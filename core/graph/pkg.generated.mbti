@@ -1,0 +1,75 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/core/graph"
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct CodeGraph {
+  modules : Map[String, ModuleNode]
+  symbols : Map[String, SymbolNode]
+  edges : Array[Edge]
+}
+pub fn CodeGraph::add_edge(Self, EdgeKind, String, String, attrs? : Map[String, String]) -> Unit
+pub fn CodeGraph::edge_count(Self) -> Int
+pub fn CodeGraph::edges_from(Self, String) -> Array[Edge]
+pub fn CodeGraph::edges_to(Self, String) -> Array[Edge]
+pub fn CodeGraph::get_edges(Self) -> Array[Edge]
+pub fn CodeGraph::get_module(Self, String) -> ModuleNode?
+pub fn CodeGraph::get_modules(Self) -> Map[String, ModuleNode]
+pub fn CodeGraph::get_or_add_module(Self, String, file? : String?) -> ModuleNode
+pub fn CodeGraph::get_or_add_symbol(Self, String, name~ : String, kind~ : String, ns~ : String, module_id~ : String) -> SymbolNode
+pub fn CodeGraph::get_symbol(Self, String) -> SymbolNode?
+pub fn CodeGraph::get_symbols(Self) -> Map[String, SymbolNode]
+pub fn CodeGraph::module_count(Self) -> Int
+pub fn CodeGraph::new() -> Self
+pub fn CodeGraph::symbol_count(Self) -> Int
+pub impl Eq for CodeGraph
+pub impl Show for CodeGraph
+
+pub struct Edge {
+  kind : EdgeKind
+  from : String
+  to : String
+  attrs : Map[String, String]
+}
+pub impl Eq for Edge
+pub impl Show for Edge
+
+pub enum EdgeKind {
+  Declares
+  References
+  ModuleDependsOn
+  Imports
+  Calls
+  Extends
+  Implements
+  Custom(String)
+}
+pub fn EdgeKind::from_string(String) -> Self
+pub fn EdgeKind::to_string(Self) -> String
+pub impl Eq for EdgeKind
+pub impl Show for EdgeKind
+
+pub struct ModuleNode {
+  id : String
+  file : String?
+}
+pub impl Eq for ModuleNode
+pub impl Show for ModuleNode
+
+pub struct SymbolNode {
+  id : String
+  name : String
+  kind : String
+  ns : String
+  module_id : String
+}
+pub impl Eq for SymbolNode
+pub impl Show for SymbolNode
+
+// Type aliases
+
+// Traits
+

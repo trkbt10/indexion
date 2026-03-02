@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/text/tokenizer"
+
+// Values
+pub fn extract_character_bigrams(String) -> Array[String]
+
+pub fn extract_word_tokens(String) -> Array[String]
+
+pub fn normalize_text(String) -> String
+
+pub fn tokenize_for_tfidf(String) -> Array[String]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

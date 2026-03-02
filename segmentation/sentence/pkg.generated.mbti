@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/segmentation/sentence"
+
+// Values
+pub fn count_sentences(String) -> Int
+
+pub fn split_sentences(String) -> Array[Sentence]
+
+pub fn split_sentences_text(String) -> Array[String]
+
+// Errors
+
+// Types and methods
+pub struct Sentence {
+  text : String
+  start : Int
+  end : Int
+}
+pub fn Sentence::get_end(Self) -> Int
+pub fn Sentence::get_start(Self) -> Int
+pub fn Sentence::get_text(Self) -> String
+pub fn Sentence::length(Self) -> Int
+pub fn Sentence::new(String, Int, Int) -> Self
+pub impl Eq for Sentence
+pub impl Show for Sentence
+
+// Type aliases
+
+// Traits
+

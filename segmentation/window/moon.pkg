@@ -1,0 +1,5 @@
+import {
+  "trkbt10/indexion/segmentation" @types,
+  "trkbt10/indexion/segmentation/sentence" @sentence,
+  "trkbt10/indexion/segmentation/utils" @utils,
+}

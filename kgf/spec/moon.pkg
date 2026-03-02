@@ -1,0 +1,4 @@
+import {
+  "moonbitlang/core/json" @json,
+  "trkbt10/indexion/kgf/types",
+}

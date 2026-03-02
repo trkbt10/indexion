@@ -1,0 +1,7 @@
+// import {
+//   "trkbt10/indexion" @lib,
+// }
+
+options(
+  "is-main": true,
+)

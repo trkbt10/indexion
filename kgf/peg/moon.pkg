@@ -1,0 +1,8 @@
+import {
+  "trkbt10/indexion/kgf/types",
+  "trkbt10/indexion/kgf/spec",
+  "trkbt10/indexion/kgf/lexer",
+  "moonbitlang/core/json",
+  "moonbitlang/core/hashset",
+  "moonbitlang/core/builtin",
+}
