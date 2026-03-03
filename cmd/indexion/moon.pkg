@@ -1,5 +1,6 @@
 import {
   "moonbitlang/x/sys" @sys,
+  "trkbt10/indexion/src/cli/docgen" @docgen_cli,
   "trkbt10/indexion/src/cli/similarity" @similarity_cli,
 }
 

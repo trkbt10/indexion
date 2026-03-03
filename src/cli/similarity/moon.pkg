@@ -1,0 +1,4 @@
+import {
+  "trkbt10/indexion/src/similarity" @sim,
+  "trkbt10/indexion/src/similarity/apted" @apted,
+}

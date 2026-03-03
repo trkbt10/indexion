@@ -1,4 +1,5 @@
 // File content detection and KGF spec selection.
+// Supports both KGF registry-based detection and fallback hardcoded patterns.
 
 ///|
 /// Extract file extension from path (without dot).
@@ -13,7 +14,6 @@ pub fn extract_extension(path : String) -> String {
       last_slash = i
     }
   }
-  // Extension must be after the last slash
   if last_dot > last_slash && last_dot < chars.length() - 1 {
     let result : Array[Char] = []
     for i = last_dot + 1; i < chars.length(); i = i + 1 {
@@ -26,7 +26,17 @@ pub fn extract_extension(path : String) -> String {
 }
 
 ///|
-/// Detect language from file extension.
+/// Detect language from file extension using KGF registry.
+/// Returns language name from KGF spec if found.
+pub fn detect_from_registry(
+  registry : @registry.KGFRegistry,
+  path : String
+) -> String? {
+  registry.detect_from_path(path)
+}
+
+///|
+/// Detect language from file extension (fallback).
 fn detect_from_extension(ext : String) -> DetectedLang {
   match ext {
     "ts" | "tsx" | "mts" | "cts" => DetectedLang::TypeScript
@@ -48,7 +58,6 @@ fn detect_from_extension(ext : String) -> DetectedLang {
 ///|
 /// Check if content looks like TypeScript/JavaScript.
 fn looks_like_typescript(content : String) -> Bool {
-  // Check for common TS/JS patterns
   has_pattern(content, "import ") ||
   has_pattern(content, "export ") ||
   has_pattern(content, "function ") ||
@@ -146,7 +155,6 @@ fn looks_like_sql(content : String) -> Bool {
 ///|
 /// Detect language from file content.
 fn detect_from_content(content : String) -> DetectedLang {
-  // Check each language pattern
   if looks_like_moonbit(content) {
     return DetectedLang::MoonBit
   }
@@ -178,16 +186,41 @@ fn detect_from_content(content : String) -> DetectedLang {
 }
 
 ///|
-/// Detect file language using both extension and content analysis.
+/// Detect file language using both extension and content analysis (legacy).
 pub fn detect_language(path : String, content : String) -> DetectedLang {
   let ext = extract_extension(path)
   let from_ext = detect_from_extension(ext)
-  // If extension gives a definite answer, use it
   if from_ext != DetectedLang::Unknown {
     return from_ext
   }
-  // Otherwise, analyze content
   detect_from_content(content)
+}
+
+///|
+/// Detect language using KGF registry with fallback to legacy detection.
+pub fn detect_language_with_registry(
+  registry : @registry.KGFRegistry,
+  path : String,
+  content : String
+) -> String {
+  // Try registry-based detection first
+  match detect_from_registry(registry, path) {
+    Some(lang) => lang
+    None => {
+      // Fall back to legacy detection
+      let detected = detect_language(path, content)
+      detected.to_string()
+    }
+  }
+}
+
+///|
+/// Get doc spec name using KGF registry.
+pub fn get_doc_spec_with_registry(
+  registry : @registry.KGFRegistry,
+  lang : String
+) -> String {
+  registry.get_doc_spec_name(lang)
 }
 
 ///|
@@ -197,6 +230,41 @@ pub fn analyze_file(path : String, content : String) -> FileInfo {
   let lang = detect_language(path, content)
   let spec_name = lang.doc_spec_name()
   FileInfo::new(path, lang, ext, spec_name)
+}
+
+///|
+/// Analyze a file using KGF registry.
+pub fn analyze_file_with_registry(
+  registry : @registry.KGFRegistry,
+  path : String,
+  content : String
+) -> FileInfo {
+  let ext = extract_extension(path)
+  let lang_str = detect_language_with_registry(registry, path, content)
+  let spec_name = get_doc_spec_with_registry(registry, lang_str)
+  // Convert lang string to DetectedLang for compatibility
+  let lang = lang_string_to_detected(lang_str)
+  FileInfo::new(path, lang, ext, spec_name)
+}
+
+///|
+/// Convert language string to DetectedLang.
+fn lang_string_to_detected(lang : String) -> DetectedLang {
+  match lang {
+    "typescript" => DetectedLang::TypeScript
+    "javascript" => DetectedLang::JavaScript
+    "python" => DetectedLang::Python
+    "moonbit" | "moonbit-doc" => DetectedLang::MoonBit
+    "go" => DetectedLang::Go
+    "rust" => DetectedLang::Rust
+    "markdown" => DetectedLang::Markdown
+    "html" => DetectedLang::Html
+    "css" => DetectedLang::Css
+    "sql" => DetectedLang::Sql
+    "json" => DetectedLang::Json
+    "yaml" => DetectedLang::Yaml
+    _ => DetectedLang::Unknown
+  }
 }
 
 ///|
@@ -236,8 +304,7 @@ fn to_upper(s : String) -> String {
   for c in chars {
     let code = c.to_int()
     if code >= 97 && code <= 122 {
-      // a-z -> A-Z
-      result.push(Char::from_int(code - 32))
+      result.push(Int::unsafe_to_char(code - 32))
     } else {
       result.push(c)
     }
