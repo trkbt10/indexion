@@ -48,7 +48,7 @@ pub fn ImportanceSignals::zero() -> ImportanceSignals {
 
 ///|
 /// A folded node: either a real node or a cluster of collapsed nodes.
-pub enum FoldedNode {
+pub(all) enum FoldedNode {
   /// A preserved individual node with its importance.
   Single(String, Double)
   /// A cluster of collapsed nodes, with a label, member count, and member IDs.

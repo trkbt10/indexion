@@ -1,5 +1,4 @@
 import {
-  "moonbitlang/core/json" @json,
   "trkbt10/indexion/src/core/graph" @graph,
   "trkbt10/indexion/src/docgen/diagram" @diagram,
   "trkbt10/indexion/src/docgen/fold" @fold,

@@ -49,7 +49,7 @@
 
 ///|
 /// CLI configuration for graph command.
-struct GraphConfig {
+priv struct GraphConfig {
   graph_type : String
   output_file : String
   specs_dir : String
@@ -79,19 +79,6 @@ fn GraphConfig::default() -> GraphConfig {
 }
 
 ///|
-fn get_arg_value(arg : String, start : Int) -> String {
-  let chars = arg.to_array()
-  if start >= chars.length() {
-    return ""
-  }
-  let result : Array[Char] = []
-  for i = start; i < chars.length(); i = i + 1 {
-    result.push(chars[i])
-  }
-  String::from_array(result)
-}
-
-///|
 fn parse_graph_args(args : Array[String], start_idx : Int) -> GraphConfig {
   let mut config = GraphConfig::default()
   let paths : Array[String] = []
@@ -104,25 +91,25 @@ fn parse_graph_args(args : Array[String], start_idx : Int) -> GraphConfig {
     } else if arg == "--simplify" {
       config = { ..config, simplify: true }
     } else if arg.has_prefix("--max-nodes=") {
-      let value = get_arg_value(arg, 12)
+      let value = @common.get_arg_value(arg, 12)
       let n = parse_int(value)
       if n > 0 {
         config = { ..config, max_nodes: n }
       }
     } else if arg.has_prefix("--type=") {
-      let value = get_arg_value(arg, 7)
+      let value = @common.get_arg_value(arg, 7)
       config = { ..config, graph_type: value }
     } else if arg.has_prefix("--output=") {
-      let value = get_arg_value(arg, 9)
+      let value = @common.get_arg_value(arg, 9)
       config = { ..config, output_file: value }
     } else if arg.has_prefix("--specs=") {
-      let value = get_arg_value(arg, 8)
+      let value = @common.get_arg_value(arg, 8)
       config = { ..config, specs_dir: value }
     } else if arg.has_prefix("--focus=") {
-      let value = get_arg_value(arg, 8)
+      let value = @common.get_arg_value(arg, 8)
       config = { ..config, focus: Some(value) }
     } else if arg.has_prefix("--title=") {
-      let value = get_arg_value(arg, 8)
+      let value = @common.get_arg_value(arg, 8)
       config = { ..config, title: Some(value) }
     } else if not(arg.has_prefix("-")) {
       paths.push(arg)
@@ -173,88 +160,6 @@ pub fn show_help() -> Unit {
 }
 
 ///|
-/// Load all KGF specs from a directory.
-fn load_specs(specs_dir : String) -> Map[String, @kgf_types.KGFSpec] {
-  let specs : Map[String, @kgf_types.KGFSpec] = {}
-  try {
-    if not(@fs.is_dir(specs_dir)) {
-      println("Warning: Specs directory not found: " + specs_dir)
-      return specs
-    }
-    let entries = @fs.read_dir(specs_dir)
-    for entry in entries {
-      if entry.has_suffix(".kgf") {
-        let path = specs_dir + "/" + entry
-        let content = @fs.read_file_to_string(path)
-        match @parser.parse_kgf(content) {
-          Some(spec) => {
-            let lang = spec.get_language()
-            specs.set(lang, spec)
-          }
-          None => println("Warning: Failed to parse spec: " + path)
-        }
-      }
-    }
-  } catch {
-    e => println("Warning: Could not load specs: " + e.to_string())
-  }
-  specs
-}
-
-///|
-/// Collect files from a path (file or directory).
-fn collect_files(path : String, files : Array[(String, String)]) -> Unit {
-  let clean_path = trim_trailing_slash(path)
-  try {
-    if @fs.is_dir(clean_path) {
-      let entries = @fs.read_dir(clean_path)
-      for entry in entries {
-        let full_path = clean_path + "/" + entry
-        collect_files(full_path, files)
-      }
-    } else if @fs.is_file(clean_path) {
-      if is_supported_file(clean_path) {
-        let content = @fs.read_file_to_string(clean_path)
-        files.push((clean_path, content))
-      }
-    }
-  } catch {
-    e =>
-      println(
-        "Warning: Could not read " + clean_path + ": " + e.to_string(),
-      )
-  }
-}
-
-///|
-fn trim_trailing_slash(path : String) -> String {
-  if path.length() > 0 && path.has_suffix("/") {
-    let chars = path.to_array()
-    let result : Array[Char] = []
-    for i = 0; i < chars.length() - 1; i = i + 1 {
-      result.push(chars[i])
-    }
-    String::from_array(result)
-  } else {
-    path
-  }
-}
-
-///|
-fn is_supported_file(path : String) -> Bool {
-  let extensions = [
-    ".ts", ".tsx", ".js", ".jsx", ".mjs", ".mbt", ".py", ".go", ".rs", ".sql",
-    ".html", ".css", ".md",
-  ]
-  for ext in extensions {
-    if path.has_suffix(ext) {
-      return true
-    }
-  }
-  false
-}
-
-///|
 /// Strip markdown code fences from a mermaid diagram string.
 fn strip_fence(diagram : String) -> String {
   let lines = split_lines(diagram)
@@ -265,7 +170,7 @@ fn strip_fence(diagram : String) -> String {
     }
     result.push(line)
   }
-  join_lines(result)
+  @common.join_lines(result)
 }
 
 ///|
@@ -287,35 +192,9 @@ fn split_lines(s : String) -> Array[String] {
 }
 
 ///|
-fn join_lines(lines : Array[String]) -> String {
-  if lines.length() == 0 {
-    return ""
-  }
-  let result : Array[Char] = []
-  for i, line in lines {
-    if i > 0 {
-      result.push('\n')
-    }
-    for c in line {
-      result.push(c)
-    }
-  }
-  String::from_array(result)
-}
-
-///|
-/// Build a CodeGraph from files using KGF analysis.
-fn build_graph(
-  files : Array[(String, String)],
-  specs : Map[String, @kgf_types.KGFSpec],
-) -> @graph.CodeGraph {
-  @build.build_graph(files, specs)
-}
-
-///|
 /// Generate mermaid diagrams from a CodeGraph based on the requested type.
 fn generate_mermaid(
-  graph : @graph.CodeGraph,
+  graph : @code_graph.CodeGraph,
   graph_type : String,
   focus : String?,
   title : String?,
@@ -403,7 +282,7 @@ fn join_sections(sections : Array[String]) -> String {
 ///|
 /// Generate a simplified mermaid diagram by folding low-importance nodes.
 fn generate_simplified_mermaid(
-  graph : @graph.CodeGraph,
+  graph : @code_graph.CodeGraph,
   graph_type : String,
   max_nodes : Int,
   title : String?,
@@ -435,7 +314,15 @@ fn generate_simplified_mermaid(
       sections.push(if no_fence { strip_fence(diagram) } else { diagram })
     }
   }
-  // Hierarchy and overview: use standard diagrams (folding doesn't apply well)
+  // Hierarchy, overview: use standard diagrams (folding doesn't apply well)
+  if graph_type == "overview" || graph_type == "all" {
+    let deps = @query.extract_module_deps(graph)
+    let decls = @query.extract_declarations(graph)
+    let diagram = @diagram.generate_overview_diagram(deps, decls)
+    if diagram.length() > 0 {
+      sections.push(if no_fence { strip_fence(diagram) } else { diagram })
+    }
+  }
   if graph_type == "hierarchy" || graph_type == "all" {
     let hierarchy = @query.extract_type_hierarchy(graph)
     let hier_title = match title {
@@ -470,20 +357,6 @@ fn parse_int(s : String) -> Int {
 }
 
 ///|
-/// Write string to file.
-fn write_output(path : String, content : String) -> Bool {
-  try {
-    @fs.write_string_to_file(path, content)
-    true
-  } catch {
-    e => {
-      println("Write error: " + e.to_string())
-      false
-    }
-  }
-}
-
-///|
 /// Run the graph command.
 pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let config = parse_graph_args(args, start_idx)
@@ -509,7 +382,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     return
   }
   // Load KGF specs
-  let specs = load_specs(config.specs_dir)
+  let specs = @common.load_specs(config.specs_dir)
   if specs.length() == 0 {
     println("Warning: No KGF specs loaded from " + config.specs_dir)
   }
@@ -517,7 +390,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let files : Array[(String, String)] = []
   if config.input_paths.length() > 0 {
     for path in config.input_paths {
-      collect_files(path, files)
+      @common.collect_files(path, files)
     }
   }
   if files.length() == 0 {
@@ -525,7 +398,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     return
   }
   // Build graph via KGF pipeline
-  let graph = build_graph(files, specs)
+  let graph = @build.build_graph(files, specs)
   // Generate mermaid output
   let mermaid = if config.simplify {
     generate_simplified_mermaid(
@@ -550,7 +423,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   }
   // Output
   if config.output_file.length() > 0 {
-    if write_output(config.output_file, mermaid) {
+    if @common.write_output(config.output_file, mermaid) {
       println("Written to: " + config.output_file)
     }
   } else {

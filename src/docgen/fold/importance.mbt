@@ -182,7 +182,7 @@ fn compute_tfidf_scores(node_ids : Array[String]) -> Map[String, Double] {
     for entry in vector.iter() {
       sum = sum + entry.1 * entry.1
     }
-    norms.push(sqrt(sum))
+    norms.push(sum.sqrt())
   }
   // Normalize
   let normalized = min_max_normalize(norms)
@@ -223,19 +223,6 @@ fn min_max_normalize(values : Array[Double]) -> Array[Double] {
     result.push((v - min_val) / range)
   }
   result
-}
-
-///|
-fn sqrt(x : Double) -> Double {
-  if x <= 0.0 {
-    return 0.0
-  }
-  let mut guess = x / 2.0
-  for i = 0; i < 20; i = i + 1 {
-    ignore(i)
-    guess = (guess + x / guess) / 2.0
-  }
-  guess
 }
 
 ///|

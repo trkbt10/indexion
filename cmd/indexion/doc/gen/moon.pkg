@@ -1,8 +1,7 @@
 import {
   "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/cmd/indexion/doc/common" @common,
   "trkbt10/indexion/src/core/graph" @graph,
   "trkbt10/indexion/src/docgen/build" @build,
   "trkbt10/indexion/src/docgen/render" @render,
-  "trkbt10/indexion/src/kgf/parser" @parser,
-  "trkbt10/indexion/src/kgf/types" @kgf_types,
 }

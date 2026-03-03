@@ -260,19 +260,6 @@ fn remap_edges(
   clusters : Array[(String, FoldedNode)],
 ) -> (Map[String, FoldedNode], Array[FoldedEdge]) {
   // Build reverse mapping: member_id -> cluster_id
-  let member_to_cluster : Map[String, String] = {}
-  for cluster in clusters {
-    let cluster_id = cluster.0
-    match cluster.1 {
-      Cluster(_, _, members) => {
-        for m in members {
-          member_to_cluster.set(m, cluster_id)
-        }
-      }
-      _ => ()
-    }
-  }
-  // Also map old node IDs to cluster IDs
   let old_to_new : Map[String, String] = {}
   for cluster in clusters {
     let cluster_id = cluster.0
