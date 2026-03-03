@@ -1,8 +1,0 @@
-import {
-  "moonbitlang/x/sys" @sys,
-  "trkbt10/indexion/src/cli/docgen" @docgen_cli,
-}
-
-options(
-  "is-main": true,
-)
