@@ -8,11 +8,12 @@
 /// Options:
 ///   --format=markdown|json|both  Output format (default: both)
 ///   --output=DIR                 Output directory (default: output)
+///   --specs=DIR                  KGF specs directory (default: src/kgf/specs)
 ///   --no-diagrams                Disable Mermaid diagrams
 ///   --help                       Show this help message
 ///
 /// Examples:
-///   moon run cmd/docgen -- src/*.ts
+///   moon run cmd/docgen -- src/*.mbt
 ///   moon run cmd/docgen -- --format=json --output=docs src/
 ///   moon run cmd/docgen -- (uses sample data for demo)
 
@@ -21,6 +22,7 @@
 struct CliConfig {
   format : String // "markdown", "json", or "both"
   output_dir : String
+  specs_dir : String
   include_diagrams : Bool
   input_paths : Array[String]
   show_help : Bool
@@ -32,6 +34,7 @@ fn CliConfig::default() -> CliConfig {
   {
     format: "both",
     output_dir: "output",
+    specs_dir: "src/kgf/specs",
     include_diagrams: true,
     input_paths: [],
     show_help: false,
@@ -71,6 +74,9 @@ fn parse_args(args : Array[String]) -> CliConfig {
     } else if arg.has_prefix("--output=") {
       let value = get_arg_value(arg, 9)
       config = { ..config, output_dir: value }
+    } else if arg.has_prefix("--specs=") {
+      let value = get_arg_value(arg, 8)
+      config = { ..config, specs_dir: value }
     } else if not(arg.has_prefix("-")) {
       paths.push(arg)
     }
@@ -89,11 +95,14 @@ fn show_help() -> Unit {
   println("Options:")
   println("  --format=markdown|json|both  Output format (default: both)")
   println("  --output=DIR                 Output directory (default: output)")
+  println(
+    "  --specs=DIR                  KGF specs directory (default: src/kgf/specs)",
+  )
   println("  --no-diagrams                Disable Mermaid diagrams")
   println("  --help                       Show this help message")
   println("")
   println("Examples:")
-  println("  moon run cmd/docgen -- src/*.ts")
+  println("  moon run cmd/docgen -- src/*.mbt")
   println("  moon run cmd/docgen -- --format=json --output=docs src/")
   println("  moon run cmd/docgen -- (uses sample data for demo)")
 }
@@ -110,34 +119,48 @@ fn main {
   }
   println("=== indexion Documentation Generator ===")
   println("")
-  // Determine if we're using real files or sample data
-  let graph = if config.input_paths.length() > 0 {
-    process_input_files(config.input_paths)
+  // Load KGF specs
+  println("Loading KGF specs from: " + config.specs_dir)
+  let specs = load_specs(config.specs_dir)
+  println("  Loaded " + specs.length().to_string() + " specs")
+  println("")
+  // Collect input files
+  let files : Array[(String, String)] = []
+  if config.input_paths.length() > 0 {
+    for path in config.input_paths {
+      collect_files(path, files)
+    }
+    println("Processing " + files.length().to_string() + " file(s)...")
   } else {
     println("No input files specified, using sample data for demo.")
-    println("")
-    create_sample_graph()
+    // Add sample files for demo
+    files.push(("demo/sample.mbt", create_sample_mbt()))
   }
+  println("")
+  // Build documentation using KGF pipeline
+  let doc_config = @build.DocConfig::new(
+    files,
+    specs,
+    options=@render.RenderOptions::new(
+      format=if config.format == "json" {
+        @render.OutputFormat::json()
+      } else {
+        @render.OutputFormat::markdown()
+      },
+      include_diagrams=config.include_diagrams,
+    ),
+  )
+  let (output, graph) = @build.build_with_graph(doc_config)
   println("Graph Statistics:")
   println("  Modules: " + graph.module_count().to_string())
   println("  Symbols: " + graph.symbol_count().to_string())
   println("  Edges: " + graph.edge_count().to_string())
   println("")
-  // Create render options
-  let options = @render.RenderOptions::new(
-    format=if config.format == "json" {
-      @render.OutputFormat::json()
-    } else {
-      @render.OutputFormat::markdown()
-    },
-    include_diagrams=config.include_diagrams,
-  )
   // Ensure output directory exists
   ensure_output_dir(config.output_dir)
   // Generate outputs based on format
   if config.format == "markdown" || config.format == "both" {
     println("Generating markdown documentation...")
-    let output = @render.render_markdown(graph, options)
     let markdown = output.to_markdown()
     let path = config.output_dir + "/api-reference.md"
     if write_output(path, markdown) {
@@ -176,28 +199,32 @@ fn main {
 }
 
 ///|
-/// Process input files and build graph.
-fn process_input_files(paths : Array[String]) -> @graph.CodeGraph {
-  let files : Array[(String, String)] = []
-  for path in paths {
-    collect_files(path, files)
+/// Load all KGF specs from a directory.
+fn load_specs(specs_dir : String) -> Map[String, @kgf_types.KGFSpec] {
+  let specs : Map[String, @kgf_types.KGFSpec] = {}
+  try {
+    if not(@fs.is_dir(specs_dir)) {
+      println("Warning: Specs directory not found: " + specs_dir)
+      return specs
+    }
+    let entries = @fs.read_dir(specs_dir)
+    for entry in entries {
+      if entry.has_suffix(".kgf") {
+        let path = specs_dir + "/" + entry
+        let content = @fs.read_file_to_string(path)
+        match @spec.parse_kgf(content) {
+          Some(spec) => {
+            let lang = spec.get_language()
+            specs.set(lang, spec)
+          }
+          None => println("Warning: Failed to parse spec: " + path)
+        }
+      }
+    }
+  } catch {
+    e => println("Warning: Could not load specs: " + e.to_string())
   }
-  println("Processing " + files.length().to_string() + " file(s)...")
-  println("")
-  // Build graph from files
-  // Note: Currently creates a basic graph since KGF spec loading
-  // would require additional setup. This demonstrates the file reading capability.
-  let graph = @graph.CodeGraph::new()
-  let declares = @graph.EdgeKind::from_string("declares")
-  for entry in files {
-    let path = entry.0
-    let content = entry.1
-    // Add module for file
-    let _ = graph.get_or_add_module(path, file=Some(path))
-    // Extract basic symbols from content (simplified analysis)
-    extract_symbols_from_content(graph, path, content, declares)
-  }
-  graph
+  specs
 }
 
 ///|
@@ -256,471 +283,40 @@ fn is_supported_file(path : String) -> Bool {
 }
 
 ///|
-/// Extract basic symbols from file content with doc comments.
-/// Captures MoonBit ///| doc comments, JSDoc /** */ comments, and Python docstrings.
-fn extract_symbols_from_content(
-  graph : @graph.CodeGraph,
-  path : String,
-  content : String,
-  declares : @graph.EdgeKind,
-) -> Unit {
-  let lines = split_lines(content)
-  let doc_lines : Array[String] = []
-  for i, line in lines {
-    let trimmed = trim(line)
-    // Collect MoonBit doc comments (///| or ///)
-    if trimmed.has_prefix("///") {
-      let doc_text = extract_mbt_doc_line(trimmed)
-      doc_lines.push(doc_text)
-      continue
-    }
-    // Collect JSDoc style comments
-    if trimmed.has_prefix("/**") ||
-      (trimmed.has_prefix("*") && not(trimmed.has_prefix("*/"))) {
-      let doc_text = extract_jsdoc_line(trimmed)
-      if doc_text.length() > 0 {
-        doc_lines.push(doc_text)
-      }
-      continue
-    }
-    // Check for declarations and attach collected doc
-    let doc = join_doc_lines(doc_lines)
-    // TypeScript/JavaScript: export function/class/interface/type
-    if trimmed.has_prefix("export function ") ||
-      trimmed.has_prefix("export async function ") {
-      let name = extract_function_name(trimmed)
-      if name.length() > 0 {
-        add_symbol(graph, declares, path, name, "Function", i + 1, doc)
-      }
-      doc_lines.clear()
-    } else if trimmed.has_prefix("export class ") {
-      let name = extract_class_name(trimmed, "class ")
-      if name.length() > 0 {
-        add_symbol(graph, declares, path, name, "Class", i + 1, doc)
-      }
-      doc_lines.clear()
-    } else if trimmed.has_prefix("export interface ") {
-      let name = extract_class_name(trimmed, "interface ")
-      if name.length() > 0 {
-        add_symbol(graph, declares, path, name, "Interface", i + 1, doc)
-      }
-      doc_lines.clear()
-    } else if trimmed.has_prefix("export type ") {
-      let name = extract_type_name(trimmed)
-      if name.length() > 0 {
-        add_symbol(graph, declares, path, name, "Type", i + 1, doc)
-      }
-      doc_lines.clear()
-    } else if trimmed.has_prefix("pub fn ") || trimmed.has_prefix("fn ") {
-      let name = extract_mbt_function_name(trimmed)
-      if name.length() > 0 {
-        add_symbol(graph, declares, path, name, "Function", i + 1, doc)
-      }
-      doc_lines.clear()
-    } else if trimmed.has_prefix("pub struct ") || trimmed.has_prefix("struct ") {
-      let name = extract_mbt_type_name(trimmed, "struct ")
-      if name.length() > 0 {
-        add_symbol(graph, declares, path, name, "Struct", i + 1, doc)
-      }
-      doc_lines.clear()
-    } else if trimmed.has_prefix("pub enum ") || trimmed.has_prefix("enum ") {
-      let name = extract_mbt_type_name(trimmed, "enum ")
-      if name.length() > 0 {
-        add_symbol(graph, declares, path, name, "Enum", i + 1, doc)
-      }
-      doc_lines.clear()
-    } else if trimmed.has_prefix("def ") {
-      let name = extract_python_function_name(trimmed)
-      if name.length() > 0 {
-        add_symbol(graph, declares, path, name, "Function", i + 1, doc)
-      }
-      doc_lines.clear()
-    } else if trimmed.length() > 0 &&
-      not(trimmed.has_prefix("//")) &&
-      not(trimmed.has_prefix("#")) {
-      // Non-empty, non-comment line - clear doc buffer
-      doc_lines.clear()
-    }
-  }
-}
-
-///|
-/// Add a symbol to the graph with documentation.
-fn add_symbol(
-  graph : @graph.CodeGraph,
-  declares : @graph.EdgeKind,
-  path : String,
-  name : String,
-  kind : String,
-  line : Int,
-  doc : String,
-) -> Unit {
-  let attrs : Map[String, String] = {}
-  attrs.set("name", name)
-  attrs.set("kind", kind)
-  attrs.set("line", line.to_string())
-  if doc.length() > 0 {
-    attrs.set("doc", doc)
-  }
-  graph.add_edge(declares, path, path + "::" + name, attrs~)
-}
-
-///|
-/// Extract doc content from MoonBit doc comment line.
-fn extract_mbt_doc_line(line : String) -> String {
-  let chars = line.to_array()
-  // Skip ///| or ///
-  let mut start = 3
-  if start < chars.length() && chars[start] == '|' {
-    start = start + 1
-  }
-  // Skip leading space
-  if start < chars.length() && chars[start] == ' ' {
-    start = start + 1
-  }
-  let result : Array[Char] = []
-  for i = start; i < chars.length(); i = i + 1 {
-    result.push(chars[i])
-  }
-  String::from_array(result)
-}
-
-///|
-/// Extract doc content from JSDoc comment line.
-fn extract_jsdoc_line(line : String) -> String {
-  let chars = line.to_array()
-  let mut start = 0
-  // Skip /** or leading *
-  if chars.length() >= 3 &&
-    chars[0] == '/' &&
-    chars[1] == '*' &&
-    chars[2] == '*' {
-    start = 3
-  } else if chars.length() >= 1 && chars[0] == '*' {
-    start = 1
-  }
-  // Skip leading space
-  if start < chars.length() && chars[start] == ' ' {
-    start = start + 1
-  }
-  let result : Array[Char] = []
-  for i = start; i < chars.length(); i = i + 1 {
-    // Stop at */
-    if i + 1 < chars.length() && chars[i] == '*' && chars[i + 1] == '/' {
-      break
-    }
-    result.push(chars[i])
-  }
-  trim(String::from_array(result))
-}
-
-///|
-/// Join doc lines into a single string.
-fn join_doc_lines(lines : Array[String]) -> String {
-  if lines.length() == 0 {
-    return ""
-  }
-  let result : Array[Char] = []
-  for i, line in lines {
-    if i > 0 {
-      result.push(' ')
-    }
-    for c in line {
-      result.push(c)
-    }
-  }
-  String::from_array(result)
-}
-
-///|
-/// Extract function name from "export function name(" or "export async function name("
-fn extract_function_name(line : String) -> String {
-  let start = if line.has_prefix("export async function ") { 22 } else { 16 }
-  let chars = line.to_array()
-  let result : Array[Char] = []
-  let mut i = start
-  while i < chars.length() {
-    let c = chars[i]
-    if c == '(' || c == '<' || c == ' ' {
-      break
-    }
-    if is_identifier_char(c) {
-      result.push(c)
-    }
-    i = i + 1
-  }
-  String::from_array(result)
-}
-
-///|
-/// Extract class/interface name from "export class/interface Name"
-fn extract_class_name(line : String, keyword : String) -> String {
-  let start = 7 + keyword.length() // "export " + keyword
-  let chars = line.to_array()
-  let result : Array[Char] = []
-  let mut i = start
-  while i < chars.length() {
-    let c = chars[i]
-    if c == ' ' || c == '{' || c == '<' || c == '\n' {
-      break
-    }
-    if is_identifier_char(c) {
-      result.push(c)
-    }
-    i = i + 1
-  }
-  String::from_array(result)
-}
-
-///|
-/// Extract type name from "export type Name = ..."
-fn extract_type_name(line : String) -> String {
-  let start = 12 // "export type "
-  let chars = line.to_array()
-  let result : Array[Char] = []
-  let mut i = start
-  while i < chars.length() {
-    let c = chars[i]
-    if c == ' ' || c == '=' || c == '<' {
-      break
-    }
-    if is_identifier_char(c) {
-      result.push(c)
-    }
-    i = i + 1
-  }
-  String::from_array(result)
-}
-
-///|
-/// Extract MoonBit function name from "pub fn name(" or "fn name("
-fn extract_mbt_function_name(line : String) -> String {
-  let start = if line.has_prefix("pub fn ") { 7 } else { 3 }
-  let chars = line.to_array()
-  let result : Array[Char] = []
-  let mut i = start
-  while i < chars.length() {
-    let c = chars[i]
-    if c == '(' || c == '[' || c == ' ' {
-      break
-    }
-    if is_identifier_char(c) || c == ':' {
-      result.push(c)
-    }
-    i = i + 1
-  }
-  String::from_array(result)
-}
-
-///|
-/// Extract MoonBit type name from "pub struct/enum Name" or "struct/enum Name"
-fn extract_mbt_type_name(line : String, keyword : String) -> String {
-  let prefix = if line.has_prefix("pub ") { "pub " } else { "" }
-  let start = prefix.length() + keyword.length()
-  let chars = line.to_array()
-  let result : Array[Char] = []
-  let mut i = start
-  while i < chars.length() {
-    let c = chars[i]
-    if c == ' ' || c == '{' || c == '[' || c == '\n' {
-      break
-    }
-    if is_identifier_char(c) {
-      result.push(c)
-    }
-    i = i + 1
-  }
-  String::from_array(result)
-}
-
-///|
-/// Extract Python function name from "def name("
-fn extract_python_function_name(line : String) -> String {
-  let start = 4 // "def "
-  let chars = line.to_array()
-  let result : Array[Char] = []
-  let mut i = start
-  while i < chars.length() {
-    let c = chars[i]
-    if c == '(' {
-      break
-    }
-    if is_identifier_char(c) {
-      result.push(c)
-    }
-    i = i + 1
-  }
-  String::from_array(result)
-}
-
-///|
-/// Check if character is valid in an identifier.
-fn is_identifier_char(c : Char) -> Bool {
-  (c >= 'a' && c <= 'z') ||
-  (c >= 'A' && c <= 'Z') ||
-  (c >= '0' && c <= '9') ||
-  c == '_'
-}
-
-///|
-/// Split string into lines.
-fn split_lines(s : String) -> Array[String] {
-  let result : Array[String] = []
-  let current : Array[Char] = []
-  for c in s {
-    if c == '\n' {
-      result.push(String::from_array(current))
-      current.clear()
-    } else if c != '\r' {
-      current.push(c)
-    }
-  }
-  if current.length() > 0 {
-    result.push(String::from_array(current))
-  }
-  result
-}
-
-///|
-/// Trim whitespace from string.
-fn trim(s : String) -> String {
-  let chars = s.to_array()
-  let mut start = 0
-  let mut end = chars.length()
-  while start < end && (chars[start] == ' ' || chars[start] == '\t') {
-    start = start + 1
-  }
-  while end > start && (chars[end - 1] == ' ' || chars[end - 1] == '\t') {
-    end = end - 1
-  }
-  if start >= end {
-    return ""
-  }
-  let result : Array[Char] = []
-  for i = start; i < end; i = i + 1 {
-    result.push(chars[i])
-  }
-  String::from_array(result)
-}
-
-///|
-/// Create a sample code graph for demonstration.
-fn create_sample_graph() -> @graph.CodeGraph {
-  let graph = @graph.CodeGraph::new()
-  // Add modules
-  let _ = graph.get_or_add_module(
-    "core/graph/graph.mbt",
-    file=Some("core/graph/graph.mbt"),
-  )
-  let _ = graph.get_or_add_module(
-    "core/graph/types.mbt",
-    file=Some("core/graph/types.mbt"),
-  )
-  let _ = graph.get_or_add_module(
-    "kgf/lexer/lexer.mbt",
-    file=Some("kgf/lexer/lexer.mbt"),
-  )
-  let _ = graph.get_or_add_module(
-    "doc/build/pipeline.mbt",
-    file=Some("doc/build/pipeline.mbt"),
-  )
-  // Add declares edges with documentation
-  let declares = @graph.EdgeKind::from_string("declares")
-  // CodeGraph struct
-  let cg_attrs : Map[String, String] = {}
-  cg_attrs.set("name", "CodeGraph")
-  cg_attrs.set("kind", "Struct")
-  cg_attrs.set("doc", "A directed graph representing code relationships.")
-  graph.add_edge(
-    declares,
-    "core/graph/graph.mbt",
-    "core/graph/graph.mbt::CodeGraph",
-    attrs=cg_attrs,
-  )
-  // CodeGraph::new
-  let cg_new_attrs : Map[String, String] = {}
-  cg_new_attrs.set("name", "new")
-  cg_new_attrs.set("kind", "Function")
-  cg_new_attrs.set("doc", "Creates a new empty CodeGraph.")
-  graph.add_edge(
-    declares,
-    "core/graph/graph.mbt",
-    "core/graph/graph.mbt::CodeGraph::new",
-    attrs=cg_new_attrs,
-  )
-  // CodeGraph::add_edge
-  let add_edge_attrs : Map[String, String] = {}
-  add_edge_attrs.set("name", "add_edge")
-  add_edge_attrs.set("kind", "Function")
-  add_edge_attrs.set("doc", "Adds an edge between two nodes.")
-  graph.add_edge(
-    declares,
-    "core/graph/graph.mbt",
-    "core/graph/graph.mbt::CodeGraph::add_edge",
-    attrs=add_edge_attrs,
-  )
-  // EdgeKind enum
-  let ek_attrs : Map[String, String] = {}
-  ek_attrs.set("name", "EdgeKind")
-  ek_attrs.set("kind", "Enum")
-  ek_attrs.set("doc", "Kinds of edges in the code graph.")
-  graph.add_edge(
-    declares,
-    "core/graph/types.mbt",
-    "core/graph/types.mbt::EdgeKind",
-    attrs=ek_attrs,
-  )
-  // Lexer struct
-  let lexer_attrs : Map[String, String] = {}
-  lexer_attrs.set("name", "Lexer")
-  lexer_attrs.set("kind", "Struct")
-  lexer_attrs.set("doc", "KGF Lexer for tokenizing source code.")
-  graph.add_edge(
-    declares,
-    "kgf/lexer/lexer.mbt",
-    "kgf/lexer/lexer.mbt::Lexer",
-    attrs=lexer_attrs,
-  )
-  // Lexer::tokenize
-  let tokenize_attrs : Map[String, String] = {}
-  tokenize_attrs.set("name", "tokenize")
-  tokenize_attrs.set("kind", "Function")
-  tokenize_attrs.set("doc", "Tokenizes the input string.")
-  graph.add_edge(
-    declares,
-    "kgf/lexer/lexer.mbt",
-    "kgf/lexer/lexer.mbt::Lexer::tokenize",
-    attrs=tokenize_attrs,
-  )
-  // build function
-  let build_attrs : Map[String, String] = {}
-  build_attrs.set("name", "build")
-  build_attrs.set("kind", "Function")
-  build_attrs.set("doc", "Build documentation from configuration.")
-  graph.add_edge(
-    declares,
-    "doc/build/pipeline.mbt",
-    "doc/build/pipeline.mbt::build",
-    attrs=build_attrs,
-  )
-  // Add module dependencies
-  let depends = @graph.EdgeKind::from_string("module_depends_on")
-  graph.add_edge(depends, "doc/build/pipeline.mbt", "core/graph/graph.mbt")
-  graph.add_edge(depends, "doc/build/pipeline.mbt", "kgf/lexer/lexer.mbt")
-  // Add call relationships
-  let calls = @graph.EdgeKind::from_string("calls")
-  graph.add_edge(
-    calls, "doc/build/pipeline.mbt::build", "core/graph/graph.mbt::CodeGraph::new",
-  )
-  graph.add_edge(
-    calls, "doc/build/pipeline.mbt::build", "kgf/lexer/lexer.mbt::Lexer::tokenize",
-  )
-  // Add references
-  let refs = @graph.EdgeKind::from_string("references")
-  graph.add_edge(
-    refs, "doc/build/pipeline.mbt::build", "core/graph/types.mbt::EdgeKind",
-  )
-  graph
+/// Create sample MoonBit content for demo.
+fn create_sample_mbt() -> String {
+  let sample =
+    #|///|
+    #|/// A sample struct for demonstration.
+    #|pub struct Point {
+    #|  /// X coordinate.
+    #|  x : Int
+    #|  /// Y coordinate.
+    #|  y : Int
+    #|}
+    #|
+    #|///|
+    #|/// Calculate distance between two points.
+    #|pub fn Point::distance(self : Point, other : Point) -> Double {
+    #|  let dx = (other.x - self.x).to_double()
+    #|  let dy = (other.y - self.y).to_double()
+    #|  (dx * dx + dy * dy).sqrt()
+    #|}
+    #|
+    #|///|
+    #|/// Sample enum for directions.
+    #|pub enum Direction {
+    #|  /// North direction.
+    #|  North
+    #|  /// South direction.
+    #|  South
+    #|  /// East direction.
+    #|  East
+    #|  /// West direction.
+    #|  West
+    #|}
+    #|
+  sample
 }
 
 ///|

@@ -328,6 +328,7 @@ fn eval_label(
 ///|
 /// Runs a PEG parse from a start rule over tokens.
 /// Returns the final result with labels and events, or None on failure.
+/// Events include rule match notifications for semantic processing.
 pub fn run_parse(
   peg : PEG,
   _spec : @types.KGFSpec,
@@ -335,10 +336,23 @@ pub fn run_parse(
   tokens : Array[@types.Tok],
 ) -> EvalResult? {
   let ctx = EvalContext::new(peg, tokens)
-  // Define call_rule function
+  // Collect all rule match events
+  let all_events : Array[(String, Map[String, Json])] = []
+  // Define call_rule function that emits events for matched rules
   fn call_rule(name : String, pos : Int) -> EvalResult {
     match peg.get_rule(name) {
-      Some(node) => eval_node(ctx, node, pos, call_rule)
+      Some(node) => {
+        let result = eval_node(ctx, node, pos, call_rule)
+        if result.ok {
+          // Emit event for this matched rule
+          let event_labels : Map[String, Json] = Map::new()
+          for key, value in result.labels {
+            event_labels.set(key, value)
+          }
+          all_events.push((name, event_labels))
+        }
+        result
+      }
       None => EvalResult::failure(pos)
     }
   }
@@ -350,7 +364,15 @@ pub fn run_parse(
     Some(node) => {
       let result = eval_node(ctx, node, 0, call_rule)
       if result.ok {
-        Some(result)
+        // Merge all rule match events into the result
+        let merged_events = append_events(result.events, all_events)
+        Some(
+          EvalResult::success(
+            result.pos,
+            labels=result.labels,
+            events=merged_events,
+          ),
+        )
       } else {
         None
       }

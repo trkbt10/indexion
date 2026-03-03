@@ -109,11 +109,17 @@ fn parse_char_class(
     match get_char_at(pattern, pos) {
       Some(']') => return Some((ranges, negated, pos + 1))
       Some('\\') => {
-        // Escaped character
+        // Escaped character - handle escape sequences
         pos = pos + 1
         match get_char_at(pattern, pos) {
           Some(c) => {
-            ranges.push((c, c))
+            let escaped_char = match c {
+              'n' => '\n'
+              'r' => '\r'
+              't' => '\t'
+              _ => c
+            }
+            ranges.push((escaped_char, escaped_char))
             pos = pos + 1
           }
           None => return None

@@ -78,7 +78,7 @@ fn analyze_with_spec(
   let start_rule = spec.get_start_rule()
   // Run parse
   let parse_result = @kgf_peg.run_parse(peg, spec, start_rule, tokens)
-  // Evaluate semantics with parsed labels
+  // Evaluate semantics for all matched rules (via events)
   match parse_result {
     Some(eval_result) => {
       let ctx = @kgf_semantics.SemEvalCtx::new(
@@ -89,11 +89,12 @@ fn analyze_with_spec(
         spec.get_language(),
         fn(_path) { false },
       )
-      @kgf_semantics.eval_rule_semantics(
-        start_rule,
-        eval_result.get_labels(),
-        ctx,
-      )
+      // Process all rule match events for semantic evaluation
+      for event in eval_result.get_events() {
+        let rule_name = event.0
+        let labels = event.1
+        @kgf_semantics.eval_rule_semantics(rule_name, labels, ctx)
+      }
     }
     None => ()
   }

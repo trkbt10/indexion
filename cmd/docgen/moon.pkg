@@ -2,7 +2,10 @@ import {
   "moonbitlang/x/fs" @fs,
   "moonbitlang/x/sys" @sys,
   "trkbt10/indexion/src/core/graph" @graph,
+  "trkbt10/indexion/src/docgen/build" @build,
   "trkbt10/indexion/src/docgen/render" @render,
+  "trkbt10/indexion/src/kgf/spec" @spec,
+  "trkbt10/indexion/src/kgf/types" @kgf_types,
 }
 
 options(
