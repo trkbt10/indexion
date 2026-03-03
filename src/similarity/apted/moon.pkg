@@ -1,3 +1,4 @@
 import {
+  "moonbitlang/core/bench",
   "trkbt10/indexion/src/kgf/peg",
 }

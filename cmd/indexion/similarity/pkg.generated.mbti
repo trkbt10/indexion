@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/similarity"
+
+// Values
+pub fn parse_similarity_args(Array[String], Int) -> SimilarityConfig
+
+pub fn run(Array[String], Int) -> Unit
+
+pub fn show_similarity_help() -> Unit
+
+// Errors
+
+// Types and methods
+pub struct SimilarityConfig {
+  strategy : String
+  ncd_weight : Double
+  tfidf_weight : Double
+  output_format : String
+  text1 : String
+  text2 : String
+  show_help : Bool
+}
+pub fn SimilarityConfig::default() -> Self
+
+// Type aliases
+
+// Traits
+

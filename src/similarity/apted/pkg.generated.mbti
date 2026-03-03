@@ -1,0 +1,116 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/similarity/apted"
+
+import {
+  "trkbt10/indexion/src/kgf/peg",
+}
+
+// Values
+pub fn calculate_tsed(TreeNode, TreeNode, TSEDConfig) -> Double
+
+pub fn calculate_tsed_distance(TreeNode, TreeNode, TSEDConfig) -> Double
+
+pub fn compute_tree_edit_distance(TreeNode, TreeNode, CostConfig) -> Double
+
+pub fn get_keyroots(Array[NodeInfo]) -> Array[Int]
+
+pub fn index_tree(TreeNode) -> Array[NodeInfo]
+
+pub fn normalized_tree_edit_distance(TreeNode, TreeNode, CostConfig) -> Double
+
+pub fn peg_cost_config() -> CostConfig
+
+pub fn peg_node_size(@peg.Node) -> Int
+
+pub fn peg_node_to_tree_node(@peg.Node) -> TreeNode
+
+pub fn peg_normalized_distance(@peg.Node, @peg.Node, CostConfig) -> Double
+
+pub fn peg_similarity(@peg.Node, @peg.Node, CostConfig) -> Double
+
+pub fn peg_tree_edit_distance(@peg.Node, @peg.Node, CostConfig) -> Double
+
+pub fn peg_tsed_config() -> TSEDConfig
+
+pub fn peg_tsed_distance(@peg.Node, @peg.Node, TSEDConfig) -> Double
+
+pub fn peg_tsed_similarity(@peg.Node, @peg.Node, TSEDConfig) -> Double
+
+pub fn should_compare_trees(TreeNode, TreeNode, Double) -> Bool
+
+pub fn tree_similarity(TreeNode, TreeNode, CostConfig) -> Double
+
+// Errors
+
+// Types and methods
+pub struct CostConfig {
+  insert_cost : Double
+  delete_cost : Double
+  rename_cost : Double
+}
+pub fn CostConfig::create(Double, Double, Double) -> Self
+pub fn CostConfig::default() -> Self
+pub fn CostConfig::get_delete_cost(Self) -> Double
+pub fn CostConfig::get_insert_cost(Self) -> Double
+pub fn CostConfig::get_rename_cost(Self) -> Double
+pub fn CostConfig::label_cost(Self, String, String) -> Double
+pub impl Eq for CostConfig
+pub impl Show for CostConfig
+
+pub struct IndexedTree {
+  size : Int
+  labels : Array[String]
+  leftmost_leaf : Array[Int]
+  keyroots : Array[Int]
+  children_count : Array[Int]
+}
+pub fn IndexedTree::from_tree(TreeNode) -> Self
+pub fn IndexedTree::get_keyroots(Self) -> Array[Int]
+pub fn IndexedTree::get_l(Self, Int) -> Int
+pub fn IndexedTree::get_label(Self, Int) -> String
+pub fn IndexedTree::get_size(Self) -> Int
+pub impl Show for IndexedTree
+
+pub struct NodeInfo {
+  node : TreeNode
+  id : Int
+  parent : Int
+  left_most_leaf : Int
+  subtree_size : Int
+}
+pub fn NodeInfo::get_id(Self) -> Int
+pub fn NodeInfo::get_left_most_leaf(Self) -> Int
+pub fn NodeInfo::get_node(Self) -> TreeNode
+pub fn NodeInfo::get_parent(Self) -> Int
+pub fn NodeInfo::get_subtree_size(Self) -> Int
+pub fn NodeInfo::new(TreeNode, Int, Int, Int, Int) -> Self
+pub impl Eq for NodeInfo
+pub impl Show for NodeInfo
+
+pub struct TSEDConfig {
+  cost_config : CostConfig
+  finalize_labels : Bool
+}
+pub fn TSEDConfig::default() -> Self
+pub impl Eq for TSEDConfig
+pub impl Show for TSEDConfig
+
+pub struct TreeNode {
+  label : String
+  children : Array[TreeNode]
+}
+pub fn TreeNode::get_children(Self) -> Array[Self]
+pub fn TreeNode::get_label(Self) -> String
+pub fn TreeNode::height(Self) -> Int
+pub fn TreeNode::is_leaf(Self) -> Bool
+pub fn TreeNode::leaf(String) -> Self
+pub fn TreeNode::node(String, Array[Self]) -> Self
+pub fn TreeNode::size(Self) -> Int
+pub fn TreeNode::with_finalized_labels(Self) -> Self
+pub impl Eq for TreeNode
+pub impl Show for TreeNode
+
+// Type aliases
+
+// Traits
+

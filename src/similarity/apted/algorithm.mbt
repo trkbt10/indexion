@@ -111,9 +111,9 @@ fn compute_forest_dist(
         let label_cost = config.label_cost(t1.get_label(x), t2.get_label(y))
         forest_dist[x - 1][y - 1] + label_cost
       } else {
-        // We're comparing forests, need to use previously computed tree distances
-        let label_cost = config.label_cost(t1.get_label(x), t2.get_label(y))
-        forest_dist[lx - 1][ly - 1] + tree_dist[x][y] + label_cost
+        // We're comparing forests, need to use previously computed tree distances.
+        // tree_dist[x][y] already includes the full subtree transformation cost.
+        forest_dist[lx - 1][ly - 1] + tree_dist[x][y]
       }
       // Take minimum
       let min_del_ins = if delete_cost < insert_cost {

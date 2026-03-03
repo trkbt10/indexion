@@ -181,3 +181,35 @@ pub fn CostConfig::label_cost(
     self.rename_cost
   }
 }
+
+///|
+/// Configuration for TSED (Tree Structure Edit Distance) calculation.
+pub struct TSEDConfig {
+  /// Base cost configuration for edit operations.
+  cost_config : CostConfig
+  /// Append child count to non-leaf labels (e.g., "Seq" → "Seq_3").
+  finalize_labels : Bool
+} derive(Eq, Show)
+
+///|
+/// Create default TSED configuration.
+pub fn TSEDConfig::default() -> TSEDConfig {
+  { cost_config: CostConfig::default(), finalize_labels: true }
+}
+
+///|
+/// Create a new tree with finalized labels.
+/// Non-leaf nodes get child count appended: "Seq" → "Seq_3" (if 3 children).
+/// Leaf nodes are unchanged. The original tree is not modified.
+pub fn TreeNode::with_finalized_labels(self : TreeNode) -> TreeNode {
+  if self.is_leaf() {
+    TreeNode::leaf(self.label)
+  } else {
+    let new_children : Array[TreeNode] = []
+    for child in self.children {
+      new_children.push(child.with_finalized_labels())
+    }
+    let new_label = self.label + "_" + self.children.length().to_string()
+    TreeNode::node(new_label, new_children)
+  }
+}

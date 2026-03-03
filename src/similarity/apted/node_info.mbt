@@ -108,23 +108,22 @@ fn compute_keyroots(size : Int, leftmost_leaf : Array[Int]) -> Array[Int] {
       keyroots.push(i)
     }
   }
-  // Sort keyroots by leftmost leaf (ascending)
-  sort_keyroots_by_l(keyroots, leftmost_leaf)
+  // Sort keyroots by postorder number (ascending).
+  // This ensures inner subtrees are processed before outer subtrees,
+  // so tree_dist[x][y] is available when needed in the else branch
+  // of compute_forest_dist.
+  sort_keyroots_by_postorder(keyroots)
   keyroots
 }
 
 ///|
-/// Sort keyroots by their leftmost leaf descendant.
-fn sort_keyroots_by_l(
-  keyroots : Array[Int],
-  leftmost_leaf : Array[Int],
-) -> Unit {
+/// Sort keyroots by their postorder number (ascending).
+fn sort_keyroots_by_postorder(keyroots : Array[Int]) -> Unit {
   // Insertion sort
   for i = 1; i < keyroots.length(); i = i + 1 {
     let key = keyroots[i]
-    let key_l = leftmost_leaf[key]
     let mut j = i - 1
-    while j >= 0 && leftmost_leaf[keyroots[j]] > key_l {
+    while j >= 0 && keyroots[j] > key {
       keyroots[j + 1] = keyroots[j]
       j = j - 1
     }

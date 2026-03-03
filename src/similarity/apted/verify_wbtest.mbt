@@ -217,22 +217,14 @@ test "verify: keyroots calculation" {
   let t = TreeNode::node("A", [TreeNode::leaf("B"), TreeNode::leaf("C")])
   let indexed = IndexedTree::from_tree(t)
   let keyroots = indexed.get_keyroots()
-  // Keyroots sorted by l: C(l=2), A(l=1) -> sorted: A first? No.
-  // Actually sorted by l ascending: A(l=1) should come before C(l=2)
-  // But A has l=1, C has l=2. Sorted: [A, C] or [3, 2]?
-  // Wait, we push in reverse postorder and then sort by l.
-  // Reverse postorder: A(3), C(2), B(1)
-  // Check l: l(A)=1, l(C)=2, l(B)=1
-  // visited_l[1] not visited -> A is keyroot
-  // visited_l[2] not visited -> C is keyroot
-  // visited_l[1] already visited -> B is not keyroot
-  // So keyroots = [A, C] = [3, 2]
-  // Sort by l: l(3)=1, l(2)=2 -> [3, 2] is correct order
+  // Tree: A(B, C). Postorder: B(1), C(2), A(3).
+  // l values: l(B)=1, l(C)=2, l(A)=1.
+  // Keyroots (rightmost for each distinct l):
+  //   l=1: A(3), l=2: C(2).
+  // Sorted by postorder ascending: [C(2), A(3)]
   inspect(keyroots.length(), content="2")
-  // First keyroot should have smaller l
-  let first_l = indexed.get_l(keyroots[0])
-  let second_l = indexed.get_l(keyroots[1])
-  assert_true(first_l <= second_l)
+  // First keyroot should have smaller postorder number
+  assert_true(keyroots[0] <= keyroots[1])
 }
 
 // ============================================================
