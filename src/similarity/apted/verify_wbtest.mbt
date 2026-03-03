@@ -217,22 +217,14 @@ test "verify: keyroots calculation" {
   let t = TreeNode::node("A", [TreeNode::leaf("B"), TreeNode::leaf("C")])
   let indexed = IndexedTree::from_tree(t)
   let keyroots = indexed.get_keyroots()
-  // Keyroots sorted by l: C(l=2), A(l=1) -> sorted: A first? No.
-  // Actually sorted by l ascending: A(l=1) should come before C(l=2)
-  // But A has l=1, C has l=2. Sorted: [A, C] or [3, 2]?
-  // Wait, we push in reverse postorder and then sort by l.
-  // Reverse postorder: A(3), C(2), B(1)
-  // Check l: l(A)=1, l(C)=2, l(B)=1
-  // visited_l[1] not visited -> A is keyroot
-  // visited_l[2] not visited -> C is keyroot
-  // visited_l[1] already visited -> B is not keyroot
-  // So keyroots = [A, C] = [3, 2]
-  // Sort by l: l(3)=1, l(2)=2 -> [3, 2] is correct order
+  // Tree: A(B, C). Postorder: B(1), C(2), A(3).
+  // l values: l(B)=1, l(C)=2, l(A)=1.
+  // Keyroots (rightmost for each distinct l):
+  //   l=1: A(3), l=2: C(2).
+  // Sorted by postorder ascending: [C(2), A(3)]
   inspect(keyroots.length(), content="2")
-  // First keyroot should have smaller l
-  let first_l = indexed.get_l(keyroots[0])
-  let second_l = indexed.get_l(keyroots[1])
-  assert_true(first_l <= second_l)
+  // First keyroot should have smaller postorder number
+  assert_true(keyroots[0] <= keyroots[1])
 }
 
 // ============================================================
@@ -270,4 +262,64 @@ test "verify: complex tree indexing" {
   inspect(indexed.get_l(4), content="4") // C is leaf
   inspect(indexed.get_l(5), content="5") // D is leaf
   inspect(indexed.get_l(6), content="1") // A's leftmost is E
+}
+
+// ============================================================
+// Test Case 15: Multi-branch tree edit distance (regression)
+// Previously, multi-branch trees with renames returned distance=0
+// due to keyroots being processed in wrong order (l-ascending
+// instead of postorder-ascending), causing tree_dist[x][y] to be
+// read before it was computed.
+// ============================================================
+
+///|
+test "verify: multi-branch rename distance" {
+  // Mod(Fn(A,B), Fn(C,D)) vs Mod(Fn(A,X), Fn(Y,D))
+  // Expected: 2 renames (B→X, C→Y)
+  let t1 = TreeNode::node("Mod", [
+    TreeNode::node("Fn", [TreeNode::leaf("A"), TreeNode::leaf("B")]),
+    TreeNode::node("Fn", [TreeNode::leaf("C"), TreeNode::leaf("D")]),
+  ])
+  let t2 = TreeNode::node("Mod", [
+    TreeNode::node("Fn", [TreeNode::leaf("A"), TreeNode::leaf("X")]),
+    TreeNode::node("Fn", [TreeNode::leaf("Y"), TreeNode::leaf("D")]),
+  ])
+  let dist = compute_tree_edit_distance(t1, t2, CostConfig::default())
+  inspect(dist, content="2")
+}
+
+///|
+test "verify: nested multi-branch rename distance" {
+  // A(B(D,E), C(F)) vs A(B(D,X), C(Y))
+  // Expected: 2 renames (E→X, F→Y)
+  let t1 = TreeNode::node("A", [
+    TreeNode::node("B", [TreeNode::leaf("D"), TreeNode::leaf("E")]),
+    TreeNode::node("C", [TreeNode::leaf("F")]),
+  ])
+  let t2 = TreeNode::node("A", [
+    TreeNode::node("B", [TreeNode::leaf("D"), TreeNode::leaf("X")]),
+    TreeNode::node("C", [TreeNode::leaf("Y")]),
+  ])
+  let dist = compute_tree_edit_distance(t1, t2, CostConfig::default())
+  inspect(dist, content="2")
+}
+
+///|
+test "verify: deep nested rename distance" {
+  // Fn(Args(A,B), Body(Ret(Var(x)))) vs Fn(Args(A,B), Body(Ret(Var(z))))
+  // Expected: 1 rename (x→z)
+  let t1 = TreeNode::node("Fn", [
+    TreeNode::node("Args", [TreeNode::leaf("A"), TreeNode::leaf("B")]),
+    TreeNode::node("Body", [
+      TreeNode::node("Ret", [TreeNode::node("Var", [TreeNode::leaf("x")])]),
+    ]),
+  ])
+  let t2 = TreeNode::node("Fn", [
+    TreeNode::node("Args", [TreeNode::leaf("A"), TreeNode::leaf("B")]),
+    TreeNode::node("Body", [
+      TreeNode::node("Ret", [TreeNode::node("Var", [TreeNode::leaf("z")])]),
+    ]),
+  ])
+  let dist = compute_tree_edit_distance(t1, t2, CostConfig::default())
+  inspect(dist, content="1")
 }
