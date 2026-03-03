@@ -7,7 +7,7 @@
 ///
 /// Options:
 ///   --format=markdown|json|both  Output format (default: both)
-///   --output=DIR                 Output directory (default: output)
+///   --output=DIR                 Output directory (default: .docgen)
 ///   --specs=DIR                  KGF specs directory (default: src/kgf/specs)
 ///   --no-diagrams                Disable Mermaid diagrams
 ///   --help                       Show this help message
@@ -33,7 +33,7 @@ struct CliConfig {
 fn CliConfig::default() -> CliConfig {
   {
     format: "both",
-    output_dir: "output",
+    output_dir: ".docgen",
     specs_dir: "src/kgf/specs",
     include_diagrams: true,
     input_paths: [],
@@ -94,7 +94,7 @@ fn show_help() -> Unit {
   println("")
   println("Options:")
   println("  --format=markdown|json|both  Output format (default: both)")
-  println("  --output=DIR                 Output directory (default: output)")
+  println("  --output=DIR                 Output directory (default: .docgen)")
   println(
     "  --specs=DIR                  KGF specs directory (default: src/kgf/specs)",
   )
