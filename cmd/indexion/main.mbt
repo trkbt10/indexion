@@ -1,18 +1,50 @@
 ///|
-/// indexion - Source code exploration and documentation tool
+/// # indexion
 ///
-/// Usage:
-///   indexion <command> [options]
+/// Source code exploration and documentation tool.
 ///
-/// Commands:
-///   explore     Analyze similarity across files in a directory
-///   plan        Generate planning documents (refactor, etc.)
-///   doc         Documentation commands (gen, etc.)
-///   sim         Calculate text similarity/distance
-///   help        Show this help message
-///   version     Show version information
+/// ## Overview
 ///
-/// Run 'indexion <command> --help' for more information on a command.
+/// indexion provides tools for analyzing, exploring, and documenting source code.
+/// Named after Korzybski's "the map is not the territory" - indexion helps build
+/// dynamic maps of your codebase.
+///
+/// ## Installation
+///
+/// ```bash
+/// # Build from source
+/// moon build --target native
+///
+/// # Or download release
+/// # See: https://github.com/trkbt10/indexion/releases
+/// ```
+///
+/// ## Commands
+///
+/// | Command | Description |
+/// |---------|-------------|
+/// | `explore` | Analyze file similarity in a directory |
+/// | `plan refactor` | Generate refactoring plan from similarity |
+/// | `doc gen` | Generate documentation from source |
+/// | `sim` | Calculate text similarity/distance |
+///
+/// ## Quick Start
+///
+/// ```bash
+/// # Explore similarity in your codebase
+/// indexion explore --format=list src/
+///
+/// # Generate refactoring plan
+/// indexion plan refactor --threshold=0.8 src/
+///
+/// # Generate documentation
+/// indexion doc gen src/
+/// ```
+///
+/// ## Configuration
+///
+/// - KGF specs: `kgfs/` directory for language specifications
+/// - Doc config: `doc.json` for documentation generation settings
 
 ///|
 /// Main entry point.

@@ -1,0 +1,52 @@
+{
+  "$schema": "./kgfs/doc-config.schema.json",
+  "version": "1.0",
+  "spec": "moonbit",
+  "output": {
+    "format": "markdown",
+    "filename": "README.md"
+  },
+  "packages": [
+    {
+      "path": "cmd/indexion",
+      "title": "indexion CLI",
+      "description": "Main CLI entry point",
+      "include_in_root": true,
+      "sections": ["overview", "commands"]
+    },
+    {
+      "path": "cmd/indexion/explore",
+      "title": "explore",
+      "include_in_root": true,
+      "sections": ["usage", "options", "examples"]
+    },
+    {
+      "path": "cmd/indexion/plan/refactor",
+      "title": "plan refactor",
+      "include_in_root": true,
+      "sections": ["usage", "options", "examples"]
+    },
+    {
+      "path": "cmd/indexion/doc/gen",
+      "title": "doc gen",
+      "include_in_root": true,
+      "sections": ["usage", "options", "examples"]
+    },
+    {
+      "path": "cmd/indexion/similarity",
+      "title": "sim",
+      "include_in_root": true,
+      "sections": ["usage", "options", "examples"]
+    }
+  ],
+  "root": {
+    "template": "docs/templates/README.template.md",
+    "output": "README.md",
+    "sections": [
+      { "type": "static", "file": "docs/intro.md" },
+      { "type": "toc", "title": "Commands" },
+      { "type": "packages", "filter": "cmd/**" },
+      { "type": "static", "file": "docs/installation.md" }
+    ]
+  }
+}
