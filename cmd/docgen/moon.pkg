@@ -1,0 +1,10 @@
+import {
+  "moonbitlang/x/fs" @fs,
+  "moonbitlang/x/sys" @sys,
+  "trkbt10/indexion/src/core/graph" @graph,
+  "trkbt10/indexion/src/docgen/render" @render,
+}
+
+options(
+  "is-main": true,
+)

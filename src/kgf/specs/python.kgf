@@ -1,0 +1,64 @@
+
+kgf 0.5
+language: python
+
+=== lex
+SKIP        /(\s+|#.[^\n]*\n?)+/
+TOKEN KW_import     /import\b/
+TOKEN KW_from       /from\b/
+TOKEN KW_def        /def\b/
+TOKEN KW_class      /class\b/
+TOKEN Ident         /[A-Za-z_][A-Za-z0-9_]*/
+TOKEN DOT           /\./
+TOKEN COMMA         /,/
+TOKEN LPAREN        /\(/
+TOKEN RPAREN        /\)/
+TOKEN COLON         /:/
+TOKEN EQ            /=/
+TOKEN STRING        /"([^"\\]|\\.)*"|'([^'\\]|\\.)*'/
+TOKEN NEWLINE       /\n/
+
+=== grammar
+Module          -> ( ImportStmt | FromImport | FnDef | SimpleStmt )*
+
+ImportStmt      -> KW_import ModList
+FromImport      -> KW_from module:QN KW_import Names
+ModList         -> QN ( COMMA QN )*
+Names           -> Ident ( COMMA Ident )*
+
+FnDef           -> KW_def id:Ident LPAREN Params? RPAREN COLON Suite
+Params          -> Ident ( COMMA Ident )*
+Suite           -> ( SimpleStmt )*    # 最小
+
+SimpleStmt      -> Expr
+
+Expr            -> Call | Primary
+Call            -> callee:Ident LPAREN (Arg ( COMMA Arg )*)? RPAREN
+Arg             -> Expr
+Primary         -> name:Ident | STRING
+
+QN              -> Ident ( DOT Ident )*
+
+=== attrs
+on FnDef:       def id kind=Function ns=value ; scope push=function
+on Params:      def id kind=Param ns=value
+on SimpleStmt:  # no-op just to keep node
+on Primary:     ref name ns=value
+on Call:        call callee=callee
+on Arg:         argref
+
+on ImportStmt:  import module=QN
+on FromImport:  import module=module
+
+on Suite:       scope pop
+
+=== semantics
+# No-op semantics; attrs cover imports/defs/refs.
+
+=== resolver
+sources: .py
+relative_prefixes: ./, ../, /
+exts: .py
+indexes: /__init__.py
+bare_prefix: pip:
+module_path_style: dot

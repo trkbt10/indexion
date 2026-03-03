@@ -1,0 +1,59 @@
+kgf 0.5
+language: css
+
+=== lex
+SKIP           /(\s+|\/\*[^*]*\*+([^/*][^*]*\*+)*\/)+/
+TOKEN AT_IMPORT   /@import\b/
+TOKEN AT_MEDIA    /@media\b/
+TOKEN AT_SUPPORTS /@supports\b/
+TOKEN AT_KEYFRAMES /@keyframes\b/
+TOKEN IMPORTANT   /!important\b/
+TOKEN URLFN       /url(?=\()/
+TOKEN LPAREN      /\(/
+TOKEN RPAREN      /\)/
+TOKEN SEMI        /;/
+TOKEN COLON       /:/
+TOKEN DOT         /\./
+TOKEN HEXCOLOR    /#[0-9A-Fa-f]{3,8}\b/
+TOKEN HASH        /#/
+TOKEN FUNCTION    /[A-Za-z_-][A-Za-z0-9_-]*(?=\()/
+TOKEN Ident       /[A-Za-z_-][A-Za-z0-9_-]*/
+TOKEN StringLit   /"([^"\\]|\\.)*"|'([^'\\]|\\.)*'/
+TOKEN NumberLit   /(?:0|[1-9][0-9]*)(?:\.[0-9]+)?/
+TOKEN LBRACE      /\{/
+TOKEN RBRACE      /\}/
+TOKEN COMMA       /,/
+
+=== grammar
+Stylesheet    -> ( ImportRule | Rule | Other )*
+Other         -> (LBRACE|RBRACE|SEMI|COMMA|Ident|StringLit|RPAREN|URLFN|DOT|HASH)*
+
+ImportRule    -> AT_IMPORT ImportTarget SEMI?
+ImportTarget  -> URL | String
+URL           -> URLFN LPAREN UrlInner RPAREN
+UrlInner      -> String | Ident
+String        -> path:StringLit
+
+Rule          -> SelectorList LBRACE Other RBRACE
+SelectorList  -> Selector ( COMMA Selector )*
+Selector      -> ( ClassSel | IdSel | Ident )+
+ClassSel      -> DOT name:Ident
+IdSel         -> HASH name:Ident
+
+=== attrs
+on ImportRule:  import module=path
+on ClassSel:    def name kind=Class ns=value
+on IdSel:       def name kind=Id ns=value
+
+=== semantics
+on ImportRule {
+  edge moduleDependsOn from $file to $resolve($path) attrs obj("via", $path, "dep_kind", "import")
+}
+
+=== resolver
+sources: .css
+relative_prefixes: ./, ../, /
+exts: .css
+indexes: /index.css
+bare_prefix: url:
+module_path_style: slash

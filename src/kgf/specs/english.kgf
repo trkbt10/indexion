@@ -1,0 +1,76 @@
+kgf 0.5
+language: english
+
+# English natural text tokenization with part-of-speech hints
+
+=== lex
+SKIP /[ \t]+/
+TOKEN NL /\r?\n+/
+
+# Punctuation
+TOKEN Punct /[.!?,:;]+/
+TOKEN Quote /["'""'']+/
+
+# Brackets
+TOKEN BracketOpen /[(\[{<]/
+TOKEN BracketClose /[)\]}>]/
+
+# Contractions (before other words)
+TOKEN Contraction /\b(I'm|you're|he's|she's|it's|we're|they're|I've|you've|we've|they've|I'll|you'll|he'll|she'll|we'll|they'll|I'd|you'd|he'd|she'd|we'd|they'd|isn't|aren't|wasn't|weren't|haven't|hasn't|hadn't|won't|wouldn't|don't|doesn't|didn't|can't|couldn't|shouldn't|mightn't|mustn't|let's|that's|who's|what's|where's|there's|here's)\b/
+
+# Articles
+TOKEN Article /\b(a|an|the)\b/
+
+# Pronouns
+TOKEN Pronoun /\b(I|me|my|mine|myself|you|your|yours|yourself|yourselves|he|him|his|himself|she|her|hers|herself|it|its|itself|we|us|our|ours|ourselves|they|them|their|theirs|themselves|this|that|these|those|who|whom|whose|which|what)\b/
+
+# Prepositions
+TOKEN Preposition /\b(in|on|at|by|for|with|to|from|of|about|into|through|during|before|after|above|below|between|under|over|against|among|within|without|along|around|behind|beside|beyond|inside|outside|toward|towards|upon|across|onto)\b/
+
+# Conjunctions
+TOKEN Conjunction /\b(and|or|but|nor|so|yet|for|because|although|though|while|whereas|if|unless|until|since|when|where|whether|however|therefore|moreover|furthermore|nevertheless|nonetheless|meanwhile|otherwise)\b/
+
+# Auxiliary/Modal verbs
+TOKEN Auxiliary /\b(be|been|being|am|is|are|was|were|have|has|had|having|do|does|did|doing|will|would|shall|should|can|could|may|might|must|ought|need|dare)\b/
+
+# Question words
+TOKEN Question /\b(what|who|whom|whose|which|where|when|why|how)\b/
+
+# Negation
+TOKEN Negation /\b(not|no|never|neither|none|nothing|nobody|nowhere|hardly|barely|scarcely)\b/
+
+# Common adverbs
+TOKEN Adverb /\b(very|really|quite|just|only|also|too|always|often|usually|sometimes|never|already|still|yet|here|there|now|then|today|tomorrow|yesterday|soon|later|always|ever)\b/
+
+# Numbers
+TOKEN Number /\b\d+(?:,\d{3})*(?:\.\d+)?(?:st|nd|rd|th)?\b|\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|first|second|third)\b/
+
+# URLs and emails
+TOKEN Url /https?:\/\/[^\s<>"']+/
+TOKEN Email /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/
+
+# General words (capitalized = proper noun hint)
+TOKEN ProperNoun /\b[A-Z][a-z]+(?:'s)?\b/
+TOKEN Word /\b[a-zA-Z]+(?:'s)?\b/
+
+# Catch-all
+TOKEN Other /[^\s]+/
+
+=== grammar
+Doc -> Sentence*
+Sentence -> Token* Punct? NL?
+Token -> Contraction | Article | Pronoun | Preposition | Conjunction
+       | Auxiliary | Question | Negation | Adverb | Number
+       | Url | Email | ProperNoun | Word | Quote | BracketOpen | BracketClose | Other
+
+=== attrs
+
+=== semantics
+
+=== resolver
+sources: .txt, .md, .text
+relative_prefixes: ./, ../
+exts: .txt, .md, .text
+indexes:
+bare_prefix:
+module_path_style: slash

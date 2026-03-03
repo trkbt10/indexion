@@ -1,0 +1,126 @@
+
+kgf 0.5
+language: typescript
+
+=== lex
+SKIP        /(\s+|\/\/[^\n]*|\/\*[\s\S]*?\*\/)+/
+TOKEN KW_import     /import\b/
+TOKEN KW_from       /from\b/
+TOKEN KW_export     /export\b/
+TOKEN KW_type       /type\b/
+TOKEN KW_function   /function\b/
+TOKEN KW_const      /const\b/
+TOKEN KW_let        /let\b/
+TOKEN KW_var        /var\b/
+TOKEN KW_as         /as\b/
+TOKEN KW_return     /return\b/
+TOKEN KW_new        /new\b/
+TOKEN STAR          /\*/
+TOKEN Ident         /[A-Za-z_\$][A-Za-z0-9_\$]*/
+TOKEN StringLit     /"([^"\\]|\\.)*"|'([^'\\]|\\.)*'/
+TOKEN NumberLit     /(?:0|[1-9][0-9]*)(?:\.[0-9]+)?/
+TOKEN LBRACE        /\{/
+TOKEN RBRACE        /\}/
+TOKEN LPAREN        /\(/
+TOKEN RPAREN        /\)/
+TOKEN SEMI          /;/
+TOKEN COMMA         /,/
+TOKEN COLON         /:/
+TOKEN DOT           /\./
+TOKEN LT            /</
+TOKEN GT            />/
+TOKEN EQ            /=/
+
+=== grammar
+Module          -> ( ImportDecl | ExportFrom | TypeAlias | FnDecl | VarDecl | ExprStmt )*
+
+ImportDecl      -> KW_import ( SideEffect | ImportNS | ImportNamedDefault | ImportNamed | ImportDefault ) SEMI?
+SideEffect      -> path:StringLit
+ImportNS        -> STAR KW_as ns:Ident KW_from from:StringLit
+ImportNamedDefault -> defId:Ident COMMA LBRACE ImportSpecList RBRACE KW_from from:StringLit
+ImportNamed     -> LBRACE ImportSpecList RBRACE KW_from from:StringLit
+ImportDefault   -> defId:Ident KW_from from:StringLit
+ImportSpecList  -> ImportSpec ( COMMA ImportSpec )*
+ImportSpec      -> origin:Ident ( KW_as local:Ident )?
+
+ExportFrom      -> KW_export ( STAR KW_from from:StringLit
+                             | LBRACE ExportSpecList RBRACE KW_from from:StringLit ) SEMI?
+ExportSpecList  -> ExportSpec ( COMMA ExportSpec )*
+ExportSpec      -> origin:Ident ( KW_as local:Ident )?
+
+TypeAlias       -> KW_type id:Ident EQ Type SEMI
+VarDecl         -> (KW_const | KW_let | KW_var) VarList SEMI?
+VarList         -> VarItem ( COMMA VarItem )*
+VarItem         -> id:Ident [ COLON Type ] [ EQ Expr ]
+
+FnDecl          -> KW_function id:Ident LPAREN ParamList? RPAREN Block
+ParamList       -> Param ( COMMA Param )*
+Param           -> id:Ident [ COLON Type ]
+Block           -> LBRACE BlockItem* RBRACE
+BlockItem       -> VarDecl | ReturnStmt | ExprStmt
+ReturnStmt      -> KW_return [ Expr ] SEMI?
+
+ExprStmt        -> Expr SEMI?
+Expr            -> CallExpr | Primary ( DOT Ident )*
+CallExpr        -> callee:Primary LPAREN (Arg ( COMMA Arg )*)? RPAREN
+Arg             -> Expr
+Primary         -> PrimaryName | LPAREN Expr RPAREN | NumberLit | StringLit | NewExpr
+PrimaryName     -> name:Ident
+NewExpr         -> KW_new Ident LPAREN (Arg ( COMMA Arg )*)? RPAREN
+
+Type            -> TypeCore [ GenericArgs ] | ObjectType
+TypeCore        -> TypeRef
+GenericArgs     -> LT ( Type ( COMMA Type )* ) GT
+TypeRef         -> tname:QN
+ObjectType      -> LBRACE (Ident|NumberLit|StringLit|LBRACE|RBRACE|LPAREN|RPAREN|COMMA|COLON|SEMI|DOT|LT|GT|EQ)* RBRACE
+QN              -> Ident ( DOT Ident )*
+
+=== attrs
+on VarItem:    def id kind=Variable ns=value
+on TypeAlias:  def id kind=TypeAlias ns=type
+on FnDecl:     def id kind=Function ns=value ; scope push=function
+
+on Param:      def id kind=Param ns=value
+on Block:      scope pop
+
+on PrimaryName: ref name ns=value
+on TypeRef:     ref tname ns=type
+
+on CallExpr:   call callee=callee
+on Arg:        argref
+
+on SideEffect:         import module=path
+on ImportNS:           import module=from
+on ImportNamedDefault: import module=from
+on ImportNamed:        import module=from
+on ImportDefault:      import module=from
+on ExportFrom:         reexport module=from
+
+=== semantics
+on SideEffect {
+  edge moduleDependsOn from $file to $resolve($path) attrs obj("via", $path, "dep_kind", "value")
+}
+on ImportNS {
+  edge moduleDependsOn from $file to $resolve($from) attrs obj("via", $from, "dep_kind", "value")
+}
+on ImportNamedDefault {
+  edge moduleDependsOn from $file to $resolve($from) attrs obj("via", $from, "dep_kind", "value")
+}
+on ImportNamed {
+  edge moduleDependsOn from $file to $resolve($from) attrs obj("via", $from, "dep_kind", "value")
+}
+on ImportDefault {
+  edge moduleDependsOn from $file to $resolve($from) attrs obj("via", $from, "dep_kind", "value")
+}
+
+=== resolver
+sources: .ts, .tsx, .d.ts
+relative_prefixes: ./, ../, /
+exts: .ts, .tsx, .d.ts
+indexes: /index.ts, /index.tsx, /index.d.ts
+bare_prefix: npm:
+module_path_style: slash
+aliases:
+  -
+    pattern: ^@/(.*)$
+    replace: src/\1

@@ -1,0 +1,4 @@
+import {
+  "trkbt10/indexion/src/text/tokenizer" @tokenizer,
+  "trkbt10/indexion/src/text/tfidf" @tfidf,
+}

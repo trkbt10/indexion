@@ -1,0 +1,149 @@
+kgf 0.5
+language: python-doc
+
+=== lex
+SKIP /[ \t]+/
+TOKEN NL /\r?\n/
+TOKEN INDENT /^[ \t]+/
+
+# Docstrings (triple-quoted strings at statement position)
+TOKEN Docstring /"""[\s\S]*?"""|'''[\s\S]*?'''/
+
+# Comments
+TOKEN Comment /#[^\r\n]*/
+
+# Strings
+TOKEN String /"([^"\\]|\\.)*"|'([^'\\]|\\.)*'/
+
+# Keywords
+TOKEN KW_def      /def\b/
+TOKEN KW_class    /class\b/
+TOKEN KW_async    /async\b/
+TOKEN KW_import   /import\b/
+TOKEN KW_from     /from\b/
+TOKEN KW_as       /as\b/
+TOKEN KW_return   /return\b/
+TOKEN KW_pass     /pass\b/
+TOKEN KW_self     /self\b/
+TOKEN KW_cls      /cls\b/
+
+# Decorators
+TOKEN Decorator /@[A-Za-z_][A-Za-z0-9_.]*/
+
+# Identifiers
+TOKEN Ident /[A-Za-z_][A-Za-z0-9_]*/
+TOKEN Number /[0-9]+(?:\.[0-9]+)?/
+
+# Punctuation
+TOKEN LPAREN   /\(/
+TOKEN RPAREN   /\)/
+TOKEN LBRACKET /\[/
+TOKEN RBRACKET /\]/
+TOKEN LBRACE   /\{/
+TOKEN RBRACE   /\}/
+TOKEN COLON    /:/
+TOKEN COMMA    /,/
+TOKEN DOT      /\./
+TOKEN EQ       /=/
+TOKEN ARROW    /->/
+TOKEN STAR     /\*/
+TOKEN STARSTAR /\*\*/
+
+=== grammar
+Module -> ModuleDoc? Item*
+
+ModuleDoc -> doc:Docstring NL*
+
+Item -> NL
+     | Comment
+     | ImportStmt
+     | FunctionDef
+     | ClassDef
+     | Assignment
+     | Other
+
+# Decorated definitions
+FunctionDef -> decorators:Decorator* KW_async? KW_def id:Ident LPAREN ParamList? RPAREN TypeHint? COLON Suite
+ClassDef -> decorators:Decorator* KW_class id:Ident Bases? COLON ClassSuite
+
+# Suite with optional docstring
+Suite -> NL INDENT doc:Docstring? SuiteContent* | SimpleStmt
+ClassSuite -> NL INDENT doc:Docstring? ClassMember*
+
+SuiteContent -> NL | Comment | Statement | INDENT
+ClassMember -> NL | Comment | MethodDef | PropertyDef | Assignment | INDENT
+
+MethodDef -> decorators:Decorator* KW_async? KW_def id:Ident LPAREN ParamList? RPAREN TypeHint? COLON Suite
+PropertyDef -> Decorator KW_def id:Ident LPAREN ParamList? RPAREN TypeHint? COLON Suite
+
+# Parameters
+ParamList -> Param ( COMMA Param )*
+Param -> STARSTAR? STAR? id:Ident TypeHint? Default?
+Default -> EQ Expr
+TypeHint -> COLON Type | ARROW Type
+Type -> Ident ( LBRACKET TypeArgs RBRACKET )? | LBRACKET Type RBRACKET
+TypeArgs -> Type ( COMMA Type )*
+
+# Class bases
+Bases -> LPAREN TypeList? RPAREN
+TypeList -> Type ( COMMA Type )*
+
+# Imports
+ImportStmt -> KW_import ModuleList | KW_from ModulePath KW_import Names
+ModuleList -> ModulePath ( COMMA ModulePath )*
+ModulePath -> Ident ( DOT Ident )*
+Names -> Ident ( KW_as Ident )? ( COMMA Ident ( KW_as Ident )? )*
+
+# Simple statements
+SimpleStmt -> Statement NL?
+Statement -> Assignment | Expr
+Assignment -> id:Ident TypeHint? EQ Expr
+
+# Expressions (simplified)
+Expr -> ExprAtom+
+ExprAtom -> Ident | Number | String | Docstring | LPAREN | RPAREN | LBRACKET | RBRACKET | LBRACE | RBRACE | DOT | COMMA | COLON | EQ | STAR | STARSTAR | ARROW
+
+Other -> ExprAtom | INDENT
+
+=== attrs
+on FunctionDef: def id kind=Function doc=doc decorators=decorators
+on ClassDef:    def id kind=Class doc=doc decorators=decorators
+on MethodDef:   def id kind=Method doc=doc decorators=decorators
+on PropertyDef: def id kind=Property doc=doc decorators=decorators
+on Assignment:  def id kind=Variable
+on Param:       def id kind=Param
+on ModuleDoc:   module_doc doc=doc
+
+=== semantics
+on ModuleDoc {
+  note module_doc payload obj("doc", $doc)
+}
+
+on FunctionDef {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Function", "doc", $doc, "decorators", $decorators)
+}
+
+on ClassDef {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Class", "doc", $doc, "decorators", $decorators)
+  bind ns "value" name "current_class" to sym_id
+}
+
+on MethodDef when $scope("value", "current_class") {
+  let parent = $scope("value", "current_class")
+  let sym_id = concat(parent, ".", $id)
+  edge declares from parent to sym_id attrs obj("name", $id, "kind", "Method", "doc", $doc, "decorators", $decorators)
+}
+
+on PropertyDef when $scope("value", "current_class") {
+  let parent = $scope("value", "current_class")
+  let sym_id = concat(parent, ".", $id)
+  edge declares from parent to sym_id attrs obj("name", $id, "kind", "Property", "doc", $doc, "decorators", $decorators)
+}
+
+=== resolver
+sources: .py, .pyi
+exts: .py, .pyi
+indexes: /__init__.py
+module_path_style: dot

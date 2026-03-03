@@ -1,0 +1,68 @@
+kgf 0.5
+language: sql
+
+=== lex
+SKIP /[ \t]+/
+TOKEN NL /\r?\n+/
+
+# Comments
+TOKEN LineComment /--[^\r\n]*/
+TOKEN BlockComment /\/\*[\s\S]*?\*\//
+
+# String literals
+TOKEN String /'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/
+
+# Numeric literals
+TOKEN Number /[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?/
+
+# Keywords - DDL
+TOKEN KeywordDDL /\b(?:CREATE|ALTER|DROP|TRUNCATE|RENAME|COMMENT)\b/i
+
+# Keywords - DML
+TOKEN KeywordDML /\b(?:SELECT|INSERT|UPDATE|DELETE|MERGE|REPLACE|UPSERT)\b/i
+
+# Keywords - Clauses
+TOKEN KeywordClause /\b(?:FROM|WHERE|JOIN|INNER|LEFT|RIGHT|OUTER|CROSS|NATURAL|ON|USING|GROUP|BY|HAVING|ORDER|ASC|DESC|NULLS|FIRST|LAST|LIMIT|OFFSET|FETCH|NEXT|ROWS|ONLY|UNION|INTERSECT|EXCEPT|ALL|DISTINCT|AS|INTO|VALUES|SET|RETURNING)\b/i
+
+# Keywords - Table/Schema
+TOKEN KeywordTable /\b(?:TABLE|VIEW|INDEX|SCHEMA|DATABASE|SEQUENCE|TRIGGER|FUNCTION|PROCEDURE|CONSTRAINT|PRIMARY|FOREIGN|KEY|REFERENCES|UNIQUE|CHECK|DEFAULT|AUTO_INCREMENT|SERIAL|IDENTITY|CASCADE|RESTRICT|NO|ACTION)\b/i
+
+# Keywords - Types
+TOKEN KeywordType /\b(?:INT|INTEGER|BIGINT|SMALLINT|TINYINT|DECIMAL|NUMERIC|FLOAT|REAL|DOUBLE|PRECISION|CHAR|VARCHAR|TEXT|NCHAR|NVARCHAR|NTEXT|BINARY|VARBINARY|BLOB|CLOB|DATE|TIME|TIMESTAMP|DATETIME|INTERVAL|BOOLEAN|BOOL|BIT|UUID|JSON|JSONB|XML|ARRAY|ENUM)\b/i
+
+# Keywords - Functions
+TOKEN KeywordFunc /\b(?:COUNT|SUM|AVG|MIN|MAX|COALESCE|NULLIF|CAST|CONVERT|EXTRACT|SUBSTRING|TRIM|UPPER|LOWER|LENGTH|CONCAT|REPLACE|ROUND|FLOOR|CEIL|ABS|MOD|POWER|SQRT|NOW|CURRENT_DATE|CURRENT_TIME|CURRENT_TIMESTAMP|DATE_ADD|DATE_SUB|DATEDIFF|YEAR|MONTH|DAY|HOUR|MINUTE|SECOND|ROW_NUMBER|RANK|DENSE_RANK|NTILE|LAG|LEAD|FIRST_VALUE|LAST_VALUE|OVER|PARTITION|WINDOW)\b/i
+
+# Keywords - Logic/Control
+TOKEN KeywordLogic /\b(?:AND|OR|NOT|IN|EXISTS|BETWEEN|LIKE|ILIKE|SIMILAR|IS|NULL|TRUE|FALSE|UNKNOWN|CASE|WHEN|THEN|ELSE|END|IF|ELSIF|ELSEIF|LOOP|WHILE|FOR|RETURN|DECLARE|BEGIN|COMMIT|ROLLBACK|SAVEPOINT|TRANSACTION|WITH|RECURSIVE|CTE)\b/i
+
+# Identifiers (quoted)
+TOKEN QuotedIdent /`[^`]+`|\[[^\]]+\]|"[^"]+"/
+
+# Identifiers (regular) - must come before operators
+TOKEN Ident /[a-zA-Z_][a-zA-Z0-9_]*/
+
+# Parameter placeholders
+TOKEN Param /\?|:[a-zA-Z_][a-zA-Z0-9_]*|\$[0-9]+/
+
+# Punctuation - must come before operators
+TOKEN Punct /[;,\.\(\)\[\]\{\}]/
+
+# Operators
+TOKEN Operator /[+\-*\/%=<>!&|^~]+|::|<>|!=|<=|>=|\|\||&&/
+
+=== grammar
+Doc -> Statement*
+Statement -> ( Token )* ( NL | Punct )?
+Token -> LineComment | BlockComment | String | Number
+      | KeywordDDL | KeywordDML | KeywordClause | KeywordTable
+      | KeywordType | KeywordFunc | KeywordLogic
+      | QuotedIdent | Ident | Param | Punct | Operator
+
+=== resolver
+sources: .sql
+relative_prefixes: ./
+exts: .sql
+indexes:
+bare_prefix:
+module_path_style: slash

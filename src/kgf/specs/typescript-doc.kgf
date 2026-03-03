@@ -1,0 +1,198 @@
+kgf 0.5
+language: typescript-doc
+
+=== lex
+# Whitespace (not comments - we capture those)
+SKIP /[ \t]+/
+TOKEN NL /\r?\n/
+
+# JSDoc comment block /** ... */
+TOKEN DocComment /\/\*\*[\s\S]*?\*\//
+
+# Regular comments (skip for doc purposes)
+TOKEN LineComment /\/\/[^\r\n]*/
+TOKEN BlockComment /\/\*(?!\*)[\s\S]*?\*\//
+
+# String literals
+TOKEN StringLit /"([^"\\]|\\.)*"|'([^'\\]|\\.)*'|`([^`\\]|\\.)*`/
+
+# Keywords
+TOKEN KW_export    /export\b/
+TOKEN KW_default   /default\b/
+TOKEN KW_function  /function\b/
+TOKEN KW_class     /class\b/
+TOKEN KW_interface /interface\b/
+TOKEN KW_type      /type\b/
+TOKEN KW_const     /const\b/
+TOKEN KW_let       /let\b/
+TOKEN KW_var       /var\b/
+TOKEN KW_enum      /enum\b/
+TOKEN KW_extends   /extends\b/
+TOKEN KW_implements /implements\b/
+TOKEN KW_async     /async\b/
+TOKEN KW_public    /public\b/
+TOKEN KW_private   /private\b/
+TOKEN KW_protected /protected\b/
+TOKEN KW_static    /static\b/
+TOKEN KW_readonly  /readonly\b/
+TOKEN KW_abstract  /abstract\b/
+
+# Identifiers and literals
+TOKEN Ident   /[A-Za-z_$][A-Za-z0-9_$]*/
+TOKEN Number  /[0-9]+(?:\.[0-9]+)?/
+
+# Punctuation
+TOKEN LBRACE  /\{/
+TOKEN RBRACE  /\}/
+TOKEN LPAREN  /\(/
+TOKEN RPAREN  /\)/
+TOKEN LBRACKET /\[/
+TOKEN RBRACKET /\]/
+TOKEN LT      /</
+TOKEN GT      />/
+TOKEN SEMI    /;/
+TOKEN COMMA   /,/
+TOKEN COLON   /:/
+TOKEN DOT     /\./
+TOKEN EQ      /=/
+TOKEN ARROW   /=>/
+TOKEN QMARK   /\?/
+TOKEN STAR    /\*/
+TOKEN PIPE    /\|/
+TOKEN AMP     /&/
+
+=== grammar
+Module -> Item*
+
+Item -> NL
+     | DocComment
+     | ExportDecl
+     | FunctionDecl
+     | ClassDecl
+     | InterfaceDecl
+     | TypeDecl
+     | VarDecl
+     | EnumDecl
+     | Other
+
+# Documented declarations (doc comment preceding)
+ExportDecl -> doc:DocComment? KW_export KW_default? ( FunctionDecl | ClassDecl | InterfaceDecl | TypeDecl | VarDecl | EnumDecl )
+           | KW_export LBRACE ExportList RBRACE
+ExportList -> Ident ( COMMA Ident )*
+
+FunctionDecl -> doc:DocComment? KW_async? KW_function id:Ident GenericParams? LPAREN ParamList? RPAREN TypeAnnotation? Body?
+ClassDecl -> doc:DocComment? KW_abstract? KW_class id:Ident GenericParams? ExtendsClause? ImplementsClause? ClassBody
+InterfaceDecl -> doc:DocComment? KW_interface id:Ident GenericParams? ExtendsClause? InterfaceBody
+TypeDecl -> doc:DocComment? KW_type id:Ident GenericParams? EQ Type SEMI?
+VarDecl -> doc:DocComment? (KW_const | KW_let | KW_var) id:Ident TypeAnnotation? ( EQ Expr )? SEMI?
+EnumDecl -> doc:DocComment? KW_enum id:Ident EnumBody
+
+# Class/Interface bodies
+ClassBody -> LBRACE ClassMember* RBRACE
+ClassMember -> doc:DocComment? Modifier* ( MethodDecl | PropertyDecl ) | NL | LineComment | BlockComment
+Modifier -> KW_public | KW_private | KW_protected | KW_static | KW_readonly | KW_abstract | KW_async
+MethodDecl -> id:Ident GenericParams? LPAREN ParamList? RPAREN TypeAnnotation? Body?
+PropertyDecl -> id:Ident QMARK? TypeAnnotation? ( EQ Expr )? SEMI?
+
+InterfaceBody -> LBRACE InterfaceMember* RBRACE
+InterfaceMember -> doc:DocComment? ( MethodSig | PropertySig ) | NL | LineComment | BlockComment
+MethodSig -> id:Ident GenericParams? LPAREN ParamList? RPAREN TypeAnnotation? SEMI?
+PropertySig -> id:Ident QMARK? TypeAnnotation? SEMI?
+
+EnumBody -> LBRACE EnumMember* RBRACE
+EnumMember -> doc:DocComment? id:Ident ( EQ Expr )? COMMA? | NL | LineComment | BlockComment
+
+# Parameters
+ParamList -> Param ( COMMA Param )*
+Param -> id:Ident QMARK? TypeAnnotation? ( EQ Expr )?
+
+# Type annotations
+TypeAnnotation -> COLON Type
+Type -> TypeAtom ( PIPE TypeAtom )*
+TypeAtom -> Ident GenericArgs? | LPAREN Type RPAREN | LBRACE TypeMembers RBRACE | LBRACKET Type RBRACKET
+GenericParams -> LT Ident ( COMMA Ident )* GT
+GenericArgs -> LT Type ( COMMA Type )* GT
+TypeMembers -> ( Ident COLON Type SEMI? )*
+ExtendsClause -> KW_extends TypeList
+ImplementsClause -> KW_implements TypeList
+TypeList -> Type ( COMMA Type )*
+
+# Bodies and expressions (simplified - just balance braces)
+Body -> LBRACE BodyContent* RBRACE
+BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+Expr -> ExprAtom+
+ExprAtom -> Ident | Number | StringLit | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | LT | GT | EQ | ARROW | QMARK | STAR | PIPE | AMP
+Atom -> Ident | Number | StringLit | SEMI | COMMA | COLON | DOT | EQ | ARROW | QMARK | STAR | PIPE | AMP | LT | GT | NL | LineComment | BlockComment | DocComment
+
+# Fallback
+Other -> Atom
+
+=== attrs
+on FunctionDecl: def id kind=Function doc=doc
+on ClassDecl:    def id kind=Class doc=doc
+on InterfaceDecl: def id kind=Interface doc=doc
+on TypeDecl:     def id kind=Type doc=doc
+on VarDecl:      def id kind=Variable doc=doc
+on EnumDecl:     def id kind=Enum doc=doc
+on MethodDecl:   def id kind=Method doc=doc
+on PropertyDecl: def id kind=Property doc=doc
+on MethodSig:    def id kind=Method doc=doc
+on PropertySig:  def id kind=Property doc=doc
+on EnumMember:   def id kind=EnumMember doc=doc
+on Param:        def id kind=Param
+
+=== semantics
+on FunctionDecl {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Function", "doc", $doc)
+}
+
+on ClassDecl {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Class", "doc", $doc)
+  bind ns "value" name "current_class" to sym_id
+}
+
+on InterfaceDecl {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Interface", "doc", $doc)
+}
+
+on TypeDecl {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Type", "doc", $doc)
+}
+
+on VarDecl {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Variable", "doc", $doc)
+}
+
+on EnumDecl {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Enum", "doc", $doc)
+  bind ns "value" name "current_enum" to sym_id
+}
+
+on MethodDecl when $scope("value", "current_class") {
+  let parent = $scope("value", "current_class")
+  let sym_id = concat(parent, ".", $id)
+  edge declares from parent to sym_id attrs obj("name", $id, "kind", "Method", "doc", $doc)
+}
+
+on PropertyDecl when $scope("value", "current_class") {
+  let parent = $scope("value", "current_class")
+  let sym_id = concat(parent, ".", $id)
+  edge declares from parent to sym_id attrs obj("name", $id, "kind", "Property", "doc", $doc)
+}
+
+on EnumMember when $scope("value", "current_enum") {
+  let parent = $scope("value", "current_enum")
+  let sym_id = concat(parent, ".", $id)
+  edge declares from parent to sym_id attrs obj("name", $id, "kind", "EnumMember", "doc", $doc)
+}
+
+=== resolver
+sources: .ts, .tsx, .mts, .cts, .js, .jsx, .mjs, .cjs
+exts: .ts, .tsx, .mts, .cts, .d.ts
+module_path_style: slash

@@ -1,0 +1,37 @@
+kgf 0.5
+language: base64
+
+=== lex
+# Tolerate whitespace in encoded blobs.
+SKIP /\\s+/
+
+# Base64 alphabet (user-requested): a-zA-Z0-9_/
+TOKEN B64_CHAR /[A-Za-z0-9_\\/]/
+
+# Padding (standard base64 uses '='). Keep as a separate token for highlighting.
+TOKEN PAD /=/
+
+=== grammar
+Doc -> Item*
+Item -> Quad | Tail | Other
+
+# Common structure: 4 base64 chars form a quartet.
+Quad -> B64_CHAR B64_CHAR B64_CHAR B64_CHAR
+
+# Tail with padding.
+Tail -> B64_CHAR B64_CHAR PAD PAD | B64_CHAR B64_CHAR B64_CHAR PAD
+
+# Fallback to keep progress.
+Other -> B64_CHAR | PAD
+
+=== attrs
+# none
+
+=== resolver
+sources: .b64, .base64, .txt
+relative_prefixes:
+exts: .b64, .base64, .txt
+indexes:
+bare_prefix:
+module_path_style: slash
+

@@ -1,4 +1,0 @@
-import {
-  "trkbt10/indexion/core/graph" @graph,
-  "moonbitlang/core/json" @json,
-}

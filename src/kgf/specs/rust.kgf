@@ -1,0 +1,65 @@
+kgf 0.5
+language: rust
+
+=== lex
+SKIP /[ \t]+/
+TOKEN NL /\r?\n+/
+
+# Comments
+TOKEN LineComment /\/\/[^\r\n]*/
+TOKEN BlockComment /\/\*[\s\S]*?\*\//
+TOKEN DocComment /\/\/\/[^\r\n]*|\/\/![^\r\n]*/
+
+# Attributes
+TOKEN Attribute /#!?\[[^\]]*\]/
+
+# String literals
+TOKEN RawString /r#*"[\s\S]*?"#*/
+TOKEN String /"(?:[^"\\]|\\.)*"/
+TOKEN Char /'(?:[^'\\]|\\.)'/
+
+# Numeric literals
+TOKEN Number /0x[0-9a-fA-F_]+|0o[0-7_]+|0b[01_]+|[0-9][0-9_]*(?:\.[0-9_]+)?(?:[eE][+-]?[0-9_]+)?(?:f32|f64|i8|i16|i32|i64|i128|isize|u8|u16|u32|u64|u128|usize)?/
+
+# Lifetime
+TOKEN Lifetime /'[a-zA-Z_][a-zA-Z0-9_]*/
+
+# Keywords - Control flow
+TOKEN KeywordControl /\b(?:if|else|match|loop|while|for|break|continue|return|yield)\b/
+
+# Keywords - Declaration
+TOKEN KeywordDecl /\b(?:let|mut|const|static|fn|struct|enum|trait|impl|type|mod|use|pub|crate|self|super|extern|async|await|dyn|where)\b/
+
+# Keywords - Types
+TOKEN KeywordType /\b(?:Self|bool|char|str|i8|i16|i32|i64|i128|isize|u8|u16|u32|u64|u128|usize|f32|f64|Box|Vec|String|Option|Result|Some|None|Ok|Err)\b/
+
+# Keywords - Other
+TOKEN KeywordOther /\b(?:as|in|ref|move|unsafe|true|false)\b/
+
+# Macros
+TOKEN Macro /[a-zA-Z_][a-zA-Z0-9_]*!/
+
+# Identifiers
+TOKEN Ident /[a-zA-Z_][a-zA-Z0-9_]*/
+
+# Operators
+TOKEN Operator /->|=>|::|\.\.=|\.\.|\?\.|[+\-*\/%&|^!<>=]=?|<<|>>/
+
+# Punctuation
+TOKEN Punct /[;,\.\(\)\[\]\{\}:@#\$\?]/
+
+=== grammar
+Doc -> Item*
+Item -> ( Token )* ( NL )?
+Token -> LineComment | BlockComment | DocComment | Attribute
+      | RawString | String | Char | Number | Lifetime
+      | KeywordControl | KeywordDecl | KeywordType | KeywordOther
+      | Macro | Ident | Operator | Punct
+
+=== resolver
+sources: .rs
+relative_prefixes: ./
+exts: .rs
+indexes:
+bare_prefix:
+module_path_style: slash

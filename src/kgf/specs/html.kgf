@@ -1,0 +1,33 @@
+
+kgf 0.5
+language: html
+
+=== lex
+SKIP          /(\s+|<!--[\s\S]*?-->)+/
+TOKEN TAG_OPEN   /<\/?[A-Za-z][A-Za-z0-9:-]*/
+TOKEN TAG_CLOSE  /\/?>/
+TOKEN ATTR_NAME  /\b[A-Za-z_:][A-Za-z0-9_:-]*(?=\s*=)/
+TOKEN EQ         /=/
+TOKEN ATTR_VALUE /"([^"\\]|\\.)*"|'([^'\\]|\\.)*'/
+
+=== grammar
+Doc        -> ( Tag | Attr | Other )*
+Tag        -> TAG_OPEN Attr* TAG_CLOSE
+Attr       -> ATTR_NAME EQ ATTR_VALUE
+Other      -> TAG_CLOSE
+
+=== attrs
+on Attr:      import module=_last
+
+=== semantics
+on Attr {
+  edge moduleDependsOn from $file to $resolve($_last) attrs obj("via", $_last, "dep_kind", "value")
+}
+
+=== resolver
+sources: .html, .htm
+relative_prefixes: ./, ../, /, http://, https://, mailto:, ftp://, data:
+exts: .html, .htm, .png, .jpg, .jpeg, .gif, .svg, .js, .css
+indexes: /index.html
+bare_prefix: url:
+module_path_style: slash

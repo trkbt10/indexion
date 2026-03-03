@@ -1,0 +1,212 @@
+kgf 0.5
+language: moonbit-doc
+
+=== lex
+SKIP /[ \t]+/
+TOKEN NL /\r?\n/
+
+# MoonBit doc comments: ///| followed by content
+TOKEN DocComment /\/\/\/\|[^\r\n]*/
+
+# Regular comments
+TOKEN LineComment /\/\/[^\r\n]*/
+
+# Strings
+TOKEN String /"([^"\\]|\\.)*"/
+TOKEN MultiString /#\|[\s\S]*?\|#/
+TOKEN Char /'([^'\\]|\\.)'/
+
+# Keywords
+TOKEN KW_fn       /fn\b/
+TOKEN KW_pub      /pub\b/
+TOKEN KW_priv     /priv\b/
+TOKEN KW_struct   /struct\b/
+TOKEN KW_enum     /enum\b/
+TOKEN KW_type     /type\b/
+TOKEN KW_trait    /trait\b/
+TOKEN KW_impl     /impl\b/
+TOKEN KW_let      /let\b/
+TOKEN KW_mut      /mut\b/
+TOKEN KW_const    /const\b/
+TOKEN KW_test     /test\b/
+TOKEN KW_derive   /derive\b/
+TOKEN KW_for      /for\b/
+TOKEN KW_with     /with\b/
+
+# Identifiers
+TOKEN TypeIdent /[A-Z][A-Za-z0-9_]*/
+TOKEN Ident /[a-z_][A-Za-z0-9_]*/
+TOKEN Number /[0-9]+(?:\.[0-9]+)?/
+
+# Operators and punctuation
+TOKEN LBRACE   /\{/
+TOKEN RBRACE   /\}/
+TOKEN LPAREN   /\(/
+TOKEN RPAREN   /\)/
+TOKEN LBRACKET /\[/
+TOKEN RBRACKET /\]/
+TOKEN COLON    /:/
+TOKEN DCOLON   /::/
+TOKEN COMMA    /,/
+TOKEN DOT      /\./
+TOKEN EQ       /=/
+TOKEN ARROW    /->/
+TOKEN FATARROW /=>/
+TOKEN TILDE    /~/
+TOKEN BANG     /!/
+TOKEN QMARK    /\?/
+TOKEN PIPE     /\|/
+TOKEN AMP      /&/
+TOKEN AT       /@/
+
+=== grammar
+Module -> Item*
+
+Item -> NL
+     | DocBlock
+     | FnDecl
+     | StructDecl
+     | EnumDecl
+     | TypeDecl
+     | TraitDecl
+     | ImplDecl
+     | LetDecl
+     | TestDecl
+     | LineComment
+     | Other
+
+# Doc comment block (one or more ///| lines)
+DocBlock -> DocComment+
+
+# Function declaration
+FnDecl -> doc:DocBlock? KW_pub? KW_fn TypeIdent? DCOLON? id:Ident GenericParams? LPAREN ParamList? RPAREN ReturnType? Body?
+
+# Struct declaration
+StructDecl -> doc:DocBlock? KW_pub? KW_priv? KW_struct id:TypeIdent GenericParams? StructBody? DeriveClause?
+
+# Enum declaration
+EnumDecl -> doc:DocBlock? KW_pub? KW_priv? KW_enum id:TypeIdent GenericParams? EnumBody? DeriveClause?
+
+# Type alias
+TypeDecl -> doc:DocBlock? KW_pub? KW_priv? KW_type id:TypeIdent GenericParams? EQ Type
+
+# Trait declaration
+TraitDecl -> doc:DocBlock? KW_pub? KW_trait id:TypeIdent GenericParams? TraitBody?
+
+# Impl block
+ImplDecl -> doc:DocBlock? KW_pub? KW_impl TypeIdent? KW_for? TypeIdent? GenericParams? ImplBody?
+
+# Let binding
+LetDecl -> doc:DocBlock? KW_pub? KW_let id:Ident TypeAnnotation? EQ Expr
+
+# Test declaration
+TestDecl -> KW_test String? Body?
+
+# Bodies
+StructBody -> LBRACE StructField* RBRACE
+StructField -> doc:DocBlock? KW_pub? KW_priv? KW_mut? id:Ident COLON Type COMMA? | NL | LineComment
+
+EnumBody -> LBRACE EnumVariant* RBRACE DeriveClause?
+EnumVariant -> doc:DocBlock? id:TypeIdent VariantPayload? COMMA? | NL | LineComment
+VariantPayload -> LPAREN TypeList RPAREN | LBRACE StructField* RBRACE
+
+TraitBody -> LBRACE TraitMember* RBRACE
+TraitMember -> doc:DocBlock? id:Ident LPAREN ParamList? RPAREN ReturnType? | NL | LineComment
+
+ImplBody -> LBRACE ImplMember* RBRACE
+ImplMember -> FnDecl | NL | LineComment
+
+DeriveClause -> KW_derive LPAREN TypeList RPAREN
+
+# Parameters and types
+ParamList -> Param ( COMMA Param )*
+Param -> KW_mut? id:Ident TypeAnnotation? | Ident TILDE
+TypeAnnotation -> COLON Type
+ReturnType -> ARROW Type BANG?
+
+Type -> TypeAtom ( PIPE TypeAtom )*
+TypeAtom -> TypeIdent GenericArgs? | Ident | LPAREN TypeList? RPAREN | LBRACKET Type RBRACKET
+GenericParams -> LBRACKET TypeParam ( COMMA TypeParam )* RBRACKET
+GenericArgs -> LBRACKET Type ( COMMA Type )* RBRACKET
+TypeParam -> TypeIdent ( COLON TypeIdent )?
+TypeList -> Type ( COMMA Type )*
+
+# Body and expressions (simplified)
+Body -> LBRACE BodyContent* RBRACE
+BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+Expr -> ExprAtom+
+ExprAtom -> Ident | TypeIdent | Number | String | MultiString | Char | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | DCOLON | EQ | ARROW | FATARROW | TILDE | BANG | QMARK | PIPE | AMP | AT
+
+Atom -> ExprAtom | NL | LineComment | DocComment
+
+Other -> Atom
+
+=== attrs
+on FnDecl:      def id kind=Function doc=doc
+on StructDecl:  def id kind=Struct doc=doc
+on EnumDecl:    def id kind=Enum doc=doc
+on TypeDecl:    def id kind=Type doc=doc
+on TraitDecl:   def id kind=Trait doc=doc
+on ImplDecl:    def id kind=Impl doc=doc
+on LetDecl:     def id kind=Variable doc=doc
+on StructField: def id kind=Field doc=doc
+on EnumVariant: def id kind=Variant doc=doc
+on TraitMember: def id kind=Method doc=doc
+on Param:       def id kind=Param
+
+=== semantics
+on FnDecl {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Function", "doc", $doc)
+}
+
+on StructDecl {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Struct", "doc", $doc)
+  bind ns "value" name "current_struct" to sym_id
+}
+
+on EnumDecl {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Enum", "doc", $doc)
+  bind ns "value" name "current_enum" to sym_id
+}
+
+on TypeDecl {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Type", "doc", $doc)
+}
+
+on TraitDecl {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Trait", "doc", $doc)
+  bind ns "value" name "current_trait" to sym_id
+}
+
+on LetDecl {
+  let sym_id = concat($file, "::", $id)
+  edge declares from $file to sym_id attrs obj("name", $id, "kind", "Variable", "doc", $doc)
+}
+
+on StructField when $scope("value", "current_struct") {
+  let parent = $scope("value", "current_struct")
+  let sym_id = concat(parent, ".", $id)
+  edge declares from parent to sym_id attrs obj("name", $id, "kind", "Field", "doc", $doc)
+}
+
+on EnumVariant when $scope("value", "current_enum") {
+  let parent = $scope("value", "current_enum")
+  let sym_id = concat(parent, ".", $id)
+  edge declares from parent to sym_id attrs obj("name", $id, "kind", "Variant", "doc", $doc)
+}
+
+on TraitMember when $scope("value", "current_trait") {
+  let parent = $scope("value", "current_trait")
+  let sym_id = concat(parent, ".", $id)
+  edge declares from parent to sym_id attrs obj("name", $id, "kind", "Method", "doc", $doc)
+}
+
+=== resolver
+sources: .mbt
+exts: .mbt
+module_path_style: slash

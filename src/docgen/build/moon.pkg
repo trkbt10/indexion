@@ -1,0 +1,10 @@
+import {
+  "trkbt10/indexion/src/core/graph" @graph,
+  "trkbt10/indexion/src/docgen/analyze" @analyze,
+  "trkbt10/indexion/src/docgen/query" @query,
+  "trkbt10/indexion/src/docgen/render" @render,
+  "trkbt10/indexion/src/kgf/types" @kgf_types,
+  "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
+  "trkbt10/indexion/src/kgf/peg" @kgf_peg,
+  "trkbt10/indexion/src/kgf/semantics" @kgf_semantics,
+}

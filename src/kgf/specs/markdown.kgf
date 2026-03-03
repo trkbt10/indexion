@@ -1,0 +1,68 @@
+
+kgf 0.5
+language: markdown
+
+=== lex
+SKIP        /(\s+)+/
+TOKEN HEADING     /^(?:#{1,6})(?=\s)/
+TOKEN CODE_FENCE  /^```[A-Za-z0-9_-]*/
+TOKEN INLINE_CODE /`[^`\n]+`/
+TOKEN TAG_OPEN    /<\/?[A-Za-z][A-Za-z0-9-]*(?=\s|\/?>)/
+TOKEN TAG_CLOSE   /\/?>/
+TOKEN ATTR_NAME   /\b[A-Za-z_:][A-Za-z0-9_:-]*(?=\s*=)/
+TOKEN EQ          /=/
+TOKEN ATTR_VALUE  /"([^"\\]|\\.)*"|'([^'\\]|\\.)*'/
+TOKEN LBRACK     /\[/
+TOKEN RBRACK     /\]/
+TOKEN LPAREN     /\(/
+TOKEN RPAREN     /\)/
+TOKEN BANG       /!/ 
+TOKEN PIPE       /\|/
+TOKEN LT         /</
+TOKEN GT         />/
+TOKEN HASH       /#/
+TOKEN TEXT       /[^()\[\]<>|\s]+/
+TOKEN QTEXT      /"([^"\\]|\\.)*"/
+
+=== grammar
+Doc        -> ( InlineImage | InlineLink | AngleLink | WikiLink | Other )*
+Other      -> TEXT | LT | GT | PIPE | HASH
+
+InlineLink -> LBRACK label:TextLike RBRACK LPAREN Target RPAREN
+InlineImage-> BANG LBRACK alt:TextLike RBRACK LPAREN Target RPAREN
+AngleLink  -> LT path:TEXT GT
+WikiLink   -> LBRACK LBRACK wpath:TEXT ( HASH frag:TEXT )? ( PIPE alias:TextLike )? RBRACK RBRACK
+
+Target     -> (Angle | PathFrag) [ QTEXT ]
+Angle      -> LT path:TEXT ( HASH frag:TEXT )? GT
+PathFrag   -> path:TEXT ( HASH frag:TEXT )?
+
+TextLike   -> (TEXT )*
+
+=== attrs
+on InlineLink:  import module=path
+on InlineImage: import module=path
+on AngleLink:   import module=path
+on WikiLink:    import module=wpath
+
+=== semantics
+on InlineLink {
+  edge moduleDependsOn from $file to $resolve($path) attrs obj("via", $path, "dep_kind", "value")
+}
+on InlineImage {
+  edge moduleDependsOn from $file to $resolve($path) attrs obj("via", $path, "dep_kind", "value")
+}
+on AngleLink {
+  edge moduleDependsOn from $file to $resolve($path) attrs obj("via", $path, "dep_kind", "value")
+}
+on WikiLink {
+  edge moduleDependsOn from $file to $resolve($wpath) attrs obj("via", $wpath, "dep_kind", "value")
+}
+
+=== resolver
+sources: .md, .markdown, .mdx
+relative_prefixes: ./, ../, /, http://, https://, mailto:, ftp://, data:
+exts: .md, .markdown, .mdx, .html, .png, .jpg, .jpeg, .gif, .svg, .pdf
+indexes: /README.md, /index.md
+bare_prefix: url:
+module_path_style: slash

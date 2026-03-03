@@ -1,0 +1,168 @@
+kgf 0.5
+language: japanese
+
+=== lex
+SKIP /[ \t　]+/
+TOKEN NL /\r?\n+/
+
+# Law header: 年号 + 年数 + "年法律第" + 号数 + "号"
+TOKEN LawHeader /((?:令和|平成|昭和|大正|明治)[一二三四五六七八九十百千〇零]+年(?:法律|政令|省令|勅令)第[一二三四五六七八九十百千〇零]+号)/
+
+TOKEN ChapterLine /((?:第[一二三四五六七八九十百千〇零]+章))[^\r\n]*/
+TOKEN SectionLine /((?:第[一二三四五六七八九十百千〇零]+節))[^\r\n]*/
+TOKEN SubsectionLine /((?:第[一二三四五六七八九十百千〇零]+款))[^\r\n]*/
+TOKEN ArticleLine /((?:第[一二三四五六七八九十百千〇零]+条(?:の[一二三四五六七八九十百千〇零]+)?))[^\r\n]*/
+TOKEN ParenHeadingLine /（([^）\r\n]+)）[^\r\n]*/
+TOKEN ItemLine /(([一二三四五六七八九十百千〇零]+(?:の[一二三四五六七八九十百千〇零]+)?))[　 \t][^\r\n]*/
+
+TOKEN Comma   /、/
+TOKEN Period  /[。！？]/
+TOKEN Open    /[（(「『【\[]/
+TOKEN Close   /[）)」』】\]]/
+TOKEN Conj /(?:しかし|そして|または|また|なお|ただし|だから|それで|つまり|及び|もしくは|ならびに)/
+TOKEN Particle /(?:から|まで|より|では|には|として|による|によって|について|における|に対して|により|は|が|を|に|へ|で|と|も|や|の|ね|よ|ぞ|さ|な|か|だ|です|ます)/
+TOKEN Kanji    /[一-龯々〆ヵヶ]+/
+TOKEN Hiragana /[ぁ-ゖー]+/
+TOKEN Katakana /[ァ-ヶー]+/
+TOKEN Latin    /[A-Za-z][A-Za-z0-9_-]*/
+TOKEN Number   /[0-9]+(?:\\.[0-9]+)?/
+TOKEN Symbol   /[・…―〜]+/
+
+TOKEN TextLine /[^\r\n]+/
+
+=== grammar
+Doc          -> ( Entry )*
+Entry        -> NL | LawHeaderEntry | Heading | Article | Item | SentenceLine
+
+LawHeaderEntry -> lh:LawHeader
+Heading      -> Chapter | Section | Subsection | ParenHeading
+Chapter      -> ch:ChapterLine
+Section      -> sec:SectionLine
+Subsection   -> sub:SubsectionLine
+ParenHeading -> ph:ParenHeadingLine
+
+Article      -> art:ArticleLine
+Item         -> item:ItemLine
+
+SentenceLine -> Sentence ( NL )?
+Sentence     -> Segment ( Comma Segment )* Period?
+Segment      -> Atom+
+
+Atom         -> Word | Particle | Conj | Open | Close
+Word         -> Kanji | Hiragana | Katakana | Latin | Number | Symbol | TextLine
+
+=== attrs
+on LawHeaderEntry: def id=lh kind=LawHeader
+on Chapter:      def id=ch kind=Chapter
+on Section:      def id=sec kind=Section
+on Subsection:   def id=sub kind=Subsection
+on ParenHeading: def id=ph kind=Heading
+on Article:      def id=art kind=Article
+on Item:         def id=item kind=Item
+
+=== resolver
+sources: .txt
+relative_prefixes:
+exts: .txt
+indexes:
+bare_prefix:
+module_path_style: slash
+
+=== semantics
+on LawHeaderEntry {
+  let cur = $scope("value", $lh)
+  edge contains from $file to cur attrs obj("rel", "root->law_header")
+}
+
+on Chapter when $scope("value", "last_chapter") {
+  let cur = $scope("value", $ch)
+  edge next from $scope("value", "last_chapter") to cur attrs obj("rel", "chapter->chapter")
+}
+on Chapter {
+  let cur = $scope("value", $ch)
+  edge contains from $file to cur attrs obj("rel", "root->chapter")
+  bind ns "value" name "last_chapter" to cur
+  bind ns "value" name "last_section" to null
+  bind ns "value" name "last_subsection" to null
+  bind ns "value" name "last_article" to null
+  bind ns "value" name "last_item" to null
+  bind ns "value" name "current_chapter" to cur
+  bind ns "value" name "current_section" to null
+  bind ns "value" name "current_subsection" to null
+  bind ns "value" name "current_article" to null
+}
+
+on Section when $scope("value", "last_section") {
+  let cur = $scope("value", $sec)
+  edge next from $scope("value", "last_section") to cur attrs obj("rel", "section->section")
+}
+on Section when $scope("value", "current_chapter") {
+  let cur = $scope("value", $sec)
+  edge contains from $scope("value", "current_chapter") to cur attrs obj("rel", "chapter->section")
+  bind ns "value" name "last_section" to cur
+  bind ns "value" name "last_subsection" to null
+  bind ns "value" name "last_article" to null
+  bind ns "value" name "last_item" to null
+  bind ns "value" name "current_section" to cur
+  bind ns "value" name "current_subsection" to null
+  bind ns "value" name "current_article" to null
+}
+
+on Subsection when $scope("value", "last_subsection") {
+  let cur = $scope("value", $sub)
+  edge next from $scope("value", "last_subsection") to cur attrs obj("rel", "subsection->subsection")
+}
+on Subsection when $scope("value", "current_section") {
+  let cur = $scope("value", $sub)
+  edge contains from $scope("value", "current_section") to cur attrs obj("rel", "section->subsection")
+  bind ns "value" name "last_subsection" to cur
+  bind ns "value" name "last_article" to null
+  bind ns "value" name "last_item" to null
+  bind ns "value" name "current_subsection" to cur
+  bind ns "value" name "current_article" to null
+}
+on Subsection when $scope("value", "current_chapter") {
+  let cur = $scope("value", $sub)
+  edge contains from $scope("value", "current_chapter") to cur attrs obj("rel", "chapter->subsection")
+  bind ns "value" name "last_subsection" to cur
+  bind ns "value" name "last_article" to null
+  bind ns "value" name "last_item" to null
+  bind ns "value" name "current_subsection" to cur
+  bind ns "value" name "current_article" to null
+}
+
+on Article when $scope("value", "last_article") {
+  let cur = $scope("value", $art)
+  edge next from $scope("value", "last_article") to cur attrs obj("rel", "article->article")
+}
+on Article when $scope("value", "current_subsection") {
+  let cur = $scope("value", $art)
+  edge contains from $scope("value", "current_subsection") to cur attrs obj("rel", "subsection->article")
+  bind ns "value" name "last_article" to cur
+  bind ns "value" name "last_item" to null
+  bind ns "value" name "current_article" to cur
+}
+on Article when $scope("value", "current_section") {
+  let cur = $scope("value", $art)
+  edge contains from $scope("value", "current_section") to cur attrs obj("rel", "section->article")
+  bind ns "value" name "last_article" to cur
+  bind ns "value" name "last_item" to null
+  bind ns "value" name "current_article" to cur
+}
+on Article when $scope("value", "current_chapter") {
+  let cur = $scope("value", $art)
+  edge contains from $scope("value", "current_chapter") to cur attrs obj("rel", "chapter->article")
+  bind ns "value" name "last_article" to cur
+  bind ns "value" name "last_item" to null
+  bind ns "value" name "current_article" to cur
+}
+
+on Item when $scope("value", "last_item") {
+  let cur = $scope("value", $item)
+  edge next from $scope("value", "last_item") to cur attrs obj("rel", "item->item")
+}
+on Item when $scope("value", "current_article") {
+  let cur = $scope("value", $item)
+  edge contains from $scope("value", "current_article") to cur attrs obj("rel", "article->item")
+  bind ns "value" name "last_item" to cur
+}

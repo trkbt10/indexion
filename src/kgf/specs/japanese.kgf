@@ -1,0 +1,86 @@
+kgf 0.5
+language: japanese
+
+# mikan.js-style regex-based word segmentation for Japanese text
+# Reference: https://github.com/trkbt10/mikan.js
+
+=== lex
+SKIP /[ \t　]+/
+TOKEN NL /\r?\n+/
+
+# Punctuation: periods, commas, exclamation, question marks
+TOKEN Punct /[\.\,。、！\!？\?]+/
+
+# Brackets (opening)
+TOKEN BracketOpen /[〈《「『｢（(\[【〔〚〖〘❮❬❪❨(<{❲❰｛❴]/
+
+# Brackets (closing)
+TOKEN BracketClose /[〉》」』｣)）\]】〕〗〙〛}>\)❩❫❭❯❱❳❵｝]/
+
+# Japanese particles (joshi) - ordered from longest to shortest for proper matching
+TOKEN Joshi /(でなければ|について|かしら|くらい|けれど|なのか|ばかり|ながら|ことよ|こそ|こと|さえ|しか|した|たり|だけ|だに|だの|つつ|ても|てよ|でも|とも|から|など|なり|ので|のに|ほど|まで|もの|やら|より|って|で|と|な|に|ね|の|も|は|ば|へ|や|わ|を|か|が|さ|し|ぞ|て)/
+
+# CJK numerals (must come before Kanji to get priority)
+TOKEN CjkNumber /[零一二三四五六七八九十百千万億兆]+/
+
+# Units (for numbers)
+TOKEN Unit /(px|point|＄|\$|€|￥|ノット|ユーロ|ドル|円|里|㌫|％|\%|cm|m|km|㌢|㍍|㌖|センチメートル|メートル|キロ|キロメートル|度|ℓ|リットル|mℓ|ミリリットル|マイル|フィート)/
+
+# Arabic numbers
+TOKEN Number /[0-9０-９]+/
+
+# Kanji words (excluding CJK numerals - use negative lookahead)
+TOKEN Kanji /(?:(?![零一二三四五六七八九十百千万億兆])[\u4e00-\u9fff々〆ヵヶゝ])+/
+
+# Hiragana words (excluding particles which are matched separately)
+TOKEN Hiragana /[ぁ-んゝ]+/
+
+# Katakana words
+TOKEN Katakana /[ァ-ヴー]+/
+
+# Latin alphanumeric and domains
+TOKEN Alnum /[a-zA-Z0-9]+\.[a-z]{2,}|[a-zA-Z0-9]+|[ａ-ｚＡ-Ｚ０-９]+/
+
+# Non-breaking space entity
+TOKEN Nbsp /\&nbsp;/
+
+# Catch-all for other characters
+TOKEN Other /[^\s\.\,。、！\!？\?〈《「『｢（(\[【〔〚〖〘❮❬❪❨(<{❲❰｛❴〉》」』｣)）\]】〕〗〙〛}>\)❩❫❭❯❱❳❵｝a-zA-Z0-9０-９ａ-ｚＡ-Ｚぁ-んゝァ-ヴー一-龠々〆ヵヶ]+/
+
+=== grammar
+Doc  -> Line*
+Line -> Segment* NL?
+Segment -> BracketOpen Content BracketClose
+         | w:Word Joshi? Punct?
+         | n:Number Unit? Punct?
+         | Punct
+Content -> Word*
+Word -> Kanji | Hiragana | Katakana | Alnum | Nbsp | Other
+
+=== attrs
+on Segment: def id=w kind=Word
+on Segment: def id=n kind=Number
+
+=== semantics
+on Segment when $scope("value", "last_word") {
+  let cur = $scope("value", $w)
+  edge nextWord from $scope("value", "last_word") to cur attrs obj("rel", "word->word")
+}
+on Segment when $w {
+  let cur = $scope("value", $w)
+  edge contains from $file to cur attrs obj("rel", "file->word")
+  bind ns "value" name "last_word" to cur
+}
+on Segment when $n {
+  let cur = $scope("value", $n)
+  edge contains from $file to cur attrs obj("rel", "file->number")
+  bind ns "value" name "last_word" to cur
+}
+
+=== resolver
+sources: .txt, .md, .text
+relative_prefixes: ./, ../
+exts: .txt, .md, .text,
+indexes:
+bare_prefix:
+module_path_style: slash
