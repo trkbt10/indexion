@@ -273,3 +273,272 @@ test "resolve_module colon style module" {
   )
   assert_eq(result, "utils/helper.rs")
 }
+
+// Additional comprehensive tests for resolver
+
+///|
+test "resolve_module typescript config" {
+  // Match the actual typescript.kgf resolver section
+  let spec = @types.ResolverSpec::new(
+    sources=[".ts", ".tsx", ".d.ts"],
+    exts=[".ts", ".tsx", ".d.ts"],
+    indexes=["/index.ts", "/index.tsx", "/index.d.ts"],
+    relative_prefixes=["./", "../", "/"],
+    module_path_style=get_slash_style(),
+    bare_prefix="npm:",
+  )
+  let resolver = MockFileResolver::new(["/project/src/utils.ts"])
+  let result = resolve_module(
+    spec,
+    "typescript",
+    "/project/src/main.ts",
+    "./utils",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "src/utils.ts")
+}
+
+///|
+test "resolve_module typescript bare import" {
+  let spec = @types.ResolverSpec::new(
+    exts=[".ts", ".tsx", ".d.ts"],
+    indexes=["/index.ts"],
+    relative_prefixes=["./", "../", "/"],
+    module_path_style=get_slash_style(),
+    bare_prefix="npm:",
+  )
+  let resolver = MockFileResolver::new([])
+  let result = resolve_module(
+    spec,
+    "typescript",
+    "/project/src/main.ts",
+    "react",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "npm:react")
+}
+
+///|
+test "resolve_module typescript scoped package" {
+  let spec = @types.ResolverSpec::new(
+    exts=[".ts"],
+    indexes=["/index.ts"],
+    relative_prefixes=["./", "../"],
+    module_path_style=get_slash_style(),
+    bare_prefix="npm:",
+  )
+  let resolver = MockFileResolver::new([])
+  let result = resolve_module(
+    spec,
+    "typescript",
+    "/project/src/main.ts",
+    "@types/node",
+    "/project",
+    resolver,
+  )
+  // Scoped packages should preserve the full module name
+  assert_eq(result, "npm:@types")
+}
+
+///|
+test "resolve_module parent directory" {
+  let spec = @types.ResolverSpec::new(
+    exts=[".ts"],
+    indexes=[],
+    relative_prefixes=["./", "../"],
+    module_path_style=get_slash_style(),
+  )
+  let resolver = MockFileResolver::new(["/project/utils/helper.ts"])
+  let result = resolve_module(
+    spec,
+    "typescript",
+    "/project/src/nested/deep.ts",
+    "../../utils/helper",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "utils/helper.ts")
+}
+
+///|
+test "resolve_module absolute path from root" {
+  let spec = @types.ResolverSpec::new(
+    exts=[".ts"],
+    indexes=[],
+    relative_prefixes=["./", "../", "/"],
+    module_path_style=get_slash_style(),
+  )
+  let resolver = MockFileResolver::new(["/project/lib/core.ts"])
+  let result = resolve_module(
+    spec,
+    "typescript",
+    "/project/src/main.ts",
+    "/lib/core",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "lib/core.ts")
+}
+
+///|
+test "resolve_module python init file" {
+  let spec = @types.ResolverSpec::new(
+    exts=[".py"],
+    indexes=["/__init__.py"],
+    relative_prefixes=["./", "../"],
+    module_path_style=get_dot_style(),
+  )
+  let resolver = MockFileResolver::new(["/project/pkg/__init__.py"])
+  let result = resolve_module(
+    spec,
+    "python",
+    "/project/main.py",
+    "pkg",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "pkg/__init__.py")
+}
+
+///|
+test "resolve_module python nested module" {
+  let spec = @types.ResolverSpec::new(
+    exts=[".py"],
+    indexes=["/__init__.py"],
+    relative_prefixes=["./", "../"],
+    module_path_style=get_dot_style(),
+  )
+  let resolver = MockFileResolver::new(["/project/pkg/sub/module.py"])
+  let result = resolve_module(
+    spec,
+    "python",
+    "/project/main.py",
+    "pkg.sub.module",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "pkg/sub/module.py")
+}
+
+///|
+test "resolve_module tries multiple extensions" {
+  let spec = @types.ResolverSpec::new(
+    exts=[".js", ".ts", ".tsx"],
+    indexes=[],
+    relative_prefixes=["./"],
+    module_path_style=get_slash_style(),
+  )
+  // Only .tsx file exists
+  let resolver = MockFileResolver::new(["/project/src/Button.tsx"])
+  let result = resolve_module(
+    spec,
+    "typescript",
+    "/project/src/main.ts",
+    "./Button",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "src/Button.tsx")
+}
+
+///|
+test "resolve_module tries index files in order" {
+  let spec = @types.ResolverSpec::new(
+    exts=[".ts"],
+    indexes=["/index.js", "/index.ts"],
+    relative_prefixes=["./"],
+    module_path_style=get_slash_style(),
+  )
+  // Only index.ts exists
+  let resolver = MockFileResolver::new(["/project/src/components/index.ts"])
+  let result = resolve_module(
+    spec,
+    "typescript",
+    "/project/src/main.ts",
+    "./components",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "src/components/index.ts")
+}
+
+///|
+test "apply_aliases multiple aliases" {
+  let aliases = [
+    @types.ResolverAlias::new("@utils", "src/utils"),
+    @types.ResolverAlias::new("@components", "src/components"),
+  ]
+  let result1 = apply_aliases("@utils/helper", aliases)
+  assert_eq(result1, "src/utils/helper")
+  let result2 = apply_aliases("@components/Button", aliases)
+  assert_eq(result2, "src/components/Button")
+}
+
+///|
+test "apply_aliases order matters" {
+  // More specific aliases should come first
+  let aliases = [
+    @types.ResolverAlias::new("@ui/icons", "assets/icons"),
+    @types.ResolverAlias::new("@ui", "src/ui"),
+  ]
+  let result = apply_aliases("@ui/icons/home", aliases)
+  assert_eq(result, "assets/icons/home")
+}
+
+///|
+test "normalize_path edge cases" {
+  assert_eq(normalize_path(""), "")
+  assert_eq(normalize_path("/"), "/")
+  assert_eq(normalize_path("."), ".")
+  assert_eq(normalize_path(".."), "..")
+  assert_eq(normalize_path("../.."), "../..")
+  assert_eq(normalize_path("a/b/../../c"), "c")
+  assert_eq(normalize_path("/a/b/../../c"), "/c")
+}
+
+///|
+test "relative_path deeper nesting" {
+  assert_eq(relative_path("/a/b/c", "/a/b/c/d/e"), "d/e")
+  assert_eq(relative_path("/a/b/c/d/e", "/a/b/c"), "../..")
+  assert_eq(relative_path("/a/b", "/c/d"), "../../c/d")
+}
+
+///|
+test "join_path edge cases" {
+  assert_eq(join_path([]), "")
+  assert_eq(join_path([""]), "")
+  assert_eq(join_path(["a"]), "a")
+  assert_eq(join_path(["a", "b"]), "a/b")
+  assert_eq(join_path(["/a", "b", "c"]), "/a/b/c")
+}
+
+///|
+test "dirname edge cases" {
+  assert_eq(dirname(""), ".")
+  assert_eq(dirname("/"), "/")
+  assert_eq(dirname("a"), ".")
+  assert_eq(dirname("a/b"), "a")
+  // Trailing slash is normalized, so /a/b/c/ becomes /a/b/c, and dirname is /a/b
+  assert_eq(dirname("/a/b/c/"), "/a/b")
+}
+
+///|
+test "basename edge cases" {
+  assert_eq(basename(""), "")
+  assert_eq(basename("/"), "")
+  assert_eq(basename("a"), "a")
+  assert_eq(basename("/a"), "a")
+  assert_eq(basename("a/b/c.txt"), "c.txt")
+}
+
+///|
+test "module_to_path edge cases" {
+  assert_eq(module_to_path("", get_dot_style()), "")
+  assert_eq(module_to_path("a", get_dot_style()), "a")
+  assert_eq(module_to_path("a.b", get_dot_style()), "a/b")
+  assert_eq(module_to_path("", get_colon_style()), "")
+  assert_eq(module_to_path("a", get_colon_style()), "a")
+  assert_eq(module_to_path("a::b", get_colon_style()), "a/b")
+}
