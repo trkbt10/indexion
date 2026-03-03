@@ -221,6 +221,95 @@ test "render_mermaid: all type combines diagrams" {
   assert_true(result.contains("classDiagram"))
 }
 
+// --- render_mermaid_simplified tests ---
+
+///|
+test "render_mermaid_simplified: with module deps" {
+  let graph = @graph.CodeGraph::new()
+  let _ = graph.get_or_add_module("main.ts", file=Some("main.ts"))
+  let _ = graph.get_or_add_module("utils.ts", file=Some("utils.ts"))
+  graph.add_edge(edge_kind("module_depends_on"), "main.ts", "utils.ts")
+  let result = render_mermaid_simplified(graph)
+  assert_true(result.contains("```mermaid"))
+  assert_true(result.contains("graph LR"))
+  assert_true(result.contains("simplified"))
+}
+
+///|
+test "render_mermaid_simplified: with hierarchy" {
+  let graph = @graph.CodeGraph::new()
+  graph.add_edge(edge_kind("extends"), "Dog", "Animal")
+  let result = render_mermaid_simplified(graph)
+  assert_true(result.contains("classDiagram"))
+}
+
+///|
+test "render_mermaid_simplified: empty graph returns empty" {
+  let graph = @graph.CodeGraph::new()
+  let result = render_mermaid_simplified(graph)
+  assert_eq(result, "")
+}
+
+///|
+test "render_mermaid_simplified: custom max_nodes" {
+  let graph = @graph.CodeGraph::new()
+  let _ = graph.get_or_add_module("a.ts", file=Some("a.ts"))
+  let _ = graph.get_or_add_module("b.ts", file=Some("b.ts"))
+  graph.add_edge(edge_kind("module_depends_on"), "a.ts", "b.ts")
+  let result = render_mermaid_simplified(graph, max_nodes=5)
+  assert_true(result.contains("```mermaid"))
+}
+
+///|
+test "render_mermaid_simplified: large graph creates clusters" {
+  let graph = @graph.CodeGraph::new()
+  let _ = graph.get_or_add_module("hub.ts", file=Some("hub.ts"))
+  for i = 0; i < 20; i = i + 1 {
+    let name = "leaf" + i.to_string() + ".ts"
+    let _ = graph.get_or_add_module(name, file=Some(name))
+    graph.add_edge(edge_kind("module_depends_on"), name, "hub.ts")
+  }
+  let result = render_mermaid_simplified(graph, max_nodes=5)
+  assert_true(result.contains("```mermaid"))
+  assert_true(result.contains("nodes"))
+}
+
+///|
+test "MermaidOptions::for_type: calls only" {
+  let opts = MermaidOptions::for_type("calls")
+  assert_false(opts.include_deps)
+  assert_true(opts.include_calls)
+  assert_false(opts.include_hierarchy)
+  assert_false(opts.include_overview)
+}
+
+///|
+test "MermaidOptions::for_type: hierarchy only" {
+  let opts = MermaidOptions::for_type("hierarchy")
+  assert_false(opts.include_deps)
+  assert_false(opts.include_calls)
+  assert_true(opts.include_hierarchy)
+  assert_false(opts.include_overview)
+}
+
+///|
+test "MermaidOptions::for_type: overview only" {
+  let opts = MermaidOptions::for_type("overview")
+  assert_false(opts.include_deps)
+  assert_false(opts.include_calls)
+  assert_false(opts.include_hierarchy)
+  assert_true(opts.include_overview)
+}
+
+///|
+test "MermaidOptions::for_type: unknown type disables all" {
+  let opts = MermaidOptions::for_type("unknown")
+  assert_false(opts.include_deps)
+  assert_false(opts.include_calls)
+  assert_false(opts.include_hierarchy)
+  assert_false(opts.include_overview)
+}
+
 // Helper function
 
 ///|
