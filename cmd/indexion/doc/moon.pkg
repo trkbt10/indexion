@@ -1,4 +1,5 @@
 import {
   "trkbt10/indexion/cmd/indexion/doc/gen" @gen,
+  "trkbt10/indexion/cmd/indexion/doc/graph" @graph,
   "trkbt10/indexion/cmd/indexion/doc/readme" @readme,
 }

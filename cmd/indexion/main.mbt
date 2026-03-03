@@ -26,6 +26,7 @@
 /// | `explore` | Analyze file similarity in a directory |
 /// | `plan refactor` | Generate refactoring plan from similarity |
 /// | `doc gen` | Generate documentation from source |
+/// | `doc graph` | Output dependency graphs in Mermaid format |
 /// | `sim` | Calculate text similarity/distance |
 ///
 /// ## Quick Start
@@ -39,6 +40,9 @@
 ///
 /// # Generate documentation
 /// indexion doc gen src/
+///
+/// # Output dependency graph as Mermaid
+/// indexion doc graph --type=deps src/
 /// ```
 ///
 /// ## Configuration

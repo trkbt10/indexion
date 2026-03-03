@@ -163,6 +163,17 @@ pub fn build_markdown(
 }
 
 ///|
+/// Build and return the merged CodeGraph without rendering.
+/// Useful for downstream consumers like Mermaid diagram generation.
+pub fn build_graph(
+  files : Array[(String, String)],
+  specs : Map[String, @kgf_types.KGFSpec],
+) -> @graph.CodeGraph {
+  let graphs = analyze_files(files, specs)
+  merge_graphs(graphs)
+}
+
+///|
 /// Build and return JSON string.
 pub fn build_json(
   files : Array[(String, String)],

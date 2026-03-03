@@ -139,6 +139,88 @@ test "render_markdown: generates complete output" {
   assert_true(output.dependency_diagram is Some(_))
 }
 
+///|
+test "MermaidOptions::default: includes all graph types" {
+  let opts = MermaidOptions::default()
+  assert_true(opts.include_deps)
+  assert_true(opts.include_calls)
+  assert_true(opts.include_hierarchy)
+  assert_true(opts.include_overview)
+  assert_eq(opts.max_symbols_per_module, 5)
+}
+
+///|
+test "MermaidOptions::for_type: deps only" {
+  let opts = MermaidOptions::for_type("deps")
+  assert_true(opts.include_deps)
+  assert_false(opts.include_calls)
+  assert_false(opts.include_hierarchy)
+  assert_false(opts.include_overview)
+}
+
+///|
+test "MermaidOptions::for_type: all includes everything" {
+  let opts = MermaidOptions::for_type("all")
+  assert_true(opts.include_deps)
+  assert_true(opts.include_calls)
+  assert_true(opts.include_hierarchy)
+  assert_true(opts.include_overview)
+}
+
+///|
+test "render_mermaid: generates dep diagram" {
+  let graph = @graph.CodeGraph::new()
+  graph.add_edge(edge_kind("module_depends_on"), "main.ts", "utils.ts")
+  let opts = MermaidOptions::for_type("deps")
+  let result = render_mermaid(graph, opts)
+  assert_true(result.contains("```mermaid"))
+  assert_true(result.contains("graph LR"))
+  assert_true(result.contains("-->"))
+}
+
+///|
+test "render_mermaid: generates call diagram" {
+  let graph = @graph.CodeGraph::new()
+  let attrs : Map[String, String] = {}
+  attrs.set("file", "main.ts")
+  graph.add_edge(edge_kind("calls"), "main::init", "utils::setup", attrs~)
+  let opts = MermaidOptions::for_type("calls")
+  let result = render_mermaid(graph, opts)
+  assert_true(result.contains("```mermaid"))
+  assert_true(result.contains("graph TD"))
+}
+
+///|
+test "render_mermaid: generates hierarchy diagram" {
+  let graph = @graph.CodeGraph::new()
+  graph.add_edge(edge_kind("extends"), "Dog", "Animal")
+  let opts = MermaidOptions::for_type("hierarchy")
+  let result = render_mermaid(graph, opts)
+  assert_true(result.contains("```mermaid"))
+  assert_true(result.contains("classDiagram"))
+  assert_true(result.contains("<|--"))
+}
+
+///|
+test "render_mermaid: empty graph returns empty string" {
+  let graph = @graph.CodeGraph::new()
+  let opts = MermaidOptions::default()
+  let result = render_mermaid(graph, opts)
+  assert_eq(result, "")
+}
+
+///|
+test "render_mermaid: all type combines diagrams" {
+  let graph = @graph.CodeGraph::new()
+  graph.add_edge(edge_kind("module_depends_on"), "main.ts", "utils.ts")
+  graph.add_edge(edge_kind("extends"), "Dog", "Animal")
+  let opts = MermaidOptions::for_type("all")
+  let result = render_mermaid(graph, opts)
+  // Should contain both dep diagram and hierarchy diagram
+  assert_true(result.contains("graph LR"))
+  assert_true(result.contains("classDiagram"))
+}
+
 // Helper function
 
 ///|
