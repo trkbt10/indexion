@@ -107,3 +107,48 @@ test "sanitize_class_name: keeps alphanumeric and underscore" {
   assert_eq(sanitize_class_name("MyClass_123"), "MyClass_123")
   assert_eq(sanitize_class_name("pkg::Type"), "pkgType")
 }
+
+///|
+test "generate_folded_diagram: creates valid mermaid" {
+  let nodes : Map[String, @fold.FoldedNode] = {}
+  nodes.set("main.ts", @fold.FoldedNode::Single("main.ts", 0.9))
+  nodes.set("utils.ts", @fold.FoldedNode::Single("utils.ts", 0.8))
+  nodes.set(
+    "cluster_other",
+    @fold.FoldedNode::Cluster("helpers", 5, ["a", "b", "c", "d", "e"]),
+  )
+  let edges = [
+    @fold.FoldedEdge::new("main.ts", "utils.ts", 1),
+    @fold.FoldedEdge::new("main.ts", "cluster_other", 3),
+  ]
+  let folded = @fold.FoldedGraph::new(nodes, edges, 1)
+  let diagram = generate_folded_diagram(folded)
+  assert_true(diagram.contains("```mermaid"))
+  assert_true(diagram.contains("graph LR"))
+  assert_true(diagram.contains("main.ts"))
+  assert_true(diagram.contains("utils.ts"))
+  assert_true(diagram.contains("5 nodes"))
+  assert_true(diagram.contains("-->"))
+  assert_true(diagram.contains("stroke-dasharray"))
+}
+
+///|
+test "generate_folded_diagram: empty graph returns empty" {
+  let nodes : Map[String, @fold.FoldedNode] = {}
+  let edges : Array[@fold.FoldedEdge] = []
+  let folded = @fold.FoldedGraph::new(nodes, edges, 0)
+  let diagram = generate_folded_diagram(folded)
+  assert_eq(diagram, "")
+}
+
+///|
+test "generate_folded_diagram: weighted edges show count" {
+  let nodes : Map[String, @fold.FoldedNode] = {}
+  nodes.set("a", @fold.FoldedNode::Single("a", 1.0))
+  nodes.set("b", @fold.FoldedNode::Single("b", 0.5))
+  let edges = [@fold.FoldedEdge::new("a", "b", 3)]
+  let folded = @fold.FoldedGraph::new(nodes, edges, 0)
+  let diagram = generate_folded_diagram(folded)
+  // Weight > 1 should show label
+  assert_true(diagram.contains("3"))
+}

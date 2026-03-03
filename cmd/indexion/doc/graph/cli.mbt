@@ -25,6 +25,8 @@
 /// | `--focus=SYMBOL` | Focus on a specific symbol (for call graphs) | (none) |
 /// | `--title=TITLE` | Custom diagram title | (auto) |
 /// | `--no-fence` | Omit markdown code fence (raw mermaid) | false |
+/// | `--simplify` | Fold low-importance nodes using TF-IDF scoring | false |
+/// | `--max-nodes=N` | Target max nodes when simplifying | 15 |
 ///
 /// ## Examples
 ///
@@ -37,6 +39,9 @@
 ///
 /// # Call graph focused on a function
 /// indexion doc graph --type=calls --focus=main src/
+///
+/// # Simplified graph (fold low-importance nodes)
+/// indexion doc graph --simplify --max-nodes=10 src/
 ///
 /// # Save to file
 /// indexion doc graph --output=deps.md src/
@@ -51,6 +56,8 @@ struct GraphConfig {
   focus : String?
   title : String?
   no_fence : Bool
+  simplify : Bool
+  max_nodes : Int
   input_paths : Array[String]
   show_help : Bool
 }
@@ -64,6 +71,8 @@ fn GraphConfig::default() -> GraphConfig {
     focus: None,
     title: None,
     no_fence: false,
+    simplify: false,
+    max_nodes: 15,
     input_paths: [],
     show_help: false,
   }
@@ -92,6 +101,14 @@ fn parse_graph_args(args : Array[String], start_idx : Int) -> GraphConfig {
       config = { ..config, show_help: true }
     } else if arg == "--no-fence" {
       config = { ..config, no_fence: true }
+    } else if arg == "--simplify" {
+      config = { ..config, simplify: true }
+    } else if arg.has_prefix("--max-nodes=") {
+      let value = get_arg_value(arg, 12)
+      let n = parse_int(value)
+      if n > 0 {
+        config = { ..config, max_nodes: n }
+      }
     } else if arg.has_prefix("--type=") {
       let value = get_arg_value(arg, 7)
       config = { ..config, graph_type: value }
@@ -132,6 +149,12 @@ pub fn show_help() -> Unit {
   println("  --focus=SYMBOL               Focus on a specific symbol (call graphs)")
   println("  --title=TITLE                Custom diagram title")
   println("  --no-fence                   Omit markdown code fence (raw mermaid)")
+  println(
+    "  --simplify                   Fold low-importance nodes (TF-IDF + centrality)",
+  )
+  println(
+    "  --max-nodes=N                Target max nodes when simplifying (default: 15)",
+  )
   println("  --help                       Show this help message")
   println("")
   println("Graph Types:")
@@ -145,6 +168,7 @@ pub fn show_help() -> Unit {
   println("  indexion doc graph src/")
   println("  indexion doc graph --type=deps src/")
   println("  indexion doc graph --type=calls --focus=main src/")
+  println("  indexion doc graph --simplify --max-nodes=10 src/")
   println("  indexion doc graph --output=deps.md src/")
 }
 
@@ -377,6 +401,75 @@ fn join_sections(sections : Array[String]) -> String {
 }
 
 ///|
+/// Generate a simplified mermaid diagram by folding low-importance nodes.
+fn generate_simplified_mermaid(
+  graph : @graph.CodeGraph,
+  graph_type : String,
+  max_nodes : Int,
+  title : String?,
+  no_fence : Bool,
+) -> String {
+  let fold_config = @fold.FoldConfig::with_max_nodes(max_nodes)
+  let sections : Array[String] = []
+  if graph_type == "deps" || graph_type == "all" {
+    let folded = @fold.fold_graph(graph, fold_config)
+    let dep_title = match title {
+      Some(t) =>
+        if graph_type == "deps" { t } else { "Module Dependencies (simplified)" }
+      None => "Module Dependencies (simplified)"
+    }
+    let diagram = @diagram.generate_folded_diagram(folded, title=dep_title)
+    if diagram.length() > 0 {
+      sections.push(if no_fence { strip_fence(diagram) } else { diagram })
+    }
+  }
+  if graph_type == "calls" || graph_type == "all" {
+    let folded = @fold.fold_graph_symbols(graph, fold_config)
+    let call_title = match title {
+      Some(t) =>
+        if graph_type == "calls" { t } else { "Call Graph (simplified)" }
+      None => "Call Graph (simplified)"
+    }
+    let diagram = @diagram.generate_folded_diagram(folded, title=call_title)
+    if diagram.length() > 0 {
+      sections.push(if no_fence { strip_fence(diagram) } else { diagram })
+    }
+  }
+  // Hierarchy and overview: use standard diagrams (folding doesn't apply well)
+  if graph_type == "hierarchy" || graph_type == "all" {
+    let hierarchy = @query.extract_type_hierarchy(graph)
+    let hier_title = match title {
+      Some(t) =>
+        if graph_type == "hierarchy" { t } else { "Type Hierarchy" }
+      None => "Type Hierarchy"
+    }
+    let diagram = @diagram.generate_hierarchy_diagram(
+      hierarchy,
+      title=hier_title,
+    )
+    if diagram.length() > 0 {
+      sections.push(if no_fence { strip_fence(diagram) } else { diagram })
+    }
+  }
+  join_sections(sections)
+}
+
+///|
+fn parse_int(s : String) -> Int {
+  let chars = s.to_array()
+  let mut result = 0
+  for c in chars {
+    let code = c.to_int()
+    if code >= 0x30 && code <= 0x39 {
+      result = result * 10 + (code - 0x30)
+    } else {
+      break
+    }
+  }
+  result
+}
+
+///|
 /// Write string to file.
 fn write_output(path : String, content : String) -> Bool {
   try {
@@ -434,13 +527,23 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   // Build graph via KGF pipeline
   let graph = build_graph(files, specs)
   // Generate mermaid output
-  let mermaid = generate_mermaid(
-    graph,
-    config.graph_type,
-    config.focus,
-    config.title,
-    config.no_fence,
-  )
+  let mermaid = if config.simplify {
+    generate_simplified_mermaid(
+      graph,
+      config.graph_type,
+      config.max_nodes,
+      config.title,
+      config.no_fence,
+    )
+  } else {
+    generate_mermaid(
+      graph,
+      config.graph_type,
+      config.focus,
+      config.title,
+      config.no_fence,
+    )
+  }
   if mermaid.length() == 0 {
     println("No graph data found. The analyzed files may not contain dependency information.")
     return

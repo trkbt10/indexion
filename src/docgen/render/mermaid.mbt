@@ -84,6 +84,42 @@ pub fn render_mermaid(
 }
 
 ///|
+/// Render a CodeGraph as simplified Mermaid diagrams.
+/// Uses importance scoring and recursive folding to reduce complexity.
+pub fn render_mermaid_simplified(
+  graph : @graph.CodeGraph,
+  max_nodes? : Int = 15,
+) -> String {
+  let fold_config = @fold.FoldConfig::with_max_nodes(max_nodes)
+  let sections : Array[String] = []
+  // Simplified module dependency diagram
+  let folded_modules = @fold.fold_graph(graph, fold_config)
+  let dep_diagram = @diagram.generate_folded_diagram(
+    folded_modules,
+    title="Module Dependencies (simplified)",
+  )
+  if dep_diagram.length() > 0 {
+    sections.push(dep_diagram)
+  }
+  // Simplified call graph
+  let folded_symbols = @fold.fold_graph_symbols(graph, fold_config)
+  let call_diagram = @diagram.generate_folded_diagram(
+    folded_symbols,
+    title="Call Graph (simplified)",
+  )
+  if call_diagram.length() > 0 {
+    sections.push(call_diagram)
+  }
+  // Hierarchy is kept as-is (folding doesn't improve class diagrams)
+  let hierarchy = @query.extract_type_hierarchy(graph)
+  let hier_diagram = @diagram.generate_hierarchy_diagram(hierarchy)
+  if hier_diagram.length() > 0 {
+    sections.push(hier_diagram)
+  }
+  join_mermaid_sections(sections)
+}
+
+///|
 fn join_mermaid_sections(sections : Array[String]) -> String {
   if sections.length() == 0 {
     return ""

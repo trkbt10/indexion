@@ -199,6 +199,108 @@ pub fn generate_overview_diagram(
   join_lines(lines)
 }
 
+///|
+/// Generate a simplified dependency diagram from a FoldedGraph.
+/// Important nodes are shown individually; collapsed nodes appear as
+/// rounded boxes with member counts.
+pub fn generate_folded_diagram(
+  folded : @fold.FoldedGraph,
+  title? : String = "Dependency Graph (simplified)",
+) -> String {
+  let nodes = folded.get_nodes()
+  let edges = folded.get_edges()
+  if nodes.length() == 0 {
+    return ""
+  }
+  let lines : Array[String] = []
+  lines.push("```mermaid")
+  lines.push("---")
+  lines.push("title: " + title)
+  lines.push("---")
+  lines.push("graph LR")
+  // Assign short IDs and generate node definitions
+  let id_map : Map[String, String] = {}
+  let mut counter = 0
+  for entry in nodes {
+    let node_id = entry.0
+    let node = entry.1
+    let short_id = "N" + counter.to_string()
+    id_map.set(node_id, short_id)
+    counter = counter + 1
+    match node {
+      @fold.FoldedNode::Single(real_id, _score) => {
+        let label = shorten_module_name(real_id)
+        lines.push("  " + short_id + "[" + escape_mermaid(label) + "]")
+      }
+      @fold.FoldedNode::Cluster(label, count, _members) => {
+        let display = escape_mermaid(label) +
+          " (" +
+          count.to_string() +
+          " nodes)"
+        // Rounded box for clusters
+        lines.push("  " + short_id + "(" + display + ")")
+      }
+    }
+  }
+  // Generate edges with optional weight labels
+  for edge in edges {
+    match (id_map.get(edge.from), id_map.get(edge.to)) {
+      (Some(from_id), Some(to_id)) => {
+        if edge.weight > 1 {
+          lines.push(
+            "  " +
+            from_id +
+            " -- " +
+            edge.weight.to_string() +
+            " --> " +
+            to_id,
+          )
+        } else {
+          lines.push("  " + from_id + " --> " + to_id)
+        }
+      }
+      _ => ()
+    }
+  }
+  // Style clusters differently
+  let cluster_ids : Array[String] = []
+  for entry in nodes {
+    match entry.1 {
+      @fold.FoldedNode::Cluster(_, _, _) =>
+        match id_map.get(entry.0) {
+          Some(short_id) => cluster_ids.push(short_id)
+          None => ()
+        }
+      _ => ()
+    }
+  }
+  if cluster_ids.length() > 0 {
+    let ids = join_with_comma(cluster_ids)
+    lines.push(
+      "  style " + ids + " fill:#f0f0f0,stroke:#999,stroke-dasharray: 5 5",
+    )
+  }
+  lines.push("```")
+  join_lines(lines)
+}
+
+///|
+fn join_with_comma(parts : Array[String]) -> String {
+  if parts.length() == 0 {
+    return ""
+  }
+  let result : Array[Char] = []
+  for i, part in parts {
+    if i > 0 {
+      result.push(',')
+    }
+    for c in part {
+      result.push(c)
+    }
+  }
+  String::from_array(result)
+}
+
 // Helper functions
 
 ///|

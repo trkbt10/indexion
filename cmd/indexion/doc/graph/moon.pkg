@@ -3,6 +3,7 @@ import {
   "trkbt10/indexion/src/core/graph" @graph,
   "trkbt10/indexion/src/docgen/build" @build,
   "trkbt10/indexion/src/docgen/diagram" @diagram,
+  "trkbt10/indexion/src/docgen/fold" @fold,
   "trkbt10/indexion/src/docgen/query" @query,
   "trkbt10/indexion/src/kgf/parser" @parser,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
