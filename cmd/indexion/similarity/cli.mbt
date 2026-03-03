@@ -117,14 +117,18 @@ fn parse_double(s : String) -> Double {
     }
     i = i + 1
   }
-  if is_negative { -result } else { result }
+  if is_negative {
+    -result
+  } else {
+    result
+  }
 }
 
 ///|
 /// Parse command line arguments for similarity.
 pub fn parse_similarity_args(
   args : Array[String],
-  start_idx : Int
+  start_idx : Int,
 ) -> SimilarityConfig {
   let mut config = SimilarityConfig::default()
   let positional : Array[String] = []
@@ -173,7 +177,9 @@ pub fn show_similarity_help() -> Unit {
   println("  ncd      Normalized Compression Distance (semantic similarity)")
   println("  tfidf    TF-IDF cosine similarity (lexical similarity)")
   println("  hybrid   Weighted combination of NCD and TF-IDF (default)")
-  println("  apted    Tree edit distance for structured text (bracket notation)")
+  println(
+    "  apted    Tree edit distance for structured text (bracket notation)",
+  )
   println("")
   println("Options:")
   println("  --strategy=NAME        Strategy to use (default: hybrid)")
@@ -187,7 +193,9 @@ pub fn show_similarity_help() -> Unit {
   println("Examples:")
   println("  indexion similarity \"hello world\" \"hello there\"")
   println("  indexion similarity --strategy=ncd \"foo bar\" \"foo baz\"")
-  println("  indexion similarity --strategy=hybrid --ncd-weight=0.7 \"a\" \"b\"")
+  println(
+    "  indexion similarity --strategy=hybrid --ncd-weight=0.7 \"a\" \"b\"",
+  )
   println("")
   println("APTED Example (tree edit distance):")
   println("  For APTED, use bracket notation for trees:")
@@ -209,7 +217,7 @@ fn parse_tree(s : String) -> @apted.TreeNode? {
 /// Recursive tree parser.
 fn parse_tree_recursive(
   chars : Array[Char],
-  start : Int
+  start : Int,
 ) -> (@apted.TreeNode, Int) {
   let label_chars : Array[Char] = []
   let mut i = start

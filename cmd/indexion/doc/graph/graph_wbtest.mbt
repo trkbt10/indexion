@@ -241,11 +241,7 @@ test "generate_mermaid: calls type with data" {
 ///|
 test "generate_mermaid: hierarchy type with data" {
   let graph = @code_graph.CodeGraph::new()
-  graph.add_edge(
-    @code_graph.EdgeKind::from_string("extends"),
-    "Dog",
-    "Animal",
-  )
+  graph.add_edge(@code_graph.EdgeKind::from_string("extends"), "Dog", "Animal")
   let result = generate_mermaid(graph, "hierarchy", None, None, false)
   assert_true(result.contains("```mermaid"))
   assert_true(result.contains("classDiagram"))
@@ -282,11 +278,7 @@ test "generate_mermaid: all type combines diagrams" {
     "main.ts",
     "utils.ts",
   )
-  graph.add_edge(
-    @code_graph.EdgeKind::from_string("extends"),
-    "Dog",
-    "Animal",
-  )
+  graph.add_edge(@code_graph.EdgeKind::from_string("extends"), "Dog", "Animal")
   let result = generate_mermaid(graph, "all", None, None, false)
   assert_true(result.contains("graph LR"))
   assert_true(result.contains("classDiagram"))
@@ -373,18 +365,8 @@ test "generate_simplified_mermaid: overview fallback works" {
 ///|
 test "generate_simplified_mermaid: hierarchy fallback works" {
   let graph = @code_graph.CodeGraph::new()
-  graph.add_edge(
-    @code_graph.EdgeKind::from_string("extends"),
-    "Dog",
-    "Animal",
-  )
-  let result = generate_simplified_mermaid(
-    graph,
-    "hierarchy",
-    15,
-    None,
-    false,
-  )
+  graph.add_edge(@code_graph.EdgeKind::from_string("extends"), "Dog", "Animal")
+  let result = generate_simplified_mermaid(graph, "hierarchy", 15, None, false)
   assert_true(result.contains("```mermaid"))
   assert_true(result.contains("classDiagram"))
 }

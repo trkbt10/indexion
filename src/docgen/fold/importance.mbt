@@ -33,9 +33,11 @@ pub fn score_modules(
     let centrality_s = centrality_scores.get(id).unwrap_or(0.0)
     let tfidf_s = tfidf_scores.get(id).unwrap_or(0.0)
     let composite = if total_weight > 0.0 {
-      (config.ref_weight * ref_s +
+      (
+        config.ref_weight * ref_s +
         config.centrality_weight * centrality_s +
-        config.tfidf_weight * tfidf_s) /
+        config.tfidf_weight * tfidf_s
+      ) /
       total_weight
     } else {
       0.0
@@ -74,9 +76,11 @@ pub fn score_symbols(
     let centrality_s = centrality_scores.get(id).unwrap_or(0.0)
     let tfidf_s = tfidf_scores.get(id).unwrap_or(0.0)
     let composite = if total_weight > 0.0 {
-      (config.ref_weight * ref_s +
+      (
+        config.ref_weight * ref_s +
         config.centrality_weight * centrality_s +
-        config.tfidf_weight * tfidf_s) /
+        config.tfidf_weight * tfidf_s
+      ) /
       total_weight
     } else {
       0.0

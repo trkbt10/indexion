@@ -46,7 +46,10 @@ pub fn KGFRegistry::load_from_dir(dir : String) -> KGFRegistry {
 
 ///|
 /// Register a single spec into the registry.
-pub fn KGFRegistry::register_spec(self : KGFRegistry, spec : @types.KGFSpec) -> Unit {
+pub fn KGFRegistry::register_spec(
+  self : KGFRegistry,
+  spec : @types.KGFSpec,
+) -> Unit {
   let lang = spec.get_language()
   self.specs.set(lang, spec)
 
@@ -67,20 +70,29 @@ pub fn KGFRegistry::register_spec(self : KGFRegistry, spec : @types.KGFSpec) -> 
 
 ///|
 /// Get spec by language name.
-pub fn KGFRegistry::get_spec(self : KGFRegistry, lang : String) -> @types.KGFSpec? {
+pub fn KGFRegistry::get_spec(
+  self : KGFRegistry,
+  lang : String,
+) -> @types.KGFSpec? {
   self.specs.get(lang)
 }
 
 ///|
 /// Get language name from file extension (with or without dot).
-pub fn KGFRegistry::get_lang_from_ext(self : KGFRegistry, ext : String) -> String? {
+pub fn KGFRegistry::get_lang_from_ext(
+  self : KGFRegistry,
+  ext : String,
+) -> String? {
   let normalized = if ext.has_prefix(".") { ext } else { "." + ext }
   self.ext_to_lang.get(normalized)
 }
 
 ///|
 /// Get the doc spec name for a language (returns language-doc if exists, otherwise the language itself).
-pub fn KGFRegistry::get_doc_spec_name(self : KGFRegistry, lang : String) -> String {
+pub fn KGFRegistry::get_doc_spec_name(
+  self : KGFRegistry,
+  lang : String,
+) -> String {
   match self.lang_to_doc_spec.get(lang) {
     Some(doc_spec) => doc_spec
     None => lang
@@ -116,7 +128,10 @@ pub fn KGFRegistry::supports_ext(self : KGFRegistry, ext : String) -> Bool {
 
 ///|
 /// Detect language from file path using extension.
-pub fn KGFRegistry::detect_from_path(self : KGFRegistry, path : String) -> String? {
+pub fn KGFRegistry::detect_from_path(
+  self : KGFRegistry,
+  path : String,
+) -> String? {
   let ext = extract_extension(path)
   if ext.length() == 0 {
     return None

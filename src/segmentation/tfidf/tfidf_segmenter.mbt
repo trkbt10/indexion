@@ -7,7 +7,7 @@
 fn combine_sentences(
   sentences : Array[@sentence.Sentence],
   start : Int,
-  count : Int
+  count : Int,
 ) -> String {
   let buf = StringBuilder::new()
   let end = if start + count > sentences.length() {
@@ -26,7 +26,7 @@ fn combine_sentences(
 fn get_window_end(
   sentences : Array[@sentence.Sentence],
   start : Int,
-  count : Int
+  count : Int,
 ) -> Int {
   let end_index = if start + count > sentences.length() {
     sentences.length()
@@ -82,7 +82,7 @@ fn min_max_normalize(values : Array[Double]) -> Array[Double] {
 /// Calculate TF-IDF divergence between adjacent sentence windows.
 pub fn calculate_window_tfidf_divergence(
   sentences : Array[@sentence.Sentence],
-  window_size : Int
+  window_size : Int,
 ) -> @types.WindowDivergence {
   let divergence_values : Array[Double] = []
   let window_end_positions : Array[Int] = []
@@ -127,7 +127,7 @@ pub fn calculate_window_tfidf_divergence(
 /// Segment text using TF-IDF based semantic detection.
 pub fn segment_by_tfidf(
   text : String,
-  config : TfidfConfig
+  config : TfidfConfig,
 ) -> Array[@types.SegmentPoint] {
   // Handle empty or whitespace-only text
   if text.length() == 0 || @utils.is_whitespace_only(text) {
@@ -164,7 +164,10 @@ pub fn segment_by_tfidf(
   }
 
   // Calculate window divergence
-  let divergence = calculate_window_tfidf_divergence(sentences, config.window_size)
+  let divergence = calculate_window_tfidf_divergence(
+    sentences,
+    config.window_size,
+  )
 
   // Find local maxima above threshold
   let maxima_indices = @utils.find_local_maxima(
@@ -192,7 +195,9 @@ pub fn segment_by_tfidf(
   )
 
   // Convert to segment points
-  let points = @utils.boundaries_to_segment_points(final_boundaries, text_length)
+  let points = @utils.boundaries_to_segment_points(
+    final_boundaries, text_length,
+  )
 
   if points.length() > 0 {
     return points

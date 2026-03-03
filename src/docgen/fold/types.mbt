@@ -64,11 +64,7 @@ pub struct FoldedEdge {
 }
 
 ///|
-pub fn FoldedEdge::new(
-  from : String,
-  to : String,
-  weight : Int,
-) -> FoldedEdge {
+pub fn FoldedEdge::new(from : String, to : String, weight : Int) -> FoldedEdge {
   { from, to, weight }
 }
 
@@ -138,5 +134,5 @@ pub fn FoldConfig::default() -> FoldConfig {
 
 ///|
 pub fn FoldConfig::with_max_nodes(max_nodes : Int) -> FoldConfig {
-  { ..FoldConfig::default(), max_nodes }
+  { ..FoldConfig::default(), max_nodes, }
 }

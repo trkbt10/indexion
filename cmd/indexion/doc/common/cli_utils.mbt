@@ -61,10 +61,7 @@ pub fn collect_files(path : String, files : Array[(String, String)]) -> Unit {
       }
     }
   } catch {
-    e =>
-      println(
-        "Warning: Could not read " + clean_path + ": " + e.to_string(),
-      )
+    e => println("Warning: Could not read " + clean_path + ": " + e.to_string())
   }
 }
 
@@ -87,8 +84,8 @@ pub fn trim_trailing_slash(path : String) -> String {
 /// Check if file extension is supported for analysis.
 pub fn is_supported_file(path : String) -> Bool {
   let extensions = [
-    ".ts", ".tsx", ".js", ".jsx", ".mjs", ".mbt", ".py", ".go", ".rs", ".sql",
-    ".html", ".css", ".md",
+    ".ts", ".tsx", ".js", ".jsx", ".mjs", ".mbt", ".py", ".go", ".rs", ".sql", ".html",
+    ".css", ".md",
   ]
   for ext in extensions {
     if path.has_suffix(ext) {

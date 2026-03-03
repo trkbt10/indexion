@@ -113,9 +113,7 @@ pub fn show_help() -> Unit {
   println("Options:")
   println("  --format=markdown|json|both  Output format (default: both)")
   println("  --output=DIR                 Output directory (default: .docgen)")
-  println(
-    "  --specs=DIR                  KGF specs directory (default: kgfs)",
-  )
+  println("  --specs=DIR                  KGF specs directory (default: kgfs)")
   println("  --no-diagrams                Disable Mermaid diagrams")
   println("  --help                       Show this help message")
   println("")

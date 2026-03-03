@@ -245,20 +245,14 @@ pub fn generate_folded_diagram(
   // Generate edges with optional weight labels
   for edge in edges {
     match (id_map.get(edge.from), id_map.get(edge.to)) {
-      (Some(from_id), Some(to_id)) => {
+      (Some(from_id), Some(to_id)) =>
         if edge.weight > 1 {
           lines.push(
-            "  " +
-            from_id +
-            " -- " +
-            edge.weight.to_string() +
-            " --> " +
-            to_id,
+            "  " + from_id + " -- " + edge.weight.to_string() + " --> " + to_id,
           )
         } else {
           lines.push("  " + from_id + " --> " + to_id)
         }
-      }
       _ => ()
     }
   }

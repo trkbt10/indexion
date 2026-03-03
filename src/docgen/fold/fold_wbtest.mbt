@@ -178,11 +178,7 @@ test "fold_graph: preserves important hub node" {
   let mut hub_found = false
   for entry in nodes {
     match entry.1 {
-      FoldedNode::Single(id, _) => {
-        if id == "hub.ts" {
-          hub_found = true
-        }
-      }
+      FoldedNode::Single(id, _) => if id == "hub.ts" { hub_found = true }
       _ => ()
     }
   }
@@ -331,10 +327,7 @@ test "fold_graph_symbols: large symbol graph gets simplified" {
 test "compute_adaptive_threshold: low ratio raises threshold" {
   let nodes : Map[String, FoldedNode] = {}
   for i = 0; i < 20; i = i + 1 {
-    nodes.set(
-      i.to_string(),
-      FoldedNode::Single(i.to_string(), 0.5),
-    )
+    nodes.set(i.to_string(), FoldedNode::Single(i.to_string(), 0.5))
   }
   let edges : Array[FoldedEdge] = []
   let fg = FoldedGraph::new(nodes, edges, 0)
@@ -362,17 +355,11 @@ test "compute_adaptive_threshold: ratio >= 1 keeps base threshold" {
 test "remap_edges: redirects edges to clusters" {
   let new_nodes : Map[String, FoldedNode] = {}
   new_nodes.set("a", FoldedNode::Single("a", 1.0))
-  new_nodes.set(
-    "cluster_a",
-    FoldedNode::Cluster("a group", 2, ["b", "c"]),
-  )
+  new_nodes.set("cluster_a", FoldedNode::Cluster("a group", 2, ["b", "c"]))
   let clusters : Array[(String, FoldedNode)] = [
     ("cluster_a", FoldedNode::Cluster("a group", 2, ["b", "c"])),
   ]
-  let old_edges = [
-    FoldedEdge::new("a", "b", 1),
-    FoldedEdge::new("a", "c", 1),
-  ]
+  let old_edges = [FoldedEdge::new("a", "b", 1), FoldedEdge::new("a", "c", 1)]
   let (_, new_edges) = remap_edges(old_edges, new_nodes, clusters)
   // Both a->b and a->c should become a->cluster_a (merged)
   assert_eq(new_edges.length(), 1)
@@ -384,10 +371,7 @@ test "remap_edges: redirects edges to clusters" {
 ///|
 test "remap_edges: removes self-loops from folding" {
   let new_nodes : Map[String, FoldedNode] = {}
-  new_nodes.set(
-    "cluster_x",
-    FoldedNode::Cluster("x group", 2, ["a", "b"]),
-  )
+  new_nodes.set("cluster_x", FoldedNode::Cluster("x group", 2, ["a", "b"]))
   let clusters : Array[(String, FoldedNode)] = [
     ("cluster_x", FoldedNode::Cluster("x group", 2, ["a", "b"])),
   ]

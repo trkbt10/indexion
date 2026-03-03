@@ -517,7 +517,9 @@ test "handle_few_sentences small text" {
     @sentence.Sentence::new("Hello.", 0, 6),
     @sentence.Sentence::new(" World.", 6, 13),
   ]
-  let result = @utils.handle_few_sentences("Hello. World.", sentences, 50, 5, 100)
+  let result = @utils.handle_few_sentences(
+    "Hello. World.", sentences, 50, 5, 100,
+  )
   assert_eq(result.length(), 1)
   assert_eq(result[0].get_start(), 0)
   assert_eq(result[0].get_end(), 13)

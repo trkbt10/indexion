@@ -10,7 +10,7 @@ pub struct ExtractedDoc {
 pub fn ExtractedDoc::new(
   title : String?,
   content : String,
-  source_path : String
+  source_path : String,
 ) -> ExtractedDoc {
   { title, content, source_path }
 }

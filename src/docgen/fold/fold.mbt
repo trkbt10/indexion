@@ -6,10 +6,7 @@
 /// Uses importance scoring to decide which nodes to preserve and which
 /// to collapse into clusters. Applies folding recursively until the
 /// target node count is reached or max depth is exhausted.
-pub fn fold_graph(
-  graph : @graph.CodeGraph,
-  config : FoldConfig,
-) -> FoldedGraph {
+pub fn fold_graph(graph : @graph.CodeGraph, config : FoldConfig) -> FoldedGraph {
   // Score modules by importance
   let scores = score_modules(graph, config)
   // Extract module-level edges
@@ -191,12 +188,11 @@ fn build_clusters(
   for pair in to_fold {
     let node_id = pair.0
     match neighbors.get(node_id) {
-      Some(neighbor) => {
+      Some(neighbor) =>
         match groups.get(neighbor) {
           Some(arr) => arr.push(node_id)
           None => groups.set(neighbor, [node_id])
         }
-      }
       None => ungrouped.push(node_id)
     }
   }
@@ -209,7 +205,10 @@ fn build_clusters(
     let cluster_id = "cluster_" + neighbor_id
     let label = shorten_name(neighbor_id) + " group"
     result.push(
-      (cluster_id, FoldedNode::Cluster(label, all_members.length(), all_members)),
+      (
+        cluster_id,
+        FoldedNode::Cluster(label, all_members.length(), all_members),
+      ),
     )
   }
   // Ungrouped nodes form a single "other" cluster
@@ -240,11 +239,10 @@ fn collect_leaf_members_from_ids(
   for id in ids {
     match node_map.get(id) {
       Some(FoldedNode::Single(real_id, _)) => result.push(real_id)
-      Some(FoldedNode::Cluster(_, _, members)) => {
+      Some(FoldedNode::Cluster(_, _, members)) =>
         for m in members {
           result.push(m)
         }
-      }
       None => result.push(id)
     }
   }
@@ -264,11 +262,10 @@ fn remap_edges(
   for cluster in clusters {
     let cluster_id = cluster.0
     match cluster.1 {
-      Cluster(_, _, members) => {
+      Cluster(_, _, members) =>
         for m in members {
           old_to_new.set(m, cluster_id)
         }
-      }
       _ => ()
     }
   }
@@ -291,7 +288,11 @@ fn remap_edges(
     match edge_map.get(key) {
       Some(idx) => {
         let existing = result_edges[idx]
-        result_edges[idx] = FoldedEdge::new(from, to, existing.weight + edge.weight)
+        result_edges[idx] = FoldedEdge::new(
+          from,
+          to,
+          existing.weight + edge.weight,
+        )
       }
       None => {
         edge_map.set(key, result_edges.length())

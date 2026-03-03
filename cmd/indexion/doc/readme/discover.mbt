@@ -18,7 +18,7 @@ pub fn discover_packages(
   paths : Array[String],
   includes : Array[String],
   excludes : Array[String],
-  recursive : Bool
+  recursive : Bool,
 ) -> Array[PackageInfo] {
   let packages : Array[PackageInfo] = []
   for path in paths {
@@ -34,7 +34,7 @@ fn discover_packages_impl(
   includes : Array[String],
   excludes : Array[String],
   recursive : Bool,
-  packages : Array[PackageInfo]
+  packages : Array[PackageInfo],
 ) -> Unit {
   try {
     if not(@fs.is_dir(path)) {
@@ -57,7 +57,9 @@ fn discover_packages_impl(
         }
         let subpath = path + "/" + entry
         if @fs.is_dir(subpath) {
-          discover_packages_impl(subpath, includes, excludes, recursive, packages)
+          discover_packages_impl(
+            subpath, includes, excludes, recursive, packages,
+          )
         }
       }
     }
@@ -122,7 +124,7 @@ fn trim_trailing_slash(path : String) -> String {
 fn should_include_package(
   name : String,
   includes : Array[String],
-  excludes : Array[String]
+  excludes : Array[String],
 ) -> Bool {
   // Check excludes first
   for pattern in excludes {
@@ -157,7 +159,7 @@ fn matches_pattern_impl(
   text : Array[Char],
   ti : Int,
   pat : Array[Char],
-  pi : Int
+  pi : Int,
 ) -> Bool {
   // Both exhausted
   if ti >= text.length() && pi >= pat.length() {

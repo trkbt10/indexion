@@ -124,7 +124,10 @@ fn parse_double(s : String) -> Double {
 }
 
 ///|
-pub fn parse_explore_args(args : Array[String], start_idx : Int) -> ExploreConfig {
+pub fn parse_explore_args(
+  args : Array[String],
+  start_idx : Int,
+) -> ExploreConfig {
   let mut config = ExploreConfig::default()
   for i = start_idx; i < args.length(); i = i + 1 {
     let arg = args[i]
@@ -157,9 +160,15 @@ pub fn show_explore_help() -> Unit {
   println("  indexion explore [options] <directory>")
   println("")
   println("Options:")
-  println("  --format=FORMAT      Output format: matrix, list, cluster, json (default: matrix)")
-  println("  --strategy=NAME      Similarity strategy: hybrid, ncd, tfidf (default: tfidf)")
-  println("  --threshold=FLOAT    Similarity threshold for clustering (default: 0.5)")
+  println(
+    "  --format=FORMAT      Output format: matrix, list, cluster, json (default: matrix)",
+  )
+  println(
+    "  --strategy=NAME      Similarity strategy: hybrid, ncd, tfidf (default: tfidf)",
+  )
+  println(
+    "  --threshold=FLOAT    Similarity threshold for clustering (default: 0.5)",
+  )
   println("  --ext=EXT            File extension to include (can be repeated)")
   println("  --help               Show this help message")
   println("")
@@ -172,7 +181,10 @@ pub fn show_explore_help() -> Unit {
 
 ///|
 /// Collect files from directory (recursive).
-fn collect_files(dir : String, extensions : Array[String]) -> Array[(String, String)] {
+fn collect_files(
+  dir : String,
+  extensions : Array[String],
+) -> Array[(String, String)] {
   let files : Array[(String, String)] = []
   collect_files_recursive(dir, extensions, files, "")
   files
@@ -184,7 +196,7 @@ fn collect_files_recursive(
   dir : String,
   extensions : Array[String],
   files : Array[(String, String)],
-  prefix : String
+  prefix : String,
 ) -> Unit {
   let clean_dir = if dir.has_suffix("/") {
     let chars = dir.to_array()
@@ -237,7 +249,11 @@ fn collect_files_recursive(
 
 ///|
 /// Calculate similarity between two texts.
-fn calc_similarity(text1 : String, text2 : String, strategy : String) -> (Double, Double) {
+fn calc_similarity(
+  text1 : String,
+  text2 : String,
+  strategy : String,
+) -> (Double, Double) {
   match strategy {
     "ncd" => {
       let s = @sim.NCDStrategy::new()
@@ -263,7 +279,10 @@ fn format_percent(d : Double) -> String {
 
 ///|
 /// Output as matrix format.
-fn output_matrix(files : Array[(String, String)], pairs : Array[FilePair]) -> Unit {
+fn output_matrix(
+  files : Array[(String, String)],
+  pairs : Array[FilePair],
+) -> Unit {
   if files.length() == 0 {
     println("No files found.")
     return
@@ -326,13 +345,19 @@ fn output_list(pairs : Array[FilePair]) -> Unit {
   println("=== File Similarity (sorted) ===")
   println("")
   for pair in pairs {
-    println(format_percent(pair.similarity) + "  " + pair.file1 + " <-> " + pair.file2)
+    println(
+      format_percent(pair.similarity) + "  " + pair.file1 + " <-> " + pair.file2,
+    )
   }
 }
 
 ///|
 /// Output as cluster format.
-fn output_cluster(files : Array[(String, String)], pairs : Array[FilePair], threshold : Double) -> Unit {
+fn output_cluster(
+  files : Array[(String, String)],
+  pairs : Array[FilePair],
+  threshold : Double,
+) -> Unit {
   if files.length() == 0 {
     println("No files found.")
     return
@@ -391,7 +416,10 @@ fn output_cluster(files : Array[(String, String)], pairs : Array[FilePair], thre
 
 ///|
 /// Output as JSON format.
-fn output_json(files : Array[(String, String)], pairs : Array[FilePair]) -> Unit {
+fn output_json(
+  files : Array[(String, String)],
+  pairs : Array[FilePair],
+) -> Unit {
   println("{")
   println("  \"files\": [")
   for i, f in files {
@@ -402,7 +430,16 @@ fn output_json(files : Array[(String, String)], pairs : Array[FilePair]) -> Unit
   println("  \"pairs\": [")
   for i, pair in pairs {
     let comma = if i < pairs.length() - 1 { "," } else { "" }
-    println("    {\"file1\": \"" + pair.file1 + "\", \"file2\": \"" + pair.file2 + "\", \"similarity\": " + pair.similarity.to_string() + "}" + comma)
+    println(
+      "    {\"file1\": \"" +
+      pair.file1 +
+      "\", \"file2\": \"" +
+      pair.file2 +
+      "\", \"similarity\": " +
+      pair.similarity.to_string() +
+      "}" +
+      comma,
+    )
   }
   println("  ]")
   println("}")
@@ -454,7 +491,12 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   for i = 0; i < files.length(); i = i + 1 {
     for j = i + 1; j < files.length(); j = j + 1 {
       let (dist, sim) = calc_similarity(files[i].1, files[j].1, config.strategy)
-      pairs.push({ file1: files[i].0, file2: files[j].0, similarity: sim, distance: dist })
+      pairs.push({
+        file1: files[i].0,
+        file2: files[j].0,
+        similarity: sim,
+        distance: dist,
+      })
     }
   }
   // Output based on format

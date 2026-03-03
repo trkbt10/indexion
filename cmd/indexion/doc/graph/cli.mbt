@@ -130,12 +130,14 @@ pub fn show_help() -> Unit {
     "  --type=deps|calls|hierarchy|overview|all  Graph type (default: all)",
   )
   println("  --output=FILE                Output file (default: stdout)")
+  println("  --specs=DIR                  KGF specs directory (default: kgfs)")
   println(
-    "  --specs=DIR                  KGF specs directory (default: kgfs)",
+    "  --focus=SYMBOL               Focus on a specific symbol (call graphs)",
   )
-  println("  --focus=SYMBOL               Focus on a specific symbol (call graphs)")
   println("  --title=TITLE                Custom diagram title")
-  println("  --no-fence                   Omit markdown code fence (raw mermaid)")
+  println(
+    "  --no-fence                   Omit markdown code fence (raw mermaid)",
+  )
   println(
     "  --simplify                   Fold low-importance nodes (TF-IDF + centrality)",
   )
@@ -209,9 +211,7 @@ fn generate_mermaid(
     }
     let diagram = @diagram.generate_dep_diagram(deps, title=dep_title)
     if diagram.length() > 0 {
-      sections.push(
-        if no_fence { strip_fence(diagram) } else { diagram },
-      )
+      sections.push(if no_fence { strip_fence(diagram) } else { diagram })
     }
   }
   if graph_type == "calls" || graph_type == "all" {
@@ -223,19 +223,16 @@ fn generate_mermaid(
     let diagram = @diagram.generate_call_diagram(
       calls,
       title=call_title,
-      focus=focus,
+      focus~,
     )
     if diagram.length() > 0 {
-      sections.push(
-        if no_fence { strip_fence(diagram) } else { diagram },
-      )
+      sections.push(if no_fence { strip_fence(diagram) } else { diagram })
     }
   }
   if graph_type == "hierarchy" || graph_type == "all" {
     let hierarchy = @query.extract_type_hierarchy(graph)
     let hier_title = match title {
-      Some(t) =>
-        if graph_type == "hierarchy" { t } else { "Type Hierarchy" }
+      Some(t) => if graph_type == "hierarchy" { t } else { "Type Hierarchy" }
       None => "Type Hierarchy"
     }
     let diagram = @diagram.generate_hierarchy_diagram(
@@ -243,9 +240,7 @@ fn generate_mermaid(
       title=hier_title,
     )
     if diagram.length() > 0 {
-      sections.push(
-        if no_fence { strip_fence(diagram) } else { diagram },
-      )
+      sections.push(if no_fence { strip_fence(diagram) } else { diagram })
     }
   }
   if graph_type == "overview" || graph_type == "all" {
@@ -253,9 +248,7 @@ fn generate_mermaid(
     let decls = @query.extract_declarations(graph)
     let diagram = @diagram.generate_overview_diagram(deps, decls)
     if diagram.length() > 0 {
-      sections.push(
-        if no_fence { strip_fence(diagram) } else { diagram },
-      )
+      sections.push(if no_fence { strip_fence(diagram) } else { diagram })
     }
   }
   join_sections(sections)
@@ -294,7 +287,11 @@ fn generate_simplified_mermaid(
     let folded = @fold.fold_graph(graph, fold_config)
     let dep_title = match title {
       Some(t) =>
-        if graph_type == "deps" { t } else { "Module Dependencies (simplified)" }
+        if graph_type == "deps" {
+          t
+        } else {
+          "Module Dependencies (simplified)"
+        }
       None => "Module Dependencies (simplified)"
     }
     let diagram = @diagram.generate_folded_diagram(folded, title=dep_title)
@@ -306,7 +303,11 @@ fn generate_simplified_mermaid(
     let folded = @fold.fold_graph_symbols(graph, fold_config)
     let call_title = match title {
       Some(t) =>
-        if graph_type == "calls" { t } else { "Call Graph (simplified)" }
+        if graph_type == "calls" {
+          t
+        } else {
+          "Call Graph (simplified)"
+        }
       None => "Call Graph (simplified)"
     }
     let diagram = @diagram.generate_folded_diagram(folded, title=call_title)
@@ -326,8 +327,7 @@ fn generate_simplified_mermaid(
   if graph_type == "hierarchy" || graph_type == "all" {
     let hierarchy = @query.extract_type_hierarchy(graph)
     let hier_title = match title {
-      Some(t) =>
-        if graph_type == "hierarchy" { t } else { "Type Hierarchy" }
+      Some(t) => if graph_type == "hierarchy" { t } else { "Type Hierarchy" }
       None => "Type Hierarchy"
     }
     let diagram = @diagram.generate_hierarchy_diagram(
@@ -394,7 +394,9 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     }
   }
   if files.length() == 0 {
-    println("Error: No input files found. Specify files or directories to analyze.")
+    println(
+      "Error: No input files found. Specify files or directories to analyze.",
+    )
     return
   }
   // Build graph via KGF pipeline
@@ -418,7 +420,9 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     )
   }
   if mermaid.length() == 0 {
-    println("No graph data found. The analyzed files may not contain dependency information.")
+    println(
+      "No graph data found. The analyzed files may not contain dependency information.",
+    )
     return
   }
   // Output

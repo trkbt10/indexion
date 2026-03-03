@@ -25,7 +25,6 @@ pub fn default_config() -> SegmentConfig {
   )
 }
 
-
 ///|
 /// Segment text using TF-IDF divergence between sentence windows.
 /// Returns an array of @types.SegmentPoints representing text boundaries.
@@ -99,7 +98,9 @@ pub fn segment_by_divergence(
   )
 
   // Convert to segment points
-  let points = @utils.boundaries_to_segment_points(final_boundaries, text_length)
+  let points = @utils.boundaries_to_segment_points(
+    final_boundaries, text_length,
+  )
 
   if points.length() > 0 {
     return points
@@ -368,7 +369,9 @@ pub fn segment_adaptive(
   )
 
   // Convert to segment points
-  let points = @utils.boundaries_to_segment_points(final_boundaries, text_length)
+  let points = @utils.boundaries_to_segment_points(
+    final_boundaries, text_length,
+  )
 
   if points.length() > 0 {
     return points

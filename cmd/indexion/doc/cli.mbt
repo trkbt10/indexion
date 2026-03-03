@@ -21,7 +21,9 @@ pub fn show_help() -> Unit {
   println("  graph    Output dependency graphs in Mermaid format (KGF-based)")
   println("  readme   Generate README.md from source doc comments")
   println("")
-  println("Use 'indexion doc <command> --help' for more information about a command.")
+  println(
+    "Use 'indexion doc <command> --help' for more information about a command.",
+  )
 }
 
 ///|

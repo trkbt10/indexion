@@ -30,7 +30,7 @@ pub fn extract_extension(path : String) -> String {
 /// Returns language name from KGF spec if found.
 pub fn detect_from_registry(
   registry : @registry.KGFRegistry,
-  path : String
+  path : String,
 ) -> String? {
   registry.detect_from_path(path)
 }
@@ -201,7 +201,7 @@ pub fn detect_language(path : String, content : String) -> DetectedLang {
 pub fn detect_language_with_registry(
   registry : @registry.KGFRegistry,
   path : String,
-  content : String
+  content : String,
 ) -> String {
   // Try registry-based detection first
   match detect_from_registry(registry, path) {
@@ -218,7 +218,7 @@ pub fn detect_language_with_registry(
 /// Get doc spec name using KGF registry.
 pub fn get_doc_spec_with_registry(
   registry : @registry.KGFRegistry,
-  lang : String
+  lang : String,
 ) -> String {
   registry.get_doc_spec_name(lang)
 }
@@ -237,7 +237,7 @@ pub fn analyze_file(path : String, content : String) -> FileInfo {
 pub fn analyze_file_with_registry(
   registry : @registry.KGFRegistry,
   path : String,
-  content : String
+  content : String,
 ) -> FileInfo {
   let ext = extract_extension(path)
   let lang_str = detect_language_with_registry(registry, path, content)

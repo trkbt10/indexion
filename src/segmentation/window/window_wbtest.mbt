@@ -650,7 +650,9 @@ test "apply_size_constraints filters small candidates" {
   // Candidates at positions 2, 4 - both too small (< min_size=10)
   // Text length 20, max_size 50, so no force split needed
   let candidates = [2, 4]
-  let result = @utils.apply_size_constraints(20, candidates, sentences, 10, 50, 15)
+  let result = @utils.apply_size_constraints(
+    20, candidates, sentences, 10, 50, 15,
+  )
   // Should filter out candidates that create chunks < min_size
   assert_eq(result.length(), 0)
 }
@@ -664,7 +666,9 @@ test "apply_size_constraints keeps valid candidates" {
   ]
   // Candidate at 25 creates chunk of 25 chars (>= min_size=10, >= target=20)
   let candidates = [25]
-  let result = @utils.apply_size_constraints(50, candidates, sentences, 10, 100, 20)
+  let result = @utils.apply_size_constraints(
+    50, candidates, sentences, 10, 100, 20,
+  )
   assert_eq(result.length(), 1)
   assert_eq(result[0], 25)
 }
@@ -677,7 +681,9 @@ test "apply_size_constraints force splits oversized" {
   ]
   // No candidates, but text is larger than max_size
   let candidates : Array[Int] = []
-  let result = @utils.apply_size_constraints(100, candidates, sentences, 5, 30, 20)
+  let result = @utils.apply_size_constraints(
+    100, candidates, sentences, 5, 30, 20,
+  )
   // Should force split because 100 > max_size=30
   assert_true(result.length() >= 1)
 }
@@ -687,7 +693,9 @@ test "apply_size_constraints empty candidates small text" {
   let sentences = [@sentence.Sentence::new("Short.", 0, 6)]
   let candidates : Array[Int] = []
   // Text length 20 < max_size 100
-  let result = @utils.apply_size_constraints(20, candidates, sentences, 5, 100, 50)
+  let result = @utils.apply_size_constraints(
+    20, candidates, sentences, 5, 100, 50,
+  )
   assert_eq(result.length(), 0)
 }
 
@@ -701,7 +709,9 @@ test "handle_few_sentences short text single segment" {
     @sentence.Sentence::new("Hello.", 0, 6),
     @sentence.Sentence::new(" World.", 6, 13),
   ]
-  let result = @utils.handle_few_sentences("Hello. World.", sentences, 50, 5, 100)
+  let result = @utils.handle_few_sentences(
+    "Hello. World.", sentences, 50, 5, 100,
+  )
   // Text length 13 < max_size 100, so single segment
   assert_eq(result.length(), 1)
   assert_eq(result[0].get_start(), 0)
