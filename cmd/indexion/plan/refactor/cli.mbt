@@ -478,10 +478,250 @@ fn format_percent(d : Double) -> String {
 }
 
 ///|
-/// Generate markdown output.
+/// Split text into lines.
+fn split_lines(text : String) -> Array[String] {
+  let lines : Array[String] = []
+  let chars = text.to_array()
+  let current : Array[Char] = []
+  for c in chars {
+    if c == '\n' {
+      lines.push(String::from_array(current))
+      current.clear()
+    } else if c != '\r' {
+      current.push(c)
+    }
+  }
+  if current.length() > 0 {
+    lines.push(String::from_array(current))
+  }
+  lines
+}
+
+///|
+/// Trim leading/trailing whitespace.
+fn trim_line(line : String) -> String {
+  let chars = line.to_array()
+  let mut start = 0
+  let mut end = chars.length()
+  while start < end && (chars[start] == ' ' || chars[start] == '\t') {
+    start = start + 1
+  }
+  while end > start && (chars[end - 1] == ' ' || chars[end - 1] == '\t') {
+    end = end - 1
+  }
+  let result : Array[Char] = []
+  for i = start; i < end; i = i + 1 {
+    result.push(chars[i])
+  }
+  String::from_array(result)
+}
+
+///|
+/// Check if line is a function definition (MoonBit style).
+fn is_function_def(line : String) -> Bool {
+  let trimmed = trim_line(line)
+  trimmed.has_prefix("pub fn ") ||
+  trimmed.has_prefix("fn ") ||
+  trimmed.has_prefix("pub impl ") ||
+  trimmed.has_prefix("impl ")
+}
+
+///|
+/// Extract function name from definition line.
+fn extract_func_name(line : String) -> String {
+  let trimmed = trim_line(line)
+  let chars = trimmed.to_array()
+  // Find start of function name (after "fn " or after "pub fn ")
+  let mut start = 0
+  if trimmed.has_prefix("pub fn ") {
+    start = 7
+  } else if trimmed.has_prefix("fn ") {
+    start = 3
+  } else if trimmed.has_prefix("pub impl ") {
+    start = 9
+  } else if trimmed.has_prefix("impl ") {
+    start = 5
+  }
+  // Find end (space, ( or {)
+  let mut end = start
+  while end < chars.length() &&
+        chars[end] != ' ' &&
+        chars[end] != '(' &&
+        chars[end] != '{' {
+    end = end + 1
+  }
+  let result : Array[Char] = []
+  for i = start; i < end; i = i + 1 {
+    result.push(chars[i])
+  }
+  String::from_array(result)
+}
+
+///|
+/// Duplicate code block found between two files.
+struct DuplicateBlock {
+  start_line1 : Int
+  start_line2 : Int
+  line_count : Int
+  func_name : String? // function name if it's a function
+  preview : String // first few lines as preview
+}
+
+///|
+/// Find duplicate code blocks between two files.
+fn find_duplicate_blocks(
+  content1 : String,
+  content2 : String,
+  min_lines : Int,
+) -> Array[DuplicateBlock] {
+  let lines1 = split_lines(content1)
+  let lines2 = split_lines(content2)
+  let duplicates : Array[DuplicateBlock] = []
+  // Skip empty or very short files
+  if lines1.length() < min_lines || lines2.length() < min_lines {
+    return duplicates
+  }
+  // Build line hash map for file2
+  let line_map : Map[String, Array[Int]] = {}
+  for i, line in lines2 {
+    let trimmed = trim_line(line)
+    if trimmed.length() > 5 {
+      // Skip very short lines
+      match line_map.get(trimmed) {
+        Some(arr) => arr.push(i)
+        None => line_map.set(trimmed, [i])
+      }
+    }
+  }
+  // Find matching blocks
+  let mut i = 0
+  while i < lines1.length() {
+    let trimmed = trim_line(lines1[i])
+    if trimmed.length() > 5 {
+      match line_map.get(trimmed) {
+        Some(positions) =>
+          for j in positions {
+            // Count matching lines
+            let mut count = 0
+            while i + count < lines1.length() &&
+                  j + count < lines2.length() &&
+                  trim_line(lines1[i + count]) == trim_line(lines2[j + count]) {
+              count = count + 1
+            }
+            if count >= min_lines {
+              // Check if this block starts with a function def
+              let func_name = if is_function_def(lines1[i]) {
+                Some(extract_func_name(lines1[i]))
+              } else {
+                None
+              }
+              // Build preview (first 3 lines)
+              let preview_lines : Array[String] = []
+              let preview_count = if count < 3 { count } else { 3 }
+              for k = 0; k < preview_count; k = k + 1 {
+                preview_lines.push(lines1[i + k])
+              }
+              let preview = preview_lines
+                .iter()
+                .fold(init="", fn(acc, line) {
+                  if acc.length() == 0 {
+                    line
+                  } else {
+                    acc + "\n" + line
+                  }
+                })
+              duplicates.push({
+                start_line1: i + 1,
+                start_line2: j + 1,
+                line_count: count,
+                func_name,
+                preview,
+              })
+              // Skip past this block
+              i = i + count - 1
+              break
+            }
+          }
+        None => ()
+      }
+    }
+    i = i + 1
+  }
+  // Sort by line count (descending)
+  for a = 0; a < duplicates.length(); a = a + 1 {
+    for b = a + 1; b < duplicates.length(); b = b + 1 {
+      if duplicates[b].line_count > duplicates[a].line_count {
+        let tmp = duplicates[a]
+        duplicates[a] = duplicates[b]
+        duplicates[b] = tmp
+      }
+    }
+  }
+  duplicates
+}
+
+///|
+/// Suggest target module for shared code.
+fn suggest_shared_module(file1 : String, file2 : String) -> String {
+  // Find common path prefix
+  let parts1 = split_by_slash(file1)
+  let parts2 = split_by_slash(file2)
+  let common : Array[String] = []
+  let min_len = if parts1.length() < parts2.length() {
+    parts1.length()
+  } else {
+    parts2.length()
+  }
+  for i = 0; i < min_len - 1; i = i + 1 {
+    if parts1[i] == parts2[i] {
+      common.push(parts1[i])
+    } else {
+      break
+    }
+  }
+  if common.length() > 0 {
+    common
+    .iter()
+    .fold(init="", fn(acc, part) {
+      if acc.length() == 0 {
+        part
+      } else {
+        acc + "/" + part
+      }
+    }) +
+    "/utils/"
+  } else {
+    "shared/utils/"
+  }
+}
+
+///|
+fn split_by_slash(path : String) -> Array[String] {
+  let parts : Array[String] = []
+  let chars = path.to_array()
+  let current : Array[Char] = []
+  for c in chars {
+    if c == '/' || c == '\\' {
+      if current.length() > 0 {
+        parts.push(String::from_array(current))
+        current.clear()
+      }
+    } else {
+      current.push(c)
+    }
+  }
+  if current.length() > 0 {
+    parts.push(String::from_array(current))
+  }
+  parts
+}
+
+///|
+/// Generate markdown output with concrete refactoring suggestions.
 fn generate_markdown(
   clusters : Array[FileCluster],
   config : RefactorPlanConfig,
+  file_contents : Map[String, String],
 ) -> String {
   let buf = StringBuilder::new()
   buf.write_string("# Refactoring Plan\n\n")
@@ -525,7 +765,7 @@ fn generate_markdown(
     "** groups of similar files.\n\n",
   )
   buf.write_string("---\n\n")
-  buf.write_string("## Refactoring Checklist\n\n")
+  buf.write_string("## Refactoring Suggestions\n\n")
   for i, cluster in clusters {
     let group_num = i + 1
     let max_sim = if cluster.pairs.length() > 0 {
@@ -556,12 +796,127 @@ fn generate_markdown(
       )
     }
     buf.write_string("\n")
-    buf.write_string("**Action Items:**\n")
-    buf.write_string("- [ ] Review files for duplicated code\n")
-    buf.write_string("- [ ] Identify common patterns to extract\n")
-    buf.write_string("- [ ] Create shared utility module if needed\n")
-    buf.write_string("- [ ] Update references to use shared code\n")
-    buf.write_string("- [ ] Verify tests pass after refactoring\n")
+    // Analyze duplicate blocks for top pairs
+    let mut found_duplicates = false
+    for pair in cluster.pairs {
+      let content1 = file_contents.get(pair.file1)
+      let content2 = file_contents.get(pair.file2)
+      match (content1, content2) {
+        (Some(c1), Some(c2)) => {
+          let duplicates = find_duplicate_blocks(c1, c2, 5)
+          if duplicates.length() > 0 {
+            if not(found_duplicates) {
+              buf.write_string("**Duplicate Code Blocks:**\n\n")
+              found_duplicates = true
+            }
+            buf.write_string(
+              "Between `" + pair.file1 + "` and `" + pair.file2 + "`:\n\n",
+            )
+            // Show top 3 duplicates
+            let show_count = if duplicates.length() < 3 {
+              duplicates.length()
+            } else {
+              3
+            }
+            for j = 0; j < show_count; j = j + 1 {
+              let dup = duplicates[j]
+              let func_label = match dup.func_name {
+                Some(name) => " (function `" + name + "`)"
+                None => ""
+              }
+              buf.write_string(
+                "- **" +
+                dup.line_count.to_string() +
+                " lines**" +
+                func_label +
+                " at `" +
+                pair.file1 +
+                ":" +
+                dup.start_line1.to_string() +
+                "` / `" +
+                pair.file2 +
+                ":" +
+                dup.start_line2.to_string() +
+                "`\n",
+              )
+              buf.write_string("  ```moonbit\n")
+              let preview_lines = split_lines(dup.preview)
+              for line in preview_lines {
+                buf.write_string("  " + line + "\n")
+              }
+              if dup.line_count > 3 {
+                buf.write_string(
+                  "  // ... " +
+                  (dup.line_count - 3).to_string() +
+                  " more lines\n",
+                )
+              }
+              buf.write_string("  ```\n")
+            }
+            buf.write_string("\n")
+          }
+        }
+        _ => ()
+      }
+    }
+    // Generate concrete suggestions
+    buf.write_string("**Suggested Actions:**\n\n")
+    if found_duplicates && cluster.pairs.length() > 0 {
+      let top_pair = cluster.pairs[0]
+      let shared_module = suggest_shared_module(top_pair.file1, top_pair.file2)
+      buf.write_string(
+        "1. **Extract shared code** to `" + shared_module + "`\n",
+      )
+      // List specific functions to extract
+      let content1 = file_contents.get(top_pair.file1)
+      let content2 = file_contents.get(top_pair.file2)
+      match (content1, content2) {
+        (Some(c1), Some(c2)) => {
+          let duplicates = find_duplicate_blocks(c1, c2, 5)
+          let func_names : Array[String] = []
+          for dup in duplicates {
+            match dup.func_name {
+              Some(name) => {
+                let mut exists = false
+                for existing in func_names {
+                  if existing == name {
+                    exists = true
+                    break
+                  }
+                }
+                if not(exists) {
+                  func_names.push(name)
+                }
+              }
+              None => ()
+            }
+          }
+          if func_names.length() > 0 {
+            buf.write_string("   - Functions to extract: ")
+            for k, name in func_names {
+              if k > 0 {
+                buf.write_string(", ")
+              }
+              buf.write_string("`" + name + "`")
+            }
+            buf.write_string("\n")
+          }
+        }
+        _ => ()
+      }
+      buf.write_string(
+        "2. **Update imports** in affected files to use shared module\n",
+      )
+      buf.write_string("3. **Remove duplicate definitions** from:\n")
+      for file in cluster.files {
+        buf.write_string("   - `" + file + "`\n")
+      }
+      buf.write_string("4. **Run tests** to verify refactoring\n")
+    } else {
+      buf.write_string("- [ ] Review files for duplicated code patterns\n")
+      buf.write_string("- [ ] Consider extracting common logic\n")
+      buf.write_string("- [ ] Verify tests pass after changes\n")
+    }
     buf.write_string("\n")
     if i < clusters.length() - 1 {
       buf.write_string("---\n\n")
@@ -601,8 +956,13 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   }
   // Find clusters
   let clusters = find_clusters(files, pairs, config.threshold)
+  // Build file contents map for concrete suggestions
+  let file_contents : Map[String, String] = {}
+  for f in files {
+    file_contents.set(f.0, f.1)
+  }
   // Generate markdown
-  let markdown = generate_markdown(clusters, config)
+  let markdown = generate_markdown(clusters, config, file_contents)
   // Output
   if config.output.length() > 0 {
     try {
