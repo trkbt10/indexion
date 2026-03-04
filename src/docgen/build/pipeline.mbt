@@ -30,22 +30,45 @@ pub fn build_with_graph(
 }
 
 ///|
+/// Build registry from specs map.
+fn build_registry(
+  specs : Map[String, @kgf_types.KGFSpec],
+) -> @registry.KGFRegistry {
+  let registry = @registry.KGFRegistry::new()
+  for entry in specs {
+    registry.register_spec(entry.1)
+  }
+  registry
+}
+
+///|
 /// Analyze files with their corresponding KGF specs.
 fn analyze_files(
   files : Array[(String, String)],
   specs : Map[String, @kgf_types.KGFSpec],
 ) -> Array[@graph.CodeGraph] {
+  // Build registry for language/spec detection
+  let registry = build_registry(specs)
+  // Build a set of known file paths for resolution
+  let known_paths : Map[String, Bool] = {}
+  for entry in files {
+    known_paths.set(entry.0, true)
+  }
+  // Create a file_exists function that checks against known paths
+  let file_exists = fn(path : String) -> Bool { known_paths.contains(path) }
+  // Use empty root - paths are already relative to working directory
+  let root = ""
   let graphs : Array[@graph.CodeGraph] = []
   for entry in files {
     let path = entry.0
     let content = entry.1
-    // Detect language and get spec name
-    let file_info = @analyze.analyze_file(path, content)
+    // Detect language and get spec name using registry
+    let file_info = @analyze.analyze_file_with_registry(registry, path, content)
     let spec_name = file_info.get_spec_name()
     // Try to get the spec
     match specs.get(spec_name) {
       Some(spec) => {
-        let graph = analyze_with_spec(path, content, spec)
+        let graph = analyze_with_spec(path, content, spec, root, file_exists)
         graphs.push(graph)
       }
       None => {
@@ -60,11 +83,88 @@ fn analyze_files(
 }
 
 ///|
+/// Find common root directory from file paths.
+fn find_common_root(files : Array[(String, String)]) -> String {
+  if files.length() == 0 {
+    return ""
+  }
+  let first_path = files[0].0
+  let parts = split_path(first_path)
+  let mut common_len = parts.length() - 1 // Exclude filename
+  for entry in files {
+    let p = split_path(entry.0)
+    let limit = if p.length() - 1 < common_len {
+      p.length() - 1
+    } else {
+      common_len
+    }
+    let mut match_len = 0
+    for i = 0; i < limit; i = i + 1 {
+      if parts[i] == p[i] {
+        match_len = i + 1
+      } else {
+        break
+      }
+    }
+    common_len = match_len
+  }
+  if common_len == 0 {
+    return ""
+  }
+  let result : Array[String] = []
+  for i = 0; i < common_len; i = i + 1 {
+    result.push(parts[i])
+  }
+  join_path_parts(result)
+}
+
+///|
+/// Split path into parts.
+fn split_path(path : String) -> Array[String] {
+  let parts : Array[String] = []
+  let current : Array[Char] = []
+  for c in path {
+    if c == '/' {
+      if current.length() > 0 {
+        parts.push(String::from_array(current))
+        current.clear()
+      }
+    } else {
+      current.push(c)
+    }
+  }
+  if current.length() > 0 {
+    parts.push(String::from_array(current))
+  }
+  parts
+}
+
+///|
+/// Join path parts with '/'.
+fn join_path_parts(parts : Array[String]) -> String {
+  if parts.length() == 0 {
+    return ""
+  }
+  let result : Array[Char] = []
+  for i, part in parts {
+    if i > 0 {
+      result.push('/')
+    }
+    for c in part {
+      result.push(c)
+    }
+  }
+  String::from_array(result)
+}
+
+///|
 /// Analyze a single file with a KGF spec.
 fn analyze_with_spec(
   path : String,
   content : String,
   spec : @kgf_types.KGFSpec,
+  root : String,
+  file_exists : (String) -> Bool,
 ) -> @graph.CodeGraph {
   let graph = @graph.CodeGraph::new()
   // Create module node for the file
@@ -85,9 +185,9 @@ fn analyze_with_spec(
         spec,
         graph,
         path,
-        "",
+        root,
         spec.get_language(),
-        fn(_path) { false },
+        file_exists,
       )
       // Process all rule match events for semantic evaluation
       for event in eval_result.get_events() {
