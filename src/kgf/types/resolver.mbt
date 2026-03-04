@@ -224,6 +224,9 @@ pub struct ResolverSpec {
   cargo_auto_from_roots : Array[String]
   /// Resolution chain for conditional/manifest-based resolution
   resolve_chain : Array[ResolveStep]
+  /// Prefixes that are considered internal (not external dependencies)
+  /// Even if they have bare_prefix, paths starting with these are internal
+  internal_prefixes : Array[String]
 }
 
 ///|
@@ -241,6 +244,7 @@ pub fn ResolverSpec::new(
   rust_mod_mode? : Bool = false,
   cargo_auto_from_roots? : Array[String] = [],
   resolve_chain? : Array[ResolveStep] = [],
+  internal_prefixes? : Array[String] = [],
 ) -> ResolverSpec {
   {
     sources,
@@ -255,6 +259,7 @@ pub fn ResolverSpec::new(
     rust_mod_mode,
     cargo_auto_from_roots,
     resolve_chain,
+    internal_prefixes,
   }
 }
 
@@ -343,3 +348,174 @@ pub fn ResolverSpec::get_resolve_chain(
 pub fn ResolverSpec::has_resolve_chain(self : ResolverSpec) -> Bool {
   self.resolve_chain.length() > 0
 }
+
+///|
+/// Returns the internal prefixes.
+/// Paths starting with these prefixes are internal even with bare_prefix.
+pub fn ResolverSpec::get_internal_prefixes(
+  self : ResolverSpec,
+) -> Array[String] {
+  self.internal_prefixes
+}
+
+///|
+/// ResolutionStats tracks statistics for module resolution performance.
+pub struct ResolutionStats {
+  /// Number of cache hits
+  mut cache_hits : Int
+  /// Number of cache misses
+  mut cache_misses : Int
+  /// Number of file existence checks
+  mut file_checks : Int
+  /// Number of circular references detected
+  mut circular_detected : Int
+} derive(Eq, Show)
+
+///|
+/// Creates a new ResolutionStats with zero counts.
+pub fn ResolutionStats::new() -> ResolutionStats {
+  { cache_hits: 0, cache_misses: 0, file_checks: 0, circular_detected: 0 }
+}
+
+///|
+/// ResolutionCache caches module resolution results for performance.
+pub struct ResolutionCache {
+  /// Cache of resolved paths: cache_key -> resolved_path
+  resolved_paths : Map[String, String]
+  /// Cache of file existence checks: path -> exists
+  file_exists_cache : Map[String, Bool]
+  /// Stack of modules currently being resolved (for circular detection)
+  resolution_stack : Array[String]
+  /// Detected circular references: (from_file, module_path)
+  circular_refs : Array[(String, String)]
+  /// Statistics
+  stats : ResolutionStats
+}
+
+///|
+/// Creates a new empty ResolutionCache.
+pub fn ResolutionCache::new() -> ResolutionCache {
+  {
+    resolved_paths: {},
+    file_exists_cache: {},
+    resolution_stack: [],
+    circular_refs: [],
+    stats: ResolutionStats::new(),
+  }
+}
+
+///|
+/// Generates a cache key from from_file and module_path.
+pub fn ResolutionCache::make_key(
+  from_file : String,
+  module_path : String,
+) -> String {
+  from_file + "::" + module_path
+}
+
+///|
+/// Gets a cached resolution result.
+pub fn ResolutionCache::get(self : ResolutionCache, key : String) -> String? {
+  self.resolved_paths.get(key)
+}
+
+///|
+/// Sets a cached resolution result.
+pub fn ResolutionCache::set(
+  self : ResolutionCache,
+  key : String,
+  value : String,
+) -> Unit {
+  self.resolved_paths.set(key, value)
+}
+
+///|
+/// Checks if a module is currently being resolved (circular detection).
+pub fn ResolutionCache::is_resolving(
+  self : ResolutionCache,
+  key : String,
+) -> Bool {
+  self.resolution_stack.contains(key)
+}
+
+///|
+/// Pushes a module onto the resolution stack.
+pub fn ResolutionCache::push_resolving(
+  self : ResolutionCache,
+  key : String,
+) -> Unit {
+  self.resolution_stack.push(key)
+}
+
+///|
+/// Pops a module from the resolution stack.
+pub fn ResolutionCache::pop_resolving(self : ResolutionCache) -> Unit {
+  if self.resolution_stack.length() > 0 {
+    let _ = self.resolution_stack.pop()
+  }
+}
+
+///|
+/// Records a circular reference.
+pub fn ResolutionCache::record_circular(
+  self : ResolutionCache,
+  from_file : String,
+  module_path : String,
+) -> Unit {
+  self.circular_refs.push((from_file, module_path))
+  self.stats.circular_detected += 1
+}
+
+///|
+/// Returns detected circular references.
+pub fn ResolutionCache::get_circular_refs(
+  self : ResolutionCache,
+) -> Array[(String, String)] {
+  self.circular_refs
+}
+
+///|
+/// Records a cache hit.
+pub fn ResolutionCache::record_hit(self : ResolutionCache) -> Unit {
+  self.stats.cache_hits += 1
+}
+
+///|
+/// Records a cache miss.
+pub fn ResolutionCache::record_miss(self : ResolutionCache) -> Unit {
+  self.stats.cache_misses += 1
+}
+
+///|
+/// Records a file check.
+pub fn ResolutionCache::record_file_check(self : ResolutionCache) -> Unit {
+  self.stats.file_checks += 1
+}
+
+///|
+/// Gets the statistics.
+pub fn ResolutionCache::get_stats(self : ResolutionCache) -> ResolutionStats {
+  self.stats
+}
+
+///|
+/// Checks file existence with caching.
+pub fn ResolutionCache::check_file_exists(
+  self : ResolutionCache,
+  path : String,
+  file_exists_fn : (String) -> Bool,
+) -> Bool {
+  match self.file_exists_cache.get(path) {
+    Some(exists) => exists
+    None => {
+      self.record_file_check()
+      let exists = file_exists_fn(path)
+      self.file_exists_cache.set(path, exists)
+      exists
+    }
+  }
+}
+
+///|
+/// Sentinel prefix for circular dependency detection.
+pub let circular_sentinel_prefix : String = "circular:"
