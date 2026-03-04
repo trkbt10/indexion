@@ -68,12 +68,13 @@ struct EvalContext {
   peg : PEG
   tokens : Array[@types.Tok]
   memo : Map[MemoKey, EvalResult]
+  all_events : Array[(String, Map[String, Json])]
 }
 
 ///|
 /// Creates a new evaluation context.
 pub fn EvalContext::new(peg : PEG, tokens : Array[@types.Tok]) -> EvalContext {
-  { peg, tokens, memo: Map::new() }
+  { peg, tokens, memo: Map::new(), all_events: [] }
 }
 
 ///|
@@ -120,229 +121,313 @@ fn append_events(
   result
 }
 
+// Trampoline-based evaluation to avoid stack overflow
+
 ///|
-/// Evaluates a node at a given position.
-fn eval_node(
-  ctx : EvalContext,
-  node : Node,
-  pos : Int,
-  call_rule : (String, Int) -> EvalResult,
-) -> EvalResult {
-  let key = make_memo_key(node, pos)
-  // Check memo
-  match ctx.memo.get(key) {
-    Some(cached) => return cached
-    None => ()
-  }
-  let result = eval_node_impl(ctx, node, pos, call_rule)
-  ctx.memo.set(key, result)
-  result
+/// Frame types for the evaluation stack.
+enum EvalFrame {
+  // Evaluate a node and continue
+  EvalNode(Node, Int, MemoKey?)
+  // Continue sequence evaluation
+  SeqCont(
+    Array[Node],
+    Int,
+    Int,
+    Map[String, Json],
+    Array[(String, Map[String, Json])],
+    Int
+  )
+  // Continue choice evaluation
+  ChoiceCont(Array[Node], Int, Int, Int)
+  // Continue star evaluation
+  StarCont(
+    Node,
+    Int,
+    Map[String, Json],
+    Array[(String, Map[String, Json])],
+    Int
+  )
+  // Continue plus evaluation (after first match)
+  PlusCont(
+    Node,
+    Int,
+    Map[String, Json],
+    Array[(String, Map[String, Json])],
+    Int
+  )
+  // Optional continuation
+  OptionalCont(Int)
+  // Apply label
+  LabelCont(String, Int)
+  // Rule call continuation
+  RuleCont(String, Int)
+  // Store memo result
+  StoreMemo(MemoKey)
 }
 
 ///|
-/// Implementation of node evaluation.
-fn eval_node_impl(
+/// Evaluates nodes using an explicit stack (trampoline).
+fn eval_trampoline(
   ctx : EvalContext,
-  node : Node,
-  pos : Int,
-  call_rule : (String, Int) -> EvalResult,
+  start_node : Node,
+  start_pos : Int,
 ) -> EvalResult {
-  match node {
-    Empty => EvalResult::success(pos)
-    Sym(name) => eval_sym(ctx, name, pos, call_rule)
-    Seq(elems) => eval_seq(ctx, elems, pos, call_rule)
-    Choice(alts) => eval_choice(ctx, alts, pos, call_rule)
-    Star(child) => eval_star(ctx, child, pos, call_rule)
-    Plus(child) => eval_plus(ctx, child, pos, call_rule)
-    Optional(child) => eval_optional(ctx, child, pos, call_rule)
-    Label(name, child) => eval_label(ctx, name, child, pos, call_rule)
-  }
-}
+  let stack : Array[EvalFrame] = []
+  let results : Array[EvalResult] = []
 
-///|
-/// Evaluates a symbol (token or rule reference).
-fn eval_sym(
-  ctx : EvalContext,
-  name : String,
-  pos : Int,
-  call_rule : (String, Int) -> EvalResult,
-) -> EvalResult {
-  if ctx.peg.is_token(name) {
-    // Token match
-    if pos < ctx.tokens.length() && ctx.tokens[pos].kind == name {
-      let tok = ctx.tokens[pos]
-      let labels : Map[String, Json] = Map::new()
-      labels.set("_last", tok.get_value().to_json())
-      labels.set("_last_pos", tok.pos.to_double().to_json())
-      labels.set("_last_len", tok.text.length().to_double().to_json())
-      EvalResult::success(pos + 1, labels~)
-    } else {
-      EvalResult::failure(pos)
+  // Push initial evaluation
+  stack.push(EvalNode(start_node, start_pos, None))
+
+  while stack.length() > 0 {
+    let frame = stack.pop().unwrap()
+    match frame {
+      EvalNode(node, pos, memo_key) => {
+        // Check memo first
+        let key = match memo_key {
+          Some(k) => k
+          None => make_memo_key(node, pos)
+        }
+        match ctx.memo.get(key) {
+          Some(cached) => {
+            results.push(cached)
+            continue
+          }
+          None => ()
+        }
+
+        // Push memo storage frame
+        stack.push(StoreMemo(key))
+
+        // Evaluate based on node type
+        match node {
+          Empty => results.push(EvalResult::success(pos))
+          Sym(name) =>
+            if ctx.peg.is_token(name) {
+              // Token match
+              if pos < ctx.tokens.length() && ctx.tokens[pos].kind == name {
+                let tok = ctx.tokens[pos]
+                let labels : Map[String, Json] = Map::new()
+                labels.set("_last", tok.get_value().to_json())
+                labels.set("_last_pos", tok.pos.to_double().to_json())
+                labels.set("_last_len", tok.text.length().to_double().to_json())
+                results.push(EvalResult::success(pos + 1, labels~))
+              } else {
+                results.push(EvalResult::failure(pos))
+              }
+            } else {
+              // Rule reference
+              stack.push(RuleCont(name, pos))
+              match ctx.peg.get_rule(name) {
+                Some(rule_node) => stack.push(EvalNode(rule_node, pos, None))
+                None => results.push(EvalResult::failure(pos))
+              }
+            }
+          Seq(elems) =>
+            if elems.length() == 0 {
+              results.push(EvalResult::success(pos))
+            } else {
+              // Push continuation for sequence
+              stack.push(SeqCont(elems, 1, pos, Map::new(), [], pos))
+              // Evaluate first element
+              stack.push(EvalNode(elems[0], pos, None))
+            }
+          Choice(alts) =>
+            if alts.length() == 0 {
+              results.push(EvalResult::failure(pos))
+            } else {
+              // Push continuation for trying next alternatives
+              stack.push(ChoiceCont(alts, 1, pos, pos))
+              // Try first alternative
+              stack.push(EvalNode(alts[0], pos, None))
+            }
+          Star(child) => {
+            // Push continuation for star
+            stack.push(StarCont(child, pos, Map::new(), [], pos))
+            // Try first match
+            stack.push(EvalNode(child, pos, None))
+          }
+          Plus(child) => {
+            // Push continuation for plus (requires at least one match)
+            stack.push(PlusCont(child, pos, Map::new(), [], pos))
+            // Try first match
+            stack.push(EvalNode(child, pos, None))
+          }
+          Optional(child) => {
+            // Optional always succeeds - if child fails, return success at original pos
+            stack.push(OptionalCont(pos))
+            stack.push(EvalNode(child, pos, None))
+          }
+          Label(name, child) => {
+            stack.push(LabelCont(name, pos))
+            stack.push(EvalNode(child, pos, None))
+          }
+        }
+      }
+      SeqCont(elems, idx, orig_pos, labels, events, current_pos) => {
+        // Get result of previous element
+        let prev = results.pop().unwrap()
+        if not(prev.ok) {
+          results.push(EvalResult::failure(orig_pos))
+        } else {
+          let new_labels = merge_labels(labels, prev.labels)
+          let new_events = append_events(events, prev.events)
+          let new_pos = prev.pos
+          if idx >= elems.length() {
+            // All elements matched
+            results.push(
+              EvalResult::success(new_pos, labels=new_labels, events=new_events),
+            )
+          } else {
+            // Continue with next element
+            stack.push(
+              SeqCont(elems, idx + 1, orig_pos, new_labels, new_events, new_pos),
+            )
+            stack.push(EvalNode(elems[idx], new_pos, None))
+          }
+        }
+      }
+      ChoiceCont(alts, idx, orig_pos, _) => {
+        // Get result of previous alternative
+        let prev = results.pop().unwrap()
+        if prev.ok {
+          // Found a match
+          results.push(prev)
+        } else if idx >= alts.length() {
+          // No more alternatives
+          results.push(EvalResult::failure(orig_pos))
+        } else {
+          // Try next alternative
+          stack.push(ChoiceCont(alts, idx + 1, orig_pos, orig_pos))
+          stack.push(EvalNode(alts[idx], orig_pos, None))
+        }
+      }
+      OptionalCont(orig_pos) => {
+        // Optional always succeeds
+        let prev = results.pop().unwrap()
+        if prev.ok {
+          results.push(prev)
+        } else {
+          // Child failed, but optional succeeds at original position
+          results.push(EvalResult::success(orig_pos))
+        }
+      }
+      StarCont(child, start_pos, labels, events, current_pos) => {
+        // Get result of previous iteration
+        let prev = results.pop().unwrap()
+        if not(prev.ok) || prev.pos == current_pos {
+          // No match or no progress - done with star
+          results.push(EvalResult::success(current_pos, labels~, events~))
+        } else {
+          // Continue iterating
+          let new_labels = merge_labels(labels, prev.labels)
+          let new_events = append_events(events, prev.events)
+          stack.push(
+            StarCont(child, start_pos, new_labels, new_events, prev.pos),
+          )
+          stack.push(EvalNode(child, prev.pos, None))
+        }
+      }
+      PlusCont(child, start_pos, labels, events, current_pos) => {
+        // Get result of previous iteration
+        let prev = results.pop().unwrap()
+        if labels.length() == 0 && events.length() == 0 {
+          // This is the first iteration
+          if not(prev.ok) {
+            // Plus requires at least one match
+            results.push(EvalResult::failure(start_pos))
+          } else {
+            // First match succeeded, continue like star
+            stack.push(
+              StarCont(child, start_pos, prev.labels, prev.events, prev.pos),
+            )
+            stack.push(EvalNode(child, prev.pos, None))
+          }
+          // Subsequent iterations - same as star
+        } else if not(prev.ok) || prev.pos == current_pos {
+          results.push(EvalResult::success(current_pos, labels~, events~))
+        } else {
+          let new_labels = merge_labels(labels, prev.labels)
+          let new_events = append_events(events, prev.events)
+          stack.push(
+            StarCont(child, start_pos, new_labels, new_events, prev.pos),
+          )
+          stack.push(EvalNode(child, prev.pos, None))
+        }
+      }
+      LabelCont(name, orig_pos) => {
+        let prev = results.pop().unwrap()
+        if not(prev.ok) {
+          results.push(EvalResult::failure(orig_pos))
+        } else {
+          let labels = prev.labels
+          // Copy _last to the label name
+          match labels.get("_last") {
+            Some(v) => labels.set(name, v)
+            None => labels.set(name, Json::null())
+          }
+          // Copy _last_pos to name_pos
+          match labels.get("_last_pos") {
+            Some(v) => labels.set(name + "_pos", v)
+            None => ()
+          }
+          // Copy _last_len to name_len
+          match labels.get("_last_len") {
+            Some(v) => labels.set(name + "_len", v)
+            None => ()
+          }
+          results.push(
+            EvalResult::success(prev.pos, labels~, events=prev.events),
+          )
+        }
+      }
+      RuleCont(name, _orig_pos) => {
+        let prev = results.pop().unwrap()
+        if prev.ok {
+          // Emit event for this matched rule
+          let event_labels : Map[String, Json] = Map::new()
+          for key, value in prev.labels {
+            event_labels.set(key, value)
+          }
+          ctx.all_events.push((name, event_labels))
+          // Clean labels - only keep _last for parent scope
+          let clean_labels : Map[String, Json] = Map::new()
+          match prev.labels.get("_last") {
+            Some(v) => clean_labels.set("_last", v)
+            None => ()
+          }
+          match prev.labels.get("_last_pos") {
+            Some(v) => clean_labels.set("_last_pos", v)
+            None => ()
+          }
+          match prev.labels.get("_last_len") {
+            Some(v) => clean_labels.set("_last_len", v)
+            None => ()
+          }
+          results.push(
+            EvalResult::success(
+              prev.pos,
+              labels=clean_labels,
+              events=prev.events,
+            ),
+          )
+        } else {
+          results.push(prev)
+        }
+      }
+      StoreMemo(key) => {
+        // Get result and store in memo, then push back
+        let result = results.pop().unwrap()
+        ctx.memo.set(key, result)
+        results.push(result)
+      }
     }
+  }
+
+  if results.length() > 0 {
+    results.pop().unwrap()
   } else {
-    // Rule reference - don't propagate internal labels to parent scope
-    // Only keep _last so that Label nodes can capture the rule's value
-    let result = call_rule(name, pos)
-    if result.ok {
-      // Create clean labels with only _last (if present) for Label to capture
-      let clean_labels : Map[String, Json] = Map::new()
-      match result.labels.get("_last") {
-        Some(v) => clean_labels.set("_last", v)
-        None => ()
-      }
-      match result.labels.get("_last_pos") {
-        Some(v) => clean_labels.set("_last_pos", v)
-        None => ()
-      }
-      match result.labels.get("_last_len") {
-        Some(v) => clean_labels.set("_last_len", v)
-        None => ()
-      }
-      EvalResult::success(result.pos, labels=clean_labels, events=result.events)
-    } else {
-      result
-    }
+    EvalResult::failure(start_pos)
   }
-}
-
-///|
-/// Evaluates a sequence of nodes.
-fn eval_seq(
-  ctx : EvalContext,
-  elems : Array[Node],
-  pos : Int,
-  call_rule : (String, Int) -> EvalResult,
-) -> EvalResult {
-  let mut current_pos = pos
-  let mut labels : Map[String, Json] = Map::new()
-  let mut events : Array[(String, Map[String, Json])] = []
-  for elem in elems {
-    let r = eval_node(ctx, elem, current_pos, call_rule)
-    if not(r.ok) {
-      return EvalResult::failure(pos)
-    }
-    current_pos = r.pos
-    labels = merge_labels(labels, r.labels)
-    events = append_events(events, r.events)
-  }
-  EvalResult::success(current_pos, labels~, events~)
-}
-
-///|
-/// Evaluates a choice (first successful alternative).
-fn eval_choice(
-  ctx : EvalContext,
-  alts : Array[Node],
-  pos : Int,
-  call_rule : (String, Int) -> EvalResult,
-) -> EvalResult {
-  for alt in alts {
-    let r = eval_node(ctx, alt, pos, call_rule)
-    if r.ok {
-      return r
-    }
-  }
-  EvalResult::failure(pos)
-}
-
-///|
-/// Evaluates a star (zero or more repetitions).
-fn eval_star(
-  ctx : EvalContext,
-  child : Node,
-  pos : Int,
-  call_rule : (String, Int) -> EvalResult,
-) -> EvalResult {
-  let mut current_pos = pos
-  let mut labels : Map[String, Json] = Map::new()
-  let mut events : Array[(String, Map[String, Json])] = []
-  while true {
-    let r = eval_node(ctx, child, current_pos, call_rule)
-    if not(r.ok) {
-      break
-    }
-    current_pos = r.pos
-    labels = merge_labels(labels, r.labels)
-    events = append_events(events, r.events)
-  }
-  EvalResult::success(current_pos, labels~, events~)
-}
-
-///|
-/// Evaluates a plus (one or more repetitions).
-fn eval_plus(
-  ctx : EvalContext,
-  child : Node,
-  pos : Int,
-  call_rule : (String, Int) -> EvalResult,
-) -> EvalResult {
-  // First iteration must succeed
-  let first = eval_node(ctx, child, pos, call_rule)
-  if not(first.ok) {
-    return EvalResult::failure(pos)
-  }
-  let mut current_pos = first.pos
-  let mut labels = first.labels
-  let mut events = first.events
-  // Additional iterations (like star)
-  while true {
-    let r = eval_node(ctx, child, current_pos, call_rule)
-    if not(r.ok) {
-      break
-    }
-    current_pos = r.pos
-    labels = merge_labels(labels, r.labels)
-    events = append_events(events, r.events)
-  }
-  EvalResult::success(current_pos, labels~, events~)
-}
-
-///|
-/// Evaluates an optional (zero or one).
-fn eval_optional(
-  ctx : EvalContext,
-  child : Node,
-  pos : Int,
-  call_rule : (String, Int) -> EvalResult,
-) -> EvalResult {
-  let r = eval_node(ctx, child, pos, call_rule)
-  if r.ok {
-    r
-  } else {
-    EvalResult::success(pos)
-  }
-}
-
-///|
-/// Evaluates a labeled expression.
-fn eval_label(
-  ctx : EvalContext,
-  name : String,
-  child : Node,
-  pos : Int,
-  call_rule : (String, Int) -> EvalResult,
-) -> EvalResult {
-  let r = eval_node(ctx, child, pos, call_rule)
-  if not(r.ok) {
-    return EvalResult::failure(pos)
-  }
-  let labels = r.labels
-  // Copy _last to the label name
-  match labels.get("_last") {
-    Some(v) => labels.set(name, v)
-    None => labels.set(name, Json::null())
-  }
-  // Copy _last_pos to name_pos
-  match labels.get("_last_pos") {
-    Some(v) => labels.set(name + "_pos", v)
-    None => ()
-  }
-  // Copy _last_len to name_len
-  match labels.get("_last_len") {
-    Some(v) => labels.set(name + "_len", v)
-    None => ()
-  }
-  EvalResult::success(r.pos, labels~, events=r.events)
 }
 
 ///|
@@ -356,36 +441,15 @@ pub fn run_parse(
   tokens : Array[@types.Tok],
 ) -> EvalResult? {
   let ctx = EvalContext::new(peg, tokens)
-  // Collect all rule match events
-  let all_events : Array[(String, Map[String, Json])] = []
-  // Define call_rule function that emits events for matched rules
-  fn call_rule(name : String, pos : Int) -> EvalResult {
-    match peg.get_rule(name) {
-      Some(node) => {
-        let result = eval_node(ctx, node, pos, call_rule)
-        if result.ok {
-          // Emit event for this matched rule
-          let event_labels : Map[String, Json] = Map::new()
-          for key, value in result.labels {
-            event_labels.set(key, value)
-          }
-          all_events.push((name, event_labels))
-        }
-        result
-      }
-      None => EvalResult::failure(pos)
-    }
-  }
 
   // Get start rule AST
-  let start_node = peg.get_rule(start_rule)
-  match start_node {
+  match peg.get_rule(start_rule) {
     None => None
     Some(node) => {
-      let result = eval_node(ctx, node, 0, call_rule)
+      let result = eval_trampoline(ctx, node, 0)
       if result.ok {
         // Merge all rule match events into the result
-        let merged_events = append_events(result.events, all_events)
+        let merged_events = append_events(result.events, ctx.all_events)
         Some(
           EvalResult::success(
             result.pos,
