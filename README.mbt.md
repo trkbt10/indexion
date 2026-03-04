@@ -28,7 +28,7 @@ indexion plan refactor [options] <directory>
 ```
 
 
-[Full documentation](./cmd/indexion/plan/refactor/README.md)
+[Full documentation](cmd/indexion/plan/refactor/README.md)
 
 ### `indexion similarity`
 
@@ -44,7 +44,7 @@ indexion sim [options] <text1> <text2>
 ```
 
 
-[Full documentation](./cmd/indexion/similarity/README.md)
+[Full documentation](cmd/indexion/similarity/README.md)
 
 ### `indexion explore`
 
@@ -59,36 +59,26 @@ indexion explore [options] <directory>
 ```
 
 
-[Full documentation](./cmd/indexion/explore/README.md)
+[Full documentation](cmd/indexion/explore/README.md)
 
 ### `indexion doc`
 
 
 
-[Full documentation](./cmd/indexion/doc/README.md)
+[Full documentation](cmd/indexion/doc/README.md)
 
-### `indexion doc gen`
-
-
-Analyzes source code using KGF (Knowledge Graph Format) specifications,
-extracts structure and documentation comments, and generates Markdown
-or JSON output with optional Mermaid diagrams.
-
-## Usage
-
-```bash
-indexion doc gen [options] [files...]
-```
+### `indexion doc graph`
 
 
-[Full documentation](./cmd/indexion/doc/gen/README.md)
+
+[Full documentation](cmd/indexion/doc/graph/README.md)
 
 ### `indexion doc readme`
 
 
 Extracts `///` documentation comments from MoonBit source files and
 outputs them in various formats. Supports flexible package discovery
-with include/exclude patterns.
+with include/exclude patterns and template-based generation.
 
 ## Usage
 
@@ -97,7 +87,9 @@ indexion doc readme [options] [paths...]
 ```
 
 
-[Full documentation](./cmd/indexion/doc/readme/README.md)
+[Full documentation](cmd/indexion/doc/readme/README.md)
+
+
 
 ## Installation
 
@@ -128,6 +120,7 @@ moon build --target native
 
 - MoonBit toolchain (for building from source)
 - No runtime dependencies
+
 
 ## License
 
