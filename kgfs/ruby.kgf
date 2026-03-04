@@ -1,5 +1,6 @@
 kgf 0.6
 language: ruby
+sources: .rb
 
 === lex
 SKIP /[ \t]+/
@@ -192,7 +193,6 @@ on MethodDecl when $scope("value", "current_module") {
 }
 
 === resolver
-sources: .rb
 relative_prefixes: ./, ../
 module_path_style: slash
 resolve:

@@ -1,5 +1,6 @@
 kgf 0.6
 language: jpeg-b64hex
+sources: .b64, .txt
 
 === preprocess
 base64ToHex
@@ -140,7 +141,6 @@ on MarkerSos {
 }
 
 === resolver
-sources: .b64, .txt
 relative_prefixes:
 exts: .b64, .txt
 indexes:

@@ -119,85 +119,6 @@ pub fn show_help() -> Unit {
 }
 
 ///|
-/// Load KGF specs from directory and build registry.
-fn load_registry(specs_dir : String) -> @registry.KGFRegistry {
-  @registry.KGFRegistry::load_from_dir(specs_dir)
-}
-
-///|
-/// Load KGF specs from directory as Map (for DocConfig compatibility).
-fn load_specs(specs_dir : String) -> Map[String, @kgf_types.KGFSpec] {
-  let specs : Map[String, @kgf_types.KGFSpec] = {}
-  try {
-    if not(@fs.is_dir(specs_dir)) {
-      return specs
-    }
-    let entries = @fs.read_dir(specs_dir)
-    for entry in entries {
-      if entry.has_suffix(".kgf") {
-        let path = specs_dir + "/" + entry
-        let content = @fs.read_file_to_string(path)
-        match @parser.parse_kgf(content) {
-          Some(spec) => {
-            let lang = spec.get_language()
-            specs.set(lang, spec)
-          }
-          None => ()
-        }
-      }
-    }
-  } catch {
-    _ => ()
-  }
-  specs
-}
-
-///|
-/// Collect files from path using KGF registry for file detection.
-fn collect_files(
-  path : String,
-  files : Array[(String, String)],
-  registry : @registry.KGFRegistry,
-) -> Unit {
-  let clean_path = trim_trailing_slash(path)
-  try {
-    if @fs.is_dir(clean_path) {
-      let entries = @fs.read_dir(clean_path)
-      for entry in entries {
-        // Skip hidden directories
-        if entry.has_prefix(".") {
-          continue
-        }
-        let full_path = clean_path + "/" + entry
-        collect_files(full_path, files, registry)
-      }
-    } else if @fs.is_file(clean_path) {
-      if registry.is_file_supported(clean_path) {
-        let content = @fs.read_file_to_string(clean_path)
-        files.push((clean_path, content))
-      }
-    }
-  } catch {
-    _ => ()
-  }
-}
-
-///|
-/// Trim trailing slash.
-fn trim_trailing_slash(path : String) -> String {
-  if path.length() > 0 && path.has_suffix("/") {
-    let chars = path.to_array()
-    let result : Array[Char] = []
-    for i = 0; i < chars.length() - 1; i = i + 1 {
-      result.push(chars[i])
-    }
-    String::from_array(result)
-  } else {
-    path
-  }
-}
-
-///|
 /// Write output to file or stdout.
 fn write_output(output : String, content : String) -> Unit {
   if output == "-" {
@@ -254,6 +175,20 @@ fn generate_json_output(
 }
 
 ///|
+/// Progress callback for file analysis.
+fn print_progress(info : (Int, Int, String)) -> Unit {
+  let (current, total, path) = info
+  println(
+    "[" +
+    current.to_string() +
+    "/" +
+    total.to_string() +
+    "] Analyzing: " +
+    path,
+  )
+}
+
+///|
 /// Run the graph command.
 pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let config = parse_args(args, start_idx)
@@ -261,40 +196,70 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     show_help()
     return
   }
-  // Load registry and specs
-  let registry = load_registry(config.specs_dir)
-  let specs = load_specs(config.specs_dir)
-  // Collect files using registry-based detection
-  let files : Array[(String, String)] = []
-  if config.input_paths.length() > 0 {
-    for path in config.input_paths {
-      collect_files(path, files, registry)
+  if config.input_paths.length() == 0 {
+    println("No input files found.")
+    return
+  }
+  let mut has_existing_input = false
+  for path in config.input_paths {
+    let exists = (@fs.is_dir(path) || @fs.is_file(path)) catch { _ => false }
+    if exists {
+      has_existing_input = true
+      break
     }
   }
+  if not(has_existing_input) {
+    println("No input files found.")
+    return
+  }
+  // Stage 1: Collect candidate files from input directories.
+  println("Collecting files...")
+  let discover_opts = @pipeline.DiscoverOptions::default()
+  let candidate_paths = @pipeline.discover_files(config.input_paths, discover_opts)
+  if candidate_paths.length() == 0 {
+    println("No input files found.")
+    return
+  }
+  // Stage 2: Select relevant KGF specs from discovered files.
+  println("Loading language specs...")
+  let registry = @pipeline.load_registry_for_paths(
+    config.specs_dir,
+    candidate_paths,
+  )
+  let specs = registry.to_specs_map()
+  // Stage 3: Filter supported files and read contents.
+  let files = @pipeline.collect_supported_files(candidate_paths, registry)
   if files.length() == 0 {
     println("No input files found.")
     return
   }
-  // Build graph using KGF pipeline
+  println("Found " + files.length().to_string() + " files to analyze.")
+  // Stage 4: Build dependency graph using KGF parser pipeline.
   let doc_config = @build.DocConfig::new(
     files,
     specs,
     options=@render.RenderOptions::new(format=@render.OutputFormat::json()),
   )
-  let (_, graph) = @build.build_with_graph(doc_config)
+  let progress = @build.ProgressCallback::new(print_progress)
+  let (_, graph) = @build.build_with_graph_progress(doc_config, Some(progress))
+  println("Analysis complete.")
   // Extract dependencies and circular references
   let deps = @query.extract_module_deps(graph)
   let circulars = @query.extract_circular_deps(graph)
-  // Generate output based on format
+  // Stage 5: Render graph output.
   let output = if config.format == "json" {
     generate_json_output(deps, circulars)
   } else {
-    // Default to Mermaid with external dependency detection from KGF
-    let external_prefixes = registry.get_external_prefixes()
+    // Default to Mermaid - uses graph's module file field for internal/external detection
+    // and KGF bare_prefixes for stripping external package prefixes
+    let bare_prefixes = registry.get_external_prefixes()
+    let source_patterns = registry.get_extensions()
     @diagram.generate_dep_diagram_with_externals(
       deps,
       circulars,
-      external_prefixes,
+      graph,
+      bare_prefixes=bare_prefixes,
+      source_patterns=source_patterns,
       title=config.title,
     )
   }

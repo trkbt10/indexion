@@ -1,5 +1,6 @@
 kgf 0.6
 language: japanese-law
+sources: .txt
 
 === lex
 SKIP /(\s+)+/
@@ -17,7 +18,6 @@ on LawRef:      import module=law
 on ArticleRef:  import module=art
 
 === resolver
-sources: .txt
 relative_prefixes: law:, ./, ../, /
 exts: .txt
 indexes:

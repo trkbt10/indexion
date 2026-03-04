@@ -1,5 +1,6 @@
 kgf 0.6
 language: jpeg-hex
+sources: .hex
 
 === lex
 SKIP /\\s+/
@@ -175,7 +176,6 @@ on End {
 }
 
 === resolver
-sources: .hex
 relative_prefixes:
 exts: .hex
 indexes:

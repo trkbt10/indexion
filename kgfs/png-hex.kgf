@@ -1,5 +1,6 @@
 kgf 0.6
 language: png-hex
+sources: .hex
 
 === lex
 SKIP /\\s+/
@@ -219,7 +220,6 @@ on ChunkfdAT {
 }
 
 === resolver
-sources: .hex
 relative_prefixes:
 exts: .hex
 indexes:

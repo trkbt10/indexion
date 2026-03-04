@@ -1,5 +1,6 @@
 kgf 0.6
 language: sql-ddl
+sources: .sql
 
 === lex
 SKIP /[ \t\r\n]+/
@@ -140,7 +141,6 @@ on ColumnWithType {
 }
 
 === resolver
-sources: .sql
 relative_prefixes: ./
 exts: .sql
 indexes:

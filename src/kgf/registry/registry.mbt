@@ -186,6 +186,18 @@ pub fn KGFRegistry::spec_count(self : KGFRegistry) -> Int {
 }
 
 ///|
+/// Get a copy of all loaded specs as language -> spec map.
+pub fn KGFRegistry::to_specs_map(
+  self : KGFRegistry,
+) -> Map[String, @types.KGFSpec] {
+  let specs : Map[String, @types.KGFSpec] = {}
+  for entry in self.specs {
+    specs.set(entry.0, entry.1)
+  }
+  specs
+}
+
+///|
 /// Get all external prefixes (bare_prefix values) from registered specs.
 /// These prefixes indicate external dependencies (e.g., "pkg:", "npm:", "pip:").
 pub fn KGFRegistry::get_external_prefixes(self : KGFRegistry) -> Array[String] {

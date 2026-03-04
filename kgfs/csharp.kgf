@@ -1,5 +1,6 @@
 kgf 0.6
 language: csharp
+sources: .cs
 
 === lex
 SKIP /[ \t]+/
@@ -302,7 +303,6 @@ on EnumMember when $scope("value", "current_enum") {
 }
 
 === resolver
-sources: .cs
 relative_prefixes: ./, ../
 module_path_style: dot
 resolve:

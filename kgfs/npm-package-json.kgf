@@ -1,6 +1,7 @@
 
 kgf 0.6
 language: npm-package-json
+sources: package.json
 
 === lex
 SKIP        /\s+/
@@ -140,7 +141,6 @@ on ExportsField {
 }
 
 === resolver
-sources: package.json
 relative_prefixes:
 exts: .json
 indexes:

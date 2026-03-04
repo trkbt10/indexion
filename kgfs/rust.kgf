@@ -1,5 +1,6 @@
 kgf 0.6
 language: rust
+sources: .rs
 
 === lex
 SKIP /[ \t]+/
@@ -277,7 +278,6 @@ on TraitItem when $scope("value", "current_trait") {
 }
 
 === resolver
-sources: .rs
 relative_prefixes: ./, ../
 module_path_style: coloncol
 resolve:

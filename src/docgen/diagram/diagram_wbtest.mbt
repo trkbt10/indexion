@@ -96,7 +96,10 @@ test "shorten_module_name: keeps meaningful path segments" {
     "kgf/types",
   )
   // moon.pkg shows parent
-  assert_eq(shorten_module_name("src/kgf/types/moon.pkg"), "kgf/types")
+  assert_eq(
+    shorten_module_name("src/kgf/types/moon.pkg", source_patterns=["moon.pkg"]),
+    "kgf/types",
+  )
 }
 
 ///|

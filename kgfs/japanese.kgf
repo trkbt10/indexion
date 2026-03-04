@@ -1,5 +1,6 @@
 kgf 0.6
 language: japanese
+sources: .txt, .md, .text
 
 # mikan.js-style regex-based word segmentation for Japanese text
 # Reference: https://github.com/trkbt10/mikan.js
@@ -78,7 +79,6 @@ on Segment when $n {
 }
 
 === resolver
-sources: .txt, .md, .text
 relative_prefixes: ./, ../
 exts: .txt, .md, .text,
 indexes:

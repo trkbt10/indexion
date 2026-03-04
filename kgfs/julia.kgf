@@ -1,5 +1,6 @@
 kgf 0.6
 language: julia
+sources: .jl
 
 === lex
 SKIP /[ \t]+/
@@ -214,7 +215,6 @@ on FieldDecl when $scope("value", "current_struct") {
 }
 
 === resolver
-sources: .jl
 relative_prefixes: ./
 module_path_style: dot
 resolve:

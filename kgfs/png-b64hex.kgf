@@ -1,5 +1,6 @@
 kgf 0.6
 language: png-b64hex
+sources: .b64, .txt
 
 === preprocess
 base64ToHex
@@ -106,7 +107,6 @@ on IHDRSegment when $scope("value", "__png_container") {
 }
 
 === resolver
-sources: .b64, .txt
 relative_prefixes:
 exts: .b64, .txt
 indexes:

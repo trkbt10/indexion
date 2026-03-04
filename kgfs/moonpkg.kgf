@@ -1,5 +1,6 @@
 kgf 0.6
 language: moonpkg
+sources: moon.pkg
 
 # KGF spec for MoonBit package manifest files (moon.pkg)
 # These files define package dependencies in MoonBit projects.
@@ -51,7 +52,6 @@ on ImportItem {
 }
 
 === resolver
-sources: moon.pkg
 relative_prefixes: ./
 module_path_style: slash
 bare_prefix: pkg:

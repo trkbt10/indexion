@@ -1,5 +1,6 @@
 kgf 0.6
 language: b64-png
+sources: .b64, .txt
 
 === lex
 # Treat the input as base64-like text (whitespace tolerated).
@@ -149,7 +150,6 @@ on ChunkiTXt {
 }
 
 === resolver
-sources: .b64, .txt
 relative_prefixes:
 exts: .b64, .txt
 indexes:

@@ -1,5 +1,6 @@
 kgf 0.6
 language: sql
+sources: .sql
 
 === lex
 SKIP /[ \t]+/
@@ -60,7 +61,6 @@ Token -> LineComment | BlockComment | String | Number
       | QuotedIdent | Ident | Param | Punct | Operator
 
 === resolver
-sources: .sql
 relative_prefixes: ./
 exts: .sql
 indexes:

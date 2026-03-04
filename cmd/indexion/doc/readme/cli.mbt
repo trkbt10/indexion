@@ -184,20 +184,32 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     show_help()
     return
   }
-  // Load KGF registry
-  let registry = @registry.KGFRegistry::load_from_dir(config.specs_dir)
+  // Stage 1: Collect candidate files from input paths.
+  let discover_opts = @pipeline.DiscoverOptions::new(
+    recursive=config.recursive,
+    excludes=config.excludes,
+  )
+  let candidate_paths = @pipeline.discover_files(config.paths, discover_opts)
+  if candidate_paths.length() == 0 {
+    println("No packages found.")
+    return
+  }
+  // Stage 2: Select relevant KGF specs.
+  let registry = @pipeline.load_registry_for_paths(
+    config.specs_dir,
+    candidate_paths,
+  )
   if registry.spec_count() == 0 {
     println("Warning: No KGF specs found in " + config.specs_dir)
   }
-  // Load specs map for docgen
-  let specs = load_specs(config.specs_dir)
-  // Discover packages using KGF registry
-  let packages = discover_packages(
+  // Reuse loaded specs for docgen.
+  let specs = registry.to_specs_map()
+  // Stage 3: Build package groups from file list + selected specs.
+  let packages = discover_packages_from_files(
     registry,
-    config.paths,
+    candidate_paths,
     config.includes,
     config.excludes,
-    config.recursive,
   )
   if packages.length() == 0 {
     println("No packages found.")
@@ -249,32 +261,4 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
         write_output(content, config.output, config.output is None)
       }
   }
-}
-
-///|
-/// Load KGF specs into a map.
-fn load_specs(specs_dir : String) -> Map[String, @kgf_types.KGFSpec] {
-  let specs : Map[String, @kgf_types.KGFSpec] = {}
-  try {
-    if not(@fs.is_dir(specs_dir)) {
-      return specs
-    }
-    let entries = @fs.read_dir(specs_dir)
-    for entry in entries {
-      if entry.has_suffix(".kgf") {
-        let path = specs_dir + "/" + entry
-        let content = @fs.read_file_to_string(path)
-        match @parser.parse_kgf(content) {
-          Some(spec) => {
-            let lang = spec.get_language()
-            specs.set(lang, spec)
-          }
-          None => ()
-        }
-      }
-    }
-  } catch {
-    _ => ()
-  }
-  specs
 }

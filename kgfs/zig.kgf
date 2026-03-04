@@ -1,5 +1,6 @@
 kgf 0.6
 language: zig
+sources: .zig
 
 === lex
 SKIP /[ \t]+/
@@ -198,7 +199,6 @@ on EnumMember when $scope("value", "current_enum") {
 }
 
 === resolver
-sources: .zig
 relative_prefixes: ./
 module_path_style: slash
 resolve:

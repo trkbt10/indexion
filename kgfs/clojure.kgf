@@ -1,5 +1,6 @@
 kgf 0.6
 language: clojure
+sources: .clj, .cljs, .cljc, .edn
 
 === lex
 SKIP /[ \t,]+/
@@ -212,7 +213,6 @@ on ProtocolMethod when $scope("value", "current_protocol") {
 }
 
 === resolver
-sources: .clj, .cljs, .cljc, .edn
 relative_prefixes: ./
 module_path_style: dot
 resolve:

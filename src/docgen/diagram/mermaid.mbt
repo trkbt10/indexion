@@ -3,23 +3,54 @@
 ///|
 /// Generate a module dependency diagram in Mermaid format.
 /// Output: graph LR with module dependencies as arrows.
+/// Note: Without graph, all packages are treated as external.
 pub fn generate_dep_diagram(
   deps : Array[@query.ModuleDep],
   title? : String = "Module Dependencies",
 ) -> String {
-  generate_dep_diagram_with_circular(deps, [], title~)
+  // Without graph info, use empty arrays
+  let internal_ids : Array[String] = []
+  let bare_prefixes : Array[String] = []
+  let source_patterns : Array[String] = []
+  generate_dep_diagram_impl(
+    deps,
+    [],
+    internal_ids,
+    bare_prefixes,
+    source_patterns,
+    title,
+  )
 }
 
 ///|
 /// Generate a module dependency diagram with external dependency detection.
-/// external_prefixes: bare_prefix values from KGF specs (e.g., ["pkg:", "npm:"])
+/// Uses graph's module file field to determine internal vs external packages.
+/// bare_prefixes: from KGF specs (e.g., ["pkg:", "npm:"])
 pub fn generate_dep_diagram_with_externals(
   deps : Array[@query.ModuleDep],
   circulars : Array[@query.CircularDep],
-  external_prefixes : Array[String],
+  graph : @graph.CodeGraph,
+  bare_prefixes? : Array[String] = [],
+  source_patterns? : Array[String] = [],
   title? : String = "Module Dependencies",
 ) -> String {
-  generate_dep_diagram_impl(deps, circulars, external_prefixes, title)
+  // Collect internal module IDs (modules with file field set)
+  let internal_ids : Array[String] = []
+  for entry in graph.get_modules() {
+    let mod_info = entry.1
+    match mod_info.file {
+      Some(_) => internal_ids.push(mod_info.id)
+      None => ()
+    }
+  }
+  generate_dep_diagram_impl(
+    deps,
+    circulars,
+    internal_ids,
+    bare_prefixes,
+    source_patterns,
+    title,
+  )
 }
 
 ///|
@@ -28,9 +59,27 @@ pub fn generate_dep_diagram_with_externals(
 pub fn generate_dep_diagram_with_circular(
   deps : Array[@query.ModuleDep],
   circulars : Array[@query.CircularDep],
+  graph? : @graph.CodeGraph = @graph.CodeGraph::new(),
+  bare_prefixes? : Array[String] = [],
+  source_patterns? : Array[String] = [],
   title? : String = "Module Dependencies",
 ) -> String {
-  generate_dep_diagram_impl(deps, circulars, [], title)
+  let internal_ids : Array[String] = []
+  for entry in graph.get_modules() {
+    let mod_info = entry.1
+    match mod_info.file {
+      Some(_) => internal_ids.push(mod_info.id)
+      None => ()
+    }
+  }
+  generate_dep_diagram_impl(
+    deps,
+    circulars,
+    internal_ids,
+    bare_prefixes,
+    source_patterns,
+    title,
+  )
 }
 
 ///|
@@ -38,7 +87,9 @@ pub fn generate_dep_diagram_with_circular(
 fn generate_dep_diagram_impl(
   deps : Array[@query.ModuleDep],
   circulars : Array[@query.CircularDep],
-  external_prefixes : Array[String],
+  internal_ids : Array[String],
+  bare_prefixes : Array[String],
+  source_patterns : Array[String],
   title : String,
 ) -> String {
   if deps.length() == 0 && circulars.length() == 0 {
@@ -56,8 +107,18 @@ fn generate_dep_diagram_impl(
   let original_to_label : Map[String, String] = {}
   let mut id_counter = 0
   for dep in deps {
-    let from_label = normalize_module_label(dep.from, external_prefixes)
-    let to_label = normalize_module_label(dep.to, external_prefixes)
+    let from_label = normalize_module_label(
+      dep.from,
+      internal_ids,
+      bare_prefixes,
+      source_patterns,
+    )
+    let to_label = normalize_module_label(
+      dep.to,
+      internal_ids,
+      bare_prefixes,
+      source_patterns,
+    )
     original_to_label.set(dep.from, from_label)
     original_to_label.set(dep.to, to_label)
     if not(label_to_id.contains(from_label)) {
@@ -70,8 +131,18 @@ fn generate_dep_diagram_impl(
     }
   }
   for circ in circulars {
-    let from_label = normalize_module_label(circ.from, external_prefixes)
-    let to_label = normalize_module_label(circ.to, external_prefixes)
+    let from_label = normalize_module_label(
+      circ.from,
+      internal_ids,
+      bare_prefixes,
+      source_patterns,
+    )
+    let to_label = normalize_module_label(
+      circ.to,
+      internal_ids,
+      bare_prefixes,
+      source_patterns,
+    )
     original_to_label.set(circ.from, from_label)
     original_to_label.set(circ.to, to_label)
     if not(label_to_id.contains(from_label)) {
@@ -262,7 +333,7 @@ pub fn generate_overview_diagram(
     let mod_id = "M" + module_counter.to_string()
     module_ids.set(mod_name, mod_id)
     module_counter = module_counter + 1
-    let label = shorten_module_name(mod_name)
+    let label = mod_name
     lines.push("  subgraph " + mod_id + "[" + escape_mermaid(label) + "]")
     let mut sym_count = 0
     for sym in symbols {
@@ -292,121 +363,140 @@ pub fn generate_overview_diagram(
 
 ///|
 /// Normalize module label for display.
-/// External prefixes are stripped for cleaner display.
+/// Uses internal_ids (from graph's modules with file field) to determine internal vs external.
 fn normalize_module_label(
   name : String,
-  external_prefixes : Array[String],
+  internal_ids : Array[String],
+  bare_prefixes : Array[String],
+  source_patterns : Array[String],
 ) -> String {
-  // Check if path starts with any external prefix (from KGF specs)
-  for prefix in external_prefixes {
-    if name.has_prefix(prefix) {
-      // Strip the bare_prefix for display
-      let stripped = strip_prefix(name, prefix)
-      return shorten_module_name(stripped)
+  if internal_ids.length() == 0 && bare_prefixes.length() == 0 {
+    return shorten_module_name(name, source_patterns=source_patterns)
+  }
+  // Check if this name matches any internal module ID
+  for id in internal_ids {
+    // Internal IDs may have file suffix (moon.pkg), remove it for comparison
+    let id_dir = strip_file_suffix(id)
+    if name == id || name == id_dir || name.has_suffix("/" + id_dir) {
+      return format_internal_package(id_dir, source_patterns)
     }
   }
-  // No external prefix - just shorten
-  shorten_module_name(name)
+  format_external_package(name, bare_prefixes, source_patterns)
 }
 
 ///|
-/// Strip prefix from string.
-fn strip_prefix(s : String, prefix : String) -> String {
-  if s.has_prefix(prefix) {
-    let chars = s.to_array()
-    let prefix_len = prefix.length()
-    let result : Array[Char] = []
-    for i = prefix_len; i < chars.length(); i = i + 1 {
-      result.push(chars[i])
-    }
-    String::from_array(result)
-  } else {
-    s
-  }
-}
-
-///|
-/// Shorten module name for display.
-/// Handles both file paths (src/kgf/types/moon.pkg) and module paths (kgf/types).
-fn shorten_module_name(name : String) -> String {
-  let parts = split_by_char(name, '/')
+/// Strip file suffix from path (e.g., src/kgf/types/moon.pkg -> src/kgf/types).
+fn strip_file_suffix(path : String) -> String {
+  let parts = split_by_char(path, '/')
   if parts.length() == 0 {
-    return name
+    return path
   }
   let last = parts[parts.length() - 1]
-  // For moon.pkg files, show the parent directory path
-  if last == "moon.pkg" || last == "package.json" {
-    let start = find_meaningful_start(parts)
-    if start < parts.length() - 1 {
-      return join_path_segments(parts, start, parts.length() - 1)
+  // Check if last part is a file (has extension or known manifest name)
+  if last.contains(".") {
+    if parts.length() == 1 {
+      return path
     }
-    if parts.length() > 1 {
-      return parts[parts.length() - 2]
-    }
-    return last
+    return join_path_segments(parts, 0, parts.length() - 1)
   }
-  // For module paths (e.g., pkg:trkbt10/indexion/src/kgf/types)
-  // Strip pkg: prefix and common prefixes, keep the meaningful part
-  let cleaned = if name.has_prefix("pkg:") {
-    let chars = name.to_array()
-    let result : Array[Char] = []
-    for i = 4; i < chars.length(); i = i + 1 {
-      result.push(chars[i])
+  path
+}
+
+/// Format external package path for display.
+/// Strips bare_prefixes (from KGF specs) and adds @ prefix to indicate external package.
+fn format_external_package(
+  name : String,
+  bare_prefixes : Array[String],
+  source_patterns : Array[String],
+) -> String {
+  // Strip any matching bare prefix
+  let mut stripped = name
+  for prefix in bare_prefixes {
+    if stripped.has_prefix(prefix) {
+      stripped = strip_prefix_n(stripped, prefix.length())
+      break
     }
-    String::from_array(result)
+  }
+  "@" + shorten_module_name(stripped, source_patterns=source_patterns)
+}
+
+///|
+/// Strip n characters from the start of a string.
+fn strip_prefix_n(s : String, n : Int) -> String {
+  let chars = s.to_array()
+  if n >= chars.length() {
+    return ""
+  }
+  let result : Array[Char] = []
+  for i = n; i < chars.length(); i = i + 1 {
+    result.push(chars[i])
+  }
+  String::from_array(result)
+}
+
+///|
+/// Format internal package path for display.
+/// Uses the matched internal ID directly - no heuristics needed.
+fn format_internal_package(
+  matched_id : String,
+  source_patterns : Array[String],
+) -> String {
+  shorten_module_name(matched_id, source_patterns=source_patterns)
+}
+
+///|
+/// Shorten module path while preserving meaningful package segments.
+fn shorten_module_name(
+  name : String,
+  source_patterns? : Array[String] = [],
+) -> String {
+  let cleaned = strip_scheme_prefix(name)
+  let parts = split_by_char(cleaned, '/')
+  if parts.length() == 0 {
+    return cleaned
+  }
+  let mut end = parts.length()
+  if is_filename_source_pattern(parts[parts.length() - 1], source_patterns) {
+    end = parts.length() - 1
+  }
+  if end <= 0 {
+    return cleaned
+  }
+  let start = if end > 2 { end - 2 } else { 0 }
+  join_path_segments(parts, start, end)
+}
+
+///|
+fn strip_scheme_prefix(name : String) -> String {
+  let chars = name.to_array()
+  let mut colon_idx = -1
+  let mut slash_idx = chars.length()
+  for i, c in chars {
+    if c == ':' && colon_idx < 0 {
+      colon_idx = i
+    } else if c == '/' || c == '\\' {
+      slash_idx = i
+      break
+    }
+  }
+  if colon_idx > 0 && colon_idx < slash_idx {
+    strip_prefix_n(name, colon_idx + 1)
   } else {
     name
   }
-  // Re-split after stripping prefix
-  let clean_parts = split_by_char(cleaned, '/')
-  if clean_parts.length() == 0 {
-    return cleaned
-  }
-  // Skip organization/project prefixes and src/
-  let start = find_meaningful_start_for_module(clean_parts)
-  if start < clean_parts.length() {
-    return join_path_segments(clean_parts, start, clean_parts.length())
-  }
-  clean_parts[clean_parts.length() - 1]
 }
 
 ///|
-/// Find where meaningful path starts (skip src/, cmd/, etc.)
-fn find_meaningful_start(parts : Array[String]) -> Int {
-  let mut start = 0
-  if parts.length() > 0 && parts[0] == "src" {
-    start = 1
-  } else if parts.length() > 0 && parts[0] == "cmd" {
-    start = 0 // Keep cmd prefix
-  }
-  start
-}
-
-///|
-/// Find meaningful start for module paths.
-/// Uses heuristics to skip common prefixes without hardcoding specific names.
-fn find_meaningful_start_for_module(parts : Array[String]) -> Int {
-  let mut start = 0
-  // Skip segments that look like organization names
-  // Heuristic: if first segment is not a known directory type, skip it
-  if parts.length() > 2 {
-    let first = parts[0]
-    if first != "src" && first != "cmd" && first != "lib" && first != "pkg" {
-      start = start + 1
-      // Check if second segment might be project name
-      if parts.length() > start + 1 {
-        let second = parts[start]
-        if second != "src" && second != "cmd" && second != "lib" {
-          start = start + 1
-        }
-      }
+fn is_filename_source_pattern(
+  segment : String,
+  source_patterns : Array[String],
+) -> Bool {
+  for pattern in source_patterns {
+    if not(pattern.has_prefix(".")) && segment == pattern {
+      return true
     }
   }
-  // Skip src/ if present
-  if parts.length() > start && parts[start] == "src" {
-    start = start + 1
-  }
-  start
+  false
 }
 
 ///|

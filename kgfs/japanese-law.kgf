@@ -1,5 +1,6 @@
 kgf 0.6
 language: japanese
+sources: .txt
 
 === lex
 SKIP /[ \t　]+/
@@ -61,7 +62,6 @@ on Article:      def id=art kind=Article
 on Item:         def id=item kind=Item
 
 === resolver
-sources: .txt
 relative_prefixes:
 exts: .txt
 indexes:

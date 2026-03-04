@@ -1,5 +1,6 @@
 kgf 0.6
 language: base64
+sources: .b64, .base64, .txt
 
 === lex
 # Tolerate whitespace in encoded blobs.
@@ -28,7 +29,6 @@ Other -> B64_CHAR | PAD
 # none
 
 === resolver
-sources: .b64, .base64, .txt
 relative_prefixes:
 exts: .b64, .base64, .txt
 indexes:

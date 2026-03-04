@@ -1,5 +1,6 @@
 kgf 0.6
 language: scala
+sources: .scala, .sc
 
 === lex
 SKIP /[ \t]+/
@@ -253,7 +254,6 @@ on EnumCase when $scope("value", "current_enum") {
 }
 
 === resolver
-sources: .scala, .sc
 relative_prefixes: ./, ../
 module_path_style: dot
 resolve:

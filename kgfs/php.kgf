@@ -1,5 +1,6 @@
 kgf 0.6
 language: php
+sources: .php
 
 === lex
 SKIP /[ \t]+/
@@ -234,7 +235,6 @@ on EnumMember when $scope("value", "current_enum") {
 }
 
 === resolver
-sources: .php
 relative_prefixes: ./, ../
 module_path_style: slash
 ns_prefix: vendor/

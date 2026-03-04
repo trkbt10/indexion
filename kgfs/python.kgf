@@ -1,5 +1,6 @@
 kgf 0.6
 language: python
+sources: .py, .pyi
 
 === lex
 SKIP /[ \t]+/
@@ -155,7 +156,6 @@ on PropertyDef when $scope("value", "current_class") {
 }
 
 === resolver
-sources: .py, .pyi
 relative_prefixes: ./, ../, /
 module_path_style: dot
 resolve:

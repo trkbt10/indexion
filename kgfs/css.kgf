@@ -1,5 +1,6 @@
 kgf 0.6
 language: css
+sources: .css
 
 === lex
 SKIP           /(\s+|\/\*[^*]*\*+([^/*][^*]*\*+)*\/)+/
@@ -51,7 +52,6 @@ on ImportRule {
 }
 
 === resolver
-sources: .css
 relative_prefixes: ./, ../, /
 module_path_style: slash
 resolve:

@@ -1,5 +1,6 @@
 kgf 0.6
 language: java
+sources: .java
 
 === lex
 SKIP /[ \t]+/
@@ -244,7 +245,6 @@ on EnumConstant when $scope("value", "current_enum") {
 }
 
 === resolver
-sources: .java
 relative_prefixes: ./, ../
 module_path_style: dot
 resolve:

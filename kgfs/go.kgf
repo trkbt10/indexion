@@ -1,5 +1,6 @@
 kgf 0.6
 language: go
+sources: .go
 
 === lex
 SKIP /[ \t]+/
@@ -190,7 +191,6 @@ on ConstSpec {
 }
 
 === resolver
-sources: .go
 relative_prefixes: ./, ../
 module_path_style: slash
 resolve:

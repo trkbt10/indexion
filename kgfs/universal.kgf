@@ -1,5 +1,6 @@
 kgf 0.6
 language: universal
+sources: .txt, .text
 
 # Universal spec for mixed-language text (natural text, code snippets, etc.)
 # Combines mikan.js-style Japanese segmentation with common programming constructs
@@ -60,7 +61,6 @@ Item -> Comment | String | Keyword | Operator | CodePunct
 === semantics
 
 === resolver
-sources: .txt, .text
 relative_prefixes: ./, ../
 exts: .txt, .text
 indexes:

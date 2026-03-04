@@ -1,5 +1,6 @@
 kgf 0.6
 language: b64-jpeg
+sources: .b64, .txt
 
 === lex
 SKIP /[^A-Za-z0-9+\/=]+/
@@ -100,7 +101,6 @@ on JpegEOI {
 }
 
 === resolver
-sources: .b64, .txt
 relative_prefixes:
 exts: .b64, .txt
 indexes:

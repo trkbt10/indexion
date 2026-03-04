@@ -1,5 +1,6 @@
 kgf 0.6
 language: elixir
+sources: .ex, .exs
 
 === lex
 SKIP /[ \t]+/
@@ -212,7 +213,6 @@ on DefGuardDecl {
 }
 
 === resolver
-sources: .ex, .exs
 relative_prefixes: ./
 module_path_style: dot
 resolve:

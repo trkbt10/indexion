@@ -1,5 +1,6 @@
 kgf 0.6
 language: cpp
+sources: .cpp, .cc, .cxx, .hpp, .hxx, .h, .hh
 
 === lex
 SKIP /[ \t]+/
@@ -280,7 +281,6 @@ on EnumValue when $scope("value", "current_enum") {
 }
 
 === resolver
-sources: .cpp, .cc, .cxx, .hpp, .hxx, .h, .hh
 relative_prefixes: ./, ../
 module_path_style: slash
 resolve:

@@ -1,5 +1,6 @@
 kgf 0.6
 language: base64-utf8
+sources: .b64, .base64, .txt
 
 === preprocess
 fst:base64Utf8Quartet
@@ -68,7 +69,6 @@ Doc -> (ASCII | UTF8 | WS | CTRL | INVALID | PAD)*
 # none
 
 === resolver
-sources: .b64, .base64, .txt
 relative_prefixes:
 exts: .b64, .base64, .txt
 indexes:

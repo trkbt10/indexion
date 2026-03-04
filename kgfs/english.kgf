@@ -1,5 +1,6 @@
 kgf 0.6
 language: english
+sources: .txt, .md, .text
 
 # English natural text tokenization with part-of-speech hints
 
@@ -68,7 +69,6 @@ Token -> Contraction | Article | Pronoun | Preposition | Conjunction
 === semantics
 
 === resolver
-sources: .txt, .md, .text
 relative_prefixes: ./, ../
 exts: .txt, .md, .text
 indexes:

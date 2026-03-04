@@ -1,5 +1,6 @@
 kgf 0.6
 language: haskell
+sources: .hs, .lhs
 
 === lex
 SKIP /[ \t]+/
@@ -204,7 +205,6 @@ on MethodSig when $scope("value", "current_class") {
 }
 
 === resolver
-sources: .hs, .lhs
 relative_prefixes: ./, ../
 module_path_style: dot
 resolve:

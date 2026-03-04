@@ -1,5 +1,6 @@
 kgf 0.6
 language: ocaml
+sources: .ml, .mli
 
 === lex
 SKIP /[ \t]+/
@@ -234,7 +235,6 @@ on MethodDecl when $scope("value", "current_class") {
 }
 
 === resolver
-sources: .ml, .mli
 relative_prefixes: ./
 module_path_style: dot
 resolve:

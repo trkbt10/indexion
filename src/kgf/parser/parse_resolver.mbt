@@ -95,6 +95,16 @@
 /// Parses resolver block into normalized ResolverSpec.
 /// Supports YAML-like syntax with aliases and resolve chain.
 pub fn parse_resolver(text : String) -> @types.ResolverSpec {
+  parse_resolver_with_sources(text, [])
+}
+
+///|
+/// Parses resolver block with sources from header.
+/// Header sources take precedence over resolver section sources.
+pub fn parse_resolver_with_sources(
+  text : String,
+  header_sources : Array[String],
+) -> @types.ResolverSpec {
   let lines = split_lines(text)
   let kv : Map[String, String] = {}
   let aliases : Array[@types.ResolverAlias] = []
@@ -120,14 +130,20 @@ pub fn parse_resolver(text : String) -> @types.ResolverSpec {
       i = parse_resolve_block(lines, i, resolve_chain)
       continue
     }
-    // Parse key: value
+    // Parse key: value (skip 'sources' if header has it)
     match parse_kv_line(ln) {
-      Some((k, v)) => kv.set(k, v)
+      Some((k, v)) =>
+        // Header sources take precedence
+        if k == "sources" && header_sources.length() > 0 {
+          () // Skip resolver section sources
+        } else {
+          kv.set(k, v)
+        }
       None => ()
     }
     i += 1
   }
-  build_resolver_spec(kv, aliases, resolve_chain)
+  build_resolver_spec_with_sources(kv, aliases, resolve_chain, header_sources)
 }
 
 ///|
@@ -411,7 +427,22 @@ fn build_resolver_spec(
   aliases : Array[@types.ResolverAlias],
   resolve_chain : Array[@types.ResolveStep],
 ) -> @types.ResolverSpec {
-  let sources = get_list(kv, "sources")
+  build_resolver_spec_with_sources(kv, aliases, resolve_chain, [])
+}
+
+///|
+fn build_resolver_spec_with_sources(
+  kv : Map[String, String],
+  aliases : Array[@types.ResolverAlias],
+  resolve_chain : Array[@types.ResolveStep],
+  header_sources : Array[String],
+) -> @types.ResolverSpec {
+  // Header sources take precedence over resolver section sources
+  let sources = if header_sources.length() > 0 {
+    header_sources
+  } else {
+    get_list(kv, "sources")
+  }
   let relative_prefixes = get_list(kv, "relative_prefixes")
   let exts = get_list(kv, "exts")
   let indexes = get_list(kv, "indexes")

@@ -1,5 +1,6 @@
 kgf 0.6
 language: chinese
+sources: .txt, .md, .text
 
 # Chinese natural text tokenization (Simplified & Traditional)
 
@@ -62,7 +63,6 @@ Token -> Particle | Pronoun | Preposition | Conjunction | Adverb | Verb
 === semantics
 
 === resolver
-sources: .txt, .md, .text
 relative_prefixes: ./, ../
 exts: .txt, .md, .text
 indexes:

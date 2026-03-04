@@ -1,6 +1,7 @@
 
 kgf 0.6
 language: html
+sources: .html, .htm
 
 === lex
 SKIP          /(\s+|<!--[\s\S]*?-->)+/
@@ -25,7 +26,6 @@ on Attr {
 }
 
 === resolver
-sources: .html, .htm
 relative_prefixes: ./, ../, /, http://, https://, mailto:, ftp://, data:
 module_path_style: slash
 resolve:

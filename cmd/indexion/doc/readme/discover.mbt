@@ -29,8 +29,39 @@ pub fn discover_packages(
 ) -> Array[PackageInfo] {
   let packages : Array[PackageInfo] = []
   for path in paths {
-    let clean_path = trim_trailing_slash(path)
+    let clean_path = @pipeline.trim_trailing_slash(path)
     discover_impl(registry, clean_path, includes, excludes, recursive, packages)
+  }
+  packages
+}
+
+///|
+/// Discover packages from a pre-collected file path list.
+pub fn discover_packages_from_files(
+  registry : @registry.KGFRegistry,
+  file_paths : Array[String],
+  includes : Array[String],
+  excludes : Array[String],
+) -> Array[PackageInfo] {
+  let by_dir : Map[String, Array[String]] = {}
+  for path in file_paths {
+    if registry.is_file_supported(path) {
+      let dir = extract_parent_dir(path)
+      match by_dir.get(dir) {
+        Some(arr) => arr.push(path)
+        None => by_dir.set(dir, [path])
+      }
+    }
+  }
+  let packages : Array[PackageInfo] = []
+  for entry in by_dir {
+    let dir = entry.0
+    let files = entry.1
+    if files.length() == 0 || not(should_include(dir, includes, excludes)) {
+      continue
+    }
+    let name = extract_dir_name(dir)
+    packages.push(PackageInfo::new(dir, name, files))
   }
   packages
 }
@@ -48,6 +79,9 @@ fn discover_impl(
     if not(@fs.is_dir(path)) {
       return
     }
+    if is_excluded_path(path, excludes) {
+      return
+    }
     // Collect supported files in this directory
     let files = collect_supported_files(registry, path)
     if files.length() > 0 {
@@ -60,8 +94,7 @@ fn discover_impl(
     if recursive {
       let entries = @fs.read_dir(path)
       for entry in entries {
-        // Skip hidden directories only
-        if entry.has_prefix(".") {
+        if @pipeline.should_skip_dir(entry) {
           continue
         }
         let subpath = path + "/" + entry
@@ -97,38 +130,39 @@ fn collect_supported_files(
 }
 
 ///|
-/// Extract directory name from path.
-fn extract_dir_name(path : String) -> String {
+fn extract_parent_dir(path : String) -> String {
   let chars = path.to_array()
   let mut last_slash = -1
   for i = 0; i < chars.length(); i = i + 1 {
-    if chars[i] == '/' {
+    if chars[i] == '/' || chars[i] == '\\' {
       last_slash = i
     }
   }
-  if last_slash >= 0 && last_slash < chars.length() - 1 {
+  if last_slash > 0 {
     let result : Array[Char] = []
-    for i = last_slash + 1; i < chars.length(); i = i + 1 {
+    for i = 0; i < last_slash; i = i + 1 {
       result.push(chars[i])
     }
     String::from_array(result)
   } else {
-    path
+    "."
   }
 }
 
 ///|
-fn trim_trailing_slash(path : String) -> String {
-  if path.length() > 0 && path.has_suffix("/") {
-    let chars = path.to_array()
-    let result : Array[Char] = []
-    for i = 0; i < chars.length() - 1; i = i + 1 {
-      result.push(chars[i])
+/// Extract directory name from path.
+fn extract_dir_name(path : String) -> String {
+  @pipeline.extract_basename(path)
+}
+
+///|
+fn is_excluded_path(path : String, excludes : Array[String]) -> Bool {
+  for pattern in excludes {
+    if @pipeline.matches_pattern(path, pattern) {
+      return true
     }
-    String::from_array(result)
-  } else {
-    path
   }
+  false
 }
 
 ///|
@@ -140,7 +174,7 @@ fn should_include(
 ) -> Bool {
   // Check excludes first
   for pattern in excludes {
-    if matches_pattern(path, pattern) {
+    if @pipeline.matches_pattern(path, pattern) {
       return false
     }
   }
@@ -150,48 +184,9 @@ fn should_include(
   }
   // Check includes
   for pattern in includes {
-    if matches_pattern(path, pattern) {
+    if @pipeline.matches_pattern(path, pattern) {
       return true
     }
-  }
-  false
-}
-
-///|
-/// Check if string matches a glob pattern (simple implementation).
-pub fn matches_pattern(text : String, pattern : String) -> Bool {
-  let text_chars = text.to_array()
-  let pat_chars = pattern.to_array()
-  matches_impl(text_chars, 0, pat_chars, 0)
-}
-
-///|
-fn matches_impl(
-  text : Array[Char],
-  ti : Int,
-  pat : Array[Char],
-  pi : Int,
-) -> Bool {
-  if ti >= text.length() && pi >= pat.length() {
-    return true
-  }
-  if pi >= pat.length() {
-    return false
-  }
-  if pat[pi] == '*' {
-    if matches_impl(text, ti, pat, pi + 1) {
-      return true
-    }
-    if ti < text.length() {
-      return matches_impl(text, ti + 1, pat, pi)
-    }
-    return false
-  }
-  if ti >= text.length() {
-    return false
-  }
-  if pat[pi] == text[ti] {
-    return matches_impl(text, ti + 1, pat, pi + 1)
   }
   false
 }

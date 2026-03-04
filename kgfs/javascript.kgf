@@ -1,6 +1,7 @@
 
 kgf 0.6
 language: javascript
+sources: .js, .mjs, .cjs
 
 === lex
 SKIP        /(\s+|\/\/[^\n]*|\/\*[\s\S]*?\*\/)+/
@@ -99,7 +100,6 @@ on ImportDefault {
 }
 
 === resolver
-sources: .js, .mjs, .cjs
 relative_prefixes: ./, ../, /
 module_path_style: slash
 resolve:

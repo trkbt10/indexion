@@ -1,5 +1,6 @@
 kgf 0.6
 language: dart
+sources: .dart
 
 === lex
 SKIP /[ \t]+/
@@ -294,7 +295,6 @@ on EnumValue when $scope("value", "current_enum") {
 }
 
 === resolver
-sources: .dart
 relative_prefixes: ./
 module_path_style: slash
 resolve:

@@ -1,5 +1,6 @@
 kgf 0.6
 language: kotlin
+sources: .kt, .kts
 
 === lex
 SKIP /[ \t]+/
@@ -235,7 +236,6 @@ on EnumEntry when $scope("value", "current_class") {
 }
 
 === resolver
-sources: .kt, .kts
 relative_prefixes: ./, ../
 module_path_style: dot
 resolve:

@@ -94,6 +94,8 @@ pub fn analyze_files_with_progress(
   // Use empty root - paths are already relative to working directory
   let root = ""
   let active_rules_cache : Map[String, @hashset.HashSet[String]] = Map::new()
+  let peg_cache : Map[String, @kgf_peg.PEG] = Map::new()
+  let lexer_cache : Map[String, @kgf_lexer.Lexer] = Map::new()
   let graphs : Array[@graph.CodeGraph] = []
   let total = files.length()
   for i, entry in files {
@@ -118,10 +120,27 @@ pub fn analyze_files_with_progress(
             built
           }
         }
-        let graph = analyze_with_spec(
-          path, content, spec, active_rules, root, file_exists,
-        )
-        graphs.push(graph)
+        let lexer = get_or_build_lexer(spec_name, spec, lexer_cache)
+        match get_or_build_peg(spec_name, spec, peg_cache) {
+          Some(peg) => {
+            let graph = analyze_with_spec(
+              path,
+              content,
+              spec,
+              active_rules,
+              root,
+              file_exists,
+              lexer,
+              peg,
+            )
+            graphs.push(graph)
+          }
+          None => {
+            let graph = @graph.CodeGraph::new()
+            let _ = graph.get_or_add_module(path, file=Some(path))
+            graphs.push(graph)
+          }
+        }
       }
       None => {
         // No spec available, create minimal graph with just the module
@@ -132,6 +151,43 @@ pub fn analyze_files_with_progress(
     }
   }
   graphs
+}
+
+///|
+fn get_or_build_lexer(
+  spec_name : String,
+  spec : @kgf_types.KGFSpec,
+  cache : Map[String, @kgf_lexer.Lexer],
+) -> @kgf_lexer.Lexer {
+  match cache.get(spec_name) {
+    Some(lexer) => lexer
+    None => {
+      let built = @kgf_lexer.Lexer::new(spec.get_tokens())
+      cache.set(spec_name, built)
+      built
+    }
+  }
+}
+
+///|
+fn get_or_build_peg(
+  spec_name : String,
+  spec : @kgf_types.KGFSpec,
+  cache : Map[String, @kgf_peg.PEG],
+) -> @kgf_peg.PEG? {
+  match cache.get(spec_name) {
+    Some(peg) => Some(peg)
+    None => {
+      let built = Some(@kgf_peg.build_peg(spec)) catch { _ => None }
+      match built {
+        Some(peg) => {
+          cache.set(spec_name, peg)
+          Some(peg)
+        }
+        None => None
+      }
+    }
+  }
 }
 
 ///|
@@ -218,15 +274,14 @@ fn analyze_with_spec(
   active_rules : @hashset.HashSet[String],
   root : String,
   file_exists : (String) -> Bool,
+  lexer : @kgf_lexer.Lexer,
+  peg : @kgf_peg.PEG,
 ) -> @graph.CodeGraph {
   let graph = @graph.CodeGraph::new()
   // Create module node for the file
   let _ = graph.get_or_add_module(path, file=Some(path))
-  // Tokenize using Lexer
-  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+  // Tokenize using cached lexer.
   let tokens = lexer.tokenize(content)
-  // Build PEG from spec
-  let peg = @kgf_peg.build_peg(spec) catch { _ => return graph }
   // Get start rule
   let start_rule = spec.get_start_rule()
   // Run parse

@@ -1,5 +1,6 @@
 kgf 0.6
 language: swift
+sources: .swift
 
 === lex
 SKIP /[ \t]+/
@@ -278,7 +279,6 @@ on EnumCase when $scope("value", "current_enum") {
 }
 
 === resolver
-sources: .swift
 relative_prefixes: ./
 module_path_style: dot
 resolve:

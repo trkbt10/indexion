@@ -1,5 +1,6 @@
 kgf 0.6
 language: korean
+sources: .txt, .md, .text
 
 # Korean natural text tokenization (Hangul)
 
@@ -62,7 +63,6 @@ Token -> Particle | Pronoun | Conjunction | Adverb | Ending
 === semantics
 
 === resolver
-sources: .txt, .md, .text
 relative_prefixes: ./, ../
 exts: .txt, .md, .text
 indexes:

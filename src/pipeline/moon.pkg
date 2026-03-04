@@ -1,0 +1,9 @@
+import {
+  "moonbitlang/core/bench",
+  "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
+  "trkbt10/indexion/src/kgf/parser" @kgf_parser,
+  "trkbt10/indexion/src/kgf/peg" @kgf_peg,
+  "trkbt10/indexion/src/kgf/registry" @registry,
+  "trkbt10/indexion/src/kgf/types" @kgf_types,
+}
