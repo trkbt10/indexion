@@ -103,3 +103,35 @@ pub fn peg_cost_config() -> CostConfig {
   // that consider node type similarity (e.g., Star vs Plus are similar).
   CostConfig::default()
 }
+
+///|
+/// Default TSED configuration for PEG AST comparison.
+pub fn peg_tsed_config() -> TSEDConfig {
+  TSEDConfig::default()
+}
+
+///|
+/// Compute TSED similarity between two PEG nodes.
+/// Returns a value in [0, 1] where 1 = identical trees.
+pub fn peg_tsed_similarity(
+  node1 : @peg.Node,
+  node2 : @peg.Node,
+  config : TSEDConfig,
+) -> Double {
+  let tree1 = peg_node_to_tree_node(node1)
+  let tree2 = peg_node_to_tree_node(node2)
+  calculate_tsed(tree1, tree2, config)
+}
+
+///|
+/// Compute TSED distance between two PEG nodes.
+/// Returns a value in [0, 1] where 0 = identical trees.
+pub fn peg_tsed_distance(
+  node1 : @peg.Node,
+  node2 : @peg.Node,
+  config : TSEDConfig,
+) -> Double {
+  let tree1 = peg_node_to_tree_node(node1)
+  let tree2 = peg_node_to_tree_node(node2)
+  calculate_tsed_distance(tree1, tree2, config)
+}
