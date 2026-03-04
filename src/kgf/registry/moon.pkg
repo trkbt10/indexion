@@ -2,4 +2,6 @@ import {
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/kgf/types" @types,
   "trkbt10/indexion/src/kgf/parser" @parser,
+  "trkbt10/indexion/src/kgf/lexer" @lexer,
+  "trkbt10/indexion/src/kgf/peg" @peg,
 }
