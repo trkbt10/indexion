@@ -417,9 +417,9 @@ test "parse_kgf with preprocess_fst" {
 
 ///|
 test "parse_kgf handles kgf version header" {
-  // Reference spec files start with "kgf 0.5" header
+  // Reference spec files start with "kgf 0.6" header
   let text =
-    #|kgf 0.5
+    #|kgf 0.6
     #|language: typescript
     #|
     #|=== lex
@@ -673,7 +673,7 @@ test "parse_semantics complex scope expressions" {
 ///|
 test "parse_kgf go spec style no attrs no semantics" {
   let text =
-    #|kgf 0.5
+    #|kgf 0.6
     #|language: go
     #|
     #|=== lex
@@ -707,7 +707,7 @@ test "parse_kgf go spec style no attrs no semantics" {
 ///|
 test "parse_kgf base64 minimal spec" {
   let text =
-    #|kgf 0.5
+    #|kgf 0.6
     #|language: base64
     #|
     #|=== lex
@@ -901,7 +901,7 @@ test "parse_attrs with comment line" {
 ///|
 test "parse_kgf rust spec style" {
   let text =
-    #|kgf 0.5
+    #|kgf 0.6
     #|language: rust
     #|
     #|=== lex
@@ -930,4 +930,142 @@ test "parse_kgf rust spec style" {
   assert_eq(s.rules.size(), 3)
   assert_eq(s.attrs.size(), 0)
   assert_true(s.semantics is None)
+}
+
+// ============================================================
+// resolve_chain parser tests
+// ============================================================
+
+///|
+test "parse_resolver with resolve chain - single line format" {
+  let text =
+    #|sources: .ts, .tsx
+    #|relative_prefixes: ./, ../
+    #|resolve:
+    #|  - index: /index.ts, /index.tsx
+    #|  - ext: .ts, .tsx
+    #|  - fallback: npm:
+  let resolver = parse_resolver(text)
+  assert_eq(resolver.get_sources().length(), 2)
+  assert_true(resolver.has_resolve_chain())
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 3)
+  // Check index step
+  assert_eq(chain[0].get_step_type().as_string(), "index")
+  assert_eq(chain[0].get_files().length(), 2)
+  assert_eq(chain[0].get_files()[0], "/index.ts")
+  // Check ext step
+  assert_eq(chain[1].get_step_type().as_string(), "ext")
+  assert_eq(chain[1].get_files().length(), 2)
+  // Check fallback step
+  assert_eq(chain[2].get_step_type().as_string(), "fallback")
+  assert_eq(chain[2].get_prefix(), "npm:")
+}
+
+///|
+test "parse_resolver with resolve chain - multi line format" {
+  let text =
+    #|sources: .ts
+    #|resolve:
+    #|  -
+    #|    type: manifest
+    #|    file: package.json
+    #|    query: main
+    #|    when: value
+    #|  -
+    #|    type: index
+    #|    files: /index.ts, /index.js
+  let resolver = parse_resolver(text)
+  assert_true(resolver.has_resolve_chain())
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 2)
+  // Check manifest step
+  assert_eq(chain[0].get_step_type().as_string(), "manifest")
+  assert_eq(chain[0].get_file(), "package.json")
+  assert_eq(chain[0].get_query(), "main")
+  assert_eq(chain[0].get_when_condition(), "value")
+  // Check index step
+  assert_eq(chain[1].get_step_type().as_string(), "index")
+  assert_eq(chain[1].get_files().length(), 2)
+}
+
+///|
+test "parse_resolver with resolve chain - marker step" {
+  let text =
+    #|sources: .py
+    #|module_path_style: dot
+    #|resolve:
+    #|  - marker: __init__.py
+    #|  - ext: .py
+    #|  - fallback: pip:
+  let resolver = parse_resolver(text)
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 3)
+  assert_eq(chain[0].get_step_type().as_string(), "marker")
+  assert_eq(chain[0].get_files()[0], "__init__.py")
+}
+
+///|
+test "parse_resolver with resolve chain - sibling step" {
+  let text =
+    #|sources: .rs
+    #|module_path_style: coloncol
+    #|resolve:
+    #|  - index: /mod.rs
+    #|  - sibling: .rs
+    #|  - ext: .rs
+  let resolver = parse_resolver(text)
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 3)
+  assert_eq(chain[1].get_step_type().as_string(), "sibling")
+  assert_eq(chain[1].get_files()[0], ".rs")
+}
+
+///|
+test "parse_resolver with resolve chain - manifest single line format" {
+  let text =
+    #|sources: .js
+    #|resolve:
+    #|  - manifest: package.json @ main | module
+    #|  - index: /index.js
+  let resolver = parse_resolver(text)
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 2)
+  assert_eq(chain[0].get_step_type().as_string(), "manifest")
+  assert_eq(chain[0].get_file(), "package.json")
+  assert_eq(chain[0].get_query(), "main | module")
+}
+
+///|
+test "parse_resolver with resolve chain - manifest with condition" {
+  let text =
+    #|sources: .ts
+    #|resolve:
+    #|  - manifest: package.json @ exports["."].types ? type
+    #|  - manifest: package.json @ main
+  let resolver = parse_resolver(text)
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 2)
+  assert_eq(chain[0].get_file(), "package.json")
+  assert_eq(chain[0].get_query(), "exports[\".\"].types")
+  assert_eq(chain[0].get_when_condition(), "type")
+  assert_eq(chain[1].get_when_condition(), "")
+}
+
+///|
+test "parse_resolver with resolve chain - mixed with comments" {
+  let text =
+    #|sources: .html
+    #|resolve:
+    #|  # HTML index files
+    #|  - index: /index.html, /index.htm
+    #|  # Extensions
+    #|  - ext: .html, .htm
+    #|  # Fallback for external URLs
+    #|  - fallback: url:
+  let resolver = parse_resolver(text)
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 3)
+  assert_eq(chain[0].get_step_type().as_string(), "index")
+  assert_eq(chain[2].get_prefix(), "url:")
 }

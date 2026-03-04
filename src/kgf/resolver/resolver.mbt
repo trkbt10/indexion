@@ -1,8 +1,10 @@
 ///|
-/// FileResolver trait for checking file existence.
+/// FileResolver trait for checking file existence and reading files.
 /// Implementations should provide the actual file system access.
 pub trait FileResolver {
   file_exists(Self, String) -> Bool
+  /// Read a file's content. Returns None if the file doesn't exist or can't be read.
+  read_file(Self, String) -> String?
 }
 
 ///|
@@ -10,6 +12,7 @@ pub trait FileResolver {
 /// - Applies resolver aliases.
 /// - Handles language-specific namespace prefixes.
 /// - Resolves relative prefixes against the importing file or project root.
+/// - Uses resolve_chain if defined, otherwise falls back to legacy resolution.
 pub fn resolve_module(
   spec : @types.ResolverSpec,
   language : String,
@@ -41,32 +44,46 @@ pub fn resolve_module(
       None => ()
     }
   }
-  // Step 3: Handle relative paths
+  // Step 3: Determine base path for resolution
   let is_relative = has_relative_prefix(module0, spec.get_relative_prefixes())
-  if is_relative {
+  let (base_path, mod_clean) = if is_relative {
     let module0_chars = module0.to_array()
     if module0_chars.length() > 0 && module0_chars[0] == '/' {
       // Absolute relative (starts with /)
-      let mod_clean = substr_from_resolver(module0, 1)
-      let hit = try_local(
-        spec, project_root, mod_clean, project_root, file_resolver,
-      )
-      match hit {
-        Some(path) => return path
-        None => ()
-      }
+      (project_root, substr_from_resolver(module0, 1))
     } else {
       // Relative to current file
-      let base = dirname(from_file)
-      let hit = try_local(spec, base, module0, project_root, file_resolver)
-      match hit {
-        Some(path) => return path
-        None => ()
-      }
+      (dirname(from_file), module0)
+    }
+  } else {
+    (project_root, module0)
+  }
+  // Step 4: Use resolve_chain if defined
+  if spec.has_resolve_chain() {
+    let result = resolve_with_chain(
+      spec, base_path, mod_clean, project_root, file_resolver,
+    )
+    match result {
+      Some(path) => return path
+      None => ()
+    }
+    // Fallback to bare_prefix if chain didn't resolve
+    let bare_prefix = spec.get_bare_prefix()
+    if bare_prefix.length() > 0 {
+      return bare_prefix + get_module_head(module0)
+    }
+    return module0
+  }
+  // Legacy resolution (when resolve_chain is not defined)
+  if is_relative {
+    let hit = try_local(spec, base_path, mod_clean, project_root, file_resolver)
+    match hit {
+      Some(path) => return path
+      None => ()
     }
     return spec.get_bare_prefix() + module0
   }
-  // Step 4: Non-relative - attempt under project root
+  // Non-relative - attempt under project root
   let mod_path = module_to_path(module0, spec.get_module_path_style())
   let local_try = join_path([project_root, mod_path])
   // Try extensions
@@ -83,13 +100,252 @@ pub fn resolve_module(
       return normalize_relative_result(project_root, p)
     }
   }
-  // Step 5: Fallback with bare_prefix
+  // Fallback with bare_prefix
   let head = get_module_head(module0)
   let bare_prefix = spec.get_bare_prefix()
   if bare_prefix.length() > 0 {
     return bare_prefix + head
   }
   module0
+}
+
+///|
+/// Resolves a module using the resolve chain.
+fn resolve_with_chain(
+  spec : @types.ResolverSpec,
+  base_path : String,
+  module_str : String,
+  project_root : String,
+  file_resolver : &FileResolver,
+) -> String? {
+  let mod_path = module_to_path(module_str, spec.get_module_path_style())
+  let base_abs = if is_absolute(base_path) {
+    base_path
+  } else {
+    join_path([project_root, base_path])
+  }
+  let target_path = normalize_path(join_path([base_abs, mod_path]))
+  for step in spec.get_resolve_chain() {
+    let result = execute_resolve_step(
+      step, target_path, module_str, project_root, file_resolver,
+    )
+    match result {
+      Some(path) => return Some(path)
+      None => continue
+    }
+  }
+  None
+}
+
+///|
+/// Executes a single resolve step.
+fn execute_resolve_step(
+  step : @types.ResolveStep,
+  target_path : String,
+  module_str : String,
+  project_root : String,
+  file_resolver : &FileResolver,
+) -> String? {
+  match step.get_step_type() {
+    @types.ResolveStepType::Manifest => {
+      // Try to read manifest file and extract entry point
+      let manifest_path = join_path([target_path, step.get_file()])
+      match file_resolver.read_file(manifest_path) {
+        Some(content) => {
+          let entry = query_manifest(content, step.get_query())
+          match entry {
+            Some(entry_file) => {
+              let full_path = normalize_path(
+                join_path([target_path, entry_file]),
+              )
+              if file_resolver.file_exists(full_path) {
+                return Some(normalize_relative_result(project_root, full_path))
+              }
+            }
+            None => ()
+          }
+        }
+        None => ()
+      }
+      None
+    }
+    @types.ResolveStepType::Marker => {
+      // Check if any marker file exists
+      for marker in step.get_files() {
+        let marker_path = join_path([target_path, marker])
+        if file_resolver.file_exists(marker_path) {
+          return Some(normalize_relative_result(project_root, marker_path))
+        }
+      }
+      None
+    }
+    @types.ResolveStepType::Index => {
+      // Try index files
+      for idx in step.get_files() {
+        let p = target_path + idx
+        if file_resolver.file_exists(p) {
+          return Some(normalize_relative_result(project_root, p))
+        }
+      }
+      None
+    }
+    @types.ResolveStepType::Ext => {
+      // Try extensions
+      for ext in step.get_files() {
+        let p = target_path + ext
+        if file_resolver.file_exists(p) {
+          return Some(normalize_relative_result(project_root, p))
+        }
+      }
+      None
+    }
+    @types.ResolveStepType::Sibling => {
+      // Try sibling file (e.g., foo/ -> foo.rs)
+      let dir_name = basename(target_path)
+      let parent = dirname(target_path)
+      for ext in step.get_files() {
+        let p = join_path([parent, dir_name + ext])
+        if file_resolver.file_exists(p) {
+          return Some(normalize_relative_result(project_root, p))
+        }
+      }
+      None
+    }
+    @types.ResolveStepType::Fallback => {
+      // Fallback step returns the prefixed module path
+      let prefix = step.get_prefix()
+      // Strip relative prefix from module_str for cleaner fallback
+      let clean_module = strip_relative_prefix(module_str)
+      Some(prefix + clean_module)
+    }
+  }
+}
+
+///|
+/// Strips relative prefixes (./, ../) from module string.
+fn strip_relative_prefix(module_str : String) -> String {
+  if module_str.has_prefix("./") {
+    return substr_from_resolver(module_str, 2)
+  }
+  if module_str.has_prefix("../") {
+    // For ../ we keep it as is since it's meaningful
+    return module_str
+  }
+  module_str
+}
+
+///|
+/// Query a manifest file (package.json, Cargo.toml) for an entry point.
+/// Supports simple JSON path queries like "main", "exports['.'].import".
+fn query_manifest(content : String, query : String) -> String? {
+  // Split query by comma or pipe for alternatives
+  let alternatives = split_by_char(query, ',')
+  for alt in alternatives {
+    let alt_trimmed = trim_string(alt)
+    // Handle pipe alternatives within a single alternative
+    let pipe_parts = split_by_char(alt_trimmed, '|')
+    for part in pipe_parts {
+      let part_trimmed = trim_string(part)
+      let result = query_json_simple(content, part_trimmed)
+      match result {
+        Some(value) => return Some(value)
+        None => continue
+      }
+    }
+  }
+  None
+}
+
+///|
+/// Simple JSON query for common manifest fields.
+/// Supports: "main", "module", "exports['.'].import", etc.
+fn query_json_simple(content : String, path : String) -> String? {
+  // Very simple JSON parsing for common cases
+  // This is a simplified implementation - a full JSON parser would be better
+  if path == "main" || path == "module" || path == "types" {
+    return find_json_string_value(content, path)
+  }
+  // For more complex paths, we need proper JSON parsing
+  // For now, just try the simple case
+  None
+}
+
+///|
+/// Find a simple string value in JSON content.
+fn find_json_string_value(content : String, key : String) -> String? {
+  // Look for "key": "value" or "key":"value"
+  let pattern = "\"" + key + "\""
+  let idx = find_substring(content, pattern)
+  guard idx >= 0 else { return None }
+  // Find the colon after the key
+  let after_key = idx + pattern.length()
+  let chars = content.to_array()
+  let mut i = after_key
+  // Skip whitespace
+  while i < chars.length() && (chars[i] == ' ' || chars[i] == '\t') {
+    i += 1
+  }
+  guard i < chars.length() && chars[i] == ':' else { return None }
+  i += 1
+  // Skip whitespace
+  while i < chars.length() && (chars[i] == ' ' || chars[i] == '\t') {
+    i += 1
+  }
+  guard i < chars.length() && chars[i] == '"' else { return None }
+  i += 1
+  // Read the string value
+  let value = StringBuilder::new()
+  while i < chars.length() && chars[i] != '"' {
+    if chars[i] == '\\' && i + 1 < chars.length() {
+      // Escape sequence
+      i += 1
+      value.write_char(chars[i])
+    } else {
+      value.write_char(chars[i])
+    }
+    i += 1
+  }
+  Some(value.to_string())
+}
+
+///|
+/// Split a string by a character.
+fn split_by_char(s : String, c : Char) -> Array[String] {
+  let result : Array[String] = []
+  let current = StringBuilder::new()
+  for ch in s {
+    if ch == c {
+      result.push(current.to_string())
+      current.reset()
+    } else {
+      current.write_char(ch)
+    }
+  }
+  result.push(current.to_string())
+  result
+}
+
+///|
+/// Trim whitespace from a string.
+fn trim_string(s : String) -> String {
+  let chars = s.to_array()
+  let mut start = 0
+  while start < chars.length() && (chars[start] == ' ' || chars[start] == '\t') {
+    start += 1
+  }
+  let mut end_idx = chars.length()
+  while end_idx > start &&
+        (chars[end_idx - 1] == ' ' || chars[end_idx - 1] == '\t') {
+    end_idx -= 1
+  }
+  if start == 0 && end_idx == chars.length() {
+    return s
+  }
+  let result = StringBuilder::new()
+  for i = start; i < end_idx; i = i + 1 {
+    result.write_char(chars[i])
+  }
+  result.to_string()
 }
 
 ///|
@@ -275,14 +531,20 @@ fn min_int(a : Int, b : Int) -> Int {
 }
 
 ///|
-/// FnFileResolver wraps a function as a FileResolver.
+/// FnFileResolver wraps functions as a FileResolver.
 priv struct FnFileResolver {
   check : (String) -> Bool
+  read : (String) -> String?
 }
 
 ///|
 impl FileResolver for FnFileResolver with file_exists(self, path : String) -> Bool {
   (self.check)(path)
+}
+
+///|
+impl FileResolver for FnFileResolver with read_file(self, path : String) -> String? {
+  (self.read)(path)
 }
 
 ///|
@@ -297,6 +559,25 @@ pub fn resolve_module_with_fn(
   project_root : String,
   file_exists_fn : (String) -> Bool,
 ) -> String {
-  let resolver = FnFileResolver::{ check: file_exists_fn }
+  let resolver = FnFileResolver::{
+    check: file_exists_fn,
+    read: fn(_path) { None },
+  }
+  resolve_module(spec, language, from_file, module_path, project_root, resolver)
+}
+
+///|
+/// Resolves a module specifier using functions for file existence and reading.
+/// This is a convenience wrapper for resolve_chain support.
+pub fn resolve_module_with_fns(
+  spec : @types.ResolverSpec,
+  language : String,
+  from_file : String,
+  module_path : String,
+  project_root : String,
+  file_exists_fn : (String) -> Bool,
+  read_file_fn : (String) -> String?,
+) -> String {
+  let resolver = FnFileResolver::{ check: file_exists_fn, read: read_file_fn }
   resolve_module(spec, language, from_file, module_path, project_root, resolver)
 }
