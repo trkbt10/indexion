@@ -326,8 +326,6 @@ fn build_resolver_spec(
   let module_path_style = get_module_path_style(kv.get("module_path_style"))
   let ns_prefix = get_optional_string(kv, "ns_prefix")
   let ns_segments = get_int(kv, "ns_segments", default=2)
-  let rust_mod_mode = get_bool(kv, "rust_mod_mode")
-  let cargo_auto_from_roots = get_list(kv, "cargo_auto_from_roots")
   let internal_prefixes = get_list(kv, "internal_prefixes")
   @types.ResolverSpec::new(
     sources~,
@@ -339,8 +337,6 @@ fn build_resolver_spec(
     aliases~,
     ns_prefix~,
     ns_segments~,
-    rust_mod_mode~,
-    cargo_auto_from_roots~,
     resolve_chain~,
     internal_prefixes~,
   )

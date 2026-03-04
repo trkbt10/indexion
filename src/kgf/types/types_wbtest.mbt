@@ -81,7 +81,6 @@ test "ResolverSpec::new creates spec with defaults" {
   assert_eq(spec.get_sources().length(), 0)
   assert_eq(spec.get_bare_prefix(), "")
   assert_eq(spec.get_ns_segments(), 0)
-  assert_eq(spec.is_rust_mod_mode(), false)
 }
 
 ///|

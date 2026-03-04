@@ -220,8 +220,6 @@ pub struct ResolverSpec {
   aliases : Array[ResolverAlias]
   ns_prefix : String?
   ns_segments : Int
-  rust_mod_mode : Bool
-  cargo_auto_from_roots : Array[String]
   /// Resolution chain for conditional/manifest-based resolution
   resolve_chain : Array[ResolveStep]
   /// Prefixes that are considered internal (not external dependencies)
@@ -241,8 +239,6 @@ pub fn ResolverSpec::new(
   aliases? : Array[ResolverAlias] = [],
   ns_prefix? : String? = None,
   ns_segments? : Int = 0,
-  rust_mod_mode? : Bool = false,
-  cargo_auto_from_roots? : Array[String] = [],
   resolve_chain? : Array[ResolveStep] = [],
   internal_prefixes? : Array[String] = [],
 ) -> ResolverSpec {
@@ -256,8 +252,6 @@ pub fn ResolverSpec::new(
     aliases,
     ns_prefix,
     ns_segments,
-    rust_mod_mode,
-    cargo_auto_from_roots,
     resolve_chain,
     internal_prefixes,
   }
@@ -319,20 +313,6 @@ pub fn ResolverSpec::get_ns_prefix(self : ResolverSpec) -> String? {
 /// Returns the namespace segments count.
 pub fn ResolverSpec::get_ns_segments(self : ResolverSpec) -> Int {
   self.ns_segments
-}
-
-///|
-/// Returns whether rust mod mode is enabled.
-pub fn ResolverSpec::is_rust_mod_mode(self : ResolverSpec) -> Bool {
-  self.rust_mod_mode
-}
-
-///|
-/// Returns the cargo auto from roots.
-pub fn ResolverSpec::get_cargo_auto_from_roots(
-  self : ResolverSpec,
-) -> Array[String] {
-  self.cargo_auto_from_roots
 }
 
 ///|
