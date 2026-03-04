@@ -191,13 +191,20 @@ pub fn build_graph_from_deps(
   let result = GraphJSON::new(title~)
   // Collect internal module IDs
   let internal_ids : Map[String, String] = Map::new() // id -> file
+  let internal_paths : Array[Array[String]] = [] // for common prefix detection
   for entry in graph.get_modules() {
     let mod_info = entry.1
     match mod_info.file {
-      Some(f) => internal_ids.set(mod_info.id, f)
+      Some(f) => {
+        internal_ids.set(mod_info.id, f)
+        let id_dir = strip_file_suffix(mod_info.id)
+        internal_paths.push(split_by_char(id_dir, '/'))
+      }
       None => ()
     }
   }
+  // Compute common prefix across all internal modules
+  let common_prefix = find_common_prefix(internal_paths)
   // Collect unique nodes
   let seen_nodes : Map[String, Bool] = Map::new()
   let node_labels : Map[String, String] = Map::new() // original -> label
@@ -230,9 +237,19 @@ pub fn build_graph_from_deps(
             }
           }
         }
-        result.nodes.push(
-          { id: node_id, label: name, kind, file, metadata: Map::new() },
-        )
+        // Generate shortened label using common prefix for internal modules
+        let label = if kind == "internal" {
+          shorten_module_name(name, common_prefix~)
+        } else {
+          name
+        }
+        result.nodes.push({
+          id: node_id,
+          label,
+          kind,
+          file,
+          metadata: Map::new(),
+        })
       }
     }
   }
@@ -248,9 +265,19 @@ pub fn build_graph_from_deps(
           Some(f) => ("internal", Some(f))
           None => ("external", None)
         }
-        result.nodes.push(
-          { id: node_id, label: name, kind, file, metadata: Map::new() },
-        )
+        // Generate shortened label using common prefix for internal modules
+        let label = if kind == "internal" {
+          shorten_module_name(name, common_prefix~)
+        } else {
+          name
+        }
+        result.nodes.push({
+          id: node_id,
+          label,
+          kind,
+          file,
+          metadata: Map::new(),
+        })
       }
     }
   }
@@ -262,9 +289,12 @@ pub fn build_graph_from_deps(
     let edge_key = from_id + "->" + to_id
     if not(seen_edges.contains(edge_key)) && from_id != to_id {
       seen_edges.set(edge_key, true)
-      result.edges.push(
-        { from: from_id, to: to_id, kind: "dependency", metadata: Map::new() },
-      )
+      result.edges.push({
+        from: from_id,
+        to: to_id,
+        kind: "dependency",
+        metadata: Map::new(),
+      })
     }
   }
   // Add circular edges
@@ -274,11 +304,13 @@ pub fn build_graph_from_deps(
     let edge_key = from_id + "->circ->" + to_id
     if not(seen_edges.contains(edge_key)) && from_id != to_id {
       seen_edges.set(edge_key, true)
-      result.edges.push(
-        { from: from_id, to: to_id, kind: "circular", metadata: Map::new() },
-      )
+      result.edges.push({
+        from: from_id,
+        to: to_id,
+        kind: "circular",
+        metadata: Map::new(),
+      })
     }
   }
   result
 }
-

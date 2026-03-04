@@ -84,20 +84,29 @@ test "generate_hierarchy_diagram: empty returns empty string" {
 
 ///|
 test "shorten_module_name: keeps meaningful path segments" {
-  // Skips src/ but keeps rest
+  // Without common_prefix, keeps full path (no hardcoded truncation)
   assert_eq(
     shorten_module_name("src/components/Button.tsx"),
-    "components/Button.tsx",
+    "src/components/Button.tsx",
   )
   assert_eq(shorten_module_name("utils"), "utils")
-  // pkg: prefix is stripped, org/project/src skipped
+  // pkg: prefix (scheme) is stripped but rest preserved
   assert_eq(
     shorten_module_name("pkg:trkbt10/indexion/src/kgf/types"),
-    "kgf/types",
+    "trkbt10/indexion/src/kgf/types",
   )
-  // moon.pkg shows parent
+  // With common_prefix, strips prefix correctly
   assert_eq(
-    shorten_module_name("src/kgf/types/moon.pkg", source_patterns=["moon.pkg"]),
+    shorten_module_name("src/components/Button.tsx", common_prefix=["src"]),
+    "components/Button.tsx",
+  )
+  // moon.pkg with common_prefix shows parent
+  assert_eq(
+    shorten_module_name(
+      "src/kgf/types/moon.pkg",
+      source_patterns=["moon.pkg"],
+      common_prefix=["src"],
+    ),
     "kgf/types",
   )
 }
@@ -154,4 +163,85 @@ test "generate_dep_diagram_with_circular: empty returns empty" {
   let circulars : Array[@query.CircularDep] = []
   let diagram = generate_dep_diagram_with_circular(deps, circulars)
   assert_eq(diagram, "")
+}
+
+///|
+test "find_common_prefix: detects common path segments" {
+  // src/kgf/cas/types, src/kgf/lexer -> common prefix is src/kgf
+  let paths = [
+    ["src", "kgf", "cas", "types"],
+    ["src", "kgf", "lexer"],
+    ["src", "kgf", "peg"],
+  ]
+  let prefix = find_common_prefix(paths)
+  assert_eq(prefix, ["src", "kgf"])
+}
+
+///|
+test "find_common_prefix: partial match" {
+  // src/kgf/cas/types, src/core/graph -> common prefix is src
+  let paths = [["src", "kgf", "cas", "types"], ["src", "core", "graph"]]
+  let prefix = find_common_prefix(paths)
+  assert_eq(prefix, ["src"])
+}
+
+///|
+test "find_common_prefix: no common prefix" {
+  // lib/utils, src/core -> no common prefix
+  let paths = [["lib", "utils"], ["src", "core"]]
+  let prefix = find_common_prefix(paths)
+  assert_eq(prefix, [])
+}
+
+///|
+test "find_common_prefix: empty input" {
+  let paths : Array[Array[String]] = []
+  let prefix = find_common_prefix(paths)
+  assert_eq(prefix, [])
+}
+
+///|
+test "find_common_prefix: single path returns empty" {
+  // Single path should not have prefix stripped (no comparison possible)
+  let paths = [["src", "kgf", "lexer"]]
+  let prefix = find_common_prefix(paths)
+  assert_eq(prefix, [])
+}
+
+///|
+test "shorten_module_name: with common_prefix strips prefix" {
+  // Common prefix: src/kgf
+  // Input: src/kgf/cas/types -> cas/types
+  assert_eq(
+    shorten_module_name("src/kgf/cas/types", common_prefix=["src", "kgf"]),
+    "cas/types",
+  )
+  // Input: src/kgf/lexer -> lexer
+  assert_eq(
+    shorten_module_name("src/kgf/lexer", common_prefix=["src", "kgf"]),
+    "lexer",
+  )
+}
+
+///|
+test "shorten_module_name: common_prefix with source_patterns" {
+  // Common prefix: src/kgf, source_pattern: moon.pkg
+  // Input: src/kgf/types/moon.pkg -> types
+  assert_eq(
+    shorten_module_name(
+      "src/kgf/types/moon.pkg",
+      source_patterns=["moon.pkg"],
+      common_prefix=["src", "kgf"],
+    ),
+    "types",
+  )
+}
+
+///|
+test "shorten_module_name: empty common_prefix uses full path" {
+  // No common prefix, should keep full path (no hardcoded truncation)
+  assert_eq(
+    shorten_module_name("src/kgf/cas/types", common_prefix=[]),
+    "src/kgf/cas/types",
+  )
 }

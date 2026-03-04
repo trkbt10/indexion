@@ -91,6 +91,14 @@ fn generate_dep_diagram_impl(
   lines.push("title: " + title)
   lines.push("---")
   lines.push("graph LR")
+  // Collect all internal module paths for common prefix detection
+  let internal_paths : Array[Array[String]] = []
+  for id in internal_ids {
+    let id_dir = strip_file_suffix(id)
+    internal_paths.push(split_by_char(id_dir, '/'))
+  }
+  // Compute common prefix across all internal modules
+  let common_prefix = find_common_prefix(internal_paths)
   // Normalize paths and collect unique nodes
   // Use shortened name as key to deduplicate same logical modules
   let label_to_id : Map[String, String] = {}
@@ -102,12 +110,14 @@ fn generate_dep_diagram_impl(
       internal_ids,
       bare_prefixes,
       source_patterns,
+      common_prefix,
     )
     let to_label = normalize_module_label(
       dep.to,
       internal_ids,
       bare_prefixes,
       source_patterns,
+      common_prefix,
     )
     original_to_label.set(dep.from, from_label)
     original_to_label.set(dep.to, to_label)
@@ -126,12 +136,14 @@ fn generate_dep_diagram_impl(
       internal_ids,
       bare_prefixes,
       source_patterns,
+      common_prefix,
     )
     let to_label = normalize_module_label(
       circ.to,
       internal_ids,
       bare_prefixes,
       source_patterns,
+      common_prefix,
     )
     original_to_label.set(circ.from, from_label)
     original_to_label.set(circ.to, to_label)
@@ -359,16 +371,17 @@ fn normalize_module_label(
   internal_ids : Array[String],
   bare_prefixes : Array[String],
   source_patterns : Array[String],
+  common_prefix : Array[String],
 ) -> String {
   if internal_ids.length() == 0 && bare_prefixes.length() == 0 {
-    return shorten_module_name(name, source_patterns~)
+    return shorten_module_name(name, source_patterns~, common_prefix~)
   }
   // Check if this name matches any internal module ID
   for id in internal_ids {
     // Internal IDs may have file suffix (moon.pkg), remove it for comparison
     let id_dir = strip_file_suffix(id)
     if name == id || name == id_dir || name.has_suffix("/" + id_dir) {
-      return format_internal_package(id_dir, source_patterns)
+      return format_internal_package(id_dir, source_patterns, common_prefix)
     }
   }
   format_external_package(name, bare_prefixes, source_patterns)
@@ -431,8 +444,51 @@ fn strip_prefix_n(s : String, n : Int) -> String {
 fn format_internal_package(
   matched_id : String,
   source_patterns : Array[String],
+  common_prefix : Array[String],
 ) -> String {
-  shorten_module_name(matched_id, source_patterns~)
+  shorten_module_name(matched_id, source_patterns~, common_prefix~)
+}
+
+///|
+/// Find the longest common prefix among all path segment arrays.
+fn find_common_prefix(paths : Array[Array[String]]) -> Array[String] {
+  if paths.length() == 0 {
+    return []
+  }
+  if paths.length() == 1 {
+    // Single path: no common prefix to strip (keep full path)
+    return []
+  }
+  // Find minimum length
+  let mut min_len = paths[0].length()
+  for path in paths {
+    if path.length() < min_len {
+      min_len = path.length()
+    }
+  }
+  // Find common prefix length
+  let mut prefix_len = 0
+  for i = 0; i < min_len; i = i + 1 {
+    let segment = paths[0][i]
+    let mut all_match = true
+    for path in paths {
+      if path[i] != segment {
+        all_match = false
+        break
+      }
+    }
+    if all_match {
+      prefix_len = i + 1
+    } else {
+      break
+    }
+  }
+  // Extract common prefix
+  let result : Array[String] = []
+  for i = 0; i < prefix_len; i = i + 1 {
+    result.push(paths[0][i])
+  }
+  result
 }
 
 ///|
@@ -440,6 +496,7 @@ fn format_internal_package(
 fn shorten_module_name(
   name : String,
   source_patterns? : Array[String] = [],
+  common_prefix? : Array[String] = [],
 ) -> String {
   let cleaned = strip_scheme_prefix(name)
   let parts = split_by_char(cleaned, '/')
@@ -453,7 +510,24 @@ fn shorten_module_name(
   if end <= 0 {
     return cleaned
   }
-  let start = if end > 2 { end - 2 } else { 0 }
+  // Strip common prefix if provided
+  let start = if common_prefix.length() > 0 {
+    // Verify prefix matches
+    let mut matches = true
+    for i = 0; i < common_prefix.length() && i < end; i = i + 1 {
+      if parts[i] != common_prefix[i] {
+        matches = false
+        break
+      }
+    }
+    if matches && common_prefix.length() < end {
+      common_prefix.length()
+    } else {
+      0
+    }
+  } else {
+    0
+  }
   join_path_segments(parts, start, end)
 }
 
