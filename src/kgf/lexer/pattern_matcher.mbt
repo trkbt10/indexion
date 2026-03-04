@@ -59,6 +59,12 @@ priv enum PatternElement {
   CharClass(Array[(Char, Char)], Bool) // ranges, negated
   AnyChar // .
   Escape(Char) // \s, \w, \d, \S, \W, \D, etc.
+  WordBoundary // \b - zero-width assertion
+  NonWordBoundary // \B - zero-width assertion
+  StartAnchor // ^ - start of string/line
+  EndAnchor // $ - end of string/line
+  StringStart // \A - absolute start of string
+  StringEnd // \z - absolute end of string
   Group(Array[QuantifiedElement])
   Alternation(Array[Array[QuantifiedElement]])
 }
@@ -70,6 +76,9 @@ priv enum Quantifier {
   ZeroOrMore // *
   OneOrMore // +
   ZeroOrOne // ?
+  Exactly(Int) // {n}
+  AtLeast(Int) // {n,}
+  Between(Int, Int) // {n,m}
 }
 
 ///|
@@ -190,6 +199,89 @@ fn parse_char_class(
 }
 
 ///|
+/// Parses a brace quantifier {n}, {n,}, {n,m}.
+fn parse_brace_quantifier(pattern : String, start : Int) -> (Quantifier, Int)? {
+  if get_char_at(pattern, start) != Some('{') {
+    return None
+  }
+  let mut pos = start + 1
+  // Parse first number
+  let mut n = 0
+  let mut has_n = false
+  while pos < pattern.length() {
+    match get_char_at(pattern, pos) {
+      Some(c) =>
+        if is_digit(c) {
+          n = n * 10 + (c.to_int() - '0'.to_int())
+          has_n = true
+          pos = pos + 1
+        } else {
+          break
+        }
+      None => return None
+    }
+  }
+  if not(has_n) {
+    return None
+  }
+  match get_char_at(pattern, pos) {
+    Some('}') => {
+      // {n} - exactly n
+      pos = pos + 1
+      // Skip non-greedy marker
+      if get_char_at(pattern, pos) == Some('?') {
+        pos = pos + 1
+      }
+      Some((Exactly(n), pos))
+    }
+    Some(',') => {
+      pos = pos + 1
+      // Check if there's an upper bound
+      match get_char_at(pattern, pos) {
+        Some('}') => {
+          // {n,} - at least n
+          pos = pos + 1
+          if get_char_at(pattern, pos) == Some('?') {
+            pos = pos + 1
+          }
+          Some((AtLeast(n), pos))
+        }
+        Some(c) =>
+          if is_digit(c) {
+            // {n,m} - between n and m
+            let mut m = 0
+            while pos < pattern.length() {
+              match get_char_at(pattern, pos) {
+                Some(c2) =>
+                  if is_digit(c2) {
+                    m = m * 10 + (c2.to_int() - '0'.to_int())
+                    pos = pos + 1
+                  } else {
+                    break
+                  }
+                None => return None
+              }
+            }
+            if get_char_at(pattern, pos) == Some('}') {
+              pos = pos + 1
+              if get_char_at(pattern, pos) == Some('?') {
+                pos = pos + 1
+              }
+              Some((Between(n, m), pos))
+            } else {
+              None
+            }
+          } else {
+            None
+          }
+        None => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
 /// Parses the pattern string into a list of quantified elements.
 fn parse_pattern(pattern : String) -> Array[QuantifiedElement]? {
   let elements : Array[QuantifiedElement] = []
@@ -197,9 +289,15 @@ fn parse_pattern(pattern : String) -> Array[QuantifiedElement]? {
   while pos < pattern.length() {
     let (element, new_pos) : (PatternElement, Int) = match
       get_char_at(pattern, pos) {
+      Some('^') => (StartAnchor, pos + 1)
+      Some('$') => (EndAnchor, pos + 1)
       Some('\\') =>
         // Escape sequence
         match get_char_at(pattern, pos + 1) {
+          Some('b') => (WordBoundary, pos + 2)
+          Some('B') => (NonWordBoundary, pos + 2)
+          Some('A') => (StringStart, pos + 2)
+          Some('z') => (StringEnd, pos + 2)
           Some(c) => (Escape(c), pos + 2)
           None => return None
         }
@@ -297,6 +395,15 @@ fn parse_pattern(pattern : String) -> Array[QuantifiedElement]? {
         }
         ZeroOrOne
       }
+      Some('{') =>
+        // Parse {n}, {n,}, {n,m}
+        match parse_brace_quantifier(pattern, pos) {
+          Some((q, new_pos)) => {
+            pos = new_pos
+            q
+          }
+          None => One
+        }
       _ => One
     }
     elements.push({ element, quantifier })
@@ -386,6 +493,8 @@ fn match_char(
       }
     }
     Group(_) | Alternation(_) => false // Should not be called directly
+    WordBoundary | NonWordBoundary => false // Zero-width assertions, handled in match_quantified
+    StartAnchor | EndAnchor | StringStart | StringEnd => false // Anchors, handled in match_quantified
   }
 }
 
@@ -400,6 +509,23 @@ fn to_lower(c : Char) -> Char {
 }
 
 ///|
+/// Checks if position is at a word boundary.
+/// A word boundary occurs between a word character and a non-word character,
+/// or at the start/end of the string if adjacent to a word character.
+fn is_at_word_boundary(input : String, pos : Int) -> Bool {
+  let prev_is_word = match get_char_at(input, pos - 1) {
+    Some(c) => is_word_char(c)
+    None => false // start of string
+  }
+  let curr_is_word = match get_char_at(input, pos) {
+    Some(c) => is_word_char(c)
+    None => false // end of string
+  }
+  // Word boundary: transition between word and non-word
+  prev_is_word != curr_is_word
+}
+
+///|
 /// Matches a quantified element against the input starting at pos.
 /// Returns the end position if matched, or None if no match.
 fn match_quantified(
@@ -409,6 +535,53 @@ fn match_quantified(
   case_insensitive : Bool,
 ) -> Int? {
   match qe.element {
+    // Zero-width assertions - don't consume characters
+    WordBoundary =>
+      if is_at_word_boundary(input, pos) {
+        Some(pos)
+      } else {
+        None
+      }
+    NonWordBoundary =>
+      if not(is_at_word_boundary(input, pos)) {
+        Some(pos)
+      } else {
+        None
+      }
+    StartAnchor =>
+      // ^ matches at start of string or after newline
+      if pos == 0 {
+        Some(pos)
+      } else {
+        match get_char_at(input, pos - 1) {
+          Some('\n') => Some(pos)
+          _ => None
+        }
+      }
+    EndAnchor =>
+      // $ matches at end of string or before newline
+      if pos >= input.length() {
+        Some(pos)
+      } else {
+        match get_char_at(input, pos) {
+          Some('\n') => Some(pos)
+          _ => None
+        }
+      }
+    StringStart =>
+      // \A matches only at absolute start of string
+      if pos == 0 {
+        Some(pos)
+      } else {
+        None
+      }
+    StringEnd =>
+      // \z matches only at absolute end of string
+      if pos >= input.length() {
+        Some(pos)
+      } else {
+        None
+      }
     Group(elements) =>
       match_group(elements, qe.quantifier, input, pos, case_insensitive)
     Alternation(alternatives) =>
@@ -490,6 +663,74 @@ fn match_simple(
           }
         None => None
       }
+    Exactly(n) => {
+      // Match exactly n times
+      let mut current = pos
+      for i = 0; i < n; i = i + 1 {
+        match get_char_at(input, current) {
+          Some(c) =>
+            if match_char(element, c, case_insensitive) {
+              current = current + 1
+            } else {
+              return None
+            }
+          None => return None
+        }
+      }
+      Some(current)
+    }
+    AtLeast(n) => {
+      // Match at least n times, then as many as possible
+      let mut current = pos
+      // First, match exactly n times
+      for i = 0; i < n; i = i + 1 {
+        match get_char_at(input, current) {
+          Some(c) =>
+            if match_char(element, c, case_insensitive) {
+              current = current + 1
+            } else {
+              return None
+            }
+          None => return None
+        }
+      }
+      // Then match as many more as possible
+      while true {
+        match get_char_at(input, current) {
+          Some(c) =>
+            if match_char(element, c, case_insensitive) {
+              current = current + 1
+            } else {
+              break
+            }
+          None => break
+        }
+      }
+      Some(current)
+    }
+    Between(n, m) => {
+      // Match between n and m times
+      let mut current = pos
+      let mut count = 0
+      // Match up to m times, but at least n
+      while count < m {
+        match get_char_at(input, current) {
+          Some(c) =>
+            if match_char(element, c, case_insensitive) {
+              current = current + 1
+              count = count + 1
+            } else {
+              break
+            }
+          None => break
+        }
+      }
+      if count >= n {
+        Some(current)
+      } else {
+        None
+      }
+    }
   }
 }
 
@@ -554,6 +795,73 @@ fn match_group(
         }
         None => None
       }
+    Exactly(n) => {
+      let mut current = pos
+      for i = 0; i < n; i = i + 1 {
+        match match_group_once(current) {
+          Some(new_pos) =>
+            if new_pos == current {
+              return None // Empty match doesn't count
+            } else {
+              current = new_pos
+            }
+          None => return None
+        }
+      }
+      Some(current)
+    }
+    AtLeast(n) => {
+      let mut current = pos
+      let mut count = 0
+      // Match at least n times
+      for i = 0; i < n; i = i + 1 {
+        match match_group_once(current) {
+          Some(new_pos) =>
+            if new_pos == current {
+              return None
+            } else {
+              current = new_pos
+              count = count + 1
+            }
+          None => return None
+        }
+      }
+      // Then match as many more as possible
+      while true {
+        match match_group_once(current) {
+          Some(new_pos) =>
+            if new_pos == current {
+              break
+            } else {
+              current = new_pos
+            }
+          None => break
+        }
+      }
+      Some(current)
+    }
+    Between(n, m) => {
+      let mut current = pos
+      let mut count = 0
+      // Match up to m times
+      while count < m {
+        match match_group_once(current) {
+          Some(new_pos) =>
+            if new_pos == current {
+              break
+            } else {
+              current = new_pos
+              count = count + 1
+            }
+          None => break
+        }
+      }
+      if count >= n {
+        Some(current)
+      } else {
+        None
+      }
+    }
   }
 }
 
@@ -627,6 +935,70 @@ fn match_alternation(
         }
         None => None
       }
+    Exactly(n) => {
+      let mut current = pos
+      for i = 0; i < n; i = i + 1 {
+        match match_alt_once(current) {
+          Some(new_pos) =>
+            if new_pos == current {
+              return None
+            } else {
+              current = new_pos
+            }
+          None => return None
+        }
+      }
+      Some(current)
+    }
+    AtLeast(n) => {
+      let mut current = pos
+      // Match at least n times
+      for i = 0; i < n; i = i + 1 {
+        match match_alt_once(current) {
+          Some(new_pos) =>
+            if new_pos == current {
+              return None
+            } else {
+              current = new_pos
+            }
+          None => return None
+        }
+      }
+      // Then match as many more as possible
+      while true {
+        match match_alt_once(current) {
+          Some(new_pos) =>
+            if new_pos == current {
+              break
+            } else {
+              current = new_pos
+            }
+          None => break
+        }
+      }
+      Some(current)
+    }
+    Between(n, m) => {
+      let mut current = pos
+      let mut count = 0
+      while count < m {
+        match match_alt_once(current) {
+          Some(new_pos) =>
+            if new_pos == current {
+              break
+            } else {
+              current = new_pos
+              count = count + 1
+            }
+          None => break
+        }
+      }
+      if count >= n {
+        Some(current)
+      } else {
+        None
+      }
+    }
   }
 }
 

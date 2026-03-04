@@ -280,3 +280,186 @@ test "lexer: typescript-style tokens" {
   assert_eq(tokens[7].kind, "StringLit")
   assert_eq(tokens[8].kind, "SEMI")
 }
+
+///|
+test "pattern_matcher: word boundary \\b at start" {
+  // Pattern "import\b" should match "import" at word boundary
+  let result = match_pattern("import\\b", "import foo", 0)
+  assert_eq(result.matched, true)
+  assert_eq(result.text, "import")
+}
+
+///|
+test "pattern_matcher: word boundary \\b prevents partial match" {
+  // Pattern "import\b" should NOT match "importing" (no word boundary after "import")
+  let result = match_pattern("import\\b", "importing", 0)
+  assert_eq(result.matched, false)
+}
+
+///|
+test "pattern_matcher: word boundary \\b at end of string" {
+  // Pattern "test\b" should match "test" at end of string
+  let result = match_pattern("test\\b", "test", 0)
+  assert_eq(result.matched, true)
+  assert_eq(result.text, "test")
+}
+
+///|
+test "pattern_matcher: word boundary \\b with punctuation" {
+  // Pattern "foo\b" should match "foo" when followed by punctuation
+  let result = match_pattern("foo\\b", "foo()", 0)
+  assert_eq(result.matched, true)
+  assert_eq(result.text, "foo")
+}
+
+///|
+test "pattern_matcher: non-word boundary \\B" {
+  // Pattern "port\B" should match "port" when NOT at word boundary
+  let result = match_pattern("port\\B", "importing", 2)
+  assert_eq(result.matched, true)
+  assert_eq(result.text, "port")
+}
+
+///|
+test "pattern_matcher: non-word boundary \\B fails at boundary" {
+  // Pattern "port\B" should NOT match "port" at word boundary
+  let result = match_pattern("port\\B", "import foo", 2)
+  assert_eq(result.matched, false)
+}
+
+///|
+test "lexer: keyword with word boundary takes priority" {
+  // Create lexer with keyword using \b and identifier
+  let lex = lexer()
+    .skip("WS", "\\s+")
+    .token("KW_import", "import\\b")
+    .token("Ident", "[a-zA-Z_][a-zA-Z0-9_]*")
+    .build()
+
+  // "import" should be recognized as keyword
+  let tokens1 = lex.tokenize("import foo")
+  assert_eq(tokens1[0].kind, "KW_import")
+  assert_eq(tokens1[0].text, "import")
+  assert_eq(tokens1[1].kind, "Ident")
+  assert_eq(tokens1[1].text, "foo")
+
+  // "importing" should be recognized as identifier, not keyword + partial
+  let tokens2 = lex.tokenize("importing")
+  assert_eq(tokens2[0].kind, "Ident")
+  assert_eq(tokens2[0].text, "importing")
+}
+
+///|
+test "pattern_matcher: exactly n quantifier {n}" {
+  // Match exactly 3 digits
+  let result = match_pattern("\\d{3}", "12345", 0)
+  assert_eq(result.matched, true)
+  assert_eq(result.text, "123")
+  // Not enough digits
+  let result2 = match_pattern("\\d{3}", "12", 0)
+  assert_eq(result2.matched, false)
+}
+
+///|
+test "pattern_matcher: at least n quantifier {n,}" {
+  // Match at least 2 digits
+  let result = match_pattern("\\d{2,}", "12345", 0)
+  assert_eq(result.matched, true)
+  assert_eq(result.text, "12345")
+  // Exactly 2 is OK
+  let result2 = match_pattern("\\d{2,}", "12abc", 0)
+  assert_eq(result2.matched, true)
+  assert_eq(result2.text, "12")
+  // Only 1 digit - fail
+  let result3 = match_pattern("\\d{2,}", "1abc", 0)
+  assert_eq(result3.matched, false)
+}
+
+///|
+test "pattern_matcher: between n and m quantifier {n,m}" {
+  // Match 2-4 digits
+  let result = match_pattern("\\d{2,4}", "12345", 0)
+  assert_eq(result.matched, true)
+  assert_eq(result.text, "1234")
+  // Only 2 digits
+  let result2 = match_pattern("\\d{2,4}", "12abc", 0)
+  assert_eq(result2.matched, true)
+  assert_eq(result2.text, "12")
+  // Only 1 digit - fail
+  let result3 = match_pattern("\\d{2,4}", "1abc", 0)
+  assert_eq(result3.matched, false)
+}
+
+///|
+test "pattern_matcher: start anchor ^" {
+  // ^ at start of string
+  let result = match_pattern("^hello", "hello world", 0)
+  assert_eq(result.matched, true)
+  assert_eq(result.text, "hello")
+  // ^ not at start - fails
+  let result2 = match_pattern("^hello", "say hello", 4)
+  assert_eq(result2.matched, false)
+}
+
+///|
+test "pattern_matcher: end anchor $" {
+  // $ at end of string
+  let result = match_pattern("world$", "hello world", 6)
+  assert_eq(result.matched, true)
+  assert_eq(result.text, "world")
+}
+
+///|
+test "pattern_matcher: multiline ^ after newline" {
+  // ^ should match after newline
+  let result = match_pattern("^line2", "line1\nline2", 6)
+  assert_eq(result.matched, true)
+  assert_eq(result.text, "line2")
+}
+
+///|
+test "pattern_matcher: multiline $ before newline" {
+  // $ should match before newline
+  let result = match_pattern("line1$", "line1\nline2", 0)
+  assert_eq(result.matched, true)
+  assert_eq(result.text, "line1")
+}
+
+///|
+test "pattern_matcher: string start \\A" {
+  // \A only at absolute start
+  let result = match_pattern("\\Ahello", "hello world", 0)
+  assert_eq(result.matched, true)
+  // \A does NOT match after newline
+  let result2 = match_pattern("\\Aline2", "line1\nline2", 6)
+  assert_eq(result2.matched, false)
+}
+
+///|
+test "pattern_matcher: string end \\z" {
+  // \z only at absolute end
+  let result = match_pattern("world\\z", "hello world", 6)
+  assert_eq(result.matched, true)
+}
+
+///|
+test "pattern_matcher: hex color with {n}" {
+  // Common use case: hex color code
+  let result = match_pattern("#[0-9a-fA-F]{6}", "#ff00aa", 0)
+  assert_eq(result.matched, true)
+  assert_eq(result.text, "#ff00aa")
+  // Short hex fails
+  let result2 = match_pattern("#[0-9a-fA-F]{6}", "#fff", 0)
+  assert_eq(result2.matched, false)
+}
+
+///|
+test "pattern_matcher: group with {n}" {
+  // Repeat group exactly n times
+  let result = match_pattern("(ab){3}", "ababab", 0)
+  assert_eq(result.matched, true)
+  assert_eq(result.text, "ababab")
+  // Not enough
+  let result2 = match_pattern("(ab){3}", "abab", 0)
+  assert_eq(result2.matched, false)
+}
