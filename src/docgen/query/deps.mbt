@@ -76,3 +76,27 @@ pub fn get_transitive_deps(
   }
   result
 }
+
+///|
+/// Extract all circular dependencies from the graph.
+/// Returns pairs of (from, to) that form circular references.
+pub fn extract_circular_deps(graph : @graph.CodeGraph) -> Array[CircularDep] {
+  let result : Array[CircularDep] = []
+  for edge in graph.get_edges() {
+    if edge.kind is @graph.CircularDependency {
+      result.push(CircularDep::new(edge.from, edge.to))
+    }
+  }
+  result
+}
+
+///|
+/// Check if there are any circular dependencies in the graph.
+pub fn has_circular_deps(graph : @graph.CodeGraph) -> Bool {
+  for edge in graph.get_edges() {
+    if edge.kind is @graph.CircularDependency {
+      return true
+    }
+  }
+  false
+}

@@ -41,9 +41,10 @@ pub fn DetectedLang::to_string(self : DetectedLang) -> String {
 /// Get the appropriate KGF spec name for documentation extraction.
 pub fn DetectedLang::doc_spec_name(self : DetectedLang) -> String {
   match self {
-    TypeScript | JavaScript => "typescript-doc"
-    Python => "python-doc"
-    MoonBit => "moonbit-doc"
+    TypeScript => "typescript"
+    JavaScript => "javascript"
+    Python => "python"
+    MoonBit => "moonbit"
     Go => "go"
     Rust => "rust"
     Markdown => "markdown"

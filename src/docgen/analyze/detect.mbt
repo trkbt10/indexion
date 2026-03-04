@@ -225,6 +225,7 @@ pub fn get_doc_spec_with_registry(
 
 ///|
 /// Analyze a file and return FileInfo with spec selection.
+/// Note: For filename-based patterns (e.g., moon.pkg), use analyze_file_with_registry instead.
 pub fn analyze_file(path : String, content : String) -> FileInfo {
   let ext = extract_extension(path)
   let lang = detect_language(path, content)

@@ -83,9 +83,20 @@ test "generate_hierarchy_diagram: empty returns empty string" {
 }
 
 ///|
-test "shorten_module_name: extracts last segment" {
-  assert_eq(shorten_module_name("src/components/Button.tsx"), "Button.tsx")
+test "shorten_module_name: keeps meaningful path segments" {
+  // Skips src/ but keeps rest
+  assert_eq(
+    shorten_module_name("src/components/Button.tsx"),
+    "components/Button.tsx",
+  )
   assert_eq(shorten_module_name("utils"), "utils")
+  // pkg: prefix is stripped, org/project/src skipped
+  assert_eq(
+    shorten_module_name("pkg:trkbt10/indexion/src/kgf/types"),
+    "kgf/types",
+  )
+  // moon.pkg shows parent
+  assert_eq(shorten_module_name("src/kgf/types/moon.pkg"), "kgf/types")
 }
 
 ///|
@@ -106,4 +117,38 @@ test "escape_mermaid: handles special chars" {
 test "sanitize_class_name: keeps alphanumeric and underscore" {
   assert_eq(sanitize_class_name("MyClass_123"), "MyClass_123")
   assert_eq(sanitize_class_name("pkg::Type"), "pkgType")
+}
+
+///|
+test "generate_dep_diagram_with_circular: includes circular refs" {
+  let deps = [
+    @query.ModuleDep::new("src/a.ts", "src/b.ts"),
+    @query.ModuleDep::new("src/b.ts", "src/c.ts"),
+  ]
+  let circulars = [@query.CircularDep::new("src/c.ts", "src/a.ts")]
+  let diagram = generate_dep_diagram_with_circular(deps, circulars)
+  assert_true(diagram.contains("```mermaid"))
+  assert_true(diagram.contains("graph LR"))
+  assert_true(diagram.contains("-->"))
+  // Circular should have special arrow
+  assert_true(diagram.contains("-.->|circular|"))
+  // Should have red styling for circular edges
+  assert_true(diagram.contains("stroke:red"))
+}
+
+///|
+test "generate_dep_diagram_with_circular: only circulars" {
+  let deps : Array[@query.ModuleDep] = []
+  let circulars = [@query.CircularDep::new("src/a.ts", "src/b.ts")]
+  let diagram = generate_dep_diagram_with_circular(deps, circulars)
+  assert_true(diagram.contains("```mermaid"))
+  assert_true(diagram.contains("-.->|circular|"))
+}
+
+///|
+test "generate_dep_diagram_with_circular: empty returns empty" {
+  let deps : Array[@query.ModuleDep] = []
+  let circulars : Array[@query.CircularDep] = []
+  let diagram = generate_dep_diagram_with_circular(deps, circulars)
+  assert_eq(diagram, "")
 }

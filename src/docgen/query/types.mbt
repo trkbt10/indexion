@@ -187,3 +187,26 @@ pub fn SymbolDecl::get_module_id(self : SymbolDecl) -> String {
 pub fn SymbolDecl::get_doc(self : SymbolDecl) -> String? {
   self.doc
 }
+
+///|
+/// Circular dependency information extracted from CircularDependency edges.
+pub struct CircularDep {
+  from : String
+  to : String
+}
+
+///|
+/// Create a new CircularDep.
+pub fn CircularDep::new(from : String, to : String) -> CircularDep {
+  { from, to }
+}
+
+///|
+pub fn CircularDep::get_from(self : CircularDep) -> String {
+  self.from
+}
+
+///|
+pub fn CircularDep::get_to(self : CircularDep) -> String {
+  self.to
+}

@@ -7,7 +7,47 @@ pub fn generate_dep_diagram(
   deps : Array[@query.ModuleDep],
   title? : String = "Module Dependencies",
 ) -> String {
-  if deps.length() == 0 {
+  generate_dep_diagram_with_circular(deps, [], title~)
+}
+
+///|
+/// Generate a module dependency diagram with external dependency detection.
+/// external_prefixes: bare_prefix values from KGF specs (e.g., ["pkg:", "npm:"])
+/// internal_prefixes: paths that are internal even with bare_prefix (e.g., ["trkbt10/indexion"])
+pub fn generate_dep_diagram_with_externals(
+  deps : Array[@query.ModuleDep],
+  circulars : Array[@query.CircularDep],
+  external_prefixes : Array[String],
+  internal_prefixes? : Array[String] = [],
+  title? : String = "Module Dependencies",
+) -> String {
+  generate_dep_diagram_impl(
+    deps, circulars, external_prefixes, internal_prefixes, title,
+  )
+}
+
+///|
+/// Generate a module dependency diagram with circular dependency highlighting.
+/// Circular dependencies are shown with red dashed edges.
+/// Uses empty external/internal prefixes (for backwards compatibility).
+pub fn generate_dep_diagram_with_circular(
+  deps : Array[@query.ModuleDep],
+  circulars : Array[@query.CircularDep],
+  title? : String = "Module Dependencies",
+) -> String {
+  generate_dep_diagram_impl(deps, circulars, [], [], title)
+}
+
+///|
+/// Internal implementation for diagram generation.
+fn generate_dep_diagram_impl(
+  deps : Array[@query.ModuleDep],
+  circulars : Array[@query.CircularDep],
+  external_prefixes : Array[String],
+  internal_prefixes : Array[String],
+  title : String,
+) -> String {
+  if deps.length() == 0 && circulars.length() == 0 {
     return ""
   }
   let lines : Array[String] = []
@@ -16,31 +56,113 @@ pub fn generate_dep_diagram(
   lines.push("title: " + title)
   lines.push("---")
   lines.push("graph LR")
-  // Collect unique nodes and assign short IDs
-  let node_ids : Map[String, String] = {}
+  // Normalize paths and collect unique nodes
+  // Use shortened name as key to deduplicate same logical modules
+  // External dependencies are collapsed to package name
+  let label_to_id : Map[String, String] = {}
+  let original_to_label : Map[String, String] = {}
+  let external_nodes : Map[String, Bool] = {}
   let mut id_counter = 0
   for dep in deps {
-    if not(node_ids.contains(dep.from)) {
-      node_ids.set(dep.from, "N" + id_counter.to_string())
+    let from_label = normalize_module_label(
+      dep.from,
+      external_nodes,
+      external_prefixes,
+      internal_prefixes,
+    )
+    let to_label = normalize_module_label(
+      dep.to,
+      external_nodes,
+      external_prefixes,
+      internal_prefixes,
+    )
+    original_to_label.set(dep.from, from_label)
+    original_to_label.set(dep.to, to_label)
+    if not(label_to_id.contains(from_label)) {
+      label_to_id.set(from_label, "N" + id_counter.to_string())
       id_counter = id_counter + 1
     }
-    if not(node_ids.contains(dep.to)) {
-      node_ids.set(dep.to, "N" + id_counter.to_string())
+    if not(label_to_id.contains(to_label)) {
+      label_to_id.set(to_label, "N" + id_counter.to_string())
       id_counter = id_counter + 1
     }
   }
-  // Generate node definitions
-  for entry in node_ids {
-    let name = entry.0
+  for circ in circulars {
+    let from_label = normalize_module_label(
+      circ.from,
+      external_nodes,
+      external_prefixes,
+      internal_prefixes,
+    )
+    let to_label = normalize_module_label(
+      circ.to,
+      external_nodes,
+      external_prefixes,
+      internal_prefixes,
+    )
+    original_to_label.set(circ.from, from_label)
+    original_to_label.set(circ.to, to_label)
+    if not(label_to_id.contains(from_label)) {
+      label_to_id.set(from_label, "N" + id_counter.to_string())
+      id_counter = id_counter + 1
+    }
+    if not(label_to_id.contains(to_label)) {
+      label_to_id.set(to_label, "N" + id_counter.to_string())
+      id_counter = id_counter + 1
+    }
+  }
+  // Generate node definitions (external nodes get different shape)
+  for entry in label_to_id {
+    let label = entry.0
     let id = entry.1
-    let label = shorten_module_name(name)
-    lines.push("  " + id + "[" + escape_mermaid(label) + "]")
+    let escaped = escape_mermaid(label)
+    if external_nodes.contains(label) {
+      // External dependency: use stadium shape ([label])
+      lines.push("  " + id + "([" + escaped + "])")
+    } else {
+      lines.push("  " + id + "[" + escaped + "]")
+    }
   }
-  // Generate edges
+  // Generate normal dependency edges (deduplicate by label)
+  let seen_edges : Map[String, Bool] = {}
   for dep in deps {
-    let from_id = node_ids.get(dep.from).unwrap()
-    let to_id = node_ids.get(dep.to).unwrap()
-    lines.push("  " + from_id + " --> " + to_id)
+    let from_label = original_to_label.get(dep.from).unwrap()
+    let to_label = original_to_label.get(dep.to).unwrap()
+    let edge_key = from_label + "->" + to_label
+    if not(seen_edges.contains(edge_key)) && from_label != to_label {
+      seen_edges.set(edge_key, true)
+      let from_id = label_to_id.get(from_label).unwrap()
+      let to_id = label_to_id.get(to_label).unwrap()
+      lines.push("  " + from_id + " --> " + to_id)
+    }
+  }
+  // Generate circular dependency edges with red dashed style
+  let mut circ_count = 0
+  if circulars.length() > 0 {
+    for circ in circulars {
+      let from_label = original_to_label.get(circ.from).unwrap()
+      let to_label = original_to_label.get(circ.to).unwrap()
+      let edge_key = from_label + "->circular->" + to_label
+      if not(seen_edges.contains(edge_key)) && from_label != to_label {
+        seen_edges.set(edge_key, true)
+        let from_id = label_to_id.get(from_label).unwrap()
+        let to_id = label_to_id.get(to_label).unwrap()
+        lines.push("  " + from_id + " -.->|circular| " + to_id)
+        circ_count = circ_count + 1
+      }
+    }
+    // Add style for circular edges
+    if circ_count > 0 {
+      lines.push("  linkStyle default stroke:#333")
+      let start_idx = seen_edges.length() - circ_count
+      for i = 0; i < circ_count; i = i + 1 {
+        lines.push(
+          "  linkStyle " +
+          (start_idx + i).to_string() +
+          " stroke:red,stroke-width:2px,stroke-dasharray:5",
+        )
+      }
+    }
   }
   lines.push("```")
   join_lines(lines)
@@ -202,15 +324,170 @@ pub fn generate_overview_diagram(
 // Helper functions
 
 ///|
+/// Normalize module label, collapsing external dependencies.
+/// Uses external_prefixes and internal_prefixes from KGF specs.
+/// External deps like pkg:moonbitlang/core/json → "moonbitlang/core"
+/// Internal deps (matching internal_prefixes) keep their structure.
+fn normalize_module_label(
+  name : String,
+  external_nodes : Map[String, Bool],
+  external_prefixes : Array[String],
+  internal_prefixes : Array[String],
+) -> String {
+  // Check if path starts with any external prefix (from KGF specs)
+  for prefix in external_prefixes {
+    if name.has_prefix(prefix) {
+      // Strip the bare_prefix to check internal_prefixes
+      let stripped = strip_prefix(name, prefix)
+      // Check if stripped path starts with any internal prefix
+      let mut is_internal = false
+      for internal in internal_prefixes {
+        if stripped.has_prefix(internal) {
+          is_internal = true
+          break
+        }
+      }
+      if is_internal {
+        // Internal module - shorten normally
+        return shorten_module_name(stripped)
+      }
+      // External dependency - extract package name
+      let package_name = extract_package_name(stripped)
+      external_nodes.set(package_name, true)
+      return package_name
+    }
+  }
+  // No external prefix - just shorten
+  shorten_module_name(name)
+}
+
+///|
+/// Strip prefix from string.
+fn strip_prefix(s : String, prefix : String) -> String {
+  if s.has_prefix(prefix) {
+    let chars = s.to_array()
+    let prefix_len = prefix.length()
+    let result : Array[Char] = []
+    for i = prefix_len; i < chars.length(); i = i + 1 {
+      result.push(chars[i])
+    }
+    String::from_array(result)
+  } else {
+    s
+  }
+}
+
+///|
+/// Extract package name from path (first two segments: org/package).
+/// "moonbitlang/core/json" → "moonbitlang/core"
+fn extract_package_name(path : String) -> String {
+  let parts = split_by_char(path, '/')
+  if parts.length() >= 2 {
+    parts[0] + "/" + parts[1]
+  } else if parts.length() == 1 {
+    parts[0]
+  } else {
+    path
+  }
+}
+
+///|
 /// Shorten module name for display.
+/// Handles both file paths (src/kgf/types/moon.pkg) and module paths (kgf/types).
 fn shorten_module_name(name : String) -> String {
-  // Take last path segment
   let parts = split_by_char(name, '/')
-  if parts.length() > 0 {
-    parts[parts.length() - 1]
+  if parts.length() == 0 {
+    return name
+  }
+  let last = parts[parts.length() - 1]
+  // For moon.pkg files, show the parent directory path
+  if last == "moon.pkg" || last == "package.json" {
+    let start = find_meaningful_start(parts)
+    if start < parts.length() - 1 {
+      return join_path_segments(parts, start, parts.length() - 1)
+    }
+    if parts.length() > 1 {
+      return parts[parts.length() - 2]
+    }
+    return last
+  }
+  // For module paths (e.g., pkg:trkbt10/indexion/src/kgf/types)
+  // Strip pkg: prefix and common prefixes, keep the meaningful part
+  let cleaned = if name.has_prefix("pkg:") {
+    let chars = name.to_array()
+    let result : Array[Char] = []
+    for i = 4; i < chars.length(); i = i + 1 {
+      result.push(chars[i])
+    }
+    String::from_array(result)
   } else {
     name
   }
+  // Re-split after stripping prefix
+  let clean_parts = split_by_char(cleaned, '/')
+  if clean_parts.length() == 0 {
+    return cleaned
+  }
+  // Skip organization/project prefixes and src/
+  let start = find_meaningful_start_for_module(clean_parts)
+  if start < clean_parts.length() {
+    return join_path_segments(clean_parts, start, clean_parts.length())
+  }
+  clean_parts[clean_parts.length() - 1]
+}
+
+///|
+/// Find where meaningful path starts (skip src/, cmd/, etc.)
+fn find_meaningful_start(parts : Array[String]) -> Int {
+  let mut start = 0
+  if parts.length() > 0 && parts[0] == "src" {
+    start = 1
+  } else if parts.length() > 0 && parts[0] == "cmd" {
+    start = 0 // Keep cmd prefix
+  }
+  start
+}
+
+///|
+/// Find meaningful start for module paths.
+/// Uses heuristics to skip common prefixes without hardcoding specific names.
+fn find_meaningful_start_for_module(parts : Array[String]) -> Int {
+  let mut start = 0
+  // Skip segments that look like organization names
+  // Heuristic: if first segment is not a known directory type, skip it
+  if parts.length() > 2 {
+    let first = parts[0]
+    if first != "src" && first != "cmd" && first != "lib" && first != "pkg" {
+      start = start + 1
+      // Check if second segment might be project name
+      if parts.length() > start + 1 {
+        let second = parts[start]
+        if second != "src" && second != "cmd" && second != "lib" {
+          start = start + 1
+        }
+      }
+    }
+  }
+  // Skip src/ if present
+  if parts.length() > start && parts[start] == "src" {
+    start = start + 1
+  }
+  start
+}
+
+///|
+/// Join path segments with /
+fn join_path_segments(parts : Array[String], start : Int, end : Int) -> String {
+  let result : Array[Char] = []
+  for i = start; i < end; i = i + 1 {
+    if i > start {
+      result.push('/')
+    }
+    for c in parts[i] {
+      result.push(c)
+    }
+  }
+  String::from_array(result)
 }
 
 ///|

@@ -167,3 +167,43 @@ test "count_references: counts refs per symbol" {
   assert_eq(counts.get("shared"), Some(3))
   assert_eq(counts.get("other"), Some(1))
 }
+
+///|
+test "extract_circular_deps: extracts CircularDependency edges" {
+  let graph = @graph.CodeGraph::new()
+  // Normal dependencies
+  graph.add_edge(edge_kind("module_depends_on"), "a.ts", "b.ts")
+  graph.add_edge(edge_kind("module_depends_on"), "b.ts", "c.ts")
+  // Circular dependency
+  graph.add_edge(edge_kind("circular_dependency"), "c.ts", "a.ts")
+  let circulars = extract_circular_deps(graph)
+  assert_eq(circulars.length(), 1)
+  assert_eq(circulars[0].from, "c.ts")
+  assert_eq(circulars[0].to, "a.ts")
+}
+
+///|
+test "has_circular_deps: detects circular deps" {
+  let graph_with = @graph.CodeGraph::new()
+  graph_with.add_edge(edge_kind("module_depends_on"), "a.ts", "b.ts")
+  graph_with.add_edge(edge_kind("circular_dependency"), "b.ts", "a.ts")
+  assert_true(has_circular_deps(graph_with))
+  let graph_without = @graph.CodeGraph::new()
+  graph_without.add_edge(edge_kind("module_depends_on"), "a.ts", "b.ts")
+  graph_without.add_edge(edge_kind("module_depends_on"), "b.ts", "c.ts")
+  assert_false(has_circular_deps(graph_without))
+}
+
+///|
+test "get_transitive_deps: handles cycles safely" {
+  // Ensure get_transitive_deps doesn't infinite loop on cycles
+  let graph = @graph.CodeGraph::new()
+  graph.add_edge(edge_kind("module_depends_on"), "a.ts", "b.ts")
+  graph.add_edge(edge_kind("module_depends_on"), "b.ts", "c.ts")
+  graph.add_edge(edge_kind("module_depends_on"), "c.ts", "a.ts") // cycle!
+  // This should complete without hanging
+  let deps = get_transitive_deps(graph, "a.ts")
+  // All nodes in the cycle should be included
+  assert_true(deps.contains("b.ts"))
+  assert_true(deps.contains("c.ts"))
+}
