@@ -84,7 +84,11 @@ fn section(text : String, name : String) -> String {
 /// Extracts the header section (everything before the first `===`).
 fn extract_header(text : String) -> String {
   let idx = find_substring(text, "===")
-  if idx >= 0 { substr(text, 0, idx) } else { text }
+  if idx >= 0 {
+    substr(text, 0, idx)
+  } else {
+    text
+  }
 }
 
 ///|

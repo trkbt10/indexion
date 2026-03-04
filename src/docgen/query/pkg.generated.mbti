@@ -1,0 +1,121 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/docgen/query"
+
+import {
+  "trkbt10/indexion/src/core/graph",
+}
+
+// Values
+pub fn count_references(@graph.CodeGraph) -> Map[String, Int]
+
+pub fn extract_call_graph(@graph.CodeGraph) -> Array[CallInfo]
+
+pub fn extract_circular_deps(@graph.CodeGraph) -> Array[CircularDep]
+
+pub fn extract_declarations(@graph.CodeGraph) -> Array[SymbolDecl]
+
+pub fn extract_module_deps(@graph.CodeGraph) -> Array[ModuleDep]
+
+pub fn extract_references(@graph.CodeGraph) -> Array[SymbolRef]
+
+pub fn extract_type_hierarchy(@graph.CodeGraph) -> Array[TypeRelation]
+
+pub fn get_ancestors(@graph.CodeGraph, String) -> Array[TypeRelation]
+
+pub fn get_call_chain(@graph.CodeGraph, String, max_depth? : Int) -> Array[CallInfo]
+
+pub fn get_callees(@graph.CodeGraph, String) -> Array[CallInfo]
+
+pub fn get_callers(@graph.CodeGraph, String) -> Array[CallInfo]
+
+pub fn get_children(@graph.CodeGraph, String) -> Array[TypeRelation]
+
+pub fn get_dependents(@graph.CodeGraph, String) -> Array[ModuleDep]
+
+pub fn get_descendants(@graph.CodeGraph, String) -> Array[TypeRelation]
+
+pub fn get_direct_deps(@graph.CodeGraph, String) -> Array[ModuleDep]
+
+pub fn get_module_declarations(@graph.CodeGraph, String) -> Array[SymbolDecl]
+
+pub fn get_parents(@graph.CodeGraph, String) -> Array[TypeRelation]
+
+pub fn get_references_from(@graph.CodeGraph, String) -> Array[SymbolRef]
+
+pub fn get_references_to(@graph.CodeGraph, String) -> Array[SymbolRef]
+
+pub fn get_transitive_deps(@graph.CodeGraph, String) -> Array[String]
+
+pub fn has_circular_deps(@graph.CodeGraph) -> Bool
+
+// Errors
+
+// Types and methods
+pub struct CallInfo {
+  caller : String
+  callee : String
+  file : String
+}
+pub fn CallInfo::get_callee(Self) -> String
+pub fn CallInfo::get_caller(Self) -> String
+pub fn CallInfo::get_file(Self) -> String
+pub fn CallInfo::new(String, String, String) -> Self
+
+pub struct CircularDep {
+  from : String
+  to : String
+}
+pub fn CircularDep::get_from(Self) -> String
+pub fn CircularDep::get_to(Self) -> String
+pub fn CircularDep::new(String, String) -> Self
+
+pub struct ModuleDep {
+  from : String
+  to : String
+  via : String?
+  dep_kind : String?
+}
+pub fn ModuleDep::get_dep_kind(Self) -> String?
+pub fn ModuleDep::get_from(Self) -> String
+pub fn ModuleDep::get_to(Self) -> String
+pub fn ModuleDep::get_via(Self) -> String?
+pub fn ModuleDep::new(String, String, via? : String?, dep_kind? : String?) -> Self
+
+pub struct SymbolDecl {
+  id : String
+  name : String
+  kind : String
+  module_id : String
+  doc : String?
+}
+pub fn SymbolDecl::get_doc(Self) -> String?
+pub fn SymbolDecl::get_id(Self) -> String
+pub fn SymbolDecl::get_kind(Self) -> String
+pub fn SymbolDecl::get_module_id(Self) -> String
+pub fn SymbolDecl::get_name(Self) -> String
+pub fn SymbolDecl::new(String, String, String, String, doc? : String?) -> Self
+
+pub struct SymbolRef {
+  symbol : String
+  ref_site : String
+  ref_kind : String
+}
+pub fn SymbolRef::get_ref_kind(Self) -> String
+pub fn SymbolRef::get_ref_site(Self) -> String
+pub fn SymbolRef::get_symbol(Self) -> String
+pub fn SymbolRef::new(String, String, String) -> Self
+
+pub struct TypeRelation {
+  child : String
+  parent : String
+  relation : String
+}
+pub fn TypeRelation::get_child(Self) -> String
+pub fn TypeRelation::get_parent(Self) -> String
+pub fn TypeRelation::get_relation(Self) -> String
+pub fn TypeRelation::new(String, String, String) -> Self
+
+// Type aliases
+
+// Traits
+

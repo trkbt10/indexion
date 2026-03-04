@@ -223,7 +223,6 @@ pub fn KGFRegistry::get_external_prefixes(self : KGFRegistry) -> Array[String] {
   prefixes
 }
 
-
 // Helper functions
 
 ///|

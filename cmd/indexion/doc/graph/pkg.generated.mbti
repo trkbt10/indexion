@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/doc/graph"
+
+// Values
+pub fn parse_args(Array[String], Int) -> GraphConfig
+
+pub fn run(Array[String], Int) -> Unit
+
+pub fn show_help() -> Unit
+
+// Errors
+
+// Types and methods
+pub struct GraphConfig {
+  output : String
+  specs_dir : String
+  title : String
+  format : String
+  input_paths : Array[String]
+  show_help : Bool
+}
+pub fn GraphConfig::default() -> Self
+
+// Type aliases
+
+// Traits
+

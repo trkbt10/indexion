@@ -1,0 +1,36 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/registry"
+
+import {
+  "trkbt10/indexion/src/kgf/types",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct KGFRegistry {
+  specs : Map[String, @types.KGFSpec]
+  ext_to_lang : Map[String, String]
+  lang_to_doc_spec : Map[String, String]
+}
+pub fn KGFRegistry::detect_from_path(Self, String) -> String?
+pub fn KGFRegistry::get_doc_spec_name(Self, String) -> String
+pub fn KGFRegistry::get_extensions(Self) -> Array[String]
+pub fn KGFRegistry::get_external_prefixes(Self) -> Array[String]
+pub fn KGFRegistry::get_lang_from_ext(Self, String) -> String?
+pub fn KGFRegistry::get_languages(Self) -> Array[String]
+pub fn KGFRegistry::get_spec(Self, String) -> @types.KGFSpec?
+pub fn KGFRegistry::is_file_supported(Self, String) -> Bool
+pub fn KGFRegistry::load_from_dir(String) -> Self
+pub fn KGFRegistry::new() -> Self
+pub fn KGFRegistry::register_spec(Self, @types.KGFSpec) -> Unit
+pub fn KGFRegistry::spec_count(Self) -> Int
+pub fn KGFRegistry::supports_ext(Self, String) -> Bool
+pub fn KGFRegistry::to_specs_map(Self) -> Map[String, @types.KGFSpec]
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,68 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/parser"
+
+import {
+  "trkbt10/indexion/src/kgf/types",
+}
+
+// Values
+pub fn char_at(String, Int) -> Char
+
+pub fn find_char(String, Int, Char) -> Int
+
+pub fn find_substring(String, String) -> Int
+
+pub fn is_digit(Char) -> Bool
+
+pub fn is_ident_char(Char) -> Bool
+
+pub fn is_ident_start(Char) -> Bool
+
+pub fn is_whitespace(Char) -> Bool
+
+pub fn parse_attrs(String) -> Map[String, Array[@types.AttrAction]]
+
+pub fn parse_kgf(String) -> @types.KGFSpec?
+
+pub fn parse_kgf_header(String) -> KGFHeader
+
+pub fn parse_lex(String) -> Array[@types.TokenDef]
+
+pub fn parse_list(String) -> Array[String]
+
+pub fn parse_preprocess_fst(String) -> Array[@types.PreprocessFstSpec]?
+
+pub fn parse_resolver(String) -> @types.ResolverSpec
+
+pub fn parse_resolver_with_sources(String, Array[String]) -> @types.ResolverSpec
+
+pub fn parse_rules(String) -> Map[String, @types.RuleDef]
+
+pub fn parse_semantics(String) -> Map[String, Array[@types.SemOnBlock]]?
+
+pub fn split_lines(String) -> Array[String]
+
+pub fn starts_with(String, String) -> Bool
+
+pub fn starts_with_at(String, Int, String) -> Bool
+
+pub fn substr(String, Int, Int) -> String
+
+pub fn substr_from(String, Int) -> String
+
+pub fn trim_str(String) -> String
+
+// Errors
+
+// Types and methods
+pub struct KGFHeader {
+  language : String
+  sources : Array[String]
+}
+pub fn KGFHeader::get_language(Self) -> String
+pub fn KGFHeader::get_sources(Self) -> Array[String]
+
+// Type aliases
+
+// Traits
+

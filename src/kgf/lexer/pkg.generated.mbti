@@ -1,0 +1,45 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/lexer"
+
+import {
+  "trkbt10/indexion/src/kgf/types",
+}
+
+// Values
+pub fn lexer() -> LexerBuilder
+
+pub fn match_pattern(String, String, Int, case_insensitive? : Bool) -> MatchResult
+
+pub fn matches_at(String, String, Int, case_insensitive? : Bool) -> Bool
+
+// Errors
+
+// Types and methods
+type CompiledToken
+
+pub struct Lexer {
+  tokens : Array[CompiledToken]
+}
+pub fn Lexer::new(Array[@types.TokenDef]) -> Self
+pub fn Lexer::tokenize(Self, String) -> Array[@types.Tok]
+
+pub struct LexerBuilder {
+  tokens : Array[@types.TokenDef]
+}
+pub fn LexerBuilder::build(Self) -> Lexer
+pub fn LexerBuilder::new() -> Self
+pub fn LexerBuilder::skip(Self, String, String) -> Self
+pub fn LexerBuilder::token(Self, String, String, skip? : Bool, flags? : String?) -> Self
+
+pub struct MatchResult {
+  matched : Bool
+  end_pos : Int
+  text : String
+}
+pub fn MatchResult::failure() -> Self
+pub fn MatchResult::success(Int, String) -> Self
+
+// Type aliases
+
+// Traits
+

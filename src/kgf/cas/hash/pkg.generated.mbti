@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/cas/hash"
+
+import {
+  "trkbt10/indexion/src/kgf/cas/types",
+}
+
+// Values
+pub fn as_content_hash(String) -> @types.ContentHash?
+
+pub fn compute_chunk_hash(String, @types.ContentHash, @types.ContentHash) -> @types.ContentHash
+
+pub fn compute_hash(String) -> @types.ContentHash
+
+pub fn compute_spec_hash(String) -> @types.ContentHash
+
+pub fn is_valid_hash(String) -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

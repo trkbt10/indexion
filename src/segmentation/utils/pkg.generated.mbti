@@ -1,0 +1,102 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/segmentation/utils"
+
+import {
+  "trkbt10/indexion/src/segmentation/sentence",
+  "trkbt10/indexion/src/segmentation/types",
+  "trkbt10/indexion/src/text/tfidf",
+}
+
+// Values
+pub fn apply_size_constraints(Int, Array[Int], Array[@sentence.Sentence], Int, Int, Int) -> Array[Int]
+
+pub fn boundaries_to_segment_points(Array[Int], Int) -> Array[@types.SegmentPoint]
+
+pub fn build_document_frequency(Array[Array[String]]) -> Map[String, Int]
+
+pub fn build_quote_stack_until(String, Int) -> Array[QuoteStackEntry]
+
+pub fn build_term_frequency(Array[String]) -> Map[String, Int]
+
+pub fn build_tfidf_vector(Array[String], Map[String, Int], Int) -> @tfidf.TfidfVector
+
+pub fn calculate_adjacent_ncd(Array[String]) -> Array[Double]
+
+pub fn calculate_adjacent_tfidf_distance(Array[String]) -> Array[Double]
+
+pub fn combine_sentences(Array[@sentence.Sentence], Int, Int) -> String
+
+pub fn compress(String) -> Bytes
+
+pub fn compressed_size(String) -> Int
+
+pub fn cosine_distance(@tfidf.TfidfVector, @tfidf.TfidfVector) -> Double
+
+pub fn cosine_similarity(@tfidf.TfidfVector, @tfidf.TfidfVector) -> Double
+
+pub let default_quote_safe_max_length : Int
+
+pub fn find_local_maxima(Array[Double], Double) -> Array[Int]
+
+pub fn find_nearest_sentence_end(Array[@sentence.Sentence], Int) -> Int
+
+pub fn find_next_boundary(String, Int, FindBoundariesOptions) -> Int
+
+pub fn find_next_boundary_default(String, Int) -> Int
+
+pub fn find_sentence_boundaries(String, FindBoundariesOptions) -> Array[Int]
+
+pub fn find_sentence_boundaries_default(String) -> Array[Int]
+
+pub fn get_window_end(Array[@sentence.Sentence], Int, Int) -> Int
+
+pub fn handle_few_sentences(String, Array[@sentence.Sentence], Int, Int, Int) -> Array[@types.SegmentPoint]
+
+pub fn is_at_boundary(String, Int) -> Bool
+
+pub fn is_inside_protected_quote(Array[QuoteStackEntry], Int, Int) -> Bool
+
+pub fn is_sentence_terminator(Char) -> Bool
+
+pub fn is_trailing_punctuation(Char) -> Bool
+
+pub fn is_whitespace_only(String) -> Bool
+
+pub fn min_max_normalize(Array[Double]) -> Array[Double]
+
+pub fn ncd(String, String) -> Double
+
+pub fn tokenize_text_for_tfidf(String) -> Array[String]
+
+pub fn update_quote_stack(Array[QuoteStackEntry], Char, Int) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct FindBoundariesOptions {
+  include_closing_brackets : Bool
+  respect_japanese_quotes : Bool
+  quote_safe_max_length : Int
+}
+pub fn FindBoundariesOptions::create(Bool, Bool, Int) -> Self
+pub fn FindBoundariesOptions::get_include_closing_brackets(Self) -> Bool
+pub fn FindBoundariesOptions::get_quote_safe_max_length(Self) -> Int
+pub fn FindBoundariesOptions::get_respect_japanese_quotes(Self) -> Bool
+pub fn FindBoundariesOptions::new() -> Self
+pub impl Eq for FindBoundariesOptions
+pub impl Show for FindBoundariesOptions
+
+pub struct QuoteStackEntry {
+  open : Char
+  start : Int
+}
+pub fn QuoteStackEntry::get_open(Self) -> Char
+pub fn QuoteStackEntry::get_start(Self) -> Int
+pub fn QuoteStackEntry::new(Char, Int) -> Self
+pub impl Eq for QuoteStackEntry
+pub impl Show for QuoteStackEntry
+
+// Type aliases
+
+// Traits
+

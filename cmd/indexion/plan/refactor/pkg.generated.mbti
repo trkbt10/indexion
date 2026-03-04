@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/plan/refactor"
+
+// Values
+pub fn parse_args(Array[String], Int) -> RefactorPlanConfig
+
+pub fn run(Array[String], Int) -> Unit
+
+pub fn show_help() -> Unit
+
+// Errors
+
+// Types and methods
+type DuplicateBlock
+
+type FileCluster
+
+pub struct RefactorPlanConfig {
+  target_dir : String
+  threshold : Double
+  strategy : String
+  includes : Array[String]
+  excludes : Array[String]
+  output : String
+  show_help : Bool
+}
+pub fn RefactorPlanConfig::default() -> Self
+
+type SimilarPair
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/cas/assembler"
+
+import {
+  "trkbt10/indexion/src/core/graph",
+  "trkbt10/indexion/src/kgf/cas/store",
+  "trkbt10/indexion/src/kgf/cas/types",
+}
+
+// Values
+pub fn assemble_graph(@types.CASManifest, @store.MemoryChunkStore) -> AssemblyResult
+
+pub fn assemble_partial_graph(@types.CASManifest, @store.MemoryChunkStore, Array[String]) -> AssemblyResult
+
+pub fn get_manifest_stats(@types.CASManifest) -> (Int, Int)
+
+pub fn validate_manifest(@types.CASManifest, @store.MemoryChunkStore) -> Array[String]
+
+// Errors
+
+// Types and methods
+pub struct AssemblyResult {
+  graph : @graph.CodeGraph
+  loaded_chunks : Array[@types.ContentHash]
+  missing_chunks : Array[String]
+  unresolved_refs : Array[String]
+}
+pub fn AssemblyResult::all_resolved(Self) -> Bool
+pub fn AssemblyResult::empty() -> Self
+pub fn AssemblyResult::is_complete(Self) -> Bool
+pub impl Eq for AssemblyResult
+pub impl Show for AssemblyResult
+
+// Type aliases
+
+// Traits
+

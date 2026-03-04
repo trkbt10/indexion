@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/preprocess"
+
+import {
+  "trkbt10/indexion/src/kgf/types",
+}
+
+// Values
+pub fn apply_preprocess(String, Array[String]?, Array[@types.PreprocessFstSpec]?) -> String raise
+
+pub fn compile_fst(@types.PreprocessFstSpec) -> CompiledFst
+
+pub fn run_fst(CompiledFst, String) -> String raise
+
+// Errors
+
+// Types and methods
+type CompiledCharClass
+
+pub struct CompiledFst {
+  name : String
+  initial : String
+  classes : Array[CompiledCharClass]
+  states : Map[String, Array[@types.FstTransition]]
+}
+
+// Type aliases
+
+// Traits
+

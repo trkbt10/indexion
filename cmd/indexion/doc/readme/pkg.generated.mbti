@@ -1,0 +1,85 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/doc/readme"
+
+import {
+  "trkbt10/indexion/src/kgf/registry",
+  "trkbt10/indexion/src/kgf/types",
+}
+
+// Values
+pub fn discover_packages(@registry.KGFRegistry, Array[String], Array[String], Array[String], Bool) -> Array[PackageInfo]
+
+pub fn discover_packages_from_files(@registry.KGFRegistry, Array[String], Array[String], Array[String]) -> Array[PackageInfo]
+
+pub fn extract_package_doc(PackageInfo, Map[String, @types.KGFSpec]) -> ExtractedDoc?
+
+pub fn extract_summary(String) -> String
+
+pub fn parse_args(Array[String], Int) -> ReadmeConfig
+
+pub fn render_json(Array[(PackageInfo, ExtractedDoc)]) -> String
+
+pub fn render_markdown(Array[(PackageInfo, ExtractedDoc)]) -> String
+
+pub fn render_raw(Array[(PackageInfo, ExtractedDoc)]) -> String
+
+pub fn render_template(String, TemplateContext) -> String
+
+pub fn render_template_file(String, TemplateContext) -> String?
+
+pub fn run(Array[String], Int) -> Unit
+
+pub fn show_help() -> Unit
+
+pub fn write_output(String, String?, Bool) -> Unit
+
+pub fn write_per_package(Array[(PackageInfo, ExtractedDoc)]) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct ExtractedDoc {
+  title : String?
+  content : String
+  source_path : String
+}
+pub fn ExtractedDoc::new(String?, String, String) -> Self
+
+pub enum OutputFormat {
+  Markdown
+  Json
+  Raw
+}
+pub fn OutputFormat::from_string(String) -> Self
+
+pub struct PackageInfo {
+  path : String
+  name : String
+  files : Array[String]
+}
+pub fn PackageInfo::new(String, String, Array[String]) -> Self
+
+pub struct ReadmeConfig {
+  paths : Array[String]
+  specs_dir : String
+  includes : Array[String]
+  excludes : Array[String]
+  recursive : Bool
+  format : String
+  output : String?
+  template : String?
+  per_package : Bool
+  show_help : Bool
+}
+pub fn ReadmeConfig::default() -> Self
+
+pub struct TemplateContext {
+  base_dir : String
+  packages : Array[(PackageInfo, ExtractedDoc)]
+}
+pub fn TemplateContext::new(String, Array[(PackageInfo, ExtractedDoc)]) -> Self
+
+// Type aliases
+
+// Traits
+

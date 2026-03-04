@@ -1,0 +1,29 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/docgen/diagram"
+
+import {
+  "trkbt10/indexion/src/core/graph",
+  "trkbt10/indexion/src/docgen/query",
+}
+
+// Values
+pub fn generate_call_diagram(Array[@query.CallInfo], title? : String, focus? : String?) -> String
+
+pub fn generate_dep_diagram(Array[@query.ModuleDep], title? : String) -> String
+
+pub fn generate_dep_diagram_with_circular(Array[@query.ModuleDep], Array[@query.CircularDep], graph? : @graph.CodeGraph, bare_prefixes? : Array[String], source_patterns? : Array[String], title? : String) -> String
+
+pub fn generate_dep_diagram_with_externals(Array[@query.ModuleDep], Array[@query.CircularDep], @graph.CodeGraph, bare_prefixes? : Array[String], source_patterns? : Array[String], title? : String) -> String
+
+pub fn generate_hierarchy_diagram(Array[@query.TypeRelation], title? : String) -> String
+
+pub fn generate_overview_diagram(Array[@query.ModuleDep], Array[@query.SymbolDecl], max_symbols_per_module? : Int) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

@@ -1,12 +1,20 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "trkbt10/indexion/segmentation/sentence"
+package "trkbt10/indexion/src/segmentation/sentence"
 
 // Values
 pub fn count_sentences(String) -> Int
 
+pub fn count_sentences_with_options(String, SplitOptions) -> Int
+
+pub let default_quote_safe_max_length : Int
+
 pub fn split_sentences(String) -> Array[Sentence]
 
 pub fn split_sentences_text(String) -> Array[String]
+
+pub fn split_sentences_text_with_options(String, SplitOptions) -> Array[String]
+
+pub fn split_sentences_with_options(String, SplitOptions) -> Array[Sentence]
 
 // Errors
 
@@ -23,6 +31,15 @@ pub fn Sentence::length(Self) -> Int
 pub fn Sentence::new(String, Int, Int) -> Self
 pub impl Eq for Sentence
 pub impl Show for Sentence
+
+pub struct SplitOptions {
+  quote_protection : Bool
+  quote_safe_max_length : Int
+  include_closing_brackets : Bool
+}
+pub fn SplitOptions::default() -> Self
+pub impl Eq for SplitOptions
+pub impl Show for SplitOptions
 
 // Type aliases
 

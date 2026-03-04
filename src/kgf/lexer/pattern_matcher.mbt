@@ -40,17 +40,6 @@ fn is_word_char(c : Char) -> Bool {
   c == '_'
 }
 
-///|
-/// Checks if a character is an alphabetic character.
-fn is_alpha(c : Char) -> Bool {
-  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-}
-
-///|
-/// Checks if a character is a hex digit.
-fn is_hex_digit(c : Char) -> Bool {
-  is_digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
-}
 
 ///|
 /// Parsed pattern element for internal use.
@@ -99,7 +88,28 @@ priv struct CompiledPattern {
 /// Gets a character from a string at the given index safely.
 fn get_char_at(s : String, index : Int) -> Char? {
   if index >= 0 && index < s.length() {
-    Some(Char::from_int(s[index].to_int()))
+    Some(Int::unsafe_to_char(s[index].to_int()))
+  } else {
+    None
+  }
+}
+
+///|
+/// Builds a char array once for repeated indexed access during matching.
+fn build_input_chars(input : String) -> Array[Char] {
+  let chars : Array[Char] = []
+  let len = input.length()
+  for i = 0; i < len; i = i + 1 {
+    chars.push(Int::unsafe_to_char(input[i].to_int()))
+  }
+  chars
+}
+
+///|
+/// Gets a character from prebuilt input chars.
+fn get_input_char(input_chars : Array[Char], index : Int) -> Char? {
+  if index >= 0 && index < input_chars.length() {
+    Some(input_chars[index])
   } else {
     None
   }
@@ -483,9 +493,9 @@ fn match_char(
       }
     CharClass(ranges, negated) => {
       let mut in_class = false
+      let ch = if case_insensitive { to_lower(c) } else { c }
       for range in ranges {
         let (start, end) = range
-        let ch = if case_insensitive { to_lower(c) } else { c }
         let range_start = if case_insensitive { to_lower(start) } else { start }
         let range_end = if case_insensitive { to_lower(end) } else { end }
         if ch >= range_start && ch <= range_end {
@@ -509,22 +519,20 @@ fn match_char(
 /// Converts a character to lowercase.
 fn to_lower(c : Char) -> Char {
   if c >= 'A' && c <= 'Z' {
-    Char::from_int(c.to_int() + 32)
+    Int::unsafe_to_char(c.to_int() + 32)
   } else {
     c
   }
 }
 
 ///|
-/// Checks if position is at a word boundary.
-/// A word boundary occurs between a word character and a non-word character,
-/// or at the start/end of the string if adjacent to a word character.
-fn is_at_word_boundary(input : String, pos : Int) -> Bool {
-  let prev_is_word = match get_char_at(input, pos - 1) {
+/// Checks if position is at a word boundary using prebuilt input chars.
+fn is_at_word_boundary_with_chars(input_chars : Array[Char], pos : Int) -> Bool {
+  let prev_is_word = match get_input_char(input_chars, pos - 1) {
     Some(c) => is_word_char(c)
     None => false // start of string
   }
-  let curr_is_word = match get_char_at(input, pos) {
+  let curr_is_word = match get_input_char(input_chars, pos) {
     Some(c) => is_word_char(c)
     None => false // end of string
   }
@@ -537,20 +545,21 @@ fn is_at_word_boundary(input : String, pos : Int) -> Bool {
 /// Returns the end position if matched, or None if no match.
 fn match_quantified(
   qe : QuantifiedElement,
-  input : String,
+  input_chars : Array[Char],
   pos : Int,
   case_insensitive : Bool,
 ) -> Int? {
+  let input_len = input_chars.length()
   match qe.element {
     // Zero-width assertions - don't consume characters
     WordBoundary =>
-      if is_at_word_boundary(input, pos) {
+      if is_at_word_boundary_with_chars(input_chars, pos) {
         Some(pos)
       } else {
         None
       }
     NonWordBoundary =>
-      if not(is_at_word_boundary(input, pos)) {
+      if not(is_at_word_boundary_with_chars(input_chars, pos)) {
         Some(pos)
       } else {
         None
@@ -560,17 +569,17 @@ fn match_quantified(
       if pos == 0 {
         Some(pos)
       } else {
-        match get_char_at(input, pos - 1) {
+        match get_input_char(input_chars, pos - 1) {
           Some('\n') => Some(pos)
           _ => None
         }
       }
     EndAnchor =>
       // $ matches at end of string or before newline
-      if pos >= input.length() {
+      if pos >= input_len {
         Some(pos)
       } else {
-        match get_char_at(input, pos) {
+        match get_input_char(input_chars, pos) {
           Some('\n') => Some(pos)
           _ => None
         }
@@ -584,22 +593,29 @@ fn match_quantified(
       }
     StringEnd =>
       // \z matches only at absolute end of string
-      if pos >= input.length() {
+      if pos >= input_len {
         Some(pos)
       } else {
         None
       }
     Group(elements) =>
-      match_group(elements, qe.quantifier, input, pos, case_insensitive)
+      match_group(elements, qe.quantifier, input_chars, pos, case_insensitive)
     Alternation(alternatives) =>
       match_alternation(
         alternatives,
         qe.quantifier,
-        input,
+        input_chars,
         pos,
         case_insensitive,
       )
-    _ => match_simple(qe.element, qe.quantifier, input, pos, case_insensitive)
+    _ =>
+      match_simple(
+        qe.element,
+        qe.quantifier,
+        input_chars,
+        pos,
+        case_insensitive,
+      )
   }
 }
 
@@ -608,13 +624,13 @@ fn match_quantified(
 fn match_simple(
   element : PatternElement,
   quantifier : Quantifier,
-  input : String,
+  input_chars : Array[Char],
   pos : Int,
   case_insensitive : Bool,
 ) -> Int? {
   match quantifier {
     One =>
-      match get_char_at(input, pos) {
+      match get_input_char(input_chars, pos) {
         Some(c) =>
           if match_char(element, c, case_insensitive) {
             Some(pos + 1)
@@ -624,7 +640,7 @@ fn match_simple(
         None => None
       }
     ZeroOrOne =>
-      match get_char_at(input, pos) {
+      match get_input_char(input_chars, pos) {
         Some(c) =>
           if match_char(element, c, case_insensitive) {
             Some(pos + 1)
@@ -634,102 +650,93 @@ fn match_simple(
         None => Some(pos)
       }
     ZeroOrMore => {
+      let input_len = input_chars.length()
       let mut current = pos
-      while true {
-        match get_char_at(input, current) {
-          Some(c) =>
-            if match_char(element, c, case_insensitive) {
-              current = current + 1
-            } else {
-              break
-            }
-          None => break
+      while current < input_len {
+        let c = input_chars[current]
+        if match_char(element, c, case_insensitive) {
+          current = current + 1
+        } else {
+          break
         }
       }
       Some(current)
     }
-    OneOrMore =>
-      match get_char_at(input, pos) {
-        Some(c) =>
-          if match_char(element, c, case_insensitive) {
-            let mut current = pos + 1
-            while true {
-              match get_char_at(input, current) {
-                Some(c2) =>
-                  if match_char(element, c2, case_insensitive) {
-                    current = current + 1
-                  } else {
-                    break
-                  }
-                None => break
-              }
-            }
-            Some(current)
-          } else {
-            None
-          }
-        None => None
+    OneOrMore => {
+      let input_len = input_chars.length()
+      if pos >= input_len {
+        return None
       }
+      let c = input_chars[pos]
+      if match_char(element, c, case_insensitive) {
+        let mut current = pos + 1
+        while current < input_len {
+          let c2 = input_chars[current]
+          if match_char(element, c2, case_insensitive) {
+            current = current + 1
+          } else {
+            break
+          }
+        }
+        Some(current)
+      } else {
+        None
+      }
+    }
     Exactly(n) => {
-      // Match exactly n times
+      let input_len = input_chars.length()
       let mut current = pos
       for i = 0; i < n; i = i + 1 {
-        match get_char_at(input, current) {
-          Some(c) =>
-            if match_char(element, c, case_insensitive) {
-              current = current + 1
-            } else {
-              return None
-            }
-          None => return None
+        if current >= input_len {
+          return None
+        }
+        let c = input_chars[current]
+        if match_char(element, c, case_insensitive) {
+          current = current + 1
+        } else {
+          return None
         }
       }
       Some(current)
     }
     AtLeast(n) => {
-      // Match at least n times, then as many as possible
+      let input_len = input_chars.length()
       let mut current = pos
       // First, match exactly n times
       for i = 0; i < n; i = i + 1 {
-        match get_char_at(input, current) {
-          Some(c) =>
-            if match_char(element, c, case_insensitive) {
-              current = current + 1
-            } else {
-              return None
-            }
-          None => return None
+        if current >= input_len {
+          return None
+        }
+        let c = input_chars[current]
+        if match_char(element, c, case_insensitive) {
+          current = current + 1
+        } else {
+          return None
         }
       }
       // Then match as many more as possible
-      while true {
-        match get_char_at(input, current) {
-          Some(c) =>
-            if match_char(element, c, case_insensitive) {
-              current = current + 1
-            } else {
-              break
-            }
-          None => break
+      while current < input_len {
+        let c = input_chars[current]
+        if match_char(element, c, case_insensitive) {
+          current = current + 1
+        } else {
+          break
         }
       }
       Some(current)
     }
     Between(n, m) => {
-      // Match between n and m times
+      let input_len = input_chars.length()
       let mut current = pos
       let mut count = 0
       // Match up to m times, but at least n
-      while count < m {
-        match get_char_at(input, current) {
-          Some(c) =>
-            if match_char(element, c, case_insensitive) {
-              current = current + 1
-              count = count + 1
-            } else {
-              break
-            }
-          None => break
+      while count < m && current < input_len {
+        let c = input_chars[current]
+        if match_char(element, c, case_insensitive) {
+          current = current + 1
+          count = count + 1
+        } else {
+          break
         }
       }
       if count >= n {
@@ -746,14 +753,14 @@ fn match_simple(
 fn match_group(
   elements : Array[QuantifiedElement],
   quantifier : Quantifier,
-  input : String,
+  input_chars : Array[Char],
   pos : Int,
   case_insensitive : Bool,
 ) -> Int? {
   fn match_group_once(start_pos : Int) -> Int? {
     let mut current = start_pos
     for elem in elements {
-      match match_quantified(elem, input, current, case_insensitive) {
+      match match_quantified(elem, input_chars, current, case_insensitive) {
         Some(new_pos) => current = new_pos
         None => return None
       }
@@ -877,7 +884,7 @@ fn match_group(
 fn match_alternation(
   alternatives : Array[Array[QuantifiedElement]],
   quantifier : Quantifier,
-  input : String,
+  input_chars : Array[Char],
   pos : Int,
   case_insensitive : Bool,
 ) -> Int? {
@@ -886,7 +893,7 @@ fn match_alternation(
       let mut current = start_pos
       let mut matched = true
       for elem in alt {
-        match match_quantified(elem, input, current, case_insensitive) {
+        match match_quantified(elem, input_chars, current, case_insensitive) {
           Some(new_pos) => current = new_pos
           None => {
             matched = false
@@ -1028,16 +1035,17 @@ fn compile_pattern(
 
 ///|
 /// Matches a compiled pattern against the input at the given position.
-fn match_compiled(
+fn match_compiled_end_pos_with_chars(
   compiled : CompiledPattern,
-  input : String,
+  input_chars : Array[Char],
   pos : Int,
-) -> MatchResult {
+) -> Int? {
   for elements in compiled.alternatives {
     let mut current = pos
     let mut matched = true
     for qe in elements {
-      match match_quantified(qe, input, current, compiled.case_insensitive) {
+      match
+        match_quantified(qe, input_chars, current, compiled.case_insensitive) {
         Some(new_pos) => current = new_pos
         None => {
           matched = false
@@ -1046,13 +1054,25 @@ fn match_compiled(
       }
     }
     if matched {
-      return MatchResult::success(
-        current,
-        input.substring(start=pos, end=current),
-      )
+      return Some(current)
     }
   }
-  MatchResult::failure()
+  None
+}
+
+///|
+/// Matches a compiled pattern against the input at the given position.
+fn match_compiled_with_chars(
+  compiled : CompiledPattern,
+  input : String,
+  input_chars : Array[Char],
+  pos : Int,
+) -> MatchResult {
+  match match_compiled_end_pos_with_chars(compiled, input_chars, pos) {
+    Some(end_pos) =>
+      MatchResult::success(end_pos, input.substring(start=pos, end=end_pos))
+    None => MatchResult::failure()
+  }
 }
 
 ///|
@@ -1064,8 +1084,10 @@ pub fn match_pattern(
   pos : Int,
   case_insensitive? : Bool = false,
 ) -> MatchResult {
+  let input_chars = build_input_chars(input)
   match compile_pattern(pattern, case_insensitive~) {
-    Some(compiled) => match_compiled(compiled, input, pos)
+    Some(compiled) =>
+      match_compiled_with_chars(compiled, input, input_chars, pos)
     None => MatchResult::failure()
   }
 }

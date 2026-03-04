@@ -1,0 +1,59 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/segmentation/tfidf"
+
+import {
+  "trkbt10/indexion/src/segmentation/sentence",
+  "trkbt10/indexion/src/segmentation/types",
+}
+
+// Values
+pub fn calculate_window_tfidf_divergence(Array[@sentence.Sentence], Int) -> @types.WindowDivergence
+
+pub let default_max_chunk_size : Int
+
+pub let default_min_chunk_size : Int
+
+pub let default_target_chunk_size : Int
+
+pub let default_tfidf_threshold : Double
+
+pub let default_window_size : Int
+
+pub fn segment(String) -> Array[@types.SegmentPoint]
+
+pub fn segment_by_tfidf(String, TfidfConfig) -> Array[@types.SegmentPoint]
+
+// Errors
+
+// Types and methods
+pub struct TfidfConfig {
+  target_chunk_size : Int
+  min_chunk_size : Int
+  max_chunk_size : Int
+  tfidf_threshold : Double
+  window_size : Int
+}
+pub fn TfidfConfig::create(Int, Int, Int, Double, Int) -> Self
+pub fn TfidfConfig::get_max_chunk_size(Self) -> Int
+pub fn TfidfConfig::get_min_chunk_size(Self) -> Int
+pub fn TfidfConfig::get_target_chunk_size(Self) -> Int
+pub fn TfidfConfig::get_tfidf_threshold(Self) -> Double
+pub fn TfidfConfig::get_window_size(Self) -> Int
+pub fn TfidfConfig::new() -> Self
+pub impl Eq for TfidfConfig
+pub impl Show for TfidfConfig
+
+pub struct TfidfStrategy {
+  config : TfidfConfig
+}
+pub fn TfidfStrategy::get_config(Self) -> TfidfConfig
+pub fn TfidfStrategy::new() -> Self
+pub fn TfidfStrategy::with_config(TfidfConfig) -> Self
+pub impl Eq for TfidfStrategy
+pub impl Show for TfidfStrategy
+pub impl @types.SegmentationStrategy for TfidfStrategy
+
+// Type aliases
+
+// Traits
+

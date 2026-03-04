@@ -1,0 +1,75 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/semantics"
+
+import {
+  "trkbt10/indexion/src/core/graph",
+  "trkbt10/indexion/src/kgf/types",
+}
+
+// Values
+pub fn eval_attrs(Array[@types.AttrAction], Map[String, Json], SemEvalCtx) -> Unit
+
+pub fn eval_expr(@types.SemExpr, Env, SemEvalCtx) -> Json
+
+pub fn eval_rule_attrs(String, Map[String, Json], SemEvalCtx) -> Unit
+
+pub fn eval_rule_semantics(String, Map[String, Json], SemEvalCtx) -> Unit
+
+pub fn eval_semantics(Array[@types.SemOnBlock], Map[String, Json], SemEvalCtx) -> Unit
+
+pub fn eval_stmt(@types.SemStmt, Env, SemEvalCtx) -> Unit
+
+pub fn is_truthy(Json) -> Bool
+
+// Errors
+
+// Types and methods
+pub struct Env {
+  labels : Map[String, Json]
+  locals : Map[String, Json]
+}
+pub fn Env::get(Self, String) -> Json?
+pub fn Env::new(Map[String, Json]) -> Self
+pub fn Env::set_local(Self, String, Json) -> Unit
+
+pub struct ScopeEntry {
+  value_ns : Map[String, String]
+  type_ns : Map[String, String]
+}
+pub fn ScopeEntry::get_type(Self, String) -> String?
+pub fn ScopeEntry::get_value(Self, String) -> String?
+pub fn ScopeEntry::new() -> Self
+pub fn ScopeEntry::set_type(Self, String, String) -> Unit
+pub fn ScopeEntry::set_value(Self, String, String) -> Unit
+
+pub struct SemEvalCtx {
+  spec : @types.KGFSpec
+  graph : @graph.CodeGraph
+  file : String
+  root : String
+  language : String
+  scopes : Array[ScopeEntry]
+  sym_seq : Ref[Int]
+  call_seq : Ref[Int]
+  call_stack : Array[String]
+  events : Array[(String, Map[String, Json])]
+  file_exists : (String) -> Bool
+  resolution_cache : @types.ResolutionCache
+}
+pub fn SemEvalCtx::add_event(Self, String, Map[String, Json]) -> Unit
+pub fn SemEvalCtx::collect_refs(Self) -> Array[Map[String, Json]]
+pub fn SemEvalCtx::current_call_id(Self) -> String?
+pub fn SemEvalCtx::current_scope(Self) -> ScopeEntry
+pub fn SemEvalCtx::get_resolution_cache(Self) -> @types.ResolutionCache
+pub fn SemEvalCtx::lookup_scope(Self, String, String) -> String?
+pub fn SemEvalCtx::new(@types.KGFSpec, @graph.CodeGraph, String, String, String, (String) -> Bool) -> Self
+pub fn SemEvalCtx::new_with_cache(@types.KGFSpec, @graph.CodeGraph, String, String, String, (String) -> Bool, @types.ResolutionCache) -> Self
+pub fn SemEvalCtx::next_call_id(Self) -> String
+pub fn SemEvalCtx::next_sym_id(Self) -> String
+pub fn SemEvalCtx::pop_scope(Self) -> Unit
+pub fn SemEvalCtx::push_scope(Self) -> Unit
+
+// Type aliases
+
+// Traits
+

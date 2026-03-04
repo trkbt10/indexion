@@ -99,7 +99,9 @@ fn discover_impl(
         }
         let subpath = path + "/" + entry
         if @fs.is_dir(subpath) {
-          discover_impl(registry, subpath, includes, excludes, recursive, packages)
+          discover_impl(
+            registry, subpath, includes, excludes, recursive, packages,
+          )
         }
       }
     }

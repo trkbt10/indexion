@@ -1,0 +1,52 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/pipeline"
+
+import {
+  "trkbt10/indexion/src/kgf/registry",
+  "trkbt10/indexion/src/kgf/types",
+}
+
+// Values
+pub fn build_kgf_index(String) -> KGFIndex
+
+pub fn build_path_signals(Array[String]) -> Map[String, Bool]
+
+pub fn collect_supported_files(Array[String], @registry.KGFRegistry) -> Array[(String, String)]
+
+pub fn discover_files(Array[String], DiscoverOptions) -> Array[String]
+
+pub fn extract_basename(String) -> String
+
+pub fn extract_extension(String) -> String
+
+pub fn load_registry_for_paths(String, Array[String]) -> @registry.KGFRegistry
+
+pub fn load_registry_from_index(KGFIndex, Map[String, Bool]) -> @registry.KGFRegistry
+
+pub fn matches_pattern(String, String) -> Bool
+
+pub fn should_skip_dir(String) -> Bool
+
+pub fn spec_matches_signals(@types.KGFSpec, Map[String, Bool]) -> Bool
+
+pub fn trim_trailing_slash(String) -> String
+
+// Errors
+
+// Types and methods
+pub struct DiscoverOptions {
+  recursive : Bool
+  excludes : Array[String]
+}
+pub fn DiscoverOptions::default() -> Self
+pub fn DiscoverOptions::new(recursive? : Bool, excludes? : Array[String]) -> Self
+
+pub struct KGFIndex {
+  source_to_files : Map[String, Array[String]]
+  all_files : Array[String]
+}
+
+// Type aliases
+
+// Traits
+

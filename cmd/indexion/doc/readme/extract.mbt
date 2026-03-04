@@ -75,10 +75,7 @@ fn extract_module_docs(graph : @graph.CodeGraph, pkg_path : String) -> String {
     // Check if edge belongs to this package
     if edge.from.has_prefix(pkg_path) || pkg_path.has_prefix(edge.from) {
       match edge.attrs.get("doc") {
-        Some(doc) =>
-          if doc.length() > 0 {
-            docs.push(doc)
-          }
+        Some(doc) => if doc.length() > 0 { docs.push(doc) }
         None => ()
       }
     }

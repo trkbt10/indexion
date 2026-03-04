@@ -1,0 +1,44 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/segmentation"
+
+import {
+  "trkbt10/indexion/src/segmentation/punctuation",
+  "trkbt10/indexion/src/segmentation/tfidf",
+  "trkbt10/indexion/src/segmentation/types",
+  "trkbt10/indexion/src/segmentation/window",
+}
+
+// Values
+pub fn default_punctuation_config() -> @punctuation.PunctuationConfig
+
+pub fn default_tfidf_config() -> @tfidf.TfidfConfig
+
+pub fn default_window_config() -> @window.SegmentConfig
+
+pub fn new_segment_point(Int, Int, @types.SegmentType) -> @types.SegmentPoint
+
+pub fn segment(String, Strategy) -> Array[@types.SegmentPoint]
+
+pub fn segment_by_divergence(String, @window.SegmentConfig) -> Array[@types.SegmentPoint]
+
+pub fn segment_by_punctuation(String, @punctuation.PunctuationConfig) -> Array[@types.SegmentPoint]
+
+pub fn segment_by_tfidf(String, @tfidf.TfidfConfig) -> Array[@types.SegmentPoint]
+
+pub fn to_text_segments(Array[@types.SegmentPoint], String) -> Array[@types.TextSegment]
+
+// Errors
+
+// Types and methods
+pub enum Strategy {
+  Punctuation
+  Tfidf
+  Window
+}
+pub impl Eq for Strategy
+pub impl Show for Strategy
+
+// Type aliases
+
+// Traits
+

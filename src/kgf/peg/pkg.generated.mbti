@@ -1,0 +1,94 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/peg"
+
+import {
+  "moonbitlang/core/hashset",
+  "trkbt10/indexion/src/kgf/types",
+}
+
+// Values
+pub fn build_peg(@types.KGFSpec) -> PEG raise
+
+pub fn collect_active_rules(@types.KGFSpec) -> @hashset.HashSet[String]
+
+pub fn parse_expr(String) -> Node raise
+
+pub fn run_parse(PEG, @types.KGFSpec, String, Array[@types.Tok]) -> EvalResult?
+
+pub fn run_parse_filtered(PEG, @types.KGFSpec, String, Array[@types.Tok], @hashset.HashSet[String]) -> EvalResult?
+
+// Errors
+
+// Types and methods
+type CompiledNode
+
+type EvalContext
+pub fn EvalContext::new(PEG, Array[@types.Tok], emit_filter? : @hashset.HashSet[String]?) -> Self
+
+pub struct EvalResult {
+  ok : Bool
+  pos : Int
+  labels : Map[String, Json]
+  events : Array[(String, Map[String, Json])]
+}
+pub fn EvalResult::failure(Int) -> Self
+pub fn EvalResult::get_events(Self) -> Array[(String, Map[String, Json])]
+pub fn EvalResult::get_label(Self, String) -> Json?
+pub fn EvalResult::get_labels(Self) -> Map[String, Json]
+pub fn EvalResult::get_pos(Self) -> Int
+pub fn EvalResult::is_ok(Self) -> Bool
+pub fn EvalResult::success(Int, labels? : Map[String, Json], events? : Array[(String, Map[String, Json])]) -> Self
+
+type MemoKey
+pub impl Eq for MemoKey
+pub impl Hash for MemoKey
+pub impl Show for MemoKey
+
+pub enum Node {
+  Empty
+  Sym(String)
+  Seq(Array[Node])
+  Choice(Array[Node])
+  Star(Node)
+  Plus(Node)
+  Optional(Node)
+  Label(String, Node)
+}
+pub fn Node::get_choice(Self) -> Array[Self]?
+pub fn Node::get_label(Self) -> (String, Self)?
+pub fn Node::get_optional(Self) -> Self?
+pub fn Node::get_plus(Self) -> Self?
+pub fn Node::get_seq(Self) -> Array[Self]?
+pub fn Node::get_star(Self) -> Self?
+pub fn Node::get_sym(Self) -> String?
+pub fn Node::is_choice(Self) -> Bool
+pub fn Node::is_empty(Self) -> Bool
+pub fn Node::is_label(Self) -> Bool
+pub fn Node::is_optional(Self) -> Bool
+pub fn Node::is_plus(Self) -> Bool
+pub fn Node::is_seq(Self) -> Bool
+pub fn Node::is_star(Self) -> Bool
+pub fn Node::is_sym(Self) -> Bool
+pub impl Eq for Node
+pub impl Hash for Node
+pub impl Show for Node
+
+pub struct PEG {
+  tokens : @hashset.HashSet[String]
+  ast : Map[String, Node]
+  attrs : Map[String, Array[@types.AttrAction]]
+  compiled_nodes : Array[CompiledNode]
+  rule_node_ids : Map[String, Int]
+}
+pub fn PEG::get_ast(Self) -> Map[String, Node]
+pub fn PEG::get_attrs(Self) -> Map[String, Array[@types.AttrAction]]
+pub fn PEG::get_rule(Self, String) -> Node?
+pub fn PEG::get_rule_attrs(Self, String) -> Array[@types.AttrAction]?
+pub fn PEG::get_tokens(Self) -> @hashset.HashSet[String]
+pub fn PEG::is_token(Self, String) -> Bool
+pub fn PEG::new() -> Self
+
+// Type aliases
+
+// Traits
+

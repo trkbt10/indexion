@@ -1,0 +1,70 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/similarity"
+
+// Values
+pub fn calculate_adjacent_hybrid(Array[String], HybridConfig) -> Array[Double]
+
+pub fn calculate_adjacent_ncd(Array[String]) -> Array[Double]
+
+pub fn calculate_adjacent_tfidf(Array[String]) -> Array[Double]
+
+// Errors
+
+// Types and methods
+pub struct HybridConfig {
+  ncd_weight : Double
+  tfidf_weight : Double
+}
+pub fn HybridConfig::create(Double, Double) -> Self
+pub fn HybridConfig::get_ncd_weight(Self) -> Double
+pub fn HybridConfig::get_tfidf_weight(Self) -> Double
+pub fn HybridConfig::new() -> Self
+pub impl Eq for HybridConfig
+pub impl Show for HybridConfig
+
+pub struct HybridStrategy {
+  config : HybridConfig
+}
+pub fn HybridStrategy::get_config(Self) -> HybridConfig
+pub fn HybridStrategy::new() -> Self
+pub fn HybridStrategy::with_config(HybridConfig) -> Self
+pub impl Eq for HybridStrategy
+pub impl Show for HybridStrategy
+pub impl SimilarityStrategy for HybridStrategy
+
+pub struct NCDStrategy {
+  // private fields
+}
+pub fn NCDStrategy::new() -> Self
+pub impl Eq for NCDStrategy
+pub impl Show for NCDStrategy
+pub impl SimilarityStrategy for NCDStrategy
+
+pub struct SimilarityResult {
+  distance : Double
+  similarity : Double
+}
+pub fn SimilarityResult::from_distance(Double) -> Self
+pub fn SimilarityResult::from_similarity(Double) -> Self
+pub fn SimilarityResult::get_distance(Self) -> Double
+pub fn SimilarityResult::get_similarity(Self) -> Double
+pub impl Eq for SimilarityResult
+pub impl Show for SimilarityResult
+
+pub struct TfidfStrategy {
+  // private fields
+}
+pub fn TfidfStrategy::new() -> Self
+pub impl Eq for TfidfStrategy
+pub impl Show for TfidfStrategy
+pub impl SimilarityStrategy for TfidfStrategy
+
+// Type aliases
+
+// Traits
+pub(open) trait SimilarityStrategy {
+  name(Self) -> String
+  distance(Self, String, String) -> Double
+  similarity(Self, String, String) -> Double
+}
+

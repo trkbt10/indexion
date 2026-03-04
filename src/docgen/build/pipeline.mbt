@@ -124,14 +124,7 @@ pub fn analyze_files_with_progress(
         match get_or_build_peg(spec_name, spec, peg_cache) {
           Some(peg) => {
             let graph = analyze_with_spec(
-              path,
-              content,
-              spec,
-              active_rules,
-              root,
-              file_exists,
-              lexer,
-              peg,
+              path, content, spec, active_rules, root, file_exists, lexer, peg,
             )
             graphs.push(graph)
           }

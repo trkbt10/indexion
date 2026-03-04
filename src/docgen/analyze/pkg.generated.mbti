@@ -1,0 +1,105 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/docgen/analyze"
+
+import {
+  "trkbt10/indexion/src/core/graph",
+  "trkbt10/indexion/src/kgf/registry",
+}
+
+// Values
+pub fn analyze_file(String, String) -> FileInfo
+
+pub fn analyze_file_with_registry(@registry.KGFRegistry, String, String) -> FileInfo
+
+pub fn detect_from_registry(@registry.KGFRegistry, String) -> String?
+
+pub fn detect_language(String, String) -> DetectedLang
+
+pub fn detect_language_with_registry(@registry.KGFRegistry, String, String) -> String
+
+pub fn extract_extension(String) -> String
+
+pub fn get_doc_spec_with_registry(@registry.KGFRegistry, String) -> String
+
+// Errors
+
+// Types and methods
+pub struct AnalysisResult {
+  files : Array[FileInfo]
+  mut graph : @graph.CodeGraph
+  symbols : Array[DocSymbol]
+  module_docs : Map[String, String]
+}
+pub fn AnalysisResult::add_file(Self, FileInfo) -> Unit
+pub fn AnalysisResult::add_symbol(Self, DocSymbol) -> Unit
+pub fn AnalysisResult::get_files(Self) -> Array[FileInfo]
+pub fn AnalysisResult::get_graph(Self) -> @graph.CodeGraph
+pub fn AnalysisResult::get_module_docs(Self) -> Map[String, String]
+pub fn AnalysisResult::get_symbols(Self) -> Array[DocSymbol]
+pub fn AnalysisResult::new() -> Self
+pub fn AnalysisResult::set_graph(Self, @graph.CodeGraph) -> Unit
+pub fn AnalysisResult::set_module_doc(Self, String, String) -> Unit
+pub impl Eq for AnalysisResult
+pub impl Show for AnalysisResult
+
+pub(all) enum DetectedLang {
+  TypeScript
+  JavaScript
+  Python
+  MoonBit
+  Go
+  Rust
+  Markdown
+  Html
+  Css
+  Sql
+  Json
+  Yaml
+  Unknown
+}
+pub fn DetectedLang::doc_spec_name(Self) -> String
+pub fn DetectedLang::to_string(Self) -> String
+pub impl Eq for DetectedLang
+pub impl Show for DetectedLang
+
+pub(all) struct DocSymbol {
+  id : String
+  name : String
+  kind : String
+  doc : String?
+  mut parent : String?
+  file : String
+  children : Array[DocSymbol]
+}
+pub fn DocSymbol::add_child(Self, Self) -> Unit
+pub fn DocSymbol::get_children(Self) -> Array[Self]
+pub fn DocSymbol::get_doc(Self) -> String?
+pub fn DocSymbol::get_file(Self) -> String
+pub fn DocSymbol::get_id(Self) -> String
+pub fn DocSymbol::get_kind(Self) -> String
+pub fn DocSymbol::get_name(Self) -> String
+pub fn DocSymbol::get_parent(Self) -> String?
+pub fn DocSymbol::new(String, String, String, String) -> Self
+pub fn DocSymbol::set_parent(Self, String) -> Unit
+pub fn DocSymbol::with_doc(String, String, String, String, String) -> Self
+pub impl Eq for DocSymbol
+pub impl Show for DocSymbol
+
+pub(all) struct FileInfo {
+  path : String
+  lang : DetectedLang
+  ext : String
+  spec_name : String
+}
+pub fn FileInfo::get_ext(Self) -> String
+pub fn FileInfo::get_lang(Self) -> DetectedLang
+pub fn FileInfo::get_path(Self) -> String
+pub fn FileInfo::get_spec_name(Self) -> String
+pub fn FileInfo::new(String, DetectedLang, String, String) -> Self
+pub impl Eq for FileInfo
+pub impl Show for FileInfo
+
+// Type aliases
+
+// Traits
+

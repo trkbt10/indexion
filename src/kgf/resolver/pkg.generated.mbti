@@ -1,0 +1,53 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/resolver"
+
+import {
+  "trkbt10/indexion/src/kgf/types",
+}
+
+// Values
+pub fn apply_aliases(String, Array[@types.ResolverAlias]) -> String
+
+pub fn basename(String) -> String
+
+pub fn dirname(String) -> String
+
+pub fn is_absolute(String) -> Bool
+
+pub fn is_circular_sentinel(String) -> Bool
+
+pub fn join_path(Array[String]) -> String
+
+pub fn module_to_path(String, @types.ModulePathStyle) -> String
+
+pub fn normalize_path(String) -> String
+
+pub fn parse_circular_sentinel(String) -> (String, String)?
+
+pub fn relative_path(String, String) -> String
+
+pub fn resolve_module(@types.ResolverSpec, String, String, String, String, &FileResolver) -> String
+
+pub fn resolve_module_cached(@types.ResolutionCache, @types.ResolverSpec, String, String, String, String, (String) -> Bool) -> ResolutionResult
+
+pub fn resolve_module_with_fn(@types.ResolverSpec, String, String, String, String, (String) -> Bool) -> String
+
+pub fn resolve_module_with_fns(@types.ResolverSpec, String, String, String, String, (String) -> Bool, (String) -> String?) -> String
+
+// Errors
+
+// Types and methods
+pub enum ResolutionResult {
+  Resolved(String)
+  Circular(String, String)
+}
+pub fn ResolutionResult::to_string(Self) -> String
+
+// Type aliases
+
+// Traits
+pub trait FileResolver {
+  file_exists(Self, String) -> Bool
+  read_file(Self, String) -> String?
+}
+

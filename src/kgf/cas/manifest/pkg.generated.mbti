@@ -1,0 +1,43 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/cas/manifest"
+
+import {
+  "trkbt10/indexion/src/kgf/cas/store",
+  "trkbt10/indexion/src/kgf/cas/types",
+}
+
+// Values
+pub fn create_manifest(@types.ContentHash) -> @types.CASManifest
+
+pub fn get_chunk_hash(@types.CASManifest, String) -> @types.ContentHash?
+
+pub fn get_chunk_hashes(@types.CASManifest) -> Array[@types.ContentHash]
+
+pub fn get_module_ids(@types.CASManifest) -> Array[String]
+
+pub fn has_module(@types.CASManifest, String) -> Bool
+
+pub fn is_chunk_valid(@types.CASManifest, @store.MemoryChunkStore, String, @types.ContentHash) -> Bool
+
+pub fn is_empty(@types.CASManifest) -> Bool
+
+pub fn merge(@types.CASManifest, @types.CASManifest) -> @types.CASManifest
+
+pub fn module_count(@types.CASManifest) -> Int
+
+pub fn remove_module(@types.CASManifest, String) -> @types.CASManifest
+
+pub fn spec_matches(@types.CASManifest, @types.ContentHash) -> Bool
+
+pub fn update_manifest(@types.CASManifest, String, @types.ContentHash) -> @types.CASManifest
+
+pub fn update_spec_hash(@types.CASManifest, @types.ContentHash) -> @types.CASManifest
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

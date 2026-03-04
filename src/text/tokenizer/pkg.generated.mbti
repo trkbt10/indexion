@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "trkbt10/indexion/text/tokenizer"
+package "trkbt10/indexion/src/text/tokenizer"
 
 // Values
 pub fn extract_character_bigrams(String) -> Array[String]

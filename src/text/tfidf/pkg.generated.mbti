@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/text/tfidf"
+
+// Values
+pub fn build_document_frequency(Array[Array[String]]) -> Map[String, Int]
+
+pub fn build_term_frequency(Array[String]) -> Map[String, Int]
+
+pub fn build_tfidf_vector(Array[String], Map[String, Int], Int) -> TfidfVector
+
+pub fn calculate_adjacent_tfidf_distance(Array[String]) -> Array[Double]
+
+pub fn cosine_distance(TfidfVector, TfidfVector) -> Double
+
+pub fn cosine_similarity(TfidfVector, TfidfVector) -> Double
+
+// Errors
+
+// Types and methods
+pub struct TfidfVector {
+  terms : Map[String, Double]
+}
+pub fn TfidfVector::from_terms(Map[String, Double]) -> Self
+pub fn TfidfVector::get(Self, String) -> Double
+pub fn TfidfVector::is_empty(Self) -> Bool
+pub fn TfidfVector::iter(Self) -> Iter[(String, Double)]
+pub fn TfidfVector::length(Self) -> Int
+pub fn TfidfVector::new() -> Self
+pub fn TfidfVector::set(Self, String, Double) -> Unit
+
+// Type aliases
+
+// Traits
+

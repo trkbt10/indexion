@@ -44,12 +44,7 @@ pub fn generate_dep_diagram_with_externals(
     }
   }
   generate_dep_diagram_impl(
-    deps,
-    circulars,
-    internal_ids,
-    bare_prefixes,
-    source_patterns,
-    title,
+    deps, circulars, internal_ids, bare_prefixes, source_patterns, title,
   )
 }
 
@@ -73,12 +68,7 @@ pub fn generate_dep_diagram_with_circular(
     }
   }
   generate_dep_diagram_impl(
-    deps,
-    circulars,
-    internal_ids,
-    bare_prefixes,
-    source_patterns,
-    title,
+    deps, circulars, internal_ids, bare_prefixes, source_patterns, title,
   )
 }
 
@@ -371,7 +361,7 @@ fn normalize_module_label(
   source_patterns : Array[String],
 ) -> String {
   if internal_ids.length() == 0 && bare_prefixes.length() == 0 {
-    return shorten_module_name(name, source_patterns=source_patterns)
+    return shorten_module_name(name, source_patterns~)
   }
   // Check if this name matches any internal module ID
   for id in internal_ids {
@@ -402,6 +392,7 @@ fn strip_file_suffix(path : String) -> String {
   path
 }
 
+///|
 /// Format external package path for display.
 /// Strips bare_prefixes (from KGF specs) and adds @ prefix to indicate external package.
 fn format_external_package(
@@ -417,7 +408,7 @@ fn format_external_package(
       break
     }
   }
-  "@" + shorten_module_name(stripped, source_patterns=source_patterns)
+  "@" + shorten_module_name(stripped, source_patterns~)
 }
 
 ///|
@@ -441,7 +432,7 @@ fn format_internal_package(
   matched_id : String,
   source_patterns : Array[String],
 ) -> String {
-  shorten_module_name(matched_id, source_patterns=source_patterns)
+  shorten_module_name(matched_id, source_patterns~)
 }
 
 ///|

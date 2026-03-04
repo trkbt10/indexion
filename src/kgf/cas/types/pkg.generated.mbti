@@ -1,0 +1,87 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/cas/types"
+
+import {
+  "moonbitlang/core/json",
+  "trkbt10/indexion/src/core/graph",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct CASManifest {
+  created_at : String
+  updated_at : String
+  spec_hash : ContentHash
+  modules : Map[String, ContentHash]
+}
+pub fn CASManifest::new(String, String, ContentHash, Map[String, ContentHash]) -> Self
+pub fn CASManifest::with_modules(Self, Map[String, ContentHash], String) -> Self
+pub fn CASManifest::with_spec_hash(Self, ContentHash, String) -> Self
+pub impl Eq for CASManifest
+pub impl Show for CASManifest
+pub impl ToJson for CASManifest
+pub impl @json.FromJson for CASManifest
+
+pub struct ContentHash {
+  value : String
+}
+pub fn ContentHash::from_string(String) -> Self
+pub fn ContentHash::to_string(Self) -> String
+pub impl Eq for ContentHash
+pub impl Hash for ContentHash
+pub impl Show for ContentHash
+pub impl ToJson for ContentHash
+pub impl @json.FromJson for ContentHash
+
+pub struct IndexError {
+  module_id : String
+  error : String
+}
+pub impl Eq for IndexError
+pub impl Show for IndexError
+
+pub enum IndexModuleResult {
+  Success(ModuleChunk)
+  Cached(ContentHash)
+  Error(IndexError)
+}
+pub impl Eq for IndexModuleResult
+pub impl Show for IndexModuleResult
+
+pub struct ModuleChunk {
+  hash : ContentHash
+  module_id : String
+  module_node : @graph.ModuleNode
+  symbols : Map[String, @graph.SymbolNode]
+  edges : Array[@graph.Edge]
+  source_hash : ContentHash
+  spec_hash : ContentHash
+  external_refs : Array[SymbolicRef]
+}
+pub fn ModuleChunk::add_edge(Self, @graph.Edge) -> Unit
+pub fn ModuleChunk::add_external_ref(Self, SymbolicRef) -> Unit
+pub fn ModuleChunk::add_symbol(Self, String, @graph.SymbolNode) -> Unit
+pub fn ModuleChunk::new(ContentHash, String, @graph.ModuleNode, ContentHash, ContentHash) -> Self
+pub impl Eq for ModuleChunk
+pub impl Show for ModuleChunk
+pub impl ToJson for ModuleChunk
+pub impl @json.FromJson for ModuleChunk
+
+pub struct SymbolicRef {
+  ref_str : String
+  edge_kind : String
+  via : String
+}
+pub fn SymbolicRef::new(String, String, String) -> Self
+pub impl Eq for SymbolicRef
+pub impl Show for SymbolicRef
+pub impl ToJson for SymbolicRef
+pub impl @json.FromJson for SymbolicRef
+
+// Type aliases
+
+// Traits
+

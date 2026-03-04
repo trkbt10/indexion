@@ -29,14 +29,23 @@ pub fn Lexer::new(tokens : Array[@types.TokenDef]) -> Lexer {
 /// Skipped tokens (like whitespace) are not included in the result.
 pub fn Lexer::tokenize(self : Lexer, input : String) -> Array[@types.Tok] {
   let result : Array[@types.Tok] = []
+  let input_chars = build_input_chars(input)
   let mut pos = 0
   while pos < input.length() {
-    let match_result = self.try_match(input, pos)
+    let match_result = self.try_match(input, input_chars, pos)
     match match_result {
       Some((token_def, end_pos, text)) => {
         if not(token_def.skip) {
-          let value = extract_value(text)
-          result.push(@types.Tok::new(token_def.name, text, pos, value~))
+          match text {
+            Some(token_text) => {
+              let value = extract_value(token_text)
+              result.push(
+                @types.Tok::new(token_def.name, token_text, pos, value~),
+              )
+            }
+            // Non-skip tokens always produce text; keep behavior robust on mismatch.
+            None => ()
+          }
         }
         pos = end_pos
       }
@@ -54,17 +63,28 @@ pub fn Lexer::tokenize(self : Lexer, input : String) -> Array[@types.Tok] {
 fn Lexer::try_match(
   self : Lexer,
   input : String,
+  input_chars : Array[Char],
   pos : Int,
-) -> (@types.TokenDef, Int, String)? {
+) -> (@types.TokenDef, Int, String?)? {
   for entry in self.tokens {
     let token_def = entry.token_def
-    let match_result = match entry.compiled_pattern {
-      Some(compiled) => match_compiled(compiled, input, pos)
+    let end_pos = match entry.compiled_pattern {
+      Some(compiled) =>
+        match_compiled_end_pos_with_chars(compiled, input_chars, pos)
       // If compile failed at lexer construction time, this token can never match.
       None => continue
     }
-    if match_result.matched && match_result.text.length() > 0 {
-      return Some((token_def, match_result.end_pos, match_result.text))
+    match end_pos {
+      Some(end_pos_value) =>
+        if end_pos_value > pos {
+          if token_def.skip {
+            return Some((token_def, end_pos_value, None))
+          } else {
+            let text = input.substring(start=pos, end=end_pos_value)
+            return Some((token_def, end_pos_value, Some(text)))
+          }
+        }
+      None => ()
     }
   }
   None
@@ -84,8 +104,8 @@ fn has_case_insensitive_flag(flags : String?) -> Bool {
 /// For quoted strings, strips the surrounding quotes.
 fn extract_value(text : String) -> String? {
   if text.length() >= 2 {
-    let first = Char::from_int(text[0].to_int())
-    let last = Char::from_int(text[text.length() - 1].to_int())
+    let first = text[0].to_int().unsafe_to_char()
+    let last = text[text.length() - 1].to_int().unsafe_to_char()
     if (first == '"' && last == '"') || (first == '\'' && last == '\'') {
       return Some(text.substring(start=1, end=text.length() - 1))
     }

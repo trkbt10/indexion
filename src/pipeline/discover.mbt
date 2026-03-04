@@ -18,8 +18,8 @@ pub fn DiscoverOptions::default() -> DiscoverOptions {
 ///|
 /// Create discover options.
 pub fn DiscoverOptions::new(
-  recursive~ : Bool = true,
-  excludes~ : Array[String] = [],
+  recursive? : Bool = true,
+  excludes? : Array[String] = [],
 ) -> DiscoverOptions {
   { recursive, excludes }
 }

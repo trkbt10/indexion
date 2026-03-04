@@ -1,0 +1,29 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/explore"
+
+// Values
+pub fn parse_explore_args(Array[String], Int) -> ExploreConfig
+
+pub fn run(Array[String], Int) -> Unit
+
+pub fn show_explore_help() -> Unit
+
+// Errors
+
+// Types and methods
+pub struct ExploreConfig {
+  target_dir : String
+  format : String
+  strategy : String
+  threshold : Double
+  extensions : Array[String]
+  show_help : Bool
+}
+pub fn ExploreConfig::default() -> Self
+
+type FilePair
+
+// Type aliases
+
+// Traits
+

@@ -25,6 +25,21 @@ enum CompiledNode {
 }
 
 ///|
+/// FastCompiledNode separates tokens and rules for O(1) matching.
+/// Token IDs and rule node IDs are pre-computed at compile time.
+enum FastCompiledNode {
+  FEmpty
+  FToken(Int) // token_id only
+  FRuleRef(Int, String) // rule_node_id, rule_name (name needed for callback)
+  FSeq(Array[Int])
+  FChoice(Array[Int])
+  FStar(Int)
+  FPlus(Int)
+  FOptional(Int)
+  FLabel(String, Int) // label_name, child (name needed for label propagation)
+}
+
+///|
 /// Returns true if this node is Empty.
 pub fn Node::is_empty(self : Node) -> Bool {
   match self {

@@ -36,13 +36,10 @@ test "collect_supported" (b : @bench.T) {
 ///|
 /// Benchmark KGF spec file reading only (no parsing).
 test "kgf_file_read" (b : @bench.T) {
-  b.bench(
-    name="read_moonbit_kgf",
-    fn() {
-      let content = @fs.read_file_to_string("kgfs/moonbit.kgf") catch { _ => "" }
-      b.keep(content)
-    },
-  )
+  b.bench(name="read_moonbit_kgf", fn() {
+    let content = @fs.read_file_to_string("kgfs/moonbit.kgf") catch { _ => "" }
+    b.keep(content)
+  })
 }
 
 ///|
@@ -183,7 +180,9 @@ test "peg_parse_single_file" (b : @bench.T) {
   let tokens = lexer.tokenize(src)
   let start_rule = spec.get_start_rule()
   b.bench(name="peg_parse", fn() {
-    b.keep(@kgf_peg.run_parse_filtered(peg, spec, start_rule, tokens, active_rules))
+    b.keep(
+      @kgf_peg.run_parse_filtered(peg, spec, start_rule, tokens, active_rules),
+    )
   })
 }
 
@@ -201,6 +200,30 @@ test "peg_parse_large_file" (b : @bench.T) {
   let tokens = lexer.tokenize(src)
   let start_rule = spec.get_start_rule()
   b.bench(name="peg_parse_large", fn() {
-    b.keep(@kgf_peg.run_parse_filtered(peg, spec, start_rule, tokens, active_rules))
+    b.keep(
+      @kgf_peg.run_parse_filtered(peg, spec, start_rule, tokens, active_rules),
+    )
+  })
+}
+
+///|
+/// Benchmark PEG parsing a very large file (104KB).
+test "peg_parse_very_large_file" (b : @bench.T) {
+  let content = @fs.read_file_to_string("kgfs/moonbit.kgf") catch { _ => "" }
+  let spec = @kgf_parser.parse_kgf(content).unwrap()
+  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+  let peg = @kgf_peg.build_peg(spec) catch { _ => @kgf_peg.PEG::new() }
+  let active_rules = @kgf_peg.collect_active_rules(spec)
+  let src = @fs.read_file_to_string("src/kgf/parser/integration_wbtest.mbt") catch {
+    _ => ""
+  }
+  println("Source length: " + src.length().to_string())
+  let tokens = lexer.tokenize(src)
+  println("Token count: " + tokens.length().to_string())
+  let start_rule = spec.get_start_rule()
+  b.bench(name="peg_parse_very_large", fn() {
+    b.keep(
+      @kgf_peg.run_parse_filtered(peg, spec, start_rule, tokens, active_rules),
+    )
   })
 }

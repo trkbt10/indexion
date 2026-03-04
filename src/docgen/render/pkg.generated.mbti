@@ -1,0 +1,71 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/docgen/render"
+
+import {
+  "trkbt10/indexion/src/core/graph",
+  "trkbt10/indexion/src/docgen/query",
+}
+
+// Values
+pub fn render_api_reference(Array[@query.SymbolDecl], Map[String, Int]) -> String
+
+pub fn render_cross_references(Array[@query.SymbolDecl], Map[String, Int]) -> String
+
+pub fn render_graph_json(@graph.CodeGraph) -> String
+
+pub fn render_json(@graph.CodeGraph) -> String
+
+pub fn render_markdown(@graph.CodeGraph, RenderOptions) -> DocOutput
+
+// Errors
+
+// Types and methods
+pub struct DocOutput {
+  api_reference : String
+  dependency_diagram : String?
+  call_graph : String?
+  type_hierarchy : String?
+  cross_references : String?
+  json_data : String?
+}
+pub fn DocOutput::get_api_reference(Self) -> String
+pub fn DocOutput::get_call_graph(Self) -> String?
+pub fn DocOutput::get_cross_references(Self) -> String?
+pub fn DocOutput::get_dependency_diagram(Self) -> String?
+pub fn DocOutput::get_json_data(Self) -> String?
+pub fn DocOutput::get_type_hierarchy(Self) -> String?
+pub fn DocOutput::new(String, dependency_diagram? : String?, call_graph? : String?, type_hierarchy? : String?, cross_references? : String?, json_data? : String?) -> Self
+pub fn DocOutput::to_markdown(Self) -> String
+pub fn DocOutput::with_json(String) -> Self
+
+pub enum OutputFormat {
+  Markdown
+  Json
+}
+pub fn OutputFormat::json() -> Self
+pub fn OutputFormat::markdown() -> Self
+
+pub struct RenderOptions {
+  format : OutputFormat
+  include_diagrams : Bool
+  include_deps : Bool
+  include_calls : Bool
+  include_hierarchy : Bool
+  include_refs : Bool
+  max_diagram_nodes : Int
+}
+pub fn RenderOptions::default() -> Self
+pub fn RenderOptions::get_format(Self) -> OutputFormat
+pub fn RenderOptions::get_include_calls(Self) -> Bool
+pub fn RenderOptions::get_include_deps(Self) -> Bool
+pub fn RenderOptions::get_include_diagrams(Self) -> Bool
+pub fn RenderOptions::get_include_hierarchy(Self) -> Bool
+pub fn RenderOptions::get_include_refs(Self) -> Bool
+pub fn RenderOptions::get_max_diagram_nodes(Self) -> Int
+pub fn RenderOptions::new(format? : OutputFormat, include_diagrams? : Bool, include_deps? : Bool, include_calls? : Bool, include_hierarchy? : Bool, include_refs? : Bool, max_diagram_nodes? : Int) -> Self
+pub fn RenderOptions::with_format(OutputFormat) -> Self
+
+// Type aliases
+
+// Traits
+

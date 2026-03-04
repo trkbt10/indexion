@@ -1,0 +1,267 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/types"
+
+// Values
+pub let circular_sentinel_prefix : String
+
+// Errors
+
+// Types and methods
+pub struct AttrAction {
+  kind : String
+  params : Map[String, String]
+}
+pub fn AttrAction::get_kind(Self) -> String
+pub fn AttrAction::get_param(Self, String) -> String?
+pub fn AttrAction::get_params(Self) -> Map[String, String]
+pub fn AttrAction::new(String, params? : Map[String, String]) -> Self
+
+pub enum FstAction {
+  EmitInput
+  Emit(String)
+  Buf
+  Flush(Int)
+}
+pub fn FstAction::buf() -> Self
+pub fn FstAction::emit(String) -> Self
+pub fn FstAction::emit_input() -> Self
+pub fn FstAction::flush(Int) -> Self
+
+pub struct FstTransition {
+  on : String
+  to : String
+  actions : Array[FstAction]
+}
+pub fn FstTransition::get_actions(Self) -> Array[FstAction]
+pub fn FstTransition::get_on(Self) -> String
+pub fn FstTransition::get_to(Self) -> String
+pub fn FstTransition::new(String, String, Array[FstAction]) -> Self
+
+pub struct KGFSpec {
+  language : String
+  tokens : Array[TokenDef]
+  rules : Map[String, RuleDef]
+  attrs : Map[String, Array[AttrAction]]
+  resolver : ResolverSpec
+  semantics : Map[String, Array[SemOnBlock]]?
+  preprocess : Array[String]?
+  preprocess_fst : Array[PreprocessFstSpec]?
+}
+pub fn KGFSpec::get_attr(Self, String) -> Array[AttrAction]?
+pub fn KGFSpec::get_attrs(Self) -> Map[String, Array[AttrAction]]
+pub fn KGFSpec::get_language(Self) -> String
+pub fn KGFSpec::get_preprocess(Self) -> Array[String]?
+pub fn KGFSpec::get_preprocess_fst(Self) -> Array[PreprocessFstSpec]?
+pub fn KGFSpec::get_resolver(Self) -> ResolverSpec
+pub fn KGFSpec::get_rule(Self, String) -> RuleDef?
+pub fn KGFSpec::get_rules(Self) -> Map[String, RuleDef]
+pub fn KGFSpec::get_semantic(Self, String) -> Array[SemOnBlock]?
+pub fn KGFSpec::get_semantics(Self) -> Map[String, Array[SemOnBlock]]?
+pub fn KGFSpec::get_start_rule(Self) -> String
+pub fn KGFSpec::get_tokens(Self) -> Array[TokenDef]
+pub fn KGFSpec::new(String, tokens? : Array[TokenDef], rules? : Map[String, RuleDef], attrs? : Map[String, Array[AttrAction]], resolver? : ResolverSpec, semantics? : Map[String, Array[SemOnBlock]]?, preprocess? : Array[String]?, preprocess_fst? : Array[PreprocessFstSpec]?) -> Self
+
+pub enum ModulePathStyle {
+  Slash
+  Dot
+  ColonColon
+}
+pub fn ModulePathStyle::as_string(Self) -> String
+pub fn ModulePathStyle::from_string(String) -> Self?
+pub impl Eq for ModulePathStyle
+pub impl Show for ModulePathStyle
+
+pub struct PreprocessFstSpec {
+  name : String
+  classes : Map[String, String]
+  initial : String
+  states : Map[String, Array[FstTransition]]
+}
+pub fn PreprocessFstSpec::get_classes(Self) -> Map[String, String]
+pub fn PreprocessFstSpec::get_initial(Self) -> String
+pub fn PreprocessFstSpec::get_name(Self) -> String
+pub fn PreprocessFstSpec::get_states(Self) -> Map[String, Array[FstTransition]]
+pub fn PreprocessFstSpec::new(String, Map[String, String], String, Map[String, Array[FstTransition]]) -> Self
+
+pub struct ResolutionCache {
+  resolved_paths : Map[String, String]
+  file_exists_cache : Map[String, Bool]
+  resolution_stack : Array[String]
+  resolving_set : Map[String, Bool]
+  circular_refs : Array[(String, String)]
+  stats : ResolutionStats
+}
+pub fn ResolutionCache::check_file_exists(Self, String, (String) -> Bool) -> Bool
+pub fn ResolutionCache::get(Self, String) -> String?
+pub fn ResolutionCache::get_circular_refs(Self) -> Array[(String, String)]
+pub fn ResolutionCache::get_stats(Self) -> ResolutionStats
+pub fn ResolutionCache::is_resolving(Self, String) -> Bool
+pub fn ResolutionCache::make_key(String, String) -> String
+pub fn ResolutionCache::new() -> Self
+pub fn ResolutionCache::pop_resolving(Self) -> Unit
+pub fn ResolutionCache::push_resolving(Self, String) -> Unit
+pub fn ResolutionCache::record_circular(Self, String, String) -> Unit
+pub fn ResolutionCache::record_file_check(Self) -> Unit
+pub fn ResolutionCache::record_hit(Self) -> Unit
+pub fn ResolutionCache::record_miss(Self) -> Unit
+pub fn ResolutionCache::set(Self, String, String) -> Unit
+
+pub struct ResolutionStats {
+  mut cache_hits : Int
+  mut cache_misses : Int
+  mut file_checks : Int
+  mut circular_detected : Int
+}
+pub fn ResolutionStats::new() -> Self
+pub impl Eq for ResolutionStats
+pub impl Show for ResolutionStats
+
+pub struct ResolveStep {
+  step_type : ResolveStepType
+  file : String
+  query : String
+  files : Array[String]
+  prefix : String
+  when_condition : String
+}
+pub fn ResolveStep::ext(Array[String]) -> Self
+pub fn ResolveStep::fallback(String) -> Self
+pub fn ResolveStep::get_file(Self) -> String
+pub fn ResolveStep::get_files(Self) -> Array[String]
+pub fn ResolveStep::get_prefix(Self) -> String
+pub fn ResolveStep::get_query(Self) -> String
+pub fn ResolveStep::get_step_type(Self) -> ResolveStepType
+pub fn ResolveStep::get_when_condition(Self) -> String
+pub fn ResolveStep::has_condition(Self) -> Bool
+pub fn ResolveStep::index(Array[String]) -> Self
+pub fn ResolveStep::manifest(String, String, when_condition? : String) -> Self
+pub fn ResolveStep::marker(Array[String]) -> Self
+pub fn ResolveStep::new(ResolveStepType, file? : String, query? : String, files? : Array[String], prefix? : String, when_condition? : String) -> Self
+pub fn ResolveStep::sibling(Array[String]) -> Self
+
+pub enum ResolveStepType {
+  Manifest
+  Marker
+  Index
+  Ext
+  Sibling
+  Fallback
+}
+pub fn ResolveStepType::as_string(Self) -> String
+pub fn ResolveStepType::from_string(String) -> Self?
+pub impl Eq for ResolveStepType
+pub impl Show for ResolveStepType
+
+pub struct ResolverAlias {
+  pattern : String
+  replace : String
+}
+pub fn ResolverAlias::get_pattern(Self) -> String
+pub fn ResolverAlias::get_replace(Self) -> String
+pub fn ResolverAlias::new(String, String) -> Self
+
+pub struct ResolverSpec {
+  sources : Array[String]
+  relative_prefixes : Array[String]
+  exts : Array[String]
+  indexes : Array[String]
+  bare_prefix : String
+  module_path_style : ModulePathStyle
+  aliases : Array[ResolverAlias]
+  ns_prefix : String?
+  ns_segments : Int
+  resolve_chain : Array[ResolveStep]
+}
+pub fn ResolverSpec::get_aliases(Self) -> Array[ResolverAlias]
+pub fn ResolverSpec::get_bare_prefix(Self) -> String
+pub fn ResolverSpec::get_exts(Self) -> Array[String]
+pub fn ResolverSpec::get_indexes(Self) -> Array[String]
+pub fn ResolverSpec::get_module_path_style(Self) -> ModulePathStyle
+pub fn ResolverSpec::get_ns_prefix(Self) -> String?
+pub fn ResolverSpec::get_ns_segments(Self) -> Int
+pub fn ResolverSpec::get_relative_prefixes(Self) -> Array[String]
+pub fn ResolverSpec::get_resolve_chain(Self) -> Array[ResolveStep]
+pub fn ResolverSpec::get_sources(Self) -> Array[String]
+pub fn ResolverSpec::has_resolve_chain(Self) -> Bool
+pub fn ResolverSpec::new(sources? : Array[String], relative_prefixes? : Array[String], exts? : Array[String], indexes? : Array[String], bare_prefix? : String, module_path_style? : ModulePathStyle, aliases? : Array[ResolverAlias], ns_prefix? : String?, ns_segments? : Int, resolve_chain? : Array[ResolveStep]) -> Self
+
+pub struct RuleDef {
+  name : String
+  expr : String
+}
+pub fn RuleDef::get_expr(Self) -> String
+pub fn RuleDef::get_name(Self) -> String
+pub fn RuleDef::new(String, String) -> Self
+
+pub enum SemExpr {
+  Str(String)
+  Num(Double)
+  Bool(Bool)
+  Null
+  Var(String)
+  Call(String, Array[SemExpr])
+  Func(String, Array[SemExpr])
+}
+pub fn SemExpr::bool(Bool) -> Self
+pub fn SemExpr::call(String, Array[Self]) -> Self
+pub fn SemExpr::func(String, Array[Self]) -> Self
+pub fn SemExpr::null() -> Self
+pub fn SemExpr::num(Double) -> Self
+pub fn SemExpr::str(String) -> Self
+pub fn SemExpr::variable(String) -> Self
+
+pub struct SemOnBlock {
+  rule : String
+  when_cond : SemExpr?
+  then_stmts : Array[SemStmt]
+  else_stmts : Array[SemStmt]?
+}
+pub fn SemOnBlock::get_else_stmts(Self) -> Array[SemStmt]?
+pub fn SemOnBlock::get_rule(Self) -> String
+pub fn SemOnBlock::get_then_stmts(Self) -> Array[SemStmt]
+pub fn SemOnBlock::get_when_cond(Self) -> SemExpr?
+pub fn SemOnBlock::new(String, Array[SemStmt], when_cond? : SemExpr?, else_stmts? : Array[SemStmt]?) -> Self
+
+pub enum SemStmt {
+  Edge(edge_kind~ : String, from~ : SemExpr, to~ : SemExpr, attrs~ : SemExpr?)
+  Bind(ns~ : SemExpr, name~ : SemExpr, to~ : SemExpr)
+  Note(note_type~ : String, payload~ : SemExpr?)
+  Let(id~ : String, value~ : SemExpr)
+  For(id~ : String, iter~ : SemExpr, body~ : Array[SemStmt])
+  Module(id~ : SemExpr, file~ : SemExpr?)
+}
+pub fn SemStmt::bind(SemExpr, SemExpr, SemExpr) -> Self
+pub fn SemStmt::edge(String, SemExpr, SemExpr, attrs? : SemExpr?) -> Self
+pub fn SemStmt::for_(String, SemExpr, Array[Self]) -> Self
+pub fn SemStmt::let_(String, SemExpr) -> Self
+pub fn SemStmt::mod_(SemExpr, file? : SemExpr?) -> Self
+pub fn SemStmt::note(String, payload? : SemExpr?) -> Self
+
+pub struct Tok {
+  kind : String
+  text : String
+  value : String?
+  pos : Int
+}
+pub fn Tok::get_kind(Self) -> String
+pub fn Tok::get_pos(Self) -> Int
+pub fn Tok::get_text(Self) -> String
+pub fn Tok::get_value(Self) -> String
+pub fn Tok::new(String, String, Int, value? : String?) -> Self
+
+pub struct TokenDef {
+  name : String
+  pattern : String
+  skip : Bool
+  flags : String?
+}
+pub fn TokenDef::get_flags(Self) -> String?
+pub fn TokenDef::get_name(Self) -> String
+pub fn TokenDef::get_pattern(Self) -> String
+pub fn TokenDef::is_skip(Self) -> Bool
+pub fn TokenDef::new(String, String, skip? : Bool, flags? : String?) -> Self
+
+// Type aliases
+
+// Traits
+

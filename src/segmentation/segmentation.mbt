@@ -14,7 +14,10 @@ pub enum Strategy {
 
 ///|
 /// Segment text using the specified strategy with default configuration.
-pub fn segment(text : String, strategy : Strategy) -> Array[@types.SegmentPoint] {
+pub fn segment(
+  text : String,
+  strategy : Strategy,
+) -> Array[@types.SegmentPoint] {
   match strategy {
     Punctuation => @punctuation.segment(text)
     Tfidf => @tfidf.segment(text)
@@ -26,7 +29,7 @@ pub fn segment(text : String, strategy : Strategy) -> Array[@types.SegmentPoint]
 /// Segment text using punctuation strategy.
 pub fn segment_by_punctuation(
   text : String,
-  config : @punctuation.PunctuationConfig
+  config : @punctuation.PunctuationConfig,
 ) -> Array[@types.SegmentPoint] {
   @punctuation.segment_by_punctuation(text, config)
 }
@@ -35,7 +38,7 @@ pub fn segment_by_punctuation(
 /// Segment text using TF-IDF strategy.
 pub fn segment_by_tfidf(
   text : String,
-  config : @tfidf.TfidfConfig
+  config : @tfidf.TfidfConfig,
 ) -> Array[@types.SegmentPoint] {
   @tfidf.segment_by_tfidf(text, config)
 }
@@ -44,7 +47,7 @@ pub fn segment_by_tfidf(
 /// Segment text using window divergence strategy.
 pub fn segment_by_divergence(
   text : String,
-  config : @window.SegmentConfig
+  config : @window.SegmentConfig,
 ) -> Array[@types.SegmentPoint] {
   @window.segment_by_divergence(text, config)
 }
@@ -54,7 +57,7 @@ pub fn segment_by_divergence(
 pub fn new_segment_point(
   start : Int,
   end : Int,
-  segment_type : @types.SegmentType
+  segment_type : @types.SegmentType,
 ) -> @types.SegmentPoint {
   @types.SegmentPoint::new(start, end, segment_type)
 }
@@ -63,7 +66,7 @@ pub fn new_segment_point(
 /// Convert segment points to text segments.
 pub fn to_text_segments(
   points : Array[@types.SegmentPoint],
-  text : String
+  text : String,
 ) -> Array[@types.TextSegment] {
   @types.segment_points_to_text_segments(points, text)
 }

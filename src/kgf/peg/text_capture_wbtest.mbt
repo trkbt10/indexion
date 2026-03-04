@@ -34,11 +34,7 @@ fn multiline_doc_kgf() -> String {
 /// Helper to parse with the multiline doc spec and get events.
 fn parse_with_doc_spec(source : String) -> Array[(String, Map[String, Json])] {
   let spec = @parser.parse_kgf(multiline_doc_kgf()).unwrap()
-  let peg = try {
-    build_peg(spec)
-  } catch {
-    _ => panic()
-  }
+  let peg = build_peg(spec) catch { _ => panic() }
   let lexer = @lexer.Lexer::new(spec.get_tokens())
   let tokens = lexer.tokenize(source)
   let result = run_parse(peg, spec, "Program", tokens)
@@ -220,7 +216,7 @@ fn repeated_tokens_kgf() -> String {
 ///|
 test "text capture: star repetition accumulates all tokens" {
   let spec = @parser.parse_kgf(repeated_tokens_kgf()).unwrap()
-  let peg = try { build_peg(spec) } catch { _ => panic() }
+  let peg = build_peg(spec) catch { _ => panic() }
   let lexer = @lexer.Lexer::new(spec.get_tokens())
   let source = "apple, banana, cherry"
   let tokens = lexer.tokenize(source)
@@ -244,7 +240,7 @@ test "text capture: star repetition accumulates all tokens" {
 ///|
 test "text capture: _last still contains last token only" {
   let spec = @parser.parse_kgf(repeated_tokens_kgf()).unwrap()
-  let peg = try { build_peg(spec) } catch { _ => panic() }
+  let peg = build_peg(spec) catch { _ => panic() }
   let lexer = @lexer.Lexer::new(spec.get_tokens())
   let source = "first, second, third"
   let tokens = lexer.tokenize(source)

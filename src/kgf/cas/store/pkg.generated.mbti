@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/cas/store"
+
+import {
+  "trkbt10/indexion/src/kgf/cas/types",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct MemoryChunkStore {
+  chunks : Map[@types.ContentHash, @types.ModuleChunk]
+}
+pub fn MemoryChunkStore::clean_orphans(Self, Array[@types.ContentHash]) -> Int
+pub fn MemoryChunkStore::clear(Self) -> Unit
+pub fn MemoryChunkStore::delete(Self, @types.ContentHash) -> Bool
+pub fn MemoryChunkStore::find_orphans(Self, Array[@types.ContentHash]) -> Array[@types.ContentHash]
+pub fn MemoryChunkStore::get(Self, @types.ContentHash) -> @types.ModuleChunk?
+pub fn MemoryChunkStore::has(Self, @types.ContentHash) -> Bool
+pub fn MemoryChunkStore::list(Self) -> Array[@types.ContentHash]
+pub fn MemoryChunkStore::new() -> Self
+pub fn MemoryChunkStore::put(Self, @types.ModuleChunk) -> Unit
+pub fn MemoryChunkStore::size(Self) -> Int
+
+// Type aliases
+
+// Traits
+pub trait ChunkStore {
+  get(Self, @types.ContentHash) -> @types.ModuleChunk?
+  put(Self, @types.ModuleChunk) -> Unit
+  has(Self, @types.ContentHash) -> Bool
+  delete(Self, @types.ContentHash) -> Bool
+  list(Self) -> Array[@types.ContentHash]
+}
+

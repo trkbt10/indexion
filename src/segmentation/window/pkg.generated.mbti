@@ -1,0 +1,76 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/segmentation/window"
+
+import {
+  "trkbt10/indexion/src/segmentation/sentence",
+  "trkbt10/indexion/src/segmentation/types",
+}
+
+// Values
+pub fn calculate_window_tfidf_divergence(Array[@sentence.Sentence], Int) -> @types.WindowDivergence
+
+pub fn default_adaptive_config() -> AdaptiveConfig
+
+pub fn default_config() -> SegmentConfig
+
+pub fn find_local_maxima(Array[Double], Double) -> Array[Int]
+
+pub fn min_max_normalize(Array[Double]) -> Array[Double]
+
+pub fn segment(String) -> Array[@types.SegmentPoint]
+
+pub fn segment_adaptive(String, AdaptiveConfig) -> Array[@types.SegmentPoint]
+
+pub fn segment_by_divergence(String, SegmentConfig) -> Array[@types.SegmentPoint]
+
+// Errors
+
+// Types and methods
+pub struct AdaptiveConfig {
+  percentile : Double
+  minimum_threshold : Double
+  target_chunk_size : Int
+  min_chunk_size : Int
+  max_chunk_size : Int
+  window_size : Int
+}
+pub fn AdaptiveConfig::get_max_chunk_size(Self) -> Int
+pub fn AdaptiveConfig::get_min_chunk_size(Self) -> Int
+pub fn AdaptiveConfig::get_minimum_threshold(Self) -> Double
+pub fn AdaptiveConfig::get_percentile(Self) -> Double
+pub fn AdaptiveConfig::get_target_chunk_size(Self) -> Int
+pub fn AdaptiveConfig::get_window_size(Self) -> Int
+pub fn AdaptiveConfig::new(Double, Double, Int, Int, Int, Int) -> Self
+pub impl Eq for AdaptiveConfig
+pub impl Show for AdaptiveConfig
+
+pub struct SegmentConfig {
+  target_chunk_size : Int
+  min_chunk_size : Int
+  max_chunk_size : Int
+  threshold : Double
+  window_size : Int
+}
+pub fn SegmentConfig::get_max_chunk_size(Self) -> Int
+pub fn SegmentConfig::get_min_chunk_size(Self) -> Int
+pub fn SegmentConfig::get_target_chunk_size(Self) -> Int
+pub fn SegmentConfig::get_threshold(Self) -> Double
+pub fn SegmentConfig::get_window_size(Self) -> Int
+pub fn SegmentConfig::new(Int, Int, Int, Double, Int) -> Self
+pub impl Eq for SegmentConfig
+pub impl Show for SegmentConfig
+
+pub struct WindowStrategy {
+  config : SegmentConfig
+}
+pub fn WindowStrategy::get_config(Self) -> SegmentConfig
+pub fn WindowStrategy::new() -> Self
+pub fn WindowStrategy::with_config(SegmentConfig) -> Self
+pub impl Eq for WindowStrategy
+pub impl Show for WindowStrategy
+pub impl @types.SegmentationStrategy for WindowStrategy
+
+// Type aliases
+
+// Traits
+

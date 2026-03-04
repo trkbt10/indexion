@@ -6,6 +6,11 @@ pub struct PEG {
   attrs : Map[String, Array[@types.AttrAction]]
   compiled_nodes : Array[CompiledNode]
   rule_node_ids : Map[String, Int]
+  // Fast evaluation support
+  token_ids : Map[String, Int] // token name -> integer ID
+  fast_nodes : Array[FastCompiledNode] // pre-compiled with IDs
+  fast_rule_ids : Map[String, Int] // rule name -> fast node ID (FRuleRef)
+  fast_rule_body_ids : Map[String, Int] // rule name -> body node ID (direct)
 }
 
 ///|
@@ -17,6 +22,10 @@ pub fn PEG::new() -> PEG {
     attrs: Map::new(),
     compiled_nodes: [],
     rule_node_ids: Map::new(),
+    token_ids: Map::new(),
+    fast_nodes: [],
+    fast_rule_ids: Map::new(),
+    fast_rule_body_ids: Map::new(),
   }
 }
 
@@ -57,6 +66,24 @@ fn PEG::get_rule_node_id(self : PEG, name : String) -> Int? {
 }
 
 ///|
+/// Gets the token ID for a token name.
+fn PEG::get_token_id(self : PEG, name : String) -> Int? {
+  self.token_ids.get(name)
+}
+
+///|
+/// Gets fast compiled root node id for a rule (FRuleRef wrapper).
+fn PEG::get_fast_rule_id(self : PEG, name : String) -> Int? {
+  self.fast_rule_ids.get(name)
+}
+
+///|
+/// Gets the body node id for a rule (without FRuleRef wrapper).
+fn PEG::get_fast_rule_body_id(self : PEG, name : String) -> Int? {
+  self.fast_rule_body_ids.get(name)
+}
+
+///|
 /// Returns the attributes map.
 pub fn PEG::get_attrs(self : PEG) -> Map[String, Array[@types.AttrAction]] {
   self.attrs
@@ -76,23 +103,109 @@ pub fn PEG::get_rule_attrs(
 /// Parses all rule expressions into AST nodes and collects token names.
 pub fn build_peg(spec : @types.KGFSpec) -> PEG raise {
   let tokens : @hashset.HashSet[String] = @hashset.new()
-  // Collect non-skip tokens
+  let token_ids : Map[String, Int] = Map::new()
+  // Collect non-skip tokens and assign IDs
+  let mut token_id_counter = 0
   for token_def in spec.tokens {
     if not(token_def.skip) {
       tokens.add(token_def.name)
+      token_ids.set(token_def.name, token_id_counter)
+      token_id_counter = token_id_counter + 1
     }
   }
   let ast : Map[String, Node] = Map::new()
   let compiled_nodes : Array[CompiledNode] = []
   let rule_node_ids : Map[String, Int] = Map::new()
-  // Parse all rule expressions
+  // Parse all rule expressions (original compiled nodes)
   for name, rule_def in spec.rules {
     let node = parse_expr(rule_def.expr)
     ast.set(name, node)
     let node_id = compile_node(node, compiled_nodes)
     rule_node_ids.set(name, node_id)
   }
-  { tokens, ast, attrs: spec.attrs, compiled_nodes, rule_node_ids }
+  // Build fast nodes with pre-computed IDs (two-pass)
+  let fast_nodes : Array[FastCompiledNode] = []
+  let fast_rule_ids : Map[String, Int] = Map::new()
+  let fast_rule_body_ids : Map[String, Int] = Map::new()
+  // First pass: reserve IDs for rule body placeholders
+  for name, _ in spec.rules {
+    fast_rule_ids.set(name, fast_nodes.length())
+    fast_nodes.push(FEmpty) // placeholder
+  }
+  // Second pass: compile rule bodies with rule IDs already known
+  for name, rule_def in spec.rules {
+    let node = parse_expr(rule_def.expr)
+    let body_node_id = compile_fast_node(
+      node,
+      fast_nodes,
+      tokens,
+      token_ids,
+      fast_rule_ids,
+    )
+    // Update placeholder to point to body
+    let rule_id = fast_rule_ids.get(name).unwrap()
+    fast_nodes[rule_id] = FRuleRef(body_node_id, name)
+    // Also track body ID for direct access
+    fast_rule_body_ids.set(name, body_node_id)
+  }
+  {
+    tokens,
+    ast,
+    attrs: spec.attrs,
+    compiled_nodes,
+    rule_node_ids,
+    token_ids,
+    fast_nodes,
+    fast_rule_ids,
+    fast_rule_body_ids,
+  }
+}
+
+///|
+/// Compiles an AST node into fast ID-based node table.
+fn compile_fast_node(
+  node : Node,
+  out : Array[FastCompiledNode],
+  tokens : @hashset.HashSet[String],
+  token_ids : Map[String, Int],
+  rule_ids : Map[String, Int],
+) -> Int {
+  let compiled = match node {
+    Empty => FEmpty
+    Sym(name) =>
+      if tokens.contains(name) {
+        // Token reference - use pre-computed token ID
+        let tid = token_ids.get(name).unwrap_or(0)
+        FToken(tid)
+      } else {
+        // Rule reference - use pre-computed rule node ID
+        let rid = rule_ids.get(name).unwrap_or(0)
+        FRuleRef(rid, name)
+      }
+    Seq(nodes) => {
+      let children : Array[Int] = []
+      for child in nodes {
+        children.push(compile_fast_node(child, out, tokens, token_ids, rule_ids))
+      }
+      FSeq(children)
+    }
+    Choice(nodes) => {
+      let children : Array[Int] = []
+      for child in nodes {
+        children.push(compile_fast_node(child, out, tokens, token_ids, rule_ids))
+      }
+      FChoice(children)
+    }
+    Star(child) => FStar(compile_fast_node(child, out, tokens, token_ids, rule_ids))
+    Plus(child) => FPlus(compile_fast_node(child, out, tokens, token_ids, rule_ids))
+    Optional(child) =>
+      FOptional(compile_fast_node(child, out, tokens, token_ids, rule_ids))
+    Label(name, child) =>
+      FLabel(name, compile_fast_node(child, out, tokens, token_ids, rule_ids))
+  }
+  let id = out.length()
+  out.push(compiled)
+  id
 }
 
 ///|
