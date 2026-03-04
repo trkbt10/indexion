@@ -11,9 +11,13 @@ pub fn show_help() -> Unit {
   println("  indexion plan <command> [options]")
   println("")
   println("Commands:")
-  println("  refactor    Generate refactoring plan from file similarity analysis")
+  println(
+    "  refactor    Generate refactoring plan from file similarity analysis",
+  )
   println("")
-  println("Use 'indexion plan <command> --help' for more information about a command.")
+  println(
+    "Use 'indexion plan <command> --help' for more information about a command.",
+  )
 }
 
 ///|

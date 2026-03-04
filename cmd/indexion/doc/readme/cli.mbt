@@ -145,19 +145,29 @@ pub fn show_help() -> Unit {
   println("  --exclude=PATTERN    Exclude packages matching glob (repeatable)")
   println("  --recursive          Scan directories recursively (default)")
   println("  --no-recursive       Do not scan recursively")
-  println("  --format=FORMAT      Output format: markdown, json, raw (default: markdown)")
+  println(
+    "  --format=FORMAT      Output format: markdown, json, raw (default: markdown)",
+  )
   println("  --output=FILE        Write output to file (default: stdout)")
   println("  -o=FILE              Short form of --output")
   println("  --per-package        Generate README.md in each package directory")
   println("  --root               Generate root README.md")
-  println("  --no-packages        Skip individual package output (use with --root)")
+  println(
+    "  --no-packages        Skip individual package output (use with --root)",
+  )
   println("  --help               Show this help message")
   println("")
   println("Examples:")
-  println("  indexion doc readme                                  # Extract from current dir")
-  println("  indexion doc readme --format=json src/               # JSON output")
+  println(
+    "  indexion doc readme                                  # Extract from current dir",
+  )
+  println(
+    "  indexion doc readme --format=json src/               # JSON output",
+  )
   println("  indexion doc readme --include=\"cmd/*\" --exclude=\"*test*\"")
-  println("  indexion doc readme --per-package --root             # Legacy behavior")
+  println(
+    "  indexion doc readme --per-package --root             # Legacy behavior",
+  )
   println("")
   println("Patterns:")
   println("  *           Match any characters")
@@ -187,12 +197,11 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let docs : Array[(PackageInfo, ExtractedDoc)] = []
   for pkg in packages {
     match pkg.main_file {
-      Some(file) => {
+      Some(file) =>
         match extract_doc_from_file(file) {
           Some(doc) => docs.push((pkg, doc))
           None => ()
         }
-      }
       None => ()
     }
   }
@@ -209,11 +218,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   // Handle root README generation
   if config.generate_root {
     println("Generating root README...")
-    let base_dir = if config.paths.length() > 0 {
-      config.paths[0]
-    } else {
-      "."
-    }
+    let base_dir = if config.paths.length() > 0 { config.paths[0] } else { "." }
     let _ = generate_root_readme(docs, base_dir)
     println("")
   }

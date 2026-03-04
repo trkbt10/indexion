@@ -17,7 +17,7 @@ pub fn is_whitespace_only(s : String) -> Bool {
 /// Find the nearest sentence boundary to a target position.
 pub fn find_nearest_sentence_end(
   sentences : Array[@sentence.Sentence],
-  target_pos : Int
+  target_pos : Int,
 ) -> Int {
   let mut nearest_end = 0
   let mut min_distance = 2147483647 // Max Int
@@ -46,7 +46,7 @@ pub fn apply_size_constraints(
   sentences : Array[@sentence.Sentence],
   min_size : Int,
   max_size : Int,
-  target_size : Int
+  target_size : Int,
 ) -> Array[Int] {
   let final_boundaries : Array[Int] = []
   let mut last_boundary = 0
@@ -60,7 +60,9 @@ pub fn apply_size_constraints(
       // Force split if current segment exceeds max_size
       while pos - last_boundary > max_size {
         let force_split_target = last_boundary + max_size
-        let split_point = find_nearest_sentence_end(sentences, force_split_target)
+        let split_point = find_nearest_sentence_end(
+          sentences, force_split_target,
+        )
 
         if split_point > last_boundary && split_point < pos {
           final_boundaries.push(split_point)
@@ -127,7 +129,7 @@ pub fn apply_size_constraints(
 /// Convert boundary positions to SegmentPoints.
 pub fn boundaries_to_segment_points(
   boundaries : Array[Int],
-  text_length : Int
+  text_length : Int,
 ) -> Array[@types.SegmentPoint] {
   let points : Array[@types.SegmentPoint] = []
   let mut start = 0
@@ -144,7 +146,11 @@ pub fn boundaries_to_segment_points(
   // Add final segment
   if start < text_length {
     points.push(
-      @types.SegmentPoint::new(start, text_length, @types.SegmentType::Paragraph),
+      @types.SegmentPoint::new(
+        start,
+        text_length,
+        @types.SegmentType::Paragraph,
+      ),
     )
   }
 
@@ -158,7 +164,7 @@ pub fn handle_few_sentences(
   sentences : Array[@sentence.Sentence],
   target_size : Int,
   min_size : Int,
-  max_size : Int
+  max_size : Int,
 ) -> Array[@types.SegmentPoint] {
   let text_length = text.length()
 
@@ -174,7 +180,11 @@ pub fn handle_few_sentences(
   for s in sentences {
     if s.get_end() - start >= target_size {
       points.push(
-        @types.SegmentPoint::new(start, s.get_end(), @types.SegmentType::Paragraph),
+        @types.SegmentPoint::new(
+          start,
+          s.get_end(),
+          @types.SegmentType::Paragraph,
+        ),
       )
       start = s.get_end()
     }
@@ -192,7 +202,11 @@ pub fn handle_few_sentences(
       )
     } else {
       points.push(
-        @types.SegmentPoint::new(start, text_length, @types.SegmentType::Paragraph),
+        @types.SegmentPoint::new(
+          start,
+          text_length,
+          @types.SegmentType::Paragraph,
+        ),
       )
     }
   }
@@ -206,7 +220,10 @@ pub fn handle_few_sentences(
 
 ///|
 /// Find local maxima indices where values exceed the threshold.
-pub fn find_local_maxima(values : Array[Double], threshold : Double) -> Array[Int] {
+pub fn find_local_maxima(
+  values : Array[Double],
+  threshold : Double,
+) -> Array[Int] {
   let maxima : Array[Int] = []
 
   if values.length() < 3 {

@@ -2,7 +2,7 @@
 /// Assemble root README from package documentation.
 pub fn assemble_root_readme(
   packages : Array[(PackageInfo, ExtractedDoc)],
-  base_dir : String
+  base_dir : String,
 ) -> String {
   let buf = StringBuilder::new()
   // Read intro
@@ -39,9 +39,7 @@ pub fn assemble_root_readme(
 ///|
 /// Read static file content.
 fn read_static_file(path : String) -> String {
-  try {
-    @fs.read_file_to_string(path)
-  } catch {
+  @fs.read_file_to_string(path) catch {
     _ => ""
   }
 }
@@ -49,7 +47,7 @@ fn read_static_file(path : String) -> String {
 ///|
 /// Filter packages that are commands (under cmd/).
 fn filter_command_packages(
-  packages : Array[(PackageInfo, ExtractedDoc)]
+  packages : Array[(PackageInfo, ExtractedDoc)],
 ) -> Array[(PackageInfo, ExtractedDoc)] {
   let result : Array[(PackageInfo, ExtractedDoc)] = []
   for item in packages {
@@ -90,7 +88,7 @@ fn extract_command_name(path : String) -> String {
 /// Generate root README and write to file.
 pub fn generate_root_readme(
   packages : Array[(PackageInfo, ExtractedDoc)],
-  base_dir : String
+  base_dir : String,
 ) -> Bool {
   let content = assemble_root_readme(packages, base_dir)
   let readme_path = base_dir + "/README.md"

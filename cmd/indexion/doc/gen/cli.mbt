@@ -127,9 +127,7 @@ pub fn show_help() -> Unit {
   println("Options:")
   println("  --format=markdown|json|both  Output format (default: both)")
   println("  --output=DIR                 Output directory (default: .docgen)")
-  println(
-    "  --specs=DIR                  KGF specs directory (default: kgfs)",
-  )
+  println("  --specs=DIR                  KGF specs directory (default: kgfs)")
   println("  --no-diagrams                Disable Mermaid diagrams")
   println("  --help                       Show this help message")
   println("")
@@ -209,8 +207,8 @@ fn trim_trailing_slash(path : String) -> String {
 /// Check if file extension is supported.
 fn is_supported_file(path : String) -> Bool {
   let extensions = [
-    ".ts", ".tsx", ".js", ".jsx", ".mjs", ".mbt", ".py", ".go", ".rs", ".sql",
-    ".html", ".css", ".md",
+    ".ts", ".tsx", ".js", ".jsx", ".mjs", ".mbt", ".py", ".go", ".rs", ".sql", ".html",
+    ".css", ".md",
   ]
   for ext in extensions {
     if path.has_suffix(ext) {
