@@ -51,8 +51,7 @@ fn should_emit_rule_rec(ctx : RecEvalContext, name : String) -> Bool {
 fn eval_rec(ctx : RecEvalContext, node_id : Int, pos : Int) -> FastEvalResult {
   let memo_idx = node_id * ctx.num_positions + pos
   match ctx.memo[memo_idx] {
-    Succeeded(end_pos) =>
-      return { ok: true, end_pos, labels: empty_labels() }
+    Succeeded(end_pos) => return { ok: true, end_pos, labels: empty_labels() }
     Failed => return { ok: false, end_pos: pos, labels: empty_labels() }
     Unknown => ()
   }
@@ -67,7 +66,11 @@ fn eval_rec(ctx : RecEvalContext, node_id : Int, pos : Int) -> FastEvalResult {
 
 ///|
 /// Evaluate a single node recursively.
-fn eval_node_rec(ctx : RecEvalContext, node_id : Int, pos : Int) -> FastEvalResult {
+fn eval_node_rec(
+  ctx : RecEvalContext,
+  node_id : Int,
+  pos : Int,
+) -> FastEvalResult {
   let compiled = ctx.peg.fast_nodes[node_id]
   match compiled {
     FEmpty => { ok: true, end_pos: pos, labels: empty_labels() }
@@ -240,7 +243,7 @@ pub fn run_parse_filtered_rec(
     rule_name : String,
     labels : Map[String, Json],
     _start_pos : Int,
-    _end_pos : Int
+    _end_pos : Int,
   ) {
     events.push((rule_name, labels))
   }
@@ -252,7 +255,7 @@ pub fn run_parse_filtered_rec(
     Some(active_rules),
   )
   if ok {
-    Some(EvalResult::success(tokens.length(), labels=final_labels, events=events))
+    Some(EvalResult::success(tokens.length(), labels=final_labels, events~))
   } else {
     None
   }

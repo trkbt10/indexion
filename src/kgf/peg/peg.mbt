@@ -136,11 +136,7 @@ pub fn build_peg(spec : @types.KGFSpec) -> PEG raise {
   for name, rule_def in spec.rules {
     let node = parse_expr(rule_def.expr)
     let body_node_id = compile_fast_node(
-      node,
-      fast_nodes,
-      tokens,
-      token_ids,
-      fast_rule_ids,
+      node, fast_nodes, tokens, token_ids, fast_rule_ids,
     )
     // Update placeholder to point to body
     let rule_id = fast_rule_ids.get(name).unwrap()
@@ -185,19 +181,25 @@ fn compile_fast_node(
     Seq(nodes) => {
       let children : Array[Int] = []
       for child in nodes {
-        children.push(compile_fast_node(child, out, tokens, token_ids, rule_ids))
+        children.push(
+          compile_fast_node(child, out, tokens, token_ids, rule_ids),
+        )
       }
       FSeq(children)
     }
     Choice(nodes) => {
       let children : Array[Int] = []
       for child in nodes {
-        children.push(compile_fast_node(child, out, tokens, token_ids, rule_ids))
+        children.push(
+          compile_fast_node(child, out, tokens, token_ids, rule_ids),
+        )
       }
       FChoice(children)
     }
-    Star(child) => FStar(compile_fast_node(child, out, tokens, token_ids, rule_ids))
-    Plus(child) => FPlus(compile_fast_node(child, out, tokens, token_ids, rule_ids))
+    Star(child) =>
+      FStar(compile_fast_node(child, out, tokens, token_ids, rule_ids))
+    Plus(child) =>
+      FPlus(compile_fast_node(child, out, tokens, token_ids, rule_ids))
     Optional(child) =>
       FOptional(compile_fast_node(child, out, tokens, token_ids, rule_ids))
     Label(name, child) =>

@@ -135,10 +135,9 @@ fn try_bracket_skip(ctx : IterEvalContext, start_pos : Int) -> Int {
     // Check if this is an opening bracket
     if kind == "LBRACE" || kind == "LPAREN" || kind == "LBRACKET" {
       match ctx.brace_pairs.get_close(pos) {
-        Some(close_pos) => {
+        Some(close_pos) =>
           // Jump to position after closing bracket
           pos = close_pos + 1
-        }
         None =>
           // No matching bracket, can't skip
           return start_pos
@@ -199,7 +198,7 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
       ctx.memo[memo_idx] = Succeeded(pos)
       ctx.results.push({ ok: true, end_pos: pos, labels: empty_labels() })
     }
-    FToken(expected_id) => {
+    FToken(expected_id) =>
       if pos < ctx.tokens.length() && ctx.token_ids[pos] == expected_id {
         let tok = ctx.tokens[pos]
         let labels : Map[String, Json] = Map::new()
@@ -213,7 +212,6 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
         ctx.memo[memo_idx] = Failed
         ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels() })
       }
-    }
     FRuleRef(rule_node_id, name) => {
       let target_is_rule_ref = match ctx.peg.fast_nodes.get(rule_node_id) {
         Some(FRuleRef(_, _)) => true
@@ -222,7 +220,7 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
       ctx.work.push(RuleRefCont(name, target_is_rule_ref, pos))
       ctx.work.push(Eval(rule_node_id, pos))
     }
-    FSeq(elems) => {
+    FSeq(elems) =>
       if elems.length() == 0 {
         ctx.memo[memo_idx] = Succeeded(pos)
         ctx.results.push({ ok: true, end_pos: pos, labels: empty_labels() })
@@ -231,8 +229,7 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
         ctx.work.push(SeqCont(node_id, 0, pos, pos, Map::new()))
         ctx.work.push(Eval(elems[0], pos))
       }
-    }
-    FChoice(alts) => {
+    FChoice(alts) =>
       if alts.length() == 0 {
         ctx.memo[memo_idx] = Failed
         ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels() })
@@ -240,7 +237,6 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
         ctx.work.push(ChoiceCont(node_id, 0, pos))
         ctx.work.push(Eval(alts[0], pos))
       }
-    }
     FStar(child) => {
       // Try bracket skip optimization first
       let skip_end = try_bracket_skip(ctx, pos)
@@ -463,7 +459,9 @@ fn process_rule_ref_cont(
   start_pos : Int,
 ) -> Unit {
   let result = ctx.results.pop().unwrap()
-  if result.ok && not(target_is_rule_ref) && should_emit_rule_iter(ctx, rule_name) {
+  if result.ok &&
+    not(target_is_rule_ref) &&
+    should_emit_rule_iter(ctx, rule_name) {
     (ctx.on_rule_match)(rule_name, result.labels, start_pos, result.end_pos)
   }
   if result.ok {
@@ -505,9 +503,9 @@ fn run_parse_iter_internal(
     Some(body_node_id) => {
       ctx.work.push(Eval(body_node_id, 0))
       eval_iter_loop(ctx)
-      let result = ctx.results.pop().unwrap_or(
-        { ok: false, end_pos: 0, labels: Map::new() },
-      )
+      let result = ctx.results
+        .pop()
+        .unwrap_or({ ok: false, end_pos: 0, labels: Map::new() })
       if result.ok && should_emit_rule_iter(ctx, start_rule) {
         (ctx.on_rule_match)(start_rule, result.labels, 0, result.end_pos)
       }
@@ -550,7 +548,7 @@ pub fn run_parse_filtered_iter(
     rule_name : String,
     labels : Map[String, Json],
     _start_pos : Int,
-    _end_pos : Int
+    _end_pos : Int,
   ) {
     events.push((rule_name, labels))
   }
@@ -562,7 +560,7 @@ pub fn run_parse_filtered_iter(
     Some(active_rules),
   )
   if ok {
-    Some(EvalResult::success(tokens.length(), labels=final_labels, events=events))
+    Some(EvalResult::success(tokens.length(), labels=final_labels, events~))
   } else {
     None
   }

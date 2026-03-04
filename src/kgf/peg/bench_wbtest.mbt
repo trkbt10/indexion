@@ -41,14 +41,23 @@ test "peg_parse_large" (b : @bench.T) {
 
 // Helper functions for test data
 
+///|
 fn moonbit_kgf_content() -> String {
-  @fs.read_file_to_string("kgfs/moonbit.kgf") catch { _ => "" }
+  @fs.read_file_to_string("kgfs/moonbit.kgf") catch {
+    _ => ""
+  }
 }
 
+///|
 fn small_source() -> String {
-  @fs.read_file_to_string("src/kgf/lexer/lexer.mbt") catch { _ => "" }
+  @fs.read_file_to_string("src/kgf/lexer/lexer.mbt") catch {
+    _ => ""
+  }
 }
 
+///|
 fn large_source() -> String {
-  @fs.read_file_to_string("src/kgf/lexer/pattern_matcher.mbt") catch { _ => "" }
+  @fs.read_file_to_string("src/kgf/lexer/pattern_matcher.mbt") catch {
+    _ => ""
+  }
 }

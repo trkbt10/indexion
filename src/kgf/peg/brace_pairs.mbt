@@ -12,8 +12,8 @@ pub struct BracePairs {
 ///|
 /// Bracket type for matching.
 priv enum BracketType {
-  Brace   // { }
-  Paren   // ( )
+  Brace // { }
+  Paren // ( )
   Bracket // [ ]
 }
 
@@ -45,7 +45,7 @@ pub fn compute_brace_pairs(tokens : Array[@types.Tok]) -> BracePairs {
   for i = 0; i < n; i = i + 1 {
     let kind = tokens[i].kind
     match get_bracket_info(kind) {
-      Some((bracket_type, is_open)) => {
+      Some((bracket_type, is_open)) =>
         if is_open {
           stack.push((i, bracket_type))
         } else {
@@ -65,11 +65,10 @@ pub fn compute_brace_pairs(tokens : Array[@types.Tok]) -> BracePairs {
             }
           }
         }
-      }
       None => ()
     }
   }
-  { pairs }
+  { pairs, }
 }
 
 ///|

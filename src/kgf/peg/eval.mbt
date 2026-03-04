@@ -55,6 +55,7 @@ pub fn EvalResult::get_label(self : EvalResult, name : String) -> Json? {
   self.labels.get(name)
 }
 
+///|
 /// Token threshold for switching to iterative evaluator.
 /// Below this: use fast recursive. Above: use iterative with bracket skip.
 /// Set to 0 to always use iterative (bracket skip makes it faster than recursive).

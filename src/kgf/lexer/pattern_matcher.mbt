@@ -40,7 +40,6 @@ fn is_word_char(c : Char) -> Bool {
   c == '_'
 }
 
-
 ///|
 /// Parsed pattern element for internal use.
 priv enum PatternElement {

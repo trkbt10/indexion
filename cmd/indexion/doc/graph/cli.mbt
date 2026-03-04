@@ -109,7 +109,9 @@ pub fn show_help() -> Unit {
   println("  --output=FILE    Output file (- for stdout, default: -)")
   println("  --specs=DIR      KGF specs directory (default: kgfs)")
   println("  --title=TEXT     Diagram title (default: Module Dependencies)")
-  println("  --format=FORMAT  Output format: mermaid, json, dot, d2, text (default: mermaid)")
+  println(
+    "  --format=FORMAT  Output format: mermaid, json, dot, d2, text (default: mermaid)",
+  )
   println("  --help           Show this help message")
   println("")
   println("Examples:")
