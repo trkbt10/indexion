@@ -70,22 +70,51 @@ pub fn render_markdown(plan : RefactorPlanJSON) -> String {
       buf.write_string("- `" + file + "`\n")
     }
     buf.write_string("\n")
-    // Similarity matrix
-    buf.write_string("**Similarity Matrix:**\n")
-    buf.write_string("| File 1 | File 2 | Similarity |\n")
-    buf.write_string("|--------|--------|------------|\n")
-    for pair in cluster.pairs {
-      buf.write_string(
-        "| `" +
-        pair.file1 +
-        "` | `" +
-        pair.file2 +
-        "` | " +
-        format_percent(pair.similarity) +
-        " |\n",
-      )
+    // Top similar pairs with excerpts (show top 3)
+    buf.write_string("**Similar Excerpts:**\n\n")
+    let max_excerpts = if cluster.pairs.length() < 3 {
+      cluster.pairs.length()
+    } else {
+      3
     }
-    buf.write_string("\n")
+    for idx = 0; idx < max_excerpts; idx = idx + 1 {
+      let pair = cluster.pairs[idx]
+      buf.write_string(
+        "**" +
+        format_percent(pair.similarity) +
+        "** `" +
+        pair.file1 +
+        "` ↔ `" +
+        pair.file2 +
+        "`\n\n",
+      )
+      if pair.preview1.length() > 0 {
+        buf.write_string("> **" + pair.file1 + ":**\n")
+        buf.write_string("> " + escape_blockquote(pair.preview1) + "\n\n")
+      }
+      if pair.preview2.length() > 0 {
+        buf.write_string("> **" + pair.file2 + ":**\n")
+        buf.write_string("> " + escape_blockquote(pair.preview2) + "\n\n")
+      }
+    }
+    // Similarity matrix (compact)
+    if cluster.pairs.length() > 3 {
+      buf.write_string("**All Pairs:**\n")
+      buf.write_string("| File 1 | File 2 | Similarity |\n")
+      buf.write_string("|--------|--------|------------|\n")
+      for pair in cluster.pairs {
+        buf.write_string(
+          "| `" +
+          pair.file1 +
+          "` | `" +
+          pair.file2 +
+          "` | " +
+          format_percent(pair.similarity) +
+          " |\n",
+        )
+      }
+      buf.write_string("\n")
+    }
     // Duplicate code blocks
     if cluster.duplicates.length() > 0 {
       buf.write_string("**Duplicate Code Blocks:**\n\n")
@@ -230,6 +259,23 @@ pub fn render_text(plan : RefactorPlanJSON) -> String {
 }
 
 // Helper functions
+
+///|
+/// Escape text for markdown blockquote (replace newlines with blockquote continuation).
+fn escape_blockquote(text : String) -> String {
+  let chars = text.to_array()
+  let result : Array[Char] = []
+  for c in chars {
+    if c == '\n' {
+      result.push('\n')
+      result.push('>')
+      result.push(' ')
+    } else {
+      result.push(c)
+    }
+  }
+  String::from_array(result)
+}
 
 ///|
 fn format_percent(d : Double) -> String {

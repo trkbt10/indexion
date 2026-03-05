@@ -13,11 +13,13 @@ pub struct ConfigSummary {
 }
 
 ///|
-/// Similar file pair with similarity score.
+/// Similar file pair with similarity score and excerpt previews.
 pub struct SimilarPairJSON {
   file1 : String
   file2 : String
   similarity : Double
+  preview1 : String // excerpt from file1
+  preview2 : String // excerpt from file2
 }
 
 ///|
@@ -157,6 +159,8 @@ fn cluster_to_json(cluster : ClusterJSON) -> Json {
     pair_obj.set("file1", pair.file1.to_json())
     pair_obj.set("file2", pair.file2.to_json())
     pair_obj.set("similarity", pair.similarity.to_json())
+    pair_obj.set("preview1", pair.preview1.to_json())
+    pair_obj.set("preview2", pair.preview2.to_json())
     pairs_arr.push(Json::object(pair_obj))
   }
   obj.set("pairs", Json::array(pairs_arr))
@@ -306,7 +310,15 @@ fn parse_cluster(json : Json) -> ClusterJSON? {
                   Some(Number(n, ..)) => n
                   _ => 0.0
                 }
-                pairs.push({ file1, file2, similarity })
+                let preview1 = match pair_obj.get("preview1") {
+                  Some(String(s)) => s
+                  _ => ""
+                }
+                let preview2 = match pair_obj.get("preview2") {
+                  Some(String(s)) => s
+                  _ => ""
+                }
+                pairs.push({ file1, file2, similarity, preview1, preview2 })
               }
               _ => ()
             }
@@ -387,6 +399,64 @@ fn parse_cluster(json : Json) -> ClusterJSON? {
 }
 
 ///|
+/// Extract preview text from content using sentence-aware splitting.
+/// Uses segmentation/sentence to properly detect sentence boundaries
+/// for both Japanese and English text.
+fn extract_preview(content : String, max_chars : Int) -> String {
+  // Use sentence splitter (supports Japanese and English)
+  let sentences = @sentence.split_sentences_text(content)
+  if sentences.length() == 0 {
+    // Fallback: return truncated content
+    let chars = content.to_array()
+    if chars.length() <= max_chars {
+      return trim_leading_whitespace(content)
+    }
+    let result : Array[Char] = []
+    for i = 0; i < max_chars; i = i + 1 {
+      result.push(chars[i])
+    }
+    return trim_leading_whitespace(String::from_array(result))
+  }
+  // Collect sentences until we reach max_chars
+  let buf = StringBuilder::new()
+  let mut total_len = 0
+  for sentence in sentences {
+    let sentence_len = sentence.to_array().length()
+    if total_len + sentence_len > max_chars && total_len > 0 {
+      break
+    }
+    buf.write_string(sentence)
+    total_len = total_len + sentence_len
+  }
+  trim_leading_whitespace(buf.to_string())
+}
+
+///|
+/// Trim leading whitespace from text.
+fn trim_leading_whitespace(text : String) -> String {
+  let chars = text.to_array()
+  let mut start = 0
+  while start < chars.length() &&
+        (
+          chars[start] == ' ' ||
+          chars[start] == '\t' ||
+          chars[start] == '\n' ||
+          chars[start] == '\r' ||
+          chars[start] == '　'
+        ) {
+    start = start + 1
+  }
+  if start == 0 {
+    return text
+  }
+  let result : Array[Char] = []
+  for i = start; i < chars.length(); i = i + 1 {
+    result.push(chars[i])
+  }
+  String::from_array(result)
+}
+
+///|
 /// Build a refactoring plan from analysis results.
 pub fn build_refactor_plan(
   clusters : Array[FileCluster],
@@ -403,13 +473,23 @@ pub fn build_refactor_plan(
   let plan = RefactorPlanJSON::new(plan_config)
   for i, cluster in clusters {
     let group_id = i + 1
-    // Convert pairs
+    // Convert pairs with previews
     let pairs : Array[SimilarPairJSON] = []
     for pair in cluster.pairs {
+      let preview1 = match file_contents.get(pair.file1) {
+        Some(content) => extract_preview(content, 200)
+        None => ""
+      }
+      let preview2 = match file_contents.get(pair.file2) {
+        Some(content) => extract_preview(content, 200)
+        None => ""
+      }
       pairs.push({
         file1: pair.file1,
         file2: pair.file2,
         similarity: pair.similarity,
+        preview1,
+        preview2,
       })
     }
     // Find duplicates and build suggestions

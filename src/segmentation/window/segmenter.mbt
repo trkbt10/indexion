@@ -379,3 +379,242 @@ pub fn segment_adaptive(
 
   [@types.SegmentPoint::new(0, text_length, @types.SegmentType::Paragraph)]
 }
+
+///|
+/// Default hybrid configuration values.
+let default_hybrid_ncd_weight : Double = 0.5
+
+///|
+let default_hybrid_tfidf_weight : Double = 0.5
+
+///|
+/// Create a default HybridAdaptiveConfig.
+pub fn default_hybrid_adaptive_config() -> HybridAdaptiveConfig {
+  HybridAdaptiveConfig::new(
+    default_adaptive_percentile, default_adaptive_minimum_threshold, default_target_chunk_size,
+    default_min_chunk_size, default_max_chunk_size, default_window_size, default_hybrid_ncd_weight,
+    default_hybrid_tfidf_weight,
+  )
+}
+
+///|
+/// Segment text using NCD+TF-IDF hybrid adaptive mode.
+/// Combines Normalized Compression Distance and TF-IDF cosine distance
+/// for more robust semantic boundary detection.
+pub fn segment_hybrid_adaptive(
+  text : String,
+  config : HybridAdaptiveConfig,
+) -> Array[@types.SegmentPoint] {
+  // Handle empty or whitespace-only text
+  if text.length() == 0 || @utils.is_whitespace_only(text) {
+    return []
+  }
+
+  let text_length = text.length()
+
+  // If text is smaller than min_chunk_size, return as single segment
+  if text_length <= config.min_chunk_size {
+    return [
+      @types.SegmentPoint::new(0, text_length, @types.SegmentType::Paragraph),
+    ]
+  }
+
+  // Split into sentences
+  let sentences = @sentence.split_sentences(text)
+
+  if sentences.length() == 0 {
+    return [
+      @types.SegmentPoint::new(0, text_length, @types.SegmentType::Paragraph),
+    ]
+  }
+
+  // If not enough sentences for window analysis
+  if sentences.length() < config.window_size + 1 {
+    return @utils.handle_few_sentences(
+      text,
+      sentences,
+      config.target_chunk_size,
+      config.min_chunk_size,
+      config.max_chunk_size,
+    )
+  }
+
+  // Calculate hybrid NCD+TF-IDF window divergence
+  let divergence = calculate_window_ncd_tfidf_divergence(
+    sentences,
+    config.window_size,
+    config.ncd_weight,
+    config.tfidf_weight,
+  )
+
+  if divergence.divergence_values.length() == 0 {
+    return [
+      @types.SegmentPoint::new(0, text_length, @types.SegmentType::Paragraph),
+    ]
+  }
+
+  // Calculate adaptive threshold
+  let threshold = calculate_adaptive_threshold(
+    divergence.divergence_values,
+    config.percentile,
+    config.minimum_threshold,
+  )
+
+  // Find local maxima above adaptive threshold
+  let maxima_indices = @utils.find_local_maxima(
+    divergence.divergence_values,
+    threshold,
+  )
+
+  // Convert maxima indices to positions
+  let candidate_positions : Array[Int] = []
+  for idx in maxima_indices {
+    let pos = divergence.window_end_positions[idx]
+    if pos > 0 {
+      candidate_positions.push(pos)
+    }
+  }
+  candidate_positions.sort_by(fn(a, b) { a.compare(b) })
+
+  // Apply minimum size constraint
+  let boundaries : Array[Int] = []
+  let mut last_boundary = 0
+  for pos in candidate_positions {
+    if pos - last_boundary >= config.min_chunk_size {
+      boundaries.push(pos)
+      last_boundary = pos
+    }
+  }
+
+  // Subdivide oversized chunks (using hybrid divergence)
+  let final_boundaries = subdivide_oversized_chunks_hybrid(
+    boundaries,
+    text_length,
+    sentences,
+    config.min_chunk_size,
+    config.max_chunk_size,
+    config.window_size,
+    config.minimum_threshold,
+    config.ncd_weight,
+    config.tfidf_weight,
+  )
+
+  // Convert to segment points
+  let points = @utils.boundaries_to_segment_points(
+    final_boundaries, text_length,
+  )
+
+  if points.length() > 0 {
+    return points
+  }
+
+  [@types.SegmentPoint::new(0, text_length, @types.SegmentType::Paragraph)]
+}
+
+///|
+/// Subdivide oversized chunks using hybrid NCD+TF-IDF divergence.
+fn subdivide_oversized_chunks_hybrid(
+  boundaries : Array[Int],
+  text_length : Int,
+  sentences : Array[@sentence.Sentence],
+  min_size : Int,
+  max_size : Int,
+  window_size : Int,
+  minimum_threshold : Double,
+  ncd_weight : Double,
+  tfidf_weight : Double,
+) -> Array[Int] {
+  let result : Array[Int] = []
+  let mut last_boundary = 0
+  let all_positions = boundaries.copy()
+  all_positions.push(text_length)
+
+  for pos in all_positions {
+    let chunk_size = pos - last_boundary
+
+    if chunk_size > max_size {
+      // Find sentences within this chunk
+      let chunk_sentences : Array[@sentence.Sentence] = []
+      for s in sentences {
+        if s.get_start() >= last_boundary && s.get_end() <= pos {
+          chunk_sentences.push(s)
+        }
+      }
+
+      // Use smaller window size for subdivision
+      let sub_window_size = if window_size / 2 > 1 {
+        window_size / 2
+      } else {
+        1
+      }
+
+      if chunk_sentences.length() >= sub_window_size + 1 {
+        let sub_divergence = calculate_window_ncd_tfidf_divergence(
+          chunk_sentences, sub_window_size, ncd_weight, tfidf_weight,
+        )
+
+        if sub_divergence.divergence_values.length() > 0 {
+          // Use median as threshold for subdivision
+          let sorted_div = sub_divergence.divergence_values.copy()
+          sorted_div.sort_by(fn(a, b) { b.compare(a) })
+          let median_index = sorted_div.length() / 2
+          let median_threshold = sorted_div[median_index]
+          let threshold = if median_threshold > minimum_threshold {
+            median_threshold
+          } else {
+            minimum_threshold
+          }
+
+          let local_maxima = @utils.find_local_maxima(
+            sub_divergence.divergence_values,
+            threshold,
+          )
+          let candidate_positions : Array[Int] = []
+          for idx in local_maxima {
+            let candidate = sub_divergence.window_end_positions[idx]
+            if candidate > last_boundary && candidate < pos {
+              candidate_positions.push(candidate)
+            }
+          }
+          candidate_positions.sort_by(fn(a, b) { a.compare(b) })
+
+          let mut previous = last_boundary
+          for candidate in candidate_positions {
+            if candidate - previous >= min_size && pos - candidate >= min_size {
+              result.push(candidate)
+              previous = candidate
+            }
+          }
+        }
+      }
+
+      // Force split remaining oversized portions
+      let mut current_boundary = if result.length() > 0 {
+        result[result.length() - 1]
+      } else {
+        last_boundary
+      }
+      while pos - current_boundary > max_size {
+        let force_split_target = current_boundary + max_size
+        let split_point = @utils.find_nearest_sentence_end(
+          sentences, force_split_target,
+        )
+
+        if split_point > current_boundary && split_point < pos {
+          result.push(split_point)
+          current_boundary = split_point
+          continue
+        }
+
+        break
+      }
+    }
+
+    if pos < text_length {
+      result.push(pos)
+    }
+    last_boundary = pos
+  }
+
+  result
+}

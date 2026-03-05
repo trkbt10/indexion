@@ -211,10 +211,7 @@ pub fn TfidfBatch::length(self : TfidfBatch) -> Int {
 /// Calculate similarity between two documents by index.
 /// Returns 1.0 for identical, 0.0 for completely different.
 pub fn TfidfBatch::similarity(self : TfidfBatch, i : Int, j : Int) -> Double {
-  if i < 0 ||
-    j < 0 ||
-    i >= self.vectors.length() ||
-    j >= self.vectors.length() {
+  if i < 0 || j < 0 || i >= self.vectors.length() || j >= self.vectors.length() {
     return 0.0
   }
   if i == j {

@@ -24,6 +24,7 @@
 /// | Command | Description |
 /// |---------|-------------|
 /// | `explore` | Analyze file similarity in a directory |
+/// | `segment` | Split text into contextual segments |
 /// | `plan refactor` | Generate refactoring plan from similarity |
 /// | `doc gen` | Generate documentation from source |
 /// | `sim` | Calculate text similarity/distance |
@@ -60,6 +61,7 @@ fn main {
     "plan" => @plan_cli.run(args, 2)
     "doc" => @doc_cli.run(args, 2)
     "sim" | "similarity" => @similarity_cli.run(args, 2)
+    "segment" | "seg" => @segment_cli.run(args, 2)
     "perf" => @perf_cli.run(args, 2)
     "version" | "-v" | "--version" => show_version()
     "help" | "-h" | "--help" => show_help()
@@ -81,6 +83,7 @@ fn show_help() -> Unit {
   println("")
   println("Commands:")
   println("  explore     Analyze similarity across files in a directory")
+  println("  segment     Split text into contextual segments")
   println("  plan        Generate planning documents (refactor, etc.)")
   println("  doc         Documentation commands (gen, etc.)")
   println("  sim         Calculate text similarity/distance")

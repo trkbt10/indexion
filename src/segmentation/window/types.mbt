@@ -175,3 +175,129 @@ pub impl @types.SegmentationStrategy for WindowStrategy with name(self) {
 pub impl @types.SegmentationStrategy for WindowStrategy with segment(self, text) {
   segment_by_divergence(text, self.config)
 }
+
+///|
+/// Configuration for NCD+TF-IDF hybrid adaptive segmentation.
+/// Combines compression-based (NCD) and lexical (TF-IDF) divergence.
+pub struct HybridAdaptiveConfig {
+  /// Percentile for threshold selection (default: 0.2 = top 20%).
+  percentile : Double
+  /// Minimum threshold value (default: 0.13).
+  minimum_threshold : Double
+  /// Target chunk size in characters.
+  target_chunk_size : Int
+  /// Minimum chunk size in characters.
+  min_chunk_size : Int
+  /// Maximum chunk size in characters.
+  max_chunk_size : Int
+  /// Number of sentences per window.
+  window_size : Int
+  /// Weight for NCD component (default: 0.5).
+  ncd_weight : Double
+  /// Weight for TF-IDF component (default: 0.5).
+  tfidf_weight : Double
+} derive(Eq, Show)
+
+///|
+/// Create a new HybridAdaptiveConfig.
+pub fn HybridAdaptiveConfig::new(
+  percentile : Double,
+  minimum_threshold : Double,
+  target_chunk_size : Int,
+  min_chunk_size : Int,
+  max_chunk_size : Int,
+  window_size : Int,
+  ncd_weight : Double,
+  tfidf_weight : Double,
+) -> HybridAdaptiveConfig {
+  {
+    percentile,
+    minimum_threshold,
+    target_chunk_size,
+    min_chunk_size,
+    max_chunk_size,
+    window_size,
+    ncd_weight,
+    tfidf_weight,
+  }
+}
+
+///|
+/// Create a HybridAdaptiveConfig with default weights (0.5/0.5).
+pub fn HybridAdaptiveConfig::with_default_weights(
+  percentile : Double,
+  minimum_threshold : Double,
+  target_chunk_size : Int,
+  min_chunk_size : Int,
+  max_chunk_size : Int,
+  window_size : Int,
+) -> HybridAdaptiveConfig {
+  HybridAdaptiveConfig::new(
+    percentile, minimum_threshold, target_chunk_size, min_chunk_size, max_chunk_size,
+    window_size, 0.5, 0.5,
+  )
+}
+
+///|
+/// Get the percentile value.
+pub fn HybridAdaptiveConfig::get_percentile(
+  self : HybridAdaptiveConfig,
+) -> Double {
+  self.percentile
+}
+
+///|
+/// Get the minimum threshold.
+pub fn HybridAdaptiveConfig::get_minimum_threshold(
+  self : HybridAdaptiveConfig,
+) -> Double {
+  self.minimum_threshold
+}
+
+///|
+/// Get the target chunk size.
+pub fn HybridAdaptiveConfig::get_target_chunk_size(
+  self : HybridAdaptiveConfig,
+) -> Int {
+  self.target_chunk_size
+}
+
+///|
+/// Get the minimum chunk size.
+pub fn HybridAdaptiveConfig::get_min_chunk_size(
+  self : HybridAdaptiveConfig,
+) -> Int {
+  self.min_chunk_size
+}
+
+///|
+/// Get the maximum chunk size.
+pub fn HybridAdaptiveConfig::get_max_chunk_size(
+  self : HybridAdaptiveConfig,
+) -> Int {
+  self.max_chunk_size
+}
+
+///|
+/// Get the window size.
+pub fn HybridAdaptiveConfig::get_window_size(
+  self : HybridAdaptiveConfig,
+) -> Int {
+  self.window_size
+}
+
+///|
+/// Get the NCD weight.
+pub fn HybridAdaptiveConfig::get_ncd_weight(
+  self : HybridAdaptiveConfig,
+) -> Double {
+  self.ncd_weight
+}
+
+///|
+/// Get the TF-IDF weight.
+pub fn HybridAdaptiveConfig::get_tfidf_weight(
+  self : HybridAdaptiveConfig,
+) -> Double {
+  self.tfidf_weight
+}
