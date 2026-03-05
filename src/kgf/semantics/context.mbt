@@ -152,6 +152,12 @@ pub fn SemEvalCtx::get_resolution_cache(
 }
 
 ///|
+/// Gets the code graph.
+pub fn SemEvalCtx::get_graph(self : SemEvalCtx) -> @graph.CodeGraph {
+  self.graph
+}
+
+///|
 /// Pushes a new scope onto the scope stack.
 pub fn SemEvalCtx::push_scope(self : SemEvalCtx) -> Unit {
   self.scopes.push(ScopeEntry::new())

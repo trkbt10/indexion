@@ -96,7 +96,11 @@ TOKEN AMP      /&/
 TOKEN STAR     /\*/
 
 === grammar
-Module -> Item*
+# Module with optional leading module doc (//! inner doc comments)
+Module -> ModuleDoc? Item*
+
+# Module-level documentation (inner doc comments //!)
+ModuleDoc -> module_doc:InnerDocComment ( NL InnerDocComment )*
 
 Item -> NL
      | DocComment
@@ -191,6 +195,7 @@ Atom -> ExprAtom | NL | DocComment | InnerDocComment | LineComment | BlockCommen
 Other -> Atom
 
 === attrs
+on ModuleDoc:   module_doc doc=module_doc
 on FnDecl:      def id kind=Function doc=doc
 on StructDecl:  def id kind=Struct doc=doc
 on EnumDecl:    def id kind=Enum doc=doc
@@ -205,6 +210,11 @@ on TraitItem:   def method_id kind=Method doc=method_doc
 on Param:       def param_id kind=Param
 
 === semantics
+# Module-level documentation (//! inner doc comments)
+on ModuleDoc {
+  note module_doc payload obj("doc", $module_doc_text)
+}
+
 # Function declaration
 on FnDecl {
   let sym_id = concat($file, "::", $id)
@@ -280,6 +290,9 @@ on TraitItem when $scope("value", "current_trait") {
 === resolver
 relative_prefixes: ./, ../
 module_path_style: coloncol
+project_config: Cargo.toml
+install_cmd: cargo add {name}
+build_cmd: cargo build
 resolve:
   - manifest: Cargo.toml @ dependencies
   - index: /mod.rs

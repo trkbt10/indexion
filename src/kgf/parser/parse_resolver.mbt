@@ -450,6 +450,10 @@ fn build_resolver_spec_with_sources(
   let module_path_style = get_module_path_style(kv.get("module_path_style"))
   let ns_prefix = get_optional_string(kv, "ns_prefix")
   let ns_segments = get_int(kv, "ns_segments", default=2)
+  // Project config and commands
+  let project_config = get_string(kv, "project_config")
+  let install_cmd = get_string(kv, "install_cmd")
+  let build_cmd = get_string(kv, "build_cmd")
   @types.ResolverSpec::new(
     sources~,
     relative_prefixes~,
@@ -461,6 +465,9 @@ fn build_resolver_spec_with_sources(
     ns_prefix~,
     ns_segments~,
     resolve_chain~,
+    project_config~,
+    install_cmd~,
+    build_cmd~,
   )
 }
 

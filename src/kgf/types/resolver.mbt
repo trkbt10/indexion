@@ -222,6 +222,12 @@ pub struct ResolverSpec {
   ns_segments : Int
   /// Resolution chain for conditional/manifest-based resolution
   resolve_chain : Array[ResolveStep]
+  /// Project-level config file (moon.mod.json, package.json, Cargo.toml, etc.)
+  project_config : String
+  /// Install command template. Use {name} as placeholder for package name.
+  install_cmd : String
+  /// Build command template.
+  build_cmd : String
 }
 
 ///|
@@ -237,6 +243,9 @@ pub fn ResolverSpec::new(
   ns_prefix? : String? = None,
   ns_segments? : Int = 0,
   resolve_chain? : Array[ResolveStep] = [],
+  project_config? : String = "",
+  install_cmd? : String = "",
+  build_cmd? : String = "",
 ) -> ResolverSpec {
   {
     sources,
@@ -249,6 +258,9 @@ pub fn ResolverSpec::new(
     ns_prefix,
     ns_segments,
     resolve_chain,
+    project_config,
+    install_cmd,
+    build_cmd,
   }
 }
 
@@ -322,6 +334,24 @@ pub fn ResolverSpec::get_resolve_chain(
 /// Checks if the resolver has a resolve chain defined.
 pub fn ResolverSpec::has_resolve_chain(self : ResolverSpec) -> Bool {
   self.resolve_chain.length() > 0
+}
+
+///|
+/// Returns the project config file name (e.g., moon.mod.json).
+pub fn ResolverSpec::get_project_config(self : ResolverSpec) -> String {
+  self.project_config
+}
+
+///|
+/// Returns the install command template.
+pub fn ResolverSpec::get_install_cmd(self : ResolverSpec) -> String {
+  self.install_cmd
+}
+
+///|
+/// Returns the build command template.
+pub fn ResolverSpec::get_build_cmd(self : ResolverSpec) -> String {
+  self.build_cmd
 }
 
 ///|

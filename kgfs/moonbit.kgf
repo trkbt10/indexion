@@ -6,7 +6,11 @@ sources: .mbt
 SKIP /[ \t]+/
 TOKEN NL /\r?\n/
 
-# MoonBit doc comments: ///| marks start of doc block
+# Doc section markers (must come before DocLine)
+# Recognizes: Module:, Overview:, Example:, Description:, Parameters:, Returns:, Throws:
+TOKEN DocSection /\/\/\/\s*(Module|Overview|Example|Description|Parameters|Returns|Throws|Deprecated|See|Since):/
+
+# MoonBit doc comments: ///| marks start of doc block (legacy format)
 TOKEN DocComment /\/\/\/\|[^\r\n]*/
 
 # Doc content lines: /// followed by content (must come before LineComment)
@@ -68,7 +72,12 @@ TOKEN AMP      /&/
 TOKEN AT       /@/
 
 === grammar
-Module -> Item*
+# Module with optional leading module doc
+Module -> ModuleDoc? Item*
+
+# Module-level documentation (first doc block at file level)
+# Supports both new format (/// Module:) and legacy format (///|)
+ModuleDoc -> module_doc:DocBlockWithSections | module_doc:DocBlock
 
 # Visibility modifier: pub, pub(all), pub(readonly), priv
 Visibility -> KW_pub LPAREN Ident RPAREN | KW_pub | KW_priv
@@ -89,9 +98,14 @@ Item -> FnDecl
      | Other
 
 # Standalone documentation block (not attached to a declaration)
-StandaloneDoc -> doc:DocBlock
+StandaloneDoc -> doc:DocBlockWithSections
 
-# Doc comment block: ///| marker followed by /// content lines
+# Doc block with section markers (new format)
+# Supports: /// Module: ..., /// Overview: ..., etc.
+DocBlockWithSections -> DocSection ( NL DocLine )* ( NL DocSection ( NL DocLine )* )*
+                      | DocBlock
+
+# Doc comment block: ///| marker followed by /// content lines (legacy format)
 # NL consumed separately so _last captures the last DocLine content
 DocBlock -> DocComment ( NL DocLine )*
 
@@ -162,6 +176,7 @@ Atom -> ExprAtom | NL | LineComment | DocComment
 Other -> Atom
 
 === attrs
+on ModuleDoc:   module_doc doc=module_doc
 on FnDecl:      def fn_id kind=Function doc=fn_doc
 on StructDecl:  def struct_id kind=Struct doc=struct_doc
 on EnumDecl:    def enum_id kind=Enum doc=enum_doc
@@ -175,6 +190,11 @@ on TraitMember: def method_id kind=Method doc=method_doc
 on Param:       def param_id kind=Param
 
 === semantics
+# Module-level documentation
+on ModuleDoc {
+  note module_doc payload obj("doc", $module_doc_text)
+}
+
 on FnDecl {
   let sym_id = concat($file, "::", $fn_id)
   edge declares from $file to sym_id attrs obj("name", $fn_id, "kind", "Function", "doc", $fn_doc_text)
@@ -234,6 +254,9 @@ on StandaloneDoc {
 === resolver
 relative_prefixes: ./
 module_path_style: slash
+project_config: moon.mod.json
+install_cmd: moon add {name}
+build_cmd: moon build
 resolve:
   - manifest: moon.pkg.json @ import
   - marker: moon.pkg.json

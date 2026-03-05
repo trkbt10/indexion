@@ -1,5 +1,6 @@
 import {
   "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/src/filter" @filter,
   "trkbt10/indexion/src/similarity" @sim,
   "trkbt10/indexion/src/segmentation/sentence" @sentence,
 }

@@ -74,11 +74,11 @@ fn collect_files_impl(
 
 ///|
 /// Check if directory should be skipped (hidden, build artifacts, etc.).
+/// Uses the filter system for consistent filtering across the codebase.
 pub fn should_skip_dir(entry : String) -> Bool {
-  if entry.has_prefix(".") {
-    return true
-  }
-  entry == "_build" || entry == ".mooncakes" || entry == "node_modules"
+  // Use default filter config for skip detection
+  let config = @filter.FilterConfig::new()
+  config.should_skip_dir(entry)
 }
 
 ///|

@@ -56,6 +56,8 @@ pub struct RefactorPlanConfig {
   excludes : Array[String] // glob patterns to exclude
   output : String // output file path (empty = stdout)
   format : String // output format: "md", "json", "text"
+  style : String // output style: "raw" (similarity), "structured" (plan)
+  project_name : String // project name for structured output
   show_help : Bool
 }
 
@@ -70,6 +72,8 @@ pub fn RefactorPlanConfig::default() -> RefactorPlanConfig {
     excludes: [],
     output: "",
     format: "md",
+    style: "raw",
+    project_name: "",
     show_help: false,
   }
 }
@@ -159,6 +163,12 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> RefactorPlanConfig {
     } else if arg.has_prefix("--format=") {
       let value = get_arg_value(arg, 9)
       config = { ..config, format: value }
+    } else if arg.has_prefix("--style=") {
+      let value = get_arg_value(arg, 8)
+      config = { ..config, style: value }
+    } else if arg.has_prefix("--name=") {
+      let value = get_arg_value(arg, 7)
+      config = { ..config, project_name: value }
     } else if not(arg.has_prefix("-")) && config.target_dir.length() == 0 {
       config = { ..config, target_dir: arg }
     }
@@ -188,11 +198,22 @@ pub fn show_help() -> Unit {
   )
   println("  --output=FILE, -o=   Output file path (default: stdout)")
   println("  --format=FORMAT      Output format: md, json, text (default: md)")
+  println(
+    "  --style=STYLE        Output style: raw, structured (default: raw)",
+  )
+  println("  --name=NAME          Project name for structured output")
   println("  --help               Show this help message")
+  println("")
+  println("Styles:")
+  println("  raw          Raw similarity analysis with duplicate detection")
+  println("  structured   Comprehensive refactoring plan with phases/checklists")
   println("")
   println("Examples:")
   println("  indexion plan refactor src/")
   println("  indexion plan refactor --threshold=0.8 --exclude=*_test.mbt src/")
+  println(
+    "  indexion plan refactor --style=structured --name=myproject src/",
+  )
   println(
     "  indexion plan refactor --include=*.mbt --exclude=*_wbtest.mbt -o=refactor.md src/",
   )
@@ -251,29 +272,9 @@ fn matches_pattern_impl(
 }
 
 ///|
-/// Check if file should be included based on include/exclude patterns.
-fn should_include_file(
-  filename : String,
-  includes : Array[String],
-  excludes : Array[String],
-) -> Bool {
-  // Check excludes first
-  for pattern in excludes {
-    if matches_pattern(filename, pattern) {
-      return false
-    }
-  }
-  // If no includes specified, include all (that weren't excluded)
-  if includes.length() == 0 {
-    return true
-  }
-  // Check includes
-  for pattern in includes {
-    if matches_pattern(filename, pattern) {
-      return true
-    }
-  }
-  false
+/// Check if file should be included based on filter config.
+fn should_include_file(filter : @filter.FilterConfig, filename : String) -> Bool {
+  filter.should_include(filename, false).is_included()
 }
 
 ///|
@@ -283,16 +284,18 @@ fn collect_files(
   includes : Array[String],
   excludes : Array[String],
 ) -> Array[(String, String)] {
+  let filter = @filter.FilterConfig::new()
+    .with_includes(includes)
+    .with_excludes(excludes)
   let files : Array[(String, String)] = []
-  collect_files_recursive(dir, includes, excludes, files, "")
+  collect_files_recursive(dir, filter, files, "")
   files
 }
 
 ///|
 fn collect_files_recursive(
   dir : String,
-  includes : Array[String],
-  excludes : Array[String],
+  filter : @filter.FilterConfig,
   files : Array[(String, String)],
   prefix : String,
 ) -> Unit {
@@ -312,6 +315,10 @@ fn collect_files_recursive(
     }
     let entries = @fs.read_dir(clean_dir)
     for entry in entries {
+      // Skip excluded directories early
+      if filter.should_skip_dir(entry) {
+        continue
+      }
       let path = clean_dir + "/" + entry
       let display_name = if prefix.length() > 0 {
         prefix + "/" + entry
@@ -319,9 +326,9 @@ fn collect_files_recursive(
         entry
       }
       if @fs.is_dir(path) {
-        collect_files_recursive(path, includes, excludes, files, display_name)
+        collect_files_recursive(path, filter, files, display_name)
       } else if @fs.is_file(path) {
-        if should_include_file(display_name, includes, excludes) {
+        if should_include_file(filter, display_name) {
           let content = @fs.read_file_to_string(path)
           files.push((display_name, content))
         }
@@ -696,6 +703,20 @@ fn split_by_slash(path : String) -> Array[String] {
 }
 
 ///|
+/// Extract project name from directory path.
+fn extract_project_name(path : String) -> String {
+  let parts = split_by_slash(path)
+  // Find first meaningful part (skip "src", ".", etc.)
+  for i = parts.length() - 1; i >= 0; i = i - 1 {
+    let part = parts[i]
+    if part != "src" && part != "." && part != ".." && part.length() > 0 {
+      return part
+    }
+  }
+  "project"
+}
+
+///|
 pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let config = parse_args(args, start_idx)
   if config.show_help {
@@ -748,11 +769,22 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   }
   // Build intermediate plan
   let plan = build_refactor_plan(clusters, config, file_contents)
-  // Render to selected format
-  let output_content = match config.format {
-    "json" => render_json(plan)
-    "text" => render_text(plan)
-    _ => render_markdown(plan)
+  // Render to selected format/style
+  let output_content = match config.style {
+    "structured" => {
+      let name = if config.project_name.length() > 0 {
+        config.project_name
+      } else {
+        extract_project_name(config.target_dir)
+      }
+      render_structured(plan, name)
+    }
+    _ =>
+      match config.format {
+        "json" => render_json(plan)
+        "text" => render_text(plan)
+        _ => render_markdown(plan)
+      }
   }
   // Output
   if config.output.length() > 0 {

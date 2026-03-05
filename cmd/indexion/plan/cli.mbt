@@ -1,7 +1,8 @@
 ///|
 /// Plan CLI - Generate various planning documents.
 /// Subcommands:
-///   refactor - Generate refactoring plan from similarity analysis
+///   refactor      - Generate refactoring plan from similarity analysis
+///   documentation - Generate documentation coverage analysis
 
 ///|
 pub fn show_help() -> Unit {
@@ -12,8 +13,9 @@ pub fn show_help() -> Unit {
   println("")
   println("Commands:")
   println(
-    "  refactor    Generate refactoring plan from file similarity analysis",
+    "  refactor       Generate refactoring plan from file similarity analysis",
   )
+  println("  documentation  Generate documentation coverage and README templates")
   println("")
   println(
     "Use 'indexion plan <command> --help' for more information about a command.",
@@ -29,6 +31,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let subcommand = args[start_idx]
   match subcommand {
     "refactor" => @refactor.run(args, start_idx + 1)
+    "documentation" | "doc" | "docs" => @documentation.run(args, start_idx + 1)
     "--help" | "-h" | "help" => show_help()
     _ => {
       println("Unknown plan command: " + subcommand)

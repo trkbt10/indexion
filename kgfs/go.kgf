@@ -6,6 +6,9 @@ sources: .go
 SKIP /[ \t]+/
 TOKEN NL /\r?\n/
 
+# Package documentation comment (// Package xxx ...)
+TOKEN PackageDoc /\/\/\s*Package\s+[^\r\n]*/
+
 # Comments - Go uses // comments before declarations as documentation
 TOKEN DocComment /\/\/[^\r\n]*/
 TOKEN BlockComment /\/\*[\s\S]*?\*\//
@@ -63,10 +66,15 @@ TOKEN COLON /:/
 TOKEN STAR /\*/
 
 === grammar
-Module -> Item*
+# Module with optional leading module doc (// Package xxx ...)
+Module -> ModuleDoc? Item*
+
+# Module-level documentation (// Package xxx followed by more // comments)
+ModuleDoc -> module_doc:PackageDoc ( NL DocComment )*
 
 Item -> NL
      | DocComment
+     | PackageDoc
      | PackageDecl
      | ImportDecl
      | FuncDecl
@@ -135,6 +143,7 @@ Atom -> ExprAtom | NL | DocComment | BlockComment | KW_package | KW_import | KW_
 Other -> Atom
 
 === attrs
+on ModuleDoc:  module_doc doc=module_doc
 on FuncDecl:   def id kind=Function doc=doc
 on TypeSpec:   def id kind=Type doc=doc
 on VarSpec:    def id kind=Variable doc=doc
@@ -146,6 +155,11 @@ on Param:      def id kind=Param
 on ImportSpec: import module=path
 
 === semantics
+# Module-level documentation (// Package xxx ...)
+on ModuleDoc {
+  note module_doc payload obj("doc", $module_doc_text)
+}
+
 # Import dependency
 on ImportSpec {
   edge moduleDependsOn from $file to $resolve($path) attrs obj("via", $path, "dep_kind", "value")
@@ -193,6 +207,9 @@ on ConstSpec {
 === resolver
 relative_prefixes: ./, ../
 module_path_style: slash
+project_config: go.mod
+install_cmd: go get {name}
+build_cmd: go build
 resolve:
   - manifest: go.mod @ module
   - ext: .go

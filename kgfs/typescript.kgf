@@ -66,7 +66,11 @@ TOKEN PIPE    /\|/
 TOKEN AMP     /&/
 
 === grammar
-Module -> Item*
+# Module with optional leading module doc (JSDoc with @module or @packageDocumentation)
+Module -> ModuleDoc? Item*
+
+# Module-level documentation (first JSDoc with @module/@packageDocumentation tag)
+ModuleDoc -> module_doc:DocComment
 
 Item -> NL
      | DocComment
@@ -145,6 +149,7 @@ Atom -> Ident | Number | StringLit | SEMI | COMMA | COLON | DOT | EQ | ARROW | Q
 Other -> Atom
 
 === attrs
+on ModuleDoc:    module_doc doc=module_doc
 on FunctionDecl: def id kind=Function doc=doc
 on ClassDecl:    def id kind=Class doc=doc
 on InterfaceDecl: def id kind=Interface doc=doc
@@ -165,6 +170,11 @@ on ImportNamed:        import module=from
 on ImportDefault:      import module=from
 
 === semantics
+# Module-level documentation (JSDoc with @module or @packageDocumentation)
+on ModuleDoc {
+  note module_doc payload obj("doc", $module_doc_text)
+}
+
 # Import dependency edges
 on SideEffect {
   edge moduleDependsOn from $file to $resolve($path) attrs obj("via", $path, "dep_kind", "value")
@@ -236,6 +246,9 @@ on EnumMember when $scope("value", "current_enum") {
 === resolver
 relative_prefixes: ./, ../, /
 module_path_style: slash
+project_config: package.json
+install_cmd: npm install {name}
+build_cmd: npm run build
 aliases:
   -
     pattern: ^@/(.*)$

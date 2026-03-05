@@ -64,6 +64,17 @@ pub struct Edge {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Note attached to a module (e.g., module_doc).
+pub struct ModuleNote {
+  /// Type of note (e.g., "module_doc").
+  note_type : String
+  /// Content of the note (e.g., documentation text).
+  content : String
+  /// Module ID this note is attached to.
+  module_id : String
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+///|
 /// The main code graph structure containing modules, symbols, and edges.
 pub struct CodeGraph {
   /// Map of module ID to module node.
@@ -72,4 +83,6 @@ pub struct CodeGraph {
   symbols : Map[String, SymbolNode]
   /// List of edges connecting nodes.
   edges : Array[Edge]
+  /// Notes attached to modules (e.g., module-level documentation).
+  notes : Array[ModuleNote]
 } derive(Eq, Show, ToJson, @json.FromJson)

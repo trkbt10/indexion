@@ -3,7 +3,52 @@
 ///|
 /// Create a new empty code graph.
 pub fn CodeGraph::new() -> CodeGraph {
-  { modules: Map::new(), symbols: Map::new(), edges: [] }
+  { modules: Map::new(), symbols: Map::new(), edges: [], notes: [] }
+}
+
+///|
+/// Add a note to the graph.
+pub fn CodeGraph::add_note(
+  self : CodeGraph,
+  note_type : String,
+  content : String,
+  module_id : String,
+) -> Unit {
+  self.notes.push({ note_type, content, module_id })
+}
+
+///|
+/// Get notes of a specific type for a module.
+pub fn CodeGraph::get_notes(
+  self : CodeGraph,
+  note_type : String,
+  module_id : String,
+) -> Array[ModuleNote] {
+  let result : Array[ModuleNote] = []
+  for note in self.notes {
+    if note.note_type == note_type &&
+       (module_id.length() == 0 || note.module_id == module_id) {
+      result.push(note)
+    }
+  }
+  result
+}
+
+///|
+/// Get all module_doc notes for a module.
+pub fn CodeGraph::get_module_doc(self : CodeGraph, module_id : String) -> String? {
+  for note in self.notes {
+    if note.note_type == "module_doc" && note.module_id == module_id {
+      return Some(note.content)
+    }
+  }
+  None
+}
+
+///|
+/// Get all notes.
+pub fn CodeGraph::get_all_notes(self : CodeGraph) -> Array[ModuleNote] {
+  self.notes
 }
 
 ///|

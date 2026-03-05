@@ -1,0 +1,84 @@
+kgf 0.6
+language: go-mod
+sources: go.mod
+
+# KGF spec for Go go.mod files
+# Extracts module name, Go version, and dependencies
+
+=== lex
+SKIP        /[ \t]+/
+TOKEN NL            /\r?\n/
+TOKEN Comment       /\/\/[^\r\n]*/
+
+# Keywords
+TOKEN KW_module     /module\b/
+TOKEN KW_go         /go\b/
+TOKEN KW_require    /require\b/
+TOKEN KW_replace    /replace\b/
+TOKEN KW_exclude    /exclude\b/
+TOKEN KW_retract    /retract\b/
+
+# Values
+TOKEN Version       /v[0-9]+\.[0-9]+(\.[0-9]+)?(-[a-zA-Z0-9.+-]+)?/
+TOKEN GoVersion     /[0-9]+\.[0-9]+(\.[0-9]+)?/
+TOKEN ModulePath    /[a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=-]+/
+
+# Punctuation
+TOKEN LPAREN        /\(/
+TOKEN RPAREN        /\)/
+TOKEN ARROW         /=>/
+
+=== grammar
+GoMod           -> Directive*
+Directive       -> ModuleDir | GoDir | RequireDir | RequireBlock
+                 | ReplaceDir | ExcludeDir | RetractDir | NL | Comment
+
+# Module declaration
+ModuleDir       -> KW_module path:ModulePath NL
+
+# Go version
+GoDir           -> KW_go version:GoVersion NL
+
+# Single require
+RequireDir      -> KW_require path:ModulePath version:Version NL
+
+# Require block
+RequireBlock    -> KW_require LPAREN NL RequireList RPAREN NL
+RequireList     -> RequireEntry*
+RequireEntry    -> path:ModulePath version:Version NL | NL | Comment
+
+# Replace/Exclude/Retract (capture but don't deeply parse)
+ReplaceDir      -> KW_replace ModulePath Version? ARROW ModulePath Version? NL
+ExcludeDir      -> KW_exclude ModulePath Version NL
+RetractDir      -> KW_retract Version NL
+
+=== attrs
+on ModuleDir: note fieldKey payload="module"
+on GoDir:     note fieldKey payload="go"
+
+=== semantics
+on ModuleDir {
+  let name = $path
+  edge projectName from $file to name attrs obj("raw", $path)
+}
+on GoDir {
+  let ver = $version
+  edge projectVersion from $file to ver attrs obj("type", "go_version")
+}
+on RequireDir {
+  let dep = $path
+  let ver = $version
+  edge dependsOn from $file to concat("go:", dep) attrs obj("version", ver, "dep_kind", "runtime")
+}
+on RequireEntry {
+  let dep = $path
+  let ver = $version
+  edge dependsOn from $file to concat("go:", dep) attrs obj("version", ver, "dep_kind", "runtime")
+}
+
+=== resolver
+relative_prefixes:
+exts: .mod
+indexes:
+bare_prefix: go:
+module_path_style: slash

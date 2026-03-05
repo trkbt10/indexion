@@ -158,6 +158,9 @@ on PropertyDef when $scope("value", "current_class") {
 === resolver
 relative_prefixes: ./, ../, /
 module_path_style: dot
+project_config: pyproject.toml
+install_cmd: pip install {name}
+build_cmd: pip install -e .
 resolve:
   - manifest: pyproject.toml @ project.dependencies
   - manifest: setup.py @ install_requires

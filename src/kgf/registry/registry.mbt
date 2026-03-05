@@ -20,28 +20,38 @@ pub fn KGFRegistry::new() -> KGFRegistry {
 }
 
 ///|
-/// Load all KGF specs from a directory.
+/// Load all KGF specs from a directory (recursively including subdirectories).
 pub fn KGFRegistry::load_from_dir(dir : String) -> KGFRegistry {
   let registry = KGFRegistry::new()
+  load_specs_recursive(registry, dir)
+  registry
+}
+
+///|
+/// Recursively load KGF specs from a directory.
+fn load_specs_recursive(registry : KGFRegistry, dir : String) -> Unit {
   try {
     if not(@fs.is_dir(dir)) {
-      return registry
+      return
     }
     let entries = @fs.read_dir(dir)
     for entry in entries {
+      let path = dir + "/" + entry
       if entry.has_suffix(".kgf") {
-        let path = dir + "/" + entry
+        // Load KGF spec file
         let content = @fs.read_file_to_string(path)
         match @parser.parse_kgf(content) {
           Some(spec) => registry.register_spec(spec)
           None => ()
         }
+      } else if @fs.is_dir(path) && not(entry.has_prefix(".")) {
+        // Recurse into subdirectory
+        load_specs_recursive(registry, path)
       }
     }
   } catch {
     _ => ()
   }
-  registry
 }
 
 ///|

@@ -1,0 +1,124 @@
+kgf 0.6
+language: moon-mod
+sources: moon.mod.json
+
+# KGF spec for MoonBit module manifest files (moon.mod.json)
+# Extracts project metadata: name, version, description, license, repository, keywords
+
+=== lex
+SKIP        /\s+/
+TOKEN LBRACE        /\{/
+TOKEN RBRACE        /\}/
+TOKEN LBRACKET      /\[/
+TOKEN RBRACKET      /\]/
+TOKEN COLON         /:/
+TOKEN COMMA         /,/
+
+# Specific field name tokens
+TOKEN KW_name            /"name"/
+TOKEN KW_version         /"version"/
+TOKEN KW_description     /"description"/
+TOKEN KW_license         /"license"/
+TOKEN KW_repository      /"repository"/
+TOKEN KW_keywords        /"keywords"/
+TOKEN KW_readme          /"readme"/
+TOKEN KW_deps            /"deps"/
+TOKEN KW_source          /"source"/
+
+# Generic string/number/bool
+TOKEN StringLit     /"([^"\\]|\\.)*"/
+TOKEN NumberLit     /-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?/
+TOKEN KW_true       /true/
+TOKEN KW_false      /false/
+TOKEN KW_null       /null/
+
+=== grammar
+ModJson         -> LBRACE [ FieldList ] RBRACE
+FieldList       -> Field ( COMMA Field )*
+
+Field           -> NameField | VersionField | DescriptionField | LicenseField
+                 | RepositoryField | KeywordsField | ReadmeField | DepsField
+                 | GenericObjectField | GenericArrayField | GenericStringField | GenericOtherField
+
+# Named fields
+NameField        -> KW_name COLON value:StringLit
+VersionField     -> KW_version COLON value:StringLit
+DescriptionField -> KW_description COLON value:StringLit
+LicenseField     -> KW_license COLON value:StringLit
+RepositoryField  -> KW_repository COLON value:StringLit
+ReadmeField      -> KW_readme COLON value:StringLit
+
+# Keywords array
+KeywordsField    -> KW_keywords COLON LBRACKET [ KeywordList ] RBRACKET
+KeywordList      -> KeywordItem ( COMMA KeywordItem )*
+KeywordItem      -> value:StringLit
+
+# Dependencies object
+DepsField        -> KW_deps COLON LBRACE [ DepList ] RBRACE
+DepList          -> DepEntry ( COMMA DepEntry )*
+DepEntry         -> name:StringLit COLON DepSpec
+DepSpec          -> StringLit | DepObject
+DepObject        -> LBRACE [ DepObjectFields ] RBRACE
+DepObjectFields  -> DepObjectField ( COMMA DepObjectField )*
+DepObjectField   -> key:StringLit COLON value:Value
+
+# Generic fields
+GenericObjectField  -> key:StringLit COLON LBRACE [ GenericFieldList ] RBRACE
+GenericArrayField   -> key:StringLit COLON LBRACKET [ ValueList ] RBRACKET
+GenericStringField  -> key:StringLit COLON value:StringLit
+GenericOtherField   -> key:StringLit COLON value:OtherValue
+OtherValue          -> NumberLit | KW_true | KW_false | KW_null
+
+GenericFieldList    -> GenericInnerField ( COMMA GenericInnerField )*
+GenericInnerField   -> key:StringLit COLON value:Value
+Value               -> Object | Array | StringLit | NumberLit | KW_true | KW_false | KW_null
+Object              -> LBRACE [ GenericFieldList ] RBRACE
+Array               -> LBRACKET [ ValueList ] RBRACKET
+ValueList           -> Value ( COMMA Value )*
+
+=== attrs
+on NameField:        note fieldKey payload="name"
+on VersionField:     note fieldKey payload="version"
+on DescriptionField: note fieldKey payload="description"
+on LicenseField:     note fieldKey payload="license"
+on RepositoryField:  note fieldKey payload="repository"
+on KeywordsField:    note fieldKey payload="keywords"
+on ReadmeField:      note fieldKey payload="readme"
+on DepsField:        note fieldKey payload="deps"
+
+=== semantics
+on NameField {
+  let name = stripQuotes($value)
+  edge projectName from $file to name attrs obj("raw", $value)
+}
+on VersionField {
+  let version = stripQuotes($value)
+  edge projectVersion from $file to version attrs obj("raw", $value)
+}
+on DescriptionField {
+  let desc = stripQuotes($value)
+  edge projectDescription from $file to desc
+}
+on LicenseField {
+  let license = stripQuotes($value)
+  edge projectLicense from $file to license
+}
+on RepositoryField {
+  let repo = stripQuotes($value)
+  edge projectRepository from $file to repo
+}
+on KeywordItem {
+  let kw = stripQuotes($value)
+  edge projectKeyword from $file to kw
+}
+on DepEntry {
+  let depName = stripQuotes($name)
+  edge dependsOn from $file to concat("pkg:", depName)
+}
+
+=== resolver
+relative_prefixes:
+exts: .json
+indexes:
+bare_prefix: pkg:
+module_path_style: slash

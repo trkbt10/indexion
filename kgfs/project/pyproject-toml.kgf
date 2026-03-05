@@ -1,0 +1,141 @@
+kgf 0.6
+language: pyproject-toml
+sources: pyproject.toml
+
+# KGF spec for Python pyproject.toml files (PEP 621)
+# Extracts project metadata from [project] section
+
+=== lex
+SKIP        /[ \t]+/
+TOKEN NL            /\r?\n/
+TOKEN Comment       /#[^\r\n]*/
+
+# Section headers
+TOKEN SectionProject      /\[project\]/
+TOKEN SectionDependencies /\[project\.dependencies\]/
+TOKEN SectionOptDeps      /\[project\.optional-dependencies\]/
+TOKEN SectionTool         /\[tool\.[a-zA-Z][a-zA-Z0-9._-]*\]/
+TOKEN SectionBuildSystem  /\[build-system\]/
+TOKEN SectionOther        /\[[a-zA-Z][a-zA-Z0-9._-]*\]/
+
+# Key names
+TOKEN KW_name          /name\b/
+TOKEN KW_version       /version\b/
+TOKEN KW_description   /description\b/
+TOKEN KW_license       /license\b/
+TOKEN KW_readme        /readme\b/
+TOKEN KW_keywords      /keywords\b/
+TOKEN KW_authors       /authors\b/
+TOKEN KW_dependencies  /dependencies\b/
+TOKEN KW_requires_python /requires-python\b/
+
+# Values
+TOKEN StringLit     /"([^"\\]|\\.)*"|'([^'\\]|\\.)*'/
+TOKEN MultiString   /"""[\s\S]*?"""|'''[\s\S]*?'''/
+TOKEN NumberLit     /[0-9]+(\.[0-9]+)?/
+TOKEN KW_true       /true\b/
+TOKEN KW_false      /false\b/
+
+# Punctuation
+TOKEN EQUALS        /=/
+TOKEN LBRACE        /\{/
+TOKEN RBRACE        /\}/
+TOKEN LBRACKET      /\[/
+TOKEN RBRACKET      /\]/
+TOKEN COMMA         /,/
+TOKEN DOT           /\./
+
+TOKEN Ident         /[a-zA-Z_][a-zA-Z0-9_-]*/
+
+=== grammar
+TomlFile        -> Item*
+Item            -> Section | NL | Comment
+
+Section         -> ProjectSection | DepsSection | OptDepsSection
+                 | ToolSection | BuildSection | OtherSection
+
+# Project section with metadata
+ProjectSection  -> SectionProject NL ProjectFields
+ProjectFields   -> ProjectField*
+ProjectField    -> NameField | VersionField | DescriptionField | LicenseField
+                 | ReadmeField | KeywordsField | AuthorsField | DepsField
+                 | RequiresPythonField | GenericField | NL | Comment
+
+NameField        -> KW_name EQUALS value:StringLit NL
+VersionField     -> KW_version EQUALS value:StringLit NL
+DescriptionField -> KW_description EQUALS value:StringLit NL
+ReadmeField      -> KW_readme EQUALS value:StringLit NL
+RequiresPythonField -> KW_requires_python EQUALS value:StringLit NL
+
+# License can be string or table
+LicenseField     -> KW_license EQUALS LicenseValue NL
+LicenseValue     -> StringLit | InlineTable
+
+KeywordsField    -> KW_keywords EQUALS LBRACKET KeywordList? RBRACKET NL
+KeywordList      -> KeywordItem ( COMMA KeywordItem )* COMMA?
+KeywordItem      -> value:StringLit
+
+AuthorsField     -> KW_authors EQUALS LBRACKET AuthorList? RBRACKET NL
+AuthorList       -> AuthorItem ( COMMA AuthorItem )* COMMA?
+AuthorItem       -> InlineTable | StringLit
+
+DepsField        -> KW_dependencies EQUALS LBRACKET DepList? RBRACKET NL
+DepList          -> DepItem ( COMMA DepItem )* COMMA?
+DepItem          -> value:StringLit
+
+# Other sections
+DepsSection      -> SectionDependencies NL GenericFields
+OptDepsSection   -> SectionOptDeps NL GenericFields
+ToolSection      -> SectionTool NL GenericFields
+BuildSection     -> SectionBuildSystem NL GenericFields
+OtherSection     -> SectionOther NL GenericFields
+
+GenericFields    -> GenericField*
+GenericField     -> Ident EQUALS GenericValue NL | NL | Comment
+GenericValue     -> StringLit | NumberLit | KW_true | KW_false
+                  | LBRACKET ValueList? RBRACKET | InlineTable
+InlineTable      -> LBRACE InlineFields? RBRACE
+InlineFields     -> InlineField ( COMMA InlineField )* COMMA?
+InlineField      -> key:Ident EQUALS value:SimpleValue
+SimpleValue      -> StringLit | NumberLit | KW_true | KW_false
+ValueList        -> SimpleValue ( COMMA SimpleValue )* COMMA?
+
+=== attrs
+on NameField:        note fieldKey payload="name"
+on VersionField:     note fieldKey payload="version"
+on DescriptionField: note fieldKey payload="description"
+on LicenseField:     note fieldKey payload="license"
+on KeywordsField:    note fieldKey payload="keywords"
+
+=== semantics
+on NameField {
+  let name = stripQuotes($value)
+  edge projectName from $file to name attrs obj("raw", $value)
+}
+on VersionField {
+  let version = stripQuotes($value)
+  edge projectVersion from $file to version attrs obj("raw", $value)
+}
+on DescriptionField {
+  let desc = stripQuotes($value)
+  edge projectDescription from $file to desc
+}
+on LicenseField {
+  # Handle both string and table forms
+  edge projectLicense from $file to "see-file"
+}
+on KeywordItem {
+  let kw = stripQuotes($value)
+  edge projectKeyword from $file to kw
+}
+on DepItem {
+  let dep = stripQuotes($value)
+  edge dependsOn from $file to concat("pypi:", dep) attrs obj("dep_kind", "runtime")
+}
+
+=== resolver
+relative_prefixes:
+exts: .toml
+indexes:
+bare_prefix: pypi:
+module_path_style: dot

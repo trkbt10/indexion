@@ -259,12 +259,12 @@ pub fn DigestIndex::build(
       self.manifest = m
       // Create attributes
       let attrs = @vcdb.empty_attrs()
-      attrs.set("name", @vcdb_core.String(unit.name()))
-      attrs.set("kind", @vcdb_core.String(unit.symbol.kind))
-      attrs.set("module", @vcdb_core.String(unit.module_id))
-      attrs.set("depth", @vcdb_core.Int(unit.depth.to_int64()))
+      attrs.set("name", @vcdb_core.AttrValue::String(unit.name()))
+      attrs.set("kind", @vcdb_core.AttrValue::String(unit.symbol.kind))
+      attrs.set("module", @vcdb_core.AttrValue::String(unit.module_id))
+      attrs.set("depth", @vcdb_core.AttrValue::Int(unit.depth.to_int64()))
       match unit.symbol.doc {
-        Some(doc) => attrs.set("doc", @vcdb_core.String(doc))
+        Some(doc) => attrs.set("doc", @vcdb_core.AttrValue::String(doc))
         None => ()
       }
       // Add to vcdb
@@ -292,7 +292,7 @@ pub fn DigestIndex::query(
   let results : Array[@types.QueryHit] = []
   for hit in hits {
     // Get function ID from vector ID
-    let vid = hit.id.inner()
+    let vid = hit.id.to_int64()
     // Find function by looking up manifest
     for entry in self.manifest.functions {
       match entry.1.vector_id {
@@ -381,10 +381,10 @@ pub fn DigestIndex::build_with_remote(
           self.manifest = m
           // Create attributes
           let attrs = @vcdb.empty_attrs()
-          attrs.set("name", @vcdb_core.String(unit.name()))
-          attrs.set("kind", @vcdb_core.String(unit.symbol.kind))
-          attrs.set("module", @vcdb_core.String(unit.module_id))
-          attrs.set("depth", @vcdb_core.Int(unit.depth.to_int64()))
+          attrs.set("name", @vcdb_core.AttrValue::String(unit.name()))
+          attrs.set("kind", @vcdb_core.AttrValue::String(unit.symbol.kind))
+          attrs.set("module", @vcdb_core.AttrValue::String(unit.module_id))
+          attrs.set("depth", @vcdb_core.AttrValue::Int(unit.depth.to_int64()))
           // Add to vcdb
           self.db.add(@vcdb_core.VectorId(vid), vector, attrs)
           // Update manifest
@@ -413,7 +413,7 @@ pub fn DigestIndex::query_with_remote(
   let hits = self.db.search(query_embedding, top_k, None)
   let results : Array[@types.QueryHit] = []
   for hit in hits {
-    let vid = hit.id.inner()
+    let vid = hit.id.to_int64()
     for entry in self.manifest.functions {
       match entry.1.vector_id {
         Some(v) =>
