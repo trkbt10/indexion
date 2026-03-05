@@ -70,6 +70,9 @@ TOKEN AT       /@/
 === grammar
 Module -> Item*
 
+# Visibility modifier: pub, pub(all), pub(readonly), priv
+Visibility -> KW_pub LPAREN Ident RPAREN | KW_pub | KW_priv
+
 # Try declarations FIRST (they consume DocBlock as optional prefix)
 # StandaloneDoc matches DocBlock not followed by a declaration
 Item -> FnDecl
@@ -93,32 +96,32 @@ StandaloneDoc -> doc:DocBlock
 DocBlock -> DocComment ( NL DocLine )*
 
 # Function declaration (DocBlock optional, NL consumed separately)
-FnDecl -> fn_doc:DocBlock? NL? KW_pub? KW_fn TypeIdent? DCOLON? fn_id:Ident GenericParams? LPAREN ParamList? RPAREN ReturnType? Body?
+FnDecl -> fn_doc:DocBlock? NL? Visibility? KW_fn TypeIdent? DCOLON? fn_id:Ident GenericParams? LPAREN ParamList? RPAREN ReturnType? Body?
 
 # Struct declaration
-StructDecl -> struct_doc:DocBlock? NL? KW_pub? KW_priv? KW_struct struct_id:TypeIdent GenericParams? StructBody? DeriveClause?
+StructDecl -> struct_doc:DocBlock? NL? Visibility? KW_struct struct_id:TypeIdent GenericParams? StructBody? DeriveClause?
 
 # Enum declaration
-EnumDecl -> enum_doc:DocBlock? NL? KW_pub? KW_priv? KW_enum enum_id:TypeIdent GenericParams? EnumBody? DeriveClause?
+EnumDecl -> enum_doc:DocBlock? NL? Visibility? KW_enum enum_id:TypeIdent GenericParams? EnumBody? DeriveClause?
 
 # Type alias
-TypeDecl -> type_doc:DocBlock? NL? KW_pub? KW_priv? KW_type type_id:TypeIdent GenericParams? EQ Type
+TypeDecl -> type_doc:DocBlock? NL? Visibility? KW_type type_id:TypeIdent GenericParams? EQ Type
 
 # Trait declaration
-TraitDecl -> trait_doc:DocBlock? NL? KW_pub? KW_trait trait_id:TypeIdent GenericParams? TraitBody?
+TraitDecl -> trait_doc:DocBlock? NL? Visibility? KW_trait trait_id:TypeIdent GenericParams? TraitBody?
 
 # Impl block
-ImplDecl -> impl_doc:DocBlock? NL? KW_pub? KW_impl TypeIdent? KW_for? TypeIdent? GenericParams? ImplBody?
+ImplDecl -> impl_doc:DocBlock? NL? Visibility? KW_impl TypeIdent? KW_for? TypeIdent? GenericParams? ImplBody?
 
-# Let binding (pub required to avoid matching local let bindings)
-LetDecl -> let_doc:DocBlock? NL? KW_pub KW_let let_id:Ident TypeAnnotation? EQ Expr
+# Let binding (visibility required to avoid matching local let bindings)
+LetDecl -> let_doc:DocBlock? NL? Visibility KW_let let_id:Ident TypeAnnotation? EQ Expr
 
 # Test declaration
 TestDecl -> KW_test String? Body?
 
 # Bodies
 StructBody -> LBRACE StructField* RBRACE
-StructField -> field_doc:DocBlock? KW_pub? KW_priv? KW_mut? field_id:Ident COLON Type COMMA? | NL | LineComment
+StructField -> field_doc:DocBlock? Visibility? KW_mut? field_id:Ident COLON Type COMMA? | NL | LineComment
 
 EnumBody -> LBRACE EnumVariant* RBRACE DeriveClause?
 EnumVariant -> variant_doc:DocBlock? variant_id:TypeIdent VariantPayload? COMMA? | NL | LineComment

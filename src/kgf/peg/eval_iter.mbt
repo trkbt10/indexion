@@ -5,10 +5,11 @@
 
 ///|
 /// Memo entry states for memoization.
+/// Stores labels to support labeled captures across backtracking.
 priv enum MemoState {
   Unknown
   Failed
-  Succeeded(Int) // end_pos only
+  Succeeded(Int, Map[String, Json]) // (end_pos, labels)
 }
 
 ///|
@@ -181,8 +182,13 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
   // Check memo first
   let memo_idx = node_id * ctx.num_positions + pos
   match ctx.memo[memo_idx] {
-    Succeeded(end_pos) => {
-      ctx.results.push({ ok: true, end_pos, labels: empty_labels() })
+    Succeeded(end_pos, labels) => {
+      // Clone labels to avoid mutation issues
+      let cloned : Map[String, Json] = {}
+      for key, value in labels {
+        cloned.set(key, value)
+      }
+      ctx.results.push({ ok: true, end_pos, labels: cloned })
       return
     }
     Failed => {
@@ -195,8 +201,9 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
   let compiled = ctx.peg.fast_nodes[node_id]
   match compiled {
     FEmpty => {
-      ctx.memo[memo_idx] = Succeeded(pos)
-      ctx.results.push({ ok: true, end_pos: pos, labels: empty_labels() })
+      let labels = empty_labels()
+      ctx.memo[memo_idx] = Succeeded(pos, labels)
+      ctx.results.push({ ok: true, end_pos: pos, labels })
     }
     FToken(expected_id) =>
       if pos < ctx.tokens.length() && ctx.token_ids[pos] == expected_id {
@@ -206,7 +213,7 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
         labels.set("_last_pos", tok.pos.to_double().to_json())
         labels.set("_last_len", tok.text.length().to_double().to_json())
         labels.set("_text", tok.text.to_json())
-        ctx.memo[memo_idx] = Succeeded(pos + 1)
+        ctx.memo[memo_idx] = Succeeded(pos + 1, labels)
         ctx.results.push({ ok: true, end_pos: pos + 1, labels })
       } else {
         ctx.memo[memo_idx] = Failed
@@ -222,8 +229,9 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
     }
     FSeq(elems) =>
       if elems.length() == 0 {
-        ctx.memo[memo_idx] = Succeeded(pos)
-        ctx.results.push({ ok: true, end_pos: pos, labels: empty_labels() })
+        let labels = empty_labels()
+        ctx.memo[memo_idx] = Succeeded(pos, labels)
+        ctx.results.push({ ok: true, end_pos: pos, labels })
       } else {
         // Push continuation with index 0, then eval first element
         ctx.work.push(SeqCont(node_id, 0, pos, pos, Map::new()))
@@ -292,7 +300,7 @@ fn process_seq_cont(
   if next_idx >= elems.length() {
     // All children succeeded
     let memo_idx = node_id * ctx.num_positions + start_pos
-    ctx.memo[memo_idx] = Succeeded(new_pos)
+    ctx.memo[memo_idx] = Succeeded(new_pos, labels)
     ctx.results.push({ ok: true, end_pos: new_pos, labels })
   } else {
     // Continue with next child
@@ -312,7 +320,7 @@ fn process_choice_cont(
   let result = ctx.results.pop().unwrap()
   if result.ok {
     let memo_idx = node_id * ctx.num_positions + pos
-    ctx.memo[memo_idx] = Succeeded(result.end_pos)
+    ctx.memo[memo_idx] = Succeeded(result.end_pos, result.labels)
     ctx.results.push(result)
     return
   }
@@ -413,12 +421,13 @@ fn process_optional_cont(
   let result = ctx.results.pop().unwrap()
   if result.ok {
     let memo_idx = node_id * ctx.num_positions + pos
-    ctx.memo[memo_idx] = Succeeded(result.end_pos)
+    ctx.memo[memo_idx] = Succeeded(result.end_pos, result.labels)
     ctx.results.push(result)
   } else {
     let memo_idx = node_id * ctx.num_positions + pos
-    ctx.memo[memo_idx] = Succeeded(pos)
-    ctx.results.push({ ok: true, end_pos: pos, labels: empty_labels() })
+    let labels = empty_labels()
+    ctx.memo[memo_idx] = Succeeded(pos, labels)
+    ctx.results.push({ ok: true, end_pos: pos, labels })
   }
 }
 

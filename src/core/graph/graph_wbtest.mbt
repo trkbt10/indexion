@@ -341,3 +341,48 @@ test "JSON handles module with null file" {
   guard restored.get_module("mod_no_file") is Some(m) else { return }
   assert_eq(m.file, None)
 }
+
+///|
+test "JSON roundtrip with symbol doc field" {
+  let graph = CodeGraph::new()
+  let _ = graph.get_or_add_symbol(
+    "pkg/foo#read_file",
+    name="read_file",
+    kind="function",
+    ns="foo",
+    module_id="pkg/foo",
+    doc=Some("Read a file from disk and return its contents."),
+  )
+
+  let json_str = graph.to_json_string()
+  assert_true(json_str.contains("\"doc\""))
+  assert_true(json_str.contains("Read a file from disk"))
+
+  let result = CodeGraph::from_json_string(json_str)
+  guard result is Some(restored) else { return }
+
+  guard restored.get_symbol("pkg/foo#read_file") is Some(s) else { return }
+  assert_eq(s.doc, Some("Read a file from disk and return its contents."))
+}
+
+///|
+test "JSON handles symbol without doc" {
+  let graph = CodeGraph::new()
+  let _ = graph.get_or_add_symbol(
+    "pkg/foo#bar",
+    name="bar",
+    kind="function",
+    ns="foo",
+    module_id="pkg/foo",
+  )
+
+  let json_str = graph.to_json_string()
+  // doc field should not appear when None
+  assert_false(json_str.contains("\"doc\""))
+
+  let result = CodeGraph::from_json_string(json_str)
+  guard result is Some(restored) else { return }
+
+  guard restored.get_symbol("pkg/foo#bar") is Some(s) else { return }
+  assert_eq(s.doc, None)
+}

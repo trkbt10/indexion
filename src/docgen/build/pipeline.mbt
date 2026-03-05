@@ -329,6 +329,7 @@ pub fn merge_graphs(graphs : Array[@graph.CodeGraph]) -> @graph.CodeGraph {
         kind=s.kind,
         ns=s.ns,
         module_id=s.module_id,
+        doc=s.doc,
       )
     }
     // Merge edges

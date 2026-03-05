@@ -1,0 +1,5 @@
+import {
+  "trkbt10/indexion/src/digest/types" @types,
+  "trkbt10/indexion/src/kgf/cas/hash" @cas_hash,
+  "trkbt10/indexion/src/kgf/cas/types" @cas_types,
+}

@@ -1,11 +1,13 @@
 import {
-  "moonbitlang/x/sys" @sys,
+  "mizchi/x/sys" @sys,
+  "moonbitlang/async",
   "trkbt10/indexion/cmd/indexion/explore" @explore_cli,
   "trkbt10/indexion/cmd/indexion/similarity" @similarity_cli,
   "trkbt10/indexion/cmd/indexion/plan" @plan_cli,
   "trkbt10/indexion/cmd/indexion/doc" @doc_cli,
   "trkbt10/indexion/cmd/indexion/perf" @perf_cli,
   "trkbt10/indexion/cmd/indexion/segment" @segment_cli,
+  "trkbt10/indexion/cmd/indexion/digest" @digest_cli,
 }
 
 options(

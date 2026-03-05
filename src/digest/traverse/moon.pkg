@@ -1,0 +1,4 @@
+import {
+  "trkbt10/indexion/src/core/graph" @graph,
+  "trkbt10/indexion/src/digest/types" @types,
+}

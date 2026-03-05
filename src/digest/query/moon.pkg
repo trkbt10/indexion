@@ -1,0 +1,4 @@
+import {
+  "trkbt10/indexion/src/digest/types" @types,
+  "trkbt10/indexion/src/digest/index" @index,
+}

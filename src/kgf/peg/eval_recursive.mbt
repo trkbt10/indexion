@@ -51,13 +51,20 @@ fn should_emit_rule_rec(ctx : RecEvalContext, name : String) -> Bool {
 fn eval_rec(ctx : RecEvalContext, node_id : Int, pos : Int) -> FastEvalResult {
   let memo_idx = node_id * ctx.num_positions + pos
   match ctx.memo[memo_idx] {
-    Succeeded(end_pos) => return { ok: true, end_pos, labels: empty_labels() }
+    Succeeded(end_pos, labels) => {
+      // Clone labels to avoid mutation issues
+      let cloned : Map[String, Json] = {}
+      for key, value in labels {
+        cloned.set(key, value)
+      }
+      return { ok: true, end_pos, labels: cloned }
+    }
     Failed => return { ok: false, end_pos: pos, labels: empty_labels() }
     Unknown => ()
   }
   let result = eval_node_rec(ctx, node_id, pos)
   if result.ok {
-    ctx.memo[memo_idx] = Succeeded(result.end_pos)
+    ctx.memo[memo_idx] = Succeeded(result.end_pos, result.labels)
   } else {
     ctx.memo[memo_idx] = Failed
   }

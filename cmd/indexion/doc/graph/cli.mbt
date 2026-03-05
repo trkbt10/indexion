@@ -257,6 +257,9 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let output = if config.format == "json" {
     // Raw dependency JSON
     generate_json_output(deps, circulars)
+  } else if config.format == "codegraph" {
+    // Full CodeGraph JSON (for digest indexing)
+    graph.to_json_string()
   } else if config.format == "dot" {
     @diagram.render_dot(graph_json)
   } else if config.format == "d2" {

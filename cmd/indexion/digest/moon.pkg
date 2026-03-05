@@ -1,0 +1,15 @@
+import {
+  "trkbt10/indexion/src/core/graph" @graph,
+  "trkbt10/indexion/src/digest/types" @types,
+  "trkbt10/indexion/src/digest/index" @index,
+  "trkbt10/indexion/src/digest/extract" @extract,
+  "trkbt10/indexion/src/digest/config" @dconfig,
+  "trkbt10/indexion/src/digest/query" @query,
+  "trkbt10/indexion/src/digest/manifest" @manifest,
+  "trkbt10/indexion/src/digest/embed" @embed,
+  "trkbt10/indexion/src/pipeline" @pipeline,
+  "trkbt10/indexion/src/docgen/build" @build,
+  "moonbitlang/x/fs" @fs,
+  "mizchi/x/sys" @sys,
+  "moonbitlang/async",
+}

@@ -43,11 +43,12 @@ pub fn CodeGraph::get_or_add_symbol(
   kind~ : String,
   ns~ : String,
   module_id~ : String,
+  doc? : String? = None,
 ) -> SymbolNode {
   match self.symbols.get(id) {
     Some(existing) => existing
     None => {
-      let node : SymbolNode = { id, name, kind, ns, module_id }
+      let node : SymbolNode = { id, name, kind, ns, module_id, doc }
       self.symbols.set(id, node)
       node
     }
@@ -188,12 +189,16 @@ pub fn CodeGraph::to_json_string(self : CodeGraph) -> String {
   for entry in self.symbols {
     let id = entry.0
     let s = entry.1
-    symbols_obj.set(id, {
-      "name": s.name,
-      "kind": s.kind,
-      "ns": s.ns,
-      "module": s.module_id,
-    })
+    let sym_map : Map[String, Json] = {}
+    sym_map.set("name", s.name.to_json())
+    sym_map.set("kind", s.kind.to_json())
+    sym_map.set("ns", s.ns.to_json())
+    sym_map.set("module", s.module_id.to_json())
+    match s.doc {
+      Some(d) => sym_map.set("doc", d.to_json())
+      None => ()
+    }
+    symbols_obj.set(id, Json::object(sym_map))
   }
 
   // Build edges array
@@ -269,7 +274,12 @@ pub fn CodeGraph::from_json_string(json_str : String) -> CodeGraph? {
         "module": String(module_id),
         ..
       } {
-      let _ = graph.get_or_add_symbol(id, name~, kind~, ns~, module_id~)
+      let doc : String? = if s_json is { "doc": String(d), .. } {
+        Some(d)
+      } else {
+        None
+      }
+      let _ = graph.get_or_add_symbol(id, name~, kind~, ns~, module_id~, doc~)
     }
   }
 

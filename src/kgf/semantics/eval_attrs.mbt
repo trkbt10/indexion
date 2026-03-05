@@ -32,6 +32,61 @@ fn eval_single_attr(
 }
 
 ///|
+/// Clean doc text by removing ///| and /// prefixes from each line.
+fn clean_doc_text(text : String) -> String {
+  let result : Array[String] = []
+  let mut i = 0
+  let chars = text.to_array()
+  let len = chars.length()
+  while i < len {
+    // Skip leading whitespace
+    while i < len && (chars[i] == ' ' || chars[i] == '\t') {
+      i = i + 1
+    }
+    // Check for ///| or ///
+    if i + 4 <= len &&
+      chars[i] == '/' &&
+      chars[i + 1] == '/' &&
+      chars[i + 2] == '/' &&
+      chars[i + 3] == '|' {
+      i = i + 4 // Skip ///|
+      // Skip rest of line
+      while i < len && chars[i] != '\n' {
+        i = i + 1
+      }
+    } else if i + 3 <= len &&
+      chars[i] == '/' &&
+      chars[i + 1] == '/' &&
+      chars[i + 2] == '/' {
+      i = i + 3 // Skip ///
+      // Skip optional space after ///
+      if i < len && chars[i] == ' ' {
+        i = i + 1
+      }
+      // Collect text until newline
+      let line_chars : Array[Char] = []
+      while i < len && chars[i] != '\n' {
+        line_chars.push(chars[i])
+        i = i + 1
+      }
+      if line_chars.length() > 0 {
+        result.push(String::from_array(line_chars))
+      }
+    } else {
+      // Skip to next line
+      while i < len && chars[i] != '\n' {
+        i = i + 1
+      }
+    }
+    // Skip newline
+    if i < len && chars[i] == '\n' {
+      i = i + 1
+    }
+  }
+  result.join(" ")
+}
+
+///|
 /// Evaluates a 'def' attribute: defines a symbol.
 /// Syntax: def id kind=Variable ns=value
 /// - First positional param or 'id' param: the label to get symbol name from
@@ -74,6 +129,34 @@ fn eval_attr_def(
   // Get kind and namespace
   let kind = params.get("kind").unwrap_or("Unknown")
   let ns = params.get("ns").unwrap_or("value")
+  // Get doc text if specified (look for label_name_text for accumulated text)
+  let doc : String? = match params.get("doc") {
+    Some(doc_label) => {
+      let text_label = doc_label + "_text"
+      match labels.get(text_label) {
+        Some(String(s)) => {
+          // Clean up the doc text: remove ///| and /// prefixes
+          let cleaned = clean_doc_text(s)
+          if cleaned.length() > 0 {
+            Some(cleaned)
+          } else {
+            None
+          }
+        }
+        Some(json) => {
+          let text = json_to_string(json)
+          let cleaned = clean_doc_text(text)
+          if cleaned.length() > 0 {
+            Some(cleaned)
+          } else {
+            None
+          }
+        }
+        None => None
+      }
+    }
+    None => None
+  }
   // Generate symbol ID
   let sym_id = ctx.file + "::" + ns + ":" + name
   // Add symbol to graph
@@ -83,6 +166,7 @@ fn eval_attr_def(
     kind~,
     ns~,
     module_id=ctx.file,
+    doc~,
   )
   // Register in current scope for later reference resolution
   let scope = ctx.current_scope()

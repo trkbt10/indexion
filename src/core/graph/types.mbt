@@ -12,7 +12,7 @@ pub struct ModuleNode {
 
 ///|
 /// Symbol node representing a named entity (function, type, variable, etc.).
-pub struct SymbolNode {
+pub(all) struct SymbolNode {
   /// Unique identifier for the symbol.
   id : String
   /// Human-readable name of the symbol.
@@ -23,6 +23,8 @@ pub struct SymbolNode {
   ns : String
   /// Module ID this symbol is declared in.
   module_id : String
+  /// Documentation comment for the symbol (optional).
+  doc : String?
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
