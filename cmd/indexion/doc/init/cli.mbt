@@ -180,12 +180,12 @@ fn write_file_if_ok(path : String, content : String, force : Bool) -> Bool {
 // Project info
 
 ///|
-struct ProjectInfo {
+priv struct ProjectInfo {
   name : String
-  version : String
+  _version : String
   description : String
   repository : String
-  license : String
+  _license : String
   keywords : Array[String]
 }
 
@@ -193,10 +193,10 @@ struct ProjectInfo {
 fn ProjectInfo::default() -> ProjectInfo {
   {
     name: "project",
-    version: "0.0.0",
+    _version: "0.0.0",
     description: "",
     repository: "",
-    license: "",
+    _license: "",
     keywords: [],
   }
 }
@@ -248,10 +248,10 @@ fn parse_config_content(filename : String, content : String) -> ProjectInfo {
 fn parse_json_config(content : String) -> ProjectInfo {
   let mut info = ProjectInfo::default()
   info = { ..info, name: extract_json_string(content, "name") }
-  info = { ..info, version: extract_json_string(content, "version") }
+  info = { ..info, _version: extract_json_string(content, "version") }
   info = { ..info, description: extract_json_string(content, "description") }
   info = { ..info, repository: extract_json_string(content, "repository") }
-  info = { ..info, license: extract_json_string(content, "license") }
+  info = { ..info, _license: extract_json_string(content, "license") }
   info = { ..info, keywords: extract_json_array(content, "keywords") }
   info
 }

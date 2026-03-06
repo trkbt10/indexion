@@ -363,7 +363,7 @@ fn ensure_dir_exists(path : String) -> Unit {
     }
   }
   if last_slash > 0 {
-    let parent = path.substring(start=0, end=last_slash)
+    let parent = path[0:last_slash].to_string() catch { _ => "" }
     if not(@fs.path_exists(parent)) {
       @fs.create_dir(parent) catch {
         _ => ()
@@ -605,7 +605,7 @@ fn run_stats(config : CliConfig) -> Unit {
   println("  Index directory: " + config.index_dir)
   println("  Provider: " + manifest.embedding_provider)
   println("  Embedding dim: " + manifest.embedding_dim.to_string())
-  println("  Indexed functions: " + manifest.functions.size().to_string())
+  println("  Indexed functions: " + manifest.functions.length().to_string())
   println("  Total symbols: " + graph.symbol_count().to_string())
   println("  Total modules: " + graph.module_count().to_string())
   println("  Total edges: " + graph.edge_count().to_string())

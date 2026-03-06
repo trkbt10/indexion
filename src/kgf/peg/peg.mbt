@@ -54,27 +54,9 @@ pub fn PEG::get_rule(self : PEG, name : String) -> Node? {
 }
 
 ///|
-/// Gets a compiled node by node id.
-fn PEG::get_compiled_node(self : PEG, node_id : Int) -> CompiledNode? {
-  self.compiled_nodes.get(node_id)
-}
-
-///|
-/// Gets compiled root node id for a rule.
-fn PEG::get_rule_node_id(self : PEG, name : String) -> Int? {
-  self.rule_node_ids.get(name)
-}
-
-///|
 /// Gets the token ID for a token name.
 fn PEG::get_token_id(self : PEG, name : String) -> Int? {
   self.token_ids.get(name)
-}
-
-///|
-/// Gets fast compiled root node id for a rule (FRuleRef wrapper).
-fn PEG::get_fast_rule_id(self : PEG, name : String) -> Int? {
-  self.fast_rule_ids.get(name)
 }
 
 ///|

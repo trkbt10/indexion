@@ -64,24 +64,6 @@ pub struct CASManifest {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
-/// Error information for indexing failures.
-pub struct IndexError {
-  module_id : String
-  error : String
-} derive(Eq, Show)
-
-///|
-/// Result of indexing a single module.
-pub enum IndexModuleResult {
-  /// Successfully indexed the module.
-  Success(ModuleChunk)
-  /// Module was already cached and valid.
-  Cached(ContentHash)
-  /// Error occurred during indexing.
-  Error(IndexError)
-} derive(Eq, Show)
-
-///|
 /// Create a new SymbolicRef.
 pub fn SymbolicRef::new(
   ref_str : String,

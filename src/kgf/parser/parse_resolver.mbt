@@ -421,16 +421,6 @@ fn build_resolve_step_from_kv(kv : Map[String, String]) -> @types.ResolveStep? {
 }
 
 ///|
-/// Builds the ResolverSpec from parsed key-value pairs, aliases, and resolve chain.
-fn build_resolver_spec(
-  kv : Map[String, String],
-  aliases : Array[@types.ResolverAlias],
-  resolve_chain : Array[@types.ResolveStep],
-) -> @types.ResolverSpec {
-  build_resolver_spec_with_sources(kv, aliases, resolve_chain, [])
-}
-
-///|
 fn build_resolver_spec_with_sources(
   kv : Map[String, String],
   aliases : Array[@types.ResolverAlias],
@@ -507,14 +497,6 @@ fn get_int(kv : Map[String, String], key : String, default~ : Int) -> Int {
   }
 }
 
-///|
-/// Gets a boolean value from the key-value map.
-fn get_bool(kv : Map[String, String], key : String) -> Bool {
-  match kv.get(key) {
-    Some(v) => trim_str(v) == "true"
-    None => false
-  }
-}
 
 ///|
 /// Gets a default ModulePathStyle (slash).

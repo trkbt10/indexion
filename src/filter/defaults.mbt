@@ -19,8 +19,3 @@ fn dir_pattern(name : String) -> IgnorePattern {
   IgnorePattern::new(name, directory_only=true, source="default")
 }
 
-///|
-/// Create a file pattern.
-fn file_pattern(pattern : String) -> IgnorePattern {
-  IgnorePattern::new(pattern, source="default")
-}

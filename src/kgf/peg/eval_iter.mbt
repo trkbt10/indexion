@@ -60,8 +60,8 @@ priv enum WorkItem {
   PlusRest(Int, Int, Int, Map[String, Json])
   /// Continue Optional: node_id, pos
   OptionalCont(Int, Int)
-  /// Continue Label: label_name, start_pos
-  LabelCont(String, Int)
+  /// Continue Label: label_name
+  LabelCont(String)
   /// Continue RuleRef: rule_name, target_is_rule_ref, start_pos
   RuleRefCont(String, Bool, Int)
 }
@@ -169,7 +169,7 @@ fn eval_iter_loop(ctx : IterEvalContext) -> Unit {
       PlusRest(child_id, start_pos, current_pos, labels) =>
         process_plus_rest(ctx, child_id, start_pos, current_pos, labels)
       OptionalCont(node_id, pos) => process_optional_cont(ctx, node_id, pos)
-      LabelCont(label_name, _) => process_label_cont(ctx, label_name)
+      LabelCont(label_name) => process_label_cont(ctx, label_name)
       RuleRefCont(rule_name, target_is_rule_ref, start_pos) =>
         process_rule_ref_cont(ctx, rule_name, target_is_rule_ref, start_pos)
     }
@@ -266,7 +266,7 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
       ctx.work.push(Eval(child, pos))
     }
     FLabel(label_name, child) => {
-      ctx.work.push(LabelCont(label_name, pos))
+      ctx.work.push(LabelCont(label_name))
       ctx.work.push(Eval(child, pos))
     }
   }

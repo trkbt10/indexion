@@ -223,53 +223,6 @@ pub fn show_help() -> Unit {
 }
 
 ///|
-/// Check if filename matches a glob pattern (simple implementation).
-fn matches_pattern(filename : String, pattern : String) -> Bool {
-  let fname_chars = filename.to_array()
-  let pat_chars = pattern.to_array()
-  matches_pattern_impl(fname_chars, 0, pat_chars, 0)
-}
-
-///|
-fn matches_pattern_impl(
-  fname : Array[Char],
-  fi : Int,
-  pat : Array[Char],
-  pi : Int,
-) -> Bool {
-  // Both exhausted
-  if fi >= fname.length() && pi >= pat.length() {
-    return true
-  }
-  // Pattern exhausted but filename remains
-  if pi >= pat.length() {
-    return false
-  }
-  // Handle wildcard
-  if pat[pi] == '*' {
-    // Try matching zero or more characters
-    // First, try skipping the wildcard (match zero chars)
-    if matches_pattern_impl(fname, fi, pat, pi + 1) {
-      return true
-    }
-    // Then try consuming one char from filename
-    if fi < fname.length() {
-      return matches_pattern_impl(fname, fi + 1, pat, pi)
-    }
-    return false
-  }
-  // Filename exhausted but pattern remains (non-wildcard)
-  if fi >= fname.length() {
-    return false
-  }
-  // Match single character
-  if pat[pi] == fname[fi] {
-    return matches_pattern_impl(fname, fi + 1, pat, pi + 1)
-  }
-  false
-}
-
-///|
 /// Check if file should be included based on filter config.
 fn should_include_file(
   filter : @filter.FilterConfig,

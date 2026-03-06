@@ -85,7 +85,7 @@ pub fn MemoryChunkStore::list(
 ///|
 /// Get the number of chunks in the store.
 pub fn MemoryChunkStore::size(self : MemoryChunkStore) -> Int {
-  self.chunks.size()
+  self.chunks.length()
 }
 
 ///|

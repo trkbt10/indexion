@@ -80,7 +80,7 @@ fn Lexer::try_match(
           if token_def.skip {
             return Some((token_def, end_pos_value, None))
           } else {
-            let text = input.substring(start=pos, end=end_pos_value)
+            let text = input[pos:end_pos_value].to_string() catch { _ => "" }
             return Some((token_def, end_pos_value, Some(text)))
           }
         }
@@ -107,7 +107,7 @@ fn extract_value(text : String) -> String? {
     let first = text[0].to_int().unsafe_to_char()
     let last = text[text.length() - 1].to_int().unsafe_to_char()
     if (first == '"' && last == '"') || (first == '\'' && last == '\'') {
-      return Some(text.substring(start=1, end=text.length() - 1))
+      return Some(text[1:text.length() - 1].to_string() catch { _ => "" })
     }
   }
   None

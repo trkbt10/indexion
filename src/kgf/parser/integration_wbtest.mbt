@@ -112,11 +112,11 @@ test "parse typescript spec - full structure" {
   assert_eq(s.language, "typescript")
   // Verify all sections are parsed
   assert_true(s.tokens.length() >= 20)
-  assert_true(s.rules.size() >= 20)
-  assert_true(s.attrs.size() >= 10)
+  assert_true(s.rules.length() >= 20)
+  assert_true(s.attrs.length() >= 10)
   assert_true(s.semantics is Some(_))
   let sem = s.semantics.unwrap()
-  assert_eq(sem.size(), 4)
+  assert_eq(sem.length(), 4)
   // Verify resolver
   let resolver = s.resolver
   assert_eq(resolver.get_sources().length(), 3)
@@ -312,9 +312,9 @@ test "parse go spec - minimal without attrs and semantics" {
   let s = spec.unwrap()
   assert_eq(s.language, "go")
   assert_eq(s.tokens.length(), 10)
-  assert_eq(s.rules.size(), 3)
+  assert_eq(s.rules.length(), 3)
   // No attrs or semantics
-  assert_eq(s.attrs.size(), 0)
+  assert_eq(s.attrs.length(), 0)
   assert_true(s.semantics is None)
   // Verify resolve chain
   assert_true(s.resolver.has_resolve_chain())
@@ -402,9 +402,9 @@ test "parse base64 spec - simple encoding format" {
   let s = spec.unwrap()
   assert_eq(s.language, "base64")
   assert_eq(s.tokens.length(), 3)
-  assert_eq(s.rules.size(), 5)
+  assert_eq(s.rules.length(), 5)
   // Attrs section with only comment should be empty
-  assert_eq(s.attrs.size(), 0)
+  assert_eq(s.attrs.length(), 0)
   // Resolver should have multiple sources
   assert_eq(s.resolver.get_sources().length(), 3)
   // Verify resolve chain
@@ -442,7 +442,7 @@ test "parse markdown spec - minimal structure" {
   let s = spec.unwrap()
   assert_eq(s.language, "markdown")
   assert_eq(s.tokens.length(), 8)
-  assert_eq(s.rules.size(), 2)
+  assert_eq(s.rules.length(), 2)
   // Verify resolve chain
   assert_true(s.resolver.has_resolve_chain())
 }
@@ -1129,7 +1129,7 @@ test "parse moonbit spec - moon ecosystem with packages" {
   // 17 TOKEN definitions in lex section
   assert_true(s.tokens.length() >= 17)
   // Verify attrs includes package reference handling
-  assert_true(s.attrs.size() >= 11)
+  assert_true(s.attrs.length() >= 11)
   // Verify resolver
   assert_eq(s.resolver.get_sources().length(), 1)
   assert_eq(s.resolver.get_sources()[0], ".mbt")

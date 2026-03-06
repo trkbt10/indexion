@@ -72,7 +72,7 @@ pub fn GraphJSON::to_json(self : GraphJSON) -> Json {
       Some(f) => obj.set("file", f.to_json())
       None => ()
     }
-    if node.metadata.size() > 0 {
+    if node.metadata.length() > 0 {
       let meta : Map[String, Json] = Map::new()
       for k, v in node.metadata {
         meta.set(k, v.to_json())
@@ -87,7 +87,7 @@ pub fn GraphJSON::to_json(self : GraphJSON) -> Json {
     obj.set("from", edge.from.to_json())
     obj.set("to", edge.to.to_json())
     obj.set("kind", edge.kind.to_json())
-    if edge.metadata.size() > 0 {
+    if edge.metadata.length() > 0 {
       let meta : Map[String, Json] = Map::new()
       for k, v in edge.metadata {
         meta.set(k, v.to_json())
@@ -100,7 +100,7 @@ pub fn GraphJSON::to_json(self : GraphJSON) -> Json {
   root.set("title", self.title.to_json())
   root.set("nodes", Json::array(nodes_json))
   root.set("edges", Json::array(edges_json))
-  if self.metadata.size() > 0 {
+  if self.metadata.length() > 0 {
     let meta : Map[String, Json] = Map::new()
     for k, v in self.metadata {
       meta.set(k, v.to_json())

@@ -72,11 +72,11 @@ pub fn ExploreConfig::default() -> ExploreConfig {
 
 ///|
 /// File pair with similarity score.
-struct FilePair {
+priv struct FilePair {
   file1 : String
   file2 : String
   similarity : Double
-  distance : Double
+  _distance : Double
 }
 
 ///|
@@ -495,7 +495,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
         file1: files[i].0,
         file2: files[j].0,
         similarity: sim,
-        distance: dist,
+        _distance: dist,
       })
     }
   }

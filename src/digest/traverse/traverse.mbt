@@ -2,20 +2,11 @@
 // Processes leaf functions first, then propagates upward through callers.
 
 ///|
-/// Traversal order for processing functions.
-pub enum TraversalOrder {
-  /// Leaf functions first (no outgoing Call edges), then callers.
-  BottomUp
-  /// Entry points first (no incoming Call edges), then callees.
-  TopDown
-} derive(Eq, Show)
-
-///|
 /// Result of computing traversal order.
 pub struct TraversalResult {
   /// Symbol IDs in traversal order.
   order : Array[String]
-  /// Symbol ID -> depth mapping (0 = leaf for BottomUp).
+  /// Symbol ID -> depth mapping (0 = leaf for bottom-up).
   depths : Map[String, Int]
   /// Detected cycles as (from, to) pairs.
   cycles : Array[(String, String)]

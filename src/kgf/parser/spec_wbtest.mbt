@@ -86,7 +86,7 @@ test "parse_rules basic" {
     #|Term -> Factor ((STAR | SLASH) Factor)*
     #|
   let rules = parse_rules(text)
-  assert_eq(rules.size(), 2)
+  assert_eq(rules.length(), 2)
   assert_eq(
     rules.get("Expr").unwrap().get_expr(),
     "Term ((PLUS | MINUS) Term)*",
@@ -106,7 +106,7 @@ test "parse_rules multiline" {
     #|Other -> Simple
     #|
   let rules = parse_rules(text)
-  assert_eq(rules.size(), 2)
+  assert_eq(rules.length(), 2)
   let stmt_expr = rules.get("Stmt").unwrap().get_expr()
   assert_true(find_substring(stmt_expr, "IF LPAREN") >= 0)
   assert_true(find_substring(stmt_expr, "Block") >= 0)
@@ -120,7 +120,7 @@ test "parse_attrs basic" {
     #|on VarRef: ref
     #|
   let attrs = parse_attrs(text)
-  assert_eq(attrs.size(), 2)
+  assert_eq(attrs.length(), 2)
   let func_actions = attrs.get("FuncDecl").unwrap()
   assert_eq(func_actions.length(), 1)
   assert_eq(func_actions[0].get_kind(), "def")
@@ -246,8 +246,8 @@ test "parse_kgf full" {
   let s = spec.unwrap()
   assert_eq(s.get_language(), "typescript")
   assert_eq(s.get_tokens().length(), 2)
-  assert_eq(s.get_rules().size(), 2)
-  assert_eq(s.get_attrs().size(), 1)
+  assert_eq(s.get_rules().length(), 2)
+  assert_eq(s.get_attrs().length(), 1)
   assert_eq(s.get_resolver().get_sources().length(), 1)
 }
 
@@ -476,7 +476,7 @@ test "parse_rules with labeled captures" {
     #|ImportNS        -> STAR KW_as ns:Ident KW_from from:StringLit
     #|ImportSpec      -> origin:Ident ( KW_as local:Ident )?
   let rules = parse_rules(text)
-  assert_eq(rules.size(), 4)
+  assert_eq(rules.length(), 4)
   assert_true(rules.contains("ImportDecl"))
   assert_true(rules.contains("SideEffect"))
   assert_true(rules.contains("ImportNS"))
@@ -492,7 +492,7 @@ test "parse_rules with alternatives" {
     #|      | RawString | String | Char | Number
     #|      | KeywordDecl | KeywordControl
   let rules = parse_rules(text)
-  assert_eq(rules.size(), 1)
+  assert_eq(rules.length(), 1)
   assert_true(rules.contains("Token"))
   let token_expr = rules.get("Token").unwrap().get_expr()
   assert_true(find_substring(token_expr, "LineComment | BlockComment") >= 0)
@@ -508,7 +508,7 @@ test "parse_attrs typescript style" {
     #|on CallExpr:   call callee=callee
     #|on SideEffect: import module=path
   let attrs = parse_attrs(text)
-  assert_eq(attrs.size(), 6)
+  assert_eq(attrs.length(), 6)
   // VarItem
   let var_actions = attrs.get("VarItem").unwrap()
   assert_eq(var_actions.length(), 1)
@@ -535,7 +535,7 @@ test "parse_attrs japanese law style" {
     #|on Section:      def id=sec kind=Section
     #|on Article:      def id=art kind=Article
   let attrs = parse_attrs(text)
-  assert_eq(attrs.size(), 4)
+  assert_eq(attrs.length(), 4)
   let chapter = attrs.get("Chapter").unwrap()
   assert_eq(chapter[0].get_param("id"), Some("ch"))
   assert_eq(chapter[0].get_param("kind"), Some("Chapter"))
@@ -599,7 +599,7 @@ test "parse_semantics typescript edge statements" {
   let sem = parse_semantics(text)
   assert_true(sem is Some(_))
   let map = sem.unwrap()
-  assert_eq(map.size(), 2)
+  assert_eq(map.length(), 2)
   assert_true(map.contains("SideEffect"))
   assert_true(map.contains("ImportNS"))
   let side_effect_blocks = map.get("SideEffect").unwrap()
@@ -698,9 +698,9 @@ test "parse_kgf go spec style no attrs no semantics" {
   let s = spec.unwrap()
   assert_eq(s.language, "go")
   assert_eq(s.tokens.length(), 4)
-  assert_eq(s.rules.size(), 3)
+  assert_eq(s.rules.length(), 3)
   // attrs and semantics should be empty/None
-  assert_eq(s.attrs.size(), 0)
+  assert_eq(s.attrs.length(), 0)
   assert_true(s.semantics is None)
 }
 
@@ -732,9 +732,9 @@ test "parse_kgf base64 minimal spec" {
   let s = spec.unwrap()
   assert_eq(s.language, "base64")
   assert_eq(s.tokens.length(), 3)
-  assert_eq(s.rules.size(), 3)
+  assert_eq(s.rules.length(), 3)
   // attrs section has only comment, should be empty
-  assert_eq(s.attrs.size(), 0)
+  assert_eq(s.attrs.length(), 0)
   let resolver = s.resolver
   assert_eq(resolver.get_sources().length(), 3)
 }
@@ -751,7 +751,7 @@ test "parse_rules multiline with continuation and labeled captures" {
     #|ExportFrom      -> KW_export ( STAR KW_from from:StringLit
     #|                             | LBRACE ExportSpecList RBRACE KW_from from:StringLit ) SEMI?
   let rules = parse_rules(text)
-  assert_eq(rules.size(), 6)
+  assert_eq(rules.length(), 6)
   // Check multiline rule is combined
   let export_from = rules.get("ExportFrom").unwrap().get_expr()
   assert_true(find_substring(export_from, "STAR KW_from") >= 0)
@@ -892,7 +892,7 @@ test "parse_attrs with comment line" {
     #|on SimpleStmt:  # no-op just to keep node
     #|on Primary:     ref name ns=value
   let attrs = parse_attrs(text)
-  assert_eq(attrs.size(), 4)
+  assert_eq(attrs.length(), 4)
   // SimpleStmt has no actions (comment only)
   let simple = attrs.get("SimpleStmt").unwrap()
   assert_eq(simple.length(), 0)
@@ -927,8 +927,8 @@ test "parse_kgf rust spec style" {
   let s = spec.unwrap()
   assert_eq(s.language, "rust")
   assert_eq(s.tokens.length(), 5)
-  assert_eq(s.rules.size(), 3)
-  assert_eq(s.attrs.size(), 0)
+  assert_eq(s.rules.length(), 3)
+  assert_eq(s.attrs.length(), 0)
   assert_true(s.semantics is None)
 }
 

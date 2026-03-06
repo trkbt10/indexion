@@ -13,7 +13,8 @@ pub enum Node {
 
 ///|
 /// CompiledNode is an ID-based representation for evaluation hot paths.
-enum CompiledNode {
+/// Note: This is legacy code superseded by FastCompiledNode but kept for API compatibility.
+pub enum CompiledNode {
   CEmpty
   CSym(String)
   CSeq(Array[Int])

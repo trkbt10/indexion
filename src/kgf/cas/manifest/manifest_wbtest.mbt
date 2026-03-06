@@ -7,7 +7,7 @@ test "create_manifest" {
   )
   let manifest = create_manifest(spec_hash)
   assert_eq(manifest.spec_hash, spec_hash)
-  assert_eq(manifest.modules.size(), 0)
+  assert_eq(manifest.modules.length(), 0)
 }
 
 ///|
@@ -20,7 +20,7 @@ test "update_manifest" {
   )
   let manifest = create_manifest(spec_hash)
   let updated = update_manifest(manifest, "src/main.ts", chunk_hash)
-  assert_eq(updated.modules.size(), 1)
+  assert_eq(updated.modules.length(), 1)
   assert_true(updated.modules.contains("src/main.ts"))
   assert_eq(updated.modules.get("src/main.ts").unwrap(), chunk_hash)
 }
@@ -35,9 +35,9 @@ test "remove_module" {
   )
   let manifest = create_manifest(spec_hash)
   let updated = update_manifest(manifest, "src/main.ts", chunk_hash)
-  assert_eq(updated.modules.size(), 1)
+  assert_eq(updated.modules.length(), 1)
   let removed = remove_module(updated, "src/main.ts")
-  assert_eq(removed.modules.size(), 0)
+  assert_eq(removed.modules.length(), 0)
 }
 
 ///|
