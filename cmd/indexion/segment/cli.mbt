@@ -118,6 +118,7 @@ fn parse_double(s : String) -> Double {
 }
 
 ///|
+/// Parse command line arguments into SegmentConfig.
 pub fn parse_args(args : Array[String], start_idx : Int) -> SegmentConfig {
   let mut config = SegmentConfig::default()
   let positional : Array[String] = []
@@ -170,6 +171,7 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> SegmentConfig {
 }
 
 ///|
+/// Display help message for segment command.
 pub fn show_help() -> Unit {
   println("indexion segment - Split text into contextual segments")
   println("")
@@ -233,6 +235,7 @@ fn substring(text : String, start : Int, end : Int) -> String {
 }
 
 ///|
+/// Run the segment command with given arguments.
 pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let config = parse_args(args, start_idx)
 

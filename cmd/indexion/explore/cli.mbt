@@ -124,6 +124,7 @@ fn parse_double(s : String) -> Double {
 }
 
 ///|
+/// Parse command line arguments into ExploreConfig.
 pub fn parse_explore_args(
   args : Array[String],
   start_idx : Int,
@@ -153,6 +154,7 @@ pub fn parse_explore_args(
 }
 
 ///|
+/// Display help message for explore command.
 pub fn show_explore_help() -> Unit {
   println("indexion explore - Analyze similarity across files")
   println("")
@@ -462,6 +464,7 @@ fn truncate(s : String, max_len : Int) -> String {
 }
 
 ///|
+/// Run the explore command with given arguments.
 pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let config = parse_explore_args(args, start_idx)
   if config.show_help {

@@ -24,6 +24,7 @@
 /// ```
 
 ///|
+/// Configuration for doc init command.
 pub struct InitConfig {
   target_dir : String
   specs_dir : String // KGF specs directory
@@ -32,6 +33,7 @@ pub struct InitConfig {
 }
 
 ///|
+/// Create default InitConfig.
 pub fn InitConfig::default() -> InitConfig {
   { target_dir: ".", specs_dir: "kgfs", force: false, show_help: false }
 }
@@ -50,6 +52,7 @@ fn get_arg_value(arg : String, prefix_len : Int) -> String {
 }
 
 ///|
+/// Parse command line arguments into InitConfig.
 pub fn parse_args(args : Array[String], start_idx : Int) -> InitConfig {
   let mut config = InitConfig::default()
   for i = start_idx; i < args.length(); i = i + 1 {
@@ -69,6 +72,7 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> InitConfig {
 }
 
 ///|
+/// Display help message for doc init command.
 pub fn show_help() -> Unit {
   println("indexion doc init - Initialize documentation template structure")
   println("")
@@ -101,6 +105,7 @@ pub fn show_help() -> Unit {
 }
 
 ///|
+/// Run the doc init command with given arguments.
 pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let config = parse_args(args, start_idx)
   if config.show_help {

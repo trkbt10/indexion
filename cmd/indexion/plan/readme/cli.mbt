@@ -19,6 +19,7 @@
 /// | `--format=FORMAT` | Output format: markdown, json | markdown |
 
 ///|
+/// Configuration for plan readme command.
 pub struct ReadmePlanConfig {
   target_dir : String
   output : String
@@ -30,6 +31,7 @@ pub struct ReadmePlanConfig {
 }
 
 ///|
+/// Create default ReadmePlanConfig.
 pub fn ReadmePlanConfig::default() -> ReadmePlanConfig {
   {
     target_dir: ".",
@@ -56,6 +58,7 @@ fn get_arg_value(arg : String, prefix_len : Int) -> String {
 }
 
 ///|
+/// Parse command line arguments into ReadmePlanConfig.
 pub fn parse_args(args : Array[String], start_idx : Int) -> ReadmePlanConfig {
   let mut config = ReadmePlanConfig::default()
   for i = start_idx; i < args.length(); i = i + 1 {
@@ -86,6 +89,7 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> ReadmePlanConfig {
 }
 
 ///|
+/// Display help message for plan readme command.
 pub fn show_help() -> Unit {
   println("indexion plan readme - Generate README documentation writing plans")
   println("")
@@ -129,6 +133,7 @@ pub fn show_help() -> Unit {
 }
 
 ///|
+/// Run the plan readme command with given arguments.
 pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let config = parse_args(args, start_idx)
   if config.show_help {

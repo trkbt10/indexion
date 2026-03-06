@@ -6,6 +6,7 @@
 ///   readme        - Generate README documentation tasks
 
 ///|
+/// Display help message for plan command.
 pub fn show_help() -> Unit {
   println("indexion plan - Generate planning documents")
   println("")
@@ -27,6 +28,7 @@ pub fn show_help() -> Unit {
 }
 
 ///|
+/// Run the plan command with given arguments.
 pub fn run(args : Array[String], start_idx : Int) -> Unit {
   if start_idx >= args.length() {
     show_help()

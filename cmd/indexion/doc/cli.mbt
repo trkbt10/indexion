@@ -10,6 +10,7 @@
 /// - `readme` - Generate README.md from source doc comments (with template support)
 
 ///|
+/// Display help message for doc command.
 pub fn show_help() -> Unit {
   println("indexion doc - Documentation commands")
   println("")
@@ -27,6 +28,7 @@ pub fn show_help() -> Unit {
 }
 
 ///|
+/// Run the doc command with given arguments.
 pub fn run(args : Array[String], start_idx : Int) -> Unit {
   if start_idx >= args.length() {
     show_help()

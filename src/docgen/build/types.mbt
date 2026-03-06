@@ -23,11 +23,13 @@ pub fn DocConfig::new(
 // Getters
 
 ///|
+/// Get the files to process as (path, content) pairs.
 pub fn DocConfig::get_files(self : DocConfig) -> Array[(String, String)] {
   self.files
 }
 
 ///|
+/// Get the KGF specs map by language name.
 pub fn DocConfig::get_specs(
   self : DocConfig,
 ) -> Map[String, @kgf_types.KGFSpec] {
@@ -35,11 +37,13 @@ pub fn DocConfig::get_specs(
 }
 
 ///|
+/// Get the render options.
 pub fn DocConfig::get_options(self : DocConfig) -> @render.RenderOptions {
   self.options
 }
 
 ///|
+/// Get the root path for resolution.
 pub fn DocConfig::get_root_path(self : DocConfig) -> String {
   self.root_path
 }

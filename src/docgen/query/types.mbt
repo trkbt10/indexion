@@ -99,91 +99,109 @@ pub fn SymbolDecl::new(
 // Getters
 
 ///|
+/// Get the source module ID.
 pub fn ModuleDep::get_from(self : ModuleDep) -> String {
   self.from
 }
 
 ///|
+/// Get the target module ID.
 pub fn ModuleDep::get_to(self : ModuleDep) -> String {
   self.to
 }
 
 ///|
+/// Get the intermediate module (if any).
 pub fn ModuleDep::get_via(self : ModuleDep) -> String? {
   self.via
 }
 
 ///|
+/// Get the dependency kind (import, require, etc).
 pub fn ModuleDep::get_dep_kind(self : ModuleDep) -> String? {
   self.dep_kind
 }
 
 ///|
+/// Get the caller symbol ID.
 pub fn CallInfo::get_caller(self : CallInfo) -> String {
   self.caller
 }
 
 ///|
+/// Get the callee symbol ID.
 pub fn CallInfo::get_callee(self : CallInfo) -> String {
   self.callee
 }
 
 ///|
+/// Get the file where the call occurs.
 pub fn CallInfo::get_file(self : CallInfo) -> String {
   self.file
 }
 
 ///|
+/// Get the child type ID.
 pub fn TypeRelation::get_child(self : TypeRelation) -> String {
   self.child
 }
 
 ///|
+/// Get the parent type ID.
 pub fn TypeRelation::get_parent(self : TypeRelation) -> String {
   self.parent
 }
 
 ///|
+/// Get the relation type (extends, implements).
 pub fn TypeRelation::get_relation(self : TypeRelation) -> String {
   self.relation
 }
 
 ///|
+/// Get the referenced symbol ID.
 pub fn SymbolRef::get_symbol(self : SymbolRef) -> String {
   self.symbol
 }
 
 ///|
+/// Get the reference site (where the symbol is used).
 pub fn SymbolRef::get_ref_site(self : SymbolRef) -> String {
   self.ref_site
 }
 
 ///|
+/// Get the reference kind (call, access, etc).
 pub fn SymbolRef::get_ref_kind(self : SymbolRef) -> String {
   self.ref_kind
 }
 
 ///|
+/// Get the symbol ID.
 pub fn SymbolDecl::get_id(self : SymbolDecl) -> String {
   self.id
 }
 
 ///|
+/// Get the symbol name.
 pub fn SymbolDecl::get_name(self : SymbolDecl) -> String {
   self.name
 }
 
 ///|
+/// Get the symbol kind (Function, Class, etc).
 pub fn SymbolDecl::get_kind(self : SymbolDecl) -> String {
   self.kind
 }
 
 ///|
+/// Get the containing module ID.
 pub fn SymbolDecl::get_module_id(self : SymbolDecl) -> String {
   self.module_id
 }
 
 ///|
+/// Get the documentation comment (if any).
 pub fn SymbolDecl::get_doc(self : SymbolDecl) -> String? {
   self.doc
 }
@@ -202,11 +220,13 @@ pub fn CircularDep::new(from : String, to : String) -> CircularDep {
 }
 
 ///|
+/// Get the source module in circular dependency.
 pub fn CircularDep::get_from(self : CircularDep) -> String {
   self.from
 }
 
 ///|
+/// Get the target module in circular dependency.
 pub fn CircularDep::get_to(self : CircularDep) -> String {
   self.to
 }

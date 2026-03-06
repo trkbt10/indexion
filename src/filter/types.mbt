@@ -14,6 +14,7 @@ pub struct IgnorePattern {
 }
 
 ///|
+/// Create a new IgnorePattern with the given pattern string.
 pub fn IgnorePattern::new(
   pattern : String,
   negated? : Bool = false,
@@ -44,6 +45,7 @@ pub struct FilterConfig {
 }
 
 ///|
+/// Create a new FilterConfig with default settings.
 pub fn FilterConfig::new() -> FilterConfig {
   {
     default_excludes: default_exclude_patterns(),
@@ -57,6 +59,7 @@ pub fn FilterConfig::new() -> FilterConfig {
 }
 
 ///|
+/// Create a FilterConfig with user-specified include/exclude patterns.
 pub fn FilterConfig::with_user_patterns(
   includes : Array[String],
   excludes : Array[String],
@@ -213,6 +216,7 @@ pub enum FilterResult {
 } derive(Eq, Show)
 
 ///|
+/// Check if the result indicates the path should be included.
 pub fn FilterResult::is_included(self : FilterResult) -> Bool {
   match self {
     Include => true
