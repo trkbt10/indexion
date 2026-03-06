@@ -27,7 +27,7 @@ pub fn CodeGraph::get_notes(
   let result : Array[ModuleNote] = []
   for note in self.notes {
     if note.note_type == note_type &&
-       (module_id.length() == 0 || note.module_id == module_id) {
+      (module_id.length() == 0 || note.module_id == module_id) {
       result.push(note)
     }
   }
@@ -36,7 +36,10 @@ pub fn CodeGraph::get_notes(
 
 ///|
 /// Get all module_doc notes for a module.
-pub fn CodeGraph::get_module_doc(self : CodeGraph, module_id : String) -> String? {
+pub fn CodeGraph::get_module_doc(
+  self : CodeGraph,
+  module_id : String,
+) -> String? {
   for note in self.notes {
     if note.note_type == "module_doc" && note.module_id == module_id {
       return Some(note.content)

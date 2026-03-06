@@ -8,7 +8,10 @@ pub const INDEXIONIGNORE_FILENAME : String = ".indexionignore"
 
 ///|
 /// Parse an ignore file content (gitignore syntax).
-pub fn parse_ignore_file(content : String, source : String) -> Array[IgnorePattern] {
+pub fn parse_ignore_file(
+  content : String,
+  source : String,
+) -> Array[IgnorePattern] {
   let patterns : Array[IgnorePattern] = []
   let lines = split_lines(content)
   for line in lines {

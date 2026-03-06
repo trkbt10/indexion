@@ -94,7 +94,10 @@ fn check_ignore_patterns(
 /// This is used for early termination - if a directory is excluded,
 /// we don't need to traverse into it.
 /// Uses same priority as should_include but for directories only.
-pub fn FilterConfig::should_skip_dir(self : FilterConfig, dir_name : String) -> Bool {
+pub fn FilterConfig::should_skip_dir(
+  self : FilterConfig,
+  dir_name : String,
+) -> Bool {
   let config = self
   // Check user includes first (if matched, don't skip)
   for pattern in config.user_includes {

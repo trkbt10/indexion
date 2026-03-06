@@ -86,7 +86,9 @@ pub fn show_help() -> Unit {
   println("Options:")
   println("  --output=FILE, -o=   Output file path (default: stdout)")
   println("  --style=STYLE        Output style: coverage, full (default: full)")
-  println("  --name=NAME          Project name (auto-detect from moon.mod.json)")
+  println(
+    "  --name=NAME          Project name (auto-detect from moon.mod.json)",
+  )
   println("  --help               Show this help message")
   println("")
   println("Styles:")

@@ -215,7 +215,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   // Stage 2: Collect candidate files using KGF ignore patterns.
   println("Collecting files...")
   let kgf_ignore = registry.collect_ignore_patterns()
-  let discover_opts = @pipeline.DiscoverOptions::new(kgf_ignore=kgf_ignore)
+  let discover_opts = @pipeline.DiscoverOptions::new(kgf_ignore~)
   let candidate_paths = @pipeline.discover_files(
     config.input_paths,
     discover_opts,

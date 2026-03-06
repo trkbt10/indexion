@@ -240,7 +240,7 @@ fn build_graph_from_source(
   let registry = @registry.KGFRegistry::load_from_dir(specs_dir)
   log_progress("Collecting files...")
   let kgf_ignore = registry.collect_ignore_patterns()
-  let discover_opts = @pipeline.DiscoverOptions::new(kgf_ignore=kgf_ignore)
+  let discover_opts = @pipeline.DiscoverOptions::new(kgf_ignore~)
   let paths = @pipeline.discover_files([source_dir], discover_opts)
   if paths.length() == 0 {
     log_error("No files found in: " + source_dir)

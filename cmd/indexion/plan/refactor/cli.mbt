@@ -198,22 +198,20 @@ pub fn show_help() -> Unit {
   )
   println("  --output=FILE, -o=   Output file path (default: stdout)")
   println("  --format=FORMAT      Output format: md, json, text (default: md)")
-  println(
-    "  --style=STYLE        Output style: raw, structured (default: raw)",
-  )
+  println("  --style=STYLE        Output style: raw, structured (default: raw)")
   println("  --name=NAME          Project name for structured output")
   println("  --help               Show this help message")
   println("")
   println("Styles:")
   println("  raw          Raw similarity analysis with duplicate detection")
-  println("  structured   Comprehensive refactoring plan with phases/checklists")
+  println(
+    "  structured   Comprehensive refactoring plan with phases/checklists",
+  )
   println("")
   println("Examples:")
   println("  indexion plan refactor src/")
   println("  indexion plan refactor --threshold=0.8 --exclude=*_test.mbt src/")
-  println(
-    "  indexion plan refactor --style=structured --name=myproject src/",
-  )
+  println("  indexion plan refactor --style=structured --name=myproject src/")
   println(
     "  indexion plan refactor --include=*.mbt --exclude=*_wbtest.mbt -o=refactor.md src/",
   )
@@ -273,7 +271,10 @@ fn matches_pattern_impl(
 
 ///|
 /// Check if file should be included based on filter config.
-fn should_include_file(filter : @filter.FilterConfig, filename : String) -> Bool {
+fn should_include_file(
+  filter : @filter.FilterConfig,
+  filename : String,
+) -> Bool {
   filter.should_include(filename, false).is_included()
 }
 

@@ -16,10 +16,10 @@ pub struct IgnorePattern {
 ///|
 pub fn IgnorePattern::new(
   pattern : String,
-  negated~ : Bool = false,
-  directory_only~ : Bool = false,
-  anchored~ : Bool = false,
-  source~ : String = "",
+  negated? : Bool = false,
+  directory_only? : Bool = false,
+  anchored? : Bool = false,
+  source? : String = "",
 ) -> IgnorePattern {
   { pattern, negated, directory_only, anchored, source }
 }

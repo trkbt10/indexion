@@ -15,7 +15,9 @@ pub fn show_help() -> Unit {
   println(
     "  refactor       Generate refactoring plan from file similarity analysis",
   )
-  println("  documentation  Generate documentation coverage and README templates")
+  println(
+    "  documentation  Generate documentation coverage and README templates",
+  )
   println("")
   println(
     "Use 'indexion plan <command> --help' for more information about a command.",

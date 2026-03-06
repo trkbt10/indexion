@@ -86,7 +86,9 @@ pub fn show_help() -> Unit {
   println("  docs/installation.md       Installation instructions")
   println("")
   println("After initialization, generate README.md with:")
-  println("  indexion doc readme --template=docs/templates/readme.md -o=README.md")
+  println(
+    "  indexion doc readme --template=docs/templates/readme.md -o=README.md",
+  )
   println("")
   println("Examples:")
   println("  indexion doc init                    # Init in current directory")
@@ -107,22 +109,16 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   // Detect project type and load info
   let (info, lang_spec) = detect_project_info(target_dir, registry)
   if info.name == "project" {
-    println(
-      "Warning: No project config found. Using defaults.",
-    )
+    println("Warning: No project config found. Using defaults.")
   }
   // Create docs/ directory structure
   let docs_dir = target_dir + "/docs"
   let templates_dir = docs_dir + "/templates"
   // Create directories
-  try {
-    @fs.create_dir(docs_dir)
-  } catch {
+  @fs.create_dir(docs_dir) catch {
     _ => () // Directory may already exist
   }
-  try {
-    @fs.create_dir(templates_dir)
-  } catch {
+  @fs.create_dir(templates_dir) catch {
     _ => ()
   }
   // Generate and write files
@@ -135,10 +131,10 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   // 2. docs/installation.md
   let install_path = docs_dir + "/installation.md"
   if write_file_if_ok(
-    install_path,
-    generate_installation(info, lang_spec),
-    config.force,
-  ) {
+      install_path,
+      generate_installation(info, lang_spec),
+      config.force,
+    ) {
     files_created.push(install_path)
   }
   // 3. docs/templates/readme.md
@@ -332,10 +328,12 @@ fn extract_json_array(json : String, key : String) -> Array[String] {
   start = start + 1
   while start < chars.length() && chars[start] != ']' {
     while start < chars.length() &&
-          (chars[start] == ' ' ||
-          chars[start] == '\t' ||
-          chars[start] == '\n' ||
-          chars[start] == ',') {
+          (
+            chars[start] == ' ' ||
+            chars[start] == '\t' ||
+            chars[start] == '\n' ||
+            chars[start] == ','
+          ) {
       start = start + 1
     }
     if start >= chars.length() || chars[start] == ']' {

@@ -127,7 +127,9 @@ fn match_char_class(
   // Scan until ]
   while i < pattern.length() && pattern[i] != ']' {
     // Check for range a-z
-    if i + 2 < pattern.length() && pattern[i + 1] == '-' && pattern[i + 2] != ']' {
+    if i + 2 < pattern.length() &&
+      pattern[i + 1] == '-' &&
+      pattern[i + 2] != ']' {
       let lo = pattern[i]
       let hi = pattern[i + 2]
       if c >= lo && c <= hi {
@@ -204,7 +206,8 @@ fn path_starts_with_pattern(path : String, pattern : String) -> Bool {
     if i == 0 || (i > 0 && path_chars[i - 1] == '/') {
       let suffix = substring_from_glob(path, i)
       // Check if suffix starts with pattern followed by /
-      if glob_match(suffix, pattern + "/**") || glob_match(suffix, pattern + "/*") {
+      if glob_match(suffix, pattern + "/**") ||
+        glob_match(suffix, pattern + "/*") {
         return true
       }
     }

@@ -161,10 +161,12 @@ fn extract_json_array(json : String, key : String) -> Array[String] {
   while start < chars.length() && chars[start] != ']' {
     // Skip whitespace and commas
     while start < chars.length() &&
-          (chars[start] == ' ' ||
-          chars[start] == '\t' ||
-          chars[start] == '\n' ||
-          chars[start] == ',') {
+          (
+            chars[start] == ' ' ||
+            chars[start] == '\t' ||
+            chars[start] == '\n' ||
+            chars[start] == ','
+          ) {
       start = start + 1
     }
     if start >= chars.length() || chars[start] == ']' {
@@ -215,7 +217,8 @@ pub fn analyze_documentation(dir : String) -> DocAnalysis {
   // Find critical missing (pub fn/type without docs)
   let critical : Array[PubItem] = []
   for item in all_items {
-    if not(item.has_doc) && (item.kind == "fn" || item.kind == "type" || item.kind == "struct") {
+    if not(item.has_doc) &&
+      (item.kind == "fn" || item.kind == "type" || item.kind == "struct") {
       critical.push(item)
     }
   }
@@ -287,10 +290,10 @@ fn collect_packages(
         }
         analyze_mbt_file(file_path, file_rel, pub_items)
       }
-      let documented = pub_items.iter().filter(fn(i) { i.has_doc }).fold(
-        init=0,
-        fn(acc, _) { acc + 1 },
-      )
+      let documented = pub_items
+        .iter()
+        .filter(fn(i) { i.has_doc })
+        .fold(init=0, fn(acc, _) { acc + 1 })
       packages.push({
         path: pkg_path,
         files: mbt_files,
@@ -378,7 +381,14 @@ fn parse_pub_declaration(
     let rest = substring(trimmed, 7, trimmed.length())
     let name = extract_identifier(rest)
     if name.length() > 0 {
-      return Some({ name, kind: "fn", file, line: line_num, has_doc, doc_preview })
+      return Some({
+        name,
+        kind: "fn",
+        file,
+        line: line_num,
+        has_doc,
+        doc_preview,
+      })
     }
   }
   // Parse pub struct
@@ -386,9 +396,14 @@ fn parse_pub_declaration(
     let rest = substring(trimmed, 11, trimmed.length())
     let name = extract_identifier(rest)
     if name.length() > 0 {
-      return Some(
-        { name, kind: "struct", file, line: line_num, has_doc, doc_preview },
-      )
+      return Some({
+        name,
+        kind: "struct",
+        file,
+        line: line_num,
+        has_doc,
+        doc_preview,
+      })
     }
   }
   // Parse pub enum
@@ -396,9 +411,14 @@ fn parse_pub_declaration(
     let rest = substring(trimmed, 9, trimmed.length())
     let name = extract_identifier(rest)
     if name.length() > 0 {
-      return Some(
-        { name, kind: "enum", file, line: line_num, has_doc, doc_preview },
-      )
+      return Some({
+        name,
+        kind: "enum",
+        file,
+        line: line_num,
+        has_doc,
+        doc_preview,
+      })
     }
   }
   // Parse pub type
@@ -406,9 +426,14 @@ fn parse_pub_declaration(
     let rest = substring(trimmed, 9, trimmed.length())
     let name = extract_identifier(rest)
     if name.length() > 0 {
-      return Some(
-        { name, kind: "type", file, line: line_num, has_doc, doc_preview },
-      )
+      return Some({
+        name,
+        kind: "type",
+        file,
+        line: line_num,
+        has_doc,
+        doc_preview,
+      })
     }
   }
   // Parse pub trait
@@ -416,9 +441,14 @@ fn parse_pub_declaration(
     let rest = substring(trimmed, 10, trimmed.length())
     let name = extract_identifier(rest)
     if name.length() > 0 {
-      return Some(
-        { name, kind: "trait", file, line: line_num, has_doc, doc_preview },
-      )
+      return Some({
+        name,
+        kind: "trait",
+        file,
+        line: line_num,
+        has_doc,
+        doc_preview,
+      })
     }
   }
   // Parse pub let (constants)
@@ -426,9 +456,14 @@ fn parse_pub_declaration(
     let rest = substring(trimmed, 8, trimmed.length())
     let name = extract_identifier(rest)
     if name.length() > 0 {
-      return Some(
-        { name, kind: "const", file, line: line_num, has_doc, doc_preview },
-      )
+      return Some({
+        name,
+        kind: "const",
+        file,
+        line: line_num,
+        has_doc,
+        doc_preview,
+      })
     }
   }
   None
@@ -526,7 +561,7 @@ fn sort_pub_items(items : Array[PubItem]) -> Unit {
   for i = 0; i < items.length(); i = i + 1 {
     for j = i + 1; j < items.length(); j = j + 1 {
       if items[j].file < items[i].file ||
-         (items[j].file == items[i].file && items[j].line < items[i].line) {
+        (items[j].file == items[i].file && items[j].line < items[i].line) {
         let tmp = items[i]
         items[i] = items[j]
         items[j] = tmp

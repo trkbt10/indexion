@@ -75,7 +75,8 @@ fn extract_module_docs(graph : @graph.CodeGraph, pkg_path : String) -> String {
   for note in graph.get_all_notes() {
     if note.note_type == "module_doc" {
       // Check if note belongs to this package
-      if note.module_id.has_prefix(pkg_path) || pkg_path.has_prefix(note.module_id) {
+      if note.module_id.has_prefix(pkg_path) ||
+        pkg_path.has_prefix(note.module_id) {
         if note.content.length() > 0 {
           docs.push(note.content)
         }

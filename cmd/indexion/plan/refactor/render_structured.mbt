@@ -8,7 +8,10 @@
 
 ///|
 /// Render as structured refactoring document (Markdown).
-pub fn render_structured(plan : RefactorPlanJSON, project_name : String) -> String {
+pub fn render_structured(
+  plan : RefactorPlanJSON,
+  project_name : String,
+) -> String {
   let buf = StringBuilder::new()
   let date = get_current_date()
 
@@ -59,7 +62,10 @@ fn get_current_date() -> String {
 }
 
 ///|
-fn render_architecture_section(buf : StringBuilder, plan : RefactorPlanJSON) -> Unit {
+fn render_architecture_section(
+  buf : StringBuilder,
+  plan : RefactorPlanJSON,
+) -> Unit {
   buf.write_string("### 1.1 Architecture Overview\n\n")
   buf.write_string("```\n")
 
@@ -110,7 +116,10 @@ fn render_architecture_section(buf : StringBuilder, plan : RefactorPlanJSON) -> 
 }
 
 ///|
-fn render_dependency_section(buf : StringBuilder, plan : RefactorPlanJSON) -> Unit {
+fn render_dependency_section(
+  buf : StringBuilder,
+  plan : RefactorPlanJSON,
+) -> Unit {
   buf.write_string("### 1.2 Dependencies\n\n")
   buf.write_string("```\n")
 
@@ -145,7 +154,10 @@ fn render_dependency_section(buf : StringBuilder, plan : RefactorPlanJSON) -> Un
 }
 
 ///|
-fn render_problems_section(buf : StringBuilder, plan : RefactorPlanJSON) -> Unit {
+fn render_problems_section(
+  buf : StringBuilder,
+  plan : RefactorPlanJSON,
+) -> Unit {
   buf.write_string("### 1.3 Identified Issues\n\n")
   buf.write_string("| Category | Issue | Severity |\n")
   buf.write_string("|---------|------|--------|\n")
@@ -216,7 +228,9 @@ fn render_problems_section(buf : StringBuilder, plan : RefactorPlanJSON) -> Unit
 fn render_phases(buf : StringBuilder, plan : RefactorPlanJSON) -> Unit {
   let mut phase_num = 1
 
-  let has_duplicates = plan.clusters.iter().any(fn(c) { c.duplicates.length() > 0 })
+  let has_duplicates = plan.clusters
+    .iter()
+    .any(fn(c) { c.duplicates.length() > 0 })
   if has_duplicates {
     buf.write_string("### Phase ")
     buf.write_string(phase_num.to_string())
@@ -272,9 +286,9 @@ fn render_phases(buf : StringBuilder, plan : RefactorPlanJSON) -> Unit {
     phase_num = phase_num + 1
   }
 
-  let high_sim_clusters = plan.clusters.filter(
-    fn(c) { c.pairs.length() > 0 && c.pairs[0].similarity > 0.8 },
-  )
+  let high_sim_clusters = plan.clusters.filter(fn(c) {
+    c.pairs.length() > 0 && c.pairs[0].similarity > 0.8
+  })
   if high_sim_clusters.length() > 0 {
     buf.write_string("### Phase ")
     buf.write_string(phase_num.to_string())
@@ -318,7 +332,9 @@ fn render_priority_table(buf : StringBuilder, plan : RefactorPlanJSON) -> Unit {
   buf.write_string("|-------|------|------|--------|------|\n")
 
   let mut phase_num = 1
-  let has_duplicates = plan.clusters.iter().any(fn(c) { c.duplicates.length() > 0 })
+  let has_duplicates = plan.clusters
+    .iter()
+    .any(fn(c) { c.duplicates.length() > 0 })
 
   if has_duplicates {
     buf.write_string("| ")
@@ -327,9 +343,9 @@ fn render_priority_table(buf : StringBuilder, plan : RefactorPlanJSON) -> Unit {
     phase_num = phase_num + 1
   }
 
-  let high_sim_clusters = plan.clusters.filter(
-    fn(c) { c.pairs.length() > 0 && c.pairs[0].similarity > 0.8 },
-  )
+  let high_sim_clusters = plan.clusters.filter(fn(c) {
+    c.pairs.length() > 0 && c.pairs[0].similarity > 0.8
+  })
   if high_sim_clusters.length() > 0 {
     buf.write_string("| ")
     buf.write_string(phase_num.to_string())
@@ -351,7 +367,9 @@ fn render_priority_table(buf : StringBuilder, plan : RefactorPlanJSON) -> Unit {
 ///|
 fn render_checklists(buf : StringBuilder, plan : RefactorPlanJSON) -> Unit {
   let mut phase_num = 1
-  let has_duplicates = plan.clusters.iter().any(fn(c) { c.duplicates.length() > 0 })
+  let has_duplicates = plan.clusters
+    .iter()
+    .any(fn(c) { c.duplicates.length() > 0 })
 
   if has_duplicates {
     buf.write_string("### Phase ")
@@ -384,9 +402,9 @@ fn render_checklists(buf : StringBuilder, plan : RefactorPlanJSON) -> Unit {
     phase_num = phase_num + 1
   }
 
-  let high_sim_clusters = plan.clusters.filter(
-    fn(c) { c.pairs.length() > 0 && c.pairs[0].similarity > 0.8 },
-  )
+  let high_sim_clusters = plan.clusters.filter(fn(c) {
+    c.pairs.length() > 0 && c.pairs[0].similarity > 0.8
+  })
   if high_sim_clusters.length() > 0 {
     buf.write_string("### Phase ")
     buf.write_string(phase_num.to_string())
@@ -398,7 +416,10 @@ fn render_checklists(buf : StringBuilder, plan : RefactorPlanJSON) -> Unit {
 }
 
 ///|
-fn render_similarity_summary(buf : StringBuilder, plan : RefactorPlanJSON) -> Unit {
+fn render_similarity_summary(
+  buf : StringBuilder,
+  plan : RefactorPlanJSON,
+) -> Unit {
   buf.write_string("### Analysis Settings\n\n")
   buf.write_string("- **Threshold**: ")
   buf.write_string(format_percent(plan.config.threshold))

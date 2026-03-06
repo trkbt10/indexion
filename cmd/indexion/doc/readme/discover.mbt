@@ -64,7 +64,8 @@ pub fn discover_packages_from_files(
   for entry in by_dir {
     let dir = entry.0
     let files = entry.1
-    if files.length() == 0 || not(filter.should_include(dir, true).is_included()) {
+    if files.length() == 0 ||
+      not(filter.should_include(dir, true).is_included()) {
       continue
     }
     let name = extract_dir_name(dir)
@@ -159,4 +160,3 @@ fn extract_parent_dir(path : String) -> String {
 fn extract_dir_name(path : String) -> String {
   @pipeline.extract_basename(path)
 }
-

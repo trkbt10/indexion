@@ -205,7 +205,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let discover_opts = @pipeline.DiscoverOptions::new(
     recursive=config.recursive,
     excludes=config.excludes,
-    kgf_ignore=kgf_ignore,
+    kgf_ignore~,
   )
   let candidate_paths = @pipeline.discover_files(config.paths, discover_opts)
   if candidate_paths.length() == 0 {

@@ -74,7 +74,10 @@ pub fn render_coverage(analysis : DocAnalysis, name : String) -> String {
 
 ///|
 /// Render README template only.
-pub fn render_readme_template(analysis : DocAnalysis, info : ProjectInfo) -> String {
+pub fn render_readme_template(
+  analysis : DocAnalysis,
+  info : ProjectInfo,
+) -> String {
   generate_readme_content(analysis, info)
 }
 
@@ -165,7 +168,9 @@ fn render_missing_section(buf : StringBuilder, analysis : DocAnalysis) -> Unit {
   for item in analysis.critical_missing {
     if count >= max_items {
       buf.write_string("\n... and ")
-      buf.write_string((analysis.critical_missing.length() - max_items).to_string())
+      buf.write_string(
+        (analysis.critical_missing.length() - max_items).to_string(),
+      )
       buf.write_string(" more items\n")
       break
     }
@@ -188,7 +193,10 @@ fn render_missing_section(buf : StringBuilder, analysis : DocAnalysis) -> Unit {
 }
 
 ///|
-fn render_package_inventory(buf : StringBuilder, analysis : DocAnalysis) -> Unit {
+fn render_package_inventory(
+  buf : StringBuilder,
+  analysis : DocAnalysis,
+) -> Unit {
   buf.write_string("## Package Inventory\n\n")
   buf.write_string("| Package | Pub Items | Documented | Coverage | README |\n")
   buf.write_string("|---------|-----------|------------|----------|--------|\n")
@@ -223,9 +231,9 @@ fn render_action_items(buf : StringBuilder, analysis : DocAnalysis) -> Unit {
   buf.write_string("## Action Items\n\n")
 
   // Priority 1: Packages with 0% coverage
-  let zero_cov = analysis.packages.filter(
-    fn(p) { p.total_pub > 0 && p.documented == 0 },
-  )
+  let zero_cov = analysis.packages.filter(fn(p) {
+    p.total_pub > 0 && p.documented == 0
+  })
   if zero_cov.length() > 0 {
     buf.write_string("### Priority 1: Zero Coverage Packages\n\n")
     for pkg in zero_cov {
@@ -252,8 +260,9 @@ fn render_action_items(buf : StringBuilder, analysis : DocAnalysis) -> Unit {
 
   // Priority 3: Low coverage (< 50%)
   let low_cov = analysis.packages.filter(fn(p) {
-    p.total_pub > 0 && p.documented > 0 && p.documented.to_double() / p.total_pub.to_double() <
-    0.5
+    p.total_pub > 0 &&
+    p.documented > 0 &&
+    p.documented.to_double() / p.total_pub.to_double() < 0.5
   })
   if low_cov.length() > 0 {
     buf.write_string("### Priority 3: Low Coverage (<50%)\n\n")
@@ -282,7 +291,10 @@ fn render_action_items(buf : StringBuilder, analysis : DocAnalysis) -> Unit {
 }
 
 ///|
-fn generate_readme_content(analysis : DocAnalysis, info : ProjectInfo) -> String {
+fn generate_readme_content(
+  analysis : DocAnalysis,
+  info : ProjectInfo,
+) -> String {
   let buf = StringBuilder::new()
 
   // Title
