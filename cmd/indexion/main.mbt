@@ -60,6 +60,7 @@ fn main {
     "explore" => @explore_cli.run(args, 2)
     "plan" => @plan_cli.run(args, 2)
     "doc" => @doc_cli.run(args, 2)
+    "kgf" => @kgf_cli.run(args, 2)
     "digest" =>
       println("digest command temporarily disabled (vcdb API update needed)")
     "sim" | "similarity" => @similarity_cli.run(args, 2)
@@ -88,6 +89,7 @@ fn show_help() -> Unit {
   println("  segment     Split text into contextual segments")
   println("  plan        Generate planning documents (refactor, etc.)")
   println("  doc         Documentation commands (gen, etc.)")
+  println("  kgf         KGF spec inspection and debugging")
   println("  sim         Calculate text similarity/distance")
   println("  perf        Performance benchmark commands")
   println("  help        Show this help message")

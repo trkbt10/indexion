@@ -1,0 +1,23 @@
+[project]
+name = "example-sdk"
+version = "0.3.1"
+description = "A Python SDK for Example API"
+license = "BSD-3-Clause"
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["api", "sdk", "client"]
+authors = [
+    { name = "Example Inc", email = "dev@example.com" }
+]
+dependencies = [
+    "httpx>=0.25.0",
+    "pydantic>=2.0.0",
+    "tenacity>=8.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100

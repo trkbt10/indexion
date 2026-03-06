@@ -1,0 +1,12 @@
+{
+  "name": "@example/app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Main application",
+  "dependencies": {
+    "@example/core": "workspace:*",
+    "@example/ui": "workspace:*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

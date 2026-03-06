@@ -1,0 +1,12 @@
+{
+  "name": "trkbt10/sample-lib",
+  "version": "0.2.0",
+  "description": "A sample MoonBit library",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/trkbt10/sample-lib",
+  "keywords": ["parsing", "utils"],
+  "deps": {
+    "moonbitlang/core": "0.1.0",
+    "peter-jerry-ye/json5": "0.1.0"
+  }
+}

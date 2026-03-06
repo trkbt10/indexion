@@ -1,8 +1,6 @@
 import {
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/core/graph" @graph,
-  "trkbt10/indexion/src/kgf/types" @types,
-  "trkbt10/indexion/src/kgf/parser" @parser,
   "trkbt10/indexion/src/kgf/lexer" @lexer,
   "trkbt10/indexion/src/kgf/peg" @peg,
   "trkbt10/indexion/src/kgf/registry" @registry,

@@ -75,12 +75,14 @@ KeywordsField    -> KW_keywords EQUALS LBRACKET KeywordList? RBRACKET NL
 KeywordList      -> KeywordItem ( COMMA KeywordItem )* COMMA?
 KeywordItem      -> value:StringLit
 
-AuthorsField     -> KW_authors EQUALS LBRACKET AuthorList? RBRACKET NL
-AuthorList       -> AuthorItem ( COMMA AuthorItem )* COMMA?
+AuthorsField     -> KW_authors EQUALS LBRACKET NL? AuthorList? RBRACKET NL
+AuthorList       -> AuthorListItem*
+AuthorListItem   -> AuthorItem COMMA NL? | AuthorItem NL | NL
 AuthorItem       -> InlineTable | StringLit
 
-DepsField        -> KW_dependencies EQUALS LBRACKET DepList? RBRACKET NL
-DepList          -> DepItem ( COMMA DepItem )* COMMA?
+DepsField        -> KW_dependencies EQUALS LBRACKET NL? DepList? RBRACKET NL
+DepList          -> DepListItem*
+DepListItem      -> DepItem COMMA NL? | DepItem NL | NL
 DepItem          -> value:StringLit
 
 # Other sections
@@ -96,7 +98,9 @@ GenericValue     -> StringLit | NumberLit | KW_true | KW_false
                   | LBRACKET ValueList? RBRACKET | InlineTable
 InlineTable      -> LBRACE InlineFields? RBRACE
 InlineFields     -> InlineField ( COMMA InlineField )* COMMA?
-InlineField      -> key:Ident EQUALS value:SimpleValue
+InlineField      -> key:InlineKey EQUALS value:SimpleValue
+InlineKey        -> Ident | KW_name | KW_version | KW_description | KW_license
+                  | KW_readme | KW_keywords | KW_authors | KW_dependencies
 SimpleValue      -> StringLit | NumberLit | KW_true | KW_false
 ValueList        -> SimpleValue ( COMMA SimpleValue )* COMMA?
 

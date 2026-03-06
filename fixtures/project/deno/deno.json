@@ -1,0 +1,16 @@
+{
+  "name": "@example/web-api",
+  "version": "1.0.0",
+  "description": "A sample web API built with Deno",
+  "license": "MIT",
+  "exports": "./mod.ts",
+  "tasks": {
+    "dev": "deno run --watch main.ts",
+    "test": "deno test"
+  },
+  "imports": {
+    "@std/http": "jsr:@std/http@1.0.0",
+    "@std/path": "jsr:@std/path@1.0.0",
+    "zod": "npm:zod@3.22.0"
+  }
+}

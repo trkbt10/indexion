@@ -1,0 +1,15 @@
+[package]
+name = "example-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "CLI for the workspace"
+
+[[bin]]
+name = "example"
+path = "src/main.rs"
+
+[dependencies]
+example-core = { path = "../core" }
+clap = { version = "4.4", features = ["derive"] }
+tracing.workspace = true

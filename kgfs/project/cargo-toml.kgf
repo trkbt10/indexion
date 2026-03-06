@@ -88,7 +88,12 @@ DepEntry             -> name:Ident EQUALS DepValue NL
 DepValue             -> StringLit | InlineTable
 InlineTable          -> LBRACE InlineFields? RBRACE
 InlineFields         -> InlineField ( COMMA InlineField )* COMMA?
-InlineField          -> key:Ident EQUALS value:SimpleValue
+InlineField          -> key:InlineKey EQUALS InlineValue
+InlineKey            -> Ident | KW_version | KW_name | KW_edition | KW_readme
+                      | KW_description | KW_license | KW_repository | KW_keywords | KW_authors
+InlineValue          -> SimpleValue | InlineArray
+InlineArray          -> LBRACKET InlineArrayItems? RBRACKET
+InlineArrayItems     -> SimpleValue ( COMMA SimpleValue )* COMMA?
 SimpleValue          -> StringLit | NumberLit | KW_true | KW_false
 
 # Workspace/Other sections (skip content)

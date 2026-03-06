@@ -1,0 +1,12 @@
+[package]
+name = "example-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "HTTP server for the workspace"
+
+[dependencies]
+example-core = { path = "../core" }
+tokio.workspace = true
+axum = "0.7"
+tracing.workspace = true

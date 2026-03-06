@@ -1,0 +1,18 @@
+[package]
+name = "example-cli"
+version = "0.1.0"
+description = "A sample CLI application"
+license = "MIT"
+repository = "https://github.com/example/example-cli"
+edition = "2021"
+readme = "README.md"
+keywords = ["cli", "example", "tool"]
+authors = ["Example Author <author@example.com>"]
+
+[dependencies]
+clap = { version = "4.0", features = ["derive"] }
+serde = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+
+[dev-dependencies]
+pretty_assertions = "1.0"

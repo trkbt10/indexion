@@ -10,6 +10,13 @@ SKIP        /[ \t]+/
 TOKEN NL            /\r?\n/
 TOKEN Comment       /\/\/[^\r\n]*/
 
+# Version must come first (v prefix)
+TOKEN Version       /v[0-9]+\.[0-9]+(\.[0-9]+)?(-[a-zA-Z0-9.+-]+)?/
+TOKEN GoVersion     /[0-9]+\.[0-9]+(\.[0-9]+)?/
+
+# Module path must come before keywords (contains . or /)
+TOKEN ModulePath    /[a-zA-Z][a-zA-Z0-9_-]*[.\/][a-zA-Z0-9._\/-]*/
+
 # Keywords
 TOKEN KW_module     /module\b/
 TOKEN KW_go         /go\b/
@@ -17,11 +24,6 @@ TOKEN KW_require    /require\b/
 TOKEN KW_replace    /replace\b/
 TOKEN KW_exclude    /exclude\b/
 TOKEN KW_retract    /retract\b/
-
-# Values
-TOKEN Version       /v[0-9]+\.[0-9]+(\.[0-9]+)?(-[a-zA-Z0-9.+-]+)?/
-TOKEN GoVersion     /[0-9]+\.[0-9]+(\.[0-9]+)?/
-TOKEN ModulePath    /[a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=-]+/
 
 # Punctuation
 TOKEN LPAREN        /\(/

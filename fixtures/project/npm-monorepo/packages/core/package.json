@@ -1,0 +1,13 @@
+{
+  "name": "@example/core",
+  "version": "1.0.0",
+  "description": "Core utilities",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "lodash": "^4.17.0"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.0"
+  }
+}

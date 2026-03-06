@@ -1,0 +1,10 @@
+[package]
+name = "example-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Core library for the workspace"
+
+[dependencies]
+serde.workspace = true
+thiserror = "1.0"
