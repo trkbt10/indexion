@@ -71,7 +71,6 @@ fn Lexer::try_match(
     let end_pos = match entry.compiled_pattern {
       Some(compiled) =>
         match_compiled_end_pos_with_chars(compiled, input_chars, pos)
-      // If compile failed at lexer construction time, this token can never match.
       None => continue
     }
     match end_pos {

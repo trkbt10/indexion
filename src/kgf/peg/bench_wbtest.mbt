@@ -43,7 +43,7 @@ test "peg_parse_large" (b : @bench.T) {
 
 ///|
 fn moonbit_kgf_content() -> String {
-  @fs.read_file_to_string("kgfs/moonbit.kgf") catch {
+  @fs.read_file_to_string("kgfs/programming/moonbit.kgf") catch {
     _ => ""
   }
 }

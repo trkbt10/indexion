@@ -46,11 +46,8 @@ fn eval_rec(ctx : RecEvalContext, node_id : Int, pos : Int) -> FastEvalResult {
   let memo_idx = node_id * ctx.num_positions + pos
   match ctx.memo[memo_idx] {
     Succeeded(end_pos, labels) => {
-      // Clone labels to avoid mutation issues
-      let cloned : Map[String, Json] = {}
-      for key, value in labels {
-        cloned.set(key, value)
-      }
+      // Clone labels (cheap for TokRef)
+      let cloned = clone_labels(labels)
       return { ok: true, end_pos, labels: cloned }
     }
     Failed => return { ok: false, end_pos: pos, labels: empty_labels() }
@@ -77,14 +74,8 @@ fn eval_node_rec(
     FEmpty => { ok: true, end_pos: pos, labels: empty_labels() }
     FToken(expected_id) =>
       if pos < ctx.tokens.length() && ctx.token_ids[pos] == expected_id {
-        let tok = ctx.tokens[pos]
-        let labels : Map[String, Json] = Map::new()
-        labels.set("_last", tok.get_value().to_json())
-        labels.set("_last_pos", tok.pos.to_double().to_json())
-        labels.set("_last_len", tok.text.length().to_double().to_json())
-        // Use token value (cleaned by strip/skip_value) for text accumulation
-        labels.set("_text", tok.get_value().to_json())
-        { ok: true, end_pos: pos + 1, labels }
+        // Use token reference - defer Map creation
+        { ok: true, end_pos: pos + 1, labels: token_labels(pos) }
       } else {
         { ok: false, end_pos: pos, labels: empty_labels() }
       }
@@ -95,40 +86,49 @@ fn eval_node_rec(
       }
       let result = eval_rec(ctx, rule_node_id, pos)
       if result.ok && not(target_is_rule_ref) && should_emit_rule_rec(ctx, name) {
-        (ctx.on_rule_match)(name, result.labels, pos, result.end_pos)
+        // Materialize for callback
+        let labels_map = materialize(result.labels, ctx.tokens)
+        (ctx.on_rule_match)(name, labels_map, pos, result.end_pos)
       }
       if result.ok {
-        let clean : Map[String, Json] = Map::new()
-        match result.labels.get("_last") {
-          Some(v) => clean.set("_last", v)
-          None => ()
+        // Clean up named labels, keep only internal ones
+        // For TokRef, already clean
+        match result.labels {
+          Labels::TokRef(_) | Labels::NoLabels => result
+          Labels::Full(map) => {
+            let clean : Map[String, Json] = Map::new()
+            match map.get("_last") {
+              Some(v) => clean.set("_last", v)
+              None => ()
+            }
+            match map.get("_last_pos") {
+              Some(v) => clean.set("_last_pos", v)
+              None => ()
+            }
+            match map.get("_last_len") {
+              Some(v) => clean.set("_last_len", v)
+              None => ()
+            }
+            match map.get("_text") {
+              Some(v) => clean.set("_text", v)
+              None => ()
+            }
+            { ok: true, end_pos: result.end_pos, labels: full_labels(clean) }
+          }
         }
-        match result.labels.get("_last_pos") {
-          Some(v) => clean.set("_last_pos", v)
-          None => ()
-        }
-        match result.labels.get("_last_len") {
-          Some(v) => clean.set("_last_len", v)
-          None => ()
-        }
-        match result.labels.get("_text") {
-          Some(v) => clean.set("_text", v)
-          None => ()
-        }
-        { ok: true, end_pos: result.end_pos, labels: clean }
       } else {
         result
       }
     }
     FSeq(elems) => {
       let mut current_pos = pos
-      let labels : Map[String, Json] = Map::new()
+      let mut labels = empty_labels()
       for elem_id in elems {
         let result = eval_rec(ctx, elem_id, current_pos)
         if not(result.ok) {
           return { ok: false, end_pos: pos, labels: empty_labels() }
         }
-        merge_labels(labels, result.labels)
+        labels = merge_labels(labels, result.labels, ctx.tokens)
         current_pos = result.end_pos
       }
       { ok: true, end_pos: current_pos, labels }
@@ -144,13 +144,13 @@ fn eval_node_rec(
     }
     FStar(child) => {
       let mut current_pos = pos
-      let labels : Map[String, Json] = Map::new()
+      let mut labels = empty_labels()
       while true {
         let result = eval_rec(ctx, child, current_pos)
         if not(result.ok) || result.end_pos == current_pos {
           break
         }
-        merge_labels(labels, result.labels)
+        labels = merge_labels(labels, result.labels, ctx.tokens)
         current_pos = result.end_pos
       }
       { ok: true, end_pos: current_pos, labels }
@@ -160,15 +160,14 @@ fn eval_node_rec(
       if not(first.ok) {
         return { ok: false, end_pos: pos, labels: empty_labels() }
       }
-      let labels : Map[String, Json] = Map::new()
-      merge_labels(labels, first.labels)
+      let mut labels = first.labels
       let mut current_pos = first.end_pos
       while true {
         let result = eval_rec(ctx, child, current_pos)
         if not(result.ok) || result.end_pos == current_pos {
           break
         }
-        merge_labels(labels, result.labels)
+        labels = merge_labels(labels, result.labels, ctx.tokens)
         current_pos = result.end_pos
       }
       { ok: true, end_pos: current_pos, labels }
@@ -184,7 +183,8 @@ fn eval_node_rec(
     FLabel(label_name, child) => {
       let result = eval_rec(ctx, child, pos)
       if result.ok {
-        let labels = result.labels
+        // Must materialize to add named label
+        let labels = materialize(result.labels, ctx.tokens)
         match labels.get("_last") {
           Some(v) => labels.set(label_name, v)
           None => ()
@@ -201,30 +201,24 @@ fn eval_node_rec(
           Some(v) => labels.set(label_name + "_text", v)
           None => ()
         }
-        { ok: true, end_pos: result.end_pos, labels }
+        { ok: true, end_pos: result.end_pos, labels: full_labels(labels) }
       } else {
         result
       }
     }
     FAnd(child) => {
-      // And-predicate: succeed if child succeeds, but don't consume input
       let result = eval_rec(ctx, child, pos)
       if result.ok {
-        // Success: return original position, no labels propagated
         { ok: true, end_pos: pos, labels: empty_labels() }
       } else {
-        // Failure
         { ok: false, end_pos: pos, labels: empty_labels() }
       }
     }
     FNot(child) => {
-      // Not-predicate: succeed if child fails, don't consume input
       let result = eval_rec(ctx, child, pos)
       if result.ok {
-        // Child succeeded, so Not fails
         { ok: false, end_pos: pos, labels: empty_labels() }
       } else {
-        // Child failed, so Not succeeds
         { ok: true, end_pos: pos, labels: empty_labels() }
       }
     }
@@ -242,13 +236,15 @@ fn run_parse_rec_internal(
 ) -> (Bool, Map[String, Json]) {
   let ctx = RecEvalContext::new(peg, tokens, on_rule_match, emit_filter~)
   match peg.get_fast_rule_body_id(start_rule) {
-    None => (false, empty_labels())
+    None => (false, Map::new())
     Some(body_node_id) => {
       let result = eval_rec(ctx, body_node_id, 0)
       if result.ok && should_emit_rule_rec(ctx, start_rule) {
-        (ctx.on_rule_match)(start_rule, result.labels, 0, result.end_pos)
+        let labels_map = materialize(result.labels, ctx.tokens)
+        (ctx.on_rule_match)(start_rule, labels_map, 0, result.end_pos)
       }
-      (result.ok, result.labels)
+      let final_labels = materialize(result.labels, ctx.tokens)
+      (result.ok, final_labels)
     }
   }
 }

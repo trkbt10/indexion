@@ -81,6 +81,18 @@ priv struct QuantifiedElement {
 priv struct CompiledPattern {
   alternatives : Array[Array[QuantifiedElement]]
   case_insensitive : Bool
+  /// Optional first char filter for quick rejection.
+  /// None means pattern can start with any character.
+  first_char_filter : FirstCharFilter
+}
+
+///|
+/// First character filter for quick pattern rejection.
+priv enum FirstCharFilter {
+  Any // Pattern can start with any character
+  Literal(Char) // Pattern must start with this exact char
+  LiteralCI(Char, Char) // Case-insensitive: lower and upper
+  CharClass(Array[(Char, Char)], Bool) // (ranges, negated)
 }
 
 ///|
@@ -1031,7 +1043,58 @@ fn compile_pattern(
       None => return None
     }
   }
-  Some({ alternatives: compiled_alts, case_insensitive })
+  // Extract first char filter from the first alternative
+  let first_char_filter = extract_first_char_filter(compiled_alts, case_insensitive)
+  Some({ alternatives: compiled_alts, case_insensitive, first_char_filter })
+}
+
+///|
+/// Extracts a first char filter from compiled alternatives.
+fn extract_first_char_filter(
+  alts : Array[Array[QuantifiedElement]],
+  case_insensitive : Bool,
+) -> FirstCharFilter {
+  if alts.length() == 0 {
+    return Any
+  }
+  // For now, only optimize single-alternative patterns
+  if alts.length() > 1 {
+    return Any
+  }
+  let elements = alts[0]
+  if elements.length() == 0 {
+    return Any
+  }
+  let first = elements[0]
+  // Only optimize if quantifier is One or OneOrMore (must match at least once)
+  match first.quantifier {
+    One | OneOrMore => ()
+    _ => return Any
+  }
+  match first.element {
+    Literal(c) =>
+      if case_insensitive {
+        let lower = to_lower(c)
+        let upper = if lower >= 'a' && lower <= 'z' {
+          Int::unsafe_to_char(lower.to_int() - 32)
+        } else {
+          lower
+        }
+        LiteralCI(lower, upper)
+      } else {
+        Literal(c)
+      }
+    CharClass(ranges, negated) => CharClass(ranges, negated)
+    Escape(escape_char) =>
+      match escape_char {
+        'n' => Literal('\n')
+        'r' => Literal('\r')
+        't' => Literal('\t')
+        's' | 'S' | 'd' | 'D' | 'w' | 'W' => Any // Variable char classes
+        _ => Literal(escape_char)
+      }
+    _ => Any
+  }
 }
 
 ///|
@@ -1041,6 +1104,15 @@ fn match_compiled_end_pos_with_chars(
   input_chars : Array[Char],
   pos : Int,
 ) -> Int? {
+  // Quick rejection using first char filter
+  if pos >= input_chars.length() {
+    return None
+  }
+  let first_char = input_chars[pos]
+  if not(check_first_char_filter(compiled.first_char_filter, first_char)) {
+    return None
+  }
+  // Full matching
   for elements in compiled.alternatives {
     let mut current = pos
     let mut matched = true
@@ -1059,6 +1131,27 @@ fn match_compiled_end_pos_with_chars(
     }
   }
   None
+}
+
+///|
+/// Checks if a character passes the first char filter.
+fn check_first_char_filter(filter : FirstCharFilter, c : Char) -> Bool {
+  match filter {
+    Any => true
+    Literal(expected) => c == expected
+    LiteralCI(lower, upper) => c == lower || c == upper
+    CharClass(ranges, negated) => {
+      let mut in_class = false
+      for range in ranges {
+        let (start, end) = range
+        if c >= start && c <= end {
+          in_class = true
+          break
+        }
+      }
+      if negated { not(in_class) } else { in_class }
+    }
+  }
 }
 
 ///|
