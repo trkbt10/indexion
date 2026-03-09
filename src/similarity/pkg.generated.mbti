@@ -1,6 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/src/similarity"
 
+import {
+  "trkbt10/indexion/src/text/tfidf",
+}
+
 // Values
 pub fn calculate_adjacent_hybrid(Array[String], HybridConfig) -> Array[Double]
 
@@ -50,6 +54,16 @@ pub fn SimilarityResult::get_distance(Self) -> Double
 pub fn SimilarityResult::get_similarity(Self) -> Double
 pub impl Eq for SimilarityResult
 pub impl Show for SimilarityResult
+
+pub struct TfidfBatch(@tfidf.TfidfBatch)
+pub fn TfidfBatch::all_pairs_above_threshold(Self, Double) -> Array[(Int, Int, Double)]
+pub fn TfidfBatch::from_auto_texts(Array[String]) -> Self
+pub fn TfidfBatch::from_code_texts(Array[String]) -> Self
+pub fn TfidfBatch::from_texts(Array[String]) -> Self
+#deprecated
+pub fn TfidfBatch::inner(Self) -> @tfidf.TfidfBatch
+pub fn TfidfBatch::length(Self) -> Int
+pub fn TfidfBatch::similarity(Self, Int, Int) -> Double
 
 pub struct TfidfStrategy {
   // private fields

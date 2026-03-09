@@ -1,5 +1,4 @@
 import {
   "trkbt10/indexion/src/segmentation/utils",
   "trkbt10/indexion/src/text/tfidf",
-  "trkbt10/indexion/src/text/tokenizer",
 }

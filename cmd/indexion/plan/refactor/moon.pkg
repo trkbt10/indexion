@@ -5,4 +5,6 @@ import {
   "trkbt10/indexion/src/segmentation/sentence" @sentence,
   "trkbt10/indexion/src/plan/types" @plan_types,
   "trkbt10/indexion/src/plan/render" @plan_render,
+  "trkbt10/indexion/src/text/tfidf" @tfidf,
+  "trkbt10/indexion/src/kgf/features" @kgf_features,
 }

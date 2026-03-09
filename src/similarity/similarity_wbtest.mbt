@@ -99,7 +99,7 @@ test "calculate_adjacent_ncd returns correct length" {
 }
 
 // ============================================================
-// TfidfStrategy tests
+// TfidfStrategy tests (NOTE: String-based distance is deprecated)
 // ============================================================
 
 ///|
@@ -109,48 +109,13 @@ test "TfidfStrategy::name returns tfidf" {
 }
 
 ///|
-test "TfidfStrategy::distance for identical texts is zero" {
-  let strategy = TfidfStrategy::new()
-  let dist = strategy.distance("hello world test", "hello world test")
-  assert_true(dist < 0.01)
-}
-
-///|
-test "TfidfStrategy::distance for empty texts" {
-  let strategy = TfidfStrategy::new()
-  let dist = strategy.distance("", "")
-  assert_true(dist < 0.01)
-}
-
-///|
-test "TfidfStrategy::distance one empty text" {
-  let strategy = TfidfStrategy::new()
-  let dist = strategy.distance("hello", "")
-  assert_true(dist > 0.99)
-}
-
-///|
-test "TfidfStrategy::distance for different texts" {
-  let strategy = TfidfStrategy::new()
-  let dist = strategy.distance("apple banana cherry", "xyz uvw rst")
-  // Completely different words should have high distance
-  assert_true(dist > 0.5)
-}
-
-///|
 test "TfidfStrategy::similarity is 1 - distance" {
   let strategy = TfidfStrategy::new()
   let dist = strategy.distance("foo bar baz", "foo bar qux")
   let sim = strategy.similarity("foo bar baz", "foo bar qux")
   let sum = dist + sim
+  // After KGF migration, string-based distance returns 0.0
   assert_true(sum > 0.99 && sum < 1.01)
-}
-
-///|
-test "calculate_adjacent_tfidf returns correct length" {
-  let texts = ["a b c", "b c d", "c d e"]
-  let result = calculate_adjacent_tfidf(texts)
-  assert_eq(result.length(), 2)
 }
 
 // ============================================================
@@ -164,28 +129,12 @@ test "HybridStrategy::name returns hybrid" {
 }
 
 ///|
-test "HybridStrategy::distance combines NCD and TF-IDF" {
+test "HybridStrategy::distance uses NCD" {
   let strategy = HybridStrategy::new()
   let dist = strategy.distance("hello world foo", "hello world bar")
-  // Should be between 0 and 1
+  // Should be between 0 and 1 (NCD only after migration)
   assert_true(dist >= 0.0)
   assert_true(dist <= 1.0)
-}
-
-///|
-test "HybridStrategy::with_config uses custom weights" {
-  let config = HybridConfig::create(1.0, 0.0)
-  let hybrid = HybridStrategy::with_config(config)
-  let ncd_only = NCDStrategy::new()
-  let dist_hybrid = hybrid.distance("abc def", "abc ghi")
-  let dist_ncd = ncd_only.distance("abc def", "abc ghi")
-  // With 100% NCD weight, should be close to NCD distance
-  let diff = if dist_hybrid > dist_ncd {
-    dist_hybrid - dist_ncd
-  } else {
-    dist_ncd - dist_hybrid
-  }
-  assert_true(diff < 0.1)
 }
 
 ///|

@@ -20,8 +20,10 @@
 /// |--------|-------------|---------|
 /// | `--format=FORMAT` | Output: `matrix`, `list`, `cluster`, `json` | matrix |
 /// | `--strategy=NAME` | Algorithm: `tfidf`, `ncd`, `hybrid` | tfidf |
-/// | `--threshold=FLOAT` | Clustering threshold (for cluster format) | 0.5 |
+/// | `--threshold=FLOAT` | Min similarity for list/json/cluster output | 0.5 |
 /// | `--ext=EXT` | File extension filter (repeatable) | all |
+/// | `--include=PATTERN` | Include files matching glob pattern | * |
+/// | `--exclude=PATTERN` | Exclude files matching glob pattern | - |
 ///
 /// ## Examples
 ///
@@ -37,6 +39,9 @@
 ///
 /// # Filter by extension
 /// indexion explore --ext=.mbt --ext=.kgf src/
+///
+/// # TypeScript only with glob filters
+/// indexion explore --format=list --include=*.ts --include=*.tsx src/
 /// ```
 ///
 /// ## Output Formats
@@ -54,6 +59,8 @@ pub struct ExploreConfig {
   strategy : String // "hybrid", "ncd", "tfidf"
   threshold : Double // similarity threshold for clustering
   extensions : Array[String] // file extensions to include
+  includes : Array[String] // glob patterns to include
+  excludes : Array[String] // glob patterns to exclude
   show_help : Bool
 }
 
@@ -66,6 +73,8 @@ pub fn ExploreConfig::default() -> ExploreConfig {
     strategy: "tfidf",
     threshold: 0.5,
     extensions: [],
+    includes: [],
+    excludes: [],
     show_help: false,
   }
 }
@@ -146,6 +155,12 @@ pub fn parse_explore_args(
     } else if arg.has_prefix("--ext=") {
       let value = get_arg_value(arg, 6)
       config.extensions.push(value)
+    } else if arg.has_prefix("--include=") {
+      let value = get_arg_value(arg, 10)
+      config.includes.push(value)
+    } else if arg.has_prefix("--exclude=") {
+      let value = get_arg_value(arg, 10)
+      config.excludes.push(value)
     } else if not(arg.has_prefix("-")) && config.target_dir.length() == 0 {
       config = { ..config, target_dir: arg }
     }
@@ -169,9 +184,15 @@ pub fn show_explore_help() -> Unit {
     "  --strategy=NAME      Similarity strategy: hybrid, ncd, tfidf (default: tfidf)",
   )
   println(
-    "  --threshold=FLOAT    Similarity threshold for clustering (default: 0.5)",
+    "  --threshold=FLOAT    Min similarity for list/json/cluster output (default: 0.5)",
   )
   println("  --ext=EXT            File extension to include (can be repeated)")
+  println(
+    "  --include=PATTERN    Include files matching pattern (can be repeated)",
+  )
+  println(
+    "  --exclude=PATTERN    Exclude files matching pattern (can be repeated)",
+  )
   println("  --help               Show this help message")
   println("")
   println("Examples:")
@@ -179,6 +200,14 @@ pub fn show_explore_help() -> Unit {
   println("  indexion explore --format=list --strategy=tfidf src/")
   println("  indexion explore --format=cluster --threshold=0.7 kgfs/")
   println("  indexion explore --ext=.mbt --ext=.kgf .")
+  println("  indexion explore --include=*.ts --include=*.tsx src/")
+}
+
+///|
+/// Progress counter for file collection.
+priv struct CollectProgress {
+  mut files_found : Int
+  mut dirs_scanned : Int
 }
 
 ///|
@@ -186,10 +215,27 @@ pub fn show_explore_help() -> Unit {
 fn collect_files(
   dir : String,
   extensions : Array[String],
+  includes : Array[String],
+  excludes : Array[String],
 ) -> Array[(String, String)] {
   let files : Array[(String, String)] = []
-  collect_files_recursive(dir, extensions, files, "")
+  let progress = CollectProgress::{ files_found: 0, dirs_scanned: 0 }
+  // Load filter config from directory (respects .gitignore, .indexionignore)
+  let filter_config = @filter.FilterConfig::new()
+    .with_includes(includes)
+    .with_excludes(excludes)
+    .with_gitignore_from_dir(dir)
+    .with_indexionignore_from_dir(dir)
+  collect_files_recursive(dir, extensions, files, "", progress, filter_config)
   files
+}
+
+///|
+fn should_include_file(
+  filter : @filter.FilterConfig,
+  filename : String,
+) -> Bool {
+  filter.should_include(filename, false).is_included()
 }
 
 ///|
@@ -199,6 +245,8 @@ fn collect_files_recursive(
   extensions : Array[String],
   files : Array[(String, String)],
   prefix : String,
+  progress : CollectProgress,
+  filter_config : @filter.FilterConfig,
 ) -> Unit {
   let clean_dir = if dir.has_suffix("/") {
     let chars = dir.to_array()
@@ -214,6 +262,17 @@ fn collect_files_recursive(
     if not(@fs.is_dir(clean_dir)) {
       return
     }
+    progress.dirs_scanned = progress.dirs_scanned + 1
+    // Show progress every 10 directories
+    if progress.dirs_scanned % 10 == 0 {
+      println(
+        "      Scanning: " +
+        progress.dirs_scanned.to_string() +
+        " dirs, " +
+        progress.files_found.to_string() +
+        " files found",
+      )
+    }
     let entries = @fs.read_dir(clean_dir)
     for entry in entries {
       let path = clean_dir + "/" + entry
@@ -223,10 +282,17 @@ fn collect_files_recursive(
         entry
       }
       if @fs.is_dir(path) {
+        // Use filter config to determine if directory should be skipped
+        if filter_config.should_skip_dir(entry) {
+          continue
+        }
         // Recurse into subdirectory
-        collect_files_recursive(path, extensions, files, display_name)
+        collect_files_recursive(
+          path, extensions, files, display_name, progress, filter_config,
+        )
       } else if @fs.is_file(path) {
-        let should_include = if extensions.length() == 0 {
+        // Check extension filter
+        let ext_ok = if extensions.length() == 0 {
           true
         } else {
           let mut matched = false
@@ -238,9 +304,11 @@ fn collect_files_recursive(
           }
           matched
         }
-        if should_include {
+        // Check filter config
+        if ext_ok && should_include_file(filter_config, display_name) {
           let content = @fs.read_file_to_string(path)
           files.push((display_name, content))
+          progress.files_found = progress.files_found + 1
         }
       }
     }
@@ -270,6 +338,126 @@ fn calc_similarity(
       (s.distance(text1, text2), s.similarity(text1, text2))
     }
   }
+}
+
+///|
+fn pair_threshold_for_format(format : String, threshold : Double) -> Double {
+  match format {
+    "matrix" => 0.0
+    _ => threshold
+  }
+}
+
+///|
+fn elapsed_ms(start_ms : UInt64) -> UInt64 {
+  let now = @env.now()
+  if now >= start_ms {
+    now - start_ms
+  } else {
+    0UL
+  }
+}
+
+///|
+fn average_count(total : Int, count : Int) -> Int {
+  if count <= 0 {
+    0
+  } else {
+    total / count
+  }
+}
+
+///|
+fn report_tfidf_build_stats(
+  stats : @tfidf.TfidfBatchBuildStats,
+  elapsed : UInt64,
+) -> Unit {
+  println(
+    "      TF-IDF build: " +
+    stats.total_tokens.to_string() +
+    " tokens (" +
+    average_count(stats.total_tokens, stats.document_count).to_string() +
+    "/file), " +
+    stats.total_vector_terms.to_string() +
+    " vector terms, " +
+    stats.vocabulary_size.to_string() +
+    " unique terms in " +
+    elapsed.to_string() +
+    "ms",
+  )
+}
+
+///|
+fn report_tfidf_search_stats(
+  stats : @tfidf.TfidfPairSearchStats,
+  elapsed : UInt64,
+) -> Unit {
+  println(
+    "      Candidate search: " +
+    stats.posting_hits.to_string() +
+    " posting hits, " +
+    stats.candidate_pairs.to_string() +
+    " candidate pairs, " +
+    stats.cosine_evaluations.to_string() +
+    " cosine evals in " +
+    elapsed.to_string() +
+    "ms",
+  )
+}
+
+///|
+fn calculate_tfidf_pairs(
+  batch : @tfidf.TfidfBatch,
+  files : Array[(String, String)],
+  min_similarity : Double,
+) -> (Array[FilePair], @tfidf.TfidfPairSearchStats) {
+  let pairs : Array[FilePair] = []
+  let (results, search_stats) = batch.all_pairs_above_threshold_with_stats(
+    min_similarity,
+  )
+  for result in results {
+    let (i, j, sim) = result
+    pairs.push({
+      file1: files[i].0,
+      file2: files[j].0,
+      similarity: sim,
+      _distance: 1.0 - sim,
+    })
+  }
+  (pairs, search_stats)
+}
+
+///|
+fn calculate_pairs(
+  files : Array[(String, String)],
+  strategy : String,
+  min_similarity : Double,
+) -> Array[FilePair] {
+  let pairs : Array[FilePair] = []
+  for i = 0; i < files.length(); i = i + 1 {
+    if files.length() > 10 {
+      println(
+        "      [" +
+        (i + 1).to_string() +
+        "/" +
+        files.length().to_string() +
+        "] " +
+        truncate(files[i].0, 40),
+      )
+    }
+    for j = i + 1; j < files.length(); j = j + 1 {
+      let (dist, sim) = calc_similarity(files[i].1, files[j].1, strategy)
+      if sim >= min_similarity {
+        pairs.push({
+          file1: files[i].0,
+          file2: files[j].0,
+          similarity: sim,
+          _distance: dist,
+        })
+      }
+    }
+  }
+  pairs
 }
 
 ///|
@@ -334,16 +522,7 @@ fn output_list(pairs : Array[FilePair]) -> Unit {
     println("No file pairs found.")
     return
   }
-  // Sort by similarity (descending) - simple bubble sort
-  for i = 0; i < pairs.length(); i = i + 1 {
-    for j = i + 1; j < pairs.length(); j = j + 1 {
-      if pairs[j].similarity > pairs[i].similarity {
-        let tmp = pairs[i]
-        pairs[i] = pairs[j]
-        pairs[j] = tmp
-      }
-    }
-  }
+  pairs.sort_by(fn(a, b) { b.similarity.compare(a.similarity) })
   println("=== File Similarity (sorted) ===")
   println("")
   for pair in pairs {
@@ -481,27 +660,72 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   println("Directory: " + config.target_dir)
   println("Strategy: " + config.strategy)
   println("")
-  // Collect files
-  let files = collect_files(config.target_dir, config.extensions)
-  println("Found " + files.length().to_string() + " files")
-  println("")
+  // Collect files with progress (respects .gitignore, .indexionignore)
+  println("[1/2] Scanning files...")
+  let files = collect_files(
+    config.target_dir,
+    config.extensions,
+    config.includes,
+    config.excludes,
+  )
+  println("      Scan complete: " + files.length().to_string() + " files")
   if files.length() < 2 {
     println("Need at least 2 files to compare.")
     return
   }
-  // Calculate all pairs
-  let pairs : Array[FilePair] = []
-  for i = 0; i < files.length(); i = i + 1 {
-    for j = i + 1; j < files.length(); j = j + 1 {
-      let (dist, sim) = calc_similarity(files[i].1, files[j].1, config.strategy)
-      pairs.push({
-        file1: files[i].0,
-        file2: files[j].0,
-        similarity: sim,
-        _distance: dist,
-      })
-    }
+  // Calculate total pairs for progress
+  let total_pairs = files.length() * (files.length() - 1) / 2
+  println(
+    "[2/2] Calculating " + total_pairs.to_string() + " similarity pairs...",
+  )
+  let min_similarity = pair_threshold_for_format(
+    config.format,
+    config.threshold,
+  )
+  let pairs = if config.strategy == "tfidf" {
+    // Load KGF registry for language-aware tokenization
+    let registry = @kgf_features.load_registry()
+    println("      Tokenizing with KGF lexer...")
+    let tokenize_started = @env.now()
+    let (tokenized, kgf_hits) = @kgf_features.tokenize_files_with_kgf(
+      files,
+      registry,
+    )
+    let fallback_count = files.length() - kgf_hits
+    println(
+      "      Tokenized: " +
+      kgf_hits.to_string() +
+      " with KGF, " +
+      fallback_count.to_string() +
+      " fallback in " +
+      elapsed_ms(tokenize_started).to_string() +
+      "ms",
+    )
+    println("      Building TF-IDF vectors...")
+    let build_started = @env.now()
+    let batch = @tfidf.TfidfBatch::from_tokens(tokenized)
+    report_tfidf_build_stats(batch.build_stats(), elapsed_ms(build_started))
+    let search_started = @env.now()
+    let (pairs, search_stats) = calculate_tfidf_pairs(
+      batch, files, min_similarity,
+    )
+    report_tfidf_search_stats(search_stats, elapsed_ms(search_started))
+    pairs
+  } else {
+    calculate_pairs(files, config.strategy, min_similarity)
   }
+  if min_similarity > 0.0 {
+    println(
+      "      Done (" +
+      pairs.length().to_string() +
+      " pairs kept at >= " +
+      format_percent(min_similarity) +
+      ")",
+    )
+  } else {
+    println("      Done (" + pairs.length().to_string() + " pairs calculated)")
+  }
+  println("")
   // Output based on format
   match config.format {
     "list" => output_list(pairs)

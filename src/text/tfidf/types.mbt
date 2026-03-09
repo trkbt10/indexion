@@ -1,6 +1,24 @@
 // TF-IDF types for text similarity computation.
 
 ///|
+/// Build-time statistics for a TF-IDF batch.
+pub struct TfidfBatchBuildStats {
+  document_count : Int
+  total_tokens : Int
+  total_vector_terms : Int
+  vocabulary_size : Int
+}
+
+///|
+/// Search statistics for TF-IDF pair generation.
+pub struct TfidfPairSearchStats {
+  posting_hits : Int
+  candidate_pairs : Int
+  cosine_evaluations : Int
+  output_pairs : Int
+}
+
+///|
 /// A sparse TF-IDF vector representation using term-weight mapping.
 pub struct TfidfVector {
   /// Map from term to TF-IDF weight.

@@ -1,4 +1,8 @@
 import {
+  "moonbitlang/core/env" @env,
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/similarity" @sim,
+  "trkbt10/indexion/src/filter" @filter,
+  "trkbt10/indexion/src/text/tfidf" @tfidf,
+  "trkbt10/indexion/src/kgf/features" @kgf_features,
 }

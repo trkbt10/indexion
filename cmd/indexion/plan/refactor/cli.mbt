@@ -197,7 +197,9 @@ pub fn show_help() -> Unit {
     "  --exclude=PATTERN    Exclude files matching pattern (can be repeated)",
   )
   println("  --output=FILE, -o=   Output file path (default: stdout)")
-  println("  --format=FORMAT      Output format: md, json, text, github-issue (default: md)")
+  println(
+    "  --format=FORMAT      Output format: md, json, text, github-issue (default: md)",
+  )
   println("  --style=STYLE        Output style: raw, structured (default: raw)")
   println("  --name=NAME          Project name for structured output")
   println("  --help               Show this help message")
@@ -698,12 +700,11 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   // Calculate all pairs using optimized batch processing for TF-IDF
   let pairs : Array[SimilarPair] = []
   if config.strategy == "tfidf" {
-    // Optimized path: batch TF-IDF with precomputed vectors
-    let contents : Array[String] = []
-    for f in files {
-      contents.push(f.1)
-    }
-    let batch = @sim.TfidfBatch::from_texts(contents)
+    // Load KGF registry for language-aware tokenization
+    let registry = @kgf_features.load_registry()
+    // Tokenize files with KGF where available
+    let (tokenized, _) = @kgf_features.tokenize_files_with_kgf(files, registry)
+    let batch = @tfidf.TfidfBatch::from_tokens(tokenized)
     let results = batch.all_pairs_above_threshold(config.threshold)
     for result in results {
       let (i, j, sim) = result

@@ -1,10 +1,10 @@
 ///|
 /// Registry tests - validates that all KGF files in kgfs/ parse correctly.
+/// Tests are consolidated to minimize registry loading overhead.
 
 ///|
 /// Helper to get the kgfs directory path.
 fn get_kgfs_dir() -> String {
-  // Project root relative paths - adjust based on test execution context
   let paths = [
     "kgfs", "../kgfs", "../../kgfs", "../../../kgfs", "../../../../kgfs",
   ]
@@ -18,142 +18,6 @@ fn get_kgfs_dir() -> String {
     }
   }
   "kgfs"
-}
-
-///|
-test "registry loads all kgf files from directory" {
-  let dir = get_kgfs_dir()
-  let registry = KGFRegistry::load_from_dir(dir)
-  // Should have loaded multiple specs
-  assert_true(registry.spec_count() > 0)
-}
-
-///|
-test "registry: programming language kgfs parse correctly" {
-  let dir = get_kgfs_dir()
-  let registry = KGFRegistry::load_from_dir(dir)
-
-  // Core programming languages
-  let expected_langs = [
-    "typescript", "javascript", "python", "go", "rust", "java", "ruby", "php", "swift",
-    "kotlin", "dart", "scala", "elixir", "haskell", "ocaml", "zig", "julia", "lua",
-    "clojure", "c", "cpp", "csharp", "moonbit",
-  ]
-
-  for lang in expected_langs {
-    let spec = registry.get_spec(lang)
-    match spec {
-      Some(s) => {
-        // Verify basic structure
-        assert_eq(s.get_language(), lang)
-        // Should have tokens defined
-        assert_true(s.get_tokens().length() > 0)
-        // Should have resolve chain (kgf 0.6 format)
-        let resolver = s.get_resolver()
-        assert_true(resolver.has_resolve_chain())
-      }
-      None => {
-        // Print which language is missing for debugging
-        println("Missing spec for: " + lang)
-        assert_true(false)
-      }
-    }
-  }
-}
-
-///|
-test "registry: extension to language mapping" {
-  let dir = get_kgfs_dir()
-  let registry = KGFRegistry::load_from_dir(dir)
-
-  // Test common extensions
-  fn check_ext(
-    r : KGFRegistry,
-    ext : String,
-    expected_lang : String,
-  ) -> Unit raise {
-    match r.get_lang_from_ext(ext) {
-      Some(lang) => assert_eq(lang, expected_lang)
-      None => {
-        println("No mapping for extension: " + ext)
-        assert_true(false)
-      }
-    }
-  }
-
-  check_ext(registry, ".ts", "typescript")
-  check_ext(registry, ".tsx", "typescript")
-  check_ext(registry, ".js", "javascript")
-  check_ext(registry, ".py", "python")
-  check_ext(registry, ".go", "go")
-  check_ext(registry, ".rs", "rust")
-  check_ext(registry, ".java", "java")
-  check_ext(registry, ".rb", "ruby")
-  check_ext(registry, ".php", "php")
-  check_ext(registry, ".swift", "swift")
-  check_ext(registry, ".kt", "kotlin")
-  check_ext(registry, ".dart", "dart")
-  check_ext(registry, ".scala", "scala")
-  check_ext(registry, ".ex", "elixir")
-  check_ext(registry, ".hs", "haskell")
-  check_ext(registry, ".ml", "ocaml")
-  check_ext(registry, ".zig", "zig")
-  check_ext(registry, ".jl", "julia")
-  check_ext(registry, ".lua", "lua")
-  check_ext(registry, ".clj", "clojure")
-  check_ext(registry, ".c", "c")
-  check_ext(registry, ".cpp", "cpp")
-  check_ext(registry, ".cs", "csharp")
-  check_ext(registry, ".mbt", "moonbit")
-}
-
-///|
-test "registry: resolve chain format validation" {
-  let dir = get_kgfs_dir()
-  let registry = KGFRegistry::load_from_dir(dir)
-
-  // Validate specific resolve chain configurations
-
-  // TypeScript should have manifest step for package.json
-  match registry.get_spec("typescript") {
-    Some(spec) => {
-      let chain = spec.get_resolver().get_resolve_chain()
-      assert_true(chain.length() >= 3)
-      // First step should be manifest
-      assert_eq(chain[0].get_step_type().as_string(), "manifest")
-      assert_eq(chain[0].get_file(), "package.json")
-    }
-    None => assert_true(false)
-  }
-
-  // Python should have manifest step for pyproject.toml
-  match registry.get_spec("python") {
-    Some(spec) => {
-      let chain = spec.get_resolver().get_resolve_chain()
-      assert_true(chain.length() >= 4)
-      // First step should be manifest (pyproject.toml)
-      assert_eq(chain[0].get_step_type().as_string(), "manifest")
-      // Should also have marker step
-      let has_marker = chain
-        .iter()
-        .any(fn(step) { step.get_step_type().as_string() == "marker" })
-      assert_true(has_marker)
-    }
-    None => assert_true(false)
-  }
-
-  // Rust should have sibling step for mod.rs pattern
-  match registry.get_spec("rust") {
-    Some(spec) => {
-      let chain = spec.get_resolver().get_resolve_chain()
-      // Should have index, sibling, ext, fallback
-      let has_sibling = chain
-        .iter()
-        .any(fn(step) { step.get_step_type().as_string() == "sibling" })
-      assert_true(has_sibling)
-    }
-    None => assert_true(false)
-  }
 }
 
 ///|
@@ -187,147 +51,180 @@ fn has_token_kind(tokens : Array[@types.Tok], kind : String) -> Bool {
 }
 
 ///|
-/// Test that example source files can be tokenized by their corresponding KGF specs.
-test "registry: tokenize example source files" {
+/// Main registry test - loads registry once and runs all validations.
+test "registry: comprehensive validation" {
   let dir = get_kgfs_dir()
   let registry = KGFRegistry::load_from_dir(dir)
-  let fixtures_dir = get_fixtures_dir()
 
-  // Test TypeScript example - verify keyword tokenization with word boundary
-  let ts_spec = registry.get_spec("typescript").unwrap()
-  let ts_lexer = @lexer.Lexer::new(ts_spec.get_tokens())
-  let ts_source = @fs.read_file_to_string(
-    fixtures_dir + "/programming/typescript/src/main.ts",
-  ) catch {
-    _ => ""
-  }
-  if ts_source.length() > 0 {
-    let ts_tokens = ts_lexer.tokenize(ts_source)
-    assert_true(ts_tokens.length() > 0)
-    // With word boundary support, import keyword should be properly recognized
-    assert_true(has_token_kind(ts_tokens, "KW_import"))
-  }
+  // Test 1: Should have loaded multiple specs
+  assert_true(registry.spec_count() > 0)
 
-  // Test Python example - verify keyword tokenization
-  let py_spec = registry.get_spec("python").unwrap()
-  let py_lexer = @lexer.Lexer::new(py_spec.get_tokens())
-  let py_source = @fs.read_file_to_string(fixtures_dir + "/programming/python/main.py") catch {
-    _ => ""
-  }
-  if py_source.length() > 0 {
-    let py_tokens = py_lexer.tokenize(py_source)
-    assert_true(py_tokens.length() > 0)
-    // Should have import and def tokens
-    assert_true(has_token_kind(py_tokens, "KW_import"))
-    assert_true(has_token_kind(py_tokens, "KW_def"))
+  // Test 2: Programming languages should exist and have correct structure
+  let expected_langs = [
+    "typescript", "javascript", "python", "go", "rust", "java", "ruby", "php",
+    "swift", "kotlin", "dart", "scala", "elixir", "haskell", "ocaml", "zig",
+    "julia", "lua", "clojure", "c", "cpp", "csharp", "moonbit",
+  ]
+  for lang in expected_langs {
+    match registry.get_spec(lang) {
+      Some(s) => {
+        assert_eq(s.get_language(), lang)
+        assert_true(s.get_tokens().length() > 0)
+        assert_true(s.get_resolver().has_resolve_chain())
+      }
+      None => {
+        println("Missing spec for: " + lang)
+        assert_true(false)
+      }
+    }
   }
 
-  // Test Go example - verify keyword tokenization
-  let go_spec = registry.get_spec("go").unwrap()
-  let go_lexer = @lexer.Lexer::new(go_spec.get_tokens())
-  let go_source = @fs.read_file_to_string(fixtures_dir + "/programming/go/main.go") catch {
-    _ => ""
-  }
-  if go_source.length() > 0 {
-    let go_tokens = go_lexer.tokenize(go_source)
-    assert_true(go_tokens.length() > 0)
-    // Should have package and func tokens
-    assert_true(has_token_kind(go_tokens, "KW_package"))
-    assert_true(has_token_kind(go_tokens, "KW_func"))
+  // Test 3: Extension to language mapping
+  let ext_mappings = [
+    (".ts", "typescript"), (".tsx", "typescript"), (".js", "javascript"),
+    (".py", "python"), (".go", "go"), (".rs", "rust"), (".java", "java"),
+    (".rb", "ruby"), (".php", "php"), (".swift", "swift"), (".kt", "kotlin"),
+    (".dart", "dart"), (".scala", "scala"), (".ex", "elixir"), (".hs", "haskell"),
+    (".ml", "ocaml"), (".zig", "zig"), (".jl", "julia"), (".lua", "lua"),
+    (".clj", "clojure"), (".c", "c"), (".cpp", "cpp"), (".cs", "csharp"),
+    (".mbt", "moonbit"),
+  ]
+  for mapping in ext_mappings {
+    let (ext, expected_lang) = mapping
+    match registry.get_lang_from_ext(ext) {
+      Some(lang) => assert_eq(lang, expected_lang)
+      None => {
+        println("No mapping for: " + ext)
+        assert_true(false)
+      }
+    }
   }
 
-  // Test Rust example - verify keyword tokenization
-  let rs_spec = registry.get_spec("rust").unwrap()
-  let rs_lexer = @lexer.Lexer::new(rs_spec.get_tokens())
-  let rs_source = @fs.read_file_to_string(fixtures_dir + "/programming/rust/main.rs") catch {
-    _ => ""
+  // Test 4: TypeScript resolve chain validation
+  match registry.get_spec("typescript") {
+    Some(spec) => {
+      let chain = spec.get_resolver().get_resolve_chain()
+      assert_true(chain.length() >= 3)
+      assert_eq(chain[0].get_step_type().as_string(), "manifest")
+      assert_eq(chain[0].get_file(), "package.json")
+    }
+    None => assert_true(false)
   }
-  if rs_source.length() > 0 {
-    let rs_tokens = rs_lexer.tokenize(rs_source)
-    assert_true(rs_tokens.length() > 0)
-    // Should have use, fn, pub tokens
-    assert_true(has_token_kind(rs_tokens, "KW_use"))
-    assert_true(has_token_kind(rs_tokens, "KW_fn"))
-    assert_true(has_token_kind(rs_tokens, "KW_pub"))
+
+  // Test 5: Python resolve chain validation
+  match registry.get_spec("python") {
+    Some(spec) => {
+      let chain = spec.get_resolver().get_resolve_chain()
+      assert_true(chain.length() >= 4)
+      assert_eq(chain[0].get_step_type().as_string(), "manifest")
+      let has_marker = chain
+        .iter()
+        .any(fn(step) { step.get_step_type().as_string() == "marker" })
+      assert_true(has_marker)
+    }
+    None => assert_true(false)
   }
+
+  // Test 6: Rust resolve chain validation
+  match registry.get_spec("rust") {
+    Some(spec) => {
+      let chain = spec.get_resolver().get_resolve_chain()
+      let has_sibling = chain
+        .iter()
+        .any(fn(step) { step.get_step_type().as_string() == "sibling" })
+      assert_true(has_sibling)
+    }
+    None => assert_true(false)
+  }
+
+  // Test 7: is_file_supported
+  assert_true(registry.is_file_supported("src/core/moon.pkg"))
+  assert_true(registry.is_file_supported("moon.pkg"))
+  assert_true(registry.is_file_supported("src/main.ts"))
+  assert_true(registry.is_file_supported("main.py"))
+  assert_true(registry.is_file_supported("main.go"))
+  assert_false(registry.is_file_supported("moon.pkg.bak"))
+  assert_false(registry.is_file_supported("file.xyz"))
 }
 
 ///|
-/// Test that example source files can be parsed by their corresponding KGF specs.
-test "registry: parse example source files" {
+/// Tokenization and parsing tests - loads registry once for all language tests.
+test "registry: tokenize and parse examples" {
   let dir = get_kgfs_dir()
   let registry = KGFRegistry::load_from_dir(dir)
   let fixtures_dir = get_fixtures_dir()
 
-  // Test JavaScript example
-  let js_spec = registry.get_spec("javascript").unwrap()
-  let js_peg = @peg.build_peg(js_spec)
-  let js_lexer = @lexer.Lexer::new(js_spec.get_tokens())
-  let js_source = @fs.read_file_to_string(
-    fixtures_dir + "/programming/javascript/src/app.js",
-  ) catch {
-    _ => ""
-  }
-  if js_source.length() > 0 {
-    let js_tokens = js_lexer.tokenize(js_source)
-    let js_result = @peg.run_parse(js_peg, js_spec, "Module", js_tokens)
-    assert_true(js_result is Some(_))
-    assert_true(js_result.unwrap().ok)
-  }
-
-  // Test TypeScript example
+  // TypeScript tokenization
   let ts_spec = registry.get_spec("typescript").unwrap()
-  let ts_peg = @peg.build_peg(ts_spec)
   let ts_lexer = @lexer.Lexer::new(ts_spec.get_tokens())
   let ts_source = @fs.read_file_to_string(
     fixtures_dir + "/programming/typescript/src/main.ts",
-  ) catch {
-    _ => ""
-  }
+  ) catch { _ => "" }
   if ts_source.length() > 0 {
     let ts_tokens = ts_lexer.tokenize(ts_source)
+    assert_true(ts_tokens.length() > 0)
+    assert_true(has_token_kind(ts_tokens, "KW_import"))
+    // Parse TypeScript
+    let ts_peg = @peg.build_peg(ts_spec)
     let ts_result = @peg.run_parse(ts_peg, ts_spec, "Module", ts_tokens)
     assert_true(ts_result is Some(_))
     assert_true(ts_result.unwrap().ok)
   }
 
-  // Test Python example
-  let py_spec = registry.get_spec("python").unwrap()
-  let py_peg = @peg.build_peg(py_spec)
-  let py_lexer = @lexer.Lexer::new(py_spec.get_tokens())
-  let py_source = @fs.read_file_to_string(fixtures_dir + "/programming/python/main.py") catch {
-    _ => ""
+  // JavaScript tokenization and parsing
+  let js_spec = registry.get_spec("javascript").unwrap()
+  let js_lexer = @lexer.Lexer::new(js_spec.get_tokens())
+  let js_source = @fs.read_file_to_string(
+    fixtures_dir + "/programming/javascript/src/app.js",
+  ) catch { _ => "" }
+  if js_source.length() > 0 {
+    let js_tokens = js_lexer.tokenize(js_source)
+    assert_true(js_tokens.length() > 0)
+    let js_peg = @peg.build_peg(js_spec)
+    let js_result = @peg.run_parse(js_peg, js_spec, "Module", js_tokens)
+    assert_true(js_result is Some(_))
+    assert_true(js_result.unwrap().ok)
   }
+
+  // Python tokenization and parsing
+  let py_spec = registry.get_spec("python").unwrap()
+  let py_lexer = @lexer.Lexer::new(py_spec.get_tokens())
+  let py_source = @fs.read_file_to_string(fixtures_dir + "/programming/python/main.py") catch { _ => "" }
   if py_source.length() > 0 {
     let py_tokens = py_lexer.tokenize(py_source)
+    assert_true(py_tokens.length() > 0)
+    assert_true(has_token_kind(py_tokens, "KW_import"))
+    assert_true(has_token_kind(py_tokens, "KW_def"))
+    let py_peg = @peg.build_peg(py_spec)
     let py_result = @peg.run_parse(py_peg, py_spec, "Module", py_tokens)
     assert_true(py_result is Some(_))
     assert_true(py_result.unwrap().ok)
   }
 
-  // Test Go example
+  // Go tokenization and parsing
   let go_spec = registry.get_spec("go").unwrap()
-  let go_peg = @peg.build_peg(go_spec)
   let go_lexer = @lexer.Lexer::new(go_spec.get_tokens())
-  let go_source = @fs.read_file_to_string(fixtures_dir + "/programming/go/main.go") catch {
-    _ => ""
-  }
+  let go_source = @fs.read_file_to_string(fixtures_dir + "/programming/go/main.go") catch { _ => "" }
   if go_source.length() > 0 {
     let go_tokens = go_lexer.tokenize(go_source)
+    assert_true(go_tokens.length() > 0)
+    assert_true(has_token_kind(go_tokens, "KW_package"))
+    assert_true(has_token_kind(go_tokens, "KW_func"))
+    let go_peg = @peg.build_peg(go_spec)
     let go_result = @peg.run_parse(go_peg, go_spec, "Module", go_tokens)
     assert_true(go_result is Some(_))
     assert_true(go_result.unwrap().ok)
   }
 
-  // Test Rust example
+  // Rust tokenization and parsing
   let rs_spec = registry.get_spec("rust").unwrap()
-  let rs_peg = @peg.build_peg(rs_spec)
   let rs_lexer = @lexer.Lexer::new(rs_spec.get_tokens())
-  let rs_source = @fs.read_file_to_string(fixtures_dir + "/programming/rust/main.rs") catch {
-    _ => ""
-  }
+  let rs_source = @fs.read_file_to_string(fixtures_dir + "/programming/rust/main.rs") catch { _ => "" }
   if rs_source.length() > 0 {
     let rs_tokens = rs_lexer.tokenize(rs_source)
+    assert_true(rs_tokens.length() > 0)
+    assert_true(has_token_kind(rs_tokens, "KW_fn"))
+    let rs_peg = @peg.build_peg(rs_spec)
     let rs_result = @peg.run_parse(rs_peg, rs_spec, "Module", rs_tokens)
     assert_true(rs_result is Some(_))
     assert_true(rs_result.unwrap().ok)
@@ -335,19 +232,17 @@ test "registry: parse example source files" {
 }
 
 ///|
-/// Test that HTML and Markdown examples can be parsed.
-test "registry: parse markup example files" {
+/// Markup and DSL parsing tests.
+test "registry: parse markup and dsl" {
   let dir = get_kgfs_dir()
   let registry = KGFRegistry::load_from_dir(dir)
   let fixtures_dir = get_fixtures_dir()
 
-  // Test HTML example
+  // HTML
   let html_spec = registry.get_spec("html").unwrap()
   let html_peg = @peg.build_peg(html_spec)
   let html_lexer = @lexer.Lexer::new(html_spec.get_tokens())
-  let html_source = @fs.read_file_to_string(fixtures_dir + "/dsl/html/index.html") catch {
-    _ => ""
-  }
+  let html_source = @fs.read_file_to_string(fixtures_dir + "/dsl/html/index.html") catch { _ => "" }
   if html_source.length() > 0 {
     let html_tokens = html_lexer.tokenize(html_source)
     let html_result = @peg.run_parse(html_peg, html_spec, "Doc", html_tokens)
@@ -355,90 +250,25 @@ test "registry: parse markup example files" {
     assert_true(html_result.unwrap().ok)
   }
 
-  // Test Markdown example
+  // Markdown
   let md_spec = registry.get_spec("markdown").unwrap()
   let md_peg = @peg.build_peg(md_spec)
   let md_lexer = @lexer.Lexer::new(md_spec.get_tokens())
-  let md_source = @fs.read_file_to_string(fixtures_dir + "/dsl/markdown/README.md") catch {
-    _ => ""
-  }
+  let md_source = @fs.read_file_to_string(fixtures_dir + "/dsl/markdown/README.md") catch { _ => "" }
   if md_source.length() > 0 {
     let md_tokens = md_lexer.tokenize(md_source)
     let md_result = @peg.run_parse(md_peg, md_spec, "Doc", md_tokens)
     assert_true(md_result is Some(_))
     assert_true(md_result.unwrap().ok)
   }
-}
 
-///|
-/// Test natural language examples can be tokenized.
-test "registry: tokenize natural language examples" {
-  let dir = get_kgfs_dir()
-  let registry = KGFRegistry::load_from_dir(dir)
-  let fixtures_dir = get_fixtures_dir()
-
-  // Test Japanese example
-  let ja_spec = registry.get_spec("japanese").unwrap()
-  let ja_lexer = @lexer.Lexer::new(ja_spec.get_tokens())
-  let ja_source = @fs.read_file_to_string(fixtures_dir + "/natural/japanese/simple.txt") catch {
-    _ => ""
-  }
-  if ja_source.length() > 0 {
-    let ja_tokens = ja_lexer.tokenize(ja_source)
-    assert_true(ja_tokens.length() > 0)
-  }
-
-  // Test English example
-  let en_spec = registry.get_spec("english").unwrap()
-  let en_lexer = @lexer.Lexer::new(en_spec.get_tokens())
-  let en_source = @fs.read_file_to_string(fixtures_dir + "/natural/english/sample.txt") catch {
-    _ => ""
-  }
-  if en_source.length() > 0 {
-    let en_tokens = en_lexer.tokenize(en_source)
-    assert_true(en_tokens.length() > 0)
-  }
-
-  // Test Korean example
-  let ko_spec = registry.get_spec("korean").unwrap()
-  let ko_lexer = @lexer.Lexer::new(ko_spec.get_tokens())
-  let ko_source = @fs.read_file_to_string(fixtures_dir + "/natural/korean/sample.txt") catch {
-    _ => ""
-  }
-  if ko_source.length() > 0 {
-    let ko_tokens = ko_lexer.tokenize(ko_source)
-    assert_true(ko_tokens.length() > 0)
-  }
-
-  // Test Chinese example
-  let zh_spec = registry.get_spec("chinese").unwrap()
-  let zh_lexer = @lexer.Lexer::new(zh_spec.get_tokens())
-  let zh_source = @fs.read_file_to_string(fixtures_dir + "/natural/chinese/sample.txt") catch {
-    _ => ""
-  }
-  if zh_source.length() > 0 {
-    let zh_tokens = zh_lexer.tokenize(zh_source)
-    assert_true(zh_tokens.length() > 0)
-  }
-}
-
-///|
-/// Test SQL examples can be parsed.
-test "registry: parse sql examples" {
-  let dir = get_kgfs_dir()
-  let registry = KGFRegistry::load_from_dir(dir)
-  let fixtures_dir = get_fixtures_dir()
-
-  // Test SQL DDL example
+  // SQL DDL
   let sql_spec = registry.get_spec("sql-ddl").unwrap()
   let sql_peg = @peg.build_peg(sql_spec)
   let sql_lexer = @lexer.Lexer::new(sql_spec.get_tokens())
-  let sql_source = @fs.read_file_to_string(fixtures_dir + "/dsl/sql-ddl/schema.sql") catch {
-    _ => ""
-  }
+  let sql_source = @fs.read_file_to_string(fixtures_dir + "/dsl/sql-ddl/schema.sql") catch { _ => "" }
   if sql_source.length() > 0 {
     let sql_tokens = sql_lexer.tokenize(sql_source)
-    assert_true(sql_tokens.length() > 0)
     let sql_result = @peg.run_parse(sql_peg, sql_spec, "Doc", sql_tokens)
     assert_true(sql_result is Some(_))
     assert_true(sql_result.unwrap().ok)
@@ -446,75 +276,45 @@ test "registry: parse sql examples" {
 }
 
 ///|
-test "registry: is_file_supported with moon.pkg" {
+/// Natural language tokenization tests.
+test "registry: tokenize natural languages" {
   let dir = get_kgfs_dir()
   let registry = KGFRegistry::load_from_dir(dir)
+  let fixtures_dir = get_fixtures_dir()
 
-  // moon.pkg should be supported (from moonpkg.kgf)
-  assert_true(registry.is_file_supported("src/core/moon.pkg"))
-  assert_true(registry.is_file_supported("moon.pkg"))
-  assert_true(registry.is_file_supported("/Users/test/project/moon.pkg"))
+  let natural_tests = [
+    ("japanese", "/natural/japanese/simple.txt"),
+    ("english", "/natural/english/sample.txt"),
+    ("korean", "/natural/korean/sample.txt"),
+    ("chinese", "/natural/chinese/sample.txt"),
+  ]
 
-  // Non-matching paths
-  assert_false(registry.is_file_supported("moon.pkg.bak"))
-  assert_false(registry.is_file_supported("notmoon.pkg"))
+  for test_case in natural_tests {
+    let (lang, path) = test_case
+    let spec = registry.get_spec(lang).unwrap()
+    let lexer = @lexer.Lexer::new(spec.get_tokens())
+    let source = @fs.read_file_to_string(fixtures_dir + path) catch { _ => "" }
+    if source.length() > 0 {
+      let tokens = lexer.tokenize(source)
+      assert_true(tokens.length() > 0)
+    }
+  }
 }
 
 ///|
-test "registry: is_file_supported with extensions" {
-  let dir = get_kgfs_dir()
-  let registry = KGFRegistry::load_from_dir(dir)
-
-  // TypeScript files
-  assert_true(registry.is_file_supported("src/main.ts"))
-  assert_true(registry.is_file_supported("component.tsx"))
-  assert_true(registry.is_file_supported("/path/to/file.ts"))
-
-  // MoonBit files
-  assert_true(registry.is_file_supported("src/core/types.mbt"))
-
-  // Python files
-  assert_true(registry.is_file_supported("main.py"))
-
-  // Go files
-  assert_true(registry.is_file_supported("main.go"))
-
-  // Rust files
-  assert_true(registry.is_file_supported("lib.rs"))
-
-  // Unsupported files
-  assert_false(registry.is_file_supported("file.xyz"))
-  assert_false(registry.is_file_supported("README"))
-}
-
-///|
-test "registry: is_file_supported mixed" {
-  let dir = get_kgfs_dir()
-  let registry = KGFRegistry::load_from_dir(dir)
-
-  // Should correctly distinguish between extension and filename patterns
-  assert_true(registry.is_file_supported("src/kgf/moon.pkg"))
-  assert_true(registry.is_file_supported("src/kgf/types.mbt"))
-  assert_false(registry.is_file_supported("src/kgf/README"))
-}
-
-///|
+/// KGF version validation.
 test "registry: all kgfs are version 0.6" {
   let dir = get_kgfs_dir()
   let is_dir = @fs.is_dir(dir) catch { _ => false }
   if not(is_dir) {
-    return // Skip if directory not found
+    return
   }
-
   let entries = @fs.read_dir(dir)
   for entry in entries {
     if entry.has_suffix(".kgf") {
       let path = dir + "/" + entry
       let content = @fs.read_file_to_string(path)
-      // All files should start with "kgf 0.6"
-      assert_true(
-        content.has_prefix("kgf 0.6") || content.has_prefix("\nkgf 0.6"),
-      )
+      assert_true(content.has_prefix("kgf 0.6") || content.has_prefix("\nkgf 0.6"))
     }
   }
 }

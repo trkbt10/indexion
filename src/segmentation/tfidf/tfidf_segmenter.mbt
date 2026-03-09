@@ -27,8 +27,15 @@ pub fn calculate_window_tfidf_divergence(
     window_ends.push(@utils.get_window_end(sentences, i, window_size))
   }
 
+  // Tokenize windows
+  let tokenized : Array[Array[String]] = []
+  for w in windows {
+    tokenized.push(@tokenizer.tokenize_for_tfidf(w))
+  }
   // Calculate TF-IDF distances between adjacent windows
-  let tfidf_values = @text_tfidf.calculate_adjacent_tfidf_distance(windows)
+  let tfidf_values = @text_tfidf.calculate_adjacent_tfidf_distance_from_tokenized(
+    tokenized,
+  )
 
   // Normalize TF-IDF values
   let normalized_tfidf = @utils.min_max_normalize(tfidf_values)

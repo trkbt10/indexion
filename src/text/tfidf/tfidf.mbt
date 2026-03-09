@@ -90,20 +90,21 @@ fn vector_norm(vector : TfidfVector) -> Double {
 }
 
 ///|
-/// Calculate cosine similarity between two TF-IDF vectors.
-/// Returns 1.0 for identical vectors, 0.0 for orthogonal vectors.
-/// If both vectors are empty, returns 1.0.
-/// If only one vector is empty, returns 0.0.
-pub fn cosine_similarity(a : TfidfVector, b : TfidfVector) -> Double {
-  // Both empty -> identical
+fn cosine_similarity_with_norms(
+  a : TfidfVector,
+  norm_a : Double,
+  b : TfidfVector,
+  norm_b : Double,
+) -> Double {
   if a.is_empty() && b.is_empty() {
     return 1.0
   }
-  // One empty -> no similarity
   if a.is_empty() || b.is_empty() {
     return 0.0
   }
-  // Iterate over the smaller vector for efficiency
+  if norm_a == 0.0 || norm_b == 0.0 {
+    return 0.0
+  }
   let (small, large) = if a.length() <= b.length() { (a, b) } else { (b, a) }
   let mut dot = 0.0
   for entry in small.iter() {
@@ -112,12 +113,18 @@ pub fn cosine_similarity(a : TfidfVector, b : TfidfVector) -> Double {
     let other = large.get(key)
     dot = dot + value * other
   }
+  dot / (norm_a * norm_b)
+}
+
+///|
+/// Calculate cosine similarity between two TF-IDF vectors.
+/// Returns 1.0 for identical vectors, 0.0 for orthogonal vectors.
+/// If both vectors are empty, returns 1.0.
+/// If only one vector is empty, returns 0.0.
+pub fn cosine_similarity(a : TfidfVector, b : TfidfVector) -> Double {
   let norm_a = vector_norm(a)
   let norm_b = vector_norm(b)
-  if norm_a == 0.0 || norm_b == 0.0 {
-    return 0.0
-  }
-  dot / (norm_a * norm_b)
+  cosine_similarity_with_norms(a, norm_a, b, norm_b)
 }
 
 ///|
@@ -138,29 +145,38 @@ pub fn cosine_distance(a : TfidfVector, b : TfidfVector) -> Double {
 }
 
 ///|
-/// Calculate TF-IDF cosine distances between adjacent texts.
-/// Returns an array of distances where distances[i] is the distance
-/// between texts[i] and texts[i+1].
-pub fn calculate_adjacent_tfidf_distance(
-  texts : Array[String],
+/// Calculate TF-IDF cosine distance between two pre-tokenized documents.
+pub fn calculate_tfidf_distance_from_tokens(
+  tokens_a : Array[String],
+  tokens_b : Array[String],
+) -> Double {
+  if tokens_a.length() == 0 && tokens_b.length() == 0 {
+    return 0.0
+  }
+  if tokens_a.length() == 0 || tokens_b.length() == 0 {
+    return 1.0
+  }
+  let docs = [tokens_a, tokens_b]
+  let document_frequency = build_document_frequency(docs)
+  let vec_a = build_tfidf_vector(tokens_a, document_frequency, 2)
+  let vec_b = build_tfidf_vector(tokens_b, document_frequency, 2)
+  cosine_distance(vec_a, vec_b)
+}
+
+///|
+/// Calculate TF-IDF cosine distances between adjacent pre-tokenized documents.
+pub fn calculate_adjacent_tfidf_distance_from_tokenized(
+  tokenized : Array[Array[String]],
 ) -> Array[Double] {
-  if texts.length() < 2 {
+  if tokenized.length() < 2 {
     return []
   }
-  // Tokenize all texts
-  let tokenized : Array[Array[String]] = []
-  for text in texts {
-    tokenized.push(@tokenizer.tokenize_for_tfidf(text))
-  }
-  // Build document frequency from all documents
   let document_frequency = build_document_frequency(tokenized)
   let total_docs = tokenized.length()
-  // Build TF-IDF vectors
   let vectors : Array[TfidfVector] = []
   for tokens in tokenized {
     vectors.push(build_tfidf_vector(tokens, document_frequency, total_docs))
   }
-  // Calculate distances between adjacent vectors
   let distances : Array[Double] = []
   for i = 0; i < vectors.length() - 1; i = i + 1 {
     let current = vectors[i]
@@ -176,35 +192,70 @@ pub fn calculate_adjacent_tfidf_distance(
 pub struct TfidfBatch {
   /// TF-IDF vectors for each document.
   vectors : Array[TfidfVector]
+  /// Cached vector norms for cosine similarity.
+  norms : Array[Double]
+  /// Aggregate build statistics for diagnostics.
+  build_stats : TfidfBatchBuildStats
 }
 
 ///|
-/// Create a TfidfBatch from an array of texts.
-/// Tokenizes each text once and builds TF-IDF vectors using shared document frequency.
-pub fn TfidfBatch::from_texts(texts : Array[String]) -> TfidfBatch {
-  if texts.length() == 0 {
-    return { vectors: [] }
+/// Create a TfidfBatch from pre-tokenized documents.
+/// Each inner array is a list of tokens for one document.
+pub fn TfidfBatch::from_tokens(tokenized : Array[Array[String]]) -> TfidfBatch {
+  build_batch_from_tokenized(tokenized)
+}
+
+///|
+fn build_batch_from_tokenized(tokenized : Array[Array[String]]) -> TfidfBatch {
+  if tokenized.length() == 0 {
+    return {
+      vectors: [],
+      norms: [],
+      build_stats: {
+        document_count: 0,
+        total_tokens: 0,
+        total_vector_terms: 0,
+        vocabulary_size: 0,
+      },
+    }
   }
-  // Tokenize all texts once
-  let tokenized : Array[Array[String]] = []
-  for text in texts {
-    tokenized.push(@tokenizer.tokenize_for_tfidf(text))
-  }
-  // Build document frequency from all documents
-  let document_frequency = build_document_frequency(tokenized)
   let total_docs = tokenized.length()
-  // Build TF-IDF vectors
-  let vectors : Array[TfidfVector] = []
+  let mut total_tokens = 0
   for tokens in tokenized {
-    vectors.push(build_tfidf_vector(tokens, document_frequency, total_docs))
+    total_tokens += tokens.length()
   }
-  { vectors, }
+  let document_frequency = build_document_frequency(tokenized)
+  let vectors : Array[TfidfVector] = []
+  let norms : Array[Double] = []
+  let mut total_vector_terms = 0
+  for tokens in tokenized {
+    let vector = build_tfidf_vector(tokens, document_frequency, total_docs)
+    total_vector_terms += vector.length()
+    norms.push(vector_norm(vector))
+    vectors.push(vector)
+  }
+  {
+    vectors,
+    norms,
+    build_stats: {
+      document_count: total_docs,
+      total_tokens,
+      total_vector_terms,
+      vocabulary_size: document_frequency.length(),
+    },
+  }
 }
 
 ///|
 /// Get the number of documents in the batch.
 pub fn TfidfBatch::length(self : TfidfBatch) -> Int {
   self.vectors.length()
+}
+
+///|
+/// Get aggregate build statistics for the batch.
+pub fn TfidfBatch::build_stats(self : TfidfBatch) -> TfidfBatchBuildStats {
+  self.build_stats
 }
 
 ///|
@@ -217,7 +268,101 @@ pub fn TfidfBatch::similarity(self : TfidfBatch, i : Int, j : Int) -> Double {
   if i == j {
     return 1.0
   }
-  cosine_similarity(self.vectors[i], self.vectors[j])
+  cosine_similarity_with_norms(
+    self.vectors[i],
+    self.norms[i],
+    self.vectors[j],
+    self.norms[j],
+  )
+}
+
+///|
+/// Calculate all pairwise similarities above a threshold with diagnostics.
+pub fn TfidfBatch::all_pairs_above_threshold_with_stats(
+  self : TfidfBatch,
+  threshold : Double,
+) -> (Array[(Int, Int, Double)], TfidfPairSearchStats) {
+  let results : Array[(Int, Int, Double)] = []
+  let n = self.vectors.length()
+  let mut posting_hits = 0
+  let mut candidate_pairs = 0
+  let mut cosine_evaluations = 0
+  if threshold > 1.0 {
+    return (
+      results,
+      { posting_hits, candidate_pairs, cosine_evaluations, output_pairs: 0 },
+    )
+  }
+  if threshold <= 0.0 {
+    for i = 0; i < n; i = i + 1 {
+      for j = i + 1; j < n; j = j + 1 {
+        let sim = cosine_similarity_with_norms(
+          self.vectors[i],
+          self.norms[i],
+          self.vectors[j],
+          self.norms[j],
+        )
+        candidate_pairs += 1
+        cosine_evaluations += 1
+        if sim >= threshold {
+          results.push((i, j, sim))
+        }
+      }
+    }
+    return (
+      results,
+      {
+        posting_hits,
+        candidate_pairs,
+        cosine_evaluations,
+        output_pairs: results.length(),
+      },
+    )
+  }
+  let postings : Map[String, Array[Int]] = {}
+  let seen_candidates : Array[Int] = Array::make(n, -1)
+  let candidates : Array[Int] = []
+  for i = 0; i < n; i = i + 1 {
+    candidates.clear()
+    for term_entry in self.vectors[i].iter() {
+      let term = term_entry.0
+      match postings.get(term) {
+        Some(doc_ids) => {
+          posting_hits += doc_ids.length()
+          for doc_id in doc_ids {
+            if seen_candidates[doc_id] != i {
+              seen_candidates[doc_id] = i
+              candidates.push(doc_id)
+            }
+          }
+          doc_ids.push(i)
+        }
+        None => postings.set(term, [i])
+      }
+    }
+    candidate_pairs += candidates.length()
+    cosine_evaluations += candidates.length()
+    for j in candidates {
+      let sim = cosine_similarity_with_norms(
+        self.vectors[j],
+        self.norms[j],
+        self.vectors[i],
+        self.norms[i],
+      )
+      if sim >= threshold {
+        results.push((j, i, sim))
+      }
+    }
+  }
+  (
+    results,
+    {
+      posting_hits,
+      candidate_pairs,
+      cosine_evaluations,
+      output_pairs: results.length(),
+    },
+  )
 }
 
 ///|
@@ -227,15 +372,5 @@ pub fn TfidfBatch::all_pairs_above_threshold(
   self : TfidfBatch,
   threshold : Double,
 ) -> Array[(Int, Int, Double)] {
-  let results : Array[(Int, Int, Double)] = []
-  let n = self.vectors.length()
-  for i = 0; i < n; i = i + 1 {
-    for j = i + 1; j < n; j = j + 1 {
-      let sim = cosine_similarity(self.vectors[i], self.vectors[j])
-      if sim >= threshold {
-        results.push((i, j, sim))
-      }
-    }
-  }
-  results
+  self.all_pairs_above_threshold_with_stats(threshold).0
 }

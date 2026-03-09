@@ -133,49 +133,34 @@ test "cosine_distance of orthogonal vectors is 1" {
 }
 
 ///|
-test "calculate_adjacent_tfidf_distance with similar texts" {
-  let texts = ["hello world", "hello there", "goodbye world"]
-  let distances = calculate_adjacent_tfidf_distance(texts)
+test "calculate_adjacent_tfidf_distance_from_tokenized with similar texts" {
+  let tokenized = [["hello", "world"], ["hello", "there"], ["goodbye", "world"]]
+  let distances = calculate_adjacent_tfidf_distance_from_tokenized(tokenized)
   assert_eq(distances.length(), 2)
-  // First two texts share "hello", second and third share "world"
   assert_true(distances[0] >= 0.0)
   assert_true(distances[0] <= 1.0)
-  assert_true(distances[1] >= 0.0)
-  assert_true(distances[1] <= 1.0)
 }
 
 ///|
-test "calculate_adjacent_tfidf_distance with identical texts" {
-  let texts = ["hello world", "hello world"]
-  let distances = calculate_adjacent_tfidf_distance(texts)
+test "calculate_adjacent_tfidf_distance_from_tokenized with identical tokens" {
+  let tokenized = [["hello", "world"], ["hello", "world"]]
+  let distances = calculate_adjacent_tfidf_distance_from_tokenized(tokenized)
   assert_eq(distances.length(), 1)
-  // Identical texts should have distance close to 0
   assert_true(distances[0] < 0.01)
 }
 
 ///|
-test "calculate_adjacent_tfidf_distance with single text" {
-  let texts = ["hello world"]
-  let distances = calculate_adjacent_tfidf_distance(texts)
+test "calculate_adjacent_tfidf_distance_from_tokenized with single doc" {
+  let tokenized = [["hello", "world"]]
+  let distances = calculate_adjacent_tfidf_distance_from_tokenized(tokenized)
   assert_eq(distances.length(), 0)
 }
 
 ///|
-test "calculate_adjacent_tfidf_distance with empty array" {
-  let texts : Array[String] = []
-  let distances = calculate_adjacent_tfidf_distance(texts)
+test "calculate_adjacent_tfidf_distance_from_tokenized with empty array" {
+  let tokenized : Array[Array[String]] = []
+  let distances = calculate_adjacent_tfidf_distance_from_tokenized(tokenized)
   assert_eq(distances.length(), 0)
-}
-
-///|
-test "calculate_adjacent_tfidf_distance with japanese text" {
-  let texts = ["日本語テスト", "日本語サンプル", "英語テスト"]
-  let distances = calculate_adjacent_tfidf_distance(texts)
-  assert_eq(distances.length(), 2)
-  // First two share "日本" and "本語" bigrams
-  // Second and third are more different
-  assert_true(distances[0] >= 0.0)
-  assert_true(distances[0] <= 1.0)
 }
 
 ///|

@@ -1,8 +1,24 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/cmd/indexion/plan/refactor"
 
+import {
+  "trkbt10/indexion/src/plan/types",
+}
+
 // Values
+pub fn build_refactor_plan(Array[FileCluster], RefactorPlanConfig, Map[String, String]) -> RefactorPlanJSON
+
 pub fn parse_args(Array[String], Int) -> RefactorPlanConfig
+
+pub fn refactor_to_plan_document(RefactorPlanJSON, String) -> @types.PlanDocument
+
+pub fn render_json(RefactorPlanJSON) -> String
+
+pub fn render_markdown(RefactorPlanJSON) -> String
+
+pub fn render_structured(RefactorPlanJSON, String) -> String
+
+pub fn render_text(RefactorPlanJSON) -> String
 
 pub fn run(Array[String], Int) -> Unit
 
@@ -11,9 +27,39 @@ pub fn show_help() -> Unit
 // Errors
 
 // Types and methods
-type DuplicateBlock
+pub struct ClusterJSON {
+  group_id : Int
+  files : Array[String]
+  pairs : Array[SimilarPairJSON]
+  duplicates : Array[DuplicateBlockJSON]
+  suggestions : RefactorSuggestion
+}
+
+pub struct ConfigSummary {
+  target_dir : String
+  threshold : Double
+  strategy : String
+  includes : Array[String]
+  excludes : Array[String]
+}
+
+pub struct DuplicateBlockJSON {
+  file1 : String
+  file2 : String
+  start_line1 : Int
+  start_line2 : Int
+  line_count : Int
+  func_name : String?
+  preview : String
+}
 
 type FileCluster
+
+pub struct PlanSummary {
+  total_clusters : Int
+  total_files_analyzed : Int
+  max_similarity : Double
+}
 
 pub struct RefactorPlanConfig {
   target_dir : String
@@ -22,11 +68,37 @@ pub struct RefactorPlanConfig {
   includes : Array[String]
   excludes : Array[String]
   output : String
+  format : String
+  style : String
+  project_name : String
   show_help : Bool
 }
 pub fn RefactorPlanConfig::default() -> Self
 
-type SimilarPair
+pub struct RefactorPlanJSON {
+  config : ConfigSummary
+  clusters : Array[ClusterJSON]
+  mut summary : PlanSummary
+}
+pub fn RefactorPlanJSON::add_cluster(Self, ClusterJSON) -> Unit
+pub fn RefactorPlanJSON::from_json(Json) -> Self?
+pub fn RefactorPlanJSON::new(ConfigSummary) -> Self
+pub fn RefactorPlanJSON::to_json(Self) -> Json
+pub fn RefactorPlanJSON::update_summary(Self, Int) -> Unit
+
+pub struct RefactorSuggestion {
+  shared_module : String
+  functions_to_extract : Array[String]
+  affected_files : Array[String]
+}
+
+pub struct SimilarPairJSON {
+  file1 : String
+  file2 : String
+  similarity : Double
+  preview1 : String
+  preview2 : String
+}
 
 // Type aliases
 

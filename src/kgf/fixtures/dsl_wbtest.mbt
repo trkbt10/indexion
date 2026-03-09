@@ -3,61 +3,36 @@
 /// Validates KGF parsing for SQL, HTML, Markdown.
 
 ///|
-test "dsl/sql-ddl: tokenize and parse" {
+test "dsl: tokenize sql, html, markdown" {
   let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
-  let spec = registry.get_spec("sql-ddl").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/dsl/sql-ddl/schema.sql",
-  ) catch {
-    _ => return
-  }
-  let tokens = lexer.tokenize(source)
-  assert_true(tokens.length() > 0)
-  // Should have CREATE keyword (KW_CREATE in sql-ddl.kgf)
-  let mut has_create = false
-  for tok in tokens {
-    if tok.kind == "KW_CREATE" {
-      has_create = true
-      break
-    }
-  }
-  assert_true(has_create)
-}
+  let fixtures = get_fixtures_dir()
 
-///|
-test "dsl/html: tokenize and parse" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
-  let spec = registry.get_spec("html").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/dsl/html/index.html",
-  ) catch {
-    _ => return
+  // SQL DDL
+  let sql_spec = registry.get_spec("sql-ddl").unwrap()
+  let sql_lexer = @lexer.Lexer::new(sql_spec.get_tokens())
+  let sql_src = @fs.read_file_to_string(fixtures + "/dsl/sql-ddl/schema.sql") catch { _ => "" }
+  if sql_src.length() > 0 {
+    let tokens = sql_lexer.tokenize(sql_src)
+    assert_true(tokens.length() > 0)
+    assert_true(tokens.iter().any(fn(t) { t.kind == "KW_CREATE" }))
   }
-  let tokens = lexer.tokenize(source)
-  assert_true(tokens.length() > 0)
-}
 
-///|
-test "dsl/markdown: tokenize and parse" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
-  let spec = registry.get_spec("markdown").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/dsl/markdown/README.md",
-  ) catch {
-    _ => return
+  // HTML
+  let html_spec = registry.get_spec("html").unwrap()
+  let html_lexer = @lexer.Lexer::new(html_spec.get_tokens())
+  let html_src = @fs.read_file_to_string(fixtures + "/dsl/html/index.html") catch { _ => "" }
+  if html_src.length() > 0 {
+    let tokens = html_lexer.tokenize(html_src)
+    assert_true(tokens.length() > 0)
   }
-  let tokens = lexer.tokenize(source)
-  assert_true(tokens.length() > 0)
-  // Should have link tokens (LBRACK for markdown links)
-  let mut has_link = false
-  for tok in tokens {
-    if tok.kind == "LBRACK" {
-      has_link = true
-      break
-    }
+
+  // Markdown
+  let md_spec = registry.get_spec("markdown").unwrap()
+  let md_lexer = @lexer.Lexer::new(md_spec.get_tokens())
+  let md_src = @fs.read_file_to_string(fixtures + "/dsl/markdown/README.md") catch { _ => "" }
+  if md_src.length() > 0 {
+    let tokens = md_lexer.tokenize(md_src)
+    assert_true(tokens.length() > 0)
+    assert_true(tokens.iter().any(fn(t) { t.kind == "LBRACK" }))
   }
-  assert_true(has_link)
 }

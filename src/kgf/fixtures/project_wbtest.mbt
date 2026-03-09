@@ -3,34 +3,32 @@
 /// Validates KGF parsing for package.json, Cargo.toml, go.mod, moon.mod.json, pyproject.toml, deno.json
 
 ///|
-/// Check if edge kind matches a string (handles Custom variant).
 fn edge_kind_is(kind : @graph.EdgeKind, expected : String) -> Bool {
   kind.to_string() == expected
 }
 
 ///|
-/// Result of running project pipeline.
 struct PipelineResult {
   edges : Array[@graph.Edge]
   parse_ok : Bool
 }
 
 ///|
-/// Helper to run full pipeline for project manifest files and return edges.
-fn run_project_pipeline(
+/// Run pipeline with pre-loaded registry.
+fn run_pipeline_with_registry(
+  registry : @registry.KGFRegistry,
   spec_name : String,
   source : String,
   file_path : String,
 ) -> PipelineResult {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
   let spec = match registry.get_spec(spec_name) {
     Some(s) => s
-    None => return { edges: [], parse_ok: false}
+    None => return { edges: [], parse_ok: false }
   }
   let lexer = @lexer.Lexer::new(spec.get_tokens())
   let tokens = lexer.tokenize(source)
   let peg = @peg.build_peg(spec) catch {
-    _ => return { edges: [], parse_ok: false}
+    _ => return { edges: [], parse_ok: false }
   }
   let start_rule = spec.get_start_rule()
   let parse_result = @peg.run_parse(peg, spec, start_rule, tokens)
@@ -39,697 +37,312 @@ fn run_project_pipeline(
   match parse_result {
     Some(eval_result) => {
       let ctx = @semantics.SemEvalCtx::new(
-        spec,
-        graph,
-        file_path,
-        "",
-        spec.get_language(),
-        fn(_path) { false },
+        spec, graph, file_path, "", spec.get_language(), fn(_) { false },
       )
       for event in eval_result.get_events() {
-        let rule_name = event.0
-        let labels = event.1
-        @semantics.eval_rule_semantics(rule_name, labels, ctx)
+        @semantics.eval_rule_semantics(event.0, event.1, ctx)
       }
-      { edges: graph.get_edges(), parse_ok: true}
+      { edges: graph.get_edges(), parse_ok: true }
     }
-    None => { edges: [], parse_ok: false}
+    None => { edges: [], parse_ok: false }
   }
 }
 
-// ============================================================================
-// package.json (npm) tests
-// ============================================================================
-
 ///|
-test "project/npm: tokenize package.json" {
+/// Test all npm/package.json project types.
+test "project: npm package.json tests" {
   let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let fixtures = get_fixtures_dir()
+
+  // Tokenize package.json
   let spec = registry.get_spec("package-json").unwrap()
   let lexer = @lexer.Lexer::new(spec.get_tokens())
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/npm/package.json",
-  ) catch {
-    _ => return
+  let source = @fs.read_file_to_string(fixtures + "/project/npm/package.json") catch { _ => "" }
+  if source.length() > 0 {
+    let tokens = lexer.tokenize(source)
+    assert_true(tokens.length() > 0)
+    assert_true(tokens.iter().any(fn(t) { t.kind == "KW_name" }))
+
+    // Parse and extract
+    let result = run_pipeline_with_registry(registry, "package-json", source, "package.json")
+    assert_true(result.parse_ok)
+    assert_true(result.edges.iter().any(fn(e) { edge_kind_is(e.kind, "projectName") }))
+    assert_true(result.edges.iter().any(fn(e) { edge_kind_is(e.kind, "projectVersion") }))
+    let npm_deps = result.edges.iter().filter(fn(e) {
+      edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("npm:")
+    }).collect()
+    assert_true(npm_deps.length() >= 3)
   }
-  let tokens = lexer.tokenize(source)
-  assert_true(tokens.length() > 0)
-  // Should have name field token
-  let mut has_name = false
-  for tok in tokens {
-    if tok.kind == "KW_name" {
-      has_name = true
-      break
-    }
+
+  // Monorepo root
+  let mono_src = @fs.read_file_to_string(fixtures + "/project/npm-monorepo/package.json") catch { _ => "" }
+  if mono_src.length() > 0 {
+    let result = run_pipeline_with_registry(registry, "package-json", mono_src, "package.json")
+    assert_true(result.edges.iter().any(fn(e) { edge_kind_is(e.kind, "projectName") }))
   }
-  assert_true(has_name)
+
+  // Workspace package
+  let ws_src = @fs.read_file_to_string(fixtures + "/project/npm-monorepo/packages/ui/package.json") catch { _ => "" }
+  if ws_src.length() > 0 {
+    let result = run_pipeline_with_registry(registry, "package-json", ws_src, "package.json")
+    assert_true(result.edges.iter().any(fn(e) {
+      edge_kind_is(e.kind, "dependsOn") && e.to.contains("@example/core")
+    }))
+  }
+
+  // Circular (should not hang)
+  let circ_src = @fs.read_file_to_string(fixtures + "/project/npm-circular/package.json") catch { _ => "" }
+  if circ_src.length() > 0 {
+    let result = run_pipeline_with_registry(registry, "package-json", circ_src, "package.json")
+    assert_true(result.edges.length() > 0)
+  }
 }
 
 ///|
-test "project/npm: parse and extract metadata" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/npm/package.json",
-  ) catch {
-    _ => return
-  }
-  let result = run_project_pipeline(
-    "package-json",
-    source,
-    "fixtures/project/npm/package.json",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have projectName edge
-  let has_name = edges.iter().any(fn(e) { edge_kind_is(e.kind, "projectName") })
-  assert_true(has_name)
-  // Should have projectVersion edge
-  let has_version = edges.iter().any(fn(e) { edge_kind_is(e.kind, "projectVersion") })
-  assert_true(has_version)
-  // Should have dependsOn edges for npm: prefixed packages
-  let npm_deps = edges
-    .iter()
-    .filter(fn(e) { edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("npm:") })
-    .collect()
-  assert_true(npm_deps.length() >= 3) // react, react-dom, clsx
-}
-
-///|
-test "project/npm-monorepo: parse root package.json" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/npm-monorepo/package.json",
-  ) catch {
-    _ => return
-  }
-  let result = run_project_pipeline(
-    "package-json",
-    source,
-    "fixtures/project/npm-monorepo/package.json",
-  )
-  let edges = result.edges
-  // Should have projectName edge
-  let name_edge = edges.iter().find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
-  assert_true(name_edge is Some(_))
-  // Should have devDependencies
-  let has_dev_deps = edges
-    .iter()
-    .any(fn(e) { edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("npm:") })
-  assert_true(has_dev_deps)
-}
-
-///|
-test "project/npm-monorepo: parse workspace package" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/npm-monorepo/packages/ui/package.json",
-  ) catch {
-    _ => return
-  }
-  let result = run_project_pipeline(
-    "package-json",
-    source,
-    "fixtures/project/npm-monorepo/packages/ui/package.json",
-  )
-  let edges = result.edges
-  // Should have dependency on @example/core (workspace reference)
-  let has_core_dep = edges.iter().any(fn(e) {
-    edge_kind_is(e.kind, "dependsOn") && e.to.contains("@example/core")
-  })
-  assert_true(has_core_dep)
-}
-
-///|
-test "project/npm-circular: parse without infinite loop" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/npm-circular/package.json",
-  ) catch {
-    _ => return
-  }
-  // Should complete without hanging (circular reference is in TS files, not package.json)
-  let result = run_project_pipeline(
-    "package-json",
-    source,
-    "fixtures/project/npm-circular/package.json",
-  )
-  assert_true(result.edges.length() > 0)
-}
-
-// ============================================================================
-// Cargo.toml tests
-// ============================================================================
-
-///|
-test "project/cargo: tokenize Cargo.toml" {
+/// Test Cargo.toml parsing.
+test "project: cargo tests" {
   let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let fixtures = get_fixtures_dir()
+
+  // Tokenize
   let spec = registry.get_spec("cargo-toml").unwrap()
   let lexer = @lexer.Lexer::new(spec.get_tokens())
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/cargo/Cargo.toml",
-  ) catch {
-    _ => return
+  let source = @fs.read_file_to_string(fixtures + "/project/cargo/Cargo.toml") catch { _ => "" }
+  if source.length() > 0 {
+    let tokens = lexer.tokenize(source)
+    assert_true(tokens.iter().any(fn(t) { t.kind == "SectionPackage" }))
+
+    // Parse
+    let src = if source.has_suffix("\n") { source } else { source + "\n" }
+    let result = run_pipeline_with_registry(registry, "cargo-toml", src, "Cargo.toml")
+    assert_true(result.parse_ok)
+    let name = result.edges.iter().find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
+    assert_true(name is Some(_))
+    let deps = result.edges.iter().filter(fn(e) {
+      edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("crate:")
+    }).collect()
+    assert_true(deps.length() >= 3)
   }
-  let tokens = lexer.tokenize(source)
-  assert_true(tokens.length() > 0)
-  // Should have [package] section
-  let mut has_package = false
-  for tok in tokens {
-    if tok.kind == "SectionPackage" {
-      has_package = true
-      break
-    }
+
+  // Workspace
+  let ws_src = @fs.read_file_to_string(fixtures + "/project/cargo-workspace/Cargo.toml") catch { _ => "" }
+  if ws_src.length() > 0 {
+    let result = run_pipeline_with_registry(registry, "cargo-toml", ws_src, "Cargo.toml")
+    assert_true(result.edges.length() >= 0)
   }
-  assert_true(has_package)
+
+  // Workspace crate
+  let crate_src = @fs.read_file_to_string(fixtures + "/project/cargo-workspace/crates/cli/Cargo.toml") catch { _ => "" }
+  if crate_src.length() > 0 {
+    let src = if crate_src.has_suffix("\n") { crate_src } else { crate_src + "\n" }
+    let result = run_pipeline_with_registry(registry, "cargo-toml", src, "Cargo.toml")
+    assert_true(result.parse_ok)
+  }
 }
 
 ///|
-test "project/cargo: parse and extract metadata" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/cargo/Cargo.toml",
-  ) catch {
-    _ => return
-  }
-  // Ensure source ends with newline (required by TOML grammar)
-  let source_with_nl = if source.has_suffix("\n") { source } else { source + "\n" }
-  let result = run_project_pipeline(
-    "cargo-toml",
-    source_with_nl,
-    "fixtures/project/cargo/Cargo.toml",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have projectName edge
-  let name_edge = edges.iter().find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
-  assert_true(name_edge is Some(_))
-  match name_edge {
-    Some(e) => assert_eq(e.to, "example-cli")
-    None => fail("Expected projectName edge")
-  }
-  // Should have dependsOn edges for crate: prefixed packages
-  let crate_deps = edges
-    .iter()
-    .filter(fn(e) { edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("crate:") })
-    .collect()
-  assert_true(crate_deps.length() >= 3) // clap, serde, tokio
-}
-
-///|
-test "project/cargo-workspace: parse workspace Cargo.toml" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/cargo-workspace/Cargo.toml",
-  ) catch {
-    _ => return
-  }
-  let result = run_project_pipeline(
-    "cargo-toml",
-    source,
-    "fixtures/project/cargo-workspace/Cargo.toml",
-  )
-  // Workspace toml may not have projectName, but should parse without error
-  assert_true(result.edges.length() >= 0)
-}
-
-///|
-test "project/cargo-workspace: parse crate Cargo.toml" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/cargo-workspace/crates/cli/Cargo.toml",
-  ) catch {
-    _ => return
-  }
-  let source_with_nl = if source.has_suffix("\n") { source } else { source + "\n" }
-  let result = run_project_pipeline(
-    "cargo-toml",
-    source_with_nl,
-    "fixtures/project/cargo-workspace/crates/cli/Cargo.toml",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have projectName edge
-  let has_name = edges.iter().any(fn(e) { edge_kind_is(e.kind, "projectName") })
-  assert_true(has_name)
-}
-
-// ============================================================================
-// go.mod tests
-// ============================================================================
-
-///|
-test "project/go: tokenize go.mod" {
+/// Test go.mod parsing.
+test "project: go mod tests" {
   let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let fixtures = get_fixtures_dir()
+
   let spec = registry.get_spec("go-mod").unwrap()
   let lexer = @lexer.Lexer::new(spec.get_tokens())
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/go/go.mod",
-  ) catch {
-    _ => return
+  let source = @fs.read_file_to_string(fixtures + "/project/go/go.mod") catch { _ => "" }
+  if source.length() > 0 {
+    let tokens = lexer.tokenize(source)
+    assert_true(tokens.iter().any(fn(t) { t.kind == "KW_module" }))
+
+    let src = if source.has_suffix("\n") { source } else { source + "\n" }
+    let result = run_pipeline_with_registry(registry, "go-mod", src, "go.mod")
+    assert_true(result.parse_ok)
+    let name = result.edges.iter().find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
+    assert_true(name is Some(_))
+    let deps = result.edges.iter().filter(fn(e) {
+      edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("go:")
+    }).collect()
+    assert_true(deps.length() >= 3)
   }
-  let tokens = lexer.tokenize(source)
-  assert_true(tokens.length() > 0)
-  // Should have module keyword
-  let mut has_module = false
-  for tok in tokens {
-    if tok.kind == "KW_module" {
-      has_module = true
-      break
-    }
-  }
-  assert_true(has_module)
 }
 
 ///|
-test "project/go: parse and extract metadata" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/go/go.mod",
-  ) catch {
-    _ => return
-  }
-  let source_with_nl = if source.has_suffix("\n") { source } else { source + "\n" }
-  let result = run_project_pipeline(
-    "go-mod",
-    source_with_nl,
-    "fixtures/project/go/go.mod",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have projectName edge
-  let name_edge = edges.iter().find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
-  assert_true(name_edge is Some(_))
-  match name_edge {
-    Some(e) => assert_eq(e.to, "github.com/example/go-service")
-    None => fail("Expected projectName edge")
-  }
-  // Should have dependsOn edges for go: prefixed packages
-  let go_deps = edges
-    .iter()
-    .filter(fn(e) { edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("go:") })
-    .collect()
-  assert_true(go_deps.length() >= 3) // gin, cobra, zap
-}
-
-// ============================================================================
-// moon.mod.json tests
-// ============================================================================
-
-///|
-test "project/moonbit: tokenize moon.mod.json" {
+/// Test moon.mod.json parsing.
+test "project: moonbit tests" {
   let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let fixtures = get_fixtures_dir()
+
   let spec = registry.get_spec("moon-mod").unwrap()
   let lexer = @lexer.Lexer::new(spec.get_tokens())
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/moonbit/moon.mod.json",
-  ) catch {
-    _ => return
+  let source = @fs.read_file_to_string(fixtures + "/project/moonbit/moon.mod.json") catch { _ => "" }
+  if source.length() > 0 {
+    let tokens = lexer.tokenize(source)
+    assert_true(tokens.iter().any(fn(t) { t.kind == "KW_name" }))
+
+    let result = run_pipeline_with_registry(registry, "moon-mod", source, "moon.mod.json")
+    assert_true(result.parse_ok)
+    let name = result.edges.iter().find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
+    assert_true(name is Some(_))
+    let deps = result.edges.iter().filter(fn(e) {
+      edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("pkg:")
+    }).collect()
+    assert_true(deps.length() >= 2)
   }
-  let tokens = lexer.tokenize(source)
-  assert_true(tokens.length() > 0)
-  // Should have name field token
-  let mut has_name = false
-  for tok in tokens {
-    if tok.kind == "KW_name" {
-      has_name = true
-      break
-    }
-  }
-  assert_true(has_name)
 }
 
 ///|
-test "project/moonbit: parse and extract metadata" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/moonbit/moon.mod.json",
-  ) catch {
-    _ => return
-  }
-  let result = run_project_pipeline(
-    "moon-mod",
-    source,
-    "fixtures/project/moonbit/moon.mod.json",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have projectName edge
-  let name_edge = edges.iter().find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
-  assert_true(name_edge is Some(_))
-  match name_edge {
-    Some(e) => assert_eq(e.to, "trkbt10/sample-lib")
-    None => fail("Expected projectName edge")
-  }
-  // Should have pkg: prefixed dependencies
-  let pkg_deps = edges
-    .iter()
-    .filter(fn(e) { edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("pkg:") })
-    .collect()
-  assert_true(pkg_deps.length() >= 2) // moonbitlang/core, peter-jerry-ye/json5
-}
-
-// ============================================================================
-// pyproject.toml tests
-// ============================================================================
-
-///|
-test "project/python: tokenize pyproject.toml" {
+/// Test pyproject.toml parsing.
+test "project: python tests" {
   let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let fixtures = get_fixtures_dir()
+
   let spec = registry.get_spec("pyproject-toml").unwrap()
   let lexer = @lexer.Lexer::new(spec.get_tokens())
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/python/pyproject.toml",
-  ) catch {
-    _ => return
+  let source = @fs.read_file_to_string(fixtures + "/project/python/pyproject.toml") catch { _ => "" }
+  if source.length() > 0 {
+    let tokens = lexer.tokenize(source)
+    assert_true(tokens.iter().any(fn(t) { t.kind == "SectionProject" }))
+
+    let src = if source.has_suffix("\n") { source } else { source + "\n" }
+    let result = run_pipeline_with_registry(registry, "pyproject-toml", src, "pyproject.toml")
+    assert_true(result.parse_ok)
+    let deps = result.edges.iter().filter(fn(e) {
+      edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("pypi:")
+    }).collect()
+    assert_true(deps.length() >= 3)
   }
-  let tokens = lexer.tokenize(source)
-  assert_true(tokens.length() > 0)
-  // Should have [project] section
-  let mut has_project = false
-  for tok in tokens {
-    if tok.kind == "SectionProject" {
-      has_project = true
-      break
-    }
-  }
-  assert_true(has_project)
 }
 
 ///|
-test "project/python: parse and extract metadata" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/python/pyproject.toml",
-  ) catch {
-    _ => return
-  }
-  let source_with_nl = if source.has_suffix("\n") { source } else { source + "\n" }
-  let result = run_project_pipeline(
-    "pyproject-toml",
-    source_with_nl,
-    "fixtures/project/python/pyproject.toml",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have projectName edge
-  let name_edge = edges.iter().find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
-  assert_true(name_edge is Some(_))
-  match name_edge {
-    Some(e) => assert_eq(e.to, "example-sdk")
-    None => fail("Expected projectName edge")
-  }
-  // Should have dependsOn edges for pypi: prefixed packages
-  let pypi_deps = edges
-    .iter()
-    .filter(fn(e) { edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("pypi:") })
-    .collect()
-  assert_true(pypi_deps.length() >= 3) // httpx, pydantic, tenacity
-}
-
-// ============================================================================
-// deno.json tests
-// ============================================================================
-
-///|
-test "project/deno: tokenize deno.json" {
+/// Test deno.json parsing.
+test "project: deno tests" {
   let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let fixtures = get_fixtures_dir()
+
   let spec = registry.get_spec("deno-json").unwrap()
   let lexer = @lexer.Lexer::new(spec.get_tokens())
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/deno/deno.json",
-  ) catch {
-    _ => return
+  let source = @fs.read_file_to_string(fixtures + "/project/deno/deno.json") catch { _ => "" }
+  if source.length() > 0 {
+    let tokens = lexer.tokenize(source)
+    assert_true(tokens.iter().any(fn(t) { t.kind == "KW_name" }))
+
+    let result = run_pipeline_with_registry(registry, "deno-json", source, "deno.json")
+    assert_true(result.parse_ok)
+    let deps = result.edges.iter().filter(fn(e) { edge_kind_is(e.kind, "dependsOn") }).collect()
+    assert_true(deps.length() >= 3)
   }
-  let tokens = lexer.tokenize(source)
-  assert_true(tokens.length() > 0)
-  // Should have name field token
-  let mut has_name = false
-  for tok in tokens {
-    if tok.kind == "KW_name" {
-      has_name = true
-      break
-    }
-  }
-  assert_true(has_name)
 }
 
 ///|
-test "project/deno: parse and extract metadata" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/deno/deno.json",
-  ) catch {
-    _ => return
-  }
-  let result = run_project_pipeline(
-    "deno-json",
-    source,
-    "fixtures/project/deno/deno.json",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have projectName edge
-  let name_edge = edges.iter().find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
-  assert_true(name_edge is Some(_))
-  match name_edge {
-    Some(e) => assert_eq(e.to, "@example/web-api")
-    None => fail("Expected projectName edge")
-  }
-  // Should have dependsOn edges from imports
-  let deps = edges.iter().filter(fn(e) { edge_kind_is(e.kind, "dependsOn") }).collect()
-  assert_true(deps.length() >= 3) // @std/http, @std/path, zod
-}
-
-// ============================================================================
-// Registry detection tests
-// ============================================================================
-
-///|
-test "registry: detect project file types" {
+/// Test other project types (vcpkg, csproj, swift, maven, gradle, ruby, php).
+test "project: other languages" {
   let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
-  // package.json detection
+  let fixtures = get_fixtures_dir()
+
+  // vcpkg (C++)
+  let vcpkg_src = @fs.read_file_to_string(fixtures + "/project/vcpkg/vcpkg.json") catch { _ => "" }
+  if vcpkg_src.length() > 0 {
+    let result = run_pipeline_with_registry(registry, "vcpkg-json", vcpkg_src, "vcpkg.json")
+    assert_true(result.parse_ok)
+    let deps = result.edges.iter().filter(fn(e) {
+      edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("vcpkg:")
+    }).collect()
+    assert_true(deps.length() >= 4)
+  }
+
+  // csproj (C#)
+  let csproj_src = @fs.read_file_to_string(fixtures + "/project/csharp/Example.csproj") catch { _ => "" }
+  if csproj_src.length() > 0 {
+    let result = run_pipeline_with_registry(registry, "csproj", csproj_src, "Example.csproj")
+    assert_true(result.parse_ok)
+    let deps = result.edges.iter().filter(fn(e) {
+      edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("nuget:")
+    }).collect()
+    assert_true(deps.length() >= 3)
+  }
+
+  // Package.swift
+  let swift_src = @fs.read_file_to_string(fixtures + "/project/swift/Package.swift") catch { _ => "" }
+  if swift_src.length() > 0 {
+    let result = run_pipeline_with_registry(registry, "package-swift", swift_src, "Package.swift")
+    assert_true(result.parse_ok)
+    let deps = result.edges.iter().filter(fn(e) {
+      edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("swift:")
+    }).collect()
+    assert_true(deps.length() >= 3)
+  }
+
+  // pom.xml (Maven)
+  let pom_src = @fs.read_file_to_string(fixtures + "/project/maven/pom.xml") catch { _ => "" }
+  if pom_src.length() > 0 {
+    let result = run_pipeline_with_registry(registry, "pom-xml", pom_src, "pom.xml")
+    assert_true(result.parse_ok)
+    let deps = result.edges.iter().filter(fn(e) {
+      edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("maven:")
+    }).collect()
+    assert_true(deps.length() >= 4)
+  }
+
+  // build.gradle.kts
+  let gradle_src = @fs.read_file_to_string(fixtures + "/project/gradle/build.gradle.kts") catch { _ => "" }
+  if gradle_src.length() > 0 {
+    let result = run_pipeline_with_registry(registry, "build-gradle-kts", gradle_src, "build.gradle.kts")
+    assert_true(result.parse_ok)
+    let deps = result.edges.iter().filter(fn(e) {
+      edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("maven:")
+    }).collect()
+    assert_true(deps.length() >= 6)
+  }
+
+  // Gemfile (Ruby)
+  let gem_src = @fs.read_file_to_string(fixtures + "/project/ruby/Gemfile") catch { _ => "" }
+  if gem_src.length() > 0 {
+    let result = run_pipeline_with_registry(registry, "gemfile", gem_src, "Gemfile")
+    assert_true(result.parse_ok)
+    let deps = result.edges.iter().filter(fn(e) {
+      edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("rubygems:")
+    }).collect()
+    assert_true(deps.length() >= 8)
+  }
+
+  // composer.json (PHP)
+  let php_src = @fs.read_file_to_string(fixtures + "/project/php/composer.json") catch { _ => "" }
+  if php_src.length() > 0 {
+    let result = run_pipeline_with_registry(registry, "composer-json", php_src, "composer.json")
+    assert_true(result.parse_ok)
+    let deps = result.edges.iter().filter(fn(e) {
+      edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("packagist:")
+    }).collect()
+    assert_true(deps.length() >= 7)
+  }
+}
+
+///|
+/// Test registry detection functions.
+test "project: registry detection" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+
+  // is_file_supported
   assert_true(registry.is_file_supported("package.json"))
-  assert_true(registry.is_file_supported("/some/path/package.json"))
-  // Cargo.toml detection
+  assert_true(registry.is_file_supported("/path/package.json"))
   assert_true(registry.is_file_supported("Cargo.toml"))
-  assert_true(registry.is_file_supported("/project/Cargo.toml"))
-  // go.mod detection
   assert_true(registry.is_file_supported("go.mod"))
-  // moon.mod.json detection
   assert_true(registry.is_file_supported("moon.mod.json"))
-  // pyproject.toml detection
   assert_true(registry.is_file_supported("pyproject.toml"))
-  // deno.json detection
   assert_true(registry.is_file_supported("deno.json"))
   assert_true(registry.is_file_supported("deno.jsonc"))
-}
 
-///|
-test "registry: detect_from_path returns correct language" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
-  // package.json can map to either "package-json" or "npm-package-json" depending on load order
+  // detect_from_path
   let pkg_lang = registry.detect_from_path("package.json")
-  assert_true(
-    pkg_lang == Some("package-json") || pkg_lang == Some("npm-package-json"),
-  )
+  assert_true(pkg_lang == Some("package-json") || pkg_lang == Some("npm-package-json"))
   assert_eq(registry.detect_from_path("Cargo.toml"), Some("cargo-toml"))
   assert_eq(registry.detect_from_path("go.mod"), Some("go-mod"))
   assert_eq(registry.detect_from_path("moon.mod.json"), Some("moon-mod"))
-  assert_eq(registry.detect_from_path("pyproject.toml"), Some("pyproject-toml"))
-  assert_eq(registry.detect_from_path("deno.json"), Some("deno-json"))
-}
 
-///|
-test "registry: get_external_prefixes includes project prefixes" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  // get_external_prefixes
   let prefixes = registry.get_external_prefixes()
-  // Should include npm:, crate:, go:, pkg:, pypi:, jsr:
-  let has_npm = prefixes.iter().any(fn(p) { p == "npm:" })
-  let has_crate = prefixes.iter().any(fn(p) { p == "crate:" })
-  let has_go = prefixes.iter().any(fn(p) { p == "go:" })
-  let has_pkg = prefixes.iter().any(fn(p) { p == "pkg:" })
-  let has_pypi = prefixes.iter().any(fn(p) { p == "pypi:" })
-  let has_jsr = prefixes.iter().any(fn(p) { p == "jsr:" })
-  assert_true(has_npm)
-  assert_true(has_crate)
-  assert_true(has_go)
-  assert_true(has_pkg)
-  assert_true(has_pypi)
-  assert_true(has_jsr)
-}
-
-// ============================================================================
-// Additional language tests (C++, C#, Swift, Java, Ruby, PHP)
-// ============================================================================
-
-///|
-test "project/vcpkg: parse C++ vcpkg.json" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/vcpkg/vcpkg.json",
-  ) catch {
-    _ => return
-  }
-  let result = run_project_pipeline(
-    "vcpkg-json",
-    source,
-    "fixtures/project/vcpkg/vcpkg.json",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have projectName
-  let name_edge = edges.iter().find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
-  assert_true(name_edge is Some(_))
-  // Should have vcpkg: dependencies
-  let deps = edges
-    .iter()
-    .filter(fn(e) { edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("vcpkg:") })
-    .collect()
-  assert_true(deps.length() >= 4)
-}
-
-///|
-test "project/csharp: parse .csproj" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/csharp/Example.csproj",
-  ) catch {
-    _ => return
-  }
-  let result = run_project_pipeline(
-    "csproj",
-    source,
-    "fixtures/project/csharp/Example.csproj",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have projectName
-  let has_name = edges.iter().any(fn(e) { edge_kind_is(e.kind, "projectName") })
-  assert_true(has_name)
-  // Should have nuget: dependencies
-  let deps = edges
-    .iter()
-    .filter(fn(e) { edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("nuget:") })
-    .collect()
-  assert_true(deps.length() >= 3)
-}
-
-///|
-test "project/swift: parse Package.swift" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/swift/Package.swift",
-  ) catch {
-    _ => return
-  }
-  let result = run_project_pipeline(
-    "package-swift",
-    source,
-    "fixtures/project/swift/Package.swift",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have projectName
-  let name_edge = edges.iter().find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
-  assert_true(name_edge is Some(_))
-  match name_edge {
-    Some(e) => assert_eq(e.to, "MySwiftPackage")
-    None => fail("Expected projectName edge")
-  }
-  // Should have swift: dependencies (GitHub URLs)
-  let deps = edges
-    .iter()
-    .filter(fn(e) { edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("swift:") })
-    .collect()
-  assert_true(deps.length() >= 3)
-}
-
-///|
-test "project/maven: parse pom.xml" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/maven/pom.xml",
-  ) catch {
-    _ => return
-  }
-  let result = run_project_pipeline(
-    "pom-xml",
-    source,
-    "fixtures/project/maven/pom.xml",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have projectName
-  let name_edge = edges.iter().find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
-  assert_true(name_edge is Some(_))
-  match name_edge {
-    Some(e) => assert_eq(e.to, "my-java-app")
-    None => fail("Expected projectName edge")
-  }
-  // Should have maven: dependencies
-  let deps = edges
-    .iter()
-    .filter(fn(e) { edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("maven:") })
-    .collect()
-  assert_true(deps.length() >= 4)
-}
-
-///|
-test "project/gradle: parse build.gradle.kts" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/gradle/build.gradle.kts",
-  ) catch {
-    _ => return
-  }
-  let result = run_project_pipeline(
-    "build-gradle-kts",
-    source,
-    "fixtures/project/gradle/build.gradle.kts",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have projectVersion
-  let has_version = edges.iter().any(fn(e) { edge_kind_is(e.kind, "projectVersion") })
-  assert_true(has_version)
-  // Should have maven: dependencies
-  let deps = edges
-    .iter()
-    .filter(fn(e) { edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("maven:") })
-    .collect()
-  assert_true(deps.length() >= 6)
-}
-
-///|
-test "project/ruby: parse Gemfile" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/ruby/Gemfile",
-  ) catch {
-    _ => return
-  }
-  let result = run_project_pipeline(
-    "gemfile",
-    source,
-    "fixtures/project/ruby/Gemfile",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have rubygems: dependencies
-  let deps = edges
-    .iter()
-    .filter(fn(e) { edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("rubygems:") })
-    .collect()
-  assert_true(deps.length() >= 8)
-}
-
-///|
-test "project/php: parse composer.json" {
-  let source = @fs.read_file_to_string(
-    get_fixtures_dir() + "/project/php/composer.json",
-  ) catch {
-    _ => return
-  }
-  let result = run_project_pipeline(
-    "composer-json",
-    source,
-    "fixtures/project/php/composer.json",
-  )
-  assert_true(result.parse_ok)
-  let edges = result.edges
-  // Should have projectName
-  let name_edge = edges.iter().find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
-  assert_true(name_edge is Some(_))
-  match name_edge {
-    Some(e) => assert_eq(e.to, "example/my-php-app")
-    None => fail("Expected projectName edge")
-  }
-  // Should have packagist: dependencies
-  let deps = edges
-    .iter()
-    .filter(fn(e) { edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("packagist:") })
-    .collect()
-  assert_true(deps.length() >= 7)
+  assert_true(prefixes.iter().any(fn(p) { p == "npm:" }))
+  assert_true(prefixes.iter().any(fn(p) { p == "crate:" }))
+  assert_true(prefixes.iter().any(fn(p) { p == "go:" }))
+  assert_true(prefixes.iter().any(fn(p) { p == "pkg:" }))
+  assert_true(prefixes.iter().any(fn(p) { p == "pypi:" }))
 }

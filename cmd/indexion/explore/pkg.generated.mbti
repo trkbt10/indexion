@@ -17,11 +17,11 @@ pub struct ExploreConfig {
   strategy : String
   threshold : Double
   extensions : Array[String]
+  includes : Array[String]
+  excludes : Array[String]
   show_help : Bool
 }
 pub fn ExploreConfig::default() -> Self
-
-type FilePair
 
 // Type aliases
 
