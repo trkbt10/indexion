@@ -1,0 +1,3 @@
+import {
+  "trkbt10/indexion/src/plan/types" @types,
+}

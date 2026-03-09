@@ -197,7 +197,7 @@ pub fn show_help() -> Unit {
     "  --exclude=PATTERN    Exclude files matching pattern (can be repeated)",
   )
   println("  --output=FILE, -o=   Output file path (default: stdout)")
-  println("  --format=FORMAT      Output format: md, json, text (default: md)")
+  println("  --format=FORMAT      Output format: md, json, text, github-issue (default: md)")
   println("  --style=STYLE        Output style: raw, structured (default: raw)")
   println("  --name=NAME          Project name for structured output")
   println("  --help               Show this help message")
@@ -207,6 +207,12 @@ pub fn show_help() -> Unit {
   println(
     "  structured   Comprehensive refactoring plan with phases/checklists",
   )
+  println("")
+  println("Formats:")
+  println("  md           Standard Markdown output")
+  println("  json         JSON intermediate representation")
+  println("  text         Plain text output")
+  println("  github-issue GitHub Issue format with labels and checklist")
   println("")
   println("Examples:")
   println("  indexion plan refactor src/")
@@ -724,20 +730,26 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   // Build intermediate plan
   let plan = build_refactor_plan(clusters, config, file_contents)
   // Render to selected format/style
-  let output_content = match config.style {
-    "structured" => {
-      let name = if config.project_name.length() > 0 {
-        config.project_name
-      } else {
-        extract_project_name(config.target_dir)
-      }
-      render_structured(plan, name)
+  let name = if config.project_name.length() > 0 {
+    config.project_name
+  } else {
+    extract_project_name(config.target_dir)
+  }
+  let output_content = match config.format {
+    "github-issue" => {
+      let doc = refactor_to_plan_document(plan, name)
+      let issue = @plan_render.render_github_issue(doc)
+      format_refactor_issue(issue)
     }
     _ =>
-      match config.format {
-        "json" => render_json(plan)
-        "text" => render_text(plan)
-        _ => render_markdown(plan)
+      match config.style {
+        "structured" => render_structured(plan, name)
+        _ =>
+          match config.format {
+            "json" => render_json(plan)
+            "text" => render_text(plan)
+            _ => render_markdown(plan)
+          }
       }
   }
   // Output
@@ -751,4 +763,27 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   } else {
     println(output_content)
   }
+}
+
+///|
+fn format_refactor_issue(issue : @plan_render.GitHubIssue) -> String {
+  let buf = StringBuilder::new()
+  buf.write_string("# ")
+  buf.write_string(issue.title)
+  buf.write_string("\n\n")
+  if issue.labels.length() > 0 {
+    buf.write_string("**Labels:** ")
+    for i, label in issue.labels {
+      if i > 0 {
+        buf.write_string(", ")
+      }
+      buf.write_string("`")
+      buf.write_string(label)
+      buf.write_string("`")
+    }
+    buf.write_string("\n\n")
+  }
+  buf.write_string("---\n\n")
+  buf.write_string(issue.body)
+  buf.to_string()
 }

@@ -134,6 +134,45 @@ test "FilterConfig: user include allows" {
 }
 
 ///|
+test "FilterConfig: user include excludes non-matching" {
+  let config = FilterConfig::new().with_includes(["*.mbt"])
+  // Non-matching files should be excluded when --include is specified
+  let result = config.should_include("src/main.txt", false)
+  assert_true(result is FilterResult::Exclude(_))
+}
+
+///|
+test "FilterConfig: user include excludes moon.pkg" {
+  let config = FilterConfig::new().with_includes(["*.mbt"])
+  // moon.pkg should be excluded when --include=*.mbt
+  let result = config.should_include("src/moon.pkg", false)
+  assert_true(result is FilterResult::Exclude(_))
+}
+
+///|
+test "FilterConfig: include and exclude combined" {
+  let config = FilterConfig::new()
+    .with_includes(["*.mbt"])
+    .with_excludes(["*_wbtest.mbt"])
+  // Matching include but also matching exclude -> Exclude wins
+  let test_result = config.should_include("src/foo_wbtest.mbt", false)
+  assert_true(test_result is FilterResult::Exclude(_))
+  // Matching include, not matching exclude -> Include
+  let main_result = config.should_include("src/main.mbt", false)
+  assert_eq(main_result, FilterResult::Include)
+}
+
+///|
+test "FilterConfig: no include means include all" {
+  let config = FilterConfig::new()
+  // Without --include, all files should be included (unless excluded)
+  let txt_result = config.should_include("src/readme.txt", false)
+  assert_eq(txt_result, FilterResult::Include)
+  let mbt_result = config.should_include("src/main.mbt", false)
+  assert_eq(mbt_result, FilterResult::Include)
+}
+
+///|
 test "should_skip_dir: skips hidden" {
   let config = FilterConfig::new()
   assert_true(config.should_skip_dir(".git"))

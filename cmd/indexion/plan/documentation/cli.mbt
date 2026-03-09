@@ -15,6 +15,8 @@
 /// |--------|-------------|---------|
 /// | `--output=FILE`, `-o=` | Output file path | stdout |
 /// | `--style=STYLE` | Output style: coverage, full | full |
+/// | `--format=FORMAT` | Output format: md, json, github-issue | md |
+/// | `--template=FILE` | GitHub Issue Form template (.yml) | - |
 /// | `--name=NAME` | Project name (auto-detect from moon.mod.json) | - |
 
 ///|
@@ -22,6 +24,8 @@ pub struct DocPlanConfig {
   target_dir : String
   output : String
   style : String // "coverage", "full"
+  format : String // "md", "json", "github-issue"
+  template : String // path to GitHub Issue Form template
   project_name : String
   show_help : Bool
 }
@@ -32,6 +36,8 @@ pub fn DocPlanConfig::default() -> DocPlanConfig {
     target_dir: "",
     output: "",
     style: "full",
+    format: "md",
+    template: "",
     project_name: "",
     show_help: false,
   }
@@ -64,6 +70,12 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> DocPlanConfig {
     } else if arg.has_prefix("--style=") {
       let value = get_arg_value(arg, 8)
       config = { ..config, style: value }
+    } else if arg.has_prefix("--format=") {
+      let value = get_arg_value(arg, 9)
+      config = { ..config, format: value }
+    } else if arg.has_prefix("--template=") {
+      let value = get_arg_value(arg, 11)
+      config = { ..config, template: value }
     } else if arg.has_prefix("--name=") {
       let value = get_arg_value(arg, 7)
       config = { ..config, project_name: value }
@@ -86,6 +98,8 @@ pub fn show_help() -> Unit {
   println("Options:")
   println("  --output=FILE, -o=   Output file path (default: stdout)")
   println("  --style=STYLE        Output style: coverage, full (default: full)")
+  println("  --format=FORMAT      Output format: md, json, github-issue (default: md)")
+  println("  --template=FILE      GitHub Issue Form template (.yml)")
   println(
     "  --name=NAME          Project name (auto-detect from moon.mod.json)",
   )
@@ -95,14 +109,15 @@ pub fn show_help() -> Unit {
   println("  coverage   Documentation coverage analysis only")
   println("  full       Complete documentation plan with action items")
   println("")
-  println("For README documentation tasks, use 'indexion plan readme' instead.")
+  println("Formats:")
+  println("  md           Standard Markdown output")
+  println("  json         JSON intermediate representation")
+  println("  github-issue GitHub Issue format with title and body")
   println("")
   println("Examples:")
   println("  indexion plan documentation src/")
-  println("  indexion plan documentation --style=coverage src/")
-  println("  indexion plan documentation -o=docs-plan.md src/")
-  println("")
-  println("Note: Use 'indexion doc init' to generate README templates.")
+  println("  indexion plan documentation --format=github-issue src/")
+  println("  indexion plan documentation --template=.github/ISSUE_TEMPLATE/doc.yml src/")
 }
 
 ///|
@@ -127,11 +142,8 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   }
   // Analyze documentation coverage
   let analysis = analyze_documentation(config.target_dir)
-  // Render output
-  let output_content = match config.style {
-    "coverage" => render_coverage(analysis, project_name)
-    _ => render_full(analysis, project_info, project_name)
-  }
+  // Generate output based on format
+  let output_content = render_output(config, analysis, project_info, project_name)
   // Output
   if config.output.length() > 0 {
     try {
@@ -143,4 +155,92 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   } else {
     println(output_content)
   }
+}
+
+///|
+fn render_output(
+  config : DocPlanConfig,
+  analysis : DocAnalysis,
+  project_info : ProjectInfo,
+  project_name : String
+) -> String {
+  match config.format {
+    "json" => {
+      // Convert to IR and output as JSON
+      let doc = to_plan_document(analysis, project_info, project_name)
+      doc.to_json().stringify(indent=2)
+    }
+    "github-issue" => {
+      // Convert to IR and render as GitHub Issue
+      let doc = to_plan_document(analysis, project_info, project_name)
+      if config.template.length() > 0 {
+        // Fill template
+        match @plan_template.load_issue_form(config.template) {
+          Some(template) => {
+            let filled = @plan_template.fill_and_render(template, doc)
+            let buf = StringBuilder::new()
+            buf.write_string("# ")
+            buf.write_string(filled.title)
+            buf.write_string("\n\n")
+            if filled.labels.length() > 0 {
+              buf.write_string("**Labels:** ")
+              for i, label in filled.labels {
+                if i > 0 {
+                  buf.write_string(", ")
+                }
+                buf.write_string("`")
+                buf.write_string(label)
+                buf.write_string("`")
+              }
+              buf.write_string("\n\n")
+            }
+            buf.write_string(filled.body)
+            buf.to_string()
+          }
+          None => {
+            println("Warning: Could not load template, using default format")
+            let issue = @plan_render.render_github_issue(doc)
+            format_github_issue(issue)
+          }
+        }
+      } else {
+        let issue = @plan_render.render_github_issue(doc)
+        format_github_issue(issue)
+      }
+    }
+    _ => {
+      // Default: Markdown using legacy renderer for now
+      match config.style {
+        "coverage" => render_coverage(analysis, project_name)
+        _ => {
+          // Use new IR-based renderer
+          let doc = to_plan_document(analysis, project_info, project_name)
+          @plan_render.render_markdown(doc)
+        }
+      }
+    }
+  }
+}
+
+///|
+fn format_github_issue(issue : @plan_render.GitHubIssue) -> String {
+  let buf = StringBuilder::new()
+  buf.write_string("# ")
+  buf.write_string(issue.title)
+  buf.write_string("\n\n")
+  if issue.labels.length() > 0 {
+    buf.write_string("**Labels:** ")
+    for i, label in issue.labels {
+      if i > 0 {
+        buf.write_string(", ")
+      }
+      buf.write_string("`")
+      buf.write_string(label)
+      buf.write_string("`")
+    }
+    buf.write_string("\n\n")
+  }
+  buf.write_string("---\n\n")
+  buf.write_string(issue.body)
+  buf.to_string()
 }

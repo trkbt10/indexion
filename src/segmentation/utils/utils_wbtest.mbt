@@ -274,19 +274,6 @@ test "min_max_normalize normalizes range" {
 }
 
 ///|
-test "tokenize_text_for_tfidf returns tokens" {
-  let tokens = tokenize_text_for_tfidf("Hello World")
-  assert_true(tokens.length() > 0)
-}
-
-///|
-test "calculate_adjacent_tfidf_distance with texts" {
-  let texts = ["Hello world", "How are you", "Goodbye world"]
-  let distances = calculate_adjacent_tfidf_distance(texts)
-  assert_eq(distances.length(), 2)
-}
-
-///|
 test "QuoteStackEntry creation and access" {
   let entry = QuoteStackEntry::new('「', 5)
   assert_eq(entry.get_open(), '「')

@@ -1,11 +1,12 @@
 ///|
 /// Check if a path should be included based on filter configuration.
 /// Priority (highest to lowest):
-/// 1. User --include/--exclude (CLI options)
-/// 2. Project ignore file (INDEXIONIGNORE_FILENAME)
-/// 3. Git ignore file (GITIGNORE_FILENAME)
-/// 4. KGF ignore patterns (language-specific)
-/// 5. Default excludes (fallback)
+/// 1. User --exclude (forces exclusion, highest priority)
+/// 2. User --include (whitelist mode when specified)
+/// 3. Project ignore file (INDEXIONIGNORE_FILENAME)
+/// 4. Git ignore file (GITIGNORE_FILENAME)
+/// 5. KGF ignore patterns (language-specific)
+/// 6. Default excludes (fallback)
 pub fn FilterConfig::should_include(
   self : FilterConfig,
   path : String,
@@ -13,18 +14,28 @@ pub fn FilterConfig::should_include(
 ) -> FilterResult {
   let config = self
   let basename = get_basename(path)
-  // 1. Check user includes (highest priority - forces inclusion)
-  // Match against both full path and basename
-  for pattern in config.user_includes {
-    if glob_match(path, pattern) || glob_match(basename, pattern) {
-      return Include
-    }
-  }
-  // 2. Check user excludes (highest priority - forces exclusion)
+  // 1. Check user excludes first (highest priority - forces exclusion)
   for pattern in config.user_excludes {
     if glob_match(path, pattern) || glob_match(basename, pattern) {
       return Exclude("user --exclude: " + pattern)
     }
+  }
+  // 2. Check user includes (whitelist mode when specified)
+  // If --include is specified, only matching files are included
+  if config.user_includes.length() > 0 {
+    let mut matched = false
+    for pattern in config.user_includes {
+      if glob_match(path, pattern) || glob_match(basename, pattern) {
+        matched = true
+        break
+      }
+    }
+    if not(matched) {
+      return Exclude("user --include: no match")
+    }
+    // Matched include pattern - continue to check other rules
+    // (already passed exclude check above)
+    return Include
   }
   // 3. Check indexionignore (process all patterns, last match wins)
   let indexion_result = check_ignore_patterns(

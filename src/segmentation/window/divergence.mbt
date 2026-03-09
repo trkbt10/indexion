@@ -91,7 +91,7 @@ pub fn calculate_window_ncd_tfidf_divergence(
   let ncd_values = @utils.calculate_adjacent_ncd(windows)
 
   // Calculate TF-IDF distances between adjacent windows
-  let tfidf_values = @utils.calculate_adjacent_tfidf_distance(windows)
+  let tfidf_values = @tfidf.calculate_adjacent_tfidf_distance(windows)
 
   // Normalize both using min-max normalization
   let normalized_ncd = @utils.min_max_normalize(ncd_values)

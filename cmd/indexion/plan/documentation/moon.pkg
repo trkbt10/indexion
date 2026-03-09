@@ -1,4 +1,7 @@
 import {
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/filter" @filter,
+  "trkbt10/indexion/src/plan/types" @plan_types,
+  "trkbt10/indexion/src/plan/render" @plan_render,
+  "trkbt10/indexion/src/plan/template" @plan_template,
 }
