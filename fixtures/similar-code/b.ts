@@ -1,0 +1,17 @@
+function computeSum(numbers: number[]): number {
+  let result = 0;
+  for (const num of numbers) {
+    result += num;
+  }
+  return result;
+}
+
+function formatOutput(amount: number): string {
+  return `Sum: ${amount}`;
+}
+
+export function run() {
+  const values = [1, 2, 3, 4, 5];
+  const sum = computeSum(values);
+  console.log(formatOutput(sum));
+}
