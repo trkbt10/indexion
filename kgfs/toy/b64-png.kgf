@@ -24,14 +24,14 @@ TOKEN B64_QUAD /[A-Za-z0-9+\/]{4}|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{2}==/
 Doc -> Item*
 
 Item -> PngSig
-     | ChunkIHDR
-     | ChunkPLTE
-     | ChunkIDAT
-     | ChunkIEND
-     | ChunktEXt
-     | ChunkzTXt
-     | ChunkiTXt
-     | Other
+     / ChunkIHDR
+     / ChunkPLTE
+     / ChunkIDAT
+     / ChunkIEND
+     / ChunktEXt
+     / ChunkzTXt
+     / ChunkiTXt
+     / Other
 
 PngSig -> sig:PNG_SIG
 ChunkIHDR -> ihdr:IHDR_B64

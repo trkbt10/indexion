@@ -9,7 +9,7 @@ TOKEN ParenArticle /（第[一二三四五六七八九十百千〇零]+条(?:の
 
 === grammar
 Doc          -> Ref*
-Ref          -> LawRef | ArticleRef
+Ref          -> LawRef / ArticleRef
 LawRef       -> law:LawName
 ArticleRef   -> art:ParenArticle
 

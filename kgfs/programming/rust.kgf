@@ -103,58 +103,58 @@ Module -> ModuleDoc? Item*
 ModuleDoc -> module_doc:InnerDocComment ( NL InnerDocComment )*
 
 Item -> NL
-     | DocComment
-     | InnerDocComment
-     | UseDecl
-     | ModDecl
-     | FnDecl
-     | StructDecl
-     | EnumDecl
-     | TraitDecl
-     | ImplDecl
-     | TypeDecl
-     | ConstDecl
-     | StaticDecl
-     | Other
+     / DocComment
+     / InnerDocComment
+     / UseDecl
+     / ModDecl
+     / FnDecl
+     / StructDecl
+     / EnumDecl
+     / TraitDecl
+     / ImplDecl
+     / TypeDecl
+     / ConstDecl
+     / StaticDecl
+     / Other
 
 # Doc block (consecutive /// comments)
 DocBlock -> DocComment ( NL DocComment )*
 
 # Use declaration (imports)
 UseDecl -> Attribute* KW_pub? KW_use UsePath SEMI
-UsePath -> ( KW_crate | KW_self | KW_super | Ident ) ( DCOLON UsePathSegment )*
-UsePathSegment -> Ident | STAR | LBRACE UseList RBRACE
+UsePath -> ( KW_crate / KW_self / KW_super / Ident ) ( DCOLON UsePathSegment )*
+UsePathSegment -> Ident / STAR / LBRACE UseList RBRACE
 UseList -> UsePath ( COMMA UsePath )* COMMA?
 
 # Module declaration
-ModDecl -> doc:DocBlock? NL? Attribute* KW_pub? KW_mod id:Ident ( SEMI | Body )
+ModDecl -> doc:DocBlock? NL? Attribute* KW_pub? KW_mod id:Ident ( SEMI / Body )
 
 # Function declaration
 FnDecl -> doc:DocBlock? NL? Attribute* KW_pub? KW_const? KW_async? KW_unsafe? KW_extern? KW_fn id:Ident GenericParams? LPAREN ParamList? RPAREN ReturnType? WhereClause? Body?
 
 # Struct declaration
-StructDecl -> doc:DocBlock? NL? Attribute* KW_pub? KW_struct id:Ident GenericParams? WhereClause? ( StructBody | TupleBody SEMI | SEMI )
+StructDecl -> doc:DocBlock? NL? Attribute* KW_pub? KW_struct id:Ident GenericParams? WhereClause? ( StructBody / TupleBody SEMI / SEMI )
 StructBody -> LBRACE StructField* RBRACE
 TupleBody -> LPAREN TupleField* RPAREN
-StructField -> field_doc:DocBlock? Attribute* KW_pub? field_id:Ident COLON Type COMMA? | NL | LineComment
-TupleField -> field_doc:DocBlock? Attribute* KW_pub? Type COMMA? | NL | LineComment
+StructField -> field_doc:DocBlock? Attribute* KW_pub? field_id:Ident COLON Type COMMA? / NL / LineComment
+TupleField -> field_doc:DocBlock? Attribute* KW_pub? Type COMMA? / NL / LineComment
 
 # Enum declaration
 EnumDecl -> doc:DocBlock? NL? Attribute* KW_pub? KW_enum id:Ident GenericParams? WhereClause? EnumBody
 EnumBody -> LBRACE EnumVariant* RBRACE
-EnumVariant -> variant_doc:DocBlock? Attribute* variant_id:Ident VariantPayload? COMMA? | NL | LineComment
-VariantPayload -> TupleBody | StructBody | FATARROW Expr
+EnumVariant -> variant_doc:DocBlock? Attribute* variant_id:Ident VariantPayload? COMMA? / NL / LineComment
+VariantPayload -> TupleBody / StructBody / FATARROW Expr
 
 # Trait declaration
 TraitDecl -> doc:DocBlock? NL? Attribute* KW_pub? KW_unsafe? KW_trait id:Ident GenericParams? SuperTraits? WhereClause? TraitBody
 SuperTraits -> COLON TypeBound ( Operator TypeBound )*
 TraitBody -> LBRACE TraitItem* RBRACE
-TraitItem -> method_doc:DocBlock? Attribute* KW_fn method_id:Ident GenericParams? LPAREN ParamList? RPAREN ReturnType? WhereClause? ( Body | SEMI ) | NL | LineComment
+TraitItem -> method_doc:DocBlock? Attribute* KW_fn method_id:Ident GenericParams? LPAREN ParamList? RPAREN ReturnType? WhereClause? ( Body / SEMI ) / NL / LineComment
 
 # Impl block
 ImplDecl -> doc:DocBlock? NL? Attribute* KW_unsafe? KW_impl GenericParams? ( KW_dyn? Type KW_for )? Type WhereClause? ImplBody
 ImplBody -> LBRACE ImplItem* RBRACE
-ImplItem -> FnDecl | TypeDecl | ConstDecl | NL | LineComment
+ImplItem -> FnDecl / TypeDecl / ConstDecl / NL / LineComment
 
 # Type alias
 TypeDecl -> doc:DocBlock? NL? Attribute* KW_pub? KW_type id:Ident GenericParams? WhereClause? ( FATARROW Type )? SEMI
@@ -167,30 +167,30 @@ StaticDecl -> doc:DocBlock? NL? Attribute* KW_pub? KW_static KW_mut? id:Ident CO
 
 # Parameters and types
 ParamList -> Param ( COMMA Param )*
-Param -> Attribute* KW_mut? ( AMP Lifetime? KW_mut? )? param_id:Ident COLON Type | KW_self | AMP Lifetime? KW_mut? KW_self
+Param -> Attribute* KW_mut? ( AMP Lifetime? KW_mut? )? param_id:Ident COLON Type / KW_self / AMP Lifetime? KW_mut? KW_self
 ReturnType -> ARROW Type
 GenericParams -> Operator GenericParam ( COMMA GenericParam )* Operator
-GenericParam -> Lifetime | Ident ( COLON TypeBound )?
+GenericParam -> Lifetime / Ident ( COLON TypeBound )?
 TypeBound -> Type ( Operator Type )*
 WhereClause -> KW_where WherePredicate ( COMMA WherePredicate )* COMMA?
 WherePredicate -> Type COLON TypeBound
 
 Type -> TypeAtom ( Operator TypeAtom )*
-TypeAtom -> AMP Lifetime? KW_mut? Type | STAR KW_const? KW_mut? Type | LBRACKET Type ( SEMI Expr )? RBRACKET | LPAREN TypeList? RPAREN | KW_dyn Type | KW_impl Type | QualifiedPath | TypePath
+TypeAtom -> AMP Lifetime? KW_mut? Type / STAR KW_const? KW_mut? Type / LBRACKET Type ( SEMI Expr )? RBRACKET / LPAREN TypeList? RPAREN / KW_dyn Type / KW_impl Type / QualifiedPath / TypePath
 QualifiedPath -> Operator TypePath KW_as TypePath Operator DCOLON Ident GenericArgs?
-TypePath -> ( KW_crate | KW_self | KW_super | Ident ) ( DCOLON Ident GenericArgs? )*
+TypePath -> ( KW_crate / KW_self / KW_super / Ident ) ( DCOLON Ident GenericArgs? )*
 GenericArgs -> Operator Type ( COMMA Type )* Operator
 TypeList -> Type ( COMMA Type )* COMMA?
 
 # Body (simplified - balance braces)
 Body -> LBRACE BodyContent* RBRACE
-BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+BodyContent -> LBRACE BodyContent* RBRACE / LPAREN BodyContent* RPAREN / LBRACKET BodyContent* RBRACKET / Atom
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | Number | String | RawString | Char | Lifetime | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | DOTDOT | COMMA | COLON | DCOLON | ARROW | FATARROW | Operator | STAR | AMP | QMARK | Macro | Attribute
+ExprAtom -> Ident / Number / String / RawString / Char / Lifetime / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / DOTDOT / COMMA / COLON / DCOLON / ARROW / FATARROW / Operator / STAR / AMP / QMARK / Macro / Attribute
 
-Atom -> ExprAtom | NL | DocComment | InnerDocComment | LineComment | BlockComment | KW_fn | KW_pub | KW_struct | KW_enum | KW_trait | KW_impl | KW_type | KW_mod | KW_use | KW_let | KW_mut | KW_const | KW_static | KW_crate | KW_self | KW_super | KW_extern | KW_async | KW_await | KW_dyn | KW_where | KW_if | KW_else | KW_match | KW_loop | KW_while | KW_for | KW_in | KW_return | KW_unsafe | KW_as | KW_ref | KW_move | KeywordType | SEMI | POUND
+Atom -> ExprAtom / NL / DocComment / InnerDocComment / LineComment / BlockComment / KW_fn / KW_pub / KW_struct / KW_enum / KW_trait / KW_impl / KW_type / KW_mod / KW_use / KW_let / KW_mut / KW_const / KW_static / KW_crate / KW_self / KW_super / KW_extern / KW_async / KW_await / KW_dyn / KW_where / KW_if / KW_else / KW_match / KW_loop / KW_while / KW_for / KW_in / KW_return / KW_unsafe / KW_as / KW_ref / KW_move / KeywordType / SEMI / POUND
 
 Other -> Atom
 

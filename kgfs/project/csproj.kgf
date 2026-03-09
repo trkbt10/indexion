@@ -47,26 +47,26 @@ TOKEN Text               /[^<]+/
 
 === grammar
 CsprojFile      -> XMLDecl? OpenProject Content* CloseProject
-Content         -> PropertyGroup | ItemGroup | Comment | OtherElem
+Content         -> PropertyGroup / ItemGroup / Comment / OtherElem
 
 PropertyGroup   -> OpenPropertyGroup PropContent* ClosePropertyGroup
-PropContent     -> TargetFrameworkProp | VersionProp | AssemblyProp
-                 | DescProp | AuthorsProp | LicenseProp | OtherProp
+PropContent     -> TargetFrameworkProp / VersionProp / AssemblyProp
+                 / DescProp / AuthorsProp / LicenseProp / OtherProp
 TargetFrameworkProp -> TargetFramework
 VersionProp     -> OpenVersion value:Text CloseVersion
 AssemblyProp    -> OpenAssemblyName value:Text CloseAssemblyName
 DescProp        -> OpenDescription value:Text CloseDescription
 AuthorsProp     -> OpenAuthors Text CloseAuthors
 LicenseProp     -> OpenPackageLicense value:Text ClosePackageLicense
-OtherProp       -> OpenElem Text CloseElem | SelfCloseElem | Text
+OtherProp       -> OpenElem Text CloseElem / SelfCloseElem / Text
 
 ItemGroup       -> OpenItemGroup ItemContent* CloseItemGroup
-ItemContent     -> PackageRefItem | ProjectRefItem | OtherItem
+ItemContent     -> PackageRefItem / ProjectRefItem / OtherItem
 PackageRefItem  -> ref:PackageRef
 ProjectRefItem  -> ref:ProjectRef
-OtherItem       -> SelfCloseElem | Text
+OtherItem       -> SelfCloseElem / Text
 
-OtherElem       -> OpenElem Text? CloseElem | SelfCloseElem | Text
+OtherElem       -> OpenElem Text? CloseElem / SelfCloseElem / Text
 
 === attrs
 on VersionProp:  note fieldKey payload="version"

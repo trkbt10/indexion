@@ -61,12 +61,12 @@ TOKEN EQ       /=/
 Module -> Item*
 
 Item -> NL
-     | DocComment
-     | FunctionDecl
-     | LocalFunctionDecl
-     | LocalVarDecl
-     | AssignmentDecl
-     | Other
+     / DocComment
+     / FunctionDecl
+     / LocalFunctionDecl
+     / LocalVarDecl
+     / AssignmentDecl
+     / Other
 
 # Doc block
 DocBlock -> DocComment ( NL DocComment )*
@@ -86,20 +86,20 @@ AssignmentDecl -> doc:DocBlock? NL? id:Ident ( DOT Ident )* EQ Expr
 
 # Function body
 FunctionBody -> ( Statement )*
-Statement -> NL | LineComment | BlockComment | KW_if | KW_then | KW_elseif | KW_else | KW_for | KW_in | KW_while | KW_do | KW_repeat | KW_until | KW_break | KW_return | Expr
+Statement -> NL / LineComment / BlockComment / KW_if / KW_then / KW_elseif / KW_else / KW_for / KW_in / KW_while / KW_do / KW_repeat / KW_until / KW_break / KW_return / Expr
 
 # Parameters
 ParamList -> Param ( COMMA Param )*
-Param -> param_id:Ident | Operator
+Param -> param_id:Ident / Operator
 
 # Expression list
 ExprList -> Expr ( COMMA Expr )*
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | Number | String | BoolLit | NilLit | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | EQ | Operator
+ExprAtom -> Ident / Number / String / BoolLit / NilLit / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / COLON / EQ / Operator
 
-Atom -> ExprAtom | NL | DocComment | LineComment | BlockComment | KW_function | KW_local | KW_end | KW_return | KW_if | KW_then | KW_elseif | KW_else | KW_for | KW_in | KW_while | KW_do | KW_repeat | KW_until | KW_break | SEMI
+Atom -> ExprAtom / NL / DocComment / LineComment / BlockComment / KW_function / KW_local / KW_end / KW_return / KW_if / KW_then / KW_elseif / KW_else / KW_for / KW_in / KW_while / KW_do / KW_repeat / KW_until / KW_break / SEMI
 
 Other -> Atom
 

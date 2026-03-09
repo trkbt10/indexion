@@ -14,16 +14,16 @@ TOKEN PAD /=/
 
 === grammar
 Doc -> Item*
-Item -> Quad | Tail | Other
+Item -> Quad / Tail / Other
 
 # Common structure: 4 base64 chars form a quartet.
 Quad -> B64_CHAR B64_CHAR B64_CHAR B64_CHAR
 
 # Tail with padding.
-Tail -> B64_CHAR B64_CHAR PAD PAD | B64_CHAR B64_CHAR B64_CHAR PAD
+Tail -> B64_CHAR B64_CHAR PAD PAD / B64_CHAR B64_CHAR B64_CHAR PAD
 
 # Fallback to keep progress.
-Other -> B64_CHAR | PAD
+Other -> B64_CHAR / PAD
 
 === attrs
 # none

@@ -90,42 +90,42 @@ TOKEN AT       /@/
 Module -> Item*
 
 Item -> NL
-     | DocComment
-     | DocBlockComment
-     | ImportDecl
-     | ClassDecl
-     | StructDecl
-     | EnumDecl
-     | ProtocolDecl
-     | ExtensionDecl
-     | ActorDecl
-     | FuncDecl
-     | VarDecl
-     | TypeAliasDecl
-     | Other
+     / DocComment
+     / DocBlockComment
+     / ImportDecl
+     / ClassDecl
+     / StructDecl
+     / EnumDecl
+     / ProtocolDecl
+     / ExtensionDecl
+     / ActorDecl
+     / FuncDecl
+     / VarDecl
+     / TypeAliasDecl
+     / Other
 
 # Doc block (consecutive /// comments)
-DocBlock -> DocComment ( NL DocComment )* | DocBlockComment
+DocBlock -> DocComment ( NL DocComment )* / DocBlockComment
 
 # Import declaration
 ImportDecl -> KW_import path:QualifiedName
-QualifiedName -> ( Ident | TypeIdent ) ( DOT ( Ident | TypeIdent ) )*
+QualifiedName -> ( Ident / TypeIdent ) ( DOT ( Ident / TypeIdent ) )*
 
 # Class declaration
 ClassDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_class id:TypeIdent TypeParams? InheritanceClause? WhereClause? ClassBody
 InheritanceClause -> COLON TypeList
 ClassBody -> LBRACE ClassMember* RBRACE
-ClassMember -> FuncDecl | VarDecl | InitDecl | DeinitDecl | SubscriptDecl | ClassDecl | StructDecl | EnumDecl | TypeAliasDecl | NL | LineComment | BlockComment
+ClassMember -> FuncDecl / VarDecl / InitDecl / DeinitDecl / SubscriptDecl / ClassDecl / StructDecl / EnumDecl / TypeAliasDecl / NL / LineComment / BlockComment
 
 # Struct declaration
 StructDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_struct id:TypeIdent TypeParams? InheritanceClause? WhereClause? StructBody
 StructBody -> LBRACE StructMember* RBRACE
-StructMember -> FuncDecl | VarDecl | InitDecl | SubscriptDecl | TypeAliasDecl | NL | LineComment | BlockComment
+StructMember -> FuncDecl / VarDecl / InitDecl / SubscriptDecl / TypeAliasDecl / NL / LineComment / BlockComment
 
 # Enum declaration
 EnumDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_enum id:TypeIdent TypeParams? InheritanceClause? WhereClause? EnumBody
 EnumBody -> LBRACE EnumMember* RBRACE
-EnumMember -> EnumCase | FuncDecl | VarDecl | InitDecl | SubscriptDecl | TypeAliasDecl | NL | LineComment | BlockComment
+EnumMember -> EnumCase / FuncDecl / VarDecl / InitDecl / SubscriptDecl / TypeAliasDecl / NL / LineComment / BlockComment
 EnumCase -> case_doc:DocBlock? Attribute* KW_case case_id:Ident AssociatedValues? RawValue? ( COMMA case_id:Ident AssociatedValues? RawValue? )*
 AssociatedValues -> LPAREN ParamList? RPAREN
 RawValue -> Operator Expr
@@ -133,27 +133,27 @@ RawValue -> Operator Expr
 # Protocol declaration
 ProtocolDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_protocol id:TypeIdent InheritanceClause? WhereClause? ProtocolBody
 ProtocolBody -> LBRACE ProtocolMember* RBRACE
-ProtocolMember -> FuncDecl | VarDecl | InitDecl | SubscriptDecl | AssociatedType | NL | LineComment | BlockComment
+ProtocolMember -> FuncDecl / VarDecl / InitDecl / SubscriptDecl / AssociatedType / NL / LineComment / BlockComment
 AssociatedType -> assoc_doc:DocBlock? Attribute* KW_typealias assoc_id:TypeIdent ( COLON Type )? WhereClause?
 
 # Extension declaration
 ExtensionDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_extension Type InheritanceClause? WhereClause? ExtensionBody
 ExtensionBody -> LBRACE ExtensionMember* RBRACE
-ExtensionMember -> FuncDecl | VarDecl | InitDecl | SubscriptDecl | TypeAliasDecl | ClassDecl | StructDecl | EnumDecl | NL | LineComment | BlockComment
+ExtensionMember -> FuncDecl / VarDecl / InitDecl / SubscriptDecl / TypeAliasDecl / ClassDecl / StructDecl / EnumDecl / NL / LineComment / BlockComment
 
 # Actor declaration
 ActorDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_actor id:TypeIdent TypeParams? InheritanceClause? WhereClause? ClassBody
 
 # Function declaration
-FuncDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_func id:Ident TypeParams? LPAREN ParamList? RPAREN ( KW_throws | KW_async KW_throws? )? ( ARROW Type )? WhereClause? Body?
+FuncDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_func id:Ident TypeParams? LPAREN ParamList? RPAREN ( KW_throws / KW_async KW_throws? )? ( ARROW Type )? WhereClause? Body?
 
 # Variable declaration
-VarDecl -> doc:DocBlock? NL? Attribute* Modifier* ( KW_let | KW_var ) id:Ident ( COLON Type )? ( Operator Expr )? Accessors?
+VarDecl -> doc:DocBlock? NL? Attribute* Modifier* ( KW_let / KW_var ) id:Ident ( COLON Type )? ( Operator Expr )? Accessors?
 Accessors -> LBRACE Accessor+ RBRACE
-Accessor -> Attribute* Modifier* ( Ident | KW_get | KW_set ) Body?
+Accessor -> Attribute* Modifier* ( Ident / KW_get / KW_set ) Body?
 
 # Init declaration
-InitDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_init ( Operator | LPAREN ParamList? RPAREN ) ( KW_throws )? Body?
+InitDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_init ( Operator / LPAREN ParamList? RPAREN ) ( KW_throws )? Body?
 
 # Deinit declaration
 DeinitDecl -> doc:DocBlock? NL? KW_deinit Body
@@ -165,32 +165,32 @@ SubscriptDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_subscript TypeParams?
 TypeAliasDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_typealias id:TypeIdent TypeParams? Operator Type
 
 # Modifiers
-Modifier -> KW_public | KW_private | KW_internal | KW_fileprivate | KW_open | KW_final | KW_static | KW_override | KW_mutating | KW_async
+Modifier -> KW_public / KW_private / KW_internal / KW_fileprivate / KW_open / KW_final / KW_static / KW_override / KW_mutating / KW_async
 
 # Parameters
 ParamList -> Param ( COMMA Param )*
-Param -> Attribute* ( Ident | Operator )? param_id:Ident COLON Ident? Type ( Operator Expr )?
+Param -> Attribute* ( Ident / Operator )? param_id:Ident COLON Ident? Type ( Operator Expr )?
 WhereClause -> KW_where WhereConstraint ( COMMA WhereConstraint )*
-WhereConstraint -> Type ( COLON | Operator ) Type
+WhereConstraint -> Type ( COLON / Operator ) Type
 
 # Types
 TypeParams -> Operator TypeParam ( COMMA TypeParam )* Operator
 TypeParam -> TypeIdent ( COLON Type )?
 TypeList -> Type ( COMMA Type )*
 Type -> TypeAtom ( Operator TypeAtom )* QMARK?
-TypeAtom -> TypeIdent TypeArgs? | LBRACKET Type ( COLON Type )? RBRACKET | LPAREN TypeList? RPAREN ( ARROW Type )?
+TypeAtom -> TypeIdent TypeArgs? / LBRACKET Type ( COLON Type )? RBRACKET / LPAREN TypeList? RPAREN ( ARROW Type )?
 TypeArgs -> Operator Type ( COMMA Type )* Operator
 QMARK -> /\?/
 
 # Body (simplified - balance braces)
 Body -> LBRACE BodyContent* RBRACE
-BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+BodyContent -> LBRACE BodyContent* RBRACE / LPAREN BodyContent* RPAREN / LBRACKET BodyContent* RBRACKET / Atom
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | TypeIdent | Number | String | BoolLit | NilLit | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | ARROW | Operator | Attribute
+ExprAtom -> Ident / TypeIdent / Number / String / BoolLit / NilLit / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / COLON / ARROW / Operator / Attribute
 
-Atom -> ExprAtom | NL | DocComment | DocBlockComment | LineComment | BlockComment | KW_import | KW_let | KW_var | KW_func | KW_class | KW_struct | KW_enum | KW_protocol | KW_extension | KW_typealias | KW_actor | KW_init | KW_deinit | KW_subscript | KW_public | KW_private | KW_internal | KW_fileprivate | KW_open | KW_final | KW_static | KW_override | KW_mutating | KW_async | KW_await | KW_throws | KW_if | KW_else | KW_guard | KW_switch | KW_case | KW_for | KW_in | KW_while | KW_return | KW_where | KW_self | KW_Self | SEMI | AT
+Atom -> ExprAtom / NL / DocComment / DocBlockComment / LineComment / BlockComment / KW_import / KW_let / KW_var / KW_func / KW_class / KW_struct / KW_enum / KW_protocol / KW_extension / KW_typealias / KW_actor / KW_init / KW_deinit / KW_subscript / KW_public / KW_private / KW_internal / KW_fileprivate / KW_open / KW_final / KW_static / KW_override / KW_mutating / KW_async / KW_await / KW_throws / KW_if / KW_else / KW_guard / KW_switch / KW_case / KW_for / KW_in / KW_while / KW_return / KW_where / KW_self / KW_Self / SEMI / AT
 
 Other -> Atom
 

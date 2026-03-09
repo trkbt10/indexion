@@ -30,9 +30,9 @@ TOKEN COLON /:/
 Module -> Item*
 
 Item -> ImportBlock
-     | NL
-     | LineComment
-     | Other
+     / NL
+     / LineComment
+     / Other
 
 # import { "path" @alias, ... }
 ImportBlock -> KW_import LBRACE NL? ImportList? RBRACE
@@ -40,9 +40,9 @@ ImportBlock -> KW_import LBRACE NL? ImportList? RBRACE
 ImportList -> ImportItem ( COMMA NL? ImportItem )* COMMA? NL?
 
 ImportItem -> module:String Alias? NL?
-           | NL
+           / NL
 
-Other -> String | Ident | Alias | LBRACE | RBRACE | COMMA | COLON
+Other -> String / Ident / Alias / LBRACE / RBRACE / COMMA / COLON
 
 === semantics
 on ImportItem {

@@ -53,10 +53,10 @@ TOKEN Text          /[^<]+/
 
 === grammar
 PomFile         -> XMLDecl? OpenProject Content* CloseProject
-Content         -> ModelVersionElem | GroupIdElem | ArtifactIdElem | VersionElemTop
-                 | PackagingElem | NameElemTop | DescElem | UrlElemTop
-                 | DepsSection | PropsSection | LicensesSection
-                 | Comment | OtherElem
+Content         -> ModelVersionElem / GroupIdElem / ArtifactIdElem / VersionElemTop
+                 / PackagingElem / NameElemTop / DescElem / UrlElemTop
+                 / DepsSection / PropsSection / LicensesSection
+                 / Comment / OtherElem
 
 ModelVersionElem -> ModelVersion
 GroupIdElem     -> OpenGroupId Text CloseGroupId
@@ -68,21 +68,21 @@ DescElem        -> OpenDescription value:Text CloseDescription
 UrlElemTop      -> OpenUrl Text CloseUrl
 
 DepsSection     -> OpenDeps DepContent* CloseDeps
-DepContent      -> Dependency | Comment | Text
+DepContent      -> Dependency / Comment / Text
 Dependency      -> OpenDep OpenGroupId group:Text CloseGroupId OpenArtifactId artifact:Text CloseArtifactId DepOptional* CloseDep
-DepOptional     -> OpenVersionElem Text CloseVersionElem | OpenScope Text CloseScope | OtherDepField
-OtherDepField   -> OpenElem Text? CloseElem | SelfCloseElem | Text
+DepOptional     -> OpenVersionElem Text CloseVersionElem / OpenScope Text CloseScope / OtherDepField
+OtherDepField   -> OpenElem Text? CloseElem / SelfCloseElem / Text
 
 PropsSection    -> OpenProps PropContent* CloseProps
-PropContent     -> OpenElem Text CloseElem | SelfCloseElem | Text | Comment
+PropContent     -> OpenElem Text CloseElem / SelfCloseElem / Text / Comment
 
 LicensesSection -> OpenLicenses LicenseContent* CloseLicenses
-LicenseContent  -> License | Comment | Text
+LicenseContent  -> License / Comment / Text
 License         -> OpenLicense LicenseFields CloseLicense
 LicenseFields   -> LicenseField*
-LicenseField    -> OpenName Text CloseName | OpenUrl Text CloseUrl | OpenElem Content* CloseElem | Text
+LicenseField    -> OpenName Text CloseName / OpenUrl Text CloseUrl / OpenElem Content* CloseElem / Text
 
-OtherElem       -> OpenElem Content* CloseElem | SelfCloseElem | Text
+OtherElem       -> OpenElem Content* CloseElem / SelfCloseElem / Text
 
 === attrs
 on ArtifactIdElem: note fieldKey payload="artifactId"

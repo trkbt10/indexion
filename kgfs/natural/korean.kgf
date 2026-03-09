@@ -55,8 +55,8 @@ TOKEN Other /[^\s]+/
 === grammar
 Doc -> Sentence*
 Sentence -> Token* Punct? NL?
-Token -> Particle | Pronoun | Conjunction | Adverb | Ending
-       | Number | Unit | Hangul | Jamo | Alnum | Quote | BracketOpen | BracketClose | Url | Other
+Token -> Particle / Pronoun / Conjunction / Adverb / Ending
+       / Number / Unit / Hangul / Jamo / Alnum / Quote / BracketOpen / BracketClose / Url / Other
 
 === attrs
 

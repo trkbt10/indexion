@@ -84,57 +84,57 @@ TOKEN AT       /@/
 Module -> Item*
 
 Item -> NL
-     | DocComment
-     | PHPOpen
-     | NamespaceDecl
-     | UseDecl
-     | ClassDecl
-     | InterfaceDecl
-     | TraitDecl
-     | EnumDecl
-     | FunctionDecl
-     | ConstDecl
-     | Other
+     / DocComment
+     / PHPOpen
+     / NamespaceDecl
+     / UseDecl
+     / ClassDecl
+     / InterfaceDecl
+     / TraitDecl
+     / EnumDecl
+     / FunctionDecl
+     / ConstDecl
+     / Other
 
 # Namespace declaration
-NamespaceDecl -> KW_namespace QualifiedName ( SEMI | NamespaceBody )
+NamespaceDecl -> KW_namespace QualifiedName ( SEMI / NamespaceBody )
 NamespaceBody -> LBRACE NamespaceMember* RBRACE
-NamespaceMember -> UseDecl | ClassDecl | InterfaceDecl | TraitDecl | EnumDecl | FunctionDecl | ConstDecl | NL | LineComment | BlockComment
-QualifiedName -> NamespaceSep? ( Ident | TypeIdent ) ( NamespaceSep ( Ident | TypeIdent ) )*
+NamespaceMember -> UseDecl / ClassDecl / InterfaceDecl / TraitDecl / EnumDecl / FunctionDecl / ConstDecl / NL / LineComment / BlockComment
+QualifiedName -> NamespaceSep? ( Ident / TypeIdent ) ( NamespaceSep ( Ident / TypeIdent ) )*
 
 # Use declaration
-UseDecl -> KW_use ( KW_function | KW_const )? path:QualifiedName ( KW_as Ident )? ( COMMA QualifiedName ( KW_as Ident )? )* SEMI
+UseDecl -> KW_use ( KW_function / KW_const )? path:QualifiedName ( KW_as Ident )? ( COMMA QualifiedName ( KW_as Ident )? )* SEMI
 
 # Class declaration
 ClassDecl -> doc:DocComment? NL? Attribute* Modifier* KW_class id:TypeIdent ExtendsClause? ImplementsClause? ClassBody
 ExtendsClause -> KW_extends QualifiedName
 ImplementsClause -> KW_implements QualifiedName ( COMMA QualifiedName )*
 ClassBody -> LBRACE ClassMember* RBRACE
-ClassMember -> MethodDecl | PropertyDecl | ConstDecl | TraitUse | NL | LineComment | BlockComment
+ClassMember -> MethodDecl / PropertyDecl / ConstDecl / TraitUse / NL / LineComment / BlockComment
 
 # Interface declaration
 InterfaceDecl -> doc:DocComment? NL? KW_interface id:TypeIdent ( KW_extends QualifiedName ( COMMA QualifiedName )* )? InterfaceBody
 InterfaceBody -> LBRACE InterfaceMember* RBRACE
-InterfaceMember -> MethodDecl | ConstDecl | NL | LineComment | BlockComment
+InterfaceMember -> MethodDecl / ConstDecl / NL / LineComment / BlockComment
 
 # Trait declaration
 TraitDecl -> doc:DocComment? NL? KW_trait id:TypeIdent TraitBody
 TraitBody -> LBRACE TraitMember* RBRACE
-TraitMember -> MethodDecl | PropertyDecl | TraitUse | NL | LineComment | BlockComment
-TraitUse -> KW_use QualifiedName ( COMMA QualifiedName )* ( SEMI | LBRACE TraitAdaptation* RBRACE )
-TraitAdaptation -> Ident ( KW_as | Ident ) Modifier* Ident? SEMI
+TraitMember -> MethodDecl / PropertyDecl / TraitUse / NL / LineComment / BlockComment
+TraitUse -> KW_use QualifiedName ( COMMA QualifiedName )* ( SEMI / LBRACE TraitAdaptation* RBRACE )
+TraitAdaptation -> Ident ( KW_as / Ident ) Modifier* Ident? SEMI
 
 # Enum declaration
 EnumDecl -> doc:DocComment? NL? KW_enum id:TypeIdent ( COLON Type )? ImplementsClause? EnumBody
 EnumBody -> LBRACE EnumMember* RBRACE
-EnumMember -> case_doc:DocComment? KW_case case_id:Ident ( Operator Expr )? SEMI | MethodDecl | NL | LineComment | BlockComment
+EnumMember -> case_doc:DocComment? KW_case case_id:Ident ( Operator Expr )? SEMI / MethodDecl / NL / LineComment / BlockComment
 KW_case -> /case\b/
 
 # Function declaration
-FunctionDecl -> doc:DocComment? NL? Modifier* KW_function id:Ident LPAREN ParamList? RPAREN ( COLON Type )? ( Body | SEMI )
+FunctionDecl -> doc:DocComment? NL? Modifier* KW_function id:Ident LPAREN ParamList? RPAREN ( COLON Type )? ( Body / SEMI )
 
 # Method declaration
-MethodDecl -> doc:DocComment? NL? Attribute* Modifier* KW_function method_id:Ident LPAREN ParamList? RPAREN ( COLON Type )? ( Body | SEMI )
+MethodDecl -> doc:DocComment? NL? Attribute* Modifier* KW_function method_id:Ident LPAREN ParamList? RPAREN ( COLON Type )? ( Body / SEMI )
 
 # Property declaration
 PropertyDecl -> doc:DocComment? NL? Attribute* Modifier* Type? Variable ( Operator Expr )? SEMI
@@ -143,7 +143,7 @@ PropertyDecl -> doc:DocComment? NL? Attribute* Modifier* Type? Variable ( Operat
 ConstDecl -> doc:DocComment? NL? Modifier* KW_const const_id:Ident Operator Expr SEMI
 
 # Modifiers
-Modifier -> KW_abstract | KW_final | KW_static | KW_public | KW_private | KW_protected | KW_readonly
+Modifier -> KW_abstract / KW_final / KW_static / KW_public / KW_private / KW_protected / KW_readonly
 
 # Attributes
 Attribute -> AT LBRACKET QualifiedName ( LPAREN ( Expr ( COMMA Expr )* )? RPAREN )? RBRACKET
@@ -154,17 +154,17 @@ Param -> Attribute* Modifier* Type? Variable ( Operator Expr )?
 
 # Types
 Type -> TypeAtom ( Operator TypeAtom )*
-TypeAtom -> QualifiedName | KeywordType | LPAREN Type RPAREN
+TypeAtom -> QualifiedName / KeywordType / LPAREN Type RPAREN
 
 # Body (simplified - balance braces)
 Body -> LBRACE BodyContent* RBRACE
-BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+BodyContent -> LBRACE BodyContent* RBRACE / LPAREN BodyContent* RPAREN / LBRACKET BodyContent* RBRACKET / Atom
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | TypeIdent | Number | String | Variable | KeywordType | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | COMMA | COLON | DCOLON | ARROW | OBJOP | NULLSAFE | Operator | NamespaceSep
+ExprAtom -> Ident / TypeIdent / Number / String / Variable / KeywordType / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / COMMA / COLON / DCOLON / ARROW / OBJOP / NULLSAFE / Operator / NamespaceSep
 
-Atom -> ExprAtom | NL | DocComment | LineComment | BlockComment | PHPOpen | KW_namespace | KW_use | KW_as | KW_class | KW_interface | KW_trait | KW_enum | KW_extends | KW_implements | KW_abstract | KW_final | KW_static | KW_public | KW_private | KW_protected | KW_readonly | KW_const | KW_function | KW_fn | KW_return | KW_new | KW_if | KW_else | KW_foreach | KW_for | KW_while | SEMI | AT
+Atom -> ExprAtom / NL / DocComment / LineComment / BlockComment / PHPOpen / KW_namespace / KW_use / KW_as / KW_class / KW_interface / KW_trait / KW_enum / KW_extends / KW_implements / KW_abstract / KW_final / KW_static / KW_public / KW_private / KW_protected / KW_readonly / KW_const / KW_function / KW_fn / KW_return / KW_new / KW_if / KW_else / KW_foreach / KW_for / KW_while / SEMI / AT
 
 Other -> Atom
 

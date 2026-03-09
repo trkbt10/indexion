@@ -79,25 +79,25 @@ Module -> ModuleDoc? Item*
 
 # Module-level documentation (first doc block at file level)
 # Supports both new format (/// Module:) and legacy format (///|)
-ModuleDoc -> module_doc:DocBlockWithSections | module_doc:DocBlock
+ModuleDoc -> module_doc:DocBlockWithSections / module_doc:DocBlock
 
 # Visibility modifier: pub, pub(all), pub(readonly), priv
-Visibility -> KW_pub LPAREN Ident RPAREN | KW_pub | KW_priv
+Visibility -> KW_pub LPAREN Ident RPAREN / KW_pub / KW_priv
 
 # Try declarations FIRST (they consume DocBlock as optional prefix)
 # StandaloneDoc matches DocBlock not followed by a declaration
 Item -> FnDecl
-     | StructDecl
-     | EnumDecl
-     | TypeDecl
-     | TraitDecl
-     | ImplDecl
-     | LetDecl
-     | TestDecl
-     | NL
-     | LineComment
-     | StandaloneDoc
-     | Other
+     / StructDecl
+     / EnumDecl
+     / TypeDecl
+     / TraitDecl
+     / ImplDecl
+     / LetDecl
+     / TestDecl
+     / NL
+     / LineComment
+     / StandaloneDoc
+     / Other
 
 # Standalone documentation block (not attached to a declaration)
 StandaloneDoc -> doc:DocBlockWithSections
@@ -105,7 +105,7 @@ StandaloneDoc -> doc:DocBlockWithSections
 # Doc block with section markers (new format)
 # Supports: /// Module: ..., /// Overview: ..., etc.
 DocBlockWithSections -> DocSection ( NL DocLine )* ( NL DocSection ( NL DocLine )* )*
-                      | DocBlock
+                      / DocBlock
 
 # Doc comment block: ///| marker followed by /// content lines (legacy format)
 # NL consumed separately so _last captures the last DocLine content
@@ -137,30 +137,30 @@ TestDecl -> KW_test String? Body?
 
 # Bodies
 StructBody -> LBRACE StructField* RBRACE
-StructField -> field_doc:DocBlock? Visibility? KW_mut? field_id:Ident COLON Type COMMA? | NL | LineComment
+StructField -> field_doc:DocBlock? Visibility? KW_mut? field_id:Ident COLON Type COMMA? / NL / LineComment
 
 EnumBody -> LBRACE EnumVariant* RBRACE DeriveClause?
-EnumVariant -> variant_doc:DocBlock? variant_id:TypeIdent VariantPayload? COMMA? | NL | LineComment
-VariantPayload -> LPAREN TypeList RPAREN | LBRACE StructField* RBRACE
+EnumVariant -> variant_doc:DocBlock? variant_id:TypeIdent VariantPayload? COMMA? / NL / LineComment
+VariantPayload -> LPAREN TypeList RPAREN / LBRACE StructField* RBRACE
 
 TraitBody -> LBRACE TraitMember* RBRACE
-TraitMember -> method_doc:DocBlock? method_id:Ident LPAREN ParamList? RPAREN ReturnType? | NL | LineComment
+TraitMember -> method_doc:DocBlock? method_id:Ident LPAREN ParamList? RPAREN ReturnType? / NL / LineComment
 
 ImplBody -> LBRACE ImplMember* RBRACE
-ImplMember -> FnDecl | NL | LineComment
+ImplMember -> FnDecl / NL / LineComment
 
 DeriveClause -> KW_derive LPAREN TypeList RPAREN
 
 # Parameters and types (NL allowed around params, QMARK for labeled params, default values, trailing comma)
 ParamList -> NL? Param ( COMMA NL? Param )* COMMA? NL?
 # Param: labeled param (name~ : Type) or regular param (name : Type) or just name~
-Param -> param_id:Ident TILDE TypeAnnotation? DefaultValue? | KW_mut? param_id:Ident QMARK? TypeAnnotation? DefaultValue?
+Param -> param_id:Ident TILDE TypeAnnotation? DefaultValue? / KW_mut? param_id:Ident QMARK? TypeAnnotation? DefaultValue?
 DefaultValue -> EQ Expr
 TypeAnnotation -> COLON Type
 ReturnType -> ARROW Type BANG?
 
 Type -> TypeAtom ( PIPE TypeAtom )*
-TypeAtom -> TypeIdent GenericArgs? QMARK? | Ident QMARK? | LPAREN TypeList? RPAREN QMARK? | LBRACKET Type RBRACKET QMARK?
+TypeAtom -> TypeIdent GenericArgs? QMARK? / Ident QMARK? / LPAREN TypeList? RPAREN QMARK? / LBRACKET Type RBRACKET QMARK?
 GenericParams -> LBRACKET TypeParam ( COMMA TypeParam )* RBRACKET
 GenericArgs -> LBRACKET Type ( COMMA Type )* RBRACKET
 TypeParam -> TypeIdent ( COLON TypeIdent )?
@@ -168,12 +168,12 @@ TypeList -> Type ( COMMA Type )*
 
 # Body and expressions (simplified)
 Body -> LBRACE BodyContent* RBRACE
-BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+BodyContent -> LBRACE BodyContent* RBRACE / LPAREN BodyContent* RPAREN / LBRACKET BodyContent* RBRACKET / Atom
 Expr -> ExprAtom+
 # ExprAtom includes keywords for use in expressions and function bodies
-ExprAtom -> Ident | TypeIdent | Number | String | MultiString | Char | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | DCOLON | EQ | ARROW | FATARROW | TILDE | BANG | QMARK | PIPE | AMP | AT | PackageRef | KW_fn | KW_pub | KW_priv | KW_struct | KW_enum | KW_type | KW_trait | KW_impl | KW_let | KW_mut | KW_const | KW_test | KW_derive | KW_for | KW_with
+ExprAtom -> Ident / TypeIdent / Number / String / MultiString / Char / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / COLON / DCOLON / EQ / ARROW / FATARROW / TILDE / BANG / QMARK / PIPE / AMP / AT / PackageRef / KW_fn / KW_pub / KW_priv / KW_struct / KW_enum / KW_type / KW_trait / KW_impl / KW_let / KW_mut / KW_const / KW_test / KW_derive / KW_for / KW_with
 
-Atom -> ExprAtom | NL | LineComment | DocComment
+Atom -> ExprAtom / NL / LineComment / DocComment
 
 Other -> Atom
 

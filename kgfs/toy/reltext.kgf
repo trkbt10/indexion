@@ -10,7 +10,7 @@ TOKEN Ident     /[^\s:]+/
 
 === grammar
 Doc        -> ( Line )*
-Line       -> from:Ident ARROW to:Ident [ COLON kind:Ident ]
+Line       -> from:Ident ARROW to:Ident (COLON kind:Ident)?
 
 === attrs
 on Line:    import module=to ; import module=from

@@ -36,8 +36,8 @@ TOKEN KW_null       /null/
 JsonFile        -> Object
 Object          -> LBRACE Members? RBRACE
 Members         -> Member ( COMMA Member )*
-Member          -> NameMember | VersionMember | DescMember | HomepageMember
-                 | LicenseMember | DepsMember | OtherMember
+Member          -> NameMember / VersionMember / DescMember / HomepageMember
+                 / LicenseMember / DepsMember / OtherMember
 
 NameMember      -> KW_name COLON value:StringLit
 VersionMember   -> KW_version COLON value:StringLit
@@ -47,17 +47,17 @@ LicenseMember   -> KW_license COLON value:StringLit
 
 DepsMember      -> KW_dependencies COLON LBRACKET DepList? RBRACKET
 DepList         -> DepItem ( COMMA DepItem )*
-DepItem         -> DepString | DepObject
+DepItem         -> DepString / DepObject
 DepString       -> name:StringLit
 DepObject       -> LBRACE DepObjMembers RBRACE
 DepObjMembers   -> DepObjMember ( COMMA DepObjMember )*
-DepObjMember    -> DepNameMember | DepVersionMember | OtherMember
+DepObjMember    -> DepNameMember / DepVersionMember / OtherMember
 DepNameMember   -> KW_name COLON name:StringLit
 DepVersionMember -> KW_version_gte COLON StringLit
 
 OtherMember     -> StringLit COLON Value
-Value           -> StringLit | NumberLit | KW_true | KW_false | KW_null
-                 | Object | Array
+Value           -> StringLit / NumberLit / KW_true / KW_false / KW_null
+                 / Object / Array
 Array           -> LBRACKET ArrayList? RBRACKET
 ArrayList       -> Value ( COMMA Value )*
 

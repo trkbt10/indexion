@@ -35,12 +35,12 @@ TOKEN KW_false      /false/
 TOKEN KW_null       /null/
 
 === grammar
-DenoJson        -> LBRACE [ FieldList ] RBRACE
+DenoJson        -> LBRACE FieldList? RBRACE
 FieldList       -> Field ( COMMA Field )*
 
-Field           -> NameField | VersionField | DescriptionField | LicenseField
-                 | RepositoryField | ImportsField | TasksField | ExportsField
-                 | GenericObjectField | GenericArrayField | GenericStringField | GenericOtherField
+Field           -> NameField / VersionField / DescriptionField / LicenseField
+                 / RepositoryField / ImportsField / TasksField / ExportsField
+                 / GenericObjectField / GenericArrayField / GenericStringField / GenericOtherField
 
 NameField        -> KW_name COLON value:StringLit
 VersionField     -> KW_version COLON value:StringLit
@@ -48,25 +48,25 @@ DescriptionField -> KW_description COLON value:StringLit
 LicenseField     -> KW_license COLON value:StringLit
 RepositoryField  -> KW_repository COLON value:StringLit
 
-ImportsField     -> KW_imports COLON LBRACE [ ImportList ] RBRACE
+ImportsField     -> KW_imports COLON LBRACE ImportList? RBRACE
 ImportList       -> ImportEntry ( COMMA ImportEntry )*
 ImportEntry      -> alias:StringLit COLON target:StringLit
 
-TasksField       -> KW_tasks COLON LBRACE [ GenericFieldList ] RBRACE
+TasksField       -> KW_tasks COLON LBRACE GenericFieldList? RBRACE
 ExportsField     -> KW_exports COLON value:Value
 
 # Generic fields
-GenericObjectField  -> key:StringLit COLON LBRACE [ GenericFieldList ] RBRACE
-GenericArrayField   -> key:StringLit COLON LBRACKET [ ValueList ] RBRACKET
+GenericObjectField  -> key:StringLit COLON LBRACE GenericFieldList? RBRACE
+GenericArrayField   -> key:StringLit COLON LBRACKET ValueList? RBRACKET
 GenericStringField  -> key:StringLit COLON value:StringLit
 GenericOtherField   -> key:StringLit COLON value:OtherValue
-OtherValue          -> NumberLit | KW_true | KW_false | KW_null
+OtherValue          -> NumberLit / KW_true / KW_false / KW_null
 
 GenericFieldList    -> GenericInnerField ( COMMA GenericInnerField )*
 GenericInnerField   -> key:StringLit COLON value:Value
-Value               -> Object | Array | StringLit | NumberLit | KW_true | KW_false | KW_null
-Object              -> LBRACE [ GenericFieldList ] RBRACE
-Array               -> LBRACKET [ ValueList ] RBRACKET
+Value               -> Object / Array / StringLit / NumberLit / KW_true / KW_false / KW_null
+Object              -> LBRACE GenericFieldList? RBRACE
+Array               -> LBRACKET ValueList? RBRACKET
 ValueList           -> Value ( COMMA Value )*
 
 === attrs

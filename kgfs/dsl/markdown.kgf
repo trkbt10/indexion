@@ -26,15 +26,15 @@ TOKEN TEXT       /[^()\[\]<>|\s]+/
 TOKEN QTEXT      /"([^"\\]|\\.)*"/
 
 === grammar
-Doc        -> ( InlineImage | InlineLink | AngleLink | WikiLink | Other )*
-Other      -> TEXT | LT | GT | PIPE | HASH
+Doc        -> ( InlineImage / InlineLink / AngleLink / WikiLink / Other )*
+Other      -> TEXT / LT / GT / PIPE / HASH
 
 InlineLink -> LBRACK label:TextLike RBRACK LPAREN Target RPAREN
 InlineImage-> BANG LBRACK alt:TextLike RBRACK LPAREN Target RPAREN
 AngleLink  -> LT path:TEXT GT
 WikiLink   -> LBRACK LBRACK wpath:TEXT ( HASH frag:TEXT )? ( PIPE alias:TextLike )? RBRACK RBRACK
 
-Target     -> (Angle | PathFrag) [ QTEXT ]
+Target     -> (Angle / PathFrag) QTEXT?
 Angle      -> LT path:TEXT ( HASH frag:TEXT )? GT
 PathFrag   -> path:TEXT ( HASH frag:TEXT )?
 

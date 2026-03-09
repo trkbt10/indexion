@@ -35,13 +35,13 @@ TOKEN KW_false      /false/
 TOKEN KW_null       /null/
 
 === grammar
-PackageJson     -> LBRACE [ FieldList ] RBRACE
+PackageJson     -> LBRACE FieldList? RBRACE
 FieldList       -> Field ( COMMA Field )*
 
-Field           -> NameField | VersionField | DescriptionField | LicenseField
-                 | RepositoryField | KeywordsField | AuthorField | HomepageField
-                 | DependenciesField | DevDependenciesField | PeerDependenciesField
-                 | GenericObjectField | GenericArrayField | GenericStringField | GenericOtherField
+Field           -> NameField / VersionField / DescriptionField / LicenseField
+                 / RepositoryField / KeywordsField / AuthorField / HomepageField
+                 / DependenciesField / DevDependenciesField / PeerDependenciesField
+                 / GenericObjectField / GenericArrayField / GenericStringField / GenericOtherField
 
 # Named fields with specific handling
 NameField        -> KW_name COLON value:StringLit
@@ -53,39 +53,39 @@ HomepageField    -> KW_homepage COLON value:StringLit
 
 # Repository can be string or object
 RepositoryField  -> KW_repository COLON RepoValue
-RepoValue        -> StringLit | RepoObject
-RepoObject       -> LBRACE [ RepoFields ] RBRACE
+RepoValue        -> StringLit / RepoObject
+RepoObject       -> LBRACE RepoFields? RBRACE
 RepoFields       -> RepoField ( COMMA RepoField )*
 RepoField        -> key:StringLit COLON value:StringLit
 
 # Author can be string or object
-AuthorValue      -> StringLit | AuthorObject
-AuthorObject     -> LBRACE [ GenericFieldList ] RBRACE
+AuthorValue      -> StringLit / AuthorObject
+AuthorObject     -> LBRACE GenericFieldList? RBRACE
 
 # Keywords array
-KeywordsField    -> KW_keywords COLON LBRACKET [ KeywordList ] RBRACKET
+KeywordsField    -> KW_keywords COLON LBRACKET KeywordList? RBRACKET
 KeywordList      -> KeywordItem ( COMMA KeywordItem )*
 KeywordItem      -> value:StringLit
 
 # Dependency fields
-DependenciesField    -> KW_dependencies COLON LBRACE [ DepList ] RBRACE
-DevDependenciesField -> KW_devDependencies COLON LBRACE [ DepList ] RBRACE
-PeerDependenciesField-> KW_peerDependencies COLON LBRACE [ DepList ] RBRACE
+DependenciesField    -> KW_dependencies COLON LBRACE DepList? RBRACE
+DevDependenciesField -> KW_devDependencies COLON LBRACE DepList? RBRACE
+PeerDependenciesField-> KW_peerDependencies COLON LBRACE DepList? RBRACE
 DepList              -> DepEntry ( COMMA DepEntry )*
 DepEntry             -> name:StringLit COLON version:StringLit
 
 # Generic fields
-GenericObjectField  -> key:StringLit COLON LBRACE [ GenericFieldList ] RBRACE
-GenericArrayField   -> key:StringLit COLON LBRACKET [ ValueList ] RBRACKET
+GenericObjectField  -> key:StringLit COLON LBRACE GenericFieldList? RBRACE
+GenericArrayField   -> key:StringLit COLON LBRACKET ValueList? RBRACKET
 GenericStringField  -> key:StringLit COLON value:StringLit
 GenericOtherField   -> key:StringLit COLON value:OtherValue
-OtherValue          -> NumberLit | KW_true | KW_false | KW_null
+OtherValue          -> NumberLit / KW_true / KW_false / KW_null
 
 GenericFieldList    -> GenericInnerField ( COMMA GenericInnerField )*
 GenericInnerField   -> key:StringLit COLON value:Value
-Value               -> Object | Array | StringLit | NumberLit | KW_true | KW_false | KW_null
-Object              -> LBRACE [ GenericFieldList ] RBRACE
-Array               -> LBRACKET [ ValueList ] RBRACKET
+Value               -> Object / Array / StringLit / NumberLit / KW_true / KW_false / KW_null
+Object              -> LBRACE GenericFieldList? RBRACE
+Array               -> LBRACKET ValueList? RBRACKET
 ValueList           -> Value ( COMMA Value )*
 
 === attrs

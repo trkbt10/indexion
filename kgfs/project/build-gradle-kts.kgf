@@ -46,15 +46,15 @@ TOKEN Ident         /[a-zA-Z_][a-zA-Z0-9_]*/
 
 === grammar
 GradleFile      -> Statement*
-Statement       -> PluginsBlock | GroupStmt | VersionStmt | ReposBlock
-                 | DepsBlock | KotlinBlock | TasksBlock
-                 | OtherBlock | OtherStmt | NL | Comment | BlockComment
+Statement       -> PluginsBlock / GroupStmt / VersionStmt / ReposBlock
+                 / DepsBlock / KotlinBlock / TasksBlock
+                 / OtherBlock / OtherStmt / NL / Comment / BlockComment
 
 PluginsBlock    -> KW_plugins LBRACE NL? PluginStmt* RBRACE
-PluginStmt      -> PluginDecl NL | NL | Comment
+PluginStmt      -> PluginDecl NL / NL / Comment
 PluginDecl      -> KW_kotlin LPAREN StringLit RPAREN VersionSpec?
-                 | KW_id LPAREN StringLit RPAREN VersionSpec?
-                 | Ident LPAREN StringLit RPAREN VersionSpec?
+                 / KW_id LPAREN StringLit RPAREN VersionSpec?
+                 / Ident LPAREN StringLit RPAREN VersionSpec?
 VersionSpec     -> KW_version StringLit
 
 GroupStmt       -> KW_group EQUALS value:StringLit NL
@@ -63,25 +63,25 @@ VersionStmt     -> KW_version EQUALS value:StringLit NL
 ReposBlock      -> KW_repositories LBRACE BlockContent* RBRACE
 
 DepsBlock       -> KW_dependencies LBRACE NL? DepStmt* RBRACE
-DepStmt         -> DepDecl NL | NL | Comment | BlockComment
+DepStmt         -> DepDecl NL / NL / Comment / BlockComment
 DepDecl         -> KW_implementation LPAREN dep:StringLit RPAREN
-                 | KW_testImplementation LPAREN dep:StringLit RPAREN
-                 | KW_api LPAREN dep:StringLit RPAREN
-                 | KW_compileOnly LPAREN dep:StringLit RPAREN
-                 | KW_runtimeOnly LPAREN dep:StringLit RPAREN
-                 | Ident LPAREN StringLit RPAREN
+                 / KW_testImplementation LPAREN dep:StringLit RPAREN
+                 / KW_api LPAREN dep:StringLit RPAREN
+                 / KW_compileOnly LPAREN dep:StringLit RPAREN
+                 / KW_runtimeOnly LPAREN dep:StringLit RPAREN
+                 / Ident LPAREN StringLit RPAREN
 
 KotlinBlock     -> KW_kotlin LBRACE BlockContent* RBRACE
 TasksBlock      -> KW_tasks DOT Ident GenericBlock
 OtherBlock      -> Ident LBRACE BlockContent* RBRACE
 OtherStmt       -> Ident OtherExpr* NL
 
-BlockContent    -> NL | Comment | BlockComment | NestedBlock | OtherContent
+BlockContent    -> NL / Comment / BlockComment / NestedBlock / OtherContent
 NestedBlock     -> Ident LBRACE BlockContent* RBRACE
-OtherContent    -> Ident | StringLit | NumberLit | LPAREN | RPAREN | DOT | EQUALS | COMMA
-GenericBlock    -> LBRACE BlockContent* RBRACE | LPAREN Expr* RPAREN
-OtherExpr       -> DOT Ident | LPAREN Expr* RPAREN | LBRACE BlockContent* RBRACE | EQUALS Expr
-Expr            -> StringLit | NumberLit | Ident | LPAREN Expr* RPAREN
+OtherContent    -> Ident / StringLit / NumberLit / LPAREN / RPAREN / DOT / EQUALS / COMMA
+GenericBlock    -> LBRACE BlockContent* RBRACE / LPAREN Expr* RPAREN
+OtherExpr       -> DOT Ident / LPAREN Expr* RPAREN / LBRACE BlockContent* RBRACE / EQUALS Expr
+Expr            -> StringLit / NumberLit / Ident / LPAREN Expr* RPAREN
 
 === attrs
 on GroupStmt:   note fieldKey payload="group"

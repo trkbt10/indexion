@@ -65,31 +65,31 @@ TOKEN AT       /@/
 Module -> Item*
 
 Item -> NL
-     | Comment
-     | NsDecl
-     | DefDecl
-     | DefnDecl
-     | DefMacroDecl
-     | DefProtocolDecl
-     | DefRecordDecl
-     | DefTypeDecl
-     | DefMultiDecl
-     | DefMethodDecl
-     | Other
+     / Comment
+     / NsDecl
+     / DefDecl
+     / DefnDecl
+     / DefMacroDecl
+     / DefProtocolDecl
+     / DefRecordDecl
+     / DefTypeDecl
+     / DefMultiDecl
+     / DefMethodDecl
+     / Other
 
 # Namespace declaration
 NsDecl -> LPAREN KW_ns id:Symbol NsBody RPAREN
 NsBody -> ( NsDirective )*
-NsDirective -> LPAREN ( KW_require | KW_use | KW_import ) RequireSpec* RPAREN | Keyword | Symbol | String | LBRACKET | RBRACKET
-RequireSpec -> LBRACKET path:Symbol Keyword* Symbol* RBRACKET | Symbol
+NsDirective -> LPAREN ( KW_require / KW_use / KW_import ) RequireSpec* RPAREN / Keyword / Symbol / String / LBRACKET / RBRACKET
+RequireSpec -> LBRACKET path:Symbol Keyword* Symbol* RBRACKET / Symbol
 
 # Def declaration (simple value)
 DefDecl -> doc:String? NL? LPAREN KW_def CARET? Metadata? id:Symbol doc:String? Expr? RPAREN
 Metadata -> LBRACE ( Keyword Expr )* RBRACE
 
 # Defn declaration (function)
-DefnDecl -> doc:String? NL? LPAREN ( KW_defn | KW_defn_ ) CARET? Metadata? id:Symbol doc:String? FnBody RPAREN
-FnBody -> LBRACKET ParamList? RBRACKET Expr* | LPAREN LBRACKET ParamList? RBRACKET Expr* RPAREN+
+DefnDecl -> doc:String? NL? LPAREN ( KW_defn / KW_defn_ ) CARET? Metadata? id:Symbol doc:String? FnBody RPAREN
+FnBody -> LBRACKET ParamList? RBRACKET Expr* / LPAREN LBRACKET ParamList? RBRACKET Expr* RPAREN+
 
 # DefMacro declaration
 DefMacroDecl -> doc:String? NL? LPAREN KW_defmacro CARET? Metadata? id:Symbol doc:String? FnBody RPAREN
@@ -116,15 +116,15 @@ DefMethodDecl -> doc:String? NL? LPAREN KW_defmethod id:Symbol Expr FnBody RPARE
 
 # Parameters
 ParamList -> Param*
-Param -> param_id:Symbol | AT Symbol | AMP Symbol
+Param -> param_id:Symbol / AT Symbol / AMP Symbol
 
 AMP -> /&/
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Symbol | NamespacedSymbol | Keyword | Number | String | Regex | LPAREN | RPAREN | LBRACKET | RBRACKET | LBRACE | RBRACE | HASH | QUOTE | BACKTICK | TILDE | CARET | AT
+ExprAtom -> Symbol / NamespacedSymbol / Keyword / Number / String / Regex / LPAREN / RPAREN / LBRACKET / RBRACKET / LBRACE / RBRACE / HASH / QUOTE / BACKTICK / TILDE / CARET / AT
 
-Atom -> ExprAtom | NL | Comment | KW_def | KW_defn | KW_defn_ | KW_defmacro | KW_defmethod | KW_defmulti | KW_defprotocol | KW_defrecord | KW_deftype | KW_fn | KW_let | KW_if | KW_do | KW_ns | KW_require | KW_use | KW_import
+Atom -> ExprAtom / NL / Comment / KW_def / KW_defn / KW_defn_ / KW_defmacro / KW_defmethod / KW_defmulti / KW_defprotocol / KW_defrecord / KW_deftype / KW_fn / KW_let / KW_if / KW_do / KW_ns / KW_require / KW_use / KW_import
 
 Other -> Atom
 

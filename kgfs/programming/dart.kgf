@@ -97,19 +97,19 @@ TOKEN AT       /@/
 Module -> Item*
 
 Item -> NL
-     | DocComment
-     | LibraryDecl
-     | ImportDecl
-     | ExportDecl
-     | PartDecl
-     | ClassDecl
-     | MixinDecl
-     | ExtensionDecl
-     | EnumDecl
-     | TypedefDecl
-     | FunctionDecl
-     | VarDecl
-     | Other
+     / DocComment
+     / LibraryDecl
+     / ImportDecl
+     / ExportDecl
+     / PartDecl
+     / ClassDecl
+     / MixinDecl
+     / ExtensionDecl
+     / EnumDecl
+     / TypedefDecl
+     / FunctionDecl
+     / VarDecl
+     / Other
 
 # Doc block (consecutive /// comments)
 DocBlock -> DocComment ( NL DocComment )*
@@ -121,7 +121,7 @@ QualifiedName -> Ident ( DOT Ident )*
 # Import/export declaration
 ImportDecl -> KW_import path:String ( KW_deferred )? ( KW_as Ident )? Combinators? SEMI
 ExportDecl -> KW_export path:String Combinators? SEMI
-Combinators -> ( KW_show | KW_hide ) Ident ( COMMA Ident )*
+Combinators -> ( KW_show / KW_hide ) Ident ( COMMA Ident )*
 PartDecl -> KW_part String SEMI
 
 # Class declaration
@@ -130,17 +130,17 @@ ExtendsClause -> KW_extends Type
 ImplementsClause -> KW_implements TypeList
 WithClause -> KW_with TypeList
 ClassBody -> LBRACE ClassMember* RBRACE
-ClassMember -> ConstructorDecl | MethodDecl | FieldDecl | GetterDecl | SetterDecl | OperatorDecl | ClassDecl | EnumDecl | NL | LineComment | BlockComment
+ClassMember -> ConstructorDecl / MethodDecl / FieldDecl / GetterDecl / SetterDecl / OperatorDecl / ClassDecl / EnumDecl / NL / LineComment / BlockComment
 
 # Mixin declaration
 MixinDecl -> doc:DocBlock? NL? Annotation* KW_mixin id:TypeIdent TypeParams? ( KW_on TypeList )? ImplementsClause? MixinBody
 MixinBody -> LBRACE MixinMember* RBRACE
-MixinMember -> MethodDecl | FieldDecl | GetterDecl | SetterDecl | NL | LineComment | BlockComment
+MixinMember -> MethodDecl / FieldDecl / GetterDecl / SetterDecl / NL / LineComment / BlockComment
 
 # Extension declaration
 ExtensionDecl -> doc:DocBlock? NL? Annotation* KW_extension id:TypeIdent? TypeParams? KW_on Type ExtensionBody
 ExtensionBody -> LBRACE ExtensionMember* RBRACE
-ExtensionMember -> MethodDecl | GetterDecl | SetterDecl | OperatorDecl | NL | LineComment | BlockComment
+ExtensionMember -> MethodDecl / GetterDecl / SetterDecl / OperatorDecl / NL / LineComment / BlockComment
 
 # Enum declaration
 EnumDecl -> doc:DocBlock? NL? Annotation* KW_enum id:TypeIdent ImplementsClause? WithClause? EnumBody
@@ -151,35 +151,35 @@ EnumValue -> value_doc:DocBlock? Annotation* value_id:Ident ( LPAREN ( Expr ( CO
 TypedefDecl -> doc:DocBlock? NL? KW_typedef id:TypeIdent TypeParams? Operator Type SEMI
 
 # Constructor declaration
-ConstructorDecl -> doc:DocBlock? NL? Annotation* Modifier* TypeIdent ( DOT id:Ident )? LPAREN ParamList? RPAREN ( COLON InitializerList )? ( Body | ARROW Expr SEMI | SEMI )
+ConstructorDecl -> doc:DocBlock? NL? Annotation* Modifier* TypeIdent ( DOT id:Ident )? LPAREN ParamList? RPAREN ( COLON InitializerList )? ( Body / ARROW Expr SEMI / SEMI )
 InitializerList -> Initializer ( COMMA Initializer )*
-Initializer -> ( KW_super | ThisLit ) ( DOT Ident )? LPAREN ( Expr ( COMMA Expr )* )? RPAREN | Ident Operator Expr
+Initializer -> ( KW_super / ThisLit ) ( DOT Ident )? LPAREN ( Expr ( COMMA Expr )* )? RPAREN / Ident Operator Expr
 
 # Method declaration
-MethodDecl -> doc:DocBlock? NL? Annotation* Modifier* Type? method_id:Ident TypeParams? LPAREN ParamList? RPAREN ( KW_async )? ( Body | ARROW Expr SEMI | SEMI )
+MethodDecl -> doc:DocBlock? NL? Annotation* Modifier* Type? method_id:Ident TypeParams? LPAREN ParamList? RPAREN ( KW_async )? ( Body / ARROW Expr SEMI / SEMI )
 
 # Field declaration
 FieldDecl -> doc:DocBlock? NL? Annotation* Modifier* Type field_id:Ident ( Operator Expr )? SEMI
 
 # Getter/Setter declaration
-GetterDecl -> doc:DocBlock? NL? Annotation* Modifier* Type? KW_get getter_id:Ident ( Body | ARROW Expr SEMI | SEMI )
-SetterDecl -> doc:DocBlock? NL? Annotation* Modifier* KW_set setter_id:Ident LPAREN Param RPAREN ( Body | ARROW Expr SEMI | SEMI )
+GetterDecl -> doc:DocBlock? NL? Annotation* Modifier* Type? KW_get getter_id:Ident ( Body / ARROW Expr SEMI / SEMI )
+SetterDecl -> doc:DocBlock? NL? Annotation* Modifier* KW_set setter_id:Ident LPAREN Param RPAREN ( Body / ARROW Expr SEMI / SEMI )
 
 # Operator declaration
-OperatorDecl -> doc:DocBlock? NL? Annotation* Modifier* Type KW_operator Operator LPAREN ParamList? RPAREN ( Body | ARROW Expr SEMI )
+OperatorDecl -> doc:DocBlock? NL? Annotation* Modifier* Type KW_operator Operator LPAREN ParamList? RPAREN ( Body / ARROW Expr SEMI )
 
 # Top-level function declaration
-FunctionDecl -> doc:DocBlock? NL? Annotation* Type? func_id:Ident TypeParams? LPAREN ParamList? RPAREN ( KW_async )? ( Body | ARROW Expr SEMI | SEMI )
+FunctionDecl -> doc:DocBlock? NL? Annotation* Type? func_id:Ident TypeParams? LPAREN ParamList? RPAREN ( KW_async )? ( Body / ARROW Expr SEMI / SEMI )
 
 # Top-level variable declaration
 VarDecl -> doc:DocBlock? NL? Annotation* Modifier* Type var_id:Ident ( Operator Expr )? SEMI
 
 # Modifiers
-Modifier -> KW_abstract | KW_sealed | KW_base | KW_interface | KW_final | KW_const | KW_var | KW_late | KW_static | KW_external | KW_factory
+Modifier -> KW_abstract / KW_sealed / KW_base / KW_interface / KW_final / KW_const / KW_var / KW_late / KW_static / KW_external / KW_factory
 
 # Parameters
-ParamList -> Param ( COMMA Param )* | OptionalParams | NamedParams
-Param -> Annotation* ( KW_final | KW_var | KW_const )? Type? param_id:Ident ( Operator Expr )?
+ParamList -> Param ( COMMA Param )* / OptionalParams / NamedParams
+Param -> Annotation* ( KW_final / KW_var / KW_const )? Type? param_id:Ident ( Operator Expr )?
 OptionalParams -> LBRACKET Param ( COMMA Param )* RBRACKET
 NamedParams -> LBRACE Param ( COMMA Param )* RBRACE
 
@@ -188,19 +188,19 @@ TypeParams -> Operator TypeParam ( COMMA TypeParam )* Operator
 TypeParam -> TypeIdent ( KW_extends Type )?
 TypeList -> Type ( COMMA Type )*
 Type -> TypeAtom ( Operator TypeAtom )* QMARK?
-TypeAtom -> TypeIdent TypeArgs? | KeywordType | LPAREN Type RPAREN | LPAREN TypeList RPAREN ARROW Type
+TypeAtom -> TypeIdent TypeArgs? / KeywordType / LPAREN Type RPAREN / LPAREN TypeList RPAREN ARROW Type
 TypeArgs -> Operator Type ( COMMA Type )* Operator
 QMARK -> /\?/
 
 # Body (simplified - balance braces)
 Body -> LBRACE BodyContent* RBRACE
-BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+BodyContent -> LBRACE BodyContent* RBRACE / LPAREN BodyContent* RPAREN / LBRACKET BodyContent* RBRACKET / Atom
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | TypeIdent | Number | String | BoolLit | NullLit | ThisLit | SuperLit | KeywordType | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | CASCADE | COMMA | COLON | ARROW | NULLCOND | NULLCOAL | Operator | Annotation
+ExprAtom -> Ident / TypeIdent / Number / String / BoolLit / NullLit / ThisLit / SuperLit / KeywordType / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / CASCADE / COMMA / COLON / ARROW / NULLCOND / NULLCOAL / Operator / Annotation
 
-Atom -> ExprAtom | NL | DocComment | LineComment | BlockComment | KW_import | KW_export | KW_library | KW_part | KW_show | KW_hide | KW_as | KW_deferred | KW_class | KW_mixin | KW_extension | KW_enum | KW_typedef | KW_abstract | KW_sealed | KW_base | KW_interface | KW_final | KW_const | KW_var | KW_late | KW_static | KW_external | KW_factory | KW_extends | KW_implements | KW_with | KW_get | KW_set | KW_operator | KW_if | KW_else | KW_switch | KW_case | KW_for | KW_in | KW_while | KW_return | KW_async | KW_await | SEMI | AT
+Atom -> ExprAtom / NL / DocComment / LineComment / BlockComment / KW_import / KW_export / KW_library / KW_part / KW_show / KW_hide / KW_as / KW_deferred / KW_class / KW_mixin / KW_extension / KW_enum / KW_typedef / KW_abstract / KW_sealed / KW_base / KW_interface / KW_final / KW_const / KW_var / KW_late / KW_static / KW_external / KW_factory / KW_extends / KW_implements / KW_with / KW_get / KW_set / KW_operator / KW_if / KW_else / KW_switch / KW_case / KW_for / KW_in / KW_while / KW_return / KW_async / KW_await / SEMI / AT
 
 Other -> Atom
 

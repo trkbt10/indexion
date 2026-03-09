@@ -73,19 +73,19 @@ Module -> ModuleDoc? Item*
 ModuleDoc -> module_doc:DocComment
 
 Item -> NL
-     | DocComment
-     | ImportDecl
-     | ExportDecl
-     | FunctionDecl
-     | ClassDecl
-     | InterfaceDecl
-     | TypeDecl
-     | VarDecl
-     | EnumDecl
-     | Other
+     / DocComment
+     / ImportDecl
+     / ExportDecl
+     / FunctionDecl
+     / ClassDecl
+     / InterfaceDecl
+     / TypeDecl
+     / VarDecl
+     / EnumDecl
+     / Other
 
 # Import declarations
-ImportDecl -> KW_import ( SideEffect | ImportNS | ImportNamedDefault | ImportNamed | ImportDefault ) SEMI?
+ImportDecl -> KW_import ( SideEffect / ImportNS / ImportNamedDefault / ImportNamed / ImportDefault ) SEMI?
 SideEffect -> path:StringLit
 ImportNS -> STAR KW_as ns:Ident KW_from from:StringLit
 ImportNamedDefault -> defId:Ident COMMA LBRACE ImportSpecList RBRACE KW_from from:StringLit
@@ -95,33 +95,33 @@ ImportSpecList -> ImportSpec ( COMMA ImportSpec )*
 ImportSpec -> origin:Ident ( KW_as local:Ident )?
 
 # Documented declarations (doc comment preceding)
-ExportDecl -> doc:DocComment? KW_export KW_default? ( FunctionDecl | ClassDecl | InterfaceDecl | TypeDecl | VarDecl | EnumDecl )
-           | KW_export STAR KW_from from:StringLit SEMI?
-           | KW_export LBRACE ExportList RBRACE KW_from from:StringLit SEMI?
-           | KW_export LBRACE ExportList RBRACE SEMI?
+ExportDecl -> doc:DocComment? KW_export KW_default? ( FunctionDecl / ClassDecl / InterfaceDecl / TypeDecl / VarDecl / EnumDecl )
+           / KW_export STAR KW_from from:StringLit SEMI?
+           / KW_export LBRACE ExportList RBRACE KW_from from:StringLit SEMI?
+           / KW_export LBRACE ExportList RBRACE SEMI?
 ExportList -> Ident ( COMMA Ident )*
 
 FunctionDecl -> doc:DocComment? KW_async? KW_function id:Ident GenericParams? LPAREN ParamList? RPAREN TypeAnnotation? Body?
 ClassDecl -> doc:DocComment? KW_abstract? KW_class id:Ident GenericParams? ExtendsClause? ImplementsClause? ClassBody
 InterfaceDecl -> doc:DocComment? KW_interface id:Ident GenericParams? ExtendsClause? InterfaceBody
 TypeDecl -> doc:DocComment? KW_type id:Ident GenericParams? EQ Type SEMI?
-VarDecl -> doc:DocComment? (KW_const | KW_let | KW_var) id:Ident TypeAnnotation? ( EQ Expr )? SEMI?
+VarDecl -> doc:DocComment? (KW_const / KW_let / KW_var) id:Ident TypeAnnotation? ( EQ Expr )? SEMI?
 EnumDecl -> doc:DocComment? KW_enum id:Ident EnumBody
 
 # Class/Interface bodies
 ClassBody -> LBRACE ClassMember* RBRACE
-ClassMember -> doc:DocComment? Modifier* ( MethodDecl | PropertyDecl ) | NL | LineComment | BlockComment
-Modifier -> KW_public | KW_private | KW_protected | KW_static | KW_readonly | KW_abstract | KW_async
+ClassMember -> doc:DocComment? Modifier* ( MethodDecl / PropertyDecl ) / NL / LineComment / BlockComment
+Modifier -> KW_public / KW_private / KW_protected / KW_static / KW_readonly / KW_abstract / KW_async
 MethodDecl -> id:Ident GenericParams? LPAREN ParamList? RPAREN TypeAnnotation? Body?
 PropertyDecl -> id:Ident QMARK? TypeAnnotation? ( EQ Expr )? SEMI?
 
 InterfaceBody -> LBRACE InterfaceMember* RBRACE
-InterfaceMember -> doc:DocComment? ( MethodSig | PropertySig ) | NL | LineComment | BlockComment
+InterfaceMember -> doc:DocComment? ( MethodSig / PropertySig ) / NL / LineComment / BlockComment
 MethodSig -> id:Ident GenericParams? LPAREN ParamList? RPAREN TypeAnnotation? SEMI?
 PropertySig -> id:Ident QMARK? TypeAnnotation? SEMI?
 
 EnumBody -> LBRACE EnumMember* RBRACE
-EnumMember -> doc:DocComment? id:Ident ( EQ Expr )? COMMA? | NL | LineComment | BlockComment
+EnumMember -> doc:DocComment? id:Ident ( EQ Expr )? COMMA? / NL / LineComment / BlockComment
 
 # Parameters
 ParamList -> Param ( COMMA Param )*
@@ -130,7 +130,7 @@ Param -> id:Ident QMARK? TypeAnnotation? ( EQ Expr )?
 # Type annotations
 TypeAnnotation -> COLON Type
 Type -> TypeAtom ( PIPE TypeAtom )*
-TypeAtom -> Ident GenericArgs? | LPAREN Type RPAREN | LBRACE TypeMembers RBRACE | LBRACKET Type RBRACKET
+TypeAtom -> Ident GenericArgs? / LPAREN Type RPAREN / LBRACE TypeMembers RBRACE / LBRACKET Type RBRACKET
 GenericParams -> LT Ident ( COMMA Ident )* GT
 GenericArgs -> LT Type ( COMMA Type )* GT
 TypeMembers -> ( Ident COLON Type SEMI? )*
@@ -140,10 +140,10 @@ TypeList -> Type ( COMMA Type )*
 
 # Bodies and expressions (simplified - just balance braces)
 Body -> LBRACE BodyContent* RBRACE
-BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+BodyContent -> LBRACE BodyContent* RBRACE / LPAREN BodyContent* RPAREN / LBRACKET BodyContent* RBRACKET / Atom
 Expr -> ExprAtom+
-ExprAtom -> Ident | Number | StringLit | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | LT | GT | EQ | ARROW | QMARK | STAR | PIPE | AMP
-Atom -> Ident | Number | StringLit | SEMI | COMMA | COLON | DOT | EQ | ARROW | QMARK | STAR | PIPE | AMP | LT | GT | NL | LineComment | BlockComment | DocComment
+ExprAtom -> Ident / Number / StringLit / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / COLON / LT / GT / EQ / ARROW / QMARK / STAR / PIPE / AMP
+Atom -> Ident / Number / StringLit / SEMI / COMMA / COLON / DOT / EQ / ARROW / QMARK / STAR / PIPE / AMP / LT / GT / NL / LineComment / BlockComment / DocComment
 
 # Fallback
 Other -> Atom

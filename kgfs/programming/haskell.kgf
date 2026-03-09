@@ -70,32 +70,32 @@ TOKEN EQ       /=/
 Module -> Item*
 
 Item -> NL
-     | DocComment
-     | ModuleDecl
-     | ImportDecl
-     | DataDecl
-     | NewtypeDecl
-     | TypeDecl
-     | ClassDecl
-     | InstanceDecl
-     | FunctionDecl
-     | Other
+     / DocComment
+     / ModuleDecl
+     / ImportDecl
+     / DataDecl
+     / NewtypeDecl
+     / TypeDecl
+     / ClassDecl
+     / InstanceDecl
+     / FunctionDecl
+     / Other
 
 # Module declaration
 ModuleDecl -> KW_module id:ConIdent ( LPAREN ExportList RPAREN )? KW_where
 ExportList -> Export ( COMMA Export )*
-Export -> VarIdent | ConIdent ( LPAREN ( VarIdent ( COMMA VarIdent )* | Operator )? RPAREN )?
+Export -> VarIdent / ConIdent ( LPAREN ( VarIdent ( COMMA VarIdent )* / Operator )? RPAREN )?
 
 # Import declaration
 ImportDecl -> KW_import KW_qualified? path:ConIdent ( KW_as ConIdent )? ( KW_hiding )? ( LPAREN ImportList RPAREN )?
 ImportList -> Import ( COMMA Import )*
-Import -> VarIdent | ConIdent
+Import -> VarIdent / ConIdent
 
 # Data declaration
 DataDecl -> doc:DocComment? NL? KW_data id:ConIdent TypeVars? ( EQ DataCons ( PIPE DataCons )* )? DerivingClause?
 DataCons -> cons_doc:DocComment? cons_id:ConIdent Type*
 TypeVars -> VarIdent+
-DerivingClause -> KW_deriving ( ConIdent | LPAREN ConIdent ( COMMA ConIdent )* RPAREN )
+DerivingClause -> KW_deriving ( ConIdent / LPAREN ConIdent ( COMMA ConIdent )* RPAREN )
 
 # Newtype declaration
 NewtypeDecl -> doc:DocComment? NL? KW_newtype id:ConIdent TypeVars? EQ ConIdent Type DerivingClause?
@@ -105,32 +105,32 @@ TypeDecl -> doc:DocComment? NL? KW_type KW_family? id:ConIdent TypeVars? ( EQ Ty
 
 # Class declaration
 ClassDecl -> doc:DocComment? NL? KW_class Context? id:ConIdent TypeVars KW_where? ClassBody?
-Context -> LPAREN Constraint ( COMMA Constraint )* RPAREN DARROW | Constraint DARROW
+Context -> LPAREN Constraint ( COMMA Constraint )* RPAREN DARROW / Constraint DARROW
 Constraint -> ConIdent VarIdent+
-ClassBody -> LBRACE ClassMember* RBRACE | ClassMember*
-ClassMember -> MethodSig | NL | LineComment | BlockComment
+ClassBody -> LBRACE ClassMember* RBRACE / ClassMember*
+ClassMember -> MethodSig / NL / LineComment / BlockComment
 MethodSig -> method_doc:DocComment? method_id:VarIdent DCOLON Type
 
 # Instance declaration
 InstanceDecl -> doc:DocComment? NL? KW_instance Context? ConIdent Type+ KW_where? InstanceBody?
-InstanceBody -> LBRACE InstanceMember* RBRACE | InstanceMember*
-InstanceMember -> FunctionDecl | NL | LineComment | BlockComment
+InstanceBody -> LBRACE InstanceMember* RBRACE / InstanceMember*
+InstanceMember -> FunctionDecl / NL / LineComment / BlockComment
 
 # Function declaration (signature + equations)
-FunctionDecl -> doc:DocComment? NL? func_id:VarIdent DCOLON Type | func_id:VarIdent Pattern* EQ Expr
+FunctionDecl -> doc:DocComment? NL? func_id:VarIdent DCOLON Type / func_id:VarIdent Pattern* EQ Expr
 
 # Pattern
-Pattern -> VarIdent | ConIdent | LPAREN Pattern ( COMMA Pattern )* RPAREN | LBRACKET Pattern* RBRACKET | Operator
+Pattern -> VarIdent / ConIdent / LPAREN Pattern ( COMMA Pattern )* RPAREN / LBRACKET Pattern* RBRACKET / Operator
 
 # Types
 Type -> TypeAtom ( ARROW TypeAtom )*
-TypeAtom -> ConIdent | VarIdent | LPAREN Type ( COMMA Type )* RPAREN | LBRACKET Type RBRACKET
+TypeAtom -> ConIdent / VarIdent / LPAREN Type ( COMMA Type )* RPAREN / LBRACKET Type RBRACKET
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> VarIdent | ConIdent | Number | String | Char | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | COMMA | SEMI | BACKTICK | PIPE | EQ | DCOLON | ARROW | LARROW | DARROW | Operator
+ExprAtom -> VarIdent / ConIdent / Number / String / Char / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / COMMA / SEMI / BACKTICK / PIPE / EQ / DCOLON / ARROW / LARROW / DARROW / Operator
 
-Atom -> ExprAtom | NL | DocComment | LineComment | BlockComment | Pragma | KW_module | KW_import | KW_qualified | KW_as | KW_hiding | KW_data | KW_newtype | KW_type | KW_class | KW_instance | KW_deriving | KW_where | KW_let | KW_in | KW_do | KW_case | KW_of | KW_if | KW_then | KW_else | KW_family
+Atom -> ExprAtom / NL / DocComment / LineComment / BlockComment / Pragma / KW_module / KW_import / KW_qualified / KW_as / KW_hiding / KW_data / KW_newtype / KW_type / KW_class / KW_instance / KW_deriving / KW_where / KW_let / KW_in / KW_do / KW_case / KW_of / KW_if / KW_then / KW_else / KW_family
 
 Other -> Atom
 

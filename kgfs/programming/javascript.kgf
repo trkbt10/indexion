@@ -31,9 +31,9 @@ TOKEN DOT           /\./
 TOKEN EQ            /=/
 
 === grammar
-Module          -> ( ImportDecl | ExportFrom | FnDecl | VarDecl | ExprStmt )*
+Module          -> ( ImportDecl / ExportFrom / FnDecl / VarDecl / ExprStmt )*
 
-ImportDecl      -> KW_import ( SideEffect | ImportNS | ImportNamedDefault | ImportNamed | ImportDefault ) SEMI?
+ImportDecl      -> KW_import ( SideEffect / ImportNS / ImportNamedDefault / ImportNamed / ImportDefault ) SEMI?
 SideEffect      -> path:StringLit
 ImportNS        -> STAR KW_as ns:Ident KW_from from:StringLit
 ImportNamedDefault -> defId:Ident COMMA LBRACE ImportSpecList RBRACE KW_from from:StringLit
@@ -43,26 +43,26 @@ ImportSpecList  -> ImportSpec ( COMMA ImportSpec )*
 ImportSpec      -> origin:Ident ( KW_as local:Ident )?
 
 ExportFrom      -> KW_export ( STAR KW_from from:StringLit
-                             | LBRACE ExportSpecList RBRACE KW_from from:StringLit ) SEMI?
+                             / LBRACE ExportSpecList RBRACE KW_from from:StringLit ) SEMI?
 ExportSpecList  -> ExportSpec ( COMMA ExportSpec )*
 ExportSpec      -> origin:Ident ( KW_as local:Ident )?
 
-VarDecl         -> (KW_const | KW_let | KW_var) VarList SEMI?
+VarDecl         -> (KW_const / KW_let / KW_var) VarList SEMI?
 VarList         -> VarItem ( COMMA VarItem )*
-VarItem         -> id:Ident [ EQ Expr ]
+VarItem         -> id:Ident (EQ Expr)?
 
 FnDecl          -> KW_function id:Ident LPAREN ParamList? RPAREN Block
 ParamList       -> Param ( COMMA Param )*
 Param           -> id:Ident
 Block           -> LBRACE BlockItem* RBRACE
-BlockItem       -> VarDecl | ReturnStmt | ExprStmt
-ReturnStmt      -> KW_return [ Expr ] SEMI?
+BlockItem       -> VarDecl / ReturnStmt / ExprStmt
+ReturnStmt      -> KW_return Expr? SEMI?
 
 ExprStmt        -> Expr SEMI?
-Expr            -> CallExpr | Primary ( DOT Ident )*
+Expr            -> CallExpr / Primary ( DOT Ident )*
 CallExpr        -> callee:Primary LPAREN (Arg ( COMMA Arg )*)? RPAREN
 Arg             -> Expr
-Primary         -> PrimaryName | LPAREN Expr RPAREN | NumberLit | StringLit | NewExpr
+Primary         -> PrimaryName / LPAREN Expr RPAREN / NumberLit / StringLit / NewExpr
 PrimaryName     -> name:Ident
 NewExpr         -> KW_new Ident LPAREN (Arg ( COMMA Arg )*)? RPAREN
 

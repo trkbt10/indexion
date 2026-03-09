@@ -69,16 +69,16 @@ TOKEN STAR     /\*/
 Module -> Item*
 
 Item -> NL
-     | DocComment
-     | Include
-     | Preprocessor
-     | StructDecl
-     | UnionDecl
-     | EnumDecl
-     | TypedefDecl
-     | FunctionDecl
-     | VarDecl
-     | Other
+     / DocComment
+     / Include
+     / Preprocessor
+     / StructDecl
+     / UnionDecl
+     / EnumDecl
+     / TypedefDecl
+     / FunctionDecl
+     / VarDecl
+     / Other
 
 # Doc block (consecutive /// comments or /** */)
 DocBlock -> DocComment ( NL DocComment )*
@@ -86,24 +86,24 @@ DocBlock -> DocComment ( NL DocComment )*
 # Struct declaration
 StructDecl -> doc:DocBlock? NL? KW_typedef? KW_struct id:Ident? StructBody? id:Ident? SEMI
 StructBody -> LBRACE StructMember* RBRACE
-StructMember -> field_doc:DocBlock? Type field_id:Ident ArrayDims? SEMI | NL | LineComment | BlockComment
+StructMember -> field_doc:DocBlock? Type field_id:Ident ArrayDims? SEMI / NL / LineComment / BlockComment
 
 # Union declaration
 UnionDecl -> doc:DocBlock? NL? KW_typedef? KW_union id:Ident? UnionBody? id:Ident? SEMI
 UnionBody -> LBRACE UnionMember* RBRACE
-UnionMember -> field_doc:DocBlock? Type field_id:Ident ArrayDims? SEMI | NL | LineComment | BlockComment
+UnionMember -> field_doc:DocBlock? Type field_id:Ident ArrayDims? SEMI / NL / LineComment / BlockComment
 
 # Enum declaration
 EnumDecl -> doc:DocBlock? NL? KW_typedef? KW_enum id:Ident? EnumBody? id:Ident? SEMI
 EnumBody -> LBRACE EnumValue* RBRACE
-EnumValue -> value_doc:DocBlock? value_id:Ident ( Operator Expr )? COMMA? | NL | LineComment | BlockComment
+EnumValue -> value_doc:DocBlock? value_id:Ident ( Operator Expr )? COMMA? / NL / LineComment / BlockComment
 
 # Typedef declaration
 TypedefDecl -> doc:DocBlock? NL? KW_typedef Type id:Ident ArrayDims? SEMI
 
 # Function declaration
-FunctionDecl -> doc:DocBlock? NL? StorageClass* Type STAR* func_id:Ident LPAREN ParamList? RPAREN ( Body | SEMI )
-StorageClass -> KW_static | KW_extern | KW_inline
+FunctionDecl -> doc:DocBlock? NL? StorageClass* Type STAR* func_id:Ident LPAREN ParamList? RPAREN ( Body / SEMI )
+StorageClass -> KW_static / KW_extern / KW_inline
 
 # Variable declaration
 VarDecl -> doc:DocBlock? NL? StorageClass* Type STAR* var_id:Ident ArrayDims? ( Operator Expr )? SEMI
@@ -114,19 +114,19 @@ Param -> Type STAR* param_id:Ident? ArrayDims?
 
 # Types
 Type -> TypeQual* TypeAtom
-TypeQual -> KW_const | KW_volatile
-TypeAtom -> KeywordType | KW_struct Ident | KW_union Ident | KW_enum Ident | TypeIdent | Ident
+TypeQual -> KW_const / KW_volatile
+TypeAtom -> KeywordType / KW_struct Ident / KW_union Ident / KW_enum Ident / TypeIdent / Ident
 ArrayDims -> ( LBRACKET Expr? RBRACKET )+
 
 # Body (simplified - balance braces)
 Body -> LBRACE BodyContent* RBRACE
-BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+BodyContent -> LBRACE BodyContent* RBRACE / LPAREN BodyContent* RPAREN / LBRACKET BodyContent* RBRACKET / Atom
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | TypeIdent | Number | String | Char | KeywordType | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | ARROW | STAR | Operator
+ExprAtom -> Ident / TypeIdent / Number / String / Char / KeywordType / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / ARROW / STAR / Operator
 
-Atom -> ExprAtom | NL | DocComment | LineComment | BlockComment | Include | Preprocessor | KW_typedef | KW_struct | KW_union | KW_enum | KW_static | KW_extern | KW_inline | KW_const | KW_volatile | KW_if | KW_else | KW_switch | KW_case | KW_for | KW_while | KW_do | KW_return | KW_sizeof | SEMI
+Atom -> ExprAtom / NL / DocComment / LineComment / BlockComment / Include / Preprocessor / KW_typedef / KW_struct / KW_union / KW_enum / KW_static / KW_extern / KW_inline / KW_const / KW_volatile / KW_if / KW_else / KW_switch / KW_case / KW_for / KW_while / KW_do / KW_return / KW_sizeof / SEMI
 
 Other -> Atom
 

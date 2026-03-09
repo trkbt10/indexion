@@ -96,52 +96,52 @@ TOKEN COLON    /:/
 Module -> Item*
 
 Item -> NL
-     | DocComment
-     | UsingDecl
-     | NamespaceDecl
-     | ClassDecl
-     | StructDecl
-     | InterfaceDecl
-     | EnumDecl
-     | RecordDecl
-     | DelegateDecl
-     | Other
+     / DocComment
+     / UsingDecl
+     / NamespaceDecl
+     / ClassDecl
+     / StructDecl
+     / InterfaceDecl
+     / EnumDecl
+     / RecordDecl
+     / DelegateDecl
+     / Other
 
 # Doc block (consecutive /// comments)
 DocBlock -> DocComment ( NL DocComment )*
 
 # Using declaration
 UsingDecl -> KW_using KW_static? ( Ident Operator )? path:QualifiedName SEMI
-QualifiedName -> ( Ident | TypeIdent ) ( DOT ( Ident | TypeIdent ) )*
+QualifiedName -> ( Ident / TypeIdent ) ( DOT ( Ident / TypeIdent ) )*
 
 # Namespace declaration
-NamespaceDecl -> KW_namespace QualifiedName ( NamespaceBody | SEMI )
+NamespaceDecl -> KW_namespace QualifiedName ( NamespaceBody / SEMI )
 NamespaceBody -> LBRACE NamespaceMember* RBRACE
-NamespaceMember -> UsingDecl | NamespaceDecl | ClassDecl | StructDecl | InterfaceDecl | EnumDecl | RecordDecl | DelegateDecl | NL | LineComment | BlockComment
+NamespaceMember -> UsingDecl / NamespaceDecl / ClassDecl / StructDecl / InterfaceDecl / EnumDecl / RecordDecl / DelegateDecl / NL / LineComment / BlockComment
 
 # Class declaration
 ClassDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_partial? KW_class id:TypeIdent TypeParams? BaseList? WhereClause* ClassBody
 BaseList -> COLON TypeList
 ClassBody -> LBRACE ClassMember* RBRACE
-ClassMember -> ConstructorDecl | MethodDecl | PropertyDecl | FieldDecl | EventDecl | IndexerDecl | ClassDecl | StructDecl | InterfaceDecl | EnumDecl | DelegateDecl | NL | LineComment | BlockComment
+ClassMember -> ConstructorDecl / MethodDecl / PropertyDecl / FieldDecl / EventDecl / IndexerDecl / ClassDecl / StructDecl / InterfaceDecl / EnumDecl / DelegateDecl / NL / LineComment / BlockComment
 
 # Struct declaration
 StructDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_partial? KW_readonly? KW_struct id:TypeIdent TypeParams? BaseList? WhereClause* StructBody
 StructBody -> LBRACE StructMember* RBRACE
-StructMember -> ConstructorDecl | MethodDecl | PropertyDecl | FieldDecl | EventDecl | IndexerDecl | ClassDecl | StructDecl | InterfaceDecl | EnumDecl | DelegateDecl | NL | LineComment | BlockComment
+StructMember -> ConstructorDecl / MethodDecl / PropertyDecl / FieldDecl / EventDecl / IndexerDecl / ClassDecl / StructDecl / InterfaceDecl / EnumDecl / DelegateDecl / NL / LineComment / BlockComment
 
 # Interface declaration
 InterfaceDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_partial? KW_interface id:TypeIdent TypeParams? BaseList? WhereClause* InterfaceBody
 InterfaceBody -> LBRACE InterfaceMember* RBRACE
-InterfaceMember -> MethodDecl | PropertyDecl | EventDecl | IndexerDecl | NL | LineComment | BlockComment
+InterfaceMember -> MethodDecl / PropertyDecl / EventDecl / IndexerDecl / NL / LineComment / BlockComment
 
 # Enum declaration
 EnumDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_enum id:TypeIdent ( COLON Type )? EnumBody
 EnumBody -> LBRACE EnumMember* RBRACE
-EnumMember -> member_doc:DocBlock? Attribute* member_id:Ident ( Operator Expr )? COMMA? | NL | LineComment | BlockComment
+EnumMember -> member_doc:DocBlock? Attribute* member_id:Ident ( Operator Expr )? COMMA? / NL / LineComment / BlockComment
 
 # Record declaration
-RecordDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_partial? KW_record KW_struct? KW_class? id:TypeIdent TypeParams? RecordParams? BaseList? WhereClause* ( RecordBody | SEMI )
+RecordDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_partial? KW_record KW_struct? KW_class? id:TypeIdent TypeParams? RecordParams? BaseList? WhereClause* ( RecordBody / SEMI )
 RecordParams -> LPAREN ParamList? RPAREN
 RecordBody -> LBRACE ClassMember* RBRACE
 
@@ -149,21 +149,21 @@ RecordBody -> LBRACE ClassMember* RBRACE
 DelegateDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_delegate Type id:TypeIdent TypeParams? LPAREN ParamList? RPAREN WhereClause* SEMI
 
 # Constructor declaration
-ConstructorDecl -> doc:DocBlock? NL? Attribute* Modifier* id:TypeIdent LPAREN ParamList? RPAREN ( COLON ( KW_this | KW_base ) LPAREN ( Expr ( COMMA Expr )* )? RPAREN )? Body
+ConstructorDecl -> doc:DocBlock? NL? Attribute* Modifier* id:TypeIdent LPAREN ParamList? RPAREN ( COLON ( KW_this / KW_base ) LPAREN ( Expr ( COMMA Expr )* )? RPAREN )? Body
 
 # Method declaration
-MethodDecl -> doc:DocBlock? NL? Attribute* Modifier* Type method_id:Ident TypeParams? LPAREN ParamList? RPAREN WhereClause* ( Body | ARROW Expr SEMI | SEMI )
+MethodDecl -> doc:DocBlock? NL? Attribute* Modifier* Type method_id:Ident TypeParams? LPAREN ParamList? RPAREN WhereClause* ( Body / ARROW Expr SEMI / SEMI )
 
 # Property declaration
-PropertyDecl -> doc:DocBlock? NL? Attribute* Modifier* Type prop_id:Ident ( PropertyAccessors | ARROW Expr SEMI )
+PropertyDecl -> doc:DocBlock? NL? Attribute* Modifier* Type prop_id:Ident ( PropertyAccessors / ARROW Expr SEMI )
 PropertyAccessors -> LBRACE Accessor+ RBRACE ( Operator Expr SEMI )?
-Accessor -> Attribute* Modifier* ( KW_get | KW_set | KW_init ) ( Body | SEMI | ARROW Expr SEMI )
+Accessor -> Attribute* Modifier* ( KW_get / KW_set / KW_init ) ( Body / SEMI / ARROW Expr SEMI )
 
 # Field declaration
 FieldDecl -> doc:DocBlock? NL? Attribute* Modifier* Type field_id:Ident ( Operator Expr )? SEMI
 
 # Event declaration
-EventDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_event Type event_id:Ident ( EventAccessors | ( Operator Expr )? SEMI )
+EventDecl -> doc:DocBlock? NL? Attribute* Modifier* KW_event Type event_id:Ident ( EventAccessors / ( Operator Expr )? SEMI )
 EventAccessors -> LBRACE EventAccessor+ RBRACE
 EventAccessor -> Attribute* ( Ident ) Body
 
@@ -171,28 +171,28 @@ EventAccessor -> Attribute* ( Ident ) Body
 IndexerDecl -> doc:DocBlock? NL? Attribute* Modifier* Type KW_this LBRACKET ParamList RBRACKET PropertyAccessors
 
 # Attributes
-Attribute -> LBRACKET Ident ( COLON )? ( Ident | TypeIdent ) ( LPAREN ( Expr ( COMMA Expr )* )? RPAREN )? RBRACKET
+Attribute -> LBRACKET Ident ( COLON )? ( Ident / TypeIdent ) ( LPAREN ( Expr ( COMMA Expr )* )? RPAREN )? RBRACKET
 
 # Modifiers
-Modifier -> KW_public | KW_private | KW_protected | KW_internal | KW_static | KW_abstract | KW_sealed | KW_partial | KW_virtual | KW_override | KW_new | KW_readonly | KW_const | KW_async | KW_extern | KW_unsafe
+Modifier -> KW_public / KW_private / KW_protected / KW_internal / KW_static / KW_abstract / KW_sealed / KW_partial / KW_virtual / KW_override / KW_new / KW_readonly / KW_const / KW_async / KW_extern / KW_unsafe
 KW_extern -> /extern\b/
 KW_unsafe -> /unsafe\b/
 
 # Parameters
 ParamList -> Param ( COMMA Param )*
-Param -> Attribute* ( KW_this | KW_ref | KW_out | KW_in | Ident )? Type param_id:Ident ( Operator Expr )?
+Param -> Attribute* ( KW_this / KW_ref / KW_out / KW_in / Ident )? Type param_id:Ident ( Operator Expr )?
 WhereClause -> KW_where TypeIdent COLON TypeConstraint ( COMMA TypeConstraint )*
-TypeConstraint -> Type | KW_class | KW_struct | KW_new LPAREN RPAREN
+TypeConstraint -> Type / KW_class / KW_struct / KW_new LPAREN RPAREN
 KW_class -> /class\b/
 KW_struct -> /struct\b/
 KW_new -> /new\b/
 
 # Types
 TypeParams -> Operator TypeParam ( COMMA TypeParam )* Operator
-TypeParam -> Attribute* ( KW_in | KW_out )? TypeIdent
+TypeParam -> Attribute* ( KW_in / KW_out )? TypeIdent
 TypeList -> Type ( COMMA Type )*
-Type -> TypeAtom ArrayDims? QMARK? | LPAREN TupleElement ( COMMA TupleElement )+ RPAREN
-TypeAtom -> QualifiedName TypeArgs? | KeywordType
+Type -> TypeAtom ArrayDims? QMARK? / LPAREN TupleElement ( COMMA TupleElement )+ RPAREN
+TypeAtom -> QualifiedName TypeArgs? / KeywordType
 TypeArgs -> Operator Type ( COMMA Type )* Operator
 ArrayDims -> ( LBRACKET COMMA* RBRACKET )+
 TupleElement -> Type Ident?
@@ -200,13 +200,13 @@ QMARK -> /\?/
 
 # Body (simplified - balance braces)
 Body -> LBRACE BodyContent* RBRACE
-BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+BodyContent -> LBRACE BodyContent* RBRACE / LPAREN BodyContent* RPAREN / LBRACKET BodyContent* RBRACKET / Atom
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | TypeIdent | Number | String | Char | BoolLit | NullLit | KeywordType | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | ARROW | NULLCOND | NULLCOAL | Operator
+ExprAtom -> Ident / TypeIdent / Number / String / Char / BoolLit / NullLit / KeywordType / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / COLON / ARROW / NULLCOND / NULLCOAL / Operator
 
-Atom -> ExprAtom | NL | DocComment | LineComment | BlockComment | KW_namespace | KW_using | KW_class | KW_struct | KW_interface | KW_enum | KW_record | KW_delegate | KW_public | KW_private | KW_protected | KW_internal | KW_static | KW_abstract | KW_sealed | KW_partial | KW_virtual | KW_override | KW_new | KW_readonly | KW_const | KW_async | KW_await | KW_void | KW_return | KW_if | KW_else | KW_switch | KW_case | KW_for | KW_foreach | KW_while | KW_in | KW_out | KW_ref | KW_get | KW_set | KW_init | KW_value | KW_this | KW_base | KW_where | KW_event | SEMI
+Atom -> ExprAtom / NL / DocComment / LineComment / BlockComment / KW_namespace / KW_using / KW_class / KW_struct / KW_interface / KW_enum / KW_record / KW_delegate / KW_public / KW_private / KW_protected / KW_internal / KW_static / KW_abstract / KW_sealed / KW_partial / KW_virtual / KW_override / KW_new / KW_readonly / KW_const / KW_async / KW_await / KW_void / KW_return / KW_if / KW_else / KW_switch / KW_case / KW_for / KW_foreach / KW_while / KW_in / KW_out / KW_ref / KW_get / KW_set / KW_init / KW_value / KW_this / KW_base / KW_where / KW_event / SEMI
 
 Other -> Atom
 

@@ -37,9 +37,9 @@ TOKEN KW_null       /null/
 === grammar
 JsonFile        -> LBRACE Members? RBRACE
 Members         -> Member ( COMMA Member )*
-Member          -> NameMember | VersionMember | DescMember | LicenseMember
-                 | TypeMember | RequireMember | RequireDevMember
-                 | OtherMember
+Member          -> NameMember / VersionMember / DescMember / LicenseMember
+                 / TypeMember / RequireMember / RequireDevMember
+                 / OtherMember
 
 NameMember      -> KW_name COLON value:StringLit
 VersionMember   -> KW_version COLON value:StringLit
@@ -55,14 +55,14 @@ DepEntry        -> name:StringLit COLON version:StringLit
 DevDepEntry     -> name:StringLit COLON version:StringLit
 
 OtherMember     -> OtherKey COLON Value
-OtherKey        -> StringLit | KW_authors | KW_autoload
-Value           -> StringLit | NumberLit | KW_true | KW_false | KW_null
-                 | NestedObject | Array
+OtherKey        -> StringLit / KW_authors / KW_autoload
+Value           -> StringLit / NumberLit / KW_true / KW_false / KW_null
+                 / NestedObject / Array
 NestedObject    -> LBRACE NestedMembers? RBRACE
 NestedMembers   -> NestedMember ( COMMA NestedMember )*
 NestedMember    -> NestedKey COLON Value
-NestedKey       -> StringLit | KW_name | KW_version | KW_description | KW_license
-                 | KW_type | KW_require | KW_require_dev | KW_authors | KW_autoload
+NestedKey       -> StringLit / KW_name / KW_version / KW_description / KW_license
+                 / KW_type / KW_require / KW_require_dev / KW_authors / KW_autoload
 Array           -> LBRACKET ArrayList? RBRACKET
 ArrayList       -> Value ( COMMA Value )*
 

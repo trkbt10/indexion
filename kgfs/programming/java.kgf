@@ -91,14 +91,14 @@ TOKEN AT       /@/
 Module -> Item*
 
 Item -> NL
-     | DocComment
-     | PackageDecl
-     | ImportDecl
-     | ClassDecl
-     | InterfaceDecl
-     | EnumDecl
-     | RecordDecl
-     | Other
+     / DocComment
+     / PackageDecl
+     / ImportDecl
+     / ClassDecl
+     / InterfaceDecl
+     / EnumDecl
+     / RecordDecl
+     / Other
 
 # Package declaration
 PackageDecl -> Annotation* KW_package QualifiedName SEMI
@@ -113,17 +113,17 @@ ExtendsClause -> KW_extends Type
 ImplementsClause -> KW_implements TypeList
 PermitsClause -> KW_permits TypeList
 ClassBody -> LBRACE ClassMember* RBRACE
-ClassMember -> ConstructorDecl | MethodDecl | FieldDecl | ClassDecl | InterfaceDecl | EnumDecl | StaticBlock | NL | LineComment | BlockComment
+ClassMember -> ConstructorDecl / MethodDecl / FieldDecl / ClassDecl / InterfaceDecl / EnumDecl / StaticBlock / NL / LineComment / BlockComment
 
 # Interface declaration
 InterfaceDecl -> doc:DocComment? NL? Annotation* Modifier* KW_interface id:Ident TypeParams? ExtendsClause? PermitsClause? InterfaceBody
 InterfaceBody -> LBRACE InterfaceMember* RBRACE
-InterfaceMember -> MethodDecl | FieldDecl | ClassDecl | InterfaceDecl | NL | LineComment | BlockComment
+InterfaceMember -> MethodDecl / FieldDecl / ClassDecl / InterfaceDecl / NL / LineComment / BlockComment
 
 # Enum declaration
 EnumDecl -> doc:DocComment? NL? Annotation* Modifier* KW_enum id:Ident ImplementsClause? EnumBody
 EnumBody -> LBRACE EnumConstant* ( SEMI ClassMember* )? RBRACE
-EnumConstant -> const_doc:DocComment? Annotation* const_id:Ident Arguments? ClassBody? COMMA? | NL | LineComment
+EnumConstant -> const_doc:DocComment? Annotation* const_id:Ident Arguments? ClassBody? COMMA? / NL / LineComment
 
 # Record declaration
 RecordDecl -> doc:DocComment? NL? Annotation* Modifier* KW_record id:Ident TypeParams? LPAREN RecordComponents? RPAREN ImplementsClause? RecordBody
@@ -135,7 +135,7 @@ RecordBody -> LBRACE ClassMember* RBRACE
 ConstructorDecl -> doc:DocComment? NL? Annotation* Modifier* id:Ident LPAREN ParamList? RPAREN ThrowsClause? Body
 
 # Method declaration
-MethodDecl -> doc:DocComment? NL? Annotation* Modifier* TypeParams? Type method_id:Ident LPAREN ParamList? RPAREN ThrowsClause? ( Body | SEMI )
+MethodDecl -> doc:DocComment? NL? Annotation* Modifier* TypeParams? Type method_id:Ident LPAREN ParamList? RPAREN ThrowsClause? ( Body / SEMI )
 
 # Field declaration
 FieldDecl -> doc:DocComment? NL? Annotation* Modifier* Type field_id:Ident ( Operator Expr )? SEMI
@@ -144,7 +144,7 @@ FieldDecl -> doc:DocComment? NL? Annotation* Modifier* Type field_id:Ident ( Ope
 StaticBlock -> KW_static Body
 
 # Modifiers
-Modifier -> KW_public | KW_private | KW_protected | KW_static | KW_final | KW_abstract | KW_sealed | KW_default
+Modifier -> KW_public / KW_private / KW_protected / KW_static / KW_final / KW_abstract / KW_sealed / KW_default
 
 # Parameters
 ParamList -> Param ( COMMA Param )*
@@ -158,20 +158,20 @@ TypeParam -> Annotation* Ident ( KW_extends TypeBound )?
 TypeBound -> Type ( Operator Type )*
 TypeList -> Type ( COMMA Type )*
 Type -> TypeAtom ArrayDims?
-TypeAtom -> QualifiedName TypeArgs? | KeywordType
+TypeAtom -> QualifiedName TypeArgs? / KeywordType
 TypeArgs -> Operator TypeArg ( COMMA TypeArg )* Operator
-TypeArg -> Type | Operator ( KW_extends | KW_super ) Type | Operator
+TypeArg -> Type / Operator ( KW_extends / KW_super ) Type / Operator
 ArrayDims -> ( LBRACKET RBRACKET )+
 
 # Body (simplified - balance braces)
 Body -> LBRACE BodyContent* RBRACE
-BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+BodyContent -> LBRACE BodyContent* RBRACE / LPAREN BodyContent* RPAREN / LBRACKET BodyContent* RBRACKET / Atom
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | Number | String | TextBlock | Char | BoolLit | NullLit | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | DCOLON | ARROW | Operator | Annotation
+ExprAtom -> Ident / Number / String / TextBlock / Char / BoolLit / NullLit / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / COLON / DCOLON / ARROW / Operator / Annotation
 
-Atom -> ExprAtom | NL | DocComment | LineComment | BlockComment | KW_package | KW_import | KW_class | KW_interface | KW_enum | KW_record | KW_extends | KW_implements | KW_public | KW_private | KW_protected | KW_static | KW_final | KW_abstract | KW_sealed | KW_permits | KW_default | KW_void | KW_new | KW_this | KW_super | KW_return | KW_throws | KW_throw | KW_try | KW_catch | KW_finally | KW_if | KW_else | KW_switch | KW_case | KW_for | KW_while | KW_do | KW_break | KW_continue | KeywordType | SEMI | AT
+Atom -> ExprAtom / NL / DocComment / LineComment / BlockComment / KW_package / KW_import / KW_class / KW_interface / KW_enum / KW_record / KW_extends / KW_implements / KW_public / KW_private / KW_protected / KW_static / KW_final / KW_abstract / KW_sealed / KW_permits / KW_default / KW_void / KW_new / KW_this / KW_super / KW_return / KW_throws / KW_throw / KW_try / KW_catch / KW_finally / KW_if / KW_else / KW_switch / KW_case / KW_for / KW_while / KW_do / KW_break / KW_continue / KeywordType / SEMI / AT
 
 Other -> Atom
 

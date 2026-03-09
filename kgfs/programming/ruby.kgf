@@ -92,55 +92,55 @@ TOKEN PIPE     /\|/
 Module -> Item*
 
 Item -> NL
-     | Comment
-     | RequireDecl
-     | ClassDecl
-     | ModuleDecl
-     | MethodDecl
-     | AttrDecl
-     | Other
+     / Comment
+     / RequireDecl
+     / ClassDecl
+     / ModuleDecl
+     / MethodDecl
+     / AttrDecl
+     / Other
 
 # Doc block (consecutive # comments before declaration)
 DocBlock -> Comment ( NL Comment )*
 
 # Require declaration
-RequireDecl -> ( KW_require | KW_require_relative ) path:String
+RequireDecl -> ( KW_require / KW_require_relative ) path:String
 
 # Class declaration
 ClassDecl -> doc:DocBlock? NL? KW_class id:ConstIdent ( Operator ConstIdent )? ClassBody
 ClassBody -> ( ClassMember )* KW_end
-ClassMember -> MethodDecl | AttrDecl | IncludeDecl | ClassDecl | ModuleDecl | VisibilityMod | NL | Comment
+ClassMember -> MethodDecl / AttrDecl / IncludeDecl / ClassDecl / ModuleDecl / VisibilityMod / NL / Comment
 
 # Module declaration
 ModuleDecl -> doc:DocBlock? NL? KW_module id:ConstIdent ModuleBody
 ModuleBody -> ( ModuleMember )* KW_end
-ModuleMember -> MethodDecl | AttrDecl | IncludeDecl | ClassDecl | ModuleDecl | VisibilityMod | NL | Comment
+ModuleMember -> MethodDecl / AttrDecl / IncludeDecl / ClassDecl / ModuleDecl / VisibilityMod / NL / Comment
 
 # Method declaration
 MethodDecl -> doc:DocBlock? NL? KW_def ( KW_self DOT )? method_id:Ident Params? MethodBody
-Params -> LPAREN ParamList? RPAREN | ParamList
+Params -> LPAREN ParamList? RPAREN / ParamList
 ParamList -> Param ( COMMA Param )*
 Param -> Operator? param_id:Ident ( Operator Expr )?
 MethodBody -> ( MethodContent )* KW_end
-MethodContent -> NL | Comment | Expr | Statement
+MethodContent -> NL / Comment / Expr / Statement
 
 # Attr declarations
-AttrDecl -> doc:DocBlock? NL? KW_attr ( Symbol | COLON Ident ) ( COMMA ( Symbol | COLON Ident ) )*
+AttrDecl -> doc:DocBlock? NL? KW_attr ( Symbol / COLON Ident ) ( COMMA ( Symbol / COLON Ident ) )*
 
 # Include/extend
-IncludeDecl -> ( KW_include | KW_extend ) ConstIdent ( DCOLON ConstIdent )*
+IncludeDecl -> ( KW_include / KW_extend ) ConstIdent ( DCOLON ConstIdent )*
 
 # Visibility modifiers
-VisibilityMod -> ( KW_private | KW_protected | KW_public ) ( Symbol | COLON Ident )?
+VisibilityMod -> ( KW_private / KW_protected / KW_public ) ( Symbol / COLON Ident )?
 
 # Statement
-Statement -> KW_if | KW_elsif | KW_else | KW_unless | KW_case | KW_when | KW_while | KW_until | KW_for | KW_begin | KW_rescue | KW_ensure | KW_end | KW_do | KW_return | KW_yield | KW_raise
+Statement -> KW_if / KW_elsif / KW_else / KW_unless / KW_case / KW_when / KW_while / KW_until / KW_for / KW_begin / KW_rescue / KW_ensure / KW_end / KW_do / KW_return / KW_yield / KW_raise
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | ConstIdent | Number | String | Symbol | Regex | BoolLit | NilLit | InstanceVar | ClassVar | GlobalVar | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | DCOLON | PIPE | Operator
+ExprAtom -> Ident / ConstIdent / Number / String / Symbol / Regex / BoolLit / NilLit / InstanceVar / ClassVar / GlobalVar / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / COLON / DCOLON / PIPE / Operator
 
-Atom -> ExprAtom | NL | Comment | HereDoc | KW_def | KW_class | KW_module | KW_end | KW_do | KW_begin | KW_rescue | KW_ensure | KW_raise | KW_return | KW_yield | KW_self | KW_super | KW_alias | KW_attr | KW_private | KW_protected | KW_public | KW_if | KW_elsif | KW_else | KW_unless | KW_case | KW_when | KW_while | KW_until | KW_for | KW_in | KW_require | KW_require_relative | KW_include | KW_extend | SEMI
+Atom -> ExprAtom / NL / Comment / HereDoc / KW_def / KW_class / KW_module / KW_end / KW_do / KW_begin / KW_rescue / KW_ensure / KW_raise / KW_return / KW_yield / KW_self / KW_super / KW_alias / KW_attr / KW_private / KW_protected / KW_public / KW_if / KW_elsif / KW_else / KW_unless / KW_case / KW_when / KW_while / KW_until / KW_for / KW_in / KW_require / KW_require_relative / KW_include / KW_extend / SEMI
 
 Other -> Atom
 

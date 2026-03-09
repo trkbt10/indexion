@@ -56,13 +56,13 @@ Module -> ModuleDoc? Item*
 ModuleDoc -> doc:Docstring NL*
 
 Item -> NL
-     | Comment
-     | ImportStmt
-     | FromImport
-     | FunctionDef
-     | ClassDef
-     | Assignment
-     | Other
+     / Comment
+     / ImportStmt
+     / FromImport
+     / FunctionDef
+     / ClassDef
+     / Assignment
+     / Other
 
 # Import statements
 ImportStmt -> KW_import ModList
@@ -76,11 +76,11 @@ FunctionDef -> decorators:Decorator* KW_async? KW_def id:Ident LPAREN ParamList?
 ClassDef -> decorators:Decorator* KW_class id:Ident Bases? COLON ClassSuite
 
 # Suite with optional docstring
-Suite -> NL INDENT doc:Docstring? SuiteContent* | SimpleStmt
+Suite -> NL INDENT doc:Docstring? SuiteContent* / SimpleStmt
 ClassSuite -> NL INDENT doc:Docstring? ClassMember*
 
-SuiteContent -> NL | Comment | Statement | INDENT
-ClassMember -> NL | Comment | MethodDef | PropertyDef | Assignment | INDENT
+SuiteContent -> NL / Comment / Statement / INDENT
+ClassMember -> NL / Comment / MethodDef / PropertyDef / Assignment / INDENT
 
 MethodDef -> decorators:Decorator* KW_async? KW_def id:Ident LPAREN ParamList? RPAREN TypeHint? COLON Suite
 PropertyDef -> Decorator KW_def id:Ident LPAREN ParamList? RPAREN TypeHint? COLON Suite
@@ -89,8 +89,8 @@ PropertyDef -> Decorator KW_def id:Ident LPAREN ParamList? RPAREN TypeHint? COLO
 ParamList -> Param ( COMMA Param )*
 Param -> STARSTAR? STAR? id:Ident TypeHint? Default?
 Default -> EQ Expr
-TypeHint -> COLON Type | ARROW Type
-Type -> Ident ( LBRACKET TypeArgs RBRACKET )? | LBRACKET Type RBRACKET
+TypeHint -> COLON Type / ARROW Type
+Type -> Ident ( LBRACKET TypeArgs RBRACKET )? / LBRACKET Type RBRACKET
 TypeArgs -> Type ( COMMA Type )*
 
 # Class bases
@@ -99,14 +99,14 @@ TypeList -> Type ( COMMA Type )*
 
 # Simple statements
 SimpleStmt -> Statement NL?
-Statement -> Assignment | Expr
+Statement -> Assignment / Expr
 Assignment -> id:Ident TypeHint? EQ Expr
 
 # Expressions (simplified)
 Expr -> ExprAtom+
-ExprAtom -> Ident | Number | String | Docstring | LPAREN | RPAREN | LBRACKET | RBRACKET | LBRACE | RBRACE | DOT | COMMA | COLON | EQ | STAR | STARSTAR | ARROW
+ExprAtom -> Ident / Number / String / Docstring / LPAREN / RPAREN / LBRACKET / RBRACKET / LBRACE / RBRACE / DOT / COMMA / COLON / EQ / STAR / STARSTAR / ARROW
 
-Other -> ExprAtom | INDENT
+Other -> ExprAtom / INDENT
 
 === attrs
 on FunctionDef: def id kind=Function doc=doc decorators=decorators

@@ -30,11 +30,11 @@ TOKEN KW_false      /false/
 TOKEN KW_null       /null/
 
 === grammar
-PackageJson     -> LBRACE [ FieldList ] RBRACE
+PackageJson     -> LBRACE FieldList? RBRACE
 FieldList       -> Field ( COMMA Field )*
 
 # Fields - specific patterns first, generic last
-Field           -> NameField | VersionField | DependenciesField | DevDependenciesField | PeerDependenciesField | WorkspacesField | MainField | TypesField | TypingsField | ExportsField | GenericObjectField | GenericArrayField | GenericStringField | GenericOtherField
+Field           -> NameField / VersionField / DependenciesField / DevDependenciesField / PeerDependenciesField / WorkspacesField / MainField / TypesField / TypingsField / ExportsField / GenericObjectField / GenericArrayField / GenericStringField / GenericOtherField
 
 # Named fields with specific handling
 NameField            -> KW_name COLON value:StringLit
@@ -44,9 +44,9 @@ TypesField           -> KW_types COLON value:StringLit
 TypingsField         -> KW_typings COLON value:StringLit
 
 # Dependency fields - each with own entry type for proper semantics
-DependenciesField    -> KW_dependencies COLON LBRACE [ RuntimeDepList ] RBRACE
-DevDependenciesField -> KW_devDependencies COLON LBRACE [ DevDepList ] RBRACE
-PeerDependenciesField-> KW_peerDependencies COLON LBRACE [ PeerDepList ] RBRACE
+DependenciesField    -> KW_dependencies COLON LBRACE RuntimeDepList? RBRACE
+DevDependenciesField -> KW_devDependencies COLON LBRACE DevDepList? RBRACE
+PeerDependenciesField-> KW_peerDependencies COLON LBRACE PeerDepList? RBRACE
 
 RuntimeDepList  -> RuntimeDepEntry ( COMMA RuntimeDepEntry )*
 RuntimeDepEntry -> name:StringLit COLON version:StringLit
@@ -58,7 +58,7 @@ PeerDepList     -> PeerDepEntry ( COMMA PeerDepEntry )*
 PeerDepEntry    -> name:StringLit COLON version:StringLit
 
 # Workspace field
-WorkspacesField -> KW_workspaces COLON LBRACKET [ WorkspaceList ] RBRACKET
+WorkspacesField -> KW_workspaces COLON LBRACKET WorkspaceList? RBRACKET
 WorkspaceList   -> WorkspaceItem ( COMMA WorkspaceItem )*
 WorkspaceItem   -> pattern:StringLit
 
@@ -66,18 +66,18 @@ WorkspaceItem   -> pattern:StringLit
 ExportsField    -> KW_exports COLON value:Value
 
 # Generic fields for unknown keys
-GenericObjectField  -> key:StringLit COLON LBRACE [ GenericFieldList ] RBRACE
-GenericArrayField   -> key:StringLit COLON LBRACKET [ ValueList ] RBRACKET
+GenericObjectField  -> key:StringLit COLON LBRACE GenericFieldList? RBRACE
+GenericArrayField   -> key:StringLit COLON LBRACKET ValueList? RBRACKET
 GenericStringField  -> key:StringLit COLON value:StringLit
 GenericOtherField   -> key:StringLit COLON value:OtherValue
-OtherValue          -> NumberLit | KW_true | KW_false | KW_null
+OtherValue          -> NumberLit / KW_true / KW_false / KW_null
 
 # Generic JSON structures for nested content
 GenericFieldList    -> GenericInnerField ( COMMA GenericInnerField )*
 GenericInnerField   -> key:StringLit COLON value:Value
-Value               -> Object | Array | StringLit | NumberLit | KW_true | KW_false | KW_null
-Object              -> LBRACE [ GenericFieldList ] RBRACE
-Array               -> LBRACKET [ ValueList ] RBRACKET
+Value               -> Object / Array / StringLit / NumberLit / KW_true / KW_false / KW_null
+Object              -> LBRACE GenericFieldList? RBRACE
+Array               -> LBRACKET ValueList? RBRACKET
 ValueList           -> Value ( COMMA Value )*
 
 === attrs

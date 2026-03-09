@@ -32,8 +32,8 @@ TOKEN ARROW         /=>/
 
 === grammar
 GoMod           -> Directive*
-Directive       -> ModuleDir | GoDir | RequireDir | RequireBlock
-                 | ReplaceDir | ExcludeDir | RetractDir | NL | Comment
+Directive       -> ModuleDir / GoDir / RequireDir / RequireBlock
+                 / ReplaceDir / ExcludeDir / RetractDir / NL / Comment
 
 # Module declaration
 ModuleDir       -> KW_module path:ModulePath NL
@@ -47,7 +47,7 @@ RequireDir      -> KW_require path:ModulePath version:Version NL
 # Require block
 RequireBlock    -> KW_require LPAREN NL RequireList RPAREN NL
 RequireList     -> RequireEntry*
-RequireEntry    -> path:ModulePath version:Version NL | NL | Comment
+RequireEntry    -> path:ModulePath version:Version NL / NL / Comment
 
 # Replace/Exclude/Retract (capture but don't deeply parse)
 ReplaceDir      -> KW_replace ModulePath Version? ARROW ModulePath Version? NL

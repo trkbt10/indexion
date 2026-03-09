@@ -84,34 +84,34 @@ TOKEN AT       /@/
 Module -> Item*
 
 Item -> NL
-     | DocString
-     | ModuleDecl
-     | UsingDecl
-     | ImportDecl
-     | ExportDecl
-     | FunctionDecl
-     | MacroDecl
-     | StructDecl
-     | AbstractDecl
-     | ConstDecl
-     | Other
+     / DocString
+     / ModuleDecl
+     / UsingDecl
+     / ImportDecl
+     / ExportDecl
+     / FunctionDecl
+     / MacroDecl
+     / StructDecl
+     / AbstractDecl
+     / ConstDecl
+     / Other
 
 # Module declaration
-ModuleDecl -> doc:DocString? NL? ( KW_module | KW_baremodule ) id:TypeIdent ModuleBody KW_end
+ModuleDecl -> doc:DocString? NL? ( KW_module / KW_baremodule ) id:TypeIdent ModuleBody KW_end
 ModuleBody -> ( ModuleMember )*
-ModuleMember -> UsingDecl | ImportDecl | ExportDecl | FunctionDecl | MacroDecl | StructDecl | AbstractDecl | ConstDecl | NL | Comment | BlockComment
+ModuleMember -> UsingDecl / ImportDecl / ExportDecl / FunctionDecl / MacroDecl / StructDecl / AbstractDecl / ConstDecl / NL / Comment / BlockComment
 
 # Using/Import/Export declarations
 UsingDecl -> KW_using ModulePath ( COLON Names )? ( COMMA ModulePath ( COLON Names )? )*
 ImportDecl -> KW_import path:ModulePath ( COLON Names )? ( COMMA ModulePath ( COLON Names )? )*
 ExportDecl -> KW_export Names
-ModulePath -> ( TypeIdent | Ident ) ( DOT ( TypeIdent | Ident ) )*
-Names -> ( TypeIdent | Ident ) ( COMMA ( TypeIdent | Ident ) )*
+ModulePath -> ( TypeIdent / Ident ) ( DOT ( TypeIdent / Ident ) )*
+Names -> ( TypeIdent / Ident ) ( COMMA ( TypeIdent / Ident ) )*
 
 # Function declaration
 FunctionDecl -> doc:DocString? NL? KW_function id:Ident TypeParams? LPAREN ParamList? RPAREN WhereClause? FunctionBody KW_end
 FunctionBody -> ( FunctionContent )*
-FunctionContent -> NL | Comment | Expr
+FunctionContent -> NL / Comment / Expr
 TypeParams -> LBRACE TypeParam ( COMMA TypeParam )* RBRACE
 TypeParam -> TypeIdent ( Operator Type )?
 WhereClause -> KW_where TypeConstraint ( COMMA TypeConstraint )*
@@ -125,7 +125,7 @@ MacroBody -> ( FunctionContent )*
 StructDecl -> doc:DocString? NL? KW_mutable? KW_struct id:TypeIdent TypeParams? SuperType? StructBody KW_end
 SuperType -> Operator Type
 StructBody -> ( StructMember )*
-StructMember -> FieldDecl | FunctionDecl | NL | Comment
+StructMember -> FieldDecl / FunctionDecl / NL / Comment
 FieldDecl -> field_doc:DocString? field_id:Ident ( DCOLON Type )?
 
 # Abstract type declaration
@@ -140,14 +140,14 @@ Param -> param_id:Ident ( DCOLON Type )? ( EQ Expr )?
 
 # Types
 Type -> TypeAtom ( Operator TypeAtom )*
-TypeAtom -> TypeIdent TypeArgs? | Ident | LBRACE Type ( COMMA Type )* RBRACE
+TypeAtom -> TypeIdent TypeArgs? / Ident / LBRACE Type ( COMMA Type )* RBRACE
 TypeArgs -> LBRACE Type ( COMMA Type )* RBRACE
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | TypeIdent | Number | String | DocString | Char | Symbol | BoolLit | NothingLit | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | DCOLON | EQ | ARROW | DARROW | AT | Operator
+ExprAtom -> Ident / TypeIdent / Number / String / DocString / Char / Symbol / BoolLit / NothingLit / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / COLON / DCOLON / EQ / ARROW / DARROW / AT / Operator
 
-Atom -> ExprAtom | NL | Comment | BlockComment | KW_module | KW_baremodule | KW_using | KW_import | KW_export | KW_function | KW_macro | KW_struct | KW_mutable | KW_abstract | KW_primitive | KW_type | KW_const | KW_let | KW_begin | KW_end | KW_if | KW_elseif | KW_else | KW_for | KW_in | KW_while | KW_return | KW_try | KW_catch | KW_finally | KW_where | SEMI
+Atom -> ExprAtom / NL / Comment / BlockComment / KW_module / KW_baremodule / KW_using / KW_import / KW_export / KW_function / KW_macro / KW_struct / KW_mutable / KW_abstract / KW_primitive / KW_type / KW_const / KW_let / KW_begin / KW_end / KW_if / KW_elseif / KW_else / KW_for / KW_in / KW_while / KW_return / KW_try / KW_catch / KW_finally / KW_where / SEMI
 
 Other -> Atom
 

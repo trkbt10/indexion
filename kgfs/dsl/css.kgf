@@ -26,18 +26,18 @@ TOKEN RBRACE      /\}/
 TOKEN COMMA       /,/
 
 === grammar
-Stylesheet    -> ( ImportRule | Rule | Other )*
+Stylesheet    -> ( ImportRule / Rule / Other )*
 Other         -> (LBRACE|RBRACE|SEMI|COMMA|Ident|StringLit|RPAREN|URLFN|DOT|HASH)*
 
 ImportRule    -> AT_IMPORT ImportTarget SEMI?
-ImportTarget  -> URL | String
+ImportTarget  -> URL / String
 URL           -> URLFN LPAREN UrlInner RPAREN
-UrlInner      -> String | Ident
+UrlInner      -> String / Ident
 String        -> path:StringLit
 
 Rule          -> SelectorList LBRACE Other RBRACE
 SelectorList  -> Selector ( COMMA Selector )*
-Selector      -> ( ClassSel | IdSel | Ident )+
+Selector      -> ( ClassSel / IdSel / Ident )+
 ClassSel      -> DOT name:Ident
 IdSel         -> HASH name:Ident
 

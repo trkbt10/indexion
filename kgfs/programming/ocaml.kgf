@@ -84,16 +84,16 @@ TOKEN QUOTE    /'/
 Module -> Item*
 
 Item -> NL
-     | DocComment
-     | OpenDecl
-     | ModuleDecl
-     | TypeDecl
-     | LetDecl
-     | ValDecl
-     | ExternalDecl
-     | ExceptionDecl
-     | ClassDecl
-     | Other
+     / DocComment
+     / OpenDecl
+     / ModuleDecl
+     / TypeDecl
+     / LetDecl
+     / ValDecl
+     / ExternalDecl
+     / ExceptionDecl
+     / ClassDecl
+     / Other
 
 # Open declaration
 OpenDecl -> KW_open path:ModulePath
@@ -101,17 +101,17 @@ ModulePath -> ModuleIdent ( DOT ModuleIdent )*
 
 # Module declaration
 ModuleDecl -> doc:DocComment? NL? KW_module id:ModuleIdent ( COLON ModuleType )? ( EQ ModuleExpr )?
-ModuleType -> KW_sig SigItem* KW_end | ModulePath
-ModuleExpr -> KW_struct StructItem* KW_end | KW_functor LPAREN ModuleIdent COLON ModuleType RPAREN ARROW ModuleExpr | ModulePath
-SigItem -> ValDecl | TypeDecl | ModuleDecl | ExceptionDecl | NL | Comment
-StructItem -> LetDecl | TypeDecl | ModuleDecl | ExceptionDecl | OpenDecl | NL | Comment
+ModuleType -> KW_sig SigItem* KW_end / ModulePath
+ModuleExpr -> KW_struct StructItem* KW_end / KW_functor LPAREN ModuleIdent COLON ModuleType RPAREN ARROW ModuleExpr / ModulePath
+SigItem -> ValDecl / TypeDecl / ModuleDecl / ExceptionDecl / NL / Comment
+StructItem -> LetDecl / TypeDecl / ModuleDecl / ExceptionDecl / OpenDecl / NL / Comment
 
 # Type declaration
 TypeDecl -> doc:DocComment? NL? KW_type TypeParams? id:Ident TypeConstraints? ( EQ TypeDef )? ( KW_and TypeParams? Ident TypeConstraints? ( EQ TypeDef )? )*
-TypeParams -> QUOTE Ident | LPAREN QUOTE Ident ( COMMA QUOTE Ident )* RPAREN
+TypeParams -> QUOTE Ident / LPAREN QUOTE Ident ( COMMA QUOTE Ident )* RPAREN
 TypeConstraints -> Constraint+
 Constraint -> Ident
-TypeDef -> Type | VariantDef | RecordDef
+TypeDef -> Type / VariantDef / RecordDef
 VariantDef -> PIPE? Variant ( PIPE Variant )*
 Variant -> variant_doc:DocComment? variant_id:ModuleIdent ( KW_of Type )?
 RecordDef -> LBRACE RecordField ( SEMI RecordField )* RBRACE
@@ -120,7 +120,7 @@ RecordField -> field_doc:DocComment? KW_mutable? field_id:Ident COLON Type
 # Let declaration
 LetDecl -> doc:DocComment? NL? KW_let KW_rec? id:Ident Params? ( COLON Type )? EQ Expr ( KW_and id:Ident Params? ( COLON Type )? EQ Expr )*
 Params -> Param+
-Param -> Ident | LPAREN Ident COLON Type RPAREN
+Param -> Ident / LPAREN Ident COLON Type RPAREN
 
 # Val declaration (in signatures)
 ValDecl -> doc:DocComment? NL? KW_val id:Ident COLON Type
@@ -134,18 +134,18 @@ ExceptionDecl -> doc:DocComment? NL? KW_exception id:ModuleIdent ( KW_of Type )?
 # Class declaration
 ClassDecl -> doc:DocComment? NL? KW_class id:Ident Params? ( COLON Type )? EQ ClassBody
 ClassBody -> KW_object ClassMember* KW_end
-ClassMember -> MethodDecl | NL | Comment
+ClassMember -> MethodDecl / NL / Comment
 MethodDecl -> method_doc:DocComment? KW_method method_id:Ident Params? ( COLON Type )? EQ Expr
 
 # Types
 Type -> TypeAtom ( ARROW TypeAtom )*
-TypeAtom -> Ident | ModuleIdent | LPAREN Type ( COMMA Type )* RPAREN | QUOTE Ident
+TypeAtom -> Ident / ModuleIdent / LPAREN Type ( COMMA Type )* RPAREN / QUOTE Ident
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | ModuleIdent | Number | String | Char | BoolLit | LPAREN | RPAREN | LBRACKET | RBRACKET | LBRACE | RBRACE | COMMA | SEMI | SEMI2 | COLON | DCOLON | ARROW | LARROW | EQ | PIPE | QUOTE | Operator
+ExprAtom -> Ident / ModuleIdent / Number / String / Char / BoolLit / LPAREN / RPAREN / LBRACKET / RBRACKET / LBRACE / RBRACE / COMMA / SEMI / SEMI2 / COLON / DCOLON / ARROW / LARROW / EQ / PIPE / QUOTE / Operator
 
-Atom -> ExprAtom | NL | DocComment | Comment | KW_open | KW_include | KW_module | KW_struct | KW_sig | KW_end | KW_functor | KW_let | KW_rec | KW_and | KW_in | KW_type | KW_val | KW_external | KW_exception | KW_class | KW_object | KW_method | KW_mutable | KW_if | KW_then | KW_else | KW_match | KW_with | KW_function | KW_fun | KW_try | KW_begin | KW_for | KW_while | KW_do | KW_done | DOT
+Atom -> ExprAtom / NL / DocComment / Comment / KW_open / KW_include / KW_module / KW_struct / KW_sig / KW_end / KW_functor / KW_let / KW_rec / KW_and / KW_in / KW_type / KW_val / KW_external / KW_exception / KW_class / KW_object / KW_method / KW_mutable / KW_if / KW_then / KW_else / KW_match / KW_with / KW_function / KW_fun / KW_try / KW_begin / KW_for / KW_while / KW_do / KW_done / DOT
 
 Other -> Atom
 

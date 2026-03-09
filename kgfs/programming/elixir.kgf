@@ -88,51 +88,51 @@ TOKEN AT       /@/
 Module -> Item*
 
 Item -> NL
-     | Comment
-     | DocAttr
-     | ModuleDecl
-     | ProtocolDecl
-     | ImplDecl
-     | DefDecl
-     | DefMacroDecl
-     | DefGuardDecl
-     | UseDecl
-     | ImportDecl
-     | AliasDecl
-     | RequireDecl
-     | Other
+     / Comment
+     / DocAttr
+     / ModuleDecl
+     / ProtocolDecl
+     / ImplDecl
+     / DefDecl
+     / DefMacroDecl
+     / DefGuardDecl
+     / UseDecl
+     / ImportDecl
+     / AliasDecl
+     / RequireDecl
+     / Other
 
 # Module declaration
-ModuleDecl -> doc:DocAttr? NL? KW_defmodule id:ModulePath ( KW_do ModuleBody KW_end | COMMA KW_do COLON ModuleBody )
+ModuleDecl -> doc:DocAttr? NL? KW_defmodule id:ModulePath ( KW_do ModuleBody KW_end / COMMA KW_do COLON ModuleBody )
 ModulePath -> ModuleIdent ( DOT ModuleIdent )*
 ModuleBody -> ( ModuleMember )*
-ModuleMember -> DocAttr | ModuleAttr | DefDecl | DefMacroDecl | DefGuardDecl | StructDecl | UseDecl | ImportDecl | AliasDecl | RequireDecl | ModuleDecl | NL | Comment
+ModuleMember -> DocAttr / ModuleAttr / DefDecl / DefMacroDecl / DefGuardDecl / StructDecl / UseDecl / ImportDecl / AliasDecl / RequireDecl / ModuleDecl / NL / Comment
 
 # Protocol declaration
-ProtocolDecl -> doc:DocAttr? NL? KW_defprotocol id:ModulePath ( KW_do ProtocolBody KW_end | COMMA KW_do COLON ProtocolBody )
+ProtocolDecl -> doc:DocAttr? NL? KW_defprotocol id:ModulePath ( KW_do ProtocolBody KW_end / COMMA KW_do COLON ProtocolBody )
 ProtocolBody -> ( ProtocolMember )*
-ProtocolMember -> DocAttr | DefDecl | NL | Comment
+ProtocolMember -> DocAttr / DefDecl / NL / Comment
 
 # Impl declaration
-ImplDecl -> doc:DocAttr? NL? KW_defimpl ModulePath COMMA KW_for COLON ModulePath ( KW_do ImplBody KW_end | COMMA KW_do COLON ImplBody )
+ImplDecl -> doc:DocAttr? NL? KW_defimpl ModulePath COMMA KW_for COLON ModulePath ( KW_do ImplBody KW_end / COMMA KW_do COLON ImplBody )
 ImplBody -> ( ImplMember )*
-ImplMember -> DocAttr | DefDecl | NL | Comment
+ImplMember -> DocAttr / DefDecl / NL / Comment
 
 # Struct declaration
 StructDecl -> KW_defstruct LBRACKET ( StructField ( COMMA StructField )* )? RBRACKET
-StructField -> Atom | Ident | LBRACE Atom COMMA Expr RBRACE
+StructField -> Atom / Ident / LBRACE Atom COMMA Expr RBRACE
 
 # Def declaration
-DefDecl -> doc:DocAttr? NL? ( KW_def | KW_defp ) def_id:Ident DefArgs? ( KW_when Expr )? ( KW_do DefBody KW_end | COMMA KW_do COLON Expr )
+DefDecl -> doc:DocAttr? NL? ( KW_def / KW_defp ) def_id:Ident DefArgs? ( KW_when Expr )? ( KW_do DefBody KW_end / COMMA KW_do COLON Expr )
 DefArgs -> LPAREN ParamList? RPAREN
 DefBody -> ( DefContent )*
-DefContent -> NL | Comment | Expr | Statement
+DefContent -> NL / Comment / Expr / Statement
 
 # DefMacro declaration
-DefMacroDecl -> doc:DocAttr? NL? ( KW_defmacro | KW_defmacrop ) macro_id:Ident DefArgs? ( KW_when Expr )? ( KW_do DefBody KW_end | COMMA KW_do COLON Expr )
+DefMacroDecl -> doc:DocAttr? NL? ( KW_defmacro / KW_defmacrop ) macro_id:Ident DefArgs? ( KW_when Expr )? ( KW_do DefBody KW_end / COMMA KW_do COLON Expr )
 
 # DefGuard declaration
-DefGuardDecl -> doc:DocAttr? NL? ( KW_defguard | KW_defguardp ) guard_id:Ident DefArgs? ( KW_when Expr )?
+DefGuardDecl -> doc:DocAttr? NL? ( KW_defguard / KW_defguardp ) guard_id:Ident DefArgs? ( KW_when Expr )?
 
 # Use/Import/Alias/Require
 UseDecl -> KW_use ModulePath ( COMMA Expr )*
@@ -147,13 +147,13 @@ ParamList -> Param ( COMMA Param )*
 Param -> param_id:Ident ( Operator Ident )? ( Operator Expr )?
 
 # Statement
-Statement -> KW_if | KW_unless | KW_case | KW_cond | KW_with | KW_for | KW_try | KW_receive | KW_after | KW_rescue | KW_catch | KW_else | KW_end | KW_do | KW_fn | KW_raise | KW_when
+Statement -> KW_if / KW_unless / KW_case / KW_cond / KW_with / KW_for / KW_try / KW_receive / KW_after / KW_rescue / KW_catch / KW_else / KW_end / KW_do / KW_fn / KW_raise / KW_when
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | ModuleIdent | Number | String | Atom | BoolLit | NilLit | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | PIPE | ARROW | LARROW | DARROW | Operator | ModuleAttr | DocAttr
+ExprAtom -> Ident / ModuleIdent / Number / String / Atom / BoolLit / NilLit / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / COLON / PIPE / ARROW / LARROW / DARROW / Operator / ModuleAttr / DocAttr
 
-Atom2 -> ExprAtom | NL | Comment | KW_defmodule | KW_defprotocol | KW_defimpl | KW_defstruct | KW_defexception | KW_defmacro | KW_defmacrop | KW_defguard | KW_def | KW_defp | KW_defdelegate | KW_if | KW_unless | KW_case | KW_cond | KW_with | KW_for | KW_try | KW_receive | KW_after | KW_rescue | KW_catch | KW_else | KW_end | KW_do | KW_fn | KW_raise | KW_require | KW_import | KW_alias | KW_use | KW_when | SEMI | AT
+Atom2 -> ExprAtom / NL / Comment / KW_defmodule / KW_defprotocol / KW_defimpl / KW_defstruct / KW_defexception / KW_defmacro / KW_defmacrop / KW_defguard / KW_def / KW_defp / KW_defdelegate / KW_if / KW_unless / KW_case / KW_cond / KW_with / KW_for / KW_try / KW_receive / KW_after / KW_rescue / KW_catch / KW_else / KW_end / KW_do / KW_fn / KW_raise / KW_require / KW_import / KW_alias / KW_use / KW_when / SEMI / AT
 
 Other -> Atom2
 

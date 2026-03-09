@@ -73,15 +73,15 @@ Module -> ModuleDoc? Item*
 ModuleDoc -> module_doc:PackageDoc ( NL DocComment )*
 
 Item -> NL
-     | DocComment
-     | PackageDoc
-     | PackageDecl
-     | ImportDecl
-     | FuncDecl
-     | TypeDecl
-     | VarDecl
-     | ConstDecl
-     | Other
+     / DocComment
+     / PackageDoc
+     / PackageDecl
+     / ImportDecl
+     / FuncDecl
+     / TypeDecl
+     / VarDecl
+     / ConstDecl
+     / Other
 
 # Doc comment block (consecutive // comments)
 DocBlock -> DocComment ( NL DocComment )*
@@ -90,7 +90,7 @@ DocBlock -> DocComment ( NL DocComment )*
 PackageDecl -> KW_package id:Ident
 
 # Import declaration
-ImportDecl -> KW_import ( ImportSpec | ImportGroup )
+ImportDecl -> KW_import ( ImportSpec / ImportGroup )
 ImportGroup -> LPAREN ( ImportSpec NL? )* RPAREN
 ImportSpec -> alias:Ident? path:String
 
@@ -99,46 +99,46 @@ FuncDecl -> doc:DocBlock? NL? KW_func Receiver? id:Ident GenericParams? Signatur
 Receiver -> LPAREN Ident? STAR? Ident RPAREN
 
 # Type declaration
-TypeDecl -> doc:DocBlock? NL? KW_type ( TypeSpec | TypeGroup )
+TypeDecl -> doc:DocBlock? NL? KW_type ( TypeSpec / TypeGroup )
 TypeGroup -> LPAREN ( TypeSpec NL? )* RPAREN
 TypeSpec -> id:Ident GenericParams? Type
 StructType -> KW_struct LBRACE StructField* RBRACE
 InterfaceType -> KW_interface LBRACE InterfaceMethod* RBRACE
-StructField -> field_doc:DocBlock? field_id:Ident Type Tag? | NL | DocComment
-InterfaceMethod -> method_doc:DocBlock? method_id:Ident Signature | NL | DocComment
+StructField -> field_doc:DocBlock? field_id:Ident Type Tag? / NL / DocComment
+InterfaceMethod -> method_doc:DocBlock? method_id:Ident Signature / NL / DocComment
 Tag -> RawString
 
 # Var declaration
-VarDecl -> doc:DocBlock? NL? KW_var ( VarSpec | VarGroup )
+VarDecl -> doc:DocBlock? NL? KW_var ( VarSpec / VarGroup )
 VarGroup -> LPAREN ( VarSpec NL? )* RPAREN
 VarSpec -> id:Ident Type? ( Operator Expr )?
 
 # Const declaration
-ConstDecl -> doc:DocBlock? NL? KW_const ( ConstSpec | ConstGroup )
+ConstDecl -> doc:DocBlock? NL? KW_const ( ConstSpec / ConstGroup )
 ConstGroup -> LPAREN ( ConstSpec NL? )* RPAREN
 ConstSpec -> id:Ident Type? ( Operator Expr )?
 
 # Types and signatures
 Signature -> LPAREN ParamList? RPAREN Result?
-Result -> LPAREN TypeList RPAREN | Type
+Result -> LPAREN TypeList RPAREN / Type
 ParamList -> Param ( COMMA Param )*
 Param -> Ident? Type
 GenericParams -> LBRACKET TypeParam ( COMMA TypeParam )* RBRACKET
 TypeParam -> Ident Type?
 TypeList -> Type ( COMMA Type )*
-Type -> TypeAtom | STAR Type | LBRACKET RBRACKET Type | KW_map LBRACKET Type RBRACKET Type | KW_chan Type
-TypeAtom -> Ident ( DOT Ident )? GenericArgs? | StructType | InterfaceType | LPAREN Type RPAREN
+Type -> TypeAtom / STAR Type / LBRACKET RBRACKET Type / KW_map LBRACKET Type RBRACKET Type / KW_chan Type
+TypeAtom -> Ident ( DOT Ident )? GenericArgs? / StructType / InterfaceType / LPAREN Type RPAREN
 GenericArgs -> LBRACKET Type ( COMMA Type )* RBRACKET
 
 # Body (simplified - balance braces)
 Body -> LBRACE BodyContent* RBRACE
-BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+BodyContent -> LBRACE BodyContent* RBRACE / LPAREN BodyContent* RPAREN / LBRACKET BodyContent* RBRACKET / Atom
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | Number | String | RawString | Char | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | Operator | STAR
+ExprAtom -> Ident / Number / String / RawString / Char / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / COLON / Operator / STAR
 
-Atom -> ExprAtom | NL | DocComment | BlockComment | KW_package | KW_import | KW_func | KW_type | KW_struct | KW_interface | KW_var | KW_const | KW_map | KW_chan | KW_if | KW_else | KW_switch | KW_case | KW_default | KW_for | KW_range | KW_return | KW_defer | KW_go | KeywordType | SEMI
+Atom -> ExprAtom / NL / DocComment / BlockComment / KW_package / KW_import / KW_func / KW_type / KW_struct / KW_interface / KW_var / KW_const / KW_map / KW_chan / KW_if / KW_else / KW_switch / KW_case / KW_default / KW_for / KW_range / KW_return / KW_defer / KW_go / KeywordType / SEMI
 
 Other -> Atom
 

@@ -12,7 +12,7 @@ TOKEN EQ         /=/
 TOKEN ATTR_VALUE /"([^"\\]|\\.)*"|'([^'\\]|\\.)*'/
 
 === grammar
-Doc        -> ( Tag | Attr | Other )*
+Doc        -> ( Tag / Attr / Other )*
 Tag        -> TAG_OPEN Attr* TAG_CLOSE
 Attr       -> ATTR_NAME EQ ATTR_VALUE
 Other      -> TAG_CLOSE

@@ -74,15 +74,15 @@ TOKEN EQ       /=/
 Module -> Item*
 
 Item -> NL
-     | DocComment
-     | ConstDecl
-     | VarDecl
-     | FnDecl
-     | StructDecl
-     | EnumDecl
-     | UnionDecl
-     | TestDecl
-     | Other
+     / DocComment
+     / ConstDecl
+     / VarDecl
+     / FnDecl
+     / StructDecl
+     / EnumDecl
+     / UnionDecl
+     / TestDecl
+     / Other
 
 # Doc block
 DocBlock -> DocComment ( NL DocComment )*
@@ -96,41 +96,41 @@ VarDecl -> doc:DocBlock? NL? KW_pub? KW_var id:Ident ( COLON Type )? EQ Expr SEM
 # Function declaration
 FnDecl -> doc:DocBlock? NL? KW_pub? KW_export? KW_extern? KW_inline? KW_fn id:Ident LPAREN ParamList? RPAREN ( Type )? Body?
 ParamList -> Param ( COMMA Param )*
-Param -> KW_comptime? param_id:Ident COLON ( KW_anytype | Type )
+Param -> KW_comptime? param_id:Ident COLON ( KW_anytype / Type )
 
 # Struct declaration
 StructDecl -> doc:DocBlock? NL? KW_pub? KW_const id:Ident EQ KW_extern? KW_packed? KW_struct StructBody
 StructBody -> LBRACE StructMember* RBRACE
-StructMember -> FieldDecl | FnDecl | NL | LineComment
+StructMember -> FieldDecl / FnDecl / NL / LineComment
 FieldDecl -> field_doc:DocBlock? field_id:Ident COLON Type ( EQ Expr )? COMMA?
 KW_packed -> /packed\b/
 
 # Enum declaration
 EnumDecl -> doc:DocBlock? NL? KW_pub? KW_const id:Ident EQ KW_enum EnumBody
 EnumBody -> LBRACE EnumMember* RBRACE
-EnumMember -> value_doc:DocBlock? value_id:Ident ( EQ Expr )? COMMA? | NL | LineComment
+EnumMember -> value_doc:DocBlock? value_id:Ident ( EQ Expr )? COMMA? / NL / LineComment
 
 # Union declaration
 UnionDecl -> doc:DocBlock? NL? KW_pub? KW_const id:Ident EQ KW_extern? KW_union UnionBody
 UnionBody -> LBRACE UnionMember* RBRACE
-UnionMember -> field_doc:DocBlock? field_id:Ident COLON Type COMMA? | NL | LineComment
+UnionMember -> field_doc:DocBlock? field_id:Ident COLON Type COMMA? / NL / LineComment
 
 # Test declaration
 TestDecl -> KW_test String Body
 
 # Types
 Type -> TypeAtom ( Operator TypeAtom )*
-TypeAtom -> PrimitiveType | KeywordType | TypeIdent | Ident | LBRACKET Expr? RBRACKET Type | Operator Type
+TypeAtom -> PrimitiveType / KeywordType / TypeIdent / Ident / LBRACKET Expr? RBRACKET Type / Operator Type
 
 # Body (simplified - balance braces)
 Body -> LBRACE BodyContent* RBRACE
-BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+BodyContent -> LBRACE BodyContent* RBRACE / LPAREN BodyContent* RPAREN / LBRACKET BodyContent* RBRACKET / Atom
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | TypeIdent | Number | String | Char | PrimitiveType | KeywordType | Builtin | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | EQ | ARROW | Operator
+ExprAtom -> Ident / TypeIdent / Number / String / Char / PrimitiveType / KeywordType / Builtin / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / COLON / EQ / ARROW / Operator
 
-Atom -> ExprAtom | NL | DocComment | LineComment | KW_const | KW_var | KW_fn | KW_pub | KW_extern | KW_export | KW_inline | KW_comptime | KW_test | KW_struct | KW_enum | KW_union | KW_error | KW_if | KW_else | KW_switch | KW_while | KW_for | KW_return | KW_defer | KW_try | KW_catch | KW_orelse | SEMI
+Atom -> ExprAtom / NL / DocComment / LineComment / KW_const / KW_var / KW_fn / KW_pub / KW_extern / KW_export / KW_inline / KW_comptime / KW_test / KW_struct / KW_enum / KW_union / KW_error / KW_if / KW_else / KW_switch / KW_while / KW_for / KW_return / KW_defer / KW_try / KW_catch / KW_orelse / SEMI
 
 Other -> Atom
 

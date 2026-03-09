@@ -35,21 +35,21 @@ TOKEN HEXBYTE /[0-9A-Fa-f]{2}/
 Doc -> Item*
 
 Item -> Sig
-     | IHDRSegment
-     | ChunkPLTE
-     | ChunkIDAT
-     | ChunkIEND
-     | ChunktEXt
-     | ChunkzTXt
-     | ChunkiTXt
-     | ChunktRNS
-     | ChunkgAMA
-     | ChunksRGB
-     | ChunkpHYs
-     | ChunkacTL
-     | ChunkfcTL
-     | ChunkfdAT
-     | Other
+     / IHDRSegment
+     / ChunkPLTE
+     / ChunkIDAT
+     / ChunkIEND
+     / ChunktEXt
+     / ChunkzTXt
+     / ChunkiTXt
+     / ChunktRNS
+     / ChunkgAMA
+     / ChunksRGB
+     / ChunkpHYs
+     / ChunkacTL
+     / ChunkfcTL
+     / ChunkfdAT
+     / Other
 
 Sig -> sig:PNG_SIG
 IHDRSegment -> seg:IHDR_SEG

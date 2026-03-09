@@ -43,14 +43,14 @@ TOKEN Ident         /[a-zA-Z_][a-zA-Z0-9_]*/
 
 === grammar
 SwiftFile       -> Item*
-Item            -> CommentLine | ImportStmt | PackageDecl | OtherLine
-CommentLine     -> Comment NL | BlockComment NL?
+Item            -> CommentLine / ImportStmt / PackageDecl / OtherLine
+CommentLine     -> Comment NL / BlockComment NL?
 ImportStmt      -> KW_import Ident NL
 OtherLine       -> NL
 
 PackageDecl     -> KW_let KW_package EQUALS KW_Package LPAREN NL? PackageArgs RPAREN
 PackageArgs     -> PackageArg ( COMMA NL? PackageArg )* COMMA? NL?
-PackageArg      -> NameArg | PlatformsArg | ProductsArg | DepsArg | TargetsArg | OtherArg
+PackageArg      -> NameArg / PlatformsArg / ProductsArg / DepsArg / TargetsArg / OtherArg
 
 NameArg         -> KW_name COLON value:StringLit
 PlatformsArg    -> KW_platforms COLON LBRACKET PlatformList? RBRACKET
@@ -62,31 +62,31 @@ OtherArg        -> Ident COLON ArgValue
 DepList         -> NL? DepItem ( COMMA NL? DepItem )* COMMA? NL?
 DepItem         -> DOT KW_package LPAREN DepArgs RPAREN
 DepArgs         -> DepArg ( COMMA NL? DepArg )*
-DepArg          -> UrlArg | FromArg | OtherDepArg
+DepArg          -> UrlArg / FromArg / OtherDepArg
 UrlArg          -> KW_url COLON url:StringLit
 FromArg         -> KW_from COLON version:StringLit
 OtherDepArg     -> Ident COLON ArgValue
 
 PlatformList    -> NL? PlatformItem ( COMMA NL? PlatformItem )* COMMA? NL?
-PlatformItem    -> DOT Ident LPAREN DOT Ident RPAREN | ArgValue
+PlatformItem    -> DOT Ident LPAREN DOT Ident RPAREN / ArgValue
 
 ProductList     -> NL? ProductItem ( COMMA NL? ProductItem )* COMMA? NL?
 ProductItem     -> DOT Ident LPAREN ProductArgs RPAREN
 ProductArgs     -> ProductArg ( COMMA NL? ProductArg )* NL?
-ProductArg      -> ArgKey COLON ArgValue | ArgValue
-ArgKey          -> Ident | KW_name | KW_url | KW_from | KW_dependencies | KW_targets
+ProductArg      -> ArgKey COLON ArgValue / ArgValue
+ArgKey          -> Ident / KW_name / KW_url / KW_from / KW_dependencies / KW_targets
 
 TargetList      -> NL? TargetItem ( COMMA NL? TargetItem )* COMMA? NL?
 TargetItem      -> DOT Ident LPAREN TargetArgs RPAREN
 TargetArgs      -> TargetArg ( COMMA NL? TargetArg )* NL?
-TargetArg       -> ArgKey COLON ArgValue | ArgValue
+TargetArg       -> ArgKey COLON ArgValue / ArgValue
 
-ArgValue        -> StringLit | NumberLit | Ident | ArrayLit | FuncCall
+ArgValue        -> StringLit / NumberLit / Ident / ArrayLit / FuncCall
 ArrayLit        -> LBRACKET ArgValueList? RBRACKET
 ArgValueList    -> ArgValue ( COMMA ArgValue )*
 FuncCall        -> DOT? Ident LPAREN FuncArgs? RPAREN
 FuncArgs        -> FuncArg ( COMMA NL? FuncArg )* NL?
-FuncArg         -> ArgKey COLON ArgValue | ArgValue
+FuncArg         -> ArgKey COLON ArgValue / ArgValue
 
 === attrs
 on NameArg: note fieldKey payload="name"

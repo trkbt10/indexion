@@ -52,11 +52,11 @@ TOKEN Other /[^\s\.\,。、！\!？\?〈《「『｢（(\[【〔〚〖〘❮❬�
 Doc  -> Line*
 Line -> Segment* NL?
 Segment -> BracketOpen Content BracketClose
-         | w:Word Joshi? Punct?
-         | n:Number Unit? Punct?
-         | Punct
+         / w:Word Joshi? Punct?
+         / n:Number Unit? Punct?
+         / Punct
 Content -> Word*
-Word -> Kanji | Hiragana | Katakana | Alnum | Nbsp | Other
+Word -> Kanji / Hiragana / Katakana / Alnum / Nbsp / Other
 
 === attrs
 on Segment: def id=w kind=Word

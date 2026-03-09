@@ -49,17 +49,17 @@ TOKEN Ident         /[a-zA-Z_][a-zA-Z0-9_-]*/
 
 === grammar
 TomlFile        -> Item*
-Item            -> Section | NL | Comment
+Item            -> Section / NL / Comment
 
-Section         -> ProjectSection | DepsSection | OptDepsSection
-                 | ToolSection | BuildSection | OtherSection
+Section         -> ProjectSection / DepsSection / OptDepsSection
+                 / ToolSection / BuildSection / OtherSection
 
 # Project section with metadata
 ProjectSection  -> SectionProject NL ProjectFields
 ProjectFields   -> ProjectField*
-ProjectField    -> NameField | VersionField | DescriptionField | LicenseField
-                 | ReadmeField | KeywordsField | AuthorsField | DepsField
-                 | RequiresPythonField | GenericField | NL | Comment
+ProjectField    -> NameField / VersionField / DescriptionField / LicenseField
+                 / ReadmeField / KeywordsField / AuthorsField / DepsField
+                 / RequiresPythonField / GenericField / NL / Comment
 
 NameField        -> KW_name EQUALS value:StringLit NL
 VersionField     -> KW_version EQUALS value:StringLit NL
@@ -69,7 +69,7 @@ RequiresPythonField -> KW_requires_python EQUALS value:StringLit NL
 
 # License can be string or table
 LicenseField     -> KW_license EQUALS LicenseValue NL
-LicenseValue     -> StringLit | InlineTable
+LicenseValue     -> StringLit / InlineTable
 
 KeywordsField    -> KW_keywords EQUALS LBRACKET KeywordList? RBRACKET NL
 KeywordList      -> KeywordItem ( COMMA KeywordItem )* COMMA?
@@ -77,12 +77,12 @@ KeywordItem      -> value:StringLit
 
 AuthorsField     -> KW_authors EQUALS LBRACKET NL? AuthorList? RBRACKET NL
 AuthorList       -> AuthorListItem*
-AuthorListItem   -> AuthorItem COMMA NL? | AuthorItem NL | NL
-AuthorItem       -> InlineTable | StringLit
+AuthorListItem   -> AuthorItem COMMA NL? / AuthorItem NL / NL
+AuthorItem       -> InlineTable / StringLit
 
 DepsField        -> KW_dependencies EQUALS LBRACKET NL? DepList? RBRACKET NL
 DepList          -> DepListItem*
-DepListItem      -> DepItem COMMA NL? | DepItem NL | NL
+DepListItem      -> DepItem COMMA NL? / DepItem NL / NL
 DepItem          -> value:StringLit
 
 # Other sections
@@ -93,15 +93,15 @@ BuildSection     -> SectionBuildSystem NL GenericFields
 OtherSection     -> SectionOther NL GenericFields
 
 GenericFields    -> GenericField*
-GenericField     -> Ident EQUALS GenericValue NL | NL | Comment
-GenericValue     -> StringLit | NumberLit | KW_true | KW_false
-                  | LBRACKET ValueList? RBRACKET | InlineTable
+GenericField     -> Ident EQUALS GenericValue NL / NL / Comment
+GenericValue     -> StringLit / NumberLit / KW_true / KW_false
+                  / LBRACKET ValueList? RBRACKET / InlineTable
 InlineTable      -> LBRACE InlineFields? RBRACE
 InlineFields     -> InlineField ( COMMA InlineField )* COMMA?
 InlineField      -> key:InlineKey EQUALS value:SimpleValue
-InlineKey        -> Ident | KW_name | KW_version | KW_description | KW_license
-                  | KW_readme | KW_keywords | KW_authors | KW_dependencies
-SimpleValue      -> StringLit | NumberLit | KW_true | KW_false
+InlineKey        -> Ident / KW_name / KW_version / KW_description / KW_license
+                  / KW_readme / KW_keywords / KW_authors / KW_dependencies
+SimpleValue      -> StringLit / NumberLit / KW_true / KW_false
 ValueList        -> SimpleValue ( COMMA SimpleValue )* COMMA?
 
 === attrs

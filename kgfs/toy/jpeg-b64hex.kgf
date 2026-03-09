@@ -30,15 +30,15 @@ TOKEN HEXBYTE /[0-9A-Fa-f]{2}/
 Doc -> Item*
 
 Item -> Start
-     | End
-     | SofBaseline
-     | SofProgressive
-     | MarkerDqt
-     | MarkerDht
-     | MarkerSos
-     | MetaJFIF
-     | MetaExif
-     | Other
+     / End
+     / SofBaseline
+     / SofProgressive
+     / MarkerDqt
+     / MarkerDht
+     / MarkerSos
+     / MetaJFIF
+     / MetaExif
+     / Other
 
 Start -> soi:SOI
 End -> eoi:EOI

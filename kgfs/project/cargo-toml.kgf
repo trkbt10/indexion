@@ -50,17 +50,17 @@ TOKEN Ident         /[a-zA-Z_][a-zA-Z0-9_-]*/
 
 === grammar
 TomlFile        -> Item*
-Item            -> Section | NL | Comment
+Item            -> Section / NL / Comment
 
-Section         -> PackageSection | DependenciesSection | DevDepsSection
-                 | BuildDepsSection | WorkspaceSection | OtherSection
+Section         -> PackageSection / DependenciesSection / DevDepsSection
+                 / BuildDepsSection / WorkspaceSection / OtherSection
 
 # Package section with metadata
 PackageSection  -> SectionPackage NL PackageFields
 PackageFields   -> PackageField*
-PackageField    -> NameField | VersionField | DescriptionField | LicenseField
-                 | RepositoryField | KeywordsField | AuthorsField | EditionField
-                 | ReadmeField | GenericField | NL | Comment
+PackageField    -> NameField / VersionField / DescriptionField / LicenseField
+                 / RepositoryField / KeywordsField / AuthorsField / EditionField
+                 / ReadmeField / GenericField / NL / Comment
 
 NameField        -> KW_name EQUALS value:StringLit NL
 VersionField     -> KW_version EQUALS value:StringLit NL
@@ -83,26 +83,26 @@ DependenciesSection  -> SectionDependencies NL DepFields
 DevDepsSection       -> SectionDevDeps NL DepFields
 BuildDepsSection     -> SectionBuildDeps NL DepFields
 DepFields            -> DepField*
-DepField             -> DepEntry | NL | Comment
+DepField             -> DepEntry / NL / Comment
 DepEntry             -> name:Ident EQUALS DepValue NL
-DepValue             -> StringLit | InlineTable
+DepValue             -> StringLit / InlineTable
 InlineTable          -> LBRACE InlineFields? RBRACE
 InlineFields         -> InlineField ( COMMA InlineField )* COMMA?
 InlineField          -> key:InlineKey EQUALS InlineValue
-InlineKey            -> Ident | KW_version | KW_name | KW_edition | KW_readme
-                      | KW_description | KW_license | KW_repository | KW_keywords | KW_authors
-InlineValue          -> SimpleValue | InlineArray
+InlineKey            -> Ident / KW_version / KW_name / KW_edition / KW_readme
+                      / KW_description / KW_license / KW_repository / KW_keywords / KW_authors
+InlineValue          -> SimpleValue / InlineArray
 InlineArray          -> LBRACKET InlineArrayItems? RBRACKET
 InlineArrayItems     -> SimpleValue ( COMMA SimpleValue )* COMMA?
-SimpleValue          -> StringLit | NumberLit | KW_true | KW_false
+SimpleValue          -> StringLit / NumberLit / KW_true / KW_false
 
 # Workspace/Other sections (skip content)
 WorkspaceSection -> SectionWorkspace NL GenericFields
 OtherSection     -> SectionOther NL GenericFields
 GenericFields    -> GenericField*
-GenericField     -> Ident EQUALS GenericValue NL | NL | Comment
-GenericValue     -> StringLit | NumberLit | KW_true | KW_false
-                  | LBRACKET ValueList? RBRACKET | InlineTable
+GenericField     -> Ident EQUALS GenericValue NL / NL / Comment
+GenericValue     -> StringLit / NumberLit / KW_true / KW_false
+                  / LBRACKET ValueList? RBRACKET / InlineTable
 ValueList        -> SimpleValue ( COMMA SimpleValue )* COMMA?
 
 === attrs

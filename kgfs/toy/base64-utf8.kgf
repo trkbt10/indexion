@@ -63,7 +63,7 @@ TOKEN INVALID /X+/
 TOKEN PAD /=+/
 
 === grammar
-Doc -> (ASCII | UTF8 | WS | CTRL | INVALID | PAD)*
+Doc -> (ASCII / UTF8 / WS / CTRL / INVALID / PAD)*
 
 === attrs
 # none

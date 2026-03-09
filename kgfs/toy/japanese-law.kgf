@@ -33,10 +33,10 @@ TOKEN TextLine /[^\r\n]+/
 
 === grammar
 Doc          -> ( Entry )*
-Entry        -> NL | LawHeaderEntry | Heading | Article | Item | SentenceLine
+Entry        -> NL / LawHeaderEntry / Heading / Article / Item / SentenceLine
 
 LawHeaderEntry -> lh:LawHeader
-Heading      -> Chapter | Section | Subsection | ParenHeading
+Heading      -> Chapter / Section / Subsection / ParenHeading
 Chapter      -> ch:ChapterLine
 Section      -> sec:SectionLine
 Subsection   -> sub:SubsectionLine
@@ -49,8 +49,8 @@ SentenceLine -> Sentence ( NL )?
 Sentence     -> Segment ( Comma Segment )* Period?
 Segment      -> Atom+
 
-Atom         -> Word | Particle | Conj | Open | Close
-Word         -> Kanji | Hiragana | Katakana | Latin | Number | Symbol | TextLine
+Atom         -> Word / Particle / Conj / Open / Close
+Word         -> Kanji / Hiragana / Katakana / Latin / Number / Symbol / TextLine
 
 === attrs
 on LawHeaderEntry: def id=lh kind=LawHeader

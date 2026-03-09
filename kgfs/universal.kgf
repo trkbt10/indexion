@@ -50,11 +50,11 @@ TOKEN Other /[^\s]+/
 
 === grammar
 Doc -> Item*
-Item -> Comment | String | Keyword | Operator | CodePunct
-      | Punct | BracketOpen | BracketClose
-      | Joshi | Unit | Number
-      | Kanji | Hiragana | Katakana
-      | Identifier | FullWidthAlnum | Url | Email | Other | NL
+Item -> Comment / String / Keyword / Operator / CodePunct
+      / Punct / BracketOpen / BracketClose
+      / Joshi / Unit / Number
+      / Kanji / Hiragana / Katakana
+      / Identifier / FullWidthAlnum / Url / Email / Other / NL
 
 === attrs
 

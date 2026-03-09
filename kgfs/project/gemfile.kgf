@@ -36,22 +36,22 @@ TOKEN Ident         /[a-zA-Z_][a-zA-Z0-9_]*/
 
 === grammar
 GemfileContent  -> Statement*
-Statement       -> SourceStmt | RubyStmt | GemStmt | GroupBlock
-                 | NL | Comment
+Statement       -> SourceStmt / RubyStmt / GemStmt / GroupBlock
+                 / NL / Comment
 
 SourceStmt      -> KW_source url:StringLit NL
 RubyStmt        -> KW_ruby version:StringLit NL
 
 GemStmt         -> KW_gem name:StringLit GemOptions? NL
 GemOptions      -> COMMA GemOption ( COMMA GemOption )*
-GemOption       -> VersionOption | KeyValueOption
+GemOption       -> VersionOption / KeyValueOption
 VersionOption   -> version:StringLit
-KeyValueOption  -> Symbol ARROW Value | Ident COLON Value
-Value           -> StringLit | Symbol | KW_true | KW_false | Ident
+KeyValueOption  -> Symbol ARROW Value / Ident COLON Value
+Value           -> StringLit / Symbol / KW_true / KW_false / Ident
 
 GroupBlock      -> KW_group GroupNames KW_do NL GroupContent* KW_end NL?
 GroupNames      -> Symbol ( COMMA Symbol )*
-GroupContent    -> GemStmt | NL | Comment
+GroupContent    -> GemStmt / NL / Comment
 
 === attrs
 on SourceStmt: note fieldKey payload="source"

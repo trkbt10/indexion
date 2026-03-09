@@ -60,9 +60,9 @@ TOKEN Other /[^\s]+/
 === grammar
 Doc -> Sentence*
 Sentence -> Token* Punct? NL?
-Token -> Contraction | Article | Pronoun | Preposition | Conjunction
-       | Auxiliary | Question | Negation | Adverb | Number
-       | Url | Email | ProperNoun | Word | Quote | BracketOpen | BracketClose | Other
+Token -> Contraction / Article / Pronoun / Preposition / Conjunction
+       / Auxiliary / Question / Negation / Adverb / Number
+       / Url / Email / ProperNoun / Word / Quote / BracketOpen / BracketClose / Other
 
 === attrs
 

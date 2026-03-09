@@ -91,60 +91,60 @@ TOKEN COLON    /:/
 Module -> Item*
 
 Item -> NL
-     | DocComment
-     | PackageDecl
-     | ImportDecl
-     | ClassDecl
-     | TraitDecl
-     | ObjectDecl
-     | EnumDecl
-     | DefDecl
-     | ValDecl
-     | VarDecl
-     | TypeDecl
-     | ExtensionDecl
-     | Other
+     / DocComment
+     / PackageDecl
+     / ImportDecl
+     / ClassDecl
+     / TraitDecl
+     / ObjectDecl
+     / EnumDecl
+     / DefDecl
+     / ValDecl
+     / VarDecl
+     / TypeDecl
+     / ExtensionDecl
+     / Other
 
 # Package declaration
 PackageDecl -> KW_package QualifiedName
-QualifiedName -> ( Ident | TypeIdent ) ( DOT ( Ident | TypeIdent ) )*
+QualifiedName -> ( Ident / TypeIdent ) ( DOT ( Ident / TypeIdent ) )*
 
 # Import declaration
-ImportDecl -> KW_import path:QualifiedName ( DOT ( Ident | TypeIdent | Operator | LBRACE ImportSelectors RBRACE ) )?
+ImportDecl -> KW_import path:QualifiedName ( DOT ( Ident / TypeIdent / Operator / LBRACE ImportSelectors RBRACE ) )?
 ImportSelectors -> ImportSelector ( COMMA ImportSelector )*
-ImportSelector -> ( Ident | TypeIdent ) ( ARROW ( Ident | TypeIdent ) )?
+ImportSelector -> ( Ident / TypeIdent ) ( ARROW ( Ident / TypeIdent ) )?
 
 # Class declaration
 ClassDecl -> doc:DocComment? NL? Annotation* Modifier* KW_case? KW_class id:TypeIdent TypeParams? ClassParams? ExtendsClause? ClassBody?
 ClassParams -> LPAREN ParamList? RPAREN
 ExtendsClause -> KW_extends Type ( KW_with Type )*
 ClassBody -> LBRACE ClassMember* RBRACE
-ClassMember -> DefDecl | ValDecl | VarDecl | TypeDecl | ClassDecl | TraitDecl | ObjectDecl | NL | LineComment | BlockComment
+ClassMember -> DefDecl / ValDecl / VarDecl / TypeDecl / ClassDecl / TraitDecl / ObjectDecl / NL / LineComment / BlockComment
 
 # Trait declaration
 TraitDecl -> doc:DocComment? NL? Annotation* Modifier* KW_sealed? KW_trait id:TypeIdent TypeParams? ExtendsClause? TraitBody?
 TraitBody -> LBRACE TraitMember* RBRACE
-TraitMember -> DefDecl | ValDecl | VarDecl | TypeDecl | NL | LineComment | BlockComment
+TraitMember -> DefDecl / ValDecl / VarDecl / TypeDecl / NL / LineComment / BlockComment
 
 # Object declaration
 ObjectDecl -> doc:DocComment? NL? Annotation* Modifier* KW_case? KW_object id:TypeIdent ExtendsClause? ObjectBody?
 ObjectBody -> LBRACE ObjectMember* RBRACE
-ObjectMember -> DefDecl | ValDecl | VarDecl | TypeDecl | ClassDecl | TraitDecl | ObjectDecl | NL | LineComment | BlockComment
+ObjectMember -> DefDecl / ValDecl / VarDecl / TypeDecl / ClassDecl / TraitDecl / ObjectDecl / NL / LineComment / BlockComment
 
 # Enum declaration
 EnumDecl -> doc:DocComment? NL? Annotation* Modifier* KW_enum id:TypeIdent TypeParams? ExtendsClause? EnumBody
 EnumBody -> LBRACE EnumMember* RBRACE
-EnumMember -> EnumCase | DefDecl | ValDecl | VarDecl | TypeDecl | NL | LineComment | BlockComment
+EnumMember -> EnumCase / DefDecl / ValDecl / VarDecl / TypeDecl / NL / LineComment / BlockComment
 EnumCase -> case_doc:DocComment? KW_case case_id:TypeIdent ClassParams? ExtendsClause?
 
 # Extension declaration
 ExtensionDecl -> doc:DocComment? NL? KW_extension TypeParams? LPAREN Ident COLON Type RPAREN ExtensionBody
-ExtensionBody -> LBRACE ExtensionMember* RBRACE | DefDecl
-ExtensionMember -> DefDecl | NL | LineComment | BlockComment
+ExtensionBody -> LBRACE ExtensionMember* RBRACE / DefDecl
+ExtensionMember -> DefDecl / NL / LineComment / BlockComment
 
 # Def declaration
 DefDecl -> doc:DocComment? NL? Annotation* Modifier* KW_def def_id:Ident TypeParams? ParamClauses? ( COLON Type )? ( Operator Expr )?
-ParamClauses -> LPAREN ( KW_using | KW_implicit )? ParamList? RPAREN ParamClauses?
+ParamClauses -> LPAREN ( KW_using / KW_implicit )? ParamList? RPAREN ParamClauses?
 
 # Val declaration
 ValDecl -> doc:DocComment? NL? Annotation* Modifier* KW_lazy? KW_val val_id:Ident ( COLON Type )? Operator Expr
@@ -156,7 +156,7 @@ VarDecl -> doc:DocComment? NL? Annotation* Modifier* KW_var var_id:Ident ( COLON
 TypeDecl -> doc:DocComment? NL? Annotation* Modifier* KW_type type_id:TypeIdent TypeParams? ( Operator Type )?
 
 # Modifiers
-Modifier -> KW_abstract | KW_final | KW_sealed | KW_private | KW_protected | KW_override | KW_implicit | KW_given
+Modifier -> KW_abstract / KW_final / KW_sealed / KW_private / KW_protected / KW_override / KW_implicit / KW_given
 
 # Parameters
 ParamList -> Param ( COMMA Param )*
@@ -164,19 +164,19 @@ Param -> Annotation* KW_val? KW_var? param_id:Ident COLON Type ( Operator Expr )
 
 # Types
 TypeParams -> LBRACKET TypeParam ( COMMA TypeParam )* RBRACKET
-TypeParam -> Annotation* ( Operator | Ident )? TypeIdent TypeBounds?
+TypeParam -> Annotation* ( Operator / Ident )? TypeIdent TypeBounds?
 TypeBounds -> ( Operator Type )+
-Type -> TypeAtom ( KW_with TypeAtom )* | TypeAtom ARROW Type
-TypeAtom -> QualifiedName TypeArgs? | LPAREN TypeList? RPAREN | LBRACE TypeMember* RBRACE
+Type -> TypeAtom ( KW_with TypeAtom )* / TypeAtom ARROW Type
+TypeAtom -> QualifiedName TypeArgs? / LPAREN TypeList? RPAREN / LBRACE TypeMember* RBRACE
 TypeArgs -> LBRACKET Type ( COMMA Type )* RBRACKET
 TypeList -> Type ( COMMA Type )*
-TypeMember -> DefDecl | ValDecl | TypeDecl | NL
+TypeMember -> DefDecl / ValDecl / TypeDecl / NL
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | TypeIdent | Number | String | Char | Symbol | BoolLit | NullLit | ThisLit | SuperLit | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | COLON2 | ARROW | LARROW | Operator | Annotation
+ExprAtom -> Ident / TypeIdent / Number / String / Char / Symbol / BoolLit / NullLit / ThisLit / SuperLit / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / COLON / COLON2 / ARROW / LARROW / Operator / Annotation
 
-Atom -> ExprAtom | NL | DocComment | LineComment | BlockComment | KW_package | KW_import | KW_def | KW_val | KW_var | KW_lazy | KW_type | KW_class | KW_trait | KW_object | KW_enum | KW_case | KW_sealed | KW_abstract | KW_final | KW_private | KW_protected | KW_override | KW_implicit | KW_given | KW_using | KW_extension | KW_extends | KW_with | KW_new | KW_if | KW_else | KW_match | KW_for | KW_while | KW_return | KW_yield | KW_try | KW_catch | KW_finally | SEMI
+Atom -> ExprAtom / NL / DocComment / LineComment / BlockComment / KW_package / KW_import / KW_def / KW_val / KW_var / KW_lazy / KW_type / KW_class / KW_trait / KW_object / KW_enum / KW_case / KW_sealed / KW_abstract / KW_final / KW_private / KW_protected / KW_override / KW_implicit / KW_given / KW_using / KW_extension / KW_extends / KW_with / KW_new / KW_if / KW_else / KW_match / KW_for / KW_while / KW_return / KW_yield / KW_try / KW_catch / KW_finally / SEMI
 
 Other -> Atom
 

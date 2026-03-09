@@ -58,25 +58,25 @@ TOKEN Operator /[+\-*\/%=<>!&|^~:]+/
 
 === grammar
 Doc -> Statement*
-Statement -> CreateTableStmt | OtherStmt
+Statement -> CreateTableStmt / OtherStmt
 
-CreateTableStmt -> KW_CREATE KW_TABLE tableName:TableName LPAREN ColumnDefList RPAREN [ SEMICOLON ]
+CreateTableStmt -> KW_CREATE KW_TABLE tableName:TableName LPAREN ColumnDefList RPAREN SEMICOLON?
 
-TableName -> QuotedIdent | BacktickIdent | BracketIdent | Ident
+TableName -> QuotedIdent / BacktickIdent / BracketIdent / Ident
 
 ColumnDefList -> ColumnDef ( COMMA ColumnDef )*
 
-ColumnDef -> InlineConstraint | ColumnWithType
+ColumnDef -> InlineConstraint / ColumnWithType
 
-ColumnWithType -> colName:ColName colType:ColType [ ColumnConstraints ]
+ColumnWithType -> colName:ColName colType:ColType ColumnConstraints?
 
-ColName -> QuotedIdent | Ident
+ColName -> QuotedIdent / Ident
 
-ColType -> colTypeName:KeywordType [ LPAREN TypeParams RPAREN ]
+ColType -> colTypeName:KeywordType (LPAREN TypeParams RPAREN)?
 TypeParams -> NumberLit ( COMMA NumberLit )*
 
 ColumnConstraints -> ColumnConstraint+
-ColumnConstraint -> PrimaryKeyInline | NotNullInline | UniqueInline | DefaultInline | ReferencesInline
+ColumnConstraint -> PrimaryKeyInline / NotNullInline / UniqueInline / DefaultInline / ReferencesInline
 
 PrimaryKeyInline -> isPK:KW_PRIMARY KW_KEY
 
@@ -85,31 +85,31 @@ NotNullInline -> isNotNull:KW_NOT KW_NULL
 UniqueInline -> isUnique:KW_UNIQUE
 
 DefaultInline -> KW_DEFAULT DefaultValue
-DefaultValue -> StringLit | NumberLit | Ident | LPAREN DefaultExpr RPAREN
-DefaultExpr -> ( Ident | StringLit | NumberLit | Operator | COMMA )*
+DefaultValue -> StringLit / NumberLit / Ident / LPAREN DefaultExpr RPAREN
+DefaultExpr -> ( Ident / StringLit / NumberLit / Operator / COMMA )*
 
-ReferencesInline -> KW_REFERENCES inlineRefTable:TableName LPAREN inlineRefCol:ColName RPAREN [ OnDeleteClause ] [ OnUpdateClause ]
+ReferencesInline -> KW_REFERENCES inlineRefTable:TableName LPAREN inlineRefCol:ColName RPAREN OnDeleteClause? OnUpdateClause?
 
 # Table-level constraints
 InlineConstraint -> KW_CONSTRAINT constraintName:ConstraintName ConstraintBody
 
-ConstraintName -> QuotedIdent | Ident
+ConstraintName -> QuotedIdent / Ident
 
-ConstraintBody -> PrimaryKeyConstraint | ForeignKeyConstraint | UniqueConstraint
+ConstraintBody -> PrimaryKeyConstraint / ForeignKeyConstraint / UniqueConstraint
 
 PrimaryKeyConstraint -> KW_PRIMARY KW_KEY LPAREN pkCol:ColName ( COMMA ColName )* RPAREN
 
-ForeignKeyConstraint -> KW_FOREIGN KW_KEY LPAREN fkCol:ColName ( COMMA ColName )* RPAREN KW_REFERENCES refTable:TableName LPAREN refCol:ColName ( COMMA ColName )* RPAREN [ OnDeleteClause ] [ OnUpdateClause ]
+ForeignKeyConstraint -> KW_FOREIGN KW_KEY LPAREN fkCol:ColName ( COMMA ColName )* RPAREN KW_REFERENCES refTable:TableName LPAREN refCol:ColName ( COMMA ColName )* RPAREN OnDeleteClause? OnUpdateClause?
 
 UniqueConstraint -> KW_UNIQUE LPAREN uniqueCol:ColName ( COMMA ColName )* RPAREN
 
 OnDeleteClause -> KW_ON KW_DELETE FKAction
 OnUpdateClause -> KW_ON KW_UPDATE FKAction
-FKAction -> KW_CASCADE | KW_RESTRICT | KW_SET KW_NULL | KW_NO KW_ACTION
+FKAction -> KW_CASCADE / KW_RESTRICT / KW_SET KW_NULL / KW_NO KW_ACTION
 
 # Other statements (skip processing)
 OtherStmt -> ( Token )+ SEMICOLON
-Token -> StringLit | NumberLit | QuotedIdent | BacktickIdent | BracketIdent | KeywordType | Ident | LPAREN | RPAREN | COMMA | Operator | KW_CREATE | KW_TABLE | KW_CONSTRAINT | KW_PRIMARY | KW_FOREIGN | KW_KEY | KW_REFERENCES | KW_UNIQUE | KW_NOT | KW_NULL | KW_DEFAULT | KW_ON | KW_DELETE | KW_UPDATE | KW_CASCADE | KW_RESTRICT | KW_SET | KW_NO | KW_ACTION
+Token -> StringLit / NumberLit / QuotedIdent / BacktickIdent / BracketIdent / KeywordType / Ident / LPAREN / RPAREN / COMMA / Operator / KW_CREATE / KW_TABLE / KW_CONSTRAINT / KW_PRIMARY / KW_FOREIGN / KW_KEY / KW_REFERENCES / KW_UNIQUE / KW_NOT / KW_NULL / KW_DEFAULT / KW_ON / KW_DELETE / KW_UPDATE / KW_CASCADE / KW_RESTRICT / KW_SET / KW_NO / KW_ACTION
 
 === attrs
 on CreateTableStmt: def id=tableName kind=Table

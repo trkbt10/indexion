@@ -97,20 +97,20 @@ TOKEN AMP      /&/
 Module -> Item*
 
 Item -> NL
-     | DocComment
-     | Include
-     | Preprocessor
-     | NamespaceDecl
-     | ClassDecl
-     | StructDecl
-     | UnionDecl
-     | EnumDecl
-     | FunctionDecl
-     | TemplateDecl
-     | UsingDecl
-     | TypedefDecl
-     | VarDecl
-     | Other
+     / DocComment
+     / Include
+     / Preprocessor
+     / NamespaceDecl
+     / ClassDecl
+     / StructDecl
+     / UnionDecl
+     / EnumDecl
+     / FunctionDecl
+     / TemplateDecl
+     / UsingDecl
+     / TypedefDecl
+     / VarDecl
+     / Other
 
 # Doc block
 DocBlock -> DocComment ( NL DocComment )*
@@ -118,47 +118,47 @@ DocBlock -> DocComment ( NL DocComment )*
 # Namespace declaration
 NamespaceDecl -> KW_namespace id:Ident? NamespaceBody
 NamespaceBody -> LBRACE NamespaceMember* RBRACE
-NamespaceMember -> ClassDecl | StructDecl | EnumDecl | FunctionDecl | TemplateDecl | UsingDecl | TypedefDecl | VarDecl | NamespaceDecl | NL | LineComment | BlockComment
+NamespaceMember -> ClassDecl / StructDecl / EnumDecl / FunctionDecl / TemplateDecl / UsingDecl / TypedefDecl / VarDecl / NamespaceDecl / NL / LineComment / BlockComment
 
 # Class declaration
 ClassDecl -> doc:DocBlock? NL? KW_class id:Ident ( KW_final )? InheritanceClause? ClassBody SEMI
 InheritanceClause -> COLON AccessSpec? QualifiedName ( COMMA AccessSpec? QualifiedName )*
-AccessSpec -> KW_public | KW_private | KW_protected
+AccessSpec -> KW_public / KW_private / KW_protected
 ClassBody -> LBRACE ClassMember* RBRACE
-ClassMember -> AccessLabel | ConstructorDecl | DestructorDecl | MethodDecl | FieldDecl | ClassDecl | StructDecl | EnumDecl | TypedefDecl | UsingDecl | FriendDecl | NL | LineComment | BlockComment
+ClassMember -> AccessLabel / ConstructorDecl / DestructorDecl / MethodDecl / FieldDecl / ClassDecl / StructDecl / EnumDecl / TypedefDecl / UsingDecl / FriendDecl / NL / LineComment / BlockComment
 AccessLabel -> AccessSpec COLON
 
 # Struct declaration
 StructDecl -> doc:DocBlock? NL? KW_struct id:Ident ( KW_final )? InheritanceClause? StructBody SEMI
 StructBody -> LBRACE StructMember* RBRACE
-StructMember -> AccessLabel | ConstructorDecl | MethodDecl | FieldDecl | NL | LineComment | BlockComment
+StructMember -> AccessLabel / ConstructorDecl / MethodDecl / FieldDecl / NL / LineComment / BlockComment
 
 # Union declaration
 UnionDecl -> doc:DocBlock? NL? KW_union id:Ident UnionBody SEMI
 UnionBody -> LBRACE UnionMember* RBRACE
-UnionMember -> field_doc:DocBlock? Type field_id:Ident SEMI | NL | LineComment | BlockComment
+UnionMember -> field_doc:DocBlock? Type field_id:Ident SEMI / NL / LineComment / BlockComment
 
 # Enum declaration
-EnumDecl -> doc:DocBlock? NL? KW_enum ( KW_class | KW_struct )? id:Ident ( COLON Type )? EnumBody SEMI
+EnumDecl -> doc:DocBlock? NL? KW_enum ( KW_class / KW_struct )? id:Ident ( COLON Type )? EnumBody SEMI
 EnumBody -> LBRACE EnumValue* RBRACE
-EnumValue -> value_doc:DocBlock? value_id:Ident ( Operator Expr )? COMMA? | NL | LineComment | BlockComment
+EnumValue -> value_doc:DocBlock? value_id:Ident ( Operator Expr )? COMMA? / NL / LineComment / BlockComment
 
 # Constructor/Destructor
-ConstructorDecl -> doc:DocBlock? NL? Modifier* id:Ident LPAREN ParamList? RPAREN Initializers? ( Body | SEMI )
-DestructorDecl -> doc:DocBlock? NL? Modifier* SCOPE? Operator id:Ident LPAREN RPAREN Modifier* ( Body | SEMI )
+ConstructorDecl -> doc:DocBlock? NL? Modifier* id:Ident LPAREN ParamList? RPAREN Initializers? ( Body / SEMI )
+DestructorDecl -> doc:DocBlock? NL? Modifier* SCOPE? Operator id:Ident LPAREN RPAREN Modifier* ( Body / SEMI )
 Initializers -> COLON Initializer ( COMMA Initializer )*
-Initializer -> Ident LPAREN ( Expr ( COMMA Expr )* )? RPAREN | Ident LBRACE ( Expr ( COMMA Expr )* )? RBRACE
+Initializer -> Ident LPAREN ( Expr ( COMMA Expr )* )? RPAREN / Ident LBRACE ( Expr ( COMMA Expr )* )? RBRACE
 
 # Method declaration
-MethodDecl -> doc:DocBlock? NL? Modifier* Type AMP? method_id:Ident LPAREN ParamList? RPAREN Modifier* ( Body | SEMI | Operator Expr SEMI )
+MethodDecl -> doc:DocBlock? NL? Modifier* Type AMP? method_id:Ident LPAREN ParamList? RPAREN Modifier* ( Body / SEMI / Operator Expr SEMI )
 
 # Function declaration
-FunctionDecl -> doc:DocBlock? NL? Modifier* Type AMP? func_id:Ident LPAREN ParamList? RPAREN Modifier* ( Body | SEMI )
+FunctionDecl -> doc:DocBlock? NL? Modifier* Type AMP? func_id:Ident LPAREN ParamList? RPAREN Modifier* ( Body / SEMI )
 
 # Template declaration
-TemplateDecl -> doc:DocBlock? NL? KW_template LT TemplateParams GT ( ClassDecl | StructDecl | FunctionDecl )
+TemplateDecl -> doc:DocBlock? NL? KW_template LT TemplateParams GT ( ClassDecl / StructDecl / FunctionDecl )
 TemplateParams -> TemplateParam ( COMMA TemplateParam )*
-TemplateParam -> ( KW_typename | KW_class ) Ident? | Type Ident?
+TemplateParam -> ( KW_typename / KW_class ) Ident? / Type Ident?
 
 # Field declaration
 FieldDecl -> doc:DocBlock? NL? Modifier* Type AMP? field_id:Ident ArrayDims? ( Operator Expr )? SEMI
@@ -167,16 +167,16 @@ FieldDecl -> doc:DocBlock? NL? Modifier* Type AMP? field_id:Ident ArrayDims? ( O
 VarDecl -> doc:DocBlock? NL? Modifier* Type AMP? var_id:Ident ArrayDims? ( Operator Expr )? SEMI
 
 # Using declaration
-UsingDecl -> KW_using ( KW_namespace QualifiedName | id:Ident Operator Type | QualifiedName ) SEMI
+UsingDecl -> KW_using ( KW_namespace QualifiedName / id:Ident Operator Type / QualifiedName ) SEMI
 
 # Typedef declaration
 TypedefDecl -> doc:DocBlock? NL? KW_typedef Type id:Ident SEMI
 
 # Friend declaration
-FriendDecl -> KW_friend ( KW_class Ident | Type Ident LPAREN ParamList? RPAREN ) SEMI
+FriendDecl -> KW_friend ( KW_class Ident / Type Ident LPAREN ParamList? RPAREN ) SEMI
 
 # Modifiers
-Modifier -> KW_const | KW_constexpr | KW_static | KW_extern | KW_inline | KW_virtual | KW_override | KW_final | KW_explicit | KW_noexcept
+Modifier -> KW_const / KW_constexpr / KW_static / KW_extern / KW_inline / KW_virtual / KW_override / KW_final / KW_explicit / KW_noexcept
 
 # Parameters
 ParamList -> Param ( COMMA Param )*
@@ -186,19 +186,19 @@ ArrayDims -> ( LBRACKET Expr? RBRACKET )+
 # Types
 Type -> TypeQual* TypeAtom STAR* AMP*
 TypeQual -> KW_const
-TypeAtom -> QualifiedName TemplateArgs? | KeywordType
+TypeAtom -> QualifiedName TemplateArgs? / KeywordType
 QualifiedName -> ( SCOPE )? Ident ( SCOPE Ident )*
 TemplateArgs -> LT Type ( COMMA Type )* GT
 
 # Body (simplified - balance braces)
 Body -> LBRACE BodyContent* RBRACE
-BodyContent -> LBRACE BodyContent* RBRACE | LPAREN BodyContent* RPAREN | LBRACKET BodyContent* RBRACKET | Atom
+BodyContent -> LBRACE BodyContent* RBRACE / LPAREN BodyContent* RPAREN / LBRACKET BodyContent* RBRACKET / Atom
 
 # Expressions
 Expr -> ExprAtom+
-ExprAtom -> Ident | TypeIdent | Number | String | Char | BoolLit | NullLit | ThisLit | KeywordType | LPAREN | RPAREN | LBRACE | RBRACE | LBRACKET | RBRACKET | DOT | COMMA | COLON | SCOPE | ARROW | LT | GT | STAR | AMP | Operator
+ExprAtom -> Ident / TypeIdent / Number / String / Char / BoolLit / NullLit / ThisLit / KeywordType / LPAREN / RPAREN / LBRACE / RBRACE / LBRACKET / RBRACKET / DOT / COMMA / COLON / SCOPE / ARROW / LT / GT / STAR / AMP / Operator
 
-Atom -> ExprAtom | NL | DocComment | LineComment | BlockComment | Include | Preprocessor | KW_class | KW_struct | KW_union | KW_enum | KW_namespace | KW_template | KW_typename | KW_public | KW_private | KW_protected | KW_virtual | KW_override | KW_final | KW_const | KW_constexpr | KW_static | KW_extern | KW_inline | KW_using | KW_typedef | KW_friend | KW_explicit | KW_if | KW_else | KW_switch | KW_case | KW_for | KW_while | KW_return | KW_new | KW_delete | KW_try | KW_catch | KW_throw | KW_noexcept | KW_operator | SEMI
+Atom -> ExprAtom / NL / DocComment / LineComment / BlockComment / Include / Preprocessor / KW_class / KW_struct / KW_union / KW_enum / KW_namespace / KW_template / KW_typename / KW_public / KW_private / KW_protected / KW_virtual / KW_override / KW_final / KW_const / KW_constexpr / KW_static / KW_extern / KW_inline / KW_using / KW_typedef / KW_friend / KW_explicit / KW_if / KW_else / KW_switch / KW_case / KW_for / KW_while / KW_return / KW_new / KW_delete / KW_try / KW_catch / KW_throw / KW_noexcept / KW_operator / SEMI
 
 Other -> Atom
 

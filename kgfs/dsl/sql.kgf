@@ -54,11 +54,11 @@ TOKEN Operator /[+\-*\/%=<>!&|^~]+|::|<>|!=|<=|>=|\|\||&&/
 
 === grammar
 Doc -> Statement*
-Statement -> ( Token )* ( NL | Punct )?
-Token -> LineComment | BlockComment | String | Number
-      | KeywordDDL | KeywordDML | KeywordClause | KeywordTable
-      | KeywordType | KeywordFunc | KeywordLogic
-      | QuotedIdent | Ident | Param | Punct | Operator
+Statement -> ( Token )* ( NL / Punct )?
+Token -> LineComment / BlockComment / String / Number
+      / KeywordDDL / KeywordDML / KeywordClause / KeywordTable
+      / KeywordType / KeywordFunc / KeywordLogic
+      / QuotedIdent / Ident / Param / Punct / Operator
 
 === resolver
 relative_prefixes: ./
