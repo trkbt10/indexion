@@ -64,6 +64,10 @@ priv enum WorkItem {
   LabelCont(String)
   /// Continue RuleRef: rule_name, target_is_rule_ref, start_pos
   RuleRefCont(String, Bool, Int)
+  /// Continue And-predicate: node_id, pos (for memoization)
+  AndCont(Int, Int)
+  /// Continue Not-predicate: node_id, pos (for memoization)
+  NotCont(Int, Int)
 }
 
 ///|
@@ -172,6 +176,8 @@ fn eval_iter_loop(ctx : IterEvalContext) -> Unit {
       LabelCont(label_name) => process_label_cont(ctx, label_name)
       RuleRefCont(rule_name, target_is_rule_ref, start_pos) =>
         process_rule_ref_cont(ctx, rule_name, target_is_rule_ref, start_pos)
+      AndCont(node_id, pos) => process_and_cont(ctx, node_id, pos)
+      NotCont(node_id, pos) => process_not_cont(ctx, node_id, pos)
     }
   }
 }
@@ -268,6 +274,14 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
     }
     FLabel(label_name, child) => {
       ctx.work.push(LabelCont(label_name))
+      ctx.work.push(Eval(child, pos))
+    }
+    FAnd(child) => {
+      ctx.work.push(AndCont(node_id, pos))
+      ctx.work.push(Eval(child, pos))
+    }
+    FNot(child) => {
+      ctx.work.push(NotCont(node_id, pos))
       ctx.work.push(Eval(child, pos))
     }
   }
@@ -495,6 +509,42 @@ fn process_rule_ref_cont(
     ctx.results.push({ ok: true, end_pos: result.end_pos, labels: clean })
   } else {
     ctx.results.push(result)
+  }
+}
+
+///|
+/// Process And-predicate continuation.
+/// And succeeds if child succeeds, but doesn't consume input.
+fn process_and_cont(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
+  let result = ctx.results.pop().unwrap()
+  let memo_idx = node_id * ctx.num_positions + pos
+  if result.ok {
+    // Child succeeded, And succeeds without consuming
+    let labels = empty_labels()
+    ctx.memo[memo_idx] = Succeeded(pos, labels)
+    ctx.results.push({ ok: true, end_pos: pos, labels })
+  } else {
+    // Child failed, And fails
+    ctx.memo[memo_idx] = Failed
+    ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels() })
+  }
+}
+
+///|
+/// Process Not-predicate continuation.
+/// Not succeeds if child fails, doesn't consume input.
+fn process_not_cont(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
+  let result = ctx.results.pop().unwrap()
+  let memo_idx = node_id * ctx.num_positions + pos
+  if result.ok {
+    // Child succeeded, Not fails
+    ctx.memo[memo_idx] = Failed
+    ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels() })
+  } else {
+    // Child failed, Not succeeds without consuming
+    let labels = empty_labels()
+    ctx.memo[memo_idx] = Succeeded(pos, labels)
+    ctx.results.push({ ok: true, end_pos: pos, labels })
   }
 }
 

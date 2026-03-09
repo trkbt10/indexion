@@ -1,5 +1,6 @@
 ///|
 /// Token types for the PEG expression tokenizer.
+/// Supports full PEG operator set (Ford 2004).
 priv enum GrammarToken {
   IDENT(String)
   LP
@@ -11,6 +12,9 @@ priv enum GrammarToken {
   Q
   BAR
   COLON
+  AMP // & - And-predicate (positive lookahead)
+  EXCL // ! - Not-predicate (negative lookahead)
+  SLASH // / - Prioritized choice (PEG standard, alias for |)
 }
 
 ///|
@@ -18,12 +22,19 @@ priv enum GrammarToken {
 priv struct ParseState {
   tokens : Array[GrammarToken]
   mut pos : Int
+  warnings : Array[String]
 }
 
 ///|
 /// Creates a new parse state from tokens.
 fn ParseState::new(tokens : Array[GrammarToken]) -> ParseState {
-  { tokens, pos: 0 }
+  { tokens, pos: 0, warnings: [] }
+}
+
+///|
+/// Adds a deprecation warning.
+fn ParseState::warn_deprecated(self : ParseState, msg : String) -> Unit {
+  self.warnings.push(msg)
 }
 
 ///|
@@ -171,10 +182,46 @@ fn ParseState::eat_colon(self : ParseState) -> Bool {
 }
 
 ///|
-/// Returns true if current token is a stop token (RP, RB, BAR).
+/// Checks if current token is AMP (&) and consumes it.
+fn ParseState::eat_amp(self : ParseState) -> Bool {
+  match self.peek() {
+    Some(AMP) => {
+      self.advance()
+      true
+    }
+    _ => false
+  }
+}
+
+///|
+/// Checks if current token is EXCL (!) and consumes it.
+fn ParseState::eat_excl(self : ParseState) -> Bool {
+  match self.peek() {
+    Some(EXCL) => {
+      self.advance()
+      true
+    }
+    _ => false
+  }
+}
+
+///|
+/// Checks if current token is SLASH (/) and consumes it.
+fn ParseState::eat_slash(self : ParseState) -> Bool {
+  match self.peek() {
+    Some(SLASH) => {
+      self.advance()
+      true
+    }
+    _ => false
+  }
+}
+
+///|
+/// Returns true if current token is a stop token (RP, RB, BAR, SLASH).
 fn ParseState::is_stop_token(self : ParseState) -> Bool {
   match self.peek() {
-    Some(RP) | Some(RB) | Some(BAR) => true
+    Some(RP) | Some(RB) | Some(BAR) | Some(SLASH) => true
     _ => false
   }
 }
@@ -285,6 +332,21 @@ fn tokenize_expr(s : String) -> Array[GrammarToken] raise {
       i += 1
       continue
     }
+    if c == '&' {
+      tokens.push(AMP)
+      i += 1
+      continue
+    }
+    if c == '!' {
+      tokens.push(EXCL)
+      i += 1
+      continue
+    }
+    if c == '/' {
+      tokens.push(SLASH)
+      i += 1
+      continue
+    }
     if is_ident_start(c) {
       let start = i
       while i < chars.length() && is_ident_char(chars[i]) {
@@ -303,8 +365,24 @@ fn tokenize_expr(s : String) -> Array[GrammarToken] raise {
 }
 
 ///|
-/// Parses a primary expression (identifier, label, parenthesized group, or bracketed optional).
+/// Parses a primary expression (identifier, label, parenthesized group, bracketed optional, or predicate).
 fn parse_primary(state : ParseState) -> Node? raise {
+  // Try And-predicate (&e)
+  if state.eat_amp() {
+    let child = parse_primary(state)
+    match child {
+      Some(node) => return Some(Node::And(node))
+      None => raise @builtin.Failure("& without expression")
+    }
+  }
+  // Try Not-predicate (!e)
+  if state.eat_excl() {
+    let child = parse_primary(state)
+    match child {
+      Some(node) => return Some(Node::Not(node))
+      None => raise @builtin.Failure("! without expression")
+    }
+  }
   // Try parenthesized group
   if state.eat_lp() {
     let inner = parse_choice(state)
@@ -313,8 +391,9 @@ fn parse_primary(state : ParseState) -> Node? raise {
     }
     return Some(inner)
   }
-  // Try bracketed optional
+  // Try bracketed optional (deprecated: use e? instead)
   if state.eat_lb() {
+    state.warn_deprecated("deprecated: use 'e?' instead of '[e]' for optional")
     let inner = parse_choice(state)
     if not(state.eat_rb()) {
       raise @builtin.Failure("missing ]")
@@ -378,12 +457,22 @@ fn parse_seq(state : ParseState) -> Node raise {
 }
 
 ///|
-/// Parses a choice expression (alternatives separated by |).
+/// Parses a choice expression (alternatives separated by / or |).
+/// PEG standard uses /. The | operator is deprecated.
 fn parse_choice(state : ParseState) -> Node raise {
   let alts : Array[Node] = []
   alts.push(parse_seq(state))
-  while state.eat_bar() {
-    alts.push(parse_seq(state))
+  while true {
+    if state.eat_slash() {
+      alts.push(parse_seq(state))
+    } else if state.eat_bar() {
+      state.warn_deprecated(
+        "deprecated: use '/' instead of '|' for choice operator",
+      )
+      alts.push(parse_seq(state))
+    } else {
+      break
+    }
   }
   if alts.length() == 1 {
     alts[0]
@@ -395,11 +484,18 @@ fn parse_choice(state : ParseState) -> Node raise {
 ///|
 /// Parses a PEG expression string into a Node AST.
 pub fn parse_expr(s : String) -> Node raise {
+  let (node, _) = parse_expr_with_warnings(s)
+  node
+}
+
+///|
+/// Parses a PEG expression string into a Node AST, returning deprecation warnings.
+pub fn parse_expr_with_warnings(s : String) -> (Node, Array[String]) raise {
   let tokens = tokenize_expr(s)
   let state = ParseState::new(tokens)
   let result = parse_choice(state)
   if state.has_more() {
     raise @builtin.Failure("Unused grammar tokens at position \{state.pos}")
   }
-  result
+  (result, state.warnings)
 }

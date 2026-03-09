@@ -28,6 +28,10 @@ pub fn peg_node_to_tree_node(node : @peg.Node) -> TreeNode {
       TreeNode::node("Optional", [peg_node_to_tree_node(inner)])
     @peg.Node::Label(name, inner) =>
       TreeNode::node("Label:" + name, [peg_node_to_tree_node(inner)])
+    @peg.Node::And(inner) =>
+      TreeNode::node("And", [peg_node_to_tree_node(inner)])
+    @peg.Node::Not(inner) =>
+      TreeNode::node("Not", [peg_node_to_tree_node(inner)])
   }
 }
 
@@ -55,6 +59,8 @@ pub fn peg_node_size(node : @peg.Node) -> Int {
     @peg.Node::Plus(inner) => 1 + peg_node_size(inner)
     @peg.Node::Optional(inner) => 1 + peg_node_size(inner)
     @peg.Node::Label(_, inner) => 1 + peg_node_size(inner)
+    @peg.Node::And(inner) => 1 + peg_node_size(inner)
+    @peg.Node::Not(inner) => 1 + peg_node_size(inner)
   }
 }
 

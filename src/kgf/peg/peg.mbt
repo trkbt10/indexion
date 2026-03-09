@@ -186,6 +186,10 @@ fn compile_fast_node(
       FOptional(compile_fast_node(child, out, tokens, token_ids, rule_ids))
     Label(name, child) =>
       FLabel(name, compile_fast_node(child, out, tokens, token_ids, rule_ids))
+    And(child) =>
+      FAnd(compile_fast_node(child, out, tokens, token_ids, rule_ids))
+    Not(child) =>
+      FNot(compile_fast_node(child, out, tokens, token_ids, rule_ids))
   }
   let id = out.length()
   out.push(compiled)
@@ -216,6 +220,8 @@ fn compile_node(node : Node, out : Array[CompiledNode]) -> Int {
     Plus(child) => CPlus(compile_node(child, out))
     Optional(child) => COptional(compile_node(child, out))
     Label(name, child) => CLabel(name, compile_node(child, out))
+    And(child) => CAnd(compile_node(child, out))
+    Not(child) => CNot(compile_node(child, out))
   }
   let id = out.length()
   out.push(compiled)

@@ -212,6 +212,28 @@ fn eval_node_rec(
         result
       }
     }
+    FAnd(child) => {
+      // And-predicate: succeed if child succeeds, but don't consume input
+      let result = eval_rec(ctx, child, pos)
+      if result.ok {
+        // Success: return original position, no labels propagated
+        { ok: true, end_pos: pos, labels: empty_labels() }
+      } else {
+        // Failure
+        { ok: false, end_pos: pos, labels: empty_labels() }
+      }
+    }
+    FNot(child) => {
+      // Not-predicate: succeed if child fails, don't consume input
+      let result = eval_rec(ctx, child, pos)
+      if result.ok {
+        // Child succeeded, so Not fails
+        { ok: false, end_pos: pos, labels: empty_labels() }
+      } else {
+        // Child failed, so Not succeeds
+        { ok: true, end_pos: pos, labels: empty_labels() }
+      }
+    }
   }
 }
 

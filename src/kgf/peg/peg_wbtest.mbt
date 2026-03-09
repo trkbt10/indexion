@@ -263,3 +263,192 @@ test "run_parse: failure" {
     Some(_) => fail("Expected parse failure")
   }
 }
+
+// =============================================================================
+// PEG Predicate Operators (Ford 2004)
+// =============================================================================
+
+///|
+test "parse_expr: And predicate" {
+  let node = parse_expr("&FOO")
+  inspect(node, content="And(Sym(\"FOO\"))")
+}
+
+///|
+test "parse_expr: Not predicate" {
+  let node = parse_expr("!FOO")
+  inspect(node, content="Not(Sym(\"FOO\"))")
+}
+
+///|
+test "parse_expr: slash choice (PEG standard)" {
+  let node = parse_expr("FOO / BAR")
+  inspect(node, content="Choice([Sym(\"FOO\"), Sym(\"BAR\")])")
+}
+
+///|
+test "parse_expr: mixed choice operators" {
+  // Both | and / should work as choice operators
+  let node = parse_expr("FOO | BAR / BAZ")
+  inspect(node, content="Choice([Sym(\"FOO\"), Sym(\"BAR\"), Sym(\"BAZ\")])")
+}
+
+///|
+test "parse_expr: nested And predicate" {
+  let node = parse_expr("&(FOO BAR)")
+  inspect(node, content="And(Seq([Sym(\"FOO\"), Sym(\"BAR\")]))")
+}
+
+///|
+test "parse_expr: nested Not predicate" {
+  let node = parse_expr("!(FOO | BAR)")
+  inspect(node, content="Not(Choice([Sym(\"FOO\"), Sym(\"BAR\")]))")
+}
+
+///|
+test "parse_expr: double negation (!!e = &e)" {
+  // !!e is semantically equivalent to &e but parsed as nested Not
+  let node = parse_expr("!!FOO")
+  inspect(node, content="Not(Not(Sym(\"FOO\")))")
+}
+
+///|
+test "parse_expr: predicate in sequence" {
+  // Common pattern: identifier that is not a keyword
+  let node = parse_expr("!KEYWORD IDENT")
+  inspect(node, content="Seq([Not(Sym(\"KEYWORD\")), Sym(\"IDENT\")])")
+}
+
+///|
+test "parse_expr: And with postfix" {
+  // &FOO* - And applies to FOO, then star
+  let node = parse_expr("&FOO*")
+  inspect(node, content="Star(And(Sym(\"FOO\")))")
+}
+
+///|
+test "parse_expr: complex predicate pattern" {
+  // EndOfFile pattern: !. (not any character)
+  // In KGF, terminals are in lex, so we use a token name
+  let node = parse_expr("!ANY")
+  inspect(node, content="Not(Sym(\"ANY\"))")
+}
+
+///|
+test "run_parse: And predicate success without consuming" {
+  let spec = @types.KGFSpec::new(
+    "test",
+    tokens=[@types.TokenDef::new("IDENT", "[a-z]+")],
+    rules={ "start": @types.RuleDef::new("start", "&IDENT IDENT") },
+  )
+  let peg = build_peg(spec)
+  let tokens = [@types.Tok::new("IDENT", "foo", 0)]
+  let result = run_parse(peg, spec, "start", tokens)
+  match result {
+    Some(r) => {
+      assert_true(r.ok)
+      // &IDENT succeeds without consuming, then IDENT consumes
+      assert_eq(r.pos, 1)
+    }
+    None => fail("Expected successful parse")
+  }
+}
+
+///|
+test "run_parse: And predicate failure" {
+  let spec = @types.KGFSpec::new(
+    "test",
+    tokens=[
+      @types.TokenDef::new("IDENT", "[a-z]+"),
+      @types.TokenDef::new("NUMBER", "[0-9]+"),
+    ],
+    rules={ "start": @types.RuleDef::new("start", "&IDENT NUMBER") },
+  )
+  let peg = build_peg(spec)
+  // Token is NUMBER, but &IDENT expects IDENT
+  let tokens = [@types.Tok::new("NUMBER", "123", 0)]
+  let result = run_parse(peg, spec, "start", tokens)
+  match result {
+    None => () // Expected: &IDENT fails because token is NUMBER
+    Some(_) => fail("Expected parse failure")
+  }
+}
+
+///|
+test "run_parse: Not predicate success" {
+  let spec = @types.KGFSpec::new(
+    "test",
+    tokens=[
+      @types.TokenDef::new("IDENT", "[a-z]+"),
+      @types.TokenDef::new("KEYWORD", "if|else|while"),
+    ],
+    rules={ "start": @types.RuleDef::new("start", "!KEYWORD IDENT") },
+  )
+  let peg = build_peg(spec)
+  // Token is IDENT (not KEYWORD), so !KEYWORD succeeds
+  let tokens = [@types.Tok::new("IDENT", "foo", 0)]
+  let result = run_parse(peg, spec, "start", tokens)
+  match result {
+    Some(r) => {
+      assert_true(r.ok)
+      assert_eq(r.pos, 1)
+    }
+    None => fail("Expected successful parse")
+  }
+}
+
+///|
+test "run_parse: Not predicate failure" {
+  let spec = @types.KGFSpec::new(
+    "test",
+    tokens=[
+      @types.TokenDef::new("IDENT", "[a-z]+"),
+      @types.TokenDef::new("KEYWORD", "if|else|while"),
+    ],
+    rules={ "start": @types.RuleDef::new("start", "!KEYWORD IDENT") },
+  )
+  let peg = build_peg(spec)
+  // Token is KEYWORD, so !KEYWORD fails
+  let tokens = [@types.Tok::new("KEYWORD", "if", 0)]
+  let result = run_parse(peg, spec, "start", tokens)
+  match result {
+    None => () // Expected: !KEYWORD fails because token is KEYWORD
+    Some(_) => fail("Expected parse failure")
+  }
+}
+
+// =============================================================================
+// Deprecation Warnings
+// =============================================================================
+
+///|
+test "parse_expr_with_warnings: bar operator deprecated" {
+  let (node, warnings) = parse_expr_with_warnings("FOO | BAR")
+  inspect(node, content="Choice([Sym(\"FOO\"), Sym(\"BAR\")])")
+  assert_eq(warnings.length(), 1)
+  assert_true(warnings[0].contains("deprecated"))
+  assert_true(warnings[0].contains("|"))
+}
+
+///|
+test "parse_expr_with_warnings: bracket optional deprecated" {
+  let (node, warnings) = parse_expr_with_warnings("[FOO]")
+  inspect(node, content="Optional(Sym(\"FOO\"))")
+  assert_eq(warnings.length(), 1)
+  assert_true(warnings[0].contains("deprecated"))
+  assert_true(warnings[0].contains("[e]"))
+}
+
+///|
+test "parse_expr_with_warnings: slash no warning" {
+  let (node, warnings) = parse_expr_with_warnings("FOO / BAR")
+  inspect(node, content="Choice([Sym(\"FOO\"), Sym(\"BAR\")])")
+  assert_eq(warnings.length(), 0)
+}
+
+///|
+test "parse_expr_with_warnings: question mark no warning" {
+  let (node, warnings) = parse_expr_with_warnings("FOO?")
+  inspect(node, content="Optional(Sym(\"FOO\"))")
+  assert_eq(warnings.length(), 0)
+}

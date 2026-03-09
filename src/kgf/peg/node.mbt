@@ -1,5 +1,6 @@
 ///|
 /// PEG AST Node types representing the parsed grammar expression.
+/// Conforms to Bryan Ford's PEG specification (POPL 2004).
 pub enum Node {
   Empty
   Sym(String)
@@ -9,6 +10,8 @@ pub enum Node {
   Plus(Node)
   Optional(Node)
   Label(String, Node)
+  And(Node) // &e - positive lookahead (PEG predicate)
+  Not(Node) // !e - negative lookahead (PEG predicate)
 } derive(Show, Eq, Hash)
 
 ///|
@@ -23,6 +26,8 @@ pub enum CompiledNode {
   CPlus(Int)
   COptional(Int)
   CLabel(String, Int)
+  CAnd(Int) // positive lookahead
+  CNot(Int) // negative lookahead
 }
 
 ///|
@@ -38,6 +43,8 @@ enum FastCompiledNode {
   FPlus(Int)
   FOptional(Int)
   FLabel(String, Int) // label_name, child (name needed for label propagation)
+  FAnd(Int) // child node id - positive lookahead
+  FNot(Int) // child node id - negative lookahead
 }
 
 ///|
@@ -171,6 +178,42 @@ pub fn Node::is_label(self : Node) -> Bool {
 pub fn Node::get_label(self : Node) -> (String, Node)? {
   match self {
     Label(name, inner) => Some((name, inner))
+    _ => None
+  }
+}
+
+///|
+/// Returns true if this node is an And predicate (positive lookahead).
+pub fn Node::is_and(self : Node) -> Bool {
+  match self {
+    And(_) => true
+    _ => false
+  }
+}
+
+///|
+/// Gets the inner node if this is an And node.
+pub fn Node::get_and(self : Node) -> Node? {
+  match self {
+    And(inner) => Some(inner)
+    _ => None
+  }
+}
+
+///|
+/// Returns true if this node is a Not predicate (negative lookahead).
+pub fn Node::is_not(self : Node) -> Bool {
+  match self {
+    Not(_) => true
+    _ => false
+  }
+}
+
+///|
+/// Gets the inner node if this is a Not node.
+pub fn Node::get_not(self : Node) -> Node? {
+  match self {
+    Not(inner) => Some(inner)
     _ => None
   }
 }
