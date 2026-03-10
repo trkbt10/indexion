@@ -1,11 +1,11 @@
-// NCD (Normalized Compression Distance) similarity strategy.
-// Wraps the existing NCD implementation from segmentation/utils.
+///|
+/// NCD (Normalized Compression Distance) similarity strategy.
+/// Wraps the existing NCD implementation from segmentation/utils.
 
 ///|
 /// NCD-based similarity strategy.
 /// Uses compression-based distance to measure semantic similarity.
 pub struct NCDStrategy {
-  /// Placeholder field for future configuration.
   priv _unused : Unit
 } derive(Eq, Show)
 
@@ -16,19 +16,19 @@ pub fn NCDStrategy::new() -> NCDStrategy {
 }
 
 ///|
-pub impl SimilarityStrategy for NCDStrategy with name(self) {
+pub impl @types.SimilarityStrategy for NCDStrategy with name(self) {
   ignore(self)
   "ncd"
 }
 
 ///|
-pub impl SimilarityStrategy for NCDStrategy with distance(self, a, b) {
+pub impl @types.SimilarityStrategy for NCDStrategy with distance(self, a, b) {
   ignore(self)
   @utils.ncd(a, b)
 }
 
 ///|
-pub impl SimilarityStrategy for NCDStrategy with similarity(self, a, b) {
+pub impl @types.SimilarityStrategy for NCDStrategy with similarity(self, a, b) {
   1.0 - self.distance(a, b)
 }
 

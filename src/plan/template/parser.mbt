@@ -82,9 +82,8 @@ pub fn parse_issue_form(content : String) -> IssueFormTemplate {
         current_field = Some(create_empty_field(field_type))
       } else {
         match current_field {
-          Some(field) => {
+          Some(field) =>
             current_field = Some(update_field(field, trimmed, lines, i))
-          }
           None => ()
         }
       }
@@ -102,8 +101,7 @@ pub fn parse_issue_form(content : String) -> IssueFormTemplate {
 ///|
 fn create_empty_field(field_type : String) -> FormField {
   match field_type {
-    "markdown" =>
-      FormField::Markdown({ value: "" })
+    "markdown" => FormField::Markdown({ value: "" })
     "textarea" =>
       FormField::Textarea({
         id: "",
@@ -152,17 +150,16 @@ fn update_field(
   field : FormField,
   line : String,
   _lines : Array[String],
-  _idx : Int
+  _idx : Int,
 ) -> FormField {
   match field {
-    FormField::Markdown(md) => {
+    FormField::Markdown(md) =>
       if line.has_prefix("value:") {
         let val = extract_yaml_value(line, "value:")
         FormField::Markdown({ value: val })
       } else {
         field
       }
-    }
     FormField::Textarea(ta) => {
       let mut updated = ta
       if line.has_prefix("id:") {

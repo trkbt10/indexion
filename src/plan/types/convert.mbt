@@ -14,6 +14,9 @@ pub fn ConvertContext::new() -> ConvertContext {
 }
 
 ///|
-pub fn ConvertContext::with_project(name : String, version : String) -> ConvertContext {
+pub fn ConvertContext::with_project(
+  name : String,
+  version : String,
+) -> ConvertContext {
   { project_name: name, project_version: version }
 }

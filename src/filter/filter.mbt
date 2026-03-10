@@ -44,12 +44,10 @@ pub fn FilterConfig::should_include(
           matched = true
           break
         }
-      } else {
         // For files, check pattern match
-        if glob_match(path, pattern) || glob_match(basename, pattern) {
-          matched = true
-          break
-        }
+      } else if glob_match(path, pattern) || glob_match(basename, pattern) {
+        matched = true
+        break
       }
     }
     if not(matched) {

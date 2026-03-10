@@ -1,12 +1,13 @@
 import {
   "moonbitlang/core/env" @env,
   "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/src/similarity" @sim,
   "trkbt10/indexion/src/similarity/apted" @apted,
+  "trkbt10/indexion/src/similarity/ncd" @ncd,
+  "trkbt10/indexion/src/similarity/tfidf_strategy" @tfidf_strategy,
+  "trkbt10/indexion/src/similarity/hybrid" @hybrid,
   "trkbt10/indexion/src/pipeline" @pipeline,
   "trkbt10/indexion/src/text/tfidf" @tfidf,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
-  "trkbt10/indexion/src/kgf/types" @kgf_types,
   "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
   "trkbt10/indexion/cmd/indexion/common" @common,
 }

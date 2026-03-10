@@ -98,7 +98,9 @@ pub fn show_help() -> Unit {
   println("Options:")
   println("  --output=FILE, -o=   Output file path (default: stdout)")
   println("  --style=STYLE        Output style: coverage, full (default: full)")
-  println("  --format=FORMAT      Output format: md, json, github-issue (default: md)")
+  println(
+    "  --format=FORMAT      Output format: md, json, github-issue (default: md)",
+  )
   println("  --template=FILE      GitHub Issue Form template (.yml)")
   println(
     "  --name=NAME          Project name (auto-detect from moon.mod.json)",
@@ -117,7 +119,9 @@ pub fn show_help() -> Unit {
   println("Examples:")
   println("  indexion plan documentation src/")
   println("  indexion plan documentation --format=github-issue src/")
-  println("  indexion plan documentation --template=.github/ISSUE_TEMPLATE/doc.yml src/")
+  println(
+    "  indexion plan documentation --template=.github/ISSUE_TEMPLATE/doc.yml src/",
+  )
 }
 
 ///|
@@ -143,7 +147,9 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   // Analyze documentation coverage
   let analysis = analyze_documentation(config.target_dir)
   // Generate output based on format
-  let output_content = render_output(config, analysis, project_info, project_name)
+  let output_content = render_output(
+    config, analysis, project_info, project_name,
+  )
   // Output
   if config.output.length() > 0 {
     try {
@@ -162,7 +168,7 @@ fn render_output(
   config : DocPlanConfig,
   analysis : DocAnalysis,
   project_info : ProjectInfo,
-  project_name : String
+  project_name : String,
 ) -> String {
   match config.format {
     "json" => {
@@ -208,7 +214,7 @@ fn render_output(
         format_github_issue(issue)
       }
     }
-    _ => {
+    _ =>
       // Default: Markdown using legacy renderer for now
       match config.style {
         "coverage" => render_coverage(analysis, project_name)
@@ -218,7 +224,6 @@ fn render_output(
           @plan_render.render_markdown(doc)
         }
       }
-    }
   }
 }
 

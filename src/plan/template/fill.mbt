@@ -6,7 +6,7 @@
 /// Returns the filled body content as a string.
 pub fn fill_issue_form(
   template : IssueFormTemplate,
-  doc : @types.PlanDocument
+  doc : @types.PlanDocument,
 ) -> String {
   let buf = StringBuilder::new()
   let style = @render.RenderStyle::markdown()
@@ -18,23 +18,21 @@ pub fn fill_issue_form(
   // Process each field in the template
   for field in template.body {
     match field {
-      FormField::Markdown(md) => {
+      FormField::Markdown(md) =>
         // Static markdown, include as-is
         if md.value.length() > 0 {
           buf.write_string(md.value)
           buf.write_string("\n\n")
         }
-      }
       FormField::Textarea(ta) => {
         // Find matching section by id
         buf.write_string("### ")
         buf.write_string(ta.label)
         buf.write_string("\n\n")
         match section_map.get(ta.id) {
-          Some(section) => {
+          Some(section) =>
             @render.render_content_common(buf, section.content, 4, style)
-          }
-          None => {
+          None =>
             // Use default value or placeholder
             if ta.value.length() > 0 {
               buf.write_string(ta.value)
@@ -44,7 +42,6 @@ pub fn fill_issue_form(
               buf.write_string(ta.placeholder)
               buf.write_string("_\n\n")
             }
-          }
         }
       }
       FormField::Input(inp) => {
@@ -56,12 +53,11 @@ pub fn fill_issue_form(
           Some(val) => buf.write_string(val)
           None =>
             match section_map.get(inp.id) {
-              Some(section) => {
+              Some(section) =>
                 match section.content {
                   @types.SectionContent::Text(t) => buf.write_string(t)
                   _ => buf.write_string(inp.value)
                 }
-              }
               None => buf.write_string(inp.value)
             }
         }
@@ -87,9 +83,8 @@ pub fn fill_issue_form(
         buf.write_string("\n\n")
         // Try to match with checklist section
         match section_map.get(cb.id) {
-          Some(section) => {
+          Some(section) =>
             @render.render_content_common(buf, section.content, 4, style)
-          }
           None => {
             for opt in cb.options {
               buf.write_string("- [ ] ")
@@ -118,7 +113,7 @@ pub struct FilledIssueForm {
 /// Fill issue form and return complete output.
 pub fn fill_and_render(
   template : IssueFormTemplate,
-  doc : @types.PlanDocument
+  doc : @types.PlanDocument,
 ) -> FilledIssueForm {
   let body = fill_issue_form(template, doc)
   // Generate title from template title pattern
@@ -128,16 +123,14 @@ pub fn fill_and_render(
   } else {
     doc.title
   }
-  {
-    title,
-    body,
-    labels: template.labels,
-    assignees: template.assignees,
-  }
+  { title, body, labels: template.labels, assignees: template.assignees }
 }
 
 ///|
-fn replace_title_placeholders(title_pattern : String, doc : @types.PlanDocument) -> String {
+fn replace_title_placeholders(
+  title_pattern : String,
+  doc : @types.PlanDocument,
+) -> String {
   // Simple placeholder replacement: [TYPE] -> doc.metadata.get("type")
   let chars = title_pattern.to_array()
   let result = StringBuilder::new()
@@ -163,12 +156,11 @@ fn replace_title_placeholders(title_pattern : String, doc : @types.PlanDocument)
             result.write_string(val)
             result.write_string("]")
           }
-          None => {
+          None =>
             // Keep original
             for k = i; k <= j; k = k + 1 {
               result.write_char(chars[k])
             }
-          }
         }
         i = j + 1
         continue

@@ -6,7 +6,7 @@
 pub fn to_plan_document(
   analysis : DocAnalysis,
   info : ProjectInfo,
-  name : String
+  name : String,
 ) -> @plan_types.PlanDocument {
   let project_name = if name.length() > 0 { name } else { info.name }
   let doc = @plan_types.PlanDocument::new(project_name + " Documentation Plan")
@@ -54,9 +54,9 @@ fn build_coverage_section(analysis : DocAnalysis) -> @plan_types.PlanSection {
     }
   }
   // Build table
-  let table = @plan_types.TableData::new(
-    ["Category", "Documented", "Total", "Coverage"],
-  )
+  let table = @plan_types.TableData::new([
+    "Category", "Documented", "Total", "Coverage",
+  ])
   table.add_row([
     "Functions",
     fn_doc.to_string(),
@@ -97,10 +97,12 @@ fn build_missing_section(analysis : DocAnalysis) -> @plan_types.PlanSection {
     if count >= max_items {
       break
     }
-    items.push(@plan_types.ChecklistItem::with_desc(
-      item.kind + " " + item.name,
-      item.file + ":" + item.line.to_string(),
-    ))
+    items.push(
+      @plan_types.ChecklistItem::with_desc(
+        item.kind + " " + item.name,
+        item.file + ":" + item.line.to_string(),
+      ),
+    )
     count = count + 1
   }
   @plan_types.PlanSection::new(
@@ -112,9 +114,9 @@ fn build_missing_section(analysis : DocAnalysis) -> @plan_types.PlanSection {
 
 ///|
 fn build_inventory_section(analysis : DocAnalysis) -> @plan_types.PlanSection {
-  let table = @plan_types.TableData::new(
-    ["Package", "Pub Items", "Documented", "Coverage", "README"],
-  )
+  let table = @plan_types.TableData::new([
+    "Package", "Pub Items", "Documented", "Coverage", "README",
+  ])
   for pkg in analysis.packages {
     let cov = if pkg.total_pub > 0 {
       pkg.documented.to_double() / pkg.total_pub.to_double() * 100.0
@@ -126,7 +128,11 @@ fn build_inventory_section(analysis : DocAnalysis) -> @plan_types.PlanSection {
       pkg.total_pub.to_string(),
       pkg.documented.to_string(),
       format_percent(cov),
-      if pkg.has_readme { "Yes" } else { "No" },
+      if pkg.has_readme {
+        "Yes"
+      } else {
+        "No"
+      },
     ])
   }
   @plan_types.PlanSection::new(
@@ -146,32 +152,44 @@ fn build_action_section(analysis : DocAnalysis) -> @plan_types.PlanSection {
   if zero_cov.length() > 0 {
     let items : Array[@plan_types.ChecklistItem] = []
     for pkg in zero_cov {
-      items.push(@plan_types.ChecklistItem::with_priority(
-        "Document `" + pkg.path + "` (" + pkg.total_pub.to_string() + " pub items)",
-        1,
-      ))
+      items.push(
+        @plan_types.ChecklistItem::with_priority(
+          "Document `" +
+          pkg.path +
+          "` (" +
+          pkg.total_pub.to_string() +
+          " pub items)",
+          1,
+        ),
+      )
     }
-    nested_sections.push(@plan_types.PlanSection::new(
-      "priority1",
-      "Priority 1: Zero Coverage Packages",
-      @plan_types.SectionContent::checklist(items),
-    ))
+    nested_sections.push(
+      @plan_types.PlanSection::new(
+        "priority1",
+        "Priority 1: Zero Coverage Packages",
+        @plan_types.SectionContent::checklist(items),
+      ),
+    )
   }
   // Priority 2: Missing README
   let no_readme = analysis.packages.filter(fn(p) { not(p.has_readme) })
   if no_readme.length() > 0 {
     let items : Array[@plan_types.ChecklistItem] = []
     for pkg in no_readme {
-      items.push(@plan_types.ChecklistItem::with_priority(
-        "Add README.md to `" + pkg.path + "`",
-        2,
-      ))
+      items.push(
+        @plan_types.ChecklistItem::with_priority(
+          "Add README.md to `" + pkg.path + "`",
+          2,
+        ),
+      )
     }
-    nested_sections.push(@plan_types.PlanSection::new(
-      "priority2",
-      "Priority 2: Missing README",
-      @plan_types.SectionContent::checklist(items),
-    ))
+    nested_sections.push(
+      @plan_types.PlanSection::new(
+        "priority2",
+        "Priority 2: Missing README",
+        @plan_types.SectionContent::checklist(items),
+      ),
+    )
   }
   // Priority 3: Low coverage
   let low_cov = analysis.packages.filter(fn(p) {
@@ -183,16 +201,24 @@ fn build_action_section(analysis : DocAnalysis) -> @plan_types.PlanSection {
     let items : Array[@plan_types.ChecklistItem] = []
     for pkg in low_cov {
       let cov = pkg.documented.to_double() / pkg.total_pub.to_double() * 100.0
-      items.push(@plan_types.ChecklistItem::with_priority(
-        "Improve `" + pkg.path + "` coverage (currently " + format_percent(cov) + ")",
-        3,
-      ))
+      items.push(
+        @plan_types.ChecklistItem::with_priority(
+          "Improve `" +
+          pkg.path +
+          "` coverage (currently " +
+          format_percent(cov) +
+          ")",
+          3,
+        ),
+      )
     }
-    nested_sections.push(@plan_types.PlanSection::new(
-      "priority3",
-      "Priority 3: Low Coverage (<50%)",
-      @plan_types.SectionContent::checklist(items),
-    ))
+    nested_sections.push(
+      @plan_types.PlanSection::new(
+        "priority3",
+        "Priority 3: Low Coverage (<50%)",
+        @plan_types.SectionContent::checklist(items),
+      ),
+    )
   }
   @plan_types.PlanSection::new(
     "actions",

@@ -16,10 +16,7 @@ pub fn find_kgfs_dir(explicit_path? : String = "") -> String? {
   }
   // 2. INDEXION_KGFS_DIR environment variable
   match @sys.get_env_var("INDEXION_KGFS_DIR") {
-    Some(dir) =>
-      if dir.length() > 0 && is_valid_dir(dir) {
-        return Some(dir)
-      }
+    Some(dir) => if dir.length() > 0 && is_valid_dir(dir) { return Some(dir) }
     None => ()
   }
   // 3. ~/.indexion/kgfs (user local installation)
@@ -44,17 +41,11 @@ pub fn find_kgfs_dir(explicit_path? : String = "") -> String? {
 pub fn get_home_dir() -> String? {
   // Try HOME (Unix) then USERPROFILE (Windows)
   match @sys.get_env_var("HOME") {
-    Some(h) =>
-      if h.length() > 0 {
-        return Some(h)
-      }
+    Some(h) => if h.length() > 0 { return Some(h) }
     None => ()
   }
   match @sys.get_env_var("USERPROFILE") {
-    Some(h) =>
-      if h.length() > 0 {
-        return Some(h)
-      }
+    Some(h) => if h.length() > 0 { return Some(h) }
     None => ()
   }
   None
@@ -63,9 +54,7 @@ pub fn get_home_dir() -> String? {
 ///|
 /// Check if a path is a valid directory.
 fn is_valid_dir(path : String) -> Bool {
-  try {
-    @fs.is_dir(path)
-  } catch {
+  @fs.is_dir(path) catch {
     _ => false
   }
 }

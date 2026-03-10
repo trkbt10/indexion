@@ -1044,7 +1044,9 @@ fn compile_pattern(
     }
   }
   // Extract first char filter from the first alternative
-  let first_char_filter = extract_first_char_filter(compiled_alts, case_insensitive)
+  let first_char_filter = extract_first_char_filter(
+    compiled_alts, case_insensitive,
+  )
   Some({ alternatives: compiled_alts, case_insensitive, first_char_filter })
 }
 
@@ -1149,7 +1151,11 @@ fn check_first_char_filter(filter : FirstCharFilter, c : Char) -> Bool {
           break
         }
       }
-      if negated { not(in_class) } else { in_class }
+      if negated {
+        not(in_class)
+      } else {
+        in_class
+      }
     }
   }
 }

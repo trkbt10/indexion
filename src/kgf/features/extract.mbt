@@ -109,7 +109,9 @@ pub fn extract_functions(
         // Find matching RBRACE
         let fn_end = find_matching_brace(tokens, body_start)
         if fn_end > body_start {
-          functions.push(ExtractedFunction::new(name, fn_start, fn_end + 1, file))
+          functions.push(
+            ExtractedFunction::new(name, fn_start, fn_end + 1, file),
+          )
           i = fn_end + 1
           continue
         }

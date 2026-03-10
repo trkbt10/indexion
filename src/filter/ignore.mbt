@@ -67,7 +67,10 @@ fn contains_slash(s : String) -> Bool {
 
 ///|
 /// Load ignore patterns from a specific file in a directory.
-fn load_ignore_from_file(dir : String, filename : String) -> Array[IgnorePattern] {
+fn load_ignore_from_file(
+  dir : String,
+  filename : String,
+) -> Array[IgnorePattern] {
   let path = dir + "/" + filename
   try {
     let content = @fs.read_file_to_string(path)
@@ -105,4 +108,3 @@ pub fn load_project_ignores(root_dir : String) -> FilterConfig {
   }
   config
 }
-

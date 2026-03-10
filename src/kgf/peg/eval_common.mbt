@@ -48,7 +48,10 @@ fn full_labels(map : Map[String, Json]) -> Labels {
 
 ///|
 /// Materializes labels to Map for external use.
-fn materialize(labels : Labels, tokens : Array[@types.Tok]) -> Map[String, Json] {
+fn materialize(
+  labels : Labels,
+  tokens : Array[@types.Tok],
+) -> Map[String, Json] {
   match labels {
     Labels::NoLabels => Map::new()
     Labels::TokRef(idx) => {

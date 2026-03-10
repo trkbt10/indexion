@@ -1,7 +1,10 @@
 import {
   "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/cmd/indexion/common" @common,
   "trkbt10/indexion/src/pipeline" @pipeline,
-  "trkbt10/indexion/src/similarity" @sim,
+  "trkbt10/indexion/src/similarity/ncd" @ncd,
+  "trkbt10/indexion/src/similarity/tfidf_strategy" @tfidf_strategy,
+  "trkbt10/indexion/src/similarity/hybrid" @hybrid,
   "trkbt10/indexion/src/segmentation/sentence" @sentence,
   "trkbt10/indexion/src/plan/types" @plan_types,
   "trkbt10/indexion/src/plan/render" @plan_render,

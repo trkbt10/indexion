@@ -2,4 +2,5 @@ import {
   "trkbt10/indexion/cmd/indexion/plan/refactor" @refactor,
   "trkbt10/indexion/cmd/indexion/plan/documentation" @documentation,
   "trkbt10/indexion/cmd/indexion/plan/readme" @readme,
+  "trkbt10/indexion/cmd/indexion/plan/solid" @solid,
 }

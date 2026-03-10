@@ -14,14 +14,7 @@ pub struct IssueFormTemplate {
 
 ///|
 pub fn IssueFormTemplate::new() -> IssueFormTemplate {
-  {
-    name: "",
-    description: "",
-    title: "",
-    labels: [],
-    assignees: [],
-    body: [],
-  }
+  { name: "", description: "", title: "", labels: [], assignees: [], body: [] }
 }
 
 ///|

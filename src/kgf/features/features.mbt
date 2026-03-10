@@ -76,9 +76,9 @@ pub fn tokenize_files_with_kgf(
   for file in files {
     let (path, content) = file
     let tokens = match registry {
-      Some(reg) => {
+      Some(reg) =>
         match reg.detect_from_path(path) {
-          Some(lang) => {
+          Some(lang) =>
             match reg.get_spec(lang) {
               Some(spec) => {
                 kgf_hits += 1
@@ -86,10 +86,8 @@ pub fn tokenize_files_with_kgf(
               }
               None => []
             }
-          }
           None => []
         }
-      }
       None => []
     }
     tokenized.push(tokens)
@@ -103,7 +101,11 @@ pub fn load_registry() -> @kgf_registry.KGFRegistry? {
   match find_kgfs_dir() {
     Some(dir) => {
       let reg = @kgf_registry.KGFRegistry::load_from_dir(dir)
-      if reg.spec_count() > 0 { Some(reg) } else { None }
+      if reg.spec_count() > 0 {
+        Some(reg)
+      } else {
+        None
+      }
     }
     None => None
   }

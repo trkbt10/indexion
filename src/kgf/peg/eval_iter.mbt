@@ -395,7 +395,11 @@ fn process_label_cont(ctx : IterEvalContext, label_name : String) -> Unit {
       Some(v) => labels.set(label_name + "_text", v)
       None => ()
     }
-    ctx.results.push({ ok: true, end_pos: result.end_pos, labels: full_labels(labels) })
+    ctx.results.push({
+      ok: true,
+      end_pos: result.end_pos,
+      labels: full_labels(labels),
+    })
   } else {
     ctx.results.push(result)
   }
@@ -410,7 +414,9 @@ fn process_rule_ref_cont(
   start_pos : Int,
 ) -> Unit {
   let result = ctx.results.pop().unwrap()
-  if result.ok && not(target_is_rule_ref) && should_emit_rule_iter(ctx, rule_name) {
+  if result.ok &&
+    not(target_is_rule_ref) &&
+    should_emit_rule_iter(ctx, rule_name) {
     // Materialize for callback
     let labels_map = materialize(result.labels, ctx.tokens)
     (ctx.on_rule_match)(rule_name, labels_map, start_pos, result.end_pos)
@@ -437,7 +443,11 @@ fn process_rule_ref_cont(
           Some(v) => clean.set("_text", v)
           None => ()
         }
-        ctx.results.push({ ok: true, end_pos: result.end_pos, labels: full_labels(clean) })
+        ctx.results.push({
+          ok: true,
+          end_pos: result.end_pos,
+          labels: full_labels(clean),
+        })
       }
     }
   } else {

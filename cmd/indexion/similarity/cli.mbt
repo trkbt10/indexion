@@ -181,16 +181,15 @@ fn calculate_similarity(config : SimilarityConfig) -> (Double, Double)? {
       println("Error: Unknown strategy '" + config.strategy + "'")
       println(
         "Available strategies: " +
-        @sim.available_strategies().iter().fold(
-          init="",
-          fn(acc, s) {
-            if acc.length() == 0 {
-              s
-            } else {
-              acc + ", " + s
-            }
-          },
-        ),
+        @sim.available_strategies()
+        .iter()
+        .fold(init="", fn(acc, s) {
+          if acc.length() == 0 {
+            s
+          } else {
+            acc + ", " + s
+          }
+        }),
       )
       None
     }

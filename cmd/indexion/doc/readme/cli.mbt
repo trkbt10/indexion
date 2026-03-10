@@ -222,7 +222,8 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
         match render_template_file(template_path, ctx) {
           Some(content) =>
             write_output(content, config.output, config.output is None)
-          None => println("Error: Could not read template file: " + template_path)
+          None =>
+            println("Error: Could not read template file: " + template_path)
         }
         return
       }

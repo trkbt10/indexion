@@ -24,8 +24,7 @@ fn get_kgfs_dir() -> String {
 /// Helper to get the fixtures directory path.
 fn get_fixtures_dir() -> String {
   let paths = [
-    "fixtures", "../fixtures", "../../fixtures", "../../../fixtures",
-    "../../../../fixtures",
+    "fixtures", "../fixtures", "../../fixtures", "../../../fixtures", "../../../../fixtures",
   ]
   for path in paths {
     try {
@@ -61,9 +60,9 @@ test "registry: comprehensive validation" {
 
   // Test 2: Programming languages should exist and have correct structure
   let expected_langs = [
-    "typescript", "javascript", "python", "go", "rust", "java", "ruby", "php",
-    "swift", "kotlin", "dart", "scala", "elixir", "haskell", "ocaml", "zig",
-    "julia", "lua", "clojure", "c", "cpp", "csharp", "moonbit",
+    "typescript", "javascript", "python", "go", "rust", "java", "ruby", "php", "swift",
+    "kotlin", "dart", "scala", "elixir", "haskell", "ocaml", "zig", "julia", "lua",
+    "clojure", "c", "cpp", "csharp", "moonbit",
   ]
   for lang in expected_langs {
     match registry.get_spec(lang) {
@@ -81,13 +80,30 @@ test "registry: comprehensive validation" {
 
   // Test 3: Extension to language mapping
   let ext_mappings = [
-    (".ts", "typescript"), (".tsx", "typescript-jsx"), (".js", "javascript"),
+    (".ts", "typescript"),
+    (".tsx", "typescript-jsx"),
+    (".js", "javascript"),
     (".jsx", "javascript-jsx"),
-    (".py", "python"), (".go", "go"), (".rs", "rust"), (".java", "java"),
-    (".rb", "ruby"), (".php", "php"), (".swift", "swift"), (".kt", "kotlin"),
-    (".dart", "dart"), (".scala", "scala"), (".ex", "elixir"), (".hs", "haskell"),
-    (".ml", "ocaml"), (".zig", "zig"), (".jl", "julia"), (".lua", "lua"),
-    (".clj", "clojure"), (".c", "c"), (".cpp", "cpp"), (".cs", "csharp"),
+    (".py", "python"),
+    (".go", "go"),
+    (".rs", "rust"),
+    (".java", "java"),
+    (".rb", "ruby"),
+    (".php", "php"),
+    (".swift", "swift"),
+    (".kt", "kotlin"),
+    (".dart", "dart"),
+    (".scala", "scala"),
+    (".ex", "elixir"),
+    (".hs", "haskell"),
+    (".ml", "ocaml"),
+    (".zig", "zig"),
+    (".jl", "julia"),
+    (".lua", "lua"),
+    (".clj", "clojure"),
+    (".c", "c"),
+    (".cpp", "cpp"),
+    (".cs", "csharp"),
     (".mbt", "moonbit"),
   ]
   for mapping in ext_mappings {
@@ -160,7 +176,9 @@ test "registry: tokenize and parse examples" {
   let ts_lexer = @lexer.Lexer::new(ts_spec.get_tokens())
   let ts_source = @fs.read_file_to_string(
     fixtures_dir + "/programming/typescript/src/main.ts",
-  ) catch { _ => "" }
+  ) catch {
+    _ => ""
+  }
   if ts_source.length() > 0 {
     let ts_tokens = ts_lexer.tokenize(ts_source)
     assert_true(ts_tokens.length() > 0)
@@ -177,7 +195,9 @@ test "registry: tokenize and parse examples" {
   let js_lexer = @lexer.Lexer::new(js_spec.get_tokens())
   let js_source = @fs.read_file_to_string(
     fixtures_dir + "/programming/javascript/src/app.js",
-  ) catch { _ => "" }
+  ) catch {
+    _ => ""
+  }
   if js_source.length() > 0 {
     let js_tokens = js_lexer.tokenize(js_source)
     assert_true(js_tokens.length() > 0)
@@ -190,7 +210,11 @@ test "registry: tokenize and parse examples" {
   // Python tokenization and parsing
   let py_spec = registry.get_spec("python").unwrap()
   let py_lexer = @lexer.Lexer::new(py_spec.get_tokens())
-  let py_source = @fs.read_file_to_string(fixtures_dir + "/programming/python/main.py") catch { _ => "" }
+  let py_source = @fs.read_file_to_string(
+    fixtures_dir + "/programming/python/main.py",
+  ) catch {
+    _ => ""
+  }
   if py_source.length() > 0 {
     let py_tokens = py_lexer.tokenize(py_source)
     assert_true(py_tokens.length() > 0)
@@ -205,7 +229,11 @@ test "registry: tokenize and parse examples" {
   // Go tokenization and parsing
   let go_spec = registry.get_spec("go").unwrap()
   let go_lexer = @lexer.Lexer::new(go_spec.get_tokens())
-  let go_source = @fs.read_file_to_string(fixtures_dir + "/programming/go/main.go") catch { _ => "" }
+  let go_source = @fs.read_file_to_string(
+    fixtures_dir + "/programming/go/main.go",
+  ) catch {
+    _ => ""
+  }
   if go_source.length() > 0 {
     let go_tokens = go_lexer.tokenize(go_source)
     assert_true(go_tokens.length() > 0)
@@ -220,7 +248,11 @@ test "registry: tokenize and parse examples" {
   // Rust tokenization and parsing
   let rs_spec = registry.get_spec("rust").unwrap()
   let rs_lexer = @lexer.Lexer::new(rs_spec.get_tokens())
-  let rs_source = @fs.read_file_to_string(fixtures_dir + "/programming/rust/main.rs") catch { _ => "" }
+  let rs_source = @fs.read_file_to_string(
+    fixtures_dir + "/programming/rust/main.rs",
+  ) catch {
+    _ => ""
+  }
   if rs_source.length() > 0 {
     let rs_tokens = rs_lexer.tokenize(rs_source)
     assert_true(rs_tokens.length() > 0)
@@ -243,7 +275,11 @@ test "registry: parse markup and dsl" {
   let html_spec = registry.get_spec("html").unwrap()
   let html_peg = @peg.build_peg(html_spec)
   let html_lexer = @lexer.Lexer::new(html_spec.get_tokens())
-  let html_source = @fs.read_file_to_string(fixtures_dir + "/dsl/html/index.html") catch { _ => "" }
+  let html_source = @fs.read_file_to_string(
+    fixtures_dir + "/dsl/html/index.html",
+  ) catch {
+    _ => ""
+  }
   if html_source.length() > 0 {
     let html_tokens = html_lexer.tokenize(html_source)
     let html_result = @peg.run_parse(html_peg, html_spec, "Doc", html_tokens)
@@ -255,7 +291,11 @@ test "registry: parse markup and dsl" {
   let md_spec = registry.get_spec("markdown").unwrap()
   let md_peg = @peg.build_peg(md_spec)
   let md_lexer = @lexer.Lexer::new(md_spec.get_tokens())
-  let md_source = @fs.read_file_to_string(fixtures_dir + "/dsl/markdown/README.md") catch { _ => "" }
+  let md_source = @fs.read_file_to_string(
+    fixtures_dir + "/dsl/markdown/README.md",
+  ) catch {
+    _ => ""
+  }
   if md_source.length() > 0 {
     let md_tokens = md_lexer.tokenize(md_source)
     let md_result = @peg.run_parse(md_peg, md_spec, "Doc", md_tokens)
@@ -267,7 +307,11 @@ test "registry: parse markup and dsl" {
   let sql_spec = registry.get_spec("sql-ddl").unwrap()
   let sql_peg = @peg.build_peg(sql_spec)
   let sql_lexer = @lexer.Lexer::new(sql_spec.get_tokens())
-  let sql_source = @fs.read_file_to_string(fixtures_dir + "/dsl/sql-ddl/schema.sql") catch { _ => "" }
+  let sql_source = @fs.read_file_to_string(
+    fixtures_dir + "/dsl/sql-ddl/schema.sql",
+  ) catch {
+    _ => ""
+  }
   if sql_source.length() > 0 {
     let sql_tokens = sql_lexer.tokenize(sql_source)
     let sql_result = @peg.run_parse(sql_peg, sql_spec, "Doc", sql_tokens)
@@ -315,7 +359,9 @@ test "registry: all kgfs are version 0.6" {
     if entry.has_suffix(".kgf") {
       let path = dir + "/" + entry
       let content = @fs.read_file_to_string(path)
-      assert_true(content.has_prefix("kgf 0.6") || content.has_prefix("\nkgf 0.6"))
+      assert_true(
+        content.has_prefix("kgf 0.6") || content.has_prefix("\nkgf 0.6"),
+      )
     }
   }
 }

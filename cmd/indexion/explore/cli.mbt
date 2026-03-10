@@ -170,6 +170,7 @@ pub fn show_explore_help() -> Unit {
 
 ///|
 /// Collect files from multiple directories using pipeline.discover_files (SoT).
+/// When multiple directories are given, display_name is "dirname:relative_path".
 fn collect_files_multi(
   dirs : Array[String],
   extensions : Array[String],
@@ -177,14 +178,19 @@ fn collect_files_multi(
   excludes : Array[String],
 ) -> Array[(String, String)] {
   let files : Array[(String, String)] = []
-  for dir in dirs {
+  let multi_dir = dirs.length() > 1
+  // Get unique names for each directory (handles "src" vs "src" case)
+  let dir_names = @common.extract_unique_dir_names(dirs)
+  for i, dir in dirs {
     // Use pipeline.discover_files as SoT for filtering
     let opts = @pipeline.DiscoverOptions::new(
-      includes=includes,
-      excludes=excludes,
+      includes~,
+      excludes~,
       root_dir=dir,
     )
     let paths = @pipeline.discover_files([dir], opts)
+    // Use unique dirname for prefix
+    let dirname = dir_names[i]
     // Filter by extensions and read contents
     for path in paths {
       let basename = @pipeline.extract_basename(path)
@@ -204,8 +210,13 @@ fn collect_files_multi(
       if ext_ok {
         try {
           let content = @fs.read_file_to_string(path)
-          // Use relative path with directory prefix for cross-dir comparison
-          let display_name = make_relative_path(path, dir)
+          let relative = @common.make_relative_path(path, dir)
+          // Prefix with dirname when multiple directories
+          let display_name = if multi_dir {
+            dirname + ":" + relative
+          } else {
+            relative
+          }
           files.push((display_name, content))
         } catch {
           _ => ()
@@ -216,21 +227,21 @@ fn collect_files_multi(
   files
 }
 
+// Path utilities: use @common (SoT)
+
 ///|
-/// Convert absolute path to relative path from base directory.
-fn make_relative_path(path : String, base : String) -> String {
-  let clean_base = @pipeline.trim_trailing_slash(base)
-  let prefix = clean_base + "/"
-  if path.has_prefix(prefix) {
-    let chars = path.to_array()
-    let result : Array[Char] = []
-    for i = prefix.length(); i < chars.length(); i = i + 1 {
-      result.push(chars[i])
+/// Filter pairs to keep only cross-directory pairs.
+fn filter_cross_dir_pairs(pairs : Array[FilePair]) -> Array[FilePair] {
+  let result : Array[FilePair] = []
+  for pair in pairs {
+    let dir1 = @common.get_dirname_prefix(pair.file1)
+    let dir2 = @common.get_dirname_prefix(pair.file2)
+    // Keep only if both have prefixes and they differ
+    if dir1.length() > 0 && dir2.length() > 0 && dir1 != dir2 {
+      result.push(pair)
     }
-    String::from_array(result)
-  } else {
-    path
   }
+  result
 }
 
 ///|
@@ -242,15 +253,15 @@ fn calc_similarity(
 ) -> (Double, Double) {
   match strategy {
     "ncd" => {
-      let s = @sim.NCDStrategy::new()
+      let s = @ncd.NCDStrategy::new()
       (s.distance(text1, text2), s.similarity(text1, text2))
     }
     "tfidf" => {
-      let s = @sim.TfidfStrategy::new()
+      let s = @tfidf_strategy.TfidfStrategy::new()
       (s.distance(text1, text2), s.similarity(text1, text2))
     }
     _ => {
-      let s = @sim.HybridStrategy::new()
+      let s = @hybrid.HybridStrategy::new()
       (s.distance(text1, text2), s.similarity(text1, text2))
     }
   }
@@ -573,10 +584,15 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     return
   }
   println("=== indexion explore ===")
-  let dirs_str = config.target_dirs.iter().fold(
-    init="",
-    fn(acc, d) { if acc.length() == 0 { d } else { acc + ", " + d } },
-  )
+  let dirs_str = config.target_dirs
+    .iter()
+    .fold(init="", fn(acc, d) {
+      if acc.length() == 0 {
+        d
+      } else {
+        acc + ", " + d
+      }
+    })
   println("Directories: " + dirs_str)
   println("Strategy: " + config.strategy)
   println("")
@@ -612,8 +628,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     println("      Tokenizing with KGF lexer...")
     let tokenize_started = @env.now()
     let (tokenized, kgf_hits) = @kgf_features.tokenize_files_with_kgf(
-      files,
-      registry,
+      files, registry,
     )
     let fallback_count = files.length() - kgf_hits
     println(
@@ -638,24 +653,42 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   } else {
     calculate_pairs(files, config.strategy, min_similarity)
   }
+  // Filter to cross-directory pairs when multiple directories
+  let filtered_pairs = if config.target_dirs.length() > 1 {
+    let cross = filter_cross_dir_pairs(pairs)
+    println(
+      "      Cross-directory filter: " +
+      cross.length().to_string() +
+      " pairs (from " +
+      pairs.length().to_string() +
+      " total)",
+    )
+    cross
+  } else {
+    pairs
+  }
   if min_similarity > 0.0 {
     println(
       "      Done (" +
-      pairs.length().to_string() +
+      filtered_pairs.length().to_string() +
       " pairs kept at >= " +
       format_percent(min_similarity) +
       ")",
     )
   } else {
-    println("      Done (" + pairs.length().to_string() + " pairs calculated)")
+    println(
+      "      Done (" +
+      filtered_pairs.length().to_string() +
+      " pairs calculated)",
+    )
   }
   println("")
   // Output based on format
   match config.format {
-    "list" => output_list(pairs)
-    "cluster" => output_cluster(files, pairs, config.threshold)
-    "json" => output_json(files, pairs)
-    _ => output_matrix(files, pairs)
+    "list" => output_list(filtered_pairs)
+    "cluster" => output_cluster(files, filtered_pairs, config.threshold)
+    "json" => output_json(files, filtered_pairs)
+    _ => output_matrix(files, filtered_pairs)
   }
 }
 

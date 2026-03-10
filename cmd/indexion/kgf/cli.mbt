@@ -202,7 +202,10 @@ fn run_inspect(config : KgfConfig) -> Unit {
       println("")
       println("=== Semantics ===")
       let graph = @graph.CodeGraph::new()
-      let _ = graph.get_or_add_module(config.file_path, file=Some(config.file_path))
+      let _ = graph.get_or_add_module(
+        config.file_path,
+        file=Some(config.file_path),
+      )
       let ctx = @semantics.SemEvalCtx::new(
         spec,
         graph,
@@ -223,7 +226,9 @@ fn run_inspect(config : KgfConfig) -> Unit {
         println("=== Edges ===")
         for edge in edges {
           let attrs_str = format_attrs(edge.attrs)
-          println("  \{edge.kind.to_string()}: \{edge.from} -> \{edge.to}\{attrs_str}")
+          println(
+            "  \{edge.kind.to_string()}: \{edge.from} -> \{edge.to}\{attrs_str}",
+          )
         }
       }
     }

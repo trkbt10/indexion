@@ -1,4 +1,5 @@
-// Type definitions for similarity calculation strategies.
+///|
+/// Type definitions for similarity calculation strategies.
 
 ///|
 /// Result of similarity calculation between two items.

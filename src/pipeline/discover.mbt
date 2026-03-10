@@ -48,7 +48,9 @@ pub fn discover_files(
     @filter.FilterConfig::new()
   }
   // Add user includes and excludes
-  filter = filter.with_includes(options.includes).with_excludes(options.excludes)
+  filter = filter
+    .with_includes(options.includes)
+    .with_excludes(options.excludes)
   // Add KGF ignore patterns
   for entry in options.kgf_ignore {
     filter = filter.with_kgf_ignore([entry.0], entry.1)

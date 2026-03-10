@@ -1,6 +1,7 @@
-// TF-IDF cosine similarity strategy.
-// NOTE: This strategy requires pre-tokenized input via TfidfBatch.
-// The string-based distance methods are deprecated.
+///|
+/// TF-IDF cosine similarity strategy.
+/// NOTE: This strategy requires pre-tokenized input via TfidfBatch.
+/// The string-based distance methods are deprecated.
 
 ///|
 /// TF-IDF based similarity strategy.
@@ -16,7 +17,7 @@ pub fn TfidfStrategy::new() -> TfidfStrategy {
 }
 
 ///|
-pub impl SimilarityStrategy for TfidfStrategy with name(self) {
+pub impl @types.SimilarityStrategy for TfidfStrategy with name(self) {
   ignore(self)
   "tfidf"
 }
@@ -24,7 +25,7 @@ pub impl SimilarityStrategy for TfidfStrategy with name(self) {
 ///|
 /// String-based distance is not supported after KGF migration.
 /// Use TfidfBatch::from_tokens for proper tokenization.
-pub impl SimilarityStrategy for TfidfStrategy with distance(self, a, b) {
+pub impl @types.SimilarityStrategy for TfidfStrategy with distance(self, a, b) {
   ignore(self)
   ignore(a)
   ignore(b)
@@ -33,7 +34,7 @@ pub impl SimilarityStrategy for TfidfStrategy with distance(self, a, b) {
 }
 
 ///|
-pub impl SimilarityStrategy for TfidfStrategy with similarity(self, a, b) {
+pub impl @types.SimilarityStrategy for TfidfStrategy with similarity(self, a, b) {
   1.0 - self.distance(a, b)
 }
 
@@ -44,9 +45,7 @@ pub struct TfidfBatch(@tfidf.TfidfBatch)
 
 ///|
 /// Create a batch calculator from pre-tokenized documents.
-pub fn TfidfBatch::from_tokens(
-  tokenized : Array[Array[String]],
-) -> TfidfBatch {
+pub fn TfidfBatch::from_tokens(tokenized : Array[Array[String]]) -> TfidfBatch {
   TfidfBatch(@tfidf.TfidfBatch::from_tokens(tokenized))
 }
 

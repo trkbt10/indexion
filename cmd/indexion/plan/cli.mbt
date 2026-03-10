@@ -21,6 +21,9 @@ pub fn show_help() -> Unit {
   println(
     "  readme         Generate README documentation tasks for manual/LLM writing",
   )
+  println(
+    "  solid          Generate solidification plan for common code extraction",
+  )
   println("")
   println(
     "Use 'indexion plan <command> --help' for more information about a command.",
@@ -39,6 +42,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     "refactor" => @refactor.run(args, start_idx + 1)
     "documentation" | "doc" | "docs" => @documentation.run(args, start_idx + 1)
     "readme" => @readme.run(args, start_idx + 1)
+    "solid" => @solid.run(args, start_idx + 1)
     "--help" | "-h" | "help" => show_help()
     _ => {
       println("Unknown plan command: " + subcommand)

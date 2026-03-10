@@ -239,18 +239,14 @@ fn collect_files(
 ) -> Array[(String, String)] {
   let files : Array[(String, String)] = []
   // Use pipeline.discover_files as SoT for filtering
-  let opts = @pipeline.DiscoverOptions::new(
-    includes=includes,
-    excludes=excludes,
-    root_dir=dir,
-  )
+  let opts = @pipeline.DiscoverOptions::new(includes~, excludes~, root_dir=dir)
   let paths = @pipeline.discover_files([dir], opts)
   // Read file contents
   for path in paths {
     try {
       let content = @fs.read_file_to_string(path)
       // Convert to relative path for display
-      let display_name = make_relative_path(path, dir)
+      let display_name = @common.make_relative_path(path, dir)
       files.push((display_name, content))
     } catch {
       _ => ()
@@ -259,37 +255,22 @@ fn collect_files(
   files
 }
 
-///|
-/// Convert absolute path to relative path from base directory.
-fn make_relative_path(path : String, base : String) -> String {
-  let clean_base = @pipeline.trim_trailing_slash(base)
-  let prefix = clean_base + "/"
-  if path.has_prefix(prefix) {
-    let chars = path.to_array()
-    let result : Array[Char] = []
-    for i = prefix.length(); i < chars.length(); i = i + 1 {
-      result.push(chars[i])
-    }
-    String::from_array(result)
-  } else {
-    path
-  }
-}
+// make_relative_path: use @common (SoT)
 
 ///|
 /// Calculate similarity between two texts.
 fn calc_similarity(text1 : String, text2 : String, strategy : String) -> Double {
   match strategy {
     "ncd" => {
-      let s = @sim.NCDStrategy::new()
+      let s = @ncd.NCDStrategy::new()
       s.similarity(text1, text2)
     }
     "tfidf" => {
-      let s = @sim.TfidfStrategy::new()
+      let s = @tfidf_strategy.TfidfStrategy::new()
       s.similarity(text1, text2)
     }
     _ => {
-      let s = @sim.HybridStrategy::new()
+      let s = @hybrid.HybridStrategy::new()
       s.similarity(text1, text2)
     }
   }
@@ -587,8 +568,8 @@ fn find_duplicate_blocks(
 /// Suggest target module for shared code.
 fn suggest_shared_module(file1 : String, file2 : String) -> String {
   // Find common path prefix
-  let parts1 = split_by_slash(file1)
-  let parts2 = split_by_slash(file2)
+  let parts1 = @common.split_by_slash(file1)
+  let parts2 = @common.split_by_slash(file2)
   let common : Array[String] = []
   let min_len = if parts1.length() < parts2.length() {
     parts1.length()
@@ -618,31 +599,12 @@ fn suggest_shared_module(file1 : String, file2 : String) -> String {
   }
 }
 
-///|
-fn split_by_slash(path : String) -> Array[String] {
-  let parts : Array[String] = []
-  let chars = path.to_array()
-  let current : Array[Char] = []
-  for c in chars {
-    if c == '/' || c == '\\' {
-      if current.length() > 0 {
-        parts.push(String::from_array(current))
-        current.clear()
-      }
-    } else {
-      current.push(c)
-    }
-  }
-  if current.length() > 0 {
-    parts.push(String::from_array(current))
-  }
-  parts
-}
+// split_by_slash: use @common (SoT)
 
 ///|
 /// Extract project name from directory path.
 fn extract_project_name(path : String) -> String {
-  let parts = split_by_slash(path)
+  let parts = @common.split_by_slash(path)
   // Find first meaningful part (skip "src", ".", etc.)
   for i = parts.length() - 1; i >= 0; i = i - 1 {
     let part = parts[i]

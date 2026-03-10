@@ -1,6 +1,6 @@
 ///|
 /// Unified similarity strategy interface.
-/// Provides a single entry point for all similarity calculations.
+/// Provides strategy kind enum and parsing.
 
 ///|
 /// Strategy kind enum for unified handling.
@@ -10,7 +10,7 @@ pub enum StrategyKind {
   /// TF-IDF cosine similarity (lexical similarity).
   TfIdf
   /// Weighted combination of NCD and TF-IDF.
-  Hybrid(HybridConfig)
+  Hybrid(@types.HybridConfig)
   /// Tree edit distance (structural similarity).
   Apted
   /// Tree Structure Edit Distance.
@@ -23,7 +23,7 @@ pub fn StrategyKind::parse(name : String) -> StrategyKind? {
   match name {
     "ncd" => Some(NCD)
     "tfidf" => Some(TfIdf)
-    "hybrid" => Some(Hybrid(HybridConfig::new()))
+    "hybrid" => Some(Hybrid(@types.HybridConfig::new()))
     "apted" => Some(Apted)
     "tsed" => Some(Tsed)
     _ => None
@@ -40,7 +40,8 @@ pub fn StrategyKind::parse_with_weights(
   match name {
     "ncd" => Some(NCD)
     "tfidf" => Some(TfIdf)
-    "hybrid" => Some(Hybrid(HybridConfig::create(ncd_weight, tfidf_weight)))
+    "hybrid" =>
+      Some(Hybrid(@types.HybridConfig::create(ncd_weight, tfidf_weight)))
     "apted" => Some(Apted)
     "tsed" => Some(Tsed)
     _ => None
@@ -75,31 +76,6 @@ pub fn StrategyKind::is_tree_strategy(self : StrategyKind) -> Bool {
 }
 
 ///|
-/// Calculate text similarity using the strategy.
-/// Returns None for tree strategies.
-pub fn StrategyKind::text_similarity(
-  self : StrategyKind,
-  text1 : String,
-  text2 : String,
-) -> SimilarityResult? {
-  match self {
-    NCD => {
-      let s = NCDStrategy::new()
-      Some(SimilarityResult::from_similarity(s.similarity(text1, text2)))
-    }
-    TfIdf => {
-      let s = TfidfStrategy::new()
-      Some(SimilarityResult::from_similarity(s.similarity(text1, text2)))
-    }
-    Hybrid(config) => {
-      let s = HybridStrategy::with_config(config)
-      Some(SimilarityResult::from_similarity(s.similarity(text1, text2)))
-    }
-    Apted | Tsed => None
-  }
-}
-
-///|
 /// List all available strategy names.
 pub fn available_strategies() -> Array[String] {
   ["ncd", "tfidf", "hybrid", "apted", "tsed"]
@@ -118,23 +94,48 @@ pub fn tree_strategies() -> Array[String] {
 }
 
 ///|
+/// Calculate text similarity using the strategy.
+/// Returns None for tree strategies.
+pub fn StrategyKind::text_similarity(
+  self : StrategyKind,
+  text1 : String,
+  text2 : String,
+) -> @types.SimilarityResult? {
+  match self {
+    NCD => {
+      let s = @ncd.NCDStrategy::new()
+      Some(@types.SimilarityResult::from_similarity(s.similarity(text1, text2)))
+    }
+    TfIdf => {
+      let s = @tfidf_strategy.TfidfStrategy::new()
+      Some(@types.SimilarityResult::from_similarity(s.similarity(text1, text2)))
+    }
+    Hybrid(config) => {
+      let s = @hybrid.HybridStrategy::with_config(config)
+      Some(@types.SimilarityResult::from_similarity(s.similarity(text1, text2)))
+    }
+    Apted | Tsed => None
+  }
+}
+
+///|
 /// Calculate tree similarity using the strategy.
 /// Returns None for text strategies.
 pub fn StrategyKind::tree_similarity(
   self : StrategyKind,
   tree1 : @apted.TreeNode,
   tree2 : @apted.TreeNode,
-) -> SimilarityResult? {
+) -> @types.SimilarityResult? {
   match self {
     Apted => {
       let config = @apted.CostConfig::default()
       let sim = @apted.tree_similarity(tree1, tree2, config)
-      Some(SimilarityResult::from_similarity(sim))
+      Some(@types.SimilarityResult::from_similarity(sim))
     }
     Tsed => {
       let config = @apted.TSEDConfig::default()
       let sim = @apted.calculate_tsed(tree1, tree2, config)
-      Some(SimilarityResult::from_similarity(sim))
+      Some(@types.SimilarityResult::from_similarity(sim))
     }
     NCD | TfIdf | Hybrid(_) => None
   }
@@ -148,7 +149,7 @@ pub fn StrategyKind::calculate(
   self : StrategyKind,
   input1 : String,
   input2 : String,
-) -> SimilarityResult? {
+) -> @types.SimilarityResult? {
   if self.is_text_strategy() {
     self.text_similarity(input1, input2)
   } else {

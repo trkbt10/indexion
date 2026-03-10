@@ -39,7 +39,7 @@ pub fn render_section_common(
   buf : StringBuilder,
   section : @types.PlanSection,
   level : Int,
-  style : RenderStyle
+  style : RenderStyle,
 ) -> Unit {
   // Heading
   for i = 0; i < level; i = i + 1 {
@@ -58,7 +58,7 @@ pub fn render_content_common(
   buf : StringBuilder,
   content : @types.SectionContent,
   level : Int,
-  style : RenderStyle
+  style : RenderStyle,
 ) -> Unit {
   match content {
     @types.SectionContent::Text(s) => {
@@ -77,9 +77,7 @@ pub fn render_content_common(
       }
       buf.write_string("\n")
     }
-    @types.SectionContent::Table(data) => {
-      render_table_common(buf, data, style)
-    }
+    @types.SectionContent::Table(data) => render_table_common(buf, data, style)
     @types.SectionContent::Checklist(items) => {
       for item in items {
         if item.checked {
@@ -118,11 +116,10 @@ pub fn render_content_common(
       buf.write_string(code)
       buf.write_string("\n```\n\n")
     }
-    @types.SectionContent::Nested(sections) => {
+    @types.SectionContent::Nested(sections) =>
       for section in sections {
         render_section_common(buf, section, level + 1, style)
       }
-    }
     @types.SectionContent::KeyValue(pairs) => {
       for pair in pairs {
         let (k, v) = pair
@@ -142,7 +139,7 @@ pub fn render_content_common(
 fn render_table_common(
   buf : StringBuilder,
   data : @types.TableData,
-  style : RenderStyle
+  style : RenderStyle,
 ) -> Unit {
   // Header row
   buf.write_string("|")

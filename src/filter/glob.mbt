@@ -28,7 +28,6 @@ pub fn glob_match_anywhere(path : String, pattern : String) -> Bool {
   false
 }
 
-
 ///|
 fn glob_match_impl(
   pattern : Array[Char],
@@ -279,7 +278,10 @@ fn split_glob_pattern(pattern : String) -> (String, String) {
   } else if last_slash == 0 {
     ("/", @parser.substr_from(pattern, 1))
   } else {
-    (@parser.substr(pattern, 0, last_slash), @parser.substr_from(pattern, last_slash + 1))
+    (
+      @parser.substr(pattern, 0, last_slash),
+      @parser.substr_from(pattern, last_slash + 1),
+    )
   }
 }
 
@@ -301,11 +303,7 @@ fn expand_glob_impl(
       if entry.has_prefix(".") && not(remaining.has_prefix(".")) {
         continue
       }
-      let full_path = if dir == "." {
-        entry
-      } else {
-        dir + "/" + entry
-      }
+      let full_path = if dir == "." { entry } else { dir + "/" + entry }
       // Check if full path matches the original pattern
       if glob_match(full_path, full_pattern) {
         results.push(full_path)

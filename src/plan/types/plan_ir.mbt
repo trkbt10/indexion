@@ -19,19 +19,29 @@ pub fn PlanDocument::new(title : String) -> PlanDocument {
 
 ///|
 /// Add a section to the document.
-pub fn PlanDocument::add_section(self : PlanDocument, section : PlanSection) -> Unit {
+pub fn PlanDocument::add_section(
+  self : PlanDocument,
+  section : PlanSection,
+) -> Unit {
   self.sections.push(section)
 }
 
 ///|
 /// Set metadata value.
-pub fn PlanDocument::set_meta(self : PlanDocument, key : String, value : String) -> Unit {
+pub fn PlanDocument::set_meta(
+  self : PlanDocument,
+  key : String,
+  value : String,
+) -> Unit {
   self.metadata.set(key, value)
 }
 
 ///|
 /// Set description.
-pub fn PlanDocument::set_description(self : PlanDocument, desc : String) -> Unit {
+pub fn PlanDocument::set_description(
+  self : PlanDocument,
+  desc : String,
+) -> Unit {
   self.description = desc
 }
 
@@ -48,7 +58,7 @@ pub struct PlanSection {
 pub fn PlanSection::new(
   id : String,
   heading : String,
-  content : SectionContent
+  content : SectionContent,
 ) -> PlanSection {
   { id, heading, content }
 }
@@ -85,7 +95,9 @@ pub fn SectionContent::table(data : TableData) -> SectionContent {
 
 ///|
 /// Create checklist content.
-pub fn SectionContent::checklist(items : Array[ChecklistItem]) -> SectionContent {
+pub fn SectionContent::checklist(
+  items : Array[ChecklistItem],
+) -> SectionContent {
   Checklist(items)
 }
 
@@ -103,7 +115,9 @@ pub fn SectionContent::nested(sections : Array[PlanSection]) -> SectionContent {
 
 ///|
 /// Create key-value content.
-pub fn SectionContent::keyvalue(pairs : Array[(String, String)]) -> SectionContent {
+pub fn SectionContent::keyvalue(
+  pairs : Array[(String, String)],
+) -> SectionContent {
   KeyValue(pairs)
 }
 
@@ -175,12 +189,18 @@ pub fn ChecklistItem::new(label : String) -> ChecklistItem {
 }
 
 ///|
-pub fn ChecklistItem::with_priority(label : String, priority : Int) -> ChecklistItem {
+pub fn ChecklistItem::with_priority(
+  label : String,
+  priority : Int,
+) -> ChecklistItem {
   { label, description: "", checked: false, priority }
 }
 
 ///|
-pub fn ChecklistItem::with_desc(label : String, description : String) -> ChecklistItem {
+pub fn ChecklistItem::with_desc(
+  label : String,
+  description : String,
+) -> ChecklistItem {
   { label, description, checked: false, priority: 0 }
 }
 
