@@ -1,5 +1,4 @@
 import {
-  "trkbt10/indexion/src/glob" @glob,
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/kgf/parser" @parser,
 }

@@ -22,8 +22,11 @@ test "reconcile: fixture typescript project validates cross-package drift detect
   let config = {
     ..ReconcileConfig::default(),
     target_dir: fixture_root,
-    doc_paths: ["docs/**/*.md"],
-    doc_specs: ["markdown"],
+    documents: @config_paths.resolve_reconcile_document_scope(
+      "custom",
+      doc_paths=["docs/**/*.md"],
+      doc_specs=["markdown"],
+    ),
     git_preferred: false,
     mtime_fallback: false,
     logical_review_mode: "off",

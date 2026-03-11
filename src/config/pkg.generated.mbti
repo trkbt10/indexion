@@ -1,10 +1,16 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/src/config"
 
+import {
+  "trkbt10/indexion/src/scope",
+}
+
 // Values
 pub fn basename(String) -> String
 
 pub fn config_base_dir(String, String) -> String
+
+pub fn default_reconcile_index_dir(String) -> String
 
 pub fn default_tool_dir(String, String) -> String
 
@@ -20,6 +26,8 @@ pub fn find_indexion_config_path(String, explicit_path? : String) -> String
 
 pub fn find_kgfs_dir(explicit_path? : String, target_dir? : String) -> String?
 
+pub fn find_nearest_marker_dir(String, String, Array[String]) -> String?
+
 pub fn get_home_dir() -> String?
 
 pub fn is_absolute_path(String) -> Bool
@@ -30,13 +38,21 @@ pub fn load_reconcile_file_config(String) -> ReconcileFileConfig
 
 pub fn normalize_path(String) -> String
 
+pub fn normalize_reconcile_doc_scope(String) -> String
+
 pub fn parse_reconcile_toml_config(String) -> ReconcileFileConfig
+
+pub fn reconcile_doc_scope_paths(String) -> Array[String]
+
+pub fn reconcile_doc_scope_specs(String) -> Array[String]
 
 pub fn relative_to(String, String) -> String
 
 pub fn resolve_config_path_value(String, String, String) -> String
 
 pub fn resolve_path(String, String) -> String
+
+pub fn resolve_reconcile_document_scope(String, doc_paths? : Array[String], doc_specs? : Array[String]) -> ReconcileDocumentScope
 
 pub fn resolve_reconcile_specs_dir(String, explicit_specs_dir? : String) -> String
 
@@ -45,7 +61,17 @@ pub fn trim_toml_comment(String) -> String
 // Errors
 
 // Types and methods
+pub struct ReconcileDocumentScope {
+  scope_name : String
+  doc_paths : Array[String]
+  doc_specs : Array[String]
+  path_scope : @scope.PathScope
+}
+pub impl Eq for ReconcileDocumentScope
+pub impl Show for ReconcileDocumentScope
+
 pub struct ReconcileFileConfig {
+  doc_scope : String?
   doc_paths : Array[String]?
   doc_specs : Array[String]?
   index_dir : String?

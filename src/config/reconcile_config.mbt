@@ -2,6 +2,7 @@
 /// Optional values loaded from `.indexion.toml` or `.indexion.json` for
 /// `indexion plan reconcile`.
 pub struct ReconcileFileConfig {
+  doc_scope : String?
   doc_paths : Array[String]?
   doc_specs : Array[String]?
   index_dir : String?
@@ -16,8 +17,18 @@ pub struct ReconcileFileConfig {
 } derive(Eq, Show)
 
 ///|
+/// Resolved document selection for reconcile.
+pub struct ReconcileDocumentScope {
+  scope_name : String
+  doc_paths : Array[String]
+  doc_specs : Array[String]
+  path_scope : @scope.PathScope
+} derive(Eq, Show)
+
+///|
 pub fn ReconcileFileConfig::empty() -> ReconcileFileConfig {
   {
+    doc_scope: None,
     doc_paths: None,
     doc_specs: None,
     index_dir: None,
@@ -44,6 +55,58 @@ pub fn resolve_reconcile_specs_dir(
       Some(dir) => dir
       None => normalize_path("kgfs")
     }
+  }
+}
+
+///|
+pub fn normalize_reconcile_doc_scope(scope : String) -> String {
+  match trim_string(scope).to_lower() {
+    "package-docs" => "package-docs"
+    "tree-docs" => "tree-docs"
+    "custom" => "custom"
+    _ => "custom"
+  }
+}
+
+///|
+pub fn reconcile_doc_scope_paths(scope : String) -> Array[String] {
+  match normalize_reconcile_doc_scope(scope) {
+    "package-docs" => ["README.md", "docs/**/*.md"]
+    "tree-docs" => ["**/README.md", "**/docs/**/*.md"]
+    _ => []
+  }
+}
+
+///|
+pub fn reconcile_doc_scope_specs(scope : String) -> Array[String] {
+  match normalize_reconcile_doc_scope(scope) {
+    "package-docs" | "tree-docs" => ["markdown"]
+    _ => []
+  }
+}
+
+///|
+pub fn resolve_reconcile_document_scope(
+  scope : String,
+  doc_paths? : Array[String] = [],
+  doc_specs? : Array[String] = [],
+) -> ReconcileDocumentScope {
+  let scope_name = normalize_reconcile_doc_scope(scope)
+  let resolved_doc_paths = if doc_paths.is_empty() {
+    reconcile_doc_scope_paths(scope_name)
+  } else {
+    doc_paths
+  }
+  let resolved_doc_specs = if doc_specs.is_empty() {
+    reconcile_doc_scope_specs(scope_name)
+  } else {
+    doc_specs
+  }
+  {
+    scope_name,
+    doc_paths: resolved_doc_paths,
+    doc_specs: resolved_doc_specs,
+    path_scope: @scope.PathScope::new(includes=resolved_doc_paths),
   }
 }
 
@@ -86,6 +149,8 @@ pub fn parse_reconcile_toml_config(content : String) -> ReconcileFileConfig {
     match section {
       "reconcile" =>
         match key {
+          "doc_scope" =>
+            file_config = { ..file_config, doc_scope: Some(trim_quotes(value)) }
           "doc_paths" =>
             file_config = {
               ..file_config,
@@ -168,6 +233,17 @@ fn parse_reconcile_json_config(content : String) -> ReconcileFileConfig {
     _ => return ReconcileFileConfig::empty()
   }
   let mut file_config = ReconcileFileConfig::empty()
+  match reconcile_obj.get("doc_scope") {
+    Some(value) =>
+      match parse_json_string(value) {
+        Some(parsed_value) =>
+          if parsed_value.length() > 0 {
+            file_config = { ..file_config, doc_scope: Some(parsed_value) }
+          }
+        None => ()
+      }
+    None => ()
+  }
   match reconcile_obj.get("doc_paths") {
     Some(value) =>
       match parse_json_string_array(value) {

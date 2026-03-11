@@ -11,6 +11,20 @@ priv struct CandidateBuildResult {
 }
 
 ///|
+priv struct AggregateBucket {
+  scope : String
+  path : String
+  status : String
+  recommended_action : String
+  candidate_count : Int
+  logical_review_count : Int
+  symbol_ids : Array[String]
+  symbol_names : Array[String]
+  doc_paths : Array[String]
+  module_paths : Array[String]
+}
+
+///|
 priv struct FragmentMatchSignals {
   exact_tokens : Map[String, Bool]
   reference_tokens : Map[String, Bool]
@@ -218,9 +232,86 @@ fn add_path_anchor_terms(tokens : Map[String, Bool], text : String) -> Unit {
 }
 
 ///|
+fn configured_doc_roots(doc_paths : Array[String]) -> Map[String, Bool] {
+  let roots : Map[String, Bool] = {}
+  for pattern in doc_paths {
+    let normalized = @config_paths.normalize_path(pattern)
+    let segment_chars : Array[Char] = []
+    let mut saw_wildcard = false
+    let mut added = false
+    for ch in normalized.to_array() {
+      if ch == '/' {
+        let segment = String::from_array(segment_chars)
+        segment_chars.clear()
+        if segment.length() == 0 || segment == "." || segment == "**" {
+          continue
+        }
+        if not(saw_wildcard) &&
+          not(segment.contains("*")) &&
+          @config_paths.extension(segment).length() == 0 {
+          roots.set(segment, true)
+        }
+        added = true
+        break
+      }
+      if ch == '*' {
+        saw_wildcard = true
+      }
+      segment_chars.push(ch)
+    }
+    if added || segment_chars.length() == 0 {
+      continue
+    }
+    let segment = String::from_array(segment_chars)
+    if segment.length() == 0 ||
+      segment == "." ||
+      segment == "**" ||
+      saw_wildcard ||
+      segment.contains("*") ||
+      @config_paths.extension(segment).length() > 0 {
+      continue
+    }
+    roots.set(segment, true)
+  }
+  roots
+}
+
+///|
+fn coverage_anchor_term(
+  root_dir : String,
+  path : String,
+  doc_roots : Map[String, Bool],
+) -> String {
+  let fallback = @config_paths.basename(root_dir)
+  let relative = @config_paths.relative_to(root_dir, path)
+  let normalized = @config_paths.normalize_path(relative)
+  if normalized == "." || normalized.length() == 0 {
+    return fallback
+  }
+  let first_chars : Array[Char] = []
+  for ch in normalized.to_array() {
+    if ch == '/' {
+      break
+    }
+    first_chars.push(ch)
+  }
+  let first = String::from_array(first_chars)
+  if first.length() == 0 ||
+    first == "." ||
+    doc_roots.contains(first) ||
+    @config_paths.extension(first).length() > 0 {
+    fallback
+  } else {
+    first
+  }
+}
+
+///|
 fn build_module_signals(
   units : Array[CodeUnit],
   registry : @registry.KGFRegistry,
+  root_dir : String,
+  doc_roots : Map[String, Bool],
 ) -> Map[String, ModuleSignals] {
   let signals : Map[String, ModuleSignals] = {}
   for unit in units {
@@ -228,7 +319,10 @@ fn build_module_signals(
       Some(existing) => existing
       None => {
         let seeded = { tokens: {}, anchors: {} }
-        add_path_anchor_terms(seeded.anchors, file_stem(unit.module_path))
+        add_specific_token(
+          seeded.anchors,
+          coverage_anchor_term(root_dir, unit.module_path, doc_roots),
+        )
         add_path_anchor_terms(seeded.tokens, unit.module_path)
         add_path_anchor_terms(seeded.tokens, file_stem(unit.module_path))
         let content = @fs.read_file_to_string(unit.module_path) catch {
@@ -269,6 +363,8 @@ fn build_module_signals(
 fn build_fragment_terms(
   fragments : Array[DocFragment],
   registry : @registry.KGFRegistry,
+  root_dir : String,
+  doc_roots : Map[String, Bool],
 ) -> Map[String, Map[String, Bool]] {
   let terms : Map[String, Map[String, Bool]] = {}
   for fragment in fragments {
@@ -285,6 +381,10 @@ fn build_fragment_terms(
         }
       None => add_surface_term(current, source_text)
     }
+    add_specific_token(
+      current,
+      coverage_anchor_term(root_dir, fragment.path, doc_roots),
+    )
     terms.set(fragment.id, current)
   }
   terms
@@ -326,9 +426,16 @@ fn build_module_coverage_index(
   units : Array[CodeUnit],
   fragments : Array[DocFragment],
   registry : @registry.KGFRegistry,
+  root_dir : String,
+  doc_paths : Array[String],
 ) -> Map[String, Bool] {
-  let module_signals = build_module_signals(units, registry)
-  let fragment_terms = build_fragment_terms(fragments, registry)
+  let doc_roots = configured_doc_roots(doc_paths)
+  let module_signals = build_module_signals(
+    units, registry, root_dir, doc_roots,
+  )
+  let fragment_terms = build_fragment_terms(
+    fragments, registry, root_dir, doc_roots,
+  )
   let coverage : Map[String, Bool] = {}
   for module_entry in module_signals {
     let signals = module_entry.1
@@ -343,7 +450,7 @@ fn build_module_coverage_index(
         continue
       }
       let anchor_hits = shared_terms(signals.anchors, terms)
-      if anchor_hits.length() > 0 || overlaps.length() >= 4 {
+      if anchor_hits.length() > 0 {
         covered = true
         break
       }
@@ -533,6 +640,36 @@ fn time_relation(
 }
 
 ///|
+fn classify_match_result(
+  relation : String,
+  mapping_confidence : Int,
+  match_kind : String,
+) -> (String, String, String) {
+  match relation {
+    "doc_older" =>
+      (
+        "stale_doc", "update_doc", "Implementation appears newer than the mapped document fragment.",
+      )
+    "doc_newer" =>
+      if mapping_confidence >= 85 && match_kind != "file_name" {
+        ("in_sync", "", "")
+      } else {
+        (
+          "review_both", "review_both", "Document appears newer than the implementation and should be reviewed.",
+        )
+      }
+    _ =>
+      if mapping_confidence < 80 {
+        (
+          "review_mapping", "review_mapping", "Mapping is heuristic and should be reviewed.",
+        )
+      } else {
+        ("in_sync", "", "")
+      }
+  }
+}
+
+///|
 fn candidate_id(unit : CodeUnit, fragment : DocFragment?) -> String {
   let doc_key = match fragment {
     Some(value) => value.id
@@ -549,7 +686,13 @@ fn build_candidates(
   registry : @registry.KGFRegistry,
 ) -> CandidateBuildResult {
   let candidates : Array[ReconcileCandidate] = []
-  let module_coverage = build_module_coverage_index(units, fragments, registry)
+  let module_coverage = build_module_coverage_index(
+    units,
+    fragments,
+    registry,
+    config.target_dir,
+    config.documents.doc_paths,
+  )
   let fragment_signals = build_fragment_match_signals(fragments, registry)
   let mut module_covered_symbols = 0
   for unit in units {
@@ -622,25 +765,13 @@ fn build_candidates(
       config,
     )
     let relation = time_relation(code_time, doc_time, config.threshold_seconds)
-    let (status, action) = match relation {
-      "doc_older" => ("stale_doc", "update_doc")
-      "doc_newer" => ("review_both", "review_both")
-      _ =>
-        if best.0 < 80 {
-          ("review_mapping", "review_mapping")
-        } else {
-          ("in_sync", "")
-        }
-    }
+    let (status, action, reason) = classify_match_result(
+      relation,
+      best.0,
+      best.1,
+    )
     if status == "in_sync" {
       continue
-    }
-    let reason = match relation {
-      "doc_older" =>
-        "Implementation appears newer than the mapped document fragment."
-      "doc_newer" =>
-        "Document appears newer than the implementation and may be ahead of code."
-      _ => "Mapping is heuristic and should be reviewed."
     }
     candidates.push({
       id: candidate_id(unit, Some(best.3)),
@@ -675,16 +806,22 @@ fn build_candidates(
       b.mapping_confidence.compare(a.mapping_confidence)
     }
   })
-  let limited = if candidates.length() <= config.max_candidates {
-    candidates
-  } else {
-    let limited : Array[ReconcileCandidate] = []
-    for i = 0; i < config.max_candidates; i = i + 1 {
-      limited.push(candidates[i])
-    }
-    limited
+  { candidates, module_covered_symbols }
+}
+
+///|
+fn limit_candidates(
+  candidates : Array[ReconcileCandidate],
+  max_candidates : Int,
+) -> Array[ReconcileCandidate] {
+  if candidates.length() <= max_candidates {
+    return candidates
   }
-  { candidates: limited, module_covered_symbols }
+  let limited : Array[ReconcileCandidate] = []
+  for i = 0; i < max_candidates; i = i + 1 {
+    limited.push(candidates[i])
+  }
+  limited
 }
 
 ///|
@@ -692,14 +829,24 @@ fn build_summary(
   units : Array[CodeUnit],
   fragments : Array[DocFragment],
   candidates : Array[ReconcileCandidate],
+  aggregate_suggestions : Array[ReconcileAggregateSuggestion],
   module_covered_symbols : Int,
   logical_reviews : Array[LogicalReviewTask],
   reused_logical_reviews : Int,
 ) -> ReconcileSummary {
   let mut symbols_with_inline_doc = 0
+  let mut module_suggestions = 0
+  let mut project_suggestions = 0
   for unit in units {
     if unit.inline_doc is Some(_) {
       symbols_with_inline_doc += 1
+    }
+  }
+  for group in aggregate_suggestions {
+    if group.scope == "module" {
+      module_suggestions += 1
+    } else if group.scope == "project" {
+      project_suggestions += 1
     }
   }
   let mut missing_doc = 0
@@ -735,6 +882,9 @@ fn build_summary(
     module_covered_symbols,
     total_doc_fragments: fragments.length(),
     total_candidates: candidates.length(),
+    total_aggregate_suggestions: aggregate_suggestions.length(),
+    module_suggestions,
+    project_suggestions,
     missing_doc,
     stale_doc,
     review_mapping,
@@ -744,4 +894,287 @@ fn build_summary(
     reused_logical_reviews,
     completed_logical_reviews,
   }
+}
+
+///|
+fn push_unique(values : Array[String], value : String) -> Unit {
+  if value.length() == 0 || contains_string(values, value) {
+    return
+  }
+  values.push(value)
+}
+
+///|
+fn aggregate_bucket(
+  scope : String,
+  path : String,
+  status : String,
+  recommended_action : String,
+) -> AggregateBucket {
+  {
+    scope,
+    path,
+    status,
+    recommended_action,
+    candidate_count: 0,
+    logical_review_count: 0,
+    symbol_ids: [],
+    symbol_names: [],
+    doc_paths: [],
+    module_paths: [],
+  }
+}
+
+///|
+fn aggregate_key(scope : String, path : String, status : String) -> String {
+  scope + "\u0000" + path + "\u0000" + status
+}
+
+///|
+fn project_group_path(
+  root_dir : String,
+  module_path : String,
+  project_markers : Array[String],
+) -> String? {
+  match
+    @config_paths.find_nearest_marker_dir(
+      root_dir, module_path, project_markers,
+    ) {
+    Some(dir) => Some(@config_paths.relative_to(root_dir, dir))
+    None => None
+  }
+}
+
+///|
+fn add_candidate_to_bucket(
+  buckets : Map[String, AggregateBucket],
+  key : String,
+  scope : String,
+  path : String,
+  candidate : ReconcileCandidate,
+  logical_review_count_delta : Int,
+) -> Unit {
+  let current = match buckets.get(key) {
+    Some(existing) => existing
+    None =>
+      aggregate_bucket(
+        scope,
+        path,
+        candidate.status,
+        candidate.recommended_action,
+      )
+  }
+  let updated = {
+    ..current,
+    candidate_count: current.candidate_count + 1,
+    logical_review_count: current.logical_review_count +
+    logical_review_count_delta,
+  }
+  push_unique(updated.symbol_ids, candidate.symbol_id)
+  push_unique(updated.symbol_names, candidate.code_anchor.name)
+  push_unique(updated.module_paths, candidate.code_anchor.module_path)
+  match candidate.doc_anchor {
+    Some(anchor) => push_unique(updated.doc_paths, anchor.path)
+    None => ()
+  }
+  buckets.set(key, updated)
+}
+
+///|
+fn sort_aggregate_suggestions(
+  suggestions : Array[ReconcileAggregateSuggestion],
+) -> Array[ReconcileAggregateSuggestion] {
+  let sorted = suggestions.copy()
+  sorted.sort_by(fn(a, b) {
+    let count_cmp = b.candidate_count.compare(a.candidate_count)
+    if count_cmp != 0 {
+      count_cmp
+    } else {
+      let status_cmp = status_priority(a.status).compare(
+        status_priority(b.status),
+      )
+      if status_cmp != 0 {
+        status_cmp
+      } else {
+        a.path.compare(b.path)
+      }
+    }
+  })
+  sorted
+}
+
+///|
+fn project_doc_paths(
+  fragments : Array[DocFragment],
+  root_dir : String,
+  project_markers : Array[String],
+) -> Map[String, Array[String]] {
+  let index : Map[String, Array[String]] = {}
+  for fragment in fragments {
+    match project_group_path(root_dir, fragment.path, project_markers) {
+      Some(project_path) => {
+        let paths = match index.get(project_path) {
+          Some(existing) => existing
+          None => []
+        }
+        push_unique(paths, @config_paths.relative_to(root_dir, fragment.path))
+        index.set(project_path, paths)
+      }
+      None => ()
+    }
+  }
+  index
+}
+
+///|
+fn build_aggregate_suggestions(
+  raw_candidates : Array[ReconcileCandidate],
+  visible_candidates : Array[ReconcileCandidate],
+  fragments : Array[DocFragment],
+  root_dir : String,
+  project_markers : Array[String],
+) -> Array[ReconcileAggregateSuggestion] {
+  let visible_index : Map[String, ReconcileCandidate] = {}
+  for candidate in visible_candidates {
+    visible_index.set(candidate.id, candidate)
+  }
+  let project_docs = project_doc_paths(fragments, root_dir, project_markers)
+  let module_buckets : Map[String, AggregateBucket] = {}
+  let project_buckets : Map[String, AggregateBucket] = {}
+  for candidate in raw_candidates {
+    let logical_review_count_delta = match visible_index.get(candidate.id) {
+      Some(visible) => if visible.needs_logical_review { 1 } else { 0 }
+      None => 0
+    }
+    let module_path = @config_paths.relative_to(
+      root_dir,
+      candidate.code_anchor.module_path,
+    )
+    add_candidate_to_bucket(
+      module_buckets,
+      aggregate_key("module", module_path, candidate.status),
+      "module",
+      module_path,
+      candidate,
+      logical_review_count_delta,
+    )
+    match
+      project_group_path(
+        root_dir,
+        candidate.code_anchor.module_path,
+        project_markers,
+      ) {
+      Some(project_path) => {
+        add_candidate_to_bucket(
+          project_buckets,
+          aggregate_key("project", project_path, candidate.status),
+          "project",
+          project_path,
+          candidate,
+          logical_review_count_delta,
+        )
+        match project_docs.get(project_path) {
+          Some(paths) => {
+            let project_key = aggregate_key(
+              "project",
+              project_path,
+              candidate.status,
+            )
+            let bucket = project_buckets.get(project_key).unwrap()
+            for path in paths {
+              push_unique(bucket.doc_paths, path)
+            }
+            project_buckets.set(project_key, bucket)
+          }
+          None => ()
+        }
+      }
+      None => ()
+    }
+  }
+  let suggestions : Array[ReconcileAggregateSuggestion] = []
+  for entry in module_buckets {
+    let bucket = entry.1
+    if bucket.candidate_count < 2 {
+      continue
+    }
+    suggestions.push({
+      id: "agg:" + make_hash([bucket.scope, bucket.path, bucket.status]),
+      scope: bucket.scope,
+      path: bucket.path,
+      status: bucket.status,
+      recommended_action: bucket.recommended_action,
+      candidate_count: bucket.candidate_count,
+      logical_review_count: bucket.logical_review_count,
+      symbol_ids: sort_strings(bucket.symbol_ids),
+      symbol_names: sort_strings(bucket.symbol_names),
+      doc_paths: sort_strings(bucket.doc_paths),
+    })
+  }
+  for entry in project_buckets {
+    let bucket = entry.1
+    if bucket.candidate_count < 3 || bucket.module_paths.length() < 2 {
+      continue
+    }
+    suggestions.push({
+      id: "agg:" + make_hash([bucket.scope, bucket.path, bucket.status]),
+      scope: bucket.scope,
+      path: bucket.path,
+      status: bucket.status,
+      recommended_action: bucket.recommended_action,
+      candidate_count: bucket.candidate_count,
+      logical_review_count: bucket.logical_review_count,
+      symbol_ids: sort_strings(bucket.symbol_ids),
+      symbol_names: sort_strings(bucket.symbol_names),
+      doc_paths: sort_strings(bucket.doc_paths),
+    })
+  }
+  sort_aggregate_suggestions(suggestions)
+}
+
+///|
+fn collapse_aggregate_only_candidates(
+  candidates : Array[ReconcileCandidate],
+  aggregate_suggestions : Array[ReconcileAggregateSuggestion],
+  root_dir : String,
+  project_markers : Array[String],
+) -> Array[ReconcileCandidate] {
+  let suppressed_modules : Map[String, Bool] = {}
+  let suppressed_projects : Map[String, Bool] = {}
+  for group in aggregate_suggestions {
+    if group.status != "missing_doc" || group.doc_paths.length() == 0 {
+      continue
+    }
+    if group.scope == "module" {
+      suppressed_modules.set(group.path, true)
+    } else if group.scope == "project" {
+      suppressed_projects.set(group.path, true)
+    }
+  }
+  let collapsed : Array[ReconcileCandidate] = []
+  for candidate in candidates {
+    if candidate.status != "missing_doc" || candidate.doc_anchor is Some(_) {
+      collapsed.push(candidate)
+      continue
+    }
+    let module_path = @config_paths.relative_to(
+      root_dir,
+      candidate.code_anchor.module_path,
+    )
+    let module_suppressed = suppressed_modules.contains(module_path)
+    let project_suppressed = match
+      project_group_path(
+        root_dir,
+        candidate.code_anchor.module_path,
+        project_markers,
+      ) {
+      Some(project_path) => suppressed_projects.contains(project_path)
+      None => false
+    }
+    if module_suppressed || project_suppressed {
+      continue
+    }
+    collapsed.push(candidate)
+  }
+  collapsed
 }

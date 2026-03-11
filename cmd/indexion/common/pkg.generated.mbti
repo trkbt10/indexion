@@ -1,0 +1,32 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/common"
+
+// Values
+pub fn extract_dirname(String) -> String
+
+pub fn extract_unique_dir_names(Array[String]) -> Array[String]
+
+pub fn get_arg_value(String, Int) -> String
+
+pub fn get_dirname_prefix(String) -> String
+
+pub fn get_relative_part(String) -> String
+
+pub fn make_relative_path(String, String) -> String
+
+pub fn parse_comma_list(String) -> Array[String]
+
+pub fn parse_double(String) -> Double
+
+pub fn parse_int(String) -> Int
+
+pub fn split_by_slash(String) -> Array[String]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

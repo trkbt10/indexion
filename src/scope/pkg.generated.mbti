@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/scope"
+
+// Values
+pub fn path_matches_pattern(String, String) -> Bool
+
+pub fn subject_matches_pattern(PathSubject, String) -> Bool
+
+// Errors
+
+// Types and methods
+pub struct PathScope {
+  includes : Array[String]
+  excludes : Array[String]
+}
+pub fn PathScope::is_empty(Self) -> Bool
+pub fn PathScope::matches(Self, PathSubject) -> Bool
+pub fn PathScope::matches_path(Self, String) -> Bool
+pub fn PathScope::new(includes? : Array[String], excludes? : Array[String]) -> Self
+pub impl Eq for PathScope
+pub impl Show for PathScope
+
+pub struct PathSubject {
+  candidate_paths : Array[String]
+}
+pub fn PathSubject::new(String, additional_paths? : Array[String]) -> Self
+pub impl Eq for PathSubject
+pub impl Show for PathSubject
+
+// Type aliases
+
+// Traits
+

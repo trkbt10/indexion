@@ -1,4 +1,38 @@
 ///|
+/// Check if path matches an ignore pattern, handling directory-only semantics.
+pub fn pattern_matches(
+  pattern : IgnorePattern,
+  path : String,
+  is_dir : Bool,
+) -> Bool {
+  let p = pattern.pattern
+  if pattern.directory_only {
+    if is_dir {
+      if pattern.anchored {
+        return @glob.glob_match(path, p)
+      }
+      let basename = path_basename(path)
+      if @glob.glob_match(basename, p) {
+        return true
+      }
+      return @glob.glob_match_anywhere(path, p)
+    }
+    if pattern.anchored {
+      return @glob.glob_match(path, p + "/**")
+    }
+    return path_starts_with_pattern(path, p)
+  }
+  if pattern.anchored {
+    return @glob.glob_match(path, p)
+  }
+  let basename = path_basename(path)
+  if @glob.glob_match(basename, p) {
+    return true
+  }
+  @glob.glob_match_anywhere(path, p)
+}
+
+///|
 /// Check if a path should be included based on filter configuration.
 /// Priority (highest to lowest):
 /// 1. User --exclude (forces exclusion, highest priority)
@@ -13,10 +47,10 @@ pub fn FilterConfig::should_include(
   is_dir : Bool,
 ) -> FilterResult {
   let config = self
-  let basename = get_basename(path)
+  let basename = path_basename(path)
   // 1. Check user excludes first (highest priority - forces exclusion)
   for pattern in config.user_excludes {
-    if glob_match(path, pattern) || glob_match(basename, pattern) {
+    if @glob.glob_match(path, pattern) || @glob.glob_match(basename, pattern) {
       return Exclude("user --exclude: " + pattern)
     }
   }
@@ -45,7 +79,8 @@ pub fn FilterConfig::should_include(
           break
         }
         // For files, check pattern match
-      } else if glob_match(path, pattern) || glob_match(basename, pattern) {
+      } else if @glob.glob_match(path, pattern) ||
+        @glob.glob_match(basename, pattern) {
         matched = true
         break
       }
@@ -132,13 +167,13 @@ pub fn FilterConfig::should_skip_dir(
   let config = self
   // Check user includes first (if matched, don't skip)
   for pattern in config.user_includes {
-    if glob_match(dir_name, pattern) {
+    if @glob.glob_match(dir_name, pattern) {
       return false
     }
   }
   // Check user excludes
   for pattern in config.user_excludes {
-    if glob_match(dir_name, pattern) {
+    if @glob.glob_match(dir_name, pattern) {
       return true
     }
   }
@@ -224,6 +259,37 @@ fn dir_could_contain_pattern_match(dir : String, pattern : String) -> Bool {
   if pattern.has_prefix("**/") || pattern.has_prefix("**\\") {
     // Pattern like "**/test.mbt" matches anywhere
     return true
+  }
+  false
+}
+
+///|
+fn path_basename(path : String) -> String {
+  let chars = path.to_array()
+  let mut last_slash = -1
+  for i = 0; i < chars.length(); i = i + 1 {
+    if chars[i] == '/' {
+      last_slash = i
+    }
+  }
+  if last_slash < 0 {
+    path
+  } else {
+    @parser.substr_from(path, last_slash + 1)
+  }
+}
+
+///|
+fn path_starts_with_pattern(path : String, pattern : String) -> Bool {
+  let path_chars = path.to_array()
+  for i = 0; i <= path_chars.length(); i = i + 1 {
+    if i == 0 || (i > 0 && path_chars[i - 1] == '/') {
+      let suffix = @parser.substr_from(path, i)
+      if @glob.glob_match(suffix, pattern + "/**") ||
+        @glob.glob_match(suffix, pattern + "/*") {
+        return true
+      }
+    }
   }
   false
 }

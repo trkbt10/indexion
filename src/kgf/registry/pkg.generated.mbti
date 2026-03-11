@@ -15,12 +15,14 @@ pub struct KGFRegistry {
   ext_to_lang : Map[String, String]
   lang_to_doc_spec : Map[String, String]
 }
+pub fn KGFRegistry::collect_ignore_patterns(Self) -> Array[(String, String)]
 pub fn KGFRegistry::detect_from_path(Self, String) -> String?
 pub fn KGFRegistry::get_doc_spec_name(Self, String) -> String
 pub fn KGFRegistry::get_extensions(Self) -> Array[String]
 pub fn KGFRegistry::get_external_prefixes(Self) -> Array[String]
 pub fn KGFRegistry::get_lang_from_ext(Self, String) -> String?
 pub fn KGFRegistry::get_languages(Self) -> Array[String]
+pub fn KGFRegistry::get_project_markers(Self) -> Array[String]
 pub fn KGFRegistry::get_spec(Self, String) -> @types.KGFSpec?
 pub fn KGFRegistry::is_file_supported(Self, String) -> Bool
 pub fn KGFRegistry::load_from_dir(String) -> Self

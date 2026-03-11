@@ -4,12 +4,11 @@ pub struct ReconcileConfig {
   target_dir : String
   output : String
   format : String
+  documents : @config_paths.ReconcileDocumentScope
   specs_dir : String
   index_dir : String
   config_path : String
   review_results_path : String
-  doc_paths : Array[String]
-  doc_specs : Array[String]
   threshold_seconds : Int
   max_candidates : Int
   allow_file_fallback : Bool
@@ -25,12 +24,11 @@ pub fn ReconcileConfig::default() -> ReconcileConfig {
     target_dir: "",
     output: "",
     format: "json",
+    documents: @config_paths.resolve_reconcile_document_scope("custom"),
     specs_dir: "",
-    index_dir: ".indexion/reconcile",
+    index_dir: "",
     config_path: "",
     review_results_path: "",
-    doc_paths: [],
-    doc_specs: [],
     threshold_seconds: 60,
     max_candidates: 200,
     allow_file_fallback: true,
@@ -155,6 +153,9 @@ pub struct ReconcileSummary {
   module_covered_symbols : Int
   total_doc_fragments : Int
   total_candidates : Int
+  total_aggregate_suggestions : Int
+  module_suggestions : Int
+  project_suggestions : Int
   missing_doc : Int
   stale_doc : Int
   review_mapping : Int
@@ -180,6 +181,7 @@ pub struct ReconcileReportConfig {
   specs_dir : String
   index_dir : String
   review_results_path : String
+  doc_scope : String
   doc_paths : Array[String]
   doc_specs : Array[String]
   threshold_seconds : Int
@@ -191,11 +193,26 @@ pub struct ReconcileReportConfig {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+pub struct ReconcileAggregateSuggestion {
+  id : String
+  scope : String
+  path : String
+  status : String
+  recommended_action : String
+  candidate_count : Int
+  logical_review_count : Int
+  symbol_ids : Array[String]
+  symbol_names : Array[String]
+  doc_paths : Array[String]
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+///|
 pub struct ReconcileReport {
   version : String
   generated_at : Int
   config : ReconcileReportConfig
   summary : ReconcileSummary
+  aggregate_suggestions : Array[ReconcileAggregateSuggestion]
   candidates : Array[ReconcileCandidate]
   logical_reviews : Array[LogicalReviewTask]
   skipped : Array[String]

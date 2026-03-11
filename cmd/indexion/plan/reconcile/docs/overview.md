@@ -10,6 +10,8 @@ Matching is symbol-first, then module-scoped. If a README or design section clea
 
 Code discovery respects KGF ignore patterns, so language-specific test files and generated artifacts can be excluded by the active spec set instead of by command-local suffix rules.
 
+Cross-package behavior is regression-tested with the TypeScript fixture at `fixtures/project/typescript-reconcile`, so package-doc scans are validated against non-MoonBit inputs as well.
+
 The command does not rewrite code or docs. Its job is to produce a mechanically derived report with timestamp evidence, mapping confidence, and a logical review queue for follow-up.
 
 At a high level, the flow is:

@@ -1,0 +1,66 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/filter"
+
+// Values
+pub const GITIGNORE_FILENAME : String = ".gitignore"
+
+pub const INDEXIONIGNORE_FILENAME : String = ".indexionignore"
+
+pub fn default_exclude_patterns() -> Array[IgnorePattern]
+
+pub fn filter_paths(FilterConfig, Array[String], (String) -> Bool) -> Array[String]
+
+pub fn load_gitignore(String) -> Array[IgnorePattern]
+
+pub fn load_indexionignore(String) -> Array[IgnorePattern]
+
+pub fn load_project_ignores(String) -> FilterConfig
+
+pub fn parse_ignore_file(String, String) -> Array[IgnorePattern]
+
+pub fn pattern_matches(IgnorePattern, String, Bool) -> Bool
+
+// Errors
+
+// Types and methods
+pub struct FilterConfig {
+  default_excludes : Array[IgnorePattern]
+  kgf_ignore_patterns : Array[IgnorePattern]
+  gitignore_patterns : Array[IgnorePattern]
+  indexionignore_patterns : Array[IgnorePattern]
+  user_includes : Array[String]
+  user_excludes : Array[String]
+  respect_gitignore : Bool
+}
+pub fn FilterConfig::from_project_root(String) -> Self
+pub fn FilterConfig::new() -> Self
+pub fn FilterConfig::should_include(Self, String, Bool) -> FilterResult
+pub fn FilterConfig::should_skip_dir(Self, String) -> Bool
+pub fn FilterConfig::with_excludes(Self, Array[String]) -> Self
+pub fn FilterConfig::with_gitignore_from_dir(Self, String) -> Self
+pub fn FilterConfig::with_includes(Self, Array[String]) -> Self
+pub fn FilterConfig::with_indexionignore_from_dir(Self, String) -> Self
+pub fn FilterConfig::with_kgf_ignore(Self, Array[String], String) -> Self
+pub fn FilterConfig::with_user_patterns(Array[String], Array[String]) -> Self
+
+pub enum FilterResult {
+  Include
+  Exclude(String)
+}
+pub fn FilterResult::is_included(Self) -> Bool
+pub impl Eq for FilterResult
+pub impl Show for FilterResult
+
+pub struct IgnorePattern {
+  pattern : String
+  negated : Bool
+  directory_only : Bool
+  anchored : Bool
+  source : String
+}
+pub fn IgnorePattern::new(String, negated? : Bool, directory_only? : Bool, anchored? : Bool, source? : String) -> Self
+
+// Type aliases
+
+// Traits
+

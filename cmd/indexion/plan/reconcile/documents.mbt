@@ -1,22 +1,27 @@
 ///|
+fn document_path_scope(config : ReconcileConfig) -> @scope.PathScope {
+  if not(config.documents.path_scope.is_empty()) ||
+    config.documents.doc_paths.is_empty() {
+    config.documents.path_scope
+  } else {
+    @config_paths.resolve_reconcile_document_scope(
+      config.documents.scope_name,
+      doc_paths=config.documents.doc_paths,
+      doc_specs=config.documents.doc_specs,
+    ).path_scope
+  }
+}
+
+///|
 fn is_document_path(
   path : String,
   config : ReconcileConfig,
   registry : @registry.KGFRegistry,
 ) -> Bool {
   let rel = @config_paths.relative_to(config.target_dir, path)
-  if config.doc_paths.length() > 0 {
-    let mut matched = false
-    for pattern in config.doc_paths {
-      if @pipeline.matches_pattern(rel, pattern) ||
-        @pipeline.matches_pattern(path, pattern) {
-        matched = true
-        break
-      }
-    }
-    if not(matched) {
-      return false
-    }
+  let subject = @scope.PathSubject::new(rel, additional_paths=[path])
+  if not(document_path_scope(config).matches(subject)) {
+    return false
   }
   select_document_spec(path, config, registry) is Some(_)
 }
@@ -75,8 +80,8 @@ fn select_document_spec(
   }
   match selected {
     Some(spec) =>
-      if config.doc_specs.length() == 0 ||
-        contains_string(config.doc_specs, spec) {
+      if config.documents.doc_specs.length() == 0 ||
+        contains_string(config.documents.doc_specs, spec) {
         Some(spec)
       } else {
         None

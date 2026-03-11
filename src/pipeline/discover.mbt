@@ -58,8 +58,8 @@ pub fn discover_files(
   let file_paths : Array[String] = []
   for path in paths {
     // Expand glob patterns
-    if @filter.has_glob_pattern(path) {
-      let expanded = @filter.expand_glob(path)
+    if @glob.has_glob_pattern(path) {
+      let expanded = @glob.expand_glob(path)
       for expanded_path in expanded {
         collect_files_impl(expanded_path, options, filter, file_paths)
       }
@@ -183,56 +183,7 @@ pub fn extract_extension(path : String) -> String {
 }
 
 ///|
-/// Simple glob pattern matching.
+/// Shared glob pattern matching.
 pub fn matches_pattern(text : String, pattern : String) -> Bool {
-  let text_chars = text.to_array()
-  let pat_chars = pattern.to_array()
-  matches_impl(text_chars, 0, pat_chars, 0)
-}
-
-///|
-fn matches_impl(
-  text : Array[Char],
-  ti : Int,
-  pat : Array[Char],
-  pi : Int,
-) -> Bool {
-  if ti >= text.length() && pi >= pat.length() {
-    return true
-  }
-  if pi >= pat.length() {
-    return false
-  }
-  if pi + 2 < pat.length() &&
-    pat[pi] == '*' &&
-    pat[pi + 1] == '*' &&
-    pat[pi + 2] == '/' {
-    if matches_impl(text, ti, pat, pi + 3) {
-      return true
-    }
-    let mut idx = ti
-    while idx < text.length() {
-      if text[idx] == '/' && matches_impl(text, idx + 1, pat, pi + 3) {
-        return true
-      }
-      idx += 1
-    }
-    return false
-  }
-  if pat[pi] == '*' {
-    if matches_impl(text, ti, pat, pi + 1) {
-      return true
-    }
-    if ti < text.length() {
-      return matches_impl(text, ti + 1, pat, pi)
-    }
-    return false
-  }
-  if ti >= text.length() {
-    return false
-  }
-  if pat[pi] == text[ti] {
-    return matches_impl(text, ti + 1, pat, pi + 1)
-  }
-  false
+  @glob.glob_match(text, pattern)
 }

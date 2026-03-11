@@ -2,6 +2,7 @@ import {
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/cmd/indexion/common" @common,
   "trkbt10/indexion/src/pipeline" @pipeline,
+  "trkbt10/indexion/src/scope" @scope,
   "trkbt10/indexion/src/text/tfidf" @tfidf,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,

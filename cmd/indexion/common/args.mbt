@@ -87,6 +87,62 @@ pub fn parse_int(s : String) -> Int {
   }
 }
 
+///|
+/// Parse a comma-separated list, trimming surrounding spaces per entry.
+pub fn parse_comma_list(s : String) -> Array[String] {
+  let result : Array[String] = []
+  let current : Array[Char] = []
+  for c in s {
+    if c == ',' {
+      let part = trim_ascii_spaces(String::from_array(current))
+      if part.length() > 0 {
+        result.push(part)
+      }
+      current.clear()
+    } else {
+      current.push(c)
+    }
+  }
+  let last = trim_ascii_spaces(String::from_array(current))
+  if last.length() > 0 {
+    result.push(last)
+  }
+  result
+}
+
+///|
+fn trim_ascii_spaces(s : String) -> String {
+  let chars = s.to_array()
+  let mut start = 0
+  let mut end = chars.length()
+  while start < end &&
+        (
+          chars[start] == ' ' ||
+          chars[start] == '\t' ||
+          chars[start] == '\n' ||
+          chars[start] == '\r'
+        ) {
+    start = start + 1
+  }
+  while end > start &&
+        (
+          chars[end - 1] == ' ' ||
+          chars[end - 1] == '\t' ||
+          chars[end - 1] == '\n' ||
+          chars[end - 1] == '\r'
+        ) {
+    end = end - 1
+  }
+  if start == 0 && end == chars.length() {
+    return s
+  }
+  let result : Array[Char] = []
+  for i = start; i < end; i = i + 1 {
+    result.push(chars[i])
+  }
+  String::from_array(result)
+}
+
 // === Path utilities (SoT for CLI commands) ===
 
 ///|

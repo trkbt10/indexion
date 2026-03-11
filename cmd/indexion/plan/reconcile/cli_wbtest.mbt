@@ -1,38 +1,4 @@
 ///|
-test "reconcile: parse_toml_config supports nested sections" {
-  let input =
-    #|[reconcile]
-    #|doc_paths = ["docs/**/*.md", "spec/**/*.toml"]
-    #|review_results_path = ".indexion/reconcile/reviews.json"
-    #|threshold_seconds = 120
-    #|
-    #|[reconcile.mapping]
-    #|allow_file_fallback = false
-    #|
-    #|[reconcile.output]
-    #|default_format = "md"
-    #|
-    #|[reconcile.time]
-    #|git_preferred = true
-    #|mtime_fallback = false
-    #|
-    #|[reconcile.logical_review]
-    #|mode = "off"
-  let config = @config_paths.parse_reconcile_toml_config(input)
-  assert_true(config.doc_paths is Some(_))
-  assert_eq(config.doc_paths.unwrap()[0], "docs/**/*.md")
-  assert_eq(
-    config.review_results_path,
-    Some(".indexion/reconcile/reviews.json"),
-  )
-  assert_eq(config.threshold_seconds, Some(120))
-  assert_eq(config.allow_file_fallback, Some(false))
-  assert_eq(config.format, Some("md"))
-  assert_eq(config.mtime_fallback, Some(false))
-  assert_eq(config.logical_review_mode, Some("off"))
-}
-
-///|
 fn temp_reconcile_dir(prefix : String) -> String {
   prefix + @env.now().to_string()
 }
@@ -68,6 +34,93 @@ test "reconcile: resolve_config keeps default index dir under target root" {
   assert_eq(config.target_dir, dir)
   assert_eq(config.index_dir, dir + "/.indexion/reconcile")
   remove_dir_if_exists(dir)
+}
+
+///|
+test "reconcile: resolve_config applies package-docs preset" {
+  let dir = temp_reconcile_dir(".indexion/reconcile-config-scope-package-")
+  @config_paths.ensure_dir_recursive(dir)
+  let config = resolve_config(["--scope=package-docs", dir], 0)
+  assert_eq(config.documents.scope_name, "package-docs")
+  assert_eq(config.documents.doc_paths, ["README.md", "docs/**/*.md"])
+  assert_eq(config.documents.doc_specs, ["markdown"])
+  assert_true(config.documents.path_scope.matches_path("README.md"))
+  remove_dir_if_exists(dir)
+}
+
+///|
+test "reconcile: explicit doc filters override scope preset defaults" {
+  let dir = temp_reconcile_dir(".indexion/reconcile-config-scope-explicit-")
+  @config_paths.ensure_dir_recursive(dir)
+  let config = resolve_config(
+    ["--scope=tree-docs", "--doc=notes/**/*.txt", "--doc-spec=plaintext", dir],
+    0,
+  )
+  assert_eq(config.documents.scope_name, "tree-docs")
+  assert_eq(config.documents.doc_paths, ["notes/**/*.txt"])
+  assert_eq(config.documents.doc_specs, ["plaintext"])
+  remove_dir_if_exists(dir)
+}
+
+///|
+test "reconcile: explicit cli filters win over file config filters" {
+  let dir = temp_reconcile_dir(".indexion/reconcile-config-precedence-")
+  @config_paths.ensure_dir_recursive(dir)
+  let config_path = dir + "/.indexion.toml"
+  let config_content =
+    #|[reconcile]
+    #|doc_scope = "package-docs"
+    #|doc_paths = ["docs/**/*.md"]
+    #|doc_specs = ["markdown"]
+    #|threshold_seconds = 120
+  @fs.write_string_to_file(config_path, config_content) catch {
+    _ => ()
+  }
+  let config = resolve_config(
+    [
+      "--scope=tree-docs", "--doc=notes/**/*.txt", "--doc-spec=plaintext", "--threshold-seconds=30",
+      dir,
+    ],
+    0,
+  )
+  assert_eq(config.documents.scope_name, "tree-docs")
+  assert_eq(config.documents.doc_paths, ["notes/**/*.txt"])
+  assert_eq(config.documents.doc_specs, ["plaintext"])
+  assert_eq(config.threshold_seconds, 30)
+  remove_file_if_exists(config_path)
+  remove_dir_if_exists(dir)
+}
+
+///|
+test "reconcile: explicit cli filters clear implicit file scope label" {
+  let dir = temp_reconcile_dir(".indexion/reconcile-config-scope-clear-")
+  @config_paths.ensure_dir_recursive(dir)
+  let config_path = dir + "/.indexion.toml"
+  let config_content =
+    #|[reconcile]
+    #|doc_scope = "package-docs"
+  @fs.write_string_to_file(config_path, config_content) catch {
+    _ => ()
+  }
+  let config = resolve_config(["--doc=notes/**/*.txt", dir], 0)
+  assert_eq(config.documents.scope_name, "custom")
+  assert_eq(config.documents.doc_paths, ["notes/**/*.txt"])
+  remove_file_if_exists(config_path)
+  remove_dir_if_exists(dir)
+}
+
+///|
+test "reconcile: document path selection uses shared scope matcher" {
+  let config = {
+    ..ReconcileConfig::default(),
+    target_dir: "pkg",
+    documents: @config_paths.resolve_reconcile_document_scope("custom", doc_paths=[
+      "docs/**/README.[mdt][xd]",
+    ]),
+  }
+  let registry = load_test_registry()
+  assert_true(is_document_path("pkg/docs/api/README.md", config, registry))
+  assert_false(is_document_path("pkg/notes/README.txt", config, registry))
 }
 
 ///|
@@ -244,6 +297,73 @@ test "reconcile: build_candidates suppresses missing_doc when module docs cover 
 }
 
 ///|
+test "reconcile: module coverage does not bleed across sibling cli modules" {
+  let dir = temp_reconcile_dir(".indexion/reconcile-module-siblings-")
+  @config_paths.ensure_dir_recursive(dir + "/reconcile")
+  @config_paths.ensure_dir_recursive(dir + "/solid")
+  let reconcile_path = dir + "/reconcile/cli.mbt"
+  let solid_path = dir + "/solid/cli.mbt"
+  let source =
+    #|fn render_output() -> Unit { ignore(()) }
+    #|let output = ""
+    #|let format = ""
+    #|let json = ""
+    #|let markdown = ""
+  @fs.write_string_to_file(reconcile_path, source) catch {
+    _ => ()
+  }
+  @fs.write_string_to_file(solid_path, source) catch {
+    _ => ()
+  }
+  let config = {
+    ..ReconcileConfig::default(),
+    target_dir: dir,
+    threshold_seconds: 10,
+  }
+  let units : Array[CodeUnit] = [
+    {
+      symbol_id: "sym:reconcile",
+      name: "render_output",
+      kind: "function",
+      ns: "pkg.reconcile",
+      module_id: "pkg.reconcile.cli",
+      module_path: reconcile_path,
+      inline_doc: None,
+      code_hash: "code-reconcile",
+    },
+    {
+      symbol_id: "sym:solid",
+      name: "render_output",
+      kind: "function",
+      ns: "pkg.solid",
+      module_id: "pkg.solid.cli",
+      module_path: solid_path,
+      inline_doc: None,
+      code_hash: "code-solid",
+    },
+  ]
+  let fragments : Array[DocFragment] = [
+    make_fragment(
+      dir + "/reconcile/README.md",
+      "markdown",
+      "paragraph",
+      "Output",
+      "The reconcile command renders markdown or json output.",
+    ),
+  ]
+  let result = build_candidates(units, fragments, config, load_test_registry())
+  assert_eq(result.module_covered_symbols, 1)
+  assert_eq(result.candidates.length(), 1)
+  assert_eq(result.candidates[0].symbol_id, "sym:solid")
+  assert_eq(result.candidates[0].status, "missing_doc")
+  remove_file_if_exists(reconcile_path)
+  remove_file_if_exists(solid_path)
+  remove_dir_if_exists(dir + "/reconcile")
+  remove_dir_if_exists(dir + "/solid")
+  remove_dir_if_exists(dir)
+}
+
+///|
 test "reconcile: match_fragment requires exact token for plain symbol names" {
   let generic_unit : CodeUnit = {
     symbol_id: "sym:run",
@@ -313,6 +433,20 @@ test "reconcile: match_fragment requires exact token for plain symbol names" {
   )
   assert_eq(matched.0, 85)
   assert_eq(matched.1, "symbol_name")
+}
+
+///|
+test "reconcile: strong doc_newer match is treated as in_sync" {
+  let result = classify_match_result("doc_newer", 92, "inline_symbol")
+  assert_eq(result.0, "in_sync")
+  assert_eq(result.1, "")
+}
+
+///|
+test "reconcile: weak doc_newer match still requires review" {
+  let result = classify_match_result("doc_newer", 45, "file_name")
+  assert_eq(result.0, "review_both")
+  assert_eq(result.1, "review_both")
 }
 
 ///|
@@ -461,6 +595,187 @@ fn sample_candidate() -> ReconcileCandidate {
 }
 
 ///|
+fn sample_candidate_for(
+  symbol_id : String,
+  name : String,
+  module_path : String,
+  doc_path? : String = "",
+) -> ReconcileCandidate {
+  {
+    ..sample_candidate(),
+    id: "cand:" + name,
+    symbol_id,
+    code_anchor: { ..sample_code_anchor(), symbol_id, name, module_path },
+    doc_anchor: if doc_path.length() > 0 {
+      Some({ ..sample_doc_anchor(), path: doc_path })
+    } else {
+      None
+    },
+  }
+}
+
+///|
+fn sample_fragment_for(
+  path : String,
+  preview? : String = "project docs",
+) -> DocFragment {
+  {
+    id: "frag:" + @cas_hash.compute_hash(path).to_string(),
+    path,
+    spec: "markdown",
+    kind: "paragraph",
+    title: "Docs",
+    content: preview,
+    preview,
+    fragment_hash: @cas_hash.compute_hash(path + ":" + preview).to_string(),
+  }
+}
+
+///|
+test "reconcile: build_aggregate_suggestions groups module and project candidates" {
+  let dir = temp_reconcile_dir(".indexion/reconcile-aggregate-")
+  let package_dir = dir + "/pkg"
+  @config_paths.ensure_dir_recursive(package_dir)
+  @fs.write_string_to_file(package_dir + "/package.json", "{}") catch {
+    _ => ()
+  }
+  let module_a = package_dir + "/a.mbt"
+  let module_b = package_dir + "/b.mbt"
+  @fs.write_string_to_file(module_a, "fn a() -> Unit { ignore(()) }") catch {
+    _ => ()
+  }
+  @fs.write_string_to_file(module_b, "fn b() -> Unit { ignore(()) }") catch {
+    _ => ()
+  }
+  let groups = build_aggregate_suggestions(
+    [
+      sample_candidate_for(
+        "sym:a1",
+        "build_graph",
+        module_a,
+        doc_path=package_dir + "/README.md",
+      ),
+      sample_candidate_for(
+        "sym:a2",
+        "render_graph",
+        module_a,
+        doc_path=package_dir + "/README.md",
+      ),
+      sample_candidate_for(
+        "sym:b1",
+        "write_report",
+        module_b,
+        doc_path=package_dir + "/docs/api.md",
+      ),
+    ],
+    [
+      sample_candidate_for(
+        "sym:a1",
+        "build_graph",
+        module_a,
+        doc_path=package_dir + "/README.md",
+      ),
+      sample_candidate_for(
+        "sym:a2",
+        "render_graph",
+        module_a,
+        doc_path=package_dir + "/README.md",
+      ),
+      sample_candidate_for(
+        "sym:b1",
+        "write_report",
+        module_b,
+        doc_path=package_dir + "/docs/api.md",
+      ),
+    ],
+    [
+      sample_fragment_for(package_dir + "/README.md"),
+      sample_fragment_for(package_dir + "/docs/api.md"),
+    ],
+    dir,
+    ["package.json"],
+  )
+  assert_eq(groups.length(), 2)
+  assert_true(
+    groups
+    .iter()
+    .any(fn(group) {
+      group.scope == "module" &&
+      group.path == "pkg/a.mbt" &&
+      group.candidate_count == 2
+    }),
+  )
+  assert_true(
+    groups
+    .iter()
+    .any(fn(group) {
+      group.scope == "project" &&
+      group.path == "pkg" &&
+      group.candidate_count == 3
+    }),
+  )
+  remove_file_if_exists(package_dir + "/package.json")
+  remove_file_if_exists(module_a)
+  remove_file_if_exists(module_b)
+  remove_dir_if_exists(package_dir)
+  remove_dir_if_exists(dir)
+}
+
+///|
+test "reconcile: collapse_aggregate_only_candidates hides symbol flood when project docs exist" {
+  let dir = temp_reconcile_dir(".indexion/reconcile-collapse-")
+  let project_dir = dir + "/pkg"
+  @config_paths.ensure_dir_recursive(project_dir)
+  @fs.write_string_to_file(project_dir + "/package.json", "{}") catch {
+    _ => ()
+  }
+  let module_a = project_dir + "/a.mbt"
+  let module_b = project_dir + "/b.mbt"
+  @fs.write_string_to_file(module_a, "fn a() -> Unit { ignore(()) }") catch {
+    _ => ()
+  }
+  @fs.write_string_to_file(module_b, "fn b() -> Unit { ignore(()) }") catch {
+    _ => ()
+  }
+  let raw_candidates : Array[ReconcileCandidate] = [
+    {
+      ..sample_candidate_for("sym:a1", "build_graph", module_a),
+      status: "missing_doc",
+      doc_anchor: None,
+    },
+    {
+      ..sample_candidate_for("sym:a2", "render_graph", module_a),
+      status: "missing_doc",
+      doc_anchor: None,
+    },
+    {
+      ..sample_candidate_for("sym:b1", "write_report", module_b),
+      status: "missing_doc",
+      doc_anchor: None,
+    },
+  ]
+  let aggregate_suggestions = build_aggregate_suggestions(
+    raw_candidates,
+    [],
+    [sample_fragment_for(project_dir + "/README.md")],
+    dir,
+    ["package.json"],
+  )
+  let collapsed = collapse_aggregate_only_candidates(
+    raw_candidates,
+    aggregate_suggestions,
+    dir,
+    ["package.json"],
+  )
+  assert_eq(collapsed.length(), 0)
+  remove_file_if_exists(project_dir + "/package.json")
+  remove_file_if_exists(module_a)
+  remove_file_if_exists(module_b)
+  remove_dir_if_exists(project_dir)
+  remove_dir_if_exists(dir)
+}
+
+///|
 test "reconcile: sync_candidates_with_index reuses pending logical review tasks" {
   let first = sync_candidates_with_index(
     [sample_candidate()],
@@ -492,6 +807,7 @@ test "reconcile: sync_candidates_with_index reuses pending logical review tasks"
     [],
     [],
     second.candidates,
+    [],
     0,
     second.logical_reviews,
     second.reused_logical_reviews,
@@ -499,6 +815,7 @@ test "reconcile: sync_candidates_with_index reuses pending logical review tasks"
   assert_eq(summary.new_logical_reviews, 0)
   assert_eq(summary.reused_logical_reviews, 1)
   assert_eq(summary.pending_logical_reviews, 1)
+  assert_eq(summary.total_aggregate_suggestions, 0)
 }
 
 ///|

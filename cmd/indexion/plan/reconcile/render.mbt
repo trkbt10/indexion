@@ -5,8 +5,9 @@ fn report_config(config : ReconcileConfig) -> ReconcileReportConfig {
     specs_dir: config.specs_dir,
     index_dir: config.index_dir,
     review_results_path: config.review_results_path,
-    doc_paths: config.doc_paths,
-    doc_specs: config.doc_specs,
+    doc_scope: config.documents.scope_name,
+    doc_paths: config.documents.doc_paths,
+    doc_specs: config.documents.doc_specs,
     threshold_seconds: config.threshold_seconds,
     max_candidates: config.max_candidates,
     allow_file_fallback: config.allow_file_fallback,
@@ -17,11 +18,52 @@ fn report_config(config : ReconcileConfig) -> ReconcileReportConfig {
 }
 
 ///|
+fn render_aggregate_suggestions(
+  buf : StringBuilder,
+  report : ReconcileReport,
+) -> Unit {
+  if report.aggregate_suggestions.length() == 0 {
+    return
+  }
+  buf.write_string("## Suggested Review Groups\n\n")
+  for group in report.aggregate_suggestions {
+    buf.write_string("### ")
+    buf.write_string(group.scope)
+    buf.write_string(": `")
+    buf.write_string(group.path)
+    buf.write_string("` (`")
+    buf.write_string(group.status)
+    buf.write_string("`)\n\n")
+    buf.write_string("- Candidates: ")
+    buf.write_string(group.candidate_count.to_string())
+    buf.write_string("\n")
+    buf.write_string("- Action: `")
+    buf.write_string(group.recommended_action)
+    buf.write_string("`\n")
+    buf.write_string("- Pending logical review: ")
+    buf.write_string(group.logical_review_count.to_string())
+    buf.write_string("\n")
+    buf.write_string("- Symbols: `")
+    buf.write_string(group.symbol_names.join("`, `"))
+    buf.write_string("`\n")
+    if group.doc_paths.length() > 0 {
+      buf.write_string("- Docs: `")
+      buf.write_string(group.doc_paths.join("`, `"))
+      buf.write_string("`\n")
+    }
+    buf.write_string("\n")
+  }
+}
+
+///|
 fn render_markdown(report : ReconcileReport) -> String {
   let buf = StringBuilder::new()
   buf.write_string("# Reconcile Report\n\n")
   buf.write_string("- Target: `")
   buf.write_string(report.config.target_dir)
+  buf.write_string("`\n")
+  buf.write_string("- Doc scope: `")
+  buf.write_string(report.config.doc_scope)
   buf.write_string("`\n")
   buf.write_string("- Cache hit: `")
   buf.write_string(report.cache_state.cache_hit.to_string())
@@ -44,10 +86,18 @@ fn render_markdown(report : ReconcileReport) -> String {
   buf.write_string("- Candidates: ")
   buf.write_string(report.summary.total_candidates.to_string())
   buf.write_string("\n\n")
+  buf.write_string("- Suggested review groups: ")
+  buf.write_string(report.summary.total_aggregate_suggestions.to_string())
+  buf.write_string(" (module ")
+  buf.write_string(report.summary.module_suggestions.to_string())
+  buf.write_string(", project ")
+  buf.write_string(report.summary.project_suggestions.to_string())
+  buf.write_string(")\n\n")
   if report.candidates.length() == 0 {
-    buf.write_string("No drift candidates found.\n")
+    buf.write_string("No suggestion candidates found.\n")
     return buf.to_string()
   }
+  render_aggregate_suggestions(buf, report)
   buf.write_string("## Candidates\n\n")
   for candidate in report.candidates {
     buf.write_string("### ")
@@ -118,7 +168,22 @@ fn render_github_issue(report : ReconcileReport) -> String {
   buf.write_string("# Reconcile drift report\n\n")
   buf.write_string("Detected ")
   buf.write_string(report.summary.total_candidates.to_string())
-  buf.write_string(" candidates requiring review.\n\n")
+  buf.write_string(" suggestion candidates requiring review.\n\n")
+  if report.aggregate_suggestions.length() > 0 {
+    buf.write_string("## Suggested review groups\n\n")
+    for group in report.aggregate_suggestions {
+      buf.write_string("- [ ] ")
+      buf.write_string(group.scope)
+      buf.write_string(" `")
+      buf.write_string(group.path)
+      buf.write_string("` -> `")
+      buf.write_string(group.recommended_action)
+      buf.write_string("` (")
+      buf.write_string(group.candidate_count.to_string())
+      buf.write_string(" symbols)\n")
+    }
+    buf.write_string("\n")
+  }
   for candidate in report.candidates {
     buf.write_string("- [ ] `")
     buf.write_string(candidate.code_anchor.name)

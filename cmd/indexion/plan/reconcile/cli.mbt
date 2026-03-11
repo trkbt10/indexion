@@ -141,6 +141,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     config.target_dir,
     config.specs_dir,
   )
+  let project_markers = registry.get_project_markers()
   let code_units = extract_code_units(graph, registry)
   let (doc_fragments, doc_file_states, used_specs) = collect_document_fragments(
     discovered_paths, config, registry,
@@ -162,12 +163,35 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let candidate_build = build_candidates(
     code_units, doc_fragments, config, registry,
   )
-  let sync_result = sync_candidates_with_index(
+  let raw_aggregate_suggestions = build_aggregate_suggestions(
     candidate_build.candidates,
+    [],
+    doc_fragments,
+    config.target_dir,
+    project_markers,
+  )
+  let visible_candidates = limit_candidates(
+    collapse_aggregate_only_candidates(
+      candidate_build.candidates,
+      raw_aggregate_suggestions,
+      config.target_dir,
+      project_markers,
+    ),
+    config.max_candidates,
+  )
+  let sync_result = sync_candidates_with_index(
+    visible_candidates,
     manifest,
     db,
     config.logical_review_mode,
     generated_at,
+  )
+  let aggregate_suggestions = build_aggregate_suggestions(
+    candidate_build.candidates,
+    sync_result.candidates,
+    doc_fragments,
+    config.target_dir,
+    project_markers,
   )
   let manifest_to_save = {
     ..sync_result.manifest,
@@ -192,10 +216,12 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
       code_units,
       doc_fragments,
       sync_result.candidates,
+      aggregate_suggestions,
       candidate_build.module_covered_symbols,
       sync_result.logical_reviews,
       sync_result.reused_logical_reviews,
     ),
+    aggregate_suggestions,
     candidates: sync_result.candidates,
     logical_reviews: sync_result.logical_reviews,
     skipped: [],

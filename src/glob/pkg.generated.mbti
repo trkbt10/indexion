@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/glob"
+
+// Values
+pub fn expand_glob(String) -> Array[String]
+
+pub fn glob_match(String, String) -> Bool
+
+pub fn glob_match_anywhere(String, String) -> Bool
+
+pub fn has_glob_pattern(String) -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

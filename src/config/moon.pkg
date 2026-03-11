@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/json" @json,
   "trkbt10/indexion/src/kgf/resolver" @path_utils,
+  "trkbt10/indexion/src/scope" @scope,
   "moonbitlang/x/fs" @fs,
   "mizchi/x/sys" @sys,
 }

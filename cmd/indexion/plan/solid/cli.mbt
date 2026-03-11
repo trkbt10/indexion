@@ -72,8 +72,7 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> SolidConfig {
       config = { ..config, show_help: true }
     } else if arg.has_prefix("--from=") {
       let value = @common.get_arg_value(arg, 7)
-      // Split by comma
-      let dirs = split_by_comma(value)
+      let dirs = @common.parse_comma_list(value)
       for d in dirs {
         config.from_dirs.push(d)
       }
@@ -111,27 +110,6 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> SolidConfig {
 }
 
 // get_arg_value and parse_double are in @common (SoT)
-
-///|
-fn split_by_comma(s : String) -> Array[String] {
-  let result : Array[String] = []
-  let chars = s.to_array()
-  let current : Array[Char] = []
-  for c in chars {
-    if c == ',' {
-      if current.length() > 0 {
-        result.push(String::from_array(current))
-        current.clear()
-      }
-    } else {
-      current.push(c)
-    }
-  }
-  if current.length() > 0 {
-    result.push(String::from_array(current))
-  }
-  result
-}
 
 ///|
 pub fn show_help() -> Unit {
@@ -601,7 +579,7 @@ fn categorize_matches(
   for m in matches {
     let mut matched = false
     for rule in rules {
-      if glob_match(rule.pattern, m.relative_path) {
+      if @scope.path_matches_pattern(m.relative_path, rule.pattern) {
         // Resolve target path
         let target = resolve_target(rule.target, to_dir)
         let updated_match = { ..m, _matched_rule: Some(rule) }
@@ -637,67 +615,6 @@ fn resolve_target(target : String, to_dir : String) -> String {
   } else {
     target
   }
-}
-
-///|
-/// Simple glob matching (supports ** and *).
-fn glob_match(pattern : String, path : String) -> Bool {
-  let pattern_chars = pattern.to_array()
-  let path_chars = path.to_array()
-  glob_match_impl(pattern_chars, 0, path_chars, 0)
-}
-
-///|
-fn glob_match_impl(
-  pattern : Array[Char],
-  pi : Int,
-  path : Array[Char],
-  si : Int,
-) -> Bool {
-  // End of pattern
-  if pi >= pattern.length() {
-    return si >= path.length()
-  }
-  // Check for **
-  if pi + 1 < pattern.length() && pattern[pi] == '*' && pattern[pi + 1] == '*' {
-    // ** matches any number of path segments
-    // Skip /** or ** at start
-    let next_pi = if pi + 2 < pattern.length() && pattern[pi + 2] == '/' {
-      pi + 3
-    } else {
-      pi + 2
-    }
-    // Try matching at each position
-    for i = si; i <= path.length(); i = i + 1 {
-      if glob_match_impl(pattern, next_pi, path, i) {
-        return true
-      }
-    }
-    return false
-  }
-  // Check for *
-  if pattern[pi] == '*' {
-    // * matches within a single segment (no /)
-    for i = si; i <= path.length(); i = i + 1 {
-      // Stop at /
-      if i > si && i - 1 < path.length() && path[i - 1] == '/' {
-        break
-      }
-      if glob_match_impl(pattern, pi + 1, path, i) {
-        return true
-      }
-    }
-    return false
-  }
-  // End of path
-  if si >= path.length() {
-    return false
-  }
-  // Match single character
-  if pattern[pi] == path[si] {
-    return glob_match_impl(pattern, pi + 1, path, si + 1)
-  }
-  false
 }
 
 // render_plan removed - using PlanDocument IR and @plan_render (SoT)

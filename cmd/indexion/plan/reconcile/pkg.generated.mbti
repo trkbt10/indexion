@@ -3,6 +3,7 @@ package "trkbt10/indexion/cmd/indexion/plan/reconcile"
 
 import {
   "moonbitlang/core/json",
+  "trkbt10/indexion/src/config",
 }
 
 // Values
@@ -152,6 +153,23 @@ pub impl Show for MappingEvidence
 pub impl ToJson for MappingEvidence
 pub impl @json.FromJson for MappingEvidence
 
+pub struct ReconcileAggregateSuggestion {
+  id : String
+  scope : String
+  path : String
+  status : String
+  recommended_action : String
+  candidate_count : Int
+  logical_review_count : Int
+  symbol_ids : Array[String]
+  symbol_names : Array[String]
+  doc_paths : Array[String]
+}
+pub impl Eq for ReconcileAggregateSuggestion
+pub impl Show for ReconcileAggregateSuggestion
+pub impl ToJson for ReconcileAggregateSuggestion
+pub impl @json.FromJson for ReconcileAggregateSuggestion
+
 pub struct ReconcileCandidate {
   id : String
   symbol_id : String
@@ -177,12 +195,11 @@ pub struct ReconcileConfig {
   target_dir : String
   output : String
   format : String
+  documents : @config.ReconcileDocumentScope
   specs_dir : String
   index_dir : String
   config_path : String
   review_results_path : String
-  doc_paths : Array[String]
-  doc_specs : Array[String]
   threshold_seconds : Int
   max_candidates : Int
   allow_file_fallback : Bool
@@ -219,6 +236,7 @@ pub struct ReconcileReport {
   generated_at : Int
   config : ReconcileReportConfig
   summary : ReconcileSummary
+  aggregate_suggestions : Array[ReconcileAggregateSuggestion]
   candidates : Array[ReconcileCandidate]
   logical_reviews : Array[LogicalReviewTask]
   skipped : Array[String]
@@ -235,6 +253,7 @@ pub struct ReconcileReportConfig {
   specs_dir : String
   index_dir : String
   review_results_path : String
+  doc_scope : String
   doc_paths : Array[String]
   doc_specs : Array[String]
   threshold_seconds : Int
@@ -255,6 +274,9 @@ pub struct ReconcileSummary {
   module_covered_symbols : Int
   total_doc_fragments : Int
   total_candidates : Int
+  total_aggregate_suggestions : Int
+  module_suggestions : Int
+  project_suggestions : Int
   missing_doc : Int
   stale_doc : Int
   review_mapping : Int

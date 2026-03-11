@@ -162,6 +162,16 @@ test "registry: comprehensive validation" {
   assert_true(registry.is_file_supported("main.go"))
   assert_false(registry.is_file_supported("moon.pkg.bak"))
   assert_false(registry.is_file_supported("file.xyz"))
+
+  // Test 8: project marker patterns come from KGF, not hardcoded caller lists
+  let project_markers = registry.get_project_markers()
+  assert_true(
+    project_markers.iter().any(fn(marker) { marker == "package.json" }),
+  )
+  assert_true(project_markers.iter().any(fn(marker) { marker == "go.mod" }))
+  assert_true(project_markers.iter().any(fn(marker) { marker == "Cargo.toml" }))
+  assert_true(project_markers.iter().any(fn(marker) { marker == "moon.pkg" }))
+  assert_true(project_markers.iter().any(fn(marker) { marker == "*.csproj" }))
 }
 
 ///|

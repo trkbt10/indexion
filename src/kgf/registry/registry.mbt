@@ -233,7 +233,65 @@ pub fn KGFRegistry::get_external_prefixes(self : KGFRegistry) -> Array[String] {
   prefixes
 }
 
+///|
+/// Get project/root marker patterns derived from loaded KGF specs.
+/// This collects filename-based `sources`, resolver `project_config`, and
+/// `manifest` / `marker` resolve steps so callers do not hardcode ecosystem
+/// manifests.
+pub fn KGFRegistry::get_project_markers(self : KGFRegistry) -> Array[String] {
+  let markers : Array[String] = []
+  for entry in self.specs {
+    let spec = entry.1
+    let resolver = spec.get_resolver()
+    add_project_marker(markers, resolver.get_project_config())
+    for source in resolver.get_sources() {
+      if is_filename_pattern(source) {
+        add_project_marker(markers, source)
+      }
+    }
+    for step in resolver.get_resolve_chain() {
+      match step.get_step_type() {
+        @types.ResolveStepType::Manifest =>
+          add_project_marker(markers, step.get_file())
+        @types.ResolveStepType::Marker =>
+          for file in step.get_files() {
+            add_project_marker(markers, file)
+          }
+        _ => ()
+      }
+    }
+  }
+  markers.sort()
+  markers
+}
+
 // Helper functions
+
+///|
+fn contains_string(values : Array[String], value : String) -> Bool {
+  for current in values {
+    if current == value {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn is_filename_pattern(pattern : String) -> Bool {
+  pattern.length() > 0 &&
+  not(pattern.has_prefix(".")) &&
+  not(pattern.contains("/")) &&
+  not(pattern.contains("\\"))
+}
+
+///|
+fn add_project_marker(markers : Array[String], marker : String) -> Unit {
+  if not(is_filename_pattern(marker)) || contains_string(markers, marker) {
+    return
+  }
+  markers.push(marker)
+}
 
 ///|
 /// Extract file extension from path (with dot).

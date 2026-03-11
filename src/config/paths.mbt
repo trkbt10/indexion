@@ -133,6 +133,12 @@ pub fn default_tool_dir(target_dir : String, tool_subdir : String) -> String {
 }
 
 ///|
+/// Default cache/index directory for `indexion plan reconcile`.
+pub fn default_reconcile_index_dir(target_dir : String) -> String {
+  default_tool_dir(target_dir, ".indexion/reconcile")
+}
+
+///|
 /// Ensure the parent directory of `path` exists.
 pub fn ensure_parent_dir(path : String) -> Unit {
   let dir = dirname(path)
@@ -157,6 +163,135 @@ pub fn ensure_dir_recursive(path : String) -> Unit {
   @fs.create_dir(normalized) catch {
     _ => ()
   }
+}
+
+///|
+/// Find the nearest directory containing any configured project marker pattern.
+/// Marker patterns are supplied by a caller-owned SoT, such as the KGF registry.
+pub fn find_nearest_marker_dir(
+  root_dir : String,
+  path : String,
+  markers : Array[String],
+) -> String? {
+  if markers.length() == 0 {
+    return None
+  }
+  let normalized_root = normalize_path(root_dir)
+  let mut current = normalize_path(path)
+  if not(is_valid_dir(current)) {
+    current = dirname(current)
+  }
+  while true {
+    if has_matching_marker(current, markers) {
+      return Some(current)
+    }
+    if current == normalized_root || current == "." {
+      break
+    }
+    let parent = dirname(current)
+    if parent == current {
+      break
+    }
+    current = parent
+  }
+  None
+}
+
+///|
+fn has_matching_marker(dir : String, markers : Array[String]) -> Bool {
+  let entries = @fs.read_dir(dir) catch { _ => return false }
+  for marker in markers {
+    for entry in entries {
+      if wildcard_match(marker, entry) {
+        return true
+      }
+    }
+  }
+  false
+}
+
+///|
+fn wildcard_match(pattern : String, text : String) -> Bool {
+  if pattern == "*" {
+    return true
+  }
+  if not(pattern.contains("*")) {
+    return pattern == text
+  }
+  let parts = split_wildcard_parts(pattern)
+  if parts.length() == 0 {
+    return true
+  }
+  let anchored_start = not(pattern.has_prefix("*"))
+  let anchored_end = not(pattern.has_suffix("*"))
+  let mut search_start = 0
+  let mut last_match_end = 0
+  for i = 0; i < parts.length(); i = i + 1 {
+    let part = parts[i]
+    let found = find_substring_from(text, part, search_start)
+    if found < 0 {
+      return false
+    }
+    if i == 0 && anchored_start && found != 0 {
+      return false
+    }
+    search_start = found + part.length()
+    last_match_end = search_start
+  }
+  if anchored_end {
+    last_match_end == text.length()
+  } else {
+    true
+  }
+}
+
+///|
+fn split_wildcard_parts(pattern : String) -> Array[String] {
+  let parts : Array[String] = []
+  let current : Array[Char] = []
+  for ch in pattern.to_array() {
+    if ch == '*' {
+      if current.length() > 0 {
+        parts.push(String::from_array(current))
+        current.clear()
+      }
+    } else {
+      current.push(ch)
+    }
+  }
+  if current.length() > 0 {
+    parts.push(String::from_array(current))
+  }
+  parts
+}
+
+///|
+fn find_substring_from(text : String, needle : String, start : Int) -> Int {
+  if needle.length() == 0 {
+    return start
+  }
+  if start < 0 || start >= text.length() {
+    return -1
+  }
+  let text_chars = text.to_array()
+  let needle_chars = needle.to_array()
+  if needle_chars.length() > text_chars.length() {
+    return -1
+  }
+  let max_start = text_chars.length() - needle_chars.length()
+  for i = start; i <= max_start; i = i + 1 {
+    let mut matched = true
+    for j = 0; j < needle_chars.length(); j = j + 1 {
+      if text_chars[i + j] != needle_chars[j] {
+        matched = false
+        break
+      }
+    }
+    if matched {
+      return i
+    }
+  }
+  -1
 }
 
 ///|

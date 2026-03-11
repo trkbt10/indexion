@@ -1,0 +1,79 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/plan/solid"
+
+import {
+  "trkbt10/indexion/src/plan/types",
+}
+
+// Values
+pub fn parse_args(Array[String], Int) -> SolidConfig
+
+pub fn run(Array[String], Int) -> Unit
+
+pub fn show_help() -> Unit
+
+pub fn solid_to_plan_document(SolidPlanJSON) -> @types.PlanDocument
+
+// Errors
+
+// Types and methods
+pub struct ExtractionFile {
+  relative_path : String
+  similarity : Double
+  action : String
+}
+
+pub struct ExtractionGroup {
+  target_path : String
+  files : Array[ExtractionFile]
+}
+
+pub struct SolidConfig {
+  from_dirs : Array[String]
+  to_dir : String
+  rules_file : String
+  inline_rules : Array[String]
+  threshold : Double
+  strategy : String
+  includes : Array[String]
+  excludes : Array[String]
+  output : String
+  format : String
+  show_help : Bool
+}
+pub fn SolidConfig::default() -> Self
+
+pub struct SolidConfigJSON {
+  sources : Array[String]
+  target : String
+  threshold : Double
+  rules_count : Int
+}
+
+pub struct SolidPlanJSON {
+  config : SolidConfigJSON
+  summary : SolidSummaryJSON
+  extractions : Array[ExtractionGroup]
+  unmatched : Array[UnmatchedFile]
+}
+
+pub struct SolidRule {
+  pattern : String
+  target : String
+}
+
+pub struct SolidSummaryJSON {
+  total_matches : Int
+  matched_by_rules : Int
+  unmatched_count : Int
+}
+
+pub struct UnmatchedFile {
+  relative_path : String
+  similarity : Double
+}
+
+// Type aliases
+
+// Traits
+
