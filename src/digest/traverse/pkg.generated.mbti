@@ -1,0 +1,35 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/digest/traverse"
+
+import {
+  "trkbt10/indexion/src/core/graph",
+  "trkbt10/indexion/src/digest/types",
+}
+
+// Values
+pub fn compute_bottom_up_order(@graph.CodeGraph, Array[String]) -> TraversalResult
+
+pub fn compute_top_down_order(@graph.CodeGraph, Array[String]) -> TraversalResult
+
+pub fn traverse_bottom_up(Array[@types.FunctionUnit], (@types.FunctionUnit) -> Unit) -> Unit
+
+pub fn traverse_top_down(Array[@types.FunctionUnit], (@types.FunctionUnit) -> Unit) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct TraversalResult {
+  order : Array[String]
+  depths : Map[String, Int]
+  cycles : Array[(String, String)]
+}
+pub fn TraversalResult::at_depth(Self, Int) -> Array[String]
+pub fn TraversalResult::max_depth(Self) -> Int
+pub fn TraversalResult::new() -> Self
+pub impl Eq for TraversalResult
+pub impl Show for TraversalResult
+
+// Type aliases
+
+// Traits
+

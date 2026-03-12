@@ -1,0 +1,42 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/digest/embed"
+
+import {
+  "trkbt10/indexion/src/digest/config",
+  "trkbt10/indexion/src/digest/types",
+}
+
+// Values
+pub async fn generate_impression(String, String, String, String, Array[String], Array[String]) -> @types.Impression raise EmbedError
+
+pub async fn generate_impression_with_config(@config.LlmConfig, String, String, String, Array[String], Array[String]) -> @types.Impression raise EmbedError
+
+pub async fn generate_impressions(String, Array[@types.FunctionUnit]) -> Array[@types.FunctionUnit] raise EmbedError
+
+pub async fn generate_impressions_with_config(@config.LlmConfig, Array[@types.FunctionUnit]) -> Array[@types.FunctionUnit] raise EmbedError
+
+pub async fn get_embedding(OpenAIConfig, String) -> Array[Double] raise EmbedError
+
+pub async fn get_embeddings(OpenAIConfig, Array[String]) -> Array[Array[Double]] raise EmbedError
+
+// Errors
+pub(all) suberror EmbedError {
+  ParseError(String)
+  ApiError(Int, String)
+  NoResult
+}
+
+// Types and methods
+pub struct OpenAIConfig {
+  api_key : String
+  model : String
+  base_url : String
+}
+pub fn OpenAIConfig::default(String) -> Self
+pub impl Eq for OpenAIConfig
+pub impl Show for OpenAIConfig
+
+// Type aliases
+
+// Traits
+

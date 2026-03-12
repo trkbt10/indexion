@@ -2,83 +2,39 @@
 package "trkbt10/indexion/src/similarity"
 
 import {
-  "trkbt10/indexion/src/text/tfidf",
+  "trkbt10/indexion/src/similarity/apted",
+  "trkbt10/indexion/src/similarity/types",
 }
 
 // Values
-pub fn calculate_adjacent_hybrid(Array[String], HybridConfig) -> Array[Double]
+pub fn available_strategies() -> Array[String]
 
-pub fn calculate_adjacent_ncd(Array[String]) -> Array[Double]
+pub fn parse_bracket_tree(String) -> @apted.TreeNode?
 
-pub fn calculate_adjacent_tfidf(Array[String]) -> Array[Double]
+pub fn text_strategies() -> Array[String]
+
+pub fn tree_strategies() -> Array[String]
 
 // Errors
 
 // Types and methods
-pub struct HybridConfig {
-  ncd_weight : Double
-  tfidf_weight : Double
+pub enum StrategyKind {
+  NCD
+  TfIdf
+  Hybrid(@types.HybridConfig)
+  Apted
+  Tsed
 }
-pub fn HybridConfig::create(Double, Double) -> Self
-pub fn HybridConfig::get_ncd_weight(Self) -> Double
-pub fn HybridConfig::get_tfidf_weight(Self) -> Double
-pub fn HybridConfig::new() -> Self
-pub impl Eq for HybridConfig
-pub impl Show for HybridConfig
-
-pub struct HybridStrategy {
-  config : HybridConfig
-}
-pub fn HybridStrategy::get_config(Self) -> HybridConfig
-pub fn HybridStrategy::new() -> Self
-pub fn HybridStrategy::with_config(HybridConfig) -> Self
-pub impl Eq for HybridStrategy
-pub impl Show for HybridStrategy
-pub impl SimilarityStrategy for HybridStrategy
-
-pub struct NCDStrategy {
-  // private fields
-}
-pub fn NCDStrategy::new() -> Self
-pub impl Eq for NCDStrategy
-pub impl Show for NCDStrategy
-pub impl SimilarityStrategy for NCDStrategy
-
-pub struct SimilarityResult {
-  distance : Double
-  similarity : Double
-}
-pub fn SimilarityResult::from_distance(Double) -> Self
-pub fn SimilarityResult::from_similarity(Double) -> Self
-pub fn SimilarityResult::get_distance(Self) -> Double
-pub fn SimilarityResult::get_similarity(Self) -> Double
-pub impl Eq for SimilarityResult
-pub impl Show for SimilarityResult
-
-pub struct TfidfBatch(@tfidf.TfidfBatch)
-pub fn TfidfBatch::all_pairs_above_threshold(Self, Double) -> Array[(Int, Int, Double)]
-pub fn TfidfBatch::from_auto_texts(Array[String]) -> Self
-pub fn TfidfBatch::from_code_texts(Array[String]) -> Self
-pub fn TfidfBatch::from_texts(Array[String]) -> Self
-#deprecated
-pub fn TfidfBatch::inner(Self) -> @tfidf.TfidfBatch
-pub fn TfidfBatch::length(Self) -> Int
-pub fn TfidfBatch::similarity(Self, Int, Int) -> Double
-
-pub struct TfidfStrategy {
-  // private fields
-}
-pub fn TfidfStrategy::new() -> Self
-pub impl Eq for TfidfStrategy
-pub impl Show for TfidfStrategy
-pub impl SimilarityStrategy for TfidfStrategy
+pub fn StrategyKind::calculate(Self, String, String) -> @types.SimilarityResult?
+pub fn StrategyKind::is_text_strategy(Self) -> Bool
+pub fn StrategyKind::is_tree_strategy(Self) -> Bool
+pub fn StrategyKind::name(Self) -> String
+pub fn StrategyKind::parse(String) -> Self?
+pub fn StrategyKind::parse_with_weights(String, Double, Double) -> Self?
+pub fn StrategyKind::text_similarity(Self, String, String) -> @types.SimilarityResult?
+pub fn StrategyKind::tree_similarity(Self, @apted.TreeNode, @apted.TreeNode) -> @types.SimilarityResult?
 
 // Type aliases
 
 // Traits
-pub(open) trait SimilarityStrategy {
-  name(Self) -> String
-  distance(Self, String, String) -> Double
-  similarity(Self, String, String) -> Double
-}
 

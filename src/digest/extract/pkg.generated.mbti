@@ -1,0 +1,36 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/digest/extract"
+
+import {
+  "trkbt10/indexion/src/core/graph",
+  "trkbt10/indexion/src/digest/types",
+}
+
+// Values
+pub fn extract_function_unit(@graph.CodeGraph, @graph.SymbolNode, Map[String, Int]) -> @types.FunctionUnit
+
+pub fn extract_function_units(@graph.CodeGraph, ExtractConfig) -> Array[@types.FunctionUnit]
+
+pub fn extract_functions_at_depth(@graph.CodeGraph, ExtractConfig, Int) -> Array[@types.FunctionUnit]
+
+pub fn extract_leaf_functions(@graph.CodeGraph, ExtractConfig) -> Array[@types.FunctionUnit]
+
+pub fn get_max_depth(Array[@types.FunctionUnit]) -> Int
+
+// Errors
+
+// Types and methods
+pub(all) struct ExtractConfig {
+  include_external : Bool
+  min_body_length : Int
+  exclude_kinds : Array[String]
+}
+pub fn ExtractConfig::all() -> Self
+pub fn ExtractConfig::default() -> Self
+pub impl Eq for ExtractConfig
+pub impl Show for ExtractConfig
+
+// Type aliases
+
+// Traits
+

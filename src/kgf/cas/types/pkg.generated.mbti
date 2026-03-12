@@ -36,21 +36,6 @@ pub impl Show for ContentHash
 pub impl ToJson for ContentHash
 pub impl @json.FromJson for ContentHash
 
-pub struct IndexError {
-  module_id : String
-  error : String
-}
-pub impl Eq for IndexError
-pub impl Show for IndexError
-
-pub enum IndexModuleResult {
-  Success(ModuleChunk)
-  Cached(ContentHash)
-  Error(IndexError)
-}
-pub impl Eq for IndexModuleResult
-pub impl Show for IndexModuleResult
-
 pub struct ModuleChunk {
   hash : ContentHash
   module_id : String

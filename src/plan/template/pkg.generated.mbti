@@ -1,0 +1,105 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/plan/template"
+
+import {
+  "trkbt10/indexion/src/plan/types",
+}
+
+// Values
+pub fn fill_and_render(IssueFormTemplate, @types.PlanDocument) -> FilledIssueForm
+
+pub fn fill_issue_form(IssueFormTemplate, @types.PlanDocument) -> String
+
+pub fn load_issue_form(String) -> IssueFormTemplate?
+
+pub fn parse_issue_form(String) -> IssueFormTemplate
+
+// Errors
+
+// Types and methods
+pub struct CheckboxOption {
+  label : String
+  required : Bool
+}
+
+pub struct CheckboxesField {
+  id : String
+  label : String
+  description : String
+  options : Array[CheckboxOption]
+  required : Bool
+}
+
+pub struct DropdownField {
+  id : String
+  label : String
+  description : String
+  options : Array[String]
+  default_index : Int
+  multiple : Bool
+  required : Bool
+}
+
+pub struct FilledIssueForm {
+  title : String
+  body : String
+  labels : Array[String]
+  assignees : Array[String]
+}
+
+pub enum FormField {
+  Markdown(MarkdownField)
+  Textarea(TextareaField)
+  Input(InputField)
+  Dropdown(DropdownField)
+  Checkboxes(CheckboxesField)
+}
+
+pub struct InputField {
+  id : String
+  label : String
+  description : String
+  placeholder : String
+  value : String
+  required : Bool
+}
+
+pub struct IssueFormTemplate {
+  mut name : String
+  mut description : String
+  mut title : String
+  mut labels : Array[String]
+  mut assignees : Array[String]
+  body : Array[FormField]
+}
+pub fn IssueFormTemplate::new() -> Self
+
+pub struct MarkdownField {
+  value : String
+}
+
+pub struct MarkdownTemplate {
+  content : String
+  placeholders : Array[TemplatePlaceholder]
+}
+
+pub struct TemplatePlaceholder {
+  key : String
+  start_pos : Int
+  end_pos : Int
+}
+
+pub struct TextareaField {
+  id : String
+  label : String
+  description : String
+  placeholder : String
+  value : String
+  render : String
+  required : Bool
+}
+
+// Type aliases
+
+// Traits
+

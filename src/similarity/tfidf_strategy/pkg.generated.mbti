@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/similarity/tfidf_strategy"
+
+import {
+  "trkbt10/indexion/src/similarity/types",
+  "trkbt10/indexion/src/text/tfidf",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct TfidfBatch(@tfidf.TfidfBatch)
+pub fn TfidfBatch::all_pairs_above_threshold(Self, Double) -> Array[(Int, Int, Double)]
+pub fn TfidfBatch::from_tokens(Array[Array[String]]) -> Self
+#deprecated
+pub fn TfidfBatch::inner(Self) -> @tfidf.TfidfBatch
+pub fn TfidfBatch::length(Self) -> Int
+pub fn TfidfBatch::similarity(Self, Int, Int) -> Double
+
+pub struct TfidfStrategy {
+  // private fields
+}
+pub fn TfidfStrategy::new() -> Self
+pub impl Eq for TfidfStrategy
+pub impl Show for TfidfStrategy
+pub impl @types.SimilarityStrategy for TfidfStrategy
+
+// Type aliases
+
+// Traits
+

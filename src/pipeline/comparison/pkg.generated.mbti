@@ -1,0 +1,58 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/pipeline/comparison"
+
+// Values
+pub fn compare(Array[FileEntry], BatchConfig) -> BatchResult
+
+pub fn compare_apted(Array[FileEntry], Double) -> BatchResult
+
+pub fn compare_tfidf(Array[FileEntry], Double) -> BatchResult
+
+pub fn compare_tsed(Array[FileEntry], Double) -> BatchResult
+
+pub fn filter_cross_directory(Array[SimilarityMatch]) -> Array[SimilarityMatch]
+
+// Errors
+
+// Types and methods
+pub struct BatchConfig {
+  threshold : Double
+  strategy : String
+}
+pub fn BatchConfig::create(Double, String) -> Self
+pub fn BatchConfig::new() -> Self
+pub impl Eq for BatchConfig
+pub impl Show for BatchConfig
+
+pub struct BatchResult {
+  matches : Array[SimilarityMatch]
+  file_count : Int
+  pairs_compared : Int
+}
+pub fn BatchResult::get_matches(Self) -> Array[SimilarityMatch]
+pub impl Eq for BatchResult
+pub impl Show for BatchResult
+
+pub struct FileEntry {
+  display_name : String
+  content : String
+}
+pub fn FileEntry::new(String, String) -> Self
+pub impl Eq for FileEntry
+pub impl Show for FileEntry
+
+pub struct SimilarityMatch {
+  index1 : Int
+  index2 : Int
+  file1 : String
+  file2 : String
+  similarity : Double
+}
+pub fn SimilarityMatch::new(Int, Int, String, String, Double) -> Self
+pub impl Eq for SimilarityMatch
+pub impl Show for SimilarityMatch
+
+// Type aliases
+
+// Traits
+

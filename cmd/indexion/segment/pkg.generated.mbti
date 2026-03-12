@@ -1,0 +1,35 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/segment"
+
+// Values
+pub fn parse_args(Array[String], Int) -> SegmentConfig
+
+pub fn run(Array[String], Int) -> Unit
+
+pub fn show_help() -> Unit
+
+// Errors
+
+// Types and methods
+pub struct SegmentConfig {
+  input_file : String
+  output_dir : String
+  strategy : String
+  min_size : Int
+  max_size : Int
+  target_size : Int
+  threshold : Double
+  window_size : Int
+  adaptive : Bool
+  hybrid : Bool
+  ncd_weight : Double
+  tfidf_weight : Double
+  prefix : String
+  show_help : Bool
+}
+pub fn SegmentConfig::default() -> Self
+
+// Type aliases
+
+// Traits
+

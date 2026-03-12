@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/similarity/hybrid"
+
+import {
+  "trkbt10/indexion/src/similarity/types",
+}
+
+// Values
+pub fn calculate_adjacent_hybrid(Array[String], @types.HybridConfig) -> Array[Double]
+
+// Errors
+
+// Types and methods
+pub struct HybridStrategy {
+  config : @types.HybridConfig
+}
+pub fn HybridStrategy::get_config(Self) -> @types.HybridConfig
+pub fn HybridStrategy::new() -> Self
+pub fn HybridStrategy::with_config(@types.HybridConfig) -> Self
+pub impl Eq for HybridStrategy
+pub impl Show for HybridStrategy
+pub impl @types.SimilarityStrategy for HybridStrategy
+
+// Type aliases
+
+// Traits
+

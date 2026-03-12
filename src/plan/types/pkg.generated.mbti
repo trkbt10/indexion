@@ -1,0 +1,89 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/plan/types"
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct ChecklistItem {
+  label : String
+  description : String
+  checked : Bool
+  priority : Int
+}
+pub fn ChecklistItem::new(String) -> Self
+pub fn ChecklistItem::with_desc(String, String) -> Self
+pub fn ChecklistItem::with_priority(String, Int) -> Self
+
+pub struct ConvertContext {
+  project_name : String
+  project_version : String
+}
+pub fn ConvertContext::new() -> Self
+pub fn ConvertContext::with_project(String, String) -> Self
+
+pub struct ListItem {
+  text : String
+  description : String
+}
+pub fn ListItem::simple(String) -> Self
+pub fn ListItem::with_desc(String, String) -> Self
+
+pub struct PlanDocument {
+  title : String
+  mut description : String
+  sections : Array[PlanSection]
+  metadata : Map[String, String]
+}
+pub fn PlanDocument::add_section(Self, PlanSection) -> Unit
+pub fn PlanDocument::new(String) -> Self
+pub fn PlanDocument::set_description(Self, String) -> Unit
+pub fn PlanDocument::set_meta(Self, String, String) -> Unit
+pub fn PlanDocument::to_json(Self) -> Json
+
+pub struct PlanSection {
+  id : String
+  heading : String
+  content : SectionContent
+}
+pub fn PlanSection::new(String, String, SectionContent) -> Self
+pub fn PlanSection::to_json(Self) -> Json
+
+pub enum SectionContent {
+  Text(String)
+  List(Array[ListItem])
+  Table(TableData)
+  Checklist(Array[ChecklistItem])
+  Code(String, String)
+  Nested(Array[PlanSection])
+  KeyValue(Array[(String, String)])
+}
+pub fn SectionContent::checklist(Array[ChecklistItem]) -> Self
+pub fn SectionContent::code(String, String) -> Self
+pub fn SectionContent::keyvalue(Array[(String, String)]) -> Self
+pub fn SectionContent::list(Array[ListItem]) -> Self
+pub fn SectionContent::nested(Array[PlanSection]) -> Self
+pub fn SectionContent::table(TableData) -> Self
+pub fn SectionContent::text(String) -> Self
+pub fn SectionContent::to_json(Self) -> Json
+
+pub enum TableAlign {
+  Left
+  Center
+  Right
+}
+pub fn TableAlign::default_left() -> Self
+
+pub struct TableData {
+  headers : Array[String]
+  rows : Array[Array[String]]
+  alignments : Array[TableAlign]
+}
+pub fn TableData::add_row(Self, Array[String]) -> Unit
+pub fn TableData::new(Array[String]) -> Self
+
+// Type aliases
+
+// Traits
+

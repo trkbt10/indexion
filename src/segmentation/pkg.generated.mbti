@@ -17,8 +17,6 @@ pub fn default_window_config() -> @window.SegmentConfig
 
 pub fn new_segment_point(Int, Int, @types.SegmentType) -> @types.SegmentPoint
 
-pub fn segment(String, Strategy) -> Array[@types.SegmentPoint]
-
 pub fn segment_by_divergence(String, @window.SegmentConfig) -> Array[@types.SegmentPoint]
 
 pub fn segment_by_punctuation(String, @punctuation.PunctuationConfig) -> Array[@types.SegmentPoint]
@@ -30,13 +28,6 @@ pub fn to_text_segments(Array[@types.SegmentPoint], String) -> Array[@types.Text
 // Errors
 
 // Types and methods
-pub enum Strategy {
-  Punctuation
-  Tfidf
-  Window
-}
-pub impl Eq for Strategy
-pub impl Show for Strategy
 
 // Type aliases
 

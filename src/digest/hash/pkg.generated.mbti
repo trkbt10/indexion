@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/digest/hash"
+
+// Values
+pub fn combine_hashes(Array[@trkbt10/indexion/src/digest/types.FunctionHash]) -> @trkbt10/indexion/src/digest/types.FunctionHash
+
+pub fn compute_context_hash(@trkbt10/indexion/src/digest/types.FunctionHash, Array[String], Array[String]) -> @trkbt10/indexion/src/digest/types.FunctionHash
+
+pub fn compute_impression_hash(@trkbt10/indexion/src/digest/types.Impression) -> @trkbt10/indexion/src/digest/types.FunctionHash
+
+pub fn compute_source_hash(String) -> @trkbt10/indexion/src/digest/types.FunctionHash
+
+pub fn from_content_hash(@trkbt10/indexion/src/kgf/cas/types.ContentHash) -> @trkbt10/indexion/src/digest/types.FunctionHash
+
+pub fn is_valid_hash(String) -> Bool
+
+pub fn to_content_hash(@trkbt10/indexion/src/digest/types.FunctionHash) -> @trkbt10/indexion/src/kgf/cas/types.ContentHash
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

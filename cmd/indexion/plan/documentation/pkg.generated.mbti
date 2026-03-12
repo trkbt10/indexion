@@ -1,0 +1,80 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/plan/documentation"
+
+import {
+  "trkbt10/indexion/src/plan/types",
+}
+
+// Values
+pub fn analyze_documentation(String) -> DocAnalysis
+
+pub fn load_project_info(String) -> ProjectInfo
+
+pub fn parse_args(Array[String], Int) -> DocPlanConfig
+
+pub fn render_coverage(DocAnalysis, String) -> String
+
+pub fn render_full(DocAnalysis, ProjectInfo, String) -> String
+
+pub fn render_readme_template(DocAnalysis, ProjectInfo) -> String
+
+pub fn run(Array[String], Int) -> Unit
+
+pub fn show_help() -> Unit
+
+pub fn to_plan_document(DocAnalysis, ProjectInfo, String) -> @types.PlanDocument
+
+// Errors
+
+// Types and methods
+pub struct DocAnalysis {
+  packages : Array[PackageAnalysis]
+  total_pub_items : Int
+  total_documented : Int
+  coverage_percent : Double
+  critical_missing : Array[PubItem]
+}
+
+pub struct DocPlanConfig {
+  target_dir : String
+  output : String
+  style : String
+  format : String
+  template : String
+  project_name : String
+  show_help : Bool
+}
+pub fn DocPlanConfig::default() -> Self
+
+pub struct PackageAnalysis {
+  path : String
+  files : Array[String]
+  pub_items : Array[PubItem]
+  total_pub : Int
+  documented : Int
+  has_readme : Bool
+}
+
+pub struct ProjectInfo {
+  name : String
+  version : String
+  description : String
+  repository : String
+  license : String
+  keywords : Array[String]
+}
+pub fn ProjectInfo::default() -> Self
+
+pub struct PubItem {
+  name : String
+  kind : String
+  file : String
+  line : Int
+  has_doc : Bool
+  doc_preview : String
+}
+
+// Type aliases
+
+// Traits
+

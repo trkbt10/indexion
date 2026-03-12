@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/digest"
+
+// Values
+pub fn parse_args(Array[String], Int) -> CliConfig
+
+pub async fn run(Array[String], Int) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct CliConfig {
+  command : String
+  input_path : String
+  purpose : String
+  index_dir : String
+  provider : String
+  dim : Int
+  strategy : String
+  top_k : Int
+  min_score : Double
+  specs_dir : String
+  show_help : Bool
+}
+pub fn CliConfig::default() -> Self
+
+// Type aliases
+
+// Traits
+

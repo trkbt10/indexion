@@ -7,11 +7,15 @@ import {
 }
 
 // Values
+pub fn calculate_window_ncd_tfidf_divergence(Array[@sentence.Sentence], Int, Double, Double) -> @types.WindowDivergence
+
 pub fn calculate_window_tfidf_divergence(Array[@sentence.Sentence], Int) -> @types.WindowDivergence
 
 pub fn default_adaptive_config() -> AdaptiveConfig
 
 pub fn default_config() -> SegmentConfig
+
+pub fn default_hybrid_adaptive_config() -> HybridAdaptiveConfig
 
 pub fn find_local_maxima(Array[Double], Double) -> Array[Int]
 
@@ -22,6 +26,8 @@ pub fn segment(String) -> Array[@types.SegmentPoint]
 pub fn segment_adaptive(String, AdaptiveConfig) -> Array[@types.SegmentPoint]
 
 pub fn segment_by_divergence(String, SegmentConfig) -> Array[@types.SegmentPoint]
+
+pub fn segment_hybrid_adaptive(String, HybridAdaptiveConfig) -> Array[@types.SegmentPoint]
 
 // Errors
 
@@ -43,6 +49,29 @@ pub fn AdaptiveConfig::get_window_size(Self) -> Int
 pub fn AdaptiveConfig::new(Double, Double, Int, Int, Int, Int) -> Self
 pub impl Eq for AdaptiveConfig
 pub impl Show for AdaptiveConfig
+
+pub struct HybridAdaptiveConfig {
+  percentile : Double
+  minimum_threshold : Double
+  target_chunk_size : Int
+  min_chunk_size : Int
+  max_chunk_size : Int
+  window_size : Int
+  ncd_weight : Double
+  tfidf_weight : Double
+}
+pub fn HybridAdaptiveConfig::get_max_chunk_size(Self) -> Int
+pub fn HybridAdaptiveConfig::get_min_chunk_size(Self) -> Int
+pub fn HybridAdaptiveConfig::get_minimum_threshold(Self) -> Double
+pub fn HybridAdaptiveConfig::get_ncd_weight(Self) -> Double
+pub fn HybridAdaptiveConfig::get_percentile(Self) -> Double
+pub fn HybridAdaptiveConfig::get_target_chunk_size(Self) -> Int
+pub fn HybridAdaptiveConfig::get_tfidf_weight(Self) -> Double
+pub fn HybridAdaptiveConfig::get_window_size(Self) -> Int
+pub fn HybridAdaptiveConfig::new(Double, Double, Int, Int, Int, Int, Double, Double) -> Self
+pub fn HybridAdaptiveConfig::with_default_weights(Double, Double, Int, Int, Int, Int) -> Self
+pub impl Eq for HybridAdaptiveConfig
+pub impl Show for HybridAdaptiveConfig
 
 pub struct SegmentConfig {
   target_chunk_size : Int

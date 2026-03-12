@@ -1,0 +1,16 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/digest/http"
+
+// Values
+pub async fn http_get(String, Map[String, String]) -> (Int, String) raise @mizchi/x/http.HttpError
+
+pub async fn post_json(String, String, Map[String, String]) -> (Int, String) raise @mizchi/x/http.HttpError
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

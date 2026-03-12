@@ -8,25 +8,13 @@ pub fn build_term_frequency(Array[String]) -> Map[String, Int]
 
 pub fn build_tfidf_vector(Array[String], Map[String, Int], Int) -> TfidfVector
 
-pub fn calculate_adjacent_auto_tfidf_distance(Array[String]) -> Array[Double]
+pub fn calculate_adjacent_tfidf_distance_from_tokenized(Array[Array[String]]) -> Array[Double]
 
-pub fn calculate_adjacent_code_tfidf_distance(Array[String]) -> Array[Double]
-
-pub fn calculate_adjacent_tfidf_distance(Array[String]) -> Array[Double]
-
-pub fn calculate_auto_tfidf_distance(String, String) -> Double
-
-pub fn calculate_code_tfidf_distance(String, String) -> Double
-
-pub fn calculate_tfidf_distance_from_texts(String, String) -> Double
+pub fn calculate_tfidf_distance_from_tokens(Array[String], Array[String]) -> Double
 
 pub fn cosine_distance(TfidfVector, TfidfVector) -> Double
 
 pub fn cosine_similarity(TfidfVector, TfidfVector) -> Double
-
-pub fn tokenize_auto_text_for_tfidf(String) -> Array[String]
-
-pub fn tokenize_code_text_for_tfidf(String) -> Array[String]
 
 // Errors
 
@@ -39,9 +27,7 @@ pub struct TfidfBatch {
 pub fn TfidfBatch::all_pairs_above_threshold(Self, Double) -> Array[(Int, Int, Double)]
 pub fn TfidfBatch::all_pairs_above_threshold_with_stats(Self, Double) -> (Array[(Int, Int, Double)], TfidfPairSearchStats)
 pub fn TfidfBatch::build_stats(Self) -> TfidfBatchBuildStats
-pub fn TfidfBatch::from_auto_texts(Array[String]) -> Self
-pub fn TfidfBatch::from_code_texts(Array[String]) -> Self
-pub fn TfidfBatch::from_texts(Array[String]) -> Self
+pub fn TfidfBatch::from_tokens(Array[Array[String]]) -> Self
 pub fn TfidfBatch::length(Self) -> Int
 pub fn TfidfBatch::similarity(Self, Int, Int) -> Double
 

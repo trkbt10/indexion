@@ -14,17 +14,24 @@ pub struct CodeGraph {
   modules : Map[String, ModuleNode]
   symbols : Map[String, SymbolNode]
   edges : Array[Edge]
+  notes : Array[ModuleNote]
 }
 pub fn CodeGraph::add_edge(Self, EdgeKind, String, String, attrs? : Map[String, String]) -> Unit
+pub fn CodeGraph::add_note(Self, String, String, String) -> Unit
 pub fn CodeGraph::edge_count(Self) -> Int
 pub fn CodeGraph::edges_from(Self, String) -> Array[Edge]
 pub fn CodeGraph::edges_to(Self, String) -> Array[Edge]
 pub fn CodeGraph::from_json_string(String) -> Self?
+pub fn CodeGraph::get_all_notes(Self) -> Array[ModuleNote]
+pub fn CodeGraph::get_callees(Self, String) -> Array[String]
+pub fn CodeGraph::get_callers(Self, String) -> Array[String]
 pub fn CodeGraph::get_edges(Self) -> Array[Edge]
 pub fn CodeGraph::get_module(Self, String) -> ModuleNode?
+pub fn CodeGraph::get_module_doc(Self, String) -> String?
 pub fn CodeGraph::get_modules(Self) -> Map[String, ModuleNode]
+pub fn CodeGraph::get_notes(Self, String, String) -> Array[ModuleNote]
 pub fn CodeGraph::get_or_add_module(Self, String, file? : String?) -> ModuleNode
-pub fn CodeGraph::get_or_add_symbol(Self, String, name~ : String, kind~ : String, ns~ : String, module_id~ : String) -> SymbolNode
+pub fn CodeGraph::get_or_add_symbol(Self, String, name~ : String, kind~ : String, ns~ : String, module_id~ : String, doc? : String?) -> SymbolNode
 pub fn CodeGraph::get_symbol(Self, String) -> SymbolNode?
 pub fn CodeGraph::get_symbols(Self) -> Map[String, SymbolNode]
 pub fn CodeGraph::module_count(Self) -> Int
@@ -74,12 +81,23 @@ pub impl Show for ModuleNode
 pub impl ToJson for ModuleNode
 pub impl @json.FromJson for ModuleNode
 
-pub struct SymbolNode {
+pub struct ModuleNote {
+  note_type : String
+  content : String
+  module_id : String
+}
+pub impl Eq for ModuleNote
+pub impl Show for ModuleNote
+pub impl ToJson for ModuleNote
+pub impl @json.FromJson for ModuleNote
+
+pub(all) struct SymbolNode {
   id : String
   name : String
   kind : String
   ns : String
   module_id : String
+  doc : String?
 }
 pub impl Eq for SymbolNode
 pub impl Show for SymbolNode

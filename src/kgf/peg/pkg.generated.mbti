@@ -11,19 +11,43 @@ pub fn build_peg(@types.KGFSpec) -> PEG raise
 
 pub fn collect_active_rules(@types.KGFSpec) -> @hashset.HashSet[String]
 
+pub fn compute_brace_pairs(Array[@types.Tok]) -> BracePairs
+
 pub fn parse_expr(String) -> Node raise
+
+pub fn parse_expr_with_warnings(String) -> (Node, Array[String]) raise
 
 pub fn run_parse(PEG, @types.KGFSpec, String, Array[@types.Tok]) -> EvalResult?
 
 pub fn run_parse_filtered(PEG, @types.KGFSpec, String, Array[@types.Tok], @hashset.HashSet[String]) -> EvalResult?
 
+pub fn run_parse_filtered_iter(PEG, @types.KGFSpec, String, Array[@types.Tok], @hashset.HashSet[String]) -> EvalResult?
+
+pub fn run_parse_filtered_rec(PEG, @types.KGFSpec, String, Array[@types.Tok], @hashset.HashSet[String]) -> EvalResult?
+
+pub fn run_parse_iter(PEG, @types.KGFSpec, String, Array[@types.Tok], @hashset.HashSet[String], (String, Map[String, Json], Int, Int) -> Unit) -> Bool
+
 // Errors
 
 // Types and methods
-type CompiledNode
+pub struct BracePairs {
+  pairs : Array[Int]
+}
+pub fn BracePairs::get_close(Self, Int) -> Int?
+pub fn BracePairs::is_balanced_open(Self, Int) -> Bool
 
-type EvalContext
-pub fn EvalContext::new(PEG, Array[@types.Tok], emit_filter? : @hashset.HashSet[String]?) -> Self
+pub enum CompiledNode {
+  CEmpty
+  CSym(String)
+  CSeq(Array[Int])
+  CChoice(Array[Int])
+  CStar(Int)
+  CPlus(Int)
+  COptional(Int)
+  CLabel(String, Int)
+  CAnd(Int)
+  CNot(Int)
+}
 
 pub struct EvalResult {
   ok : Bool
@@ -39,10 +63,7 @@ pub fn EvalResult::get_pos(Self) -> Int
 pub fn EvalResult::is_ok(Self) -> Bool
 pub fn EvalResult::success(Int, labels? : Map[String, Json], events? : Array[(String, Map[String, Json])]) -> Self
 
-type MemoKey
-pub impl Eq for MemoKey
-pub impl Hash for MemoKey
-pub impl Show for MemoKey
+type FastCompiledNode
 
 pub enum Node {
   Empty
@@ -53,17 +74,23 @@ pub enum Node {
   Plus(Node)
   Optional(Node)
   Label(String, Node)
+  And(Node)
+  Not(Node)
 }
+pub fn Node::get_and(Self) -> Self?
 pub fn Node::get_choice(Self) -> Array[Self]?
 pub fn Node::get_label(Self) -> (String, Self)?
+pub fn Node::get_not(Self) -> Self?
 pub fn Node::get_optional(Self) -> Self?
 pub fn Node::get_plus(Self) -> Self?
 pub fn Node::get_seq(Self) -> Array[Self]?
 pub fn Node::get_star(Self) -> Self?
 pub fn Node::get_sym(Self) -> String?
+pub fn Node::is_and(Self) -> Bool
 pub fn Node::is_choice(Self) -> Bool
 pub fn Node::is_empty(Self) -> Bool
 pub fn Node::is_label(Self) -> Bool
+pub fn Node::is_not(Self) -> Bool
 pub fn Node::is_optional(Self) -> Bool
 pub fn Node::is_plus(Self) -> Bool
 pub fn Node::is_seq(Self) -> Bool
@@ -79,6 +106,10 @@ pub struct PEG {
   attrs : Map[String, Array[@types.AttrAction]]
   compiled_nodes : Array[CompiledNode]
   rule_node_ids : Map[String, Int]
+  token_ids : Map[String, Int]
+  fast_nodes : Array[FastCompiledNode]
+  fast_rule_ids : Map[String, Int]
+  fast_rule_body_ids : Map[String, Int]
 }
 pub fn PEG::get_ast(Self) -> Map[String, Node]
 pub fn PEG::get_attrs(Self) -> Map[String, Array[@types.AttrAction]]

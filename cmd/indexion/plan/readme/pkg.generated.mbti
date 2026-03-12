@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/plan/readme"
+
+// Values
+pub fn parse_args(Array[String], Int) -> ReadmePlanConfig
+
+pub fn run(Array[String], Int) -> Unit
+
+pub fn show_help() -> Unit
+
+// Errors
+
+// Types and methods
+pub struct ReadmePlanConfig {
+  target_dir : String
+  output : String
+  format : String
+  specs_dir : String
+  template : String
+  plans_dir : String
+  show_help : Bool
+}
+pub fn ReadmePlanConfig::default() -> Self
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,66 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/digest/manifest"
+
+import {
+  "moonbitlang/core/json",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct DigestManifest {
+  created_at : String
+  updated_at : String
+  spec_hash : @trkbt10/indexion/src/kgf/cas/types.ContentHash
+  embedding_provider : String
+  embedding_dim : Int
+  files : Map[String, FileEntry]
+  functions : Map[String, FunctionEntry]
+  vector_id_counter : Int64
+}
+pub fn DigestManifest::allocate_vector_id(Self) -> (Self, Int64)
+pub fn DigestManifest::from_json_string(String) -> Self?
+pub fn DigestManifest::get_deleted_functions(Self, Array[String]) -> Array[String]
+pub fn DigestManifest::get_function(Self, String) -> FunctionEntry?
+pub fn DigestManifest::get_function_ids(Self) -> Array[String]
+pub fn DigestManifest::get_stale_functions(Self, Array[@trkbt10/indexion/src/digest/types.FunctionUnit]) -> Array[String]
+pub fn DigestManifest::is_function_valid(Self, String, @trkbt10/indexion/src/digest/types.FunctionHash, @trkbt10/indexion/src/digest/types.FunctionHash) -> Bool
+pub fn DigestManifest::new(@trkbt10/indexion/src/kgf/cas/types.ContentHash, String, Int) -> Self
+pub fn DigestManifest::remove_deleted_functions(Self, Array[String]) -> (Self, Array[Int64])
+pub fn DigestManifest::remove_function(Self, String) -> Self
+pub fn DigestManifest::to_json_string(Self) -> String
+pub fn DigestManifest::update_function(Self, FunctionEntry) -> Self
+pub impl Eq for DigestManifest
+pub impl Show for DigestManifest
+pub impl ToJson for DigestManifest
+pub impl @json.FromJson for DigestManifest
+
+pub struct FileEntry {
+  file_path : String
+  source_hash : @trkbt10/indexion/src/kgf/cas/types.ContentHash
+  functions : Array[String]
+}
+pub impl Eq for FileEntry
+pub impl Show for FileEntry
+pub impl ToJson for FileEntry
+pub impl @json.FromJson for FileEntry
+
+pub struct FunctionEntry {
+  function_id : String
+  source_hash : @trkbt10/indexion/src/digest/types.FunctionHash
+  context_hash : @trkbt10/indexion/src/digest/types.FunctionHash
+  vector_id : Int64?
+  impression_hash : @trkbt10/indexion/src/digest/types.FunctionHash?
+}
+pub fn FunctionEntry::from_unit(@trkbt10/indexion/src/digest/types.FunctionUnit, Int64?) -> Self
+pub impl Eq for FunctionEntry
+pub impl Show for FunctionEntry
+pub impl ToJson for FunctionEntry
+pub impl @json.FromJson for FunctionEntry
+
+// Type aliases
+
+// Traits
+

@@ -12,7 +12,7 @@ pub fn show_explore_help() -> Unit
 
 // Types and methods
 pub struct ExploreConfig {
-  target_dir : String
+  target_dirs : Array[String]
   format : String
   strategy : String
   threshold : Double

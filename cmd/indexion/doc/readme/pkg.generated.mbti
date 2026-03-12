@@ -11,7 +11,11 @@ pub fn discover_packages(@registry.KGFRegistry, Array[String], Array[String], Ar
 
 pub fn discover_packages_from_files(@registry.KGFRegistry, Array[String], Array[String], Array[String]) -> Array[PackageInfo]
 
+pub fn extract_overview(String) -> String
+
 pub fn extract_package_doc(PackageInfo, Map[String, @types.KGFSpec]) -> ExtractedDoc?
+
+pub fn extract_sections(String, Array[String]) -> String
 
 pub fn extract_summary(String) -> String
 
@@ -28,6 +32,8 @@ pub fn render_template(String, TemplateContext) -> String
 pub fn render_template_file(String, TemplateContext) -> String?
 
 pub fn run(Array[String], Int) -> Unit
+
+pub fn run_with_doc_config(String, ReadmeConfig) -> Unit
 
 pub fn show_help() -> Unit
 
@@ -68,6 +74,7 @@ pub struct ReadmeConfig {
   format : String
   output : String?
   template : String?
+  config_path : String?
   per_package : Bool
   show_help : Bool
 }

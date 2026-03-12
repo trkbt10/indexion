@@ -4,7 +4,6 @@ package "trkbt10/indexion/src/segmentation/utils"
 import {
   "trkbt10/indexion/src/segmentation/sentence",
   "trkbt10/indexion/src/segmentation/types",
-  "trkbt10/indexion/src/text/tfidf",
 }
 
 // Values
@@ -12,27 +11,15 @@ pub fn apply_size_constraints(Int, Array[Int], Array[@sentence.Sentence], Int, I
 
 pub fn boundaries_to_segment_points(Array[Int], Int) -> Array[@types.SegmentPoint]
 
-pub fn build_document_frequency(Array[Array[String]]) -> Map[String, Int]
-
 pub fn build_quote_stack_until(String, Int) -> Array[QuoteStackEntry]
 
-pub fn build_term_frequency(Array[String]) -> Map[String, Int]
-
-pub fn build_tfidf_vector(Array[String], Map[String, Int], Int) -> @tfidf.TfidfVector
-
 pub fn calculate_adjacent_ncd(Array[String]) -> Array[Double]
-
-pub fn calculate_adjacent_tfidf_distance(Array[String]) -> Array[Double]
 
 pub fn combine_sentences(Array[@sentence.Sentence], Int, Int) -> String
 
 pub fn compress(String) -> Bytes
 
 pub fn compressed_size(String) -> Int
-
-pub fn cosine_distance(@tfidf.TfidfVector, @tfidf.TfidfVector) -> Double
-
-pub fn cosine_similarity(@tfidf.TfidfVector, @tfidf.TfidfVector) -> Double
 
 pub let default_quote_safe_max_length : Int
 
@@ -65,8 +52,6 @@ pub fn is_whitespace_only(String) -> Bool
 pub fn min_max_normalize(Array[Double]) -> Array[Double]
 
 pub fn ncd(String, String) -> Double
-
-pub fn tokenize_text_for_tfidf(String) -> Array[String]
 
 pub fn update_quote_stack(Array[QuoteStackEntry], Char, Int) -> Unit
 

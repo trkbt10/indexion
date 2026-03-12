@@ -1,0 +1,92 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/digest/config"
+
+import {
+  "trkbt10/indexion/src/digest/extract",
+  "trkbt10/indexion/src/digest/types",
+}
+
+// Values
+pub const DEFAULT_IMPRESS_MODEL : String = "gpt-4o-mini"
+
+pub const DEFAULT_IMPRESS_PROMPT : String = "You are a code documentation expert. Given a function's metadata, generate a concise purpose description.\n\nOutput JSON with:\n- summary: One sentence describing what the function does\n- keywords: 3-5 key terms for search (English)\n\nBe specific and actionable. Focus on WHAT the function does, not HOW."
+
+pub const DEFAULT_INDEX_DIR : String = ".indexion/digest"
+
+pub const DEFAULT_TFIDF_DIM : Int = 256
+
+pub const OPENAI_EMBEDDING_DIM : Int = 1536
+
+pub fn default_exclude_kinds() -> Array[String]
+
+// Errors
+
+// Types and methods
+pub(all) struct DigestConfig {
+  embedding_source : EmbeddingSource
+  embedding_provider : EmbeddingProvider
+  vcdb_strategy : VcdbStrategy
+  include_external : Bool
+  exclude_kinds : Array[String]
+  index_dir : String
+  llm_config : LlmConfig?
+}
+pub fn DigestConfig::default() -> Self
+pub fn DigestConfig::embedding_dim(Self) -> Int
+pub fn DigestConfig::get_embedding_text(Self, @types.FunctionUnit) -> String
+pub fn DigestConfig::is_remote(Self) -> Bool
+pub fn DigestConfig::openai(String) -> Self
+pub fn DigestConfig::precomputed(String) -> Self
+pub fn DigestConfig::to_extract_config(Self) -> @extract.ExtractConfig
+pub fn DigestConfig::uses_impressions(Self) -> Bool
+pub fn DigestConfig::with_exclude_kinds(Self, Array[String]) -> Self
+pub fn DigestConfig::with_impress_model(Self, String) -> Self
+pub fn DigestConfig::with_impress_prompt(Self, String) -> Self
+pub fn DigestConfig::with_impressions(String) -> Self
+pub fn DigestConfig::with_index_dir(Self, String) -> Self
+pub fn DigestConfig::with_llm(Self, LlmConfig) -> Self
+pub fn DigestConfig::with_provider(Self, EmbeddingProvider) -> Self
+pub impl Eq for DigestConfig
+pub impl Show for DigestConfig
+
+pub(all) enum EmbeddingProvider {
+  TfIdf(Int)
+  OpenAI(String)
+  Precomputed(String)
+}
+pub impl Eq for EmbeddingProvider
+pub impl Show for EmbeddingProvider
+
+pub(all) enum EmbeddingSource {
+  Raw
+  Impression
+  RawWithContext
+}
+pub impl Eq for EmbeddingSource
+pub impl Show for EmbeddingSource
+
+pub(all) struct LlmConfig {
+  api_key : String
+  model : String
+  system_prompt : String
+  base_url : String
+  temperature : Double
+}
+pub fn LlmConfig::openai(String) -> Self
+pub fn LlmConfig::with_model(String, String) -> Self
+pub fn LlmConfig::with_prompt(String, String) -> Self
+pub impl Eq for LlmConfig
+pub impl Show for LlmConfig
+
+pub(all) enum VcdbStrategy {
+  BruteForce
+  Hnsw
+  Ivf
+}
+pub impl Eq for VcdbStrategy
+pub impl Show for VcdbStrategy
+
+// Type aliases
+
+// Traits
+

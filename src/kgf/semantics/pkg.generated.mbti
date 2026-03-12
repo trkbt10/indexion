@@ -60,6 +60,7 @@ pub fn SemEvalCtx::add_event(Self, String, Map[String, Json]) -> Unit
 pub fn SemEvalCtx::collect_refs(Self) -> Array[Map[String, Json]]
 pub fn SemEvalCtx::current_call_id(Self) -> String?
 pub fn SemEvalCtx::current_scope(Self) -> ScopeEntry
+pub fn SemEvalCtx::get_graph(Self) -> @graph.CodeGraph
 pub fn SemEvalCtx::get_resolution_cache(Self) -> @types.ResolutionCache
 pub fn SemEvalCtx::lookup_scope(Self, String, String) -> String?
 pub fn SemEvalCtx::new(@types.KGFSpec, @graph.CodeGraph, String, String, String, (String) -> Bool) -> Self

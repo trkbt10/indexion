@@ -7,6 +7,8 @@ import {
 }
 
 // Values
+pub fn build_graph_from_deps(Array[@query.ModuleDep], circulars? : Array[@query.CircularDep], graph? : @graph.CodeGraph, title? : String) -> GraphJSON
+
 pub fn generate_call_diagram(Array[@query.CallInfo], title? : String, focus? : String?) -> String
 
 pub fn generate_dep_diagram(Array[@query.ModuleDep], title? : String) -> String
@@ -19,9 +21,45 @@ pub fn generate_hierarchy_diagram(Array[@query.TypeRelation], title? : String) -
 
 pub fn generate_overview_diagram(Array[@query.ModuleDep], Array[@query.SymbolDecl], max_symbols_per_module? : Int) -> String
 
+pub fn render_d2(GraphJSON) -> String
+
+pub fn render_dot(GraphJSON) -> String
+
+pub fn render_mermaid(GraphJSON) -> String
+
+pub fn render_text(GraphJSON) -> String
+
 // Errors
 
 // Types and methods
+pub struct GraphEdge {
+  from : String
+  to : String
+  kind : String
+  metadata : Map[String, String]
+}
+pub impl Eq for GraphEdge
+
+pub struct GraphJSON {
+  title : String
+  nodes : Array[GraphNode]
+  edges : Array[GraphEdge]
+  metadata : Map[String, String]
+}
+pub fn GraphJSON::add_edge(Self, String, String, kind? : String) -> Unit
+pub fn GraphJSON::add_node(Self, String, String, kind? : String, file? : String?) -> Unit
+pub fn GraphJSON::from_json(Json) -> Self?
+pub fn GraphJSON::new(title? : String) -> Self
+pub fn GraphJSON::to_json(Self) -> Json
+
+pub struct GraphNode {
+  id : String
+  label : String
+  kind : String
+  file : String?
+  metadata : Map[String, String]
+}
+pub impl Eq for GraphNode
 
 // Type aliases
 

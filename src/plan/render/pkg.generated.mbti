@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/plan/render"
+
+import {
+  "trkbt10/indexion/src/plan/types",
+}
+
+// Values
+pub fn render_content_common(StringBuilder, @types.SectionContent, Int, RenderStyle) -> Unit
+
+pub fn render_github_issue(@types.PlanDocument) -> GitHubIssue
+
+pub fn render_markdown(@types.PlanDocument) -> String
+
+pub fn render_section_common(StringBuilder, @types.PlanSection, Int, RenderStyle) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct GitHubIssue {
+  title : String
+  body : String
+  labels : Array[String]
+}
+
+pub struct RenderStyle {
+  priority_style : String
+  checklist_desc_newline : Bool
+  table_separator_spaced : Bool
+}
+pub fn RenderStyle::github_issue() -> Self
+pub fn RenderStyle::markdown() -> Self
+
+// Type aliases
+
+// Traits
+

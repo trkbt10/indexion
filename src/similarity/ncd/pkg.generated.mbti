@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/similarity/ncd"
+
+import {
+  "trkbt10/indexion/src/similarity/types",
+}
+
+// Values
+pub fn calculate_adjacent_ncd(Array[String]) -> Array[Double]
+
+// Errors
+
+// Types and methods
+pub struct NCDStrategy {
+  // private fields
+}
+pub fn NCDStrategy::new() -> Self
+pub impl Eq for NCDStrategy
+pub impl Show for NCDStrategy
+pub impl @types.SimilarityStrategy for NCDStrategy
+
+// Type aliases
+
+// Traits
+
