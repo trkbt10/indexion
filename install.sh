@@ -7,6 +7,24 @@ set -euo pipefail
 REPO="trkbt10/indexion"
 INSTALL_DIR="${INDEXION_INSTALL_DIR:-$HOME/.indexion}"
 
+# OS-standard data directory for kgfs (matches platform.mbt SoT)
+get_data_dir() {
+    case "$(uname -s)" in
+        Darwin*)
+            echo "$HOME/Library/Application Support/Indexion"
+            ;;
+        Linux*)
+            echo "${XDG_DATA_HOME:-$HOME/.local/share}/indexion"
+            ;;
+        MINGW*|MSYS*|CYGWIN*)
+            echo "${LOCALAPPDATA:-$USERPROFILE/AppData/Local}/Indexion"
+            ;;
+        *)
+            echo "${XDG_DATA_HOME:-$HOME/.local/share}/indexion"
+            ;;
+    esac
+}
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -21,7 +39,7 @@ detect_platform() {
     case "$(uname -s)" in
         Linux*)  os="linux" ;;
         Darwin*) os="darwin" ;;
-        MINGW*|MSYS*|CYGWIN*) error "Use Windows release archive instead" ;;
+        MINGW*|MSYS*|CYGWIN*) os="windows" ;;
         *) error "Unsupported OS: $(uname -s)" ;;
     esac
 
@@ -30,14 +48,14 @@ detect_platform() {
             if [[ "$os" == "darwin" ]]; then
                 echo "darwin-arm64"  # Rosetta compatible
             else
-                echo "linux-x64"
+                echo "${os}-x64"
             fi
             ;;
         arm64|aarch64)
             if [[ "$os" == "darwin" ]]; then
                 echo "darwin-arm64"
             else
-                error "Linux arm64 not yet supported"
+                error "${os} arm64 not yet supported"
             fi
             ;;
         *) error "Unsupported architecture: $(uname -m)" ;;
@@ -101,28 +119,45 @@ main() {
     info "Version: $version"
 
     local asset="indexion-${platform}"
-    local url="https://github.com/$REPO/releases/download/$version/${asset}.tar.gz"
+    local is_windows=false
+    local archive_ext="tar.gz"
+    local bin_name="indexion"
+    if [[ "$platform" == windows-* ]]; then
+        is_windows=true
+        archive_ext="zip"
+        bin_name="indexion.exe"
+    fi
+
+    local url="https://github.com/$REPO/releases/download/$version/${asset}.${archive_ext}"
     local checksum_url="${url}.sha256"
 
     local tmp_dir=$(mktemp -d)
     trap "rm -rf '$tmp_dir'" EXIT
 
-    download "$url" "$tmp_dir/archive.tar.gz"
-    verify_checksum "$tmp_dir/archive.tar.gz" "$checksum_url"
+    download "$url" "$tmp_dir/archive.${archive_ext}"
+    verify_checksum "$tmp_dir/archive.${archive_ext}" "$checksum_url"
 
     info "Extracting..."
-    tar -xzf "$tmp_dir/archive.tar.gz" -C "$tmp_dir"
+    if [[ "$is_windows" == true ]]; then
+        unzip -qo "$tmp_dir/archive.zip" -d "$tmp_dir"
+    else
+        tar -xzf "$tmp_dir/archive.tar.gz" -C "$tmp_dir"
+    fi
 
     info "Installing to $INSTALL_DIR"
     mkdir -p "$INSTALL_DIR/bin"
 
-    cp "$tmp_dir/$asset/indexion" "$INSTALL_DIR/bin/indexion"
-    chmod +x "$INSTALL_DIR/bin/indexion"
+    cp "$tmp_dir/$asset/$bin_name" "$INSTALL_DIR/bin/$bin_name"
+    if [[ "$is_windows" != true ]]; then
+        chmod +x "$INSTALL_DIR/bin/$bin_name"
+    fi
 
     if [[ -d "$tmp_dir/$asset/kgfs" ]]; then
-        rm -rf "$INSTALL_DIR/kgfs"
-        cp -r "$tmp_dir/$asset/kgfs" "$INSTALL_DIR/kgfs"
-        info "KGF specs installed to $INSTALL_DIR/kgfs"
+        local data_dir=$(get_data_dir)
+        mkdir -p "$data_dir"
+        rm -rf "$data_dir/kgfs"
+        cp -r "$tmp_dir/$asset/kgfs" "$data_dir/kgfs"
+        info "KGF specs installed to $data_dir/kgfs"
     fi
 
     if [[ ":$PATH:" != *":$INSTALL_DIR/bin:"* ]]; then
