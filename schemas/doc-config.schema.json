@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/trkbt10/indexion/specs/doc-config.schema.json",
+  "title": "indexion doc config",
+  "description": "Configuration for indexion doc readme --config",
+  "type": "object",
+  "required": ["version", "packages", "root"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "version": {
+      "type": "string",
+      "description": "Config version",
+      "enum": ["1.0"]
+    },
+    "spec": {
+      "type": "string",
+      "description": "Default KGF spec for documentation extraction"
+    },
+    "output": {
+      "type": "object",
+      "description": "Default output settings",
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["markdown", "json"],
+          "default": "markdown"
+        },
+        "filename": {
+          "type": "string",
+          "default": "README.md"
+        }
+      }
+    },
+    "packages": {
+      "type": "array",
+      "description": "Package entries for documentation",
+      "items": {
+        "$ref": "#/$defs/packageEntry"
+      }
+    },
+    "root": {
+      "type": "object",
+      "description": "Root README configuration",
+      "required": ["output", "sections"],
+      "properties": {
+        "template": {
+          "type": "string",
+          "description": "Optional template file path"
+        },
+        "output": {
+          "type": "string",
+          "description": "Output file path"
+        },
+        "sections": {
+          "type": "array",
+          "description": "Ordered sections for root README",
+          "items": {
+            "$ref": "#/$defs/rootSection"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "packageEntry": {
+      "type": "object",
+      "required": ["path", "title"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Package directory path"
+        },
+        "title": {
+          "type": "string",
+          "description": "Display title for the package/command"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description"
+        },
+        "include_in_root": {
+          "type": "boolean",
+          "description": "Include in root README",
+          "default": false
+        },
+        "sections": {
+          "type": "array",
+          "description": "Sections to extract from README.md",
+          "items": {
+            "type": "string"
+          },
+          "examples": [["overview", "usage", "options", "examples"]]
+        }
+      }
+    },
+    "rootSection": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        {
+          "properties": {
+            "type": { "const": "static" },
+            "file": {
+              "type": "string",
+              "description": "Path to static markdown file"
+            }
+          },
+          "required": ["type", "file"]
+        },
+        {
+          "properties": {
+            "type": { "const": "toc" },
+            "title": {
+              "type": "string",
+              "description": "TOC section title",
+              "default": "Contents"
+            }
+          },
+          "required": ["type"]
+        },
+        {
+          "properties": {
+            "type": { "const": "packages" },
+            "filter": {
+              "type": "string",
+              "description": "Glob pattern to filter packages",
+              "default": "**"
+            }
+          },
+          "required": ["type"]
+        }
+      ]
+    }
+  }
+}

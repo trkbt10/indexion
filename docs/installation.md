@@ -1,27 +1,55 @@
 ## Installation
 
-### From Release
+### Quick Install (Linux/macOS)
 
-Download the appropriate binary for your platform from [Releases](https://github.com/trkbt10/indexion/releases).
+```bash
+curl -fsSL https://raw.githubusercontent.com/trkbt10/indexion/main/install.sh | bash
+```
+
+Installs to `~/.indexion/` with KGF language specs. Add to PATH:
+
+```bash
+export PATH="$HOME/.indexion/bin:$PATH"
+```
+
+### Manual Download
+
+Download from [Releases](https://github.com/trkbt10/indexion/releases):
 
 | Platform | Archive |
 |----------|---------|
 | Linux x64 | `indexion-linux-x64.tar.gz` |
-| macOS ARM64 | `indexion-macos-arm64.tar.gz` |
+| macOS ARM64 | `indexion-darwin-arm64.tar.gz` |
 | Windows x64 | `indexion-windows-x64.zip` |
+
+Each archive contains:
+- `indexion` binary
+- `kgfs/` directory (60+ language specifications)
+
+Extract and move to your preferred location:
+
+```bash
+tar -xzf indexion-darwin-arm64.tar.gz
+mv indexion-darwin-arm64/indexion ~/.local/bin/
+mv indexion-darwin-arm64/kgfs ~/.indexion/
+```
 
 ### From Source
 
 ```bash
-# Clone repository
 git clone https://github.com/trkbt10/indexion.git
 cd indexion
-
-# Build native binary
-moon build --target native
-
-# Binary is at: target/native/release/build/cmd/indexion/indexion
+moon build --target native --release
+# Binary: _build/native/release/build/cmd/indexion/indexion.exe
 ```
+
+### KGF Specs Location
+
+indexion searches for KGF specs in this order:
+1. `--kgfs-dir` CLI option
+2. `INDEXION_KGFS_DIR` environment variable
+3. `~/.indexion/kgfs/`
+4. `kgfs/` in project directory
 
 ### Requirements
 

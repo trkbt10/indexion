@@ -147,33 +147,14 @@ jobs:
           draft: false
           prerelease: ${{ contains(github.ref, '-') }}
           body: |
-            ## Installation
+            ## Quick Install (Linux/macOS)
 
-            Download the archive for your platform and extract it:
-
-            ### Linux (x64)
             ```bash
-            tar -xzf indexion-linux-x64.tar.gz
-            cd indexion-linux-x64
-            ./indexion --help
+            curl -fsSL https://raw.githubusercontent.com/trkbt10/indexion/main/install.sh | bash
             ```
 
-            ### macOS (ARM64)
-            ```bash
-            tar -xzf indexion-darwin-arm64.tar.gz
-            cd indexion-darwin-arm64
-            ./indexion --help
-            ```
+            ## Manual Download
 
-            ### Windows (x64)
-            Extract `indexion-windows-x64.zip` and run `indexion.exe`
+            Each archive contains the `indexion` binary and `kgfs/` language specs.
 
-            ## Package Contents
-
-            Each package includes:
-            - `indexion` (or `indexion.exe`) - the CLI binary
-            - `kgfs/` - KGF language specification files
-
-            ## Adding Custom KGF Specs
-
-            Add your own `.kgf` files to the `kgfs/` directory to support additional languages.
+            See [Installation Guide](https://github.com/trkbt10/indexion#installation) for details.

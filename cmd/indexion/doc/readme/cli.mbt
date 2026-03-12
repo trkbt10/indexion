@@ -59,6 +59,7 @@ pub struct ReadmeConfig {
   format : String
   output : String?
   template : String?
+  config_path : String?
   per_package : Bool
   show_help : Bool
 }
@@ -74,6 +75,7 @@ pub fn ReadmeConfig::default() -> ReadmeConfig {
     format: "markdown",
     output: None,
     template: None,
+    config_path: None,
     per_package: false,
     show_help: false,
   }
@@ -127,6 +129,9 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> ReadmeConfig {
     } else if arg.has_prefix("--template=") {
       let value = get_arg_value(arg, 11)
       config = { ..config, template: Some(value) }
+    } else if arg.has_prefix("--config=") {
+      let value = get_arg_value(arg, 9)
+      config = { ..config, config_path: Some(value) }
     } else if not(arg.has_prefix("-")) {
       paths.push(arg)
     }
@@ -157,6 +162,7 @@ pub fn show_help() -> Unit {
   println("  --output=FILE        Write output to file (default: stdout)")
   println("  -o=FILE              Short form of --output")
   println("  --template=FILE      Use template file for generation")
+  println("  --config=FILE        Use doc.json configuration file")
   println("  --per-package        Generate README.md in each package directory")
   println("  --help               Show this help message")
   println("")
@@ -190,6 +196,14 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   if config.show_help {
     show_help()
     return
+  }
+  // If --config is specified, use doc.json-based generation
+  match config.config_path {
+    Some(config_path) => {
+      run_with_doc_config(config_path, config)
+      return
+    }
+    None => ()
   }
   // Stage 1: Load KGF specs to get ignore patterns.
   log_progress("[1/4] Loading KGF specs...")
