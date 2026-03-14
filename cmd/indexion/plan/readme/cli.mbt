@@ -160,7 +160,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     return
   }
   // Discover packages for context
-  let packages = discover_packages(target_dir, lang_spec)
+  let packages = discover_packages(target_dir, lang_spec, Some(registry))
   // Discover existing documentation files
   let existing_docs = discover_existing_docs(target_dir, lang_spec)
   // Create plans directory
@@ -222,12 +222,12 @@ fn ProjectInfo::default() -> ProjectInfo {
 fn load_registry_from_paths(
   specs_dir : String,
   target_dir : String,
-) -> @registry.KGFRegistry {
+) -> @kgf_registry.KGFRegistry {
   // Use SoT: explicit path takes priority if not default
   let explicit = if specs_dir != "kgfs" { specs_dir } else { "" }
   match @kgf_features.load_registry(explicit_path=explicit, target_dir~) {
     Some(reg) => reg
-    None => @registry.KGFRegistry::new()
+    None => @kgf_registry.KGFRegistry::new()
   }
 }
 
@@ -235,7 +235,7 @@ fn load_registry_from_paths(
 /// Detect project type using KGF specs and return both info and spec.
 fn detect_project_with_kgf(
   dir : String,
-  registry : @registry.KGFRegistry,
+  registry : @kgf_registry.KGFRegistry,
 ) -> (ProjectInfo, @kgf_types.KGFSpec?) {
   let specs_map = registry.to_specs_map()
   for lang, spec in specs_map {
@@ -360,6 +360,7 @@ fn extract_doc_title(path : String) -> String {
 fn discover_packages(
   dir : String,
   spec : @kgf_types.KGFSpec?,
+  registry : @kgf_registry.KGFRegistry?,
 ) -> Array[PackageInfo] {
   let packages : Array[PackageInfo] = []
   let mut filter_config = @filter.FilterConfig::from_project_root(dir)
@@ -378,7 +379,7 @@ fn discover_packages(
       }
     None => ()
   }
-  discover_packages_recursive(dir, dir, packages, filter_config)
+  discover_packages_recursive(dir, dir, packages, filter_config, registry)
   packages
 }
 
@@ -388,6 +389,7 @@ fn discover_packages_recursive(
   current_dir : String,
   packages : Array[PackageInfo],
   filter_config : @filter.FilterConfig,
+  registry : @kgf_registry.KGFRegistry?,
 ) -> Unit {
   let entries = @fs.read_dir(current_dir) catch { _ => return }
   // Load nested .gitignore if present
@@ -399,7 +401,9 @@ fn discover_packages_recursive(
     if entry.has_suffix(".mbt") && not(entry.has_suffix("_wbtest.mbt")) {
       has_mbt_files = true
       let file_path = current_dir + "/" + entry
-      pub_count = pub_count + count_pub_items(file_path)
+      let content = @fs.read_file_to_string(file_path) catch { _ => continue }
+      pub_count = pub_count +
+        @kgf_features.count_pub_declarations(content, file_path, registry)
     }
   }
   if has_mbt_files && pub_count > 0 {
@@ -412,29 +416,15 @@ fn discover_packages_recursive(
     if @common.is_directory(full_path) {
       // Use filter to skip excluded directories
       if not(local_config.should_skip_dir(entry)) {
-        discover_packages_recursive(base_dir, full_path, packages, local_config)
+        discover_packages_recursive(
+          base_dir, full_path, packages, local_config, registry,
+        )
       }
     }
   }
 }
 
-///|
-fn count_pub_items(file_path : String) -> Int {
-  let content = @fs.read_file_to_string(file_path) catch { _ => return 0 }
-  let mut count = 0
-  let lines = @common.split_lines(content)
-  for line in lines {
-    let trimmed = @common.trim_ascii_spaces(line)
-    if trimmed.has_prefix("pub fn ") ||
-      trimmed.has_prefix("pub struct ") ||
-      trimmed.has_prefix("pub enum ") ||
-      trimmed.has_prefix("pub type ") ||
-      trimmed.has_prefix("pub trait ") {
-      count = count + 1
-    }
-  }
-  count
-}
+// count_pub_items: replaced by @kgf_features.count_pub_declarations (SoT, language-agnostic)
 
 // use @common (SoT) — is_directory
 
@@ -535,7 +525,7 @@ fn get_plan_filename(include_path : String) -> String {
 /// Create directory recursively.
 fn create_dir_recursive(path : String) -> Unit {
   // Split path and create each part
-  let parts = split_path(path)
+  let parts = @common.split_by_slash(path)
   let mut current = ""
   for part in parts {
     current = if current.length() == 0 {
@@ -553,25 +543,7 @@ fn create_dir_recursive(path : String) -> Unit {
   }
 }
 
-///|
-fn split_path(path : String) -> Array[String] {
-  let parts : Array[String] = []
-  let current : Array[Char] = []
-  for c in path {
-    if c == '/' {
-      if current.length() > 0 {
-        parts.push(String::from_array(current))
-        current.clear()
-      }
-    } else {
-      current.push(c)
-    }
-  }
-  if current.length() > 0 {
-    parts.push(String::from_array(current))
-  }
-  parts
-}
+// split_path: use @common.split_by_slash (SoT)
 
 ///|
 /// Generate writing plan content for a specific include path.

@@ -10,9 +10,13 @@ import {
 // Values
 pub fn build_line_func_map(String, String, @registry.KGFRegistry?) -> Map[Int, String]
 
+pub fn count_pub_declarations(String, String, @registry.KGFRegistry?) -> Int
+
 pub fn extract_function_trees(Array[@types.Tok], String) -> Array[(ExtractedFunction, @apted.TreeNode)]
 
 pub fn extract_functions(Array[@types.Tok], String) -> Array[ExtractedFunction]
+
+pub fn extract_pub_declarations(String, String, @registry.KGFRegistry?) -> Array[PubDeclaration]
 
 pub fn find_kgfs_dir(explicit_path? : String, target_dir? : String, target_dirs? : Array[String]) -> String?
 
@@ -44,6 +48,12 @@ pub fn ExtractedFunction::get_start(Self) -> Int
 pub fn ExtractedFunction::new(String, Int, Int, String) -> Self
 pub fn ExtractedFunction::qualified_name(Self) -> String
 pub fn ExtractedFunction::token_count(Self) -> Int
+
+pub struct PubDeclaration {
+  kind : String
+  name : String
+  line : Int
+}
 
 // Type aliases
 

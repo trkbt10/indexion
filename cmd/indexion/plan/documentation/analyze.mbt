@@ -90,7 +90,8 @@ pub fn analyze_documentation(dir : String) -> DocAnalysis {
   let all_items : Array[PubItem] = []
   let normalized_dir = @common.normalize_path(dir)
   let filter = @filter.FilterConfig::from_project_root(normalized_dir)
-  collect_packages(normalized_dir, packages, "", filter)
+  let registry = @kgf_features.load_registry(target_dir=normalized_dir)
+  collect_packages(normalized_dir, packages, "", filter, registry)
   // Aggregate stats
   let mut total_pub = 0
   let mut total_doc = 0
@@ -131,6 +132,7 @@ fn collect_packages(
   packages : Array[PackageAnalysis],
   rel_path : String,
   filter : @filter.FilterConfig,
+  registry : @kgf_registry.KGFRegistry?,
 ) -> Unit {
   try {
     if not(@fs.is_dir(dir)) {
@@ -165,7 +167,7 @@ fn collect_packages(
           } else {
             entry
           }
-          collect_packages(path, packages, sub_rel, filter)
+          collect_packages(path, packages, sub_rel, filter, registry)
         }
       }
     }
@@ -180,7 +182,7 @@ fn collect_packages(
         } else {
           file
         }
-        analyze_mbt_file(file_path, file_rel, pub_items)
+        analyze_source_file(file_path, file_rel, pub_items, registry)
       }
       let documented = pub_items
         .iter()
@@ -201,19 +203,35 @@ fn collect_packages(
 }
 
 ///|
-fn analyze_mbt_file(
+/// Analyze source file for public declarations using KGF tokenization.
+/// Associates doc comments (///| blocks) with declarations by line proximity.
+fn analyze_source_file(
   path : String,
   rel_path : String,
   items : Array[PubItem],
+  registry : @kgf_registry.KGFRegistry?,
 ) -> Unit {
   try {
     let content = @fs.read_file_to_string(path)
+    // Extract public declarations via KGF (language-agnostic)
+    let declarations = @kgf_features.extract_pub_declarations(
+      content, path, registry,
+    )
+    if declarations.length() == 0 {
+      return
+    }
+    // Build line -> declaration lookup
+    let decl_map : Map[Int, @kgf_features.PubDeclaration] = {}
+    for decl in declarations {
+      decl_map.set(decl.line, decl)
+    }
+    // Scan lines for doc comments and associate with declarations
     let lines = @common.split_lines(content)
     let mut doc_buffer : Array[String] = []
     let mut in_doc_block = false
     for i, line in lines {
       let trimmed = @common.trim_ascii_spaces(line)
-      // Check for doc comment
+      let line_num = i + 1
       if trimmed.has_prefix("///|") {
         in_doc_block = true
         doc_buffer = []
@@ -225,21 +243,17 @@ fn analyze_mbt_file(
         }
         doc_buffer.push(@common.trim_ascii_spaces(doc_line))
       } else if in_doc_block {
-        // End of doc block, check if next line is pub declaration
-        if trimmed.has_prefix("pub ") {
-          let item = parse_pub_declaration(trimmed, rel_path, i + 1, doc_buffer)
-          match item {
-            Some(it) => items.push(it)
-            None => ()
-          }
-        }
         in_doc_block = false
+        match decl_map.get(line_num) {
+          Some(decl) =>
+            items.push(make_pub_item(decl, rel_path, doc_buffer))
+          None => ()
+        }
         doc_buffer = []
-      } else if trimmed.has_prefix("pub ") {
-        // Pub without doc
-        let item = parse_pub_declaration(trimmed, rel_path, i + 1, [])
-        match item {
-          Some(it) => items.push(it)
+      } else {
+        // Check for pub declaration without doc
+        match decl_map.get(line_num) {
+          Some(decl) => items.push(make_pub_item(decl, rel_path, []))
           None => ()
         }
       }
@@ -250,13 +264,11 @@ fn analyze_mbt_file(
 }
 
 ///|
-fn parse_pub_declaration(
-  line : String,
+fn make_pub_item(
+  decl : @kgf_features.PubDeclaration,
   file : String,
-  line_num : Int,
   doc_lines : Array[String],
-) -> PubItem? {
-  let trimmed = @common.trim_ascii_spaces(line)
+) -> PubItem {
   let has_doc = doc_lines.length() > 0
   let doc_preview = if has_doc && doc_lines[0].length() > 0 {
     let preview = doc_lines[0]
@@ -268,122 +280,10 @@ fn parse_pub_declaration(
   } else {
     ""
   }
-  // Parse pub fn
-  if trimmed.has_prefix("pub fn ") {
-    let rest = @common.substring(trimmed, 7, trimmed.length())
-    let name = extract_identifier(rest)
-    if name.length() > 0 {
-      return Some({
-        name,
-        kind: "fn",
-        file,
-        line: line_num,
-        has_doc,
-        doc_preview,
-      })
-    }
-  }
-  // Parse pub struct
-  if trimmed.has_prefix("pub struct ") {
-    let rest = @common.substring(trimmed, 11, trimmed.length())
-    let name = extract_identifier(rest)
-    if name.length() > 0 {
-      return Some({
-        name,
-        kind: "struct",
-        file,
-        line: line_num,
-        has_doc,
-        doc_preview,
-      })
-    }
-  }
-  // Parse pub enum
-  if trimmed.has_prefix("pub enum ") {
-    let rest = @common.substring(trimmed, 9, trimmed.length())
-    let name = extract_identifier(rest)
-    if name.length() > 0 {
-      return Some({
-        name,
-        kind: "enum",
-        file,
-        line: line_num,
-        has_doc,
-        doc_preview,
-      })
-    }
-  }
-  // Parse pub type
-  if trimmed.has_prefix("pub type ") {
-    let rest = @common.substring(trimmed, 9, trimmed.length())
-    let name = extract_identifier(rest)
-    if name.length() > 0 {
-      return Some({
-        name,
-        kind: "type",
-        file,
-        line: line_num,
-        has_doc,
-        doc_preview,
-      })
-    }
-  }
-  // Parse pub trait
-  if trimmed.has_prefix("pub trait ") {
-    let rest = @common.substring(trimmed, 10, trimmed.length())
-    let name = extract_identifier(rest)
-    if name.length() > 0 {
-      return Some({
-        name,
-        kind: "trait",
-        file,
-        line: line_num,
-        has_doc,
-        doc_preview,
-      })
-    }
-  }
-  // Parse pub let (constants)
-  if trimmed.has_prefix("pub let ") {
-    let rest = @common.substring(trimmed, 8, trimmed.length())
-    let name = extract_identifier(rest)
-    if name.length() > 0 {
-      return Some({
-        name,
-        kind: "const",
-        file,
-        line: line_num,
-        has_doc,
-        doc_preview,
-      })
-    }
-  }
-  None
+  { name: decl.name, kind: decl.kind, file, line: decl.line, has_doc, doc_preview }
 }
 
-///|
-fn extract_identifier(s : String) -> String {
-  let chars = s.to_array()
-  let result : Array[Char] = []
-  for c in chars {
-    if is_ident_char(c) {
-      result.push(c)
-    } else {
-      break
-    }
-  }
-  String::from_array(result)
-}
-
-///|
-fn is_ident_char(c : Char) -> Bool {
-  (c >= 'a' && c <= 'z') ||
-  (c >= 'A' && c <= 'Z') ||
-  (c >= '0' && c <= '9') ||
-  c == '_' ||
-  c == ':'
-}
-
+// extract_identifier, is_ident_char: no longer needed (KGF handles identification)
 // use @common (SoT) — split_lines
 
 // use @common (SoT) — trim_ascii_spaces, substring, normalize_path

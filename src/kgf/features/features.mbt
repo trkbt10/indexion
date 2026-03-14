@@ -160,3 +160,133 @@ pub fn load_registry(
     None => None
   }
 }
+
+///|
+/// A public declaration extracted from source code via KGF tokenization.
+pub struct PubDeclaration {
+  /// Declaration kind derived from token kind (e.g. "fn", "struct", "class").
+  kind : String
+  /// Declaration name (the identifier following the declaration keyword).
+  name : String
+  /// Line number (1-indexed).
+  line : Int
+}
+
+///|
+/// Check if a token kind represents a visibility modifier.
+/// Detects KW_pub, KW_public, KW_export by prefix convention.
+fn is_visibility_keyword(kind : String) -> Bool {
+  kind == "KW_pub" || kind == "KW_public" || kind == "KW_export"
+}
+
+///|
+/// Check if a token kind represents a declaration keyword.
+/// Returns the normalized kind name (e.g. "KW_fn" -> "fn", "KW_function" -> "function").
+fn declaration_kind(kind : String) -> String? {
+  // Function declarations
+  if kind == "KW_fn" || kind == "KW_function" || kind == "KW_def" || kind == "KW_func" {
+    return Some(kind.substring(start=3))
+  }
+  // Type declarations
+  if kind == "KW_struct" || kind == "KW_class" || kind == "KW_enum" ||
+    kind == "KW_type" || kind == "KW_trait" || kind == "KW_interface" {
+    return Some(kind.substring(start=3))
+  }
+  // Variable/constant declarations
+  if kind == "KW_let" || kind == "KW_const" || kind == "KW_var" {
+    return Some(kind.substring(start=3))
+  }
+  None
+}
+
+///|
+/// Extract public declarations from source code using KGF tokenization.
+/// Language-agnostic: uses KGF token kinds to detect visibility + declaration patterns.
+/// Returns empty array if registry or spec is unavailable.
+pub fn extract_pub_declarations(
+  content : String,
+  path : String,
+  registry : @kgf_registry.KGFRegistry?,
+) -> Array[PubDeclaration] {
+  let result : Array[PubDeclaration] = []
+  let reg = match registry {
+    Some(r) => r
+    None => return result
+  }
+  let lang = match reg.detect_from_path(path) {
+    Some(l) => l
+    None => return result
+  }
+  let spec = match reg.get_spec(lang) {
+    Some(s) => s
+    None => return result
+  }
+  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+  let tokens = lexer.tokenize(content)
+  // Build token -> line number mapping
+  let mut line = 1
+  let token_lines : Array[Int] = Array::make(tokens.length(), 1)
+  for i, tok in tokens {
+    token_lines[i] = line
+    if tok.get_kind() == "NL" {
+      line += 1
+    }
+  }
+  // Scan for visibility keyword followed by declaration keyword + identifier
+  let mut i = 0
+  while i < tokens.length() {
+    let tok = tokens[i]
+    if is_visibility_keyword(tok.get_kind()) {
+      // Look ahead for a declaration keyword
+      let mut j = i + 1
+      // Skip whitespace/newlines between visibility and declaration
+      while j < tokens.length() {
+        let next_kind = tokens[j].get_kind()
+        if next_kind == "NL" || next_kind == "WS" || next_kind == "LPAREN" ||
+          next_kind == "RPAREN" {
+          j += 1
+        } else {
+          break
+        }
+      }
+      if j < tokens.length() {
+        match declaration_kind(tokens[j].get_kind()) {
+          Some(kind) => {
+            // Find the identifier (name) after the declaration keyword
+            let mut k = j + 1
+            while k < tokens.length() {
+              let kind_k = tokens[k].get_kind()
+              if is_identifier_kind(kind_k) || kind_k == "TypeIdent" {
+                result.push({
+                  kind,
+                  name: tokens[k].get_text(),
+                  line: token_lines[i],
+                })
+                break
+              } else if kind_k == "NL" || kind_k == "LBRACE" {
+                break // No identifier found before block/newline
+              }
+              k += 1
+            }
+            i = k + 1
+            continue
+          }
+          None => ()
+        }
+      }
+    }
+    i += 1
+  }
+  result
+}
+
+///|
+/// Count public declarations in source code using KGF tokenization.
+/// Convenience wrapper around extract_pub_declarations.
+pub fn count_pub_declarations(
+  content : String,
+  path : String,
+  registry : @kgf_registry.KGFRegistry?,
+) -> Int {
+  extract_pub_declarations(content, path, registry).length()
+}
