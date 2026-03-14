@@ -32,7 +32,7 @@ pub fn ReconcileConfig::default() -> ReconcileConfig {
     threshold_seconds: 60,
     max_candidates: 200,
     allow_file_fallback: true,
-    git_preferred: true,
+    git_preferred: false,
     mtime_fallback: true,
     logical_review_mode: "queue",
     show_help: false,

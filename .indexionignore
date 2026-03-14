@@ -1,0 +1,10 @@
+# Test fixtures — thousands of files from external projects
+fixtures/
+
+# Build artifacts
+_build/
+target/
+
+# Dependencies
+.mooncakes/
+node_modules/

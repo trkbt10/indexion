@@ -39,14 +39,15 @@ fn collect_document_fragments(
     if not(contains_string(used_specs, spec)) {
       used_specs.push(spec)
     }
+    let ts = timestamp_for_path(config.target_dir, path, config)
     let file_state = {
       path,
       file_kind: "doc",
       spec,
       content_hash: @cas_hash.compute_hash(content).to_string(),
-      git_time: @git.last_commit_seconds(config.target_dir, path),
+      git_time: ts.epoch_seconds,
       mtime: @git.file_mtime_seconds(path),
-      git_dirty: @git.status_dirty(config.target_dir, path),
+      git_dirty: ts.is_dirty,
     }
     file_states.push(file_state)
   }
@@ -68,14 +69,15 @@ fn collect_code_file_states(
     let content = @fs.read_file_to_string(unit.module_path) catch {
       _ => continue
     }
+    let ts = timestamp_for_path(config.target_dir, unit.module_path, config)
     file_states.push({
       path: unit.module_path,
       file_kind: "code",
       spec: "code",
       content_hash: @cas_hash.compute_hash(content).to_string(),
-      git_time: @git.last_commit_seconds(config.target_dir, unit.module_path),
+      git_time: ts.epoch_seconds,
       mtime: @git.file_mtime_seconds(unit.module_path),
-      git_dirty: @git.status_dirty(config.target_dir, unit.module_path),
+      git_dirty: ts.is_dirty,
     })
   }
   file_states

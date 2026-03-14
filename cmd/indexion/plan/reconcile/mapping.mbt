@@ -404,12 +404,26 @@ fn terms_overlap(left : String, right : String) -> Bool {
 }
 
 ///|
+/// Find shared terms between two token maps.
+/// Optimized: exact matches via Map lookup (O(n)), then fuzzy only for remaining.
 fn shared_terms(
   left : Map[String, Bool],
   right : Map[String, Bool],
 ) -> Array[String] {
   let shared : Array[String] = []
+  let found : Map[String, Bool] = {}
+  // Phase 1: exact matches via Map lookup — O(n)
   for left_entry in left {
+    if right.contains(left_entry.0) {
+      shared.push(left_entry.0)
+      found.set(left_entry.0, true)
+    }
+  }
+  // Phase 2: fuzzy contains matches for remaining — only long terms
+  for left_entry in left {
+    if found.contains(left_entry.0) || left_entry.0.length() < 6 {
+      continue
+    }
     for right_entry in right {
       if terms_overlap(left_entry.0, right_entry.0) {
         shared.push(left_entry.0)
@@ -571,12 +585,50 @@ fn build_doc_anchor(fragment : DocFragment) -> DocAnchor {
 }
 
 ///|
+/// Cache for timestamp_for_path results.
+/// Eliminates redundant git subprocess calls for the same path.
+let timestamp_cache : Map[String, TimestampInfo] = {}
+
+///|
+/// Cache for is_repo check (one per root directory).
+let repo_check_cache : Map[String, Bool] = {}
+
+///|
+fn is_repo_cached(root : String) -> Bool {
+  match repo_check_cache.get(root) {
+    Some(v) => v
+    None => {
+      let v = @git.is_repo(root)
+      repo_check_cache.set(root, v)
+      v
+    }
+  }
+}
+
+///|
+/// Get timestamp info for a path, with memoization.
+/// Each unique path's git status is queried at most once per run.
 fn timestamp_for_path(
   root : String,
   path : String,
   config : ReconcileConfig,
 ) -> TimestampInfo {
-  let repo_ok = config.git_preferred && @git.is_repo(root)
+  match timestamp_cache.get(path) {
+    Some(cached) => return cached
+    None => ()
+  }
+  let result = timestamp_for_path_uncached(root, path, config)
+  timestamp_cache.set(path, result)
+  result
+}
+
+///|
+fn timestamp_for_path_uncached(
+  root : String,
+  path : String,
+  config : ReconcileConfig,
+) -> TimestampInfo {
+  let repo_ok = config.git_preferred && is_repo_cached(root)
   if repo_ok {
     let git_time = @git.last_commit_seconds(root, path)
     let dirty = @git.status_dirty(root, path)

@@ -161,6 +161,9 @@ fn parse_args_state(args : Array[String], start_idx : Int) -> ParsedArgsState {
     } else if arg == "--no-file-fallback" {
       config = { ..config, allow_file_fallback: false }
       state = { ..state, explicit_allow_file_fallback: true }
+    } else if arg == "--git" {
+      config = { ..config, git_preferred: true }
+      state = { ..state, explicit_git_preferred: true }
     } else if arg == "--mtime-only" {
       config = { ..config, git_preferred: false, mtime_fallback: true }
       state = {
