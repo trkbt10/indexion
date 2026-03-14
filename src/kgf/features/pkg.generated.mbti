@@ -8,6 +8,8 @@ import {
 }
 
 // Values
+pub fn build_line_func_map(String, String, @registry.KGFRegistry?) -> Map[Int, String]
+
 pub fn extract_function_trees(Array[@types.Tok], String) -> Array[(ExtractedFunction, @apted.TreeNode)]
 
 pub fn extract_functions(Array[@types.Tok], String) -> Array[ExtractedFunction]

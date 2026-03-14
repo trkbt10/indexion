@@ -36,3 +36,27 @@ pub fn render_github_issue(doc : @types.PlanDocument) -> GitHubIssue {
   }
   { title: doc.title, body: buf.to_string(), labels }
 }
+
+///|
+/// Format GitHubIssue as a full Markdown document with title, labels, and body.
+pub fn GitHubIssue::format(self : GitHubIssue) -> String {
+  let buf = StringBuilder::new()
+  buf.write_string("# ")
+  buf.write_string(self.title)
+  buf.write_string("\n\n")
+  if self.labels.length() > 0 {
+    buf.write_string("**Labels:** ")
+    for i, label in self.labels {
+      if i > 0 {
+        buf.write_string(", ")
+      }
+      buf.write_string("`")
+      buf.write_string(label)
+      buf.write_string("`")
+    }
+    buf.write_string("\n\n")
+  }
+  buf.write_string("---\n\n")
+  buf.write_string(self.body)
+  buf.to_string()
+}

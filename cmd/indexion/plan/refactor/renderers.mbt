@@ -11,7 +11,7 @@ pub fn render_markdown(plan : RefactorPlanJSON) -> String {
   buf.write_string("## Configuration\n\n")
   buf.write_string("- **Directory**: `" + plan.config.target_dir + "`\n")
   buf.write_string(
-    "- **Threshold**: " + format_percent(plan.config.threshold) + "\n",
+    "- **Threshold**: " + @common.format_percent(plan.config.threshold) + "\n",
   )
   buf.write_string("- **Strategy**: " + plan.config.strategy + "\n")
   if plan.config.includes.length() > 0 {
@@ -53,7 +53,7 @@ pub fn render_markdown(plan : RefactorPlanJSON) -> String {
   // Render each cluster
   for i, cluster in plan.clusters {
     let max_sim = if cluster.pairs.length() > 0 {
-      format_percent(cluster.pairs[0].similarity)
+      @common.format_percent(cluster.pairs[0].similarity)
     } else {
       "N/A"
     }
@@ -81,7 +81,7 @@ pub fn render_markdown(plan : RefactorPlanJSON) -> String {
       let pair = cluster.pairs[idx]
       buf.write_string(
         "**" +
-        format_percent(pair.similarity) +
+        @common.format_percent(pair.similarity) +
         "** `" +
         pair.file1 +
         "` ↔ `" +
@@ -109,7 +109,7 @@ pub fn render_markdown(plan : RefactorPlanJSON) -> String {
           "` | `" +
           pair.file2 +
           "` | " +
-          format_percent(pair.similarity) +
+          @common.format_percent(pair.similarity) +
           " |\n",
         )
       }
@@ -151,7 +151,7 @@ pub fn render_markdown(plan : RefactorPlanJSON) -> String {
             "`\n",
           )
           buf.write_string("  ```moonbit\n")
-          let preview_lines = split_lines(dup.preview)
+          let preview_lines = @common.split_lines(dup.preview)
           for line in preview_lines {
             buf.write_string("  " + line + "\n")
           }
@@ -219,7 +219,7 @@ pub fn render_text(plan : RefactorPlanJSON) -> String {
   buf.write_string("REFACTORING PLAN\n")
   buf.write_string("================\n\n")
   buf.write_string("Directory: " + plan.config.target_dir + "\n")
-  buf.write_string("Threshold: " + format_percent(plan.config.threshold) + "\n")
+  buf.write_string("Threshold: " + @common.format_percent(plan.config.threshold) + "\n")
   buf.write_string("Strategy: " + plan.config.strategy + "\n")
   buf.write_string("\n")
   if plan.clusters.length() == 0 {
@@ -243,7 +243,7 @@ pub fn render_text(plan : RefactorPlanJSON) -> String {
           " <-> " +
           pair.file2 +
           ": " +
-          format_percent(pair.similarity) +
+          @common.format_percent(pair.similarity) +
           "\n",
         )
       }
@@ -277,27 +277,4 @@ fn escape_blockquote(text : String) -> String {
   String::from_array(result)
 }
 
-///|
-fn format_percent(d : Double) -> String {
-  let percent = (d * 100.0).to_int()
-  percent.to_string() + "%"
-}
-
-///|
-fn split_lines(text : String) -> Array[String] {
-  let lines : Array[String] = []
-  let chars = text.to_array()
-  let current : Array[Char] = []
-  for c in chars {
-    if c == '\n' {
-      lines.push(String::from_array(current))
-      current.clear()
-    } else if c != '\r' {
-      current.push(c)
-    }
-  }
-  if current.length() > 0 {
-    lines.push(String::from_array(current))
-  }
-  lines
-}
+// format_percent, split_lines: use @common (SoT)

@@ -111,7 +111,7 @@ pub fn parse_comma_list(s : String) -> Array[String] {
 }
 
 ///|
-fn trim_ascii_spaces(s : String) -> String {
+pub fn trim_ascii_spaces(s : String) -> String {
   let chars = s.to_array()
   let mut start = 0
   let mut end = chars.length()
@@ -247,6 +247,59 @@ pub fn split_by_slash(path : String) -> Array[String] {
 /// Extract unique display names for directories.
 /// If all end with same name (e.g., "src"), use parent directory name.
 /// Returns array of names in same order as input dirs.
+///|
+/// Return elapsed milliseconds since start timestamp.
+pub fn elapsed_ms(start_ms : UInt64) -> UInt64 {
+  let now = @env.now()
+  if now >= start_ms {
+    now - start_ms
+  } else {
+    0UL
+  }
+}
+
+///|
+/// Get parent directory of a path.
+/// Example: parent_dir("/foo/bar/baz") -> "/foo/bar", parent_dir("foo") -> "."
+pub fn parent_dir(path : String) -> String {
+  let clean = @pipeline.trim_trailing_slash(path)
+  let parts = split_by_slash(clean)
+  if parts.length() <= 1 {
+    return if path.has_prefix("/") { "/" } else { "." }
+  }
+  let buf = StringBuilder::new()
+  if path.has_prefix("/") {
+    buf.write_string("/")
+  }
+  for i in 0..<(parts.length() - 1) {
+    if i > 0 {
+      buf.write_string("/")
+    }
+    buf.write_string(parts[i])
+  }
+  buf.to_string()
+}
+
+///|
+/// Return target dir and all ancestor directories up to filesystem root.
+pub fn ancestor_dirs(dir : String) -> Array[String] {
+  let result : Array[String] = [dir]
+  let mut current = dir
+  while true {
+    let parent = parent_dir(current)
+    if parent == current {
+      break
+    }
+    result.push(parent)
+    current = parent
+  }
+  result
+}
+
+///|
+/// Extract unique display names for directories.
+/// If all end with same name (e.g., "src"), use parent directory name.
+/// Returns array of names in same order as input dirs.
 pub fn extract_unique_dir_names(dirs : Array[String]) -> Array[String] {
   let base_names : Array[String] = []
   for dir in dirs {
@@ -283,4 +336,100 @@ pub fn extract_unique_dir_names(dirs : Array[String]) -> Array[String] {
   } else {
     base_names
   }
+}
+
+///|
+/// Split text into lines by newline characters.
+/// Handles both \n and \r\n line endings.
+pub fn split_lines(text : String) -> Array[String] {
+  let lines : Array[String] = []
+  let current : Array[Char] = []
+  for c in text {
+    if c == '\n' {
+      lines.push(String::from_array(current))
+      current.clear()
+    } else if c != '\r' {
+      current.push(c)
+    }
+  }
+  if current.length() > 0 {
+    lines.push(String::from_array(current))
+  }
+  lines
+}
+
+///|
+/// Format a double (0.0-1.0) as a percentage string.
+/// Example: format_percent(0.75) -> "75%"
+pub fn format_percent(d : Double) -> String {
+  let percent = (d * 100.0).to_int()
+  percent.to_string() + "%"
+}
+
+///|
+/// Collect files from one or more directories using pipeline.discover_files (SoT).
+/// Returns Array[(display_name, content)].
+///
+/// - For a single directory: display_name is the relative path.
+/// - For multiple directories: display_name is "dirname:relative_path".
+/// - Optional extensions filter (e.g. [".mbt", ".ts"]).
+pub fn collect_files(
+  dirs : Array[String],
+  includes~ : Array[String] = [],
+  excludes~ : Array[String] = [],
+  extensions~ : Array[String] = [],
+) -> Array[(String, String)] {
+  let files : Array[(String, String)] = []
+  let multi_dir = dirs.length() > 1
+  let dir_names = extract_unique_dir_names(dirs)
+  for i, dir in dirs {
+    let opts = @pipeline.DiscoverOptions::new(includes~, excludes~, root_dir=dir)
+    let paths = @pipeline.discover_files([dir], opts)
+    let dirname = dir_names[i]
+    for path in paths {
+      // Check extension filter
+      if extensions.length() > 0 {
+        let basename = @pipeline.extract_basename(path)
+        let mut matched = false
+        for ext in extensions {
+          if basename.has_suffix(ext) {
+            matched = true
+            break
+          }
+        }
+        if not(matched) {
+          continue
+        }
+      }
+      try {
+        let content = @fs.read_file_to_string(path)
+        let relative = make_relative_path(path, dir)
+        let display_name = if multi_dir {
+          dirname + ":" + relative
+        } else {
+          relative
+        }
+        files.push((display_name, content))
+      } catch {
+        _ => ()
+      }
+    }
+  }
+  files
+}
+
+///|
+/// Truncate string to max length, appending ".." if truncated.
+pub fn truncate(s : String, max_len : Int) -> String {
+  let chars = s.to_array()
+  if chars.length() <= max_len {
+    return s
+  }
+  let result : Array[Char] = []
+  for i = 0; i < max_len - 2; i = i + 1 {
+    result.push(chars[i])
+  }
+  result.push('.')
+  result.push('.')
+  String::from_array(result)
 }

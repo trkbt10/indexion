@@ -22,6 +22,7 @@ pub struct GitHubIssue {
   body : String
   labels : Array[String]
 }
+pub fn GitHubIssue::format(Self) -> String
 
 pub struct RenderStyle {
   priority_style : String

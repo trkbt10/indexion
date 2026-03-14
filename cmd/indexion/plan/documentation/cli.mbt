@@ -43,18 +43,7 @@ pub fn DocPlanConfig::default() -> DocPlanConfig {
   }
 }
 
-///|
-fn get_arg_value(arg : String, prefix_len : Int) -> String {
-  let chars = arg.to_array()
-  if prefix_len >= chars.length() {
-    return ""
-  }
-  let result : Array[Char] = []
-  for i = prefix_len; i < chars.length(); i = i + 1 {
-    result.push(chars[i])
-  }
-  String::from_array(result)
-}
+// use @common (SoT) — get_arg_value
 
 ///|
 pub fn parse_args(args : Array[String], start_idx : Int) -> DocPlanConfig {
@@ -65,19 +54,19 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> DocPlanConfig {
       config = { ..config, show_help: true }
     } else if arg.has_prefix("--output=") || arg.has_prefix("-o=") {
       let prefix_len = if arg.has_prefix("--output=") { 9 } else { 3 }
-      let value = get_arg_value(arg, prefix_len)
+      let value = @common.get_arg_value(arg, prefix_len)
       config = { ..config, output: value }
     } else if arg.has_prefix("--style=") {
-      let value = get_arg_value(arg, 8)
+      let value = @common.get_arg_value(arg, 8)
       config = { ..config, style: value }
     } else if arg.has_prefix("--format=") {
-      let value = get_arg_value(arg, 9)
+      let value = @common.get_arg_value(arg, 9)
       config = { ..config, format: value }
     } else if arg.has_prefix("--template=") {
-      let value = get_arg_value(arg, 11)
+      let value = @common.get_arg_value(arg, 11)
       config = { ..config, template: value }
     } else if arg.has_prefix("--name=") {
-      let value = get_arg_value(arg, 7)
+      let value = @common.get_arg_value(arg, 7)
       config = { ..config, project_name: value }
     } else if not(arg.has_prefix("-")) && config.target_dir.length() == 0 {
       config = { ..config, target_dir: arg }
@@ -206,12 +195,12 @@ fn render_output(
           None => {
             println("Warning: Could not load template, using default format")
             let issue = @plan_render.render_github_issue(doc)
-            format_github_issue(issue)
+            issue.format()
           }
         }
       } else {
         let issue = @plan_render.render_github_issue(doc)
-        format_github_issue(issue)
+        issue.format()
       }
     }
     _ =>
@@ -227,25 +216,4 @@ fn render_output(
   }
 }
 
-///|
-fn format_github_issue(issue : @plan_render.GitHubIssue) -> String {
-  let buf = StringBuilder::new()
-  buf.write_string("# ")
-  buf.write_string(issue.title)
-  buf.write_string("\n\n")
-  if issue.labels.length() > 0 {
-    buf.write_string("**Labels:** ")
-    for i, label in issue.labels {
-      if i > 0 {
-        buf.write_string(", ")
-      }
-      buf.write_string("`")
-      buf.write_string(label)
-      buf.write_string("`")
-    }
-    buf.write_string("\n\n")
-  }
-  buf.write_string("---\n\n")
-  buf.write_string(issue.body)
-  buf.to_string()
-}
+// format_github_issue: use @plan_render.GitHubIssue::format (SoT)

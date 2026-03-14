@@ -25,7 +25,7 @@ pub fn render_full(
   buf.write_string(date)
   buf.write_string("\n")
   buf.write_string("**Coverage**: ")
-  buf.write_string(format_percent(analysis.coverage_percent))
+  buf.write_string(@common.format_percent(analysis.coverage_percent / 100.0))
   buf.write_string(" (")
   buf.write_string(analysis.total_documented.to_string())
   buf.write_string("/")
@@ -59,7 +59,7 @@ pub fn render_coverage(analysis : DocAnalysis, name : String) -> String {
   buf.write_string(name)
   buf.write_string(" Documentation Coverage\n\n")
   buf.write_string("**Overall Coverage**: ")
-  buf.write_string(format_percent(analysis.coverage_percent))
+  buf.write_string(@common.format_percent(analysis.coverage_percent / 100.0))
   buf.write_string(" (")
   buf.write_string(analysis.total_documented.to_string())
   buf.write_string("/")
@@ -97,7 +97,7 @@ fn render_coverage_section(buf : StringBuilder, analysis : DocAnalysis) -> Unit 
     }
   }
   buf.write_string("] ")
-  buf.write_string(format_percent(analysis.coverage_percent))
+  buf.write_string(@common.format_percent(analysis.coverage_percent / 100.0))
   buf.write_string("\n```\n\n")
 
   // Stats breakdown
@@ -129,11 +129,11 @@ fn render_coverage_section(buf : StringBuilder, analysis : DocAnalysis) -> Unit 
   buf.write_string(fn_total.to_string())
   buf.write_string(" | ")
   buf.write_string(
-    format_percent(
+    @common.format_percent(
       if fn_total > 0 {
-        fn_doc.to_double() / fn_total.to_double() * 100.0
+        fn_doc.to_double() / fn_total.to_double()
       } else {
-        100.0
+        1.0
       },
     ),
   )
@@ -144,11 +144,11 @@ fn render_coverage_section(buf : StringBuilder, analysis : DocAnalysis) -> Unit 
   buf.write_string(type_total.to_string())
   buf.write_string(" | ")
   buf.write_string(
-    format_percent(
+    @common.format_percent(
       if type_total > 0 {
-        type_doc.to_double() / type_total.to_double() * 100.0
+        type_doc.to_double() / type_total.to_double()
       } else {
-        100.0
+        1.0
       },
     ),
   )
@@ -203,9 +203,9 @@ fn render_package_inventory(
 
   for pkg in analysis.packages {
     let cov = if pkg.total_pub > 0 {
-      pkg.documented.to_double() / pkg.total_pub.to_double() * 100.0
+      pkg.documented.to_double() / pkg.total_pub.to_double()
     } else {
-      100.0
+      1.0
     }
     buf.write_string("| `")
     buf.write_string(pkg.path)
@@ -214,7 +214,7 @@ fn render_package_inventory(
     buf.write_string(" | ")
     buf.write_string(pkg.documented.to_string())
     buf.write_string(" | ")
-    buf.write_string(format_percent(cov))
+    buf.write_string(@common.format_percent(cov))
     buf.write_string(" | ")
     if pkg.has_readme {
       buf.write_string("✓")
@@ -267,11 +267,11 @@ fn render_action_items(buf : StringBuilder, analysis : DocAnalysis) -> Unit {
   if low_cov.length() > 0 {
     buf.write_string("### Priority 3: Low Coverage (<50%)\n\n")
     for pkg in low_cov {
-      let cov = pkg.documented.to_double() / pkg.total_pub.to_double() * 100.0
+      let cov = pkg.documented.to_double() / pkg.total_pub.to_double()
       buf.write_string("- [ ] Improve `")
       buf.write_string(pkg.path)
       buf.write_string("` coverage (currently ")
-      buf.write_string(format_percent(cov))
+      buf.write_string(@common.format_percent(cov))
       buf.write_string(")\n")
     }
     buf.write_string("\n")
@@ -418,13 +418,4 @@ fn extract_package_from_path(path : String) -> String {
   }
 }
 
-///|
-fn format_percent(value : Double) -> String {
-  let int_part = value.to_int()
-  let decimal = ((value - int_part.to_double()) * 10.0).to_int()
-  if decimal == 0 {
-    int_part.to_string() + "%"
-  } else {
-    int_part.to_string() + "." + decimal.to_string() + "%"
-  }
-}
+// use @common (SoT) — format_percent

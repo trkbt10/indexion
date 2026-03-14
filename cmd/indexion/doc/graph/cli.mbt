@@ -55,19 +55,7 @@ pub fn GraphConfig::default() -> GraphConfig {
   }
 }
 
-///|
-/// Extract value after '=' in argument.
-fn get_arg_value(arg : String, start : Int) -> String {
-  let chars = arg.to_array()
-  if start >= chars.length() {
-    return ""
-  }
-  let result : Array[Char] = []
-  for i = start; i < chars.length(); i = i + 1 {
-    result.push(chars[i])
-  }
-  String::from_array(result)
-}
+// get_arg_value: use @common (SoT)
 
 ///|
 /// Parse command line arguments.
@@ -79,16 +67,16 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> GraphConfig {
     if arg == "--help" || arg == "-h" {
       config = { ..config, show_help: true }
     } else if arg.has_prefix("--output=") {
-      let value = get_arg_value(arg, 9)
+      let value = @common.get_arg_value(arg, 9)
       config = { ..config, output: value }
     } else if arg.has_prefix("--specs=") {
-      let value = get_arg_value(arg, 8)
+      let value = @common.get_arg_value(arg, 8)
       config = { ..config, specs_dir: value }
     } else if arg.has_prefix("--title=") {
-      let value = get_arg_value(arg, 8)
+      let value = @common.get_arg_value(arg, 8)
       config = { ..config, title: value }
     } else if arg.has_prefix("--format=") {
-      let value = get_arg_value(arg, 9)
+      let value = @common.get_arg_value(arg, 9)
       config = { ..config, format: value }
     } else if not(arg.has_prefix("-")) {
       paths.push(arg)

@@ -53,7 +53,7 @@ pub fn solid_to_plan_document(plan : SolidPlanJSON) -> @plan_types.PlanDocument 
     "Extract common code from multiple packages into a shared location.",
   )
   // Metadata
-  doc.set_meta("threshold", format_percent(plan.config.threshold))
+  doc.set_meta("threshold", @common.format_percent(plan.config.threshold))
   doc.set_meta("rules_count", plan.config.rules_count.to_string())
   doc.set_meta("labels", "refactoring,code-sharing,consolidation")
   // Summary section
@@ -84,7 +84,7 @@ fn build_summary_section(plan : SolidPlanJSON) -> @plan_types.PlanSection {
     })
   pairs.push(("Sources", sources_str))
   pairs.push(("Target", plan.config.target))
-  pairs.push(("Threshold", format_percent(plan.config.threshold)))
+  pairs.push(("Threshold", @common.format_percent(plan.config.threshold)))
   pairs.push(("Rules Defined", plan.config.rules_count.to_string()))
   pairs.push(("Files Matched", plan.summary.matched_by_rules.to_string()))
   pairs.push(("Files Unmatched", plan.summary.unmatched_count.to_string()))
@@ -100,7 +100,7 @@ fn build_extraction_section(group : ExtractionGroup) -> @plan_types.PlanSection 
   let table = @plan_types.TableData::new(["Similarity", "File", "Action"])
   for file in group.files {
     table.add_row([
-      format_percent(file.similarity),
+      @common.format_percent(file.similarity),
       "`" + file.relative_path + "`",
       file.action,
     ])
@@ -121,7 +121,7 @@ fn build_unmatched_section(
     items.push(
       @plan_types.ListItem::with_desc(
         "`" + file.relative_path + "`",
-        format_percent(file.similarity) + " similar",
+        @common.format_percent(file.similarity) + " similar",
       ),
     )
   }
@@ -132,11 +132,7 @@ fn build_unmatched_section(
   )
 }
 
-///|
-fn format_percent(d : Double) -> String {
-  let percent = (d * 100.0).to_int()
-  percent.to_string() + "%"
-}
+// format_percent: use @common (SoT)
 
 ///|
 fn sanitize_id(s : String) -> String {

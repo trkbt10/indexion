@@ -64,58 +64,8 @@ pub fn SegmentConfig::default() -> SegmentConfig {
   }
 }
 
-///|
-fn get_arg_value(arg : String, prefix_len : Int) -> String {
-  let chars = arg.to_array()
-  if prefix_len >= chars.length() {
-    return ""
-  }
-  let result : Array[Char] = []
-  for i = prefix_len; i < chars.length(); i = i + 1 {
-    result.push(chars[i])
-  }
-  String::from_array(result)
-}
-
-///|
-fn parse_int(s : String) -> Int {
-  let chars = s.to_array()
-  let mut result = 0
-  for c in chars {
-    if c >= '0' && c <= '9' {
-      result = result * 10 + (c.to_int() - '0'.to_int())
-    }
-  }
-  result
-}
-
-///|
-fn parse_double(s : String) -> Double {
-  let chars = s.to_array()
-  if chars.length() == 0 {
-    return 0.0
-  }
-  let mut result = 0.0
-  let mut decimal_place = 0
-  for c in chars {
-    if c == '.' {
-      decimal_place = 1
-    } else if c >= '0' && c <= '9' {
-      let digit = (c.to_int() - '0'.to_int()).to_double()
-      if decimal_place > 0 {
-        let mut divisor = 1.0
-        for j = 0; j < decimal_place; j = j + 1 {
-          divisor = divisor * 10.0
-        }
-        result = result + digit / divisor
-        decimal_place = decimal_place + 1
-      } else {
-        result = result * 10.0 + digit
-      }
-    }
-  }
-  result
-}
+// get_arg_value, parse_double: use @common (SoT)
+// parse_int: use @common (SoT)
 
 ///|
 /// Parse command line arguments into SegmentConfig.
@@ -131,31 +81,31 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> SegmentConfig {
     } else if arg == "--hybrid" {
       config = { ..config, hybrid: true, adaptive: true }
     } else if arg.has_prefix("--ncd-weight=") {
-      let value = get_arg_value(arg, 13)
-      config = { ..config, ncd_weight: parse_double(value) }
+      let value = @common.get_arg_value(arg, 13)
+      config = { ..config, ncd_weight: @common.parse_double(value) }
     } else if arg.has_prefix("--tfidf-weight=") {
-      let value = get_arg_value(arg, 15)
-      config = { ..config, tfidf_weight: parse_double(value) }
+      let value = @common.get_arg_value(arg, 15)
+      config = { ..config, tfidf_weight: @common.parse_double(value) }
     } else if arg.has_prefix("--strategy=") {
-      let value = get_arg_value(arg, 11)
+      let value = @common.get_arg_value(arg, 11)
       config = { ..config, strategy: value }
     } else if arg.has_prefix("--min-size=") {
-      let value = get_arg_value(arg, 11)
-      config = { ..config, min_size: parse_int(value) }
+      let value = @common.get_arg_value(arg, 11)
+      config = { ..config, min_size: @common.parse_int(value) }
     } else if arg.has_prefix("--max-size=") {
-      let value = get_arg_value(arg, 11)
-      config = { ..config, max_size: parse_int(value) }
+      let value = @common.get_arg_value(arg, 11)
+      config = { ..config, max_size: @common.parse_int(value) }
     } else if arg.has_prefix("--target-size=") {
-      let value = get_arg_value(arg, 14)
-      config = { ..config, target_size: parse_int(value) }
+      let value = @common.get_arg_value(arg, 14)
+      config = { ..config, target_size: @common.parse_int(value) }
     } else if arg.has_prefix("--threshold=") {
-      let value = get_arg_value(arg, 12)
-      config = { ..config, threshold: parse_double(value) }
+      let value = @common.get_arg_value(arg, 12)
+      config = { ..config, threshold: @common.parse_double(value) }
     } else if arg.has_prefix("--window-size=") {
-      let value = get_arg_value(arg, 14)
-      config = { ..config, window_size: parse_int(value) }
+      let value = @common.get_arg_value(arg, 14)
+      config = { ..config, window_size: @common.parse_int(value) }
     } else if arg.has_prefix("--prefix=") {
-      let value = get_arg_value(arg, 9)
+      let value = @common.get_arg_value(arg, 9)
       config = { ..config, prefix: value }
     } else if not(arg.has_prefix("-")) {
       positional.push(arg)

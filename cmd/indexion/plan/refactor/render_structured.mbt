@@ -208,7 +208,7 @@ fn render_problems_section(
         buf.write_string("` ↔ `")
         buf.write_string(extract_filename(cluster.pairs[0].file2))
         buf.write_string("` ")
-        buf.write_string(format_percent(max_sim))
+        buf.write_string(@common.format_percent(max_sim))
         buf.write_string(" similar | High |\n")
       }
     }
@@ -422,7 +422,7 @@ fn render_similarity_summary(
 ) -> Unit {
   buf.write_string("### Analysis Settings\n\n")
   buf.write_string("- **Threshold**: ")
-  buf.write_string(format_percent(plan.config.threshold))
+  buf.write_string(@common.format_percent(plan.config.threshold))
   buf.write_string("\n")
   buf.write_string("- **Strategy**: ")
   buf.write_string(plan.config.strategy)
@@ -436,7 +436,7 @@ fn render_similarity_summary(
     buf.write_string(" files")
     if cluster.pairs.length() > 0 {
       buf.write_string(", max: ")
-      buf.write_string(format_percent(cluster.pairs[0].similarity))
+      buf.write_string(@common.format_percent(cluster.pairs[0].similarity))
     }
     buf.write_string(")\n\n")
 
@@ -458,7 +458,7 @@ fn render_similarity_summary(
         buf.write_string("` | `")
         buf.write_string(extract_filename(pair.file2))
         buf.write_string("` | ")
-        buf.write_string(format_percent(pair.similarity))
+        buf.write_string(@common.format_percent(pair.similarity))
         buf.write_string(" |\n")
       }
       buf.write_string("\n")

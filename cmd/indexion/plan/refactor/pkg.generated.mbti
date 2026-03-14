@@ -2,11 +2,12 @@
 package "trkbt10/indexion/cmd/indexion/plan/refactor"
 
 import {
+  "trkbt10/indexion/src/kgf/registry",
   "trkbt10/indexion/src/plan/types",
 }
 
 // Values
-pub fn build_refactor_plan(Array[FileCluster], RefactorPlanConfig, Map[String, String]) -> RefactorPlanJSON
+pub fn build_refactor_plan(Array[FileCluster], RefactorPlanConfig, Map[String, String], effective_threshold? : Double, registry? : @registry.KGFRegistry?) -> RefactorPlanJSON
 
 pub fn parse_args(Array[String], Int) -> RefactorPlanConfig
 

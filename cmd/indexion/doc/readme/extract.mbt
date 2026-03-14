@@ -108,7 +108,7 @@ fn extract_module_docs(graph : @graph.CodeGraph, pkg_path : String) -> String {
 ///|
 /// Extract title from document content (first # heading).
 fn extract_title_from_content(content : String) -> String? {
-  let lines = split_lines(content)
+  let lines = @common.split_lines(content)
   for line in lines {
     if line.has_prefix("# ") {
       let chars = line.to_array()
@@ -122,24 +122,7 @@ fn extract_title_from_content(content : String) -> String? {
   None
 }
 
-///|
-fn split_lines(s : String) -> Array[String] {
-  let lines : Array[String] = []
-  let chars = s.to_array()
-  let current : Array[Char] = []
-  for c in chars {
-    if c == '\n' {
-      lines.push(String::from_array(current.copy()))
-      current.clear()
-    } else if c != '\r' {
-      current.push(c)
-    }
-  }
-  if current.length() > 0 {
-    lines.push(String::from_array(current))
-  }
-  lines
-}
+// use @common (SoT): split_lines
 
 ///|
 fn join_with_newlines(parts : Array[String]) -> String {
@@ -156,7 +139,7 @@ fn join_with_newlines(parts : Array[String]) -> String {
 ///|
 /// Extract summary from doc content (text before second ## heading).
 pub fn extract_summary(content : String) -> String {
-  let lines = split_lines(content)
+  let lines = @common.split_lines(content)
   let result : Array[String] = []
   let mut heading_count = 0
   for line in lines {

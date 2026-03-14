@@ -38,18 +38,7 @@ pub fn InitConfig::default() -> InitConfig {
   { target_dir: ".", specs_dir: "kgfs", force: false, show_help: false }
 }
 
-///|
-fn get_arg_value(arg : String, prefix_len : Int) -> String {
-  let chars = arg.to_array()
-  if prefix_len >= chars.length() {
-    return ""
-  }
-  let result : Array[Char] = []
-  for i = prefix_len; i < chars.length(); i = i + 1 {
-    result.push(chars[i])
-  }
-  String::from_array(result)
-}
+// get_arg_value: use @common (SoT)
 
 ///|
 /// Parse command line arguments into InitConfig.
@@ -62,7 +51,7 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> InitConfig {
     } else if arg == "--force" || arg == "-f" {
       config = { ..config, force: true }
     } else if arg.has_prefix("--specs-dir=") {
-      let value = get_arg_value(arg, 12)
+      let value = @common.get_arg_value(arg, 12)
       config = { ..config, specs_dir: value }
     } else if not(arg.has_prefix("-")) && config.target_dir == "." {
       config = { ..config, target_dir: arg }

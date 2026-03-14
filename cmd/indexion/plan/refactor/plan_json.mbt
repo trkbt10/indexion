@@ -462,27 +462,50 @@ pub fn build_refactor_plan(
   clusters : Array[FileCluster],
   config : RefactorPlanConfig,
   file_contents : Map[String, String],
+  effective_threshold~ : Double = 0.0,
+  registry~ : @kgf_registry.KGFRegistry? = None,
 ) -> RefactorPlanJSON {
+  let threshold = if effective_threshold > 0.0 {
+    effective_threshold
+  } else {
+    config.threshold
+  }
   let plan_config : ConfigSummary = {
     target_dir: config.target_dir,
-    threshold: config.threshold,
+    threshold,
     strategy: config.strategy,
     includes: config.includes,
     excludes: config.excludes,
   }
   let plan = RefactorPlanJSON::new(plan_config)
+  // Cache previews to avoid recomputing for the same file
+  let preview_cache : Map[String, String] = {}
   for i, cluster in clusters {
     let group_id = i + 1
-    // Convert pairs with previews
+    // Convert all pairs with cached previews (for JSON output)
     let pairs : Array[SimilarPairJSON] = []
     for pair in cluster.pairs {
-      let preview1 = match file_contents.get(pair.file1) {
-        Some(content) => extract_preview(content, 200)
-        None => ""
+      let preview1 = match preview_cache.get(pair.file1) {
+        Some(cached) => cached
+        None => {
+          let p = match file_contents.get(pair.file1) {
+            Some(content) => extract_preview(content, 200)
+            None => ""
+          }
+          preview_cache.set(pair.file1, p)
+          p
+        }
       }
-      let preview2 = match file_contents.get(pair.file2) {
-        Some(content) => extract_preview(content, 200)
-        None => ""
+      let preview2 = match preview_cache.get(pair.file2) {
+        Some(cached) => cached
+        None => {
+          let p = match file_contents.get(pair.file2) {
+            Some(content) => extract_preview(content, 200)
+            None => ""
+          }
+          preview_cache.set(pair.file2, p)
+          p
+        }
       }
       pairs.push({
         file1: pair.file1,
@@ -492,49 +515,87 @@ pub fn build_refactor_plan(
         preview2,
       })
     }
-    // Find duplicates and build suggestions
+    // Find duplicates using similarity pairs (already sorted by similarity desc).
+    // Use the pairs list instead of all file combinations — this ensures we focus
+    // on the most similar file pairs, and avoids O(n²) explosion for large clusters.
     let duplicates : Array[DuplicateBlockJSON] = []
     let func_names : Array[String] = []
     let mut shared_module = ""
+    let seen_file_pairs : Map[String, Bool] = {}
+    // Cache line->func maps per file (built from KGF, language-agnostic)
+    let line_func_cache : Map[String, Map[Int, String]] = {}
+    let max_dup_comparisons = 200
+    let mut dup_count = 0
     for pair in cluster.pairs {
-      let content1 = file_contents.get(pair.file1)
-      let content2 = file_contents.get(pair.file2)
-      match (content1, content2) {
-        (Some(c1), Some(c2)) => {
-          let blocks = find_duplicate_blocks(c1, c2, 5)
-          for block in blocks {
-            duplicates.push({
-              file1: pair.file1,
-              file2: pair.file2,
-              start_line1: block.start_line1,
-              start_line2: block.start_line2,
-              line_count: block.line_count,
-              func_name: block.func_name,
-              preview: block.preview,
-            })
-            match block.func_name {
-              Some(name) => {
-                let mut exists = false
-                for existing in func_names {
-                  if existing == name {
-                    exists = true
-                    break
+      if dup_count >= max_dup_comparisons {
+        break
+      }
+      // Deduplicate file pairs (pairs may contain near-duplicates)
+      let pair_key = pair.file1 + "\t" + pair.file2
+      match seen_file_pairs.get(pair_key) {
+        Some(_) => continue
+        None => seen_file_pairs.set(pair_key, true)
+      }
+      let file1 = pair.file1
+      let file2 = pair.file2
+      let content1 = file_contents.get(file1)
+      let content2 = file_contents.get(file2)
+        match (content1, content2) {
+          (Some(c1), Some(c2)) => {
+            // Build KGF line->func maps (cached per file)
+            let lf1 = match line_func_cache.get(file1) {
+              Some(m) => m
+              None => {
+                let m = @kgf_features.build_line_func_map(c1, file1, registry)
+                line_func_cache.set(file1, m)
+                m
+              }
+            }
+            let lf2 = match line_func_cache.get(file2) {
+              Some(m) => m
+              None => {
+                let m = @kgf_features.build_line_func_map(c2, file2, registry)
+                line_func_cache.set(file2, m)
+                m
+              }
+            }
+            let blocks = find_duplicate_blocks(
+              c1, c2, 5, line_funcs1=lf1, line_funcs2=lf2,
+            )
+            for block in blocks {
+              duplicates.push({
+                file1,
+                file2,
+                start_line1: block.start_line1,
+                start_line2: block.start_line2,
+                line_count: block.line_count,
+                func_name: block.func_name,
+                preview: block.preview,
+              })
+              match block.func_name {
+                Some(name) => {
+                  let mut exists = false
+                  for existing in func_names {
+                    if existing == name {
+                      exists = true
+                      break
+                    }
+                  }
+                  if not(exists) {
+                    func_names.push(name)
                   }
                 }
-                if not(exists) {
-                  func_names.push(name)
-                }
+                None => ()
               }
-              None => ()
+            }
+            if shared_module.length() == 0 {
+              shared_module = suggest_shared_module(file1, file2)
             }
           }
-          if shared_module.length() == 0 {
-            shared_module = suggest_shared_module(pair.file1, pair.file2)
-          }
+          _ => ()
         }
-        _ => ()
+        dup_count = dup_count + 1
       }
-    }
     let suggestions : RefactorSuggestion = {
       shared_module,
       functions_to_extract: func_names,

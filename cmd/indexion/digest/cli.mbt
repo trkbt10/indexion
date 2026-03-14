@@ -38,58 +38,8 @@ pub fn CliConfig::default() -> CliConfig {
   }
 }
 
-///|
-fn get_arg_value(arg : String, prefix_len : Int) -> String {
-  let chars = arg.to_array()
-  if prefix_len >= chars.length() {
-    return ""
-  }
-  let result : Array[Char] = []
-  for i = prefix_len; i < chars.length(); i = i + 1 {
-    result.push(chars[i])
-  }
-  String::from_array(result)
-}
-
-///|
-fn parse_int(s : String) -> Int {
-  let chars = s.to_array()
-  let mut result = 0
-  for c in chars {
-    if c >= '0' && c <= '9' {
-      result = result * 10 + (c.to_int() - '0'.to_int())
-    }
-  }
-  result
-}
-
-///|
-fn parse_double(s : String) -> Double {
-  let chars = s.to_array()
-  if chars.length() == 0 {
-    return 0.0
-  }
-  let mut result = 0.0
-  let mut decimal_place = 0
-  for c in chars {
-    if c == '.' {
-      decimal_place = 1
-    } else if c >= '0' && c <= '9' {
-      if decimal_place == 0 {
-        result = result * 10.0 + (c.to_int() - '0'.to_int()).to_double()
-      } else {
-        let digit = (c.to_int() - '0'.to_int()).to_double()
-        let mut divisor = 1.0
-        for _i = 0; _i < decimal_place; _i = _i + 1 {
-          divisor = divisor * 10.0
-        }
-        result = result + digit / divisor
-        decimal_place = decimal_place + 1
-      }
-    }
-  }
-  result
-}
+// get_arg_value, parse_double: use @common (SoT)
+// parse_int: use @common (SoT)
 
 ///|
 /// Parse CLI arguments.
@@ -101,25 +51,25 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> CliConfig {
     if arg == "--help" || arg == "-h" {
       config = { ..config, show_help: true }
     } else if arg.has_prefix("--dim=") {
-      let value = get_arg_value(arg, 6)
-      config = { ..config, dim: parse_int(value) }
+      let value = @common.get_arg_value(arg, 6)
+      config = { ..config, dim: @common.parse_int(value) }
     } else if arg.has_prefix("--strategy=") {
-      let value = get_arg_value(arg, 11)
+      let value = @common.get_arg_value(arg, 11)
       config = { ..config, strategy: value }
     } else if arg.has_prefix("--top-k=") {
-      let value = get_arg_value(arg, 8)
-      config = { ..config, top_k: parse_int(value) }
+      let value = @common.get_arg_value(arg, 8)
+      config = { ..config, top_k: @common.parse_int(value) }
     } else if arg.has_prefix("--min-score=") {
-      let value = get_arg_value(arg, 12)
-      config = { ..config, min_score: parse_double(value) }
+      let value = @common.get_arg_value(arg, 12)
+      config = { ..config, min_score: @common.parse_double(value) }
     } else if arg.has_prefix("--index-dir=") {
-      let value = get_arg_value(arg, 12)
+      let value = @common.get_arg_value(arg, 12)
       config = { ..config, index_dir: value }
     } else if arg.has_prefix("--provider=") {
-      let value = get_arg_value(arg, 11)
+      let value = @common.get_arg_value(arg, 11)
       config = { ..config, provider: value }
     } else if arg.has_prefix("--specs=") {
-      let value = get_arg_value(arg, 8)
+      let value = @common.get_arg_value(arg, 8)
       config = { ..config, specs_dir: value }
     } else if not(arg.has_prefix("-")) {
       positional.push(arg)

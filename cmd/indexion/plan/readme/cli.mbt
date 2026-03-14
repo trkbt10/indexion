@@ -44,18 +44,7 @@ pub fn ReadmePlanConfig::default() -> ReadmePlanConfig {
   }
 }
 
-///|
-fn get_arg_value(arg : String, prefix_len : Int) -> String {
-  let chars = arg.to_array()
-  if prefix_len >= chars.length() {
-    return ""
-  }
-  let result : Array[Char] = []
-  for i = prefix_len; i < chars.length(); i = i + 1 {
-    result.push(chars[i])
-  }
-  String::from_array(result)
-}
+// use @common (SoT)
 
 ///|
 /// Parse command line arguments into ReadmePlanConfig.
@@ -67,19 +56,19 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> ReadmePlanConfig {
       config = { ..config, show_help: true }
     } else if arg.has_prefix("--output=") || arg.has_prefix("-o=") {
       let prefix_len = if arg.has_prefix("--output=") { 9 } else { 3 }
-      let value = get_arg_value(arg, prefix_len)
+      let value = @common.get_arg_value(arg, prefix_len)
       config = { ..config, output: value }
     } else if arg.has_prefix("--format=") {
-      let value = get_arg_value(arg, 9)
+      let value = @common.get_arg_value(arg, 9)
       config = { ..config, format: value }
     } else if arg.has_prefix("--specs-dir=") {
-      let value = get_arg_value(arg, 12)
+      let value = @common.get_arg_value(arg, 12)
       config = { ..config, specs_dir: value }
     } else if arg.has_prefix("--template=") {
-      let value = get_arg_value(arg, 11)
+      let value = @common.get_arg_value(arg, 11)
       config = { ..config, template: value }
     } else if arg.has_prefix("--plans-dir=") {
-      let value = get_arg_value(arg, 12)
+      let value = @common.get_arg_value(arg, 12)
       config = { ..config, plans_dir: value }
     } else if not(arg.has_prefix("-")) && config.target_dir == "." {
       config = { ..config, target_dir: arg }
@@ -374,7 +363,7 @@ fn discover_docs_recursive(
   for entry in entries {
     let full_path = current_dir + "/" + entry
     if entry.has_suffix(".md") && not(is_directory(full_path)) {
-      let rel_path = make_relative(full_path, base_dir)
+      let rel_path = @common.make_relative_path(full_path, base_dir)
       let title = extract_doc_title(full_path)
       docs.push({ path: rel_path, title })
     } else if is_directory(full_path) {
@@ -389,7 +378,7 @@ fn discover_docs_recursive(
 /// Extract title from first heading in markdown file.
 fn extract_doc_title(path : String) -> String {
   let content = @fs.read_file_to_string(path) catch { _ => return "" }
-  let lines = split_lines(content)
+  let lines = @common.split_lines(content)
   for line in lines {
     let trimmed = trim_str(line)
     if trimmed.has_prefix("# ") {
@@ -452,7 +441,7 @@ fn discover_packages_recursive(
     }
   }
   if has_mbt_files && pub_count > 0 {
-    let rel_path = make_relative(current_dir, base_dir)
+    let rel_path = @common.make_relative_path(current_dir, base_dir)
     packages.push({ path: rel_path, pub_items: pub_count })
   }
   // Recurse into subdirectories
@@ -471,7 +460,7 @@ fn discover_packages_recursive(
 fn count_pub_items(file_path : String) -> Int {
   let content = @fs.read_file_to_string(file_path) catch { _ => return 0 }
   let mut count = 0
-  let lines = split_lines(content)
+  let lines = @common.split_lines(content)
   for line in lines {
     let trimmed = trim_str(line)
     if trimmed.has_prefix("pub fn ") ||
@@ -492,27 +481,7 @@ fn is_directory(path : String) -> Bool {
   }
 }
 
-///|
-fn make_relative(path : String, base : String) -> String {
-  let normalized_base = if base.has_suffix("/") { base } else { base + "/" }
-  if path.has_prefix(normalized_base) {
-    let chars = path.to_array()
-    let result : Array[Char] = []
-    for i = normalized_base.length(); i < chars.length(); i = i + 1 {
-      result.push(chars[i])
-    }
-    let rel = String::from_array(result)
-    if rel.length() == 0 {
-      "."
-    } else {
-      rel
-    }
-  } else if path == base {
-    "."
-  } else {
-    path
-  }
-}
+// use @common (SoT)
 
 // Rendering
 
@@ -874,23 +843,7 @@ fn normalize_path(path : String) -> String {
   }
 }
 
-///|
-fn split_lines(s : String) -> Array[String] {
-  let lines : Array[String] = []
-  let current : Array[Char] = []
-  for c in s {
-    if c == '\n' {
-      lines.push(String::from_array(current))
-      current.clear()
-    } else if c != '\r' {
-      current.push(c)
-    }
-  }
-  if current.length() > 0 {
-    lines.push(String::from_array(current))
-  }
-  lines
-}
+// use @common (SoT)
 
 ///|
 fn trim_str(s : String) -> String {

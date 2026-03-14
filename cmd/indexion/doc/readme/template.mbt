@@ -143,7 +143,7 @@ fn render_packages(
       buf.write_string("\n---\n\n")
     }
     // Output package path as heading
-    let rel_path = make_relative_path(pkg.path, base_dir)
+    let rel_path = @common.make_relative_path(pkg.path, base_dir)
     buf.write_string("### ")
     buf.write_string(rel_path)
     buf.write_string("\n\n")
@@ -154,23 +154,7 @@ fn render_packages(
   buf.to_string()
 }
 
-///|
-/// Make path relative to base_dir.
-fn make_relative_path(path : String, base_dir : String) -> String {
-  let normalized_base = if base_dir == "." || base_dir == "./" {
-    ""
-  } else {
-    let b = if base_dir.has_suffix("/") { base_dir } else { base_dir + "/" }
-    b
-  }
-  if normalized_base.length() > 0 && path.has_prefix(normalized_base) {
-    substring_from(path, normalized_base.length())
-  } else if path.has_prefix("./") {
-    substring_from(path, 2)
-  } else {
-    path
-  }
-}
+// use @common (SoT): make_relative_path
 
 ///|
 /// Load and render a template file.

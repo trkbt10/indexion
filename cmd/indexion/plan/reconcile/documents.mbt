@@ -154,7 +154,7 @@ fn extract_markdown_fragments(
   content : String,
 ) -> Array[DocFragment] {
   let fragments : Array[DocFragment] = []
-  let lines = split_lines(content)
+  let lines = @common.split_lines(content)
   let paragraph : Array[String] = []
   let mut heading = @config_paths.basename(path)
   fn flush_markdown_paragraph(
@@ -204,7 +204,7 @@ fn extract_plaintext_fragments(
   content : String,
 ) -> Array[DocFragment] {
   let fragments : Array[DocFragment] = []
-  let lines = split_lines(content)
+  let lines = @common.split_lines(content)
   let paragraph : Array[String] = []
   let mut title = @config_paths.basename(path)
   fn flush_plaintext_paragraph(
@@ -249,7 +249,7 @@ fn extract_toml_fragments(
 ) -> Array[DocFragment] {
   let fragments : Array[DocFragment] = []
   let mut section = ""
-  for raw_line in split_lines(content) {
+  for raw_line in @common.split_lines(content) {
     let line = @config_paths.trim_toml_comment(raw_line)
     if line.length() == 0 {
       continue

@@ -93,49 +93,7 @@ struct FileCluster {
   pairs : Array[SimilarPair] // pairs within this cluster
 }
 
-///|
-fn get_arg_value(arg : String, prefix_len : Int) -> String {
-  let chars = arg.to_array()
-  if prefix_len >= chars.length() {
-    return ""
-  }
-  let result : Array[Char] = []
-  for i = prefix_len; i < chars.length(); i = i + 1 {
-    result.push(chars[i])
-  }
-  String::from_array(result)
-}
-
-///|
-fn parse_double(s : String) -> Double {
-  let chars = s.to_array()
-  if chars.length() == 0 {
-    return 0.0
-  }
-  let mut result = 0.0
-  let mut decimal_place = 0
-  let mut i = 0
-  while i < chars.length() {
-    let c = chars[i]
-    if c == '.' {
-      decimal_place = 1
-    } else if c >= '0' && c <= '9' {
-      let digit = (c.to_int() - '0'.to_int()).to_double()
-      if decimal_place > 0 {
-        let mut divisor = 1.0
-        for j = 0; j < decimal_place; j = j + 1 {
-          divisor = divisor * 10.0
-        }
-        result = result + digit / divisor
-        decimal_place = decimal_place + 1
-      } else {
-        result = result * 10.0 + digit
-      }
-    }
-    i = i + 1
-  }
-  result
-}
+// get_arg_value, parse_double: use @common (SoT)
 
 ///|
 pub fn parse_args(args : Array[String], start_idx : Int) -> RefactorPlanConfig {
@@ -145,29 +103,29 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> RefactorPlanConfig {
     if arg == "--help" || arg == "-h" {
       config = { ..config, show_help: true }
     } else if arg.has_prefix("--threshold=") {
-      let value = get_arg_value(arg, 12)
-      config = { ..config, threshold: parse_double(value) }
+      let value = @common.get_arg_value(arg, 12)
+      config = { ..config, threshold: @common.parse_double(value) }
     } else if arg.has_prefix("--strategy=") {
-      let value = get_arg_value(arg, 11)
+      let value = @common.get_arg_value(arg, 11)
       config = { ..config, strategy: value }
     } else if arg.has_prefix("--include=") {
-      let value = get_arg_value(arg, 10)
+      let value = @common.get_arg_value(arg, 10)
       config.includes.push(value)
     } else if arg.has_prefix("--exclude=") {
-      let value = get_arg_value(arg, 10)
+      let value = @common.get_arg_value(arg, 10)
       config.excludes.push(value)
     } else if arg.has_prefix("--output=") || arg.has_prefix("-o=") {
       let prefix_len = if arg.has_prefix("--output=") { 9 } else { 3 }
-      let value = get_arg_value(arg, prefix_len)
+      let value = @common.get_arg_value(arg, prefix_len)
       config = { ..config, output: value }
     } else if arg.has_prefix("--format=") {
-      let value = get_arg_value(arg, 9)
+      let value = @common.get_arg_value(arg, 9)
       config = { ..config, format: value }
     } else if arg.has_prefix("--style=") {
-      let value = get_arg_value(arg, 8)
+      let value = @common.get_arg_value(arg, 8)
       config = { ..config, style: value }
     } else if arg.has_prefix("--name=") {
-      let value = get_arg_value(arg, 7)
+      let value = @common.get_arg_value(arg, 7)
       config = { ..config, project_name: value }
     } else if not(arg.has_prefix("-")) && config.target_dir.length() == 0 {
       config = { ..config, target_dir: arg }
@@ -230,32 +188,7 @@ pub fn show_help() -> Unit {
   println("  test/*      Match files in test directory")
 }
 
-///|
-/// Collect files recursively with filtering using pipeline.discover_files (SoT).
-fn collect_files(
-  dir : String,
-  includes : Array[String],
-  excludes : Array[String],
-) -> Array[(String, String)] {
-  let files : Array[(String, String)] = []
-  // Use pipeline.discover_files as SoT for filtering
-  let opts = @pipeline.DiscoverOptions::new(includes~, excludes~, root_dir=dir)
-  let paths = @pipeline.discover_files([dir], opts)
-  // Read file contents
-  for path in paths {
-    try {
-      let content = @fs.read_file_to_string(path)
-      // Convert to relative path for display
-      let display_name = @common.make_relative_path(path, dir)
-      files.push((display_name, content))
-    } catch {
-      _ => ()
-    }
-  }
-  files
-}
-
-// make_relative_path: use @common (SoT)
+// collect_files: use @common (SoT)
 
 ///|
 /// Calculate similarity between two texts.
@@ -330,136 +263,66 @@ fn find_clusters(
       None => groups.set(root, [f.0])
     }
   }
-  // Build clusters with their pairs
+  // Build file-to-root lookup for O(1) cluster membership check
+  let file_to_root : Map[String, Int] = {}
+  for i, f in files {
+    file_to_root.set(f.0, find(i))
+  }
+  // Group pairs by cluster root in one pass over pairs
+  let cluster_pairs_map : Map[Int, Array[SimilarPair]] = {}
+  for pair in pairs {
+    if pair.similarity >= threshold {
+      let root1 = file_to_root.get(pair.file1)
+      let root2 = file_to_root.get(pair.file2)
+      match (root1, root2) {
+        (Some(r1), Some(r2)) =>
+          if r1 == r2 {
+            match cluster_pairs_map.get(r1) {
+              Some(arr) => arr.push(pair)
+              None => cluster_pairs_map.set(r1, [pair])
+            }
+          }
+        _ => ()
+      }
+    }
+  }
+  // Build clusters
   let clusters : Array[FileCluster] = []
   for _, group in groups {
     if group.length() > 1 {
-      // Find all pairs within this cluster
-      let cluster_pairs : Array[SimilarPair] = []
-      for pair in pairs {
-        if pair.similarity >= threshold {
-          let mut in_cluster = false
-          for file in group {
-            if pair.file1 == file || pair.file2 == file {
-              in_cluster = true
-              break
-            }
-          }
-          if in_cluster {
-            // Check both files are in cluster
-            let mut both = false
-            let mut found1 = false
-            let mut found2 = false
-            for file in group {
-              if pair.file1 == file {
-                found1 = true
-              }
-              if pair.file2 == file {
-                found2 = true
-              }
-            }
-            both = found1 && found2
-            if both {
-              cluster_pairs.push(pair)
-            }
-          }
-        }
-      }
+      // Look up pre-grouped pairs by root of first file
+      let root = file_to_root.get(group[0]).unwrap()
+      let cluster_pairs = cluster_pairs_map.get(root).unwrap_or([])
       // Sort pairs by similarity (descending)
-      for i = 0; i < cluster_pairs.length(); i = i + 1 {
-        for j = i + 1; j < cluster_pairs.length(); j = j + 1 {
-          if cluster_pairs[j].similarity > cluster_pairs[i].similarity {
-            let tmp = cluster_pairs[i]
-            cluster_pairs[i] = cluster_pairs[j]
-            cluster_pairs[j] = tmp
-          }
+      cluster_pairs.sort_by(fn(a, b) {
+        if b.similarity > a.similarity {
+          -1
+        } else if b.similarity < a.similarity {
+          1
+        } else {
+          0
         }
-      }
+      })
       clusters.push({ files: group, pairs: cluster_pairs })
     }
   }
   // Sort clusters by max similarity (descending)
-  for i = 0; i < clusters.length(); i = i + 1 {
-    for j = i + 1; j < clusters.length(); j = j + 1 {
-      let max_i = if clusters[i].pairs.length() > 0 {
-        clusters[i].pairs[0].similarity
-      } else {
-        0.0
-      }
-      let max_j = if clusters[j].pairs.length() > 0 {
-        clusters[j].pairs[0].similarity
-      } else {
-        0.0
-      }
-      if max_j > max_i {
-        let tmp = clusters[i]
-        clusters[i] = clusters[j]
-        clusters[j] = tmp
-      }
+  clusters.sort_by(fn(a, b) {
+    let max_a = if a.pairs.length() > 0 { a.pairs[0].similarity } else { 0.0 }
+    let max_b = if b.pairs.length() > 0 { b.pairs[0].similarity } else { 0.0 }
+    if max_b > max_a {
+      -1
+    } else if max_b < max_a {
+      1
+    } else {
+      0
     }
-  }
+  })
   clusters
 }
 
-///|
-/// Trim leading/trailing whitespace.
-fn trim_line(line : String) -> String {
-  let chars = line.to_array()
-  let mut start = 0
-  let mut end = chars.length()
-  while start < end && (chars[start] == ' ' || chars[start] == '\t') {
-    start = start + 1
-  }
-  while end > start && (chars[end - 1] == ' ' || chars[end - 1] == '\t') {
-    end = end - 1
-  }
-  let result : Array[Char] = []
-  for i = start; i < end; i = i + 1 {
-    result.push(chars[i])
-  }
-  String::from_array(result)
-}
-
-///|
-/// Check if line is a function definition (MoonBit style).
-fn is_function_def(line : String) -> Bool {
-  let trimmed = trim_line(line)
-  trimmed.has_prefix("pub fn ") ||
-  trimmed.has_prefix("fn ") ||
-  trimmed.has_prefix("pub impl ") ||
-  trimmed.has_prefix("impl ")
-}
-
-///|
-/// Extract function name from definition line.
-fn extract_func_name(line : String) -> String {
-  let trimmed = trim_line(line)
-  let chars = trimmed.to_array()
-  // Find start of function name (after "fn " or after "pub fn ")
-  let mut start = 0
-  if trimmed.has_prefix("pub fn ") {
-    start = 7
-  } else if trimmed.has_prefix("fn ") {
-    start = 3
-  } else if trimmed.has_prefix("pub impl ") {
-    start = 9
-  } else if trimmed.has_prefix("impl ") {
-    start = 5
-  }
-  // Find end (space, ( or {)
-  let mut end = start
-  while end < chars.length() &&
-        chars[end] != ' ' &&
-        chars[end] != '(' &&
-        chars[end] != '{' {
-    end = end + 1
-  }
-  let result : Array[Char] = []
-  for i = start; i < end; i = i + 1 {
-    result.push(chars[i])
-  }
-  String::from_array(result)
-}
+// trim_line: use @common.trim_ascii_spaces (SoT)
+// is_function_def, extract_func_name: replaced by @kgf_features.build_line_func_map (SoT)
 
 ///|
 /// Duplicate code block found between two files.
@@ -473,22 +336,34 @@ priv struct DuplicateBlock {
 
 ///|
 /// Find duplicate code blocks between two files.
+/// Function name annotation is done by the caller via line_funcs maps
+/// built from @kgf_features.build_line_func_map (language-agnostic).
 fn find_duplicate_blocks(
   content1 : String,
   content2 : String,
   min_lines : Int,
+  line_funcs1~ : Map[Int, String] = {},
+  line_funcs2~ : Map[Int, String] = {},
 ) -> Array[DuplicateBlock] {
-  let lines1 = split_lines(content1)
-  let lines2 = split_lines(content2)
+  let lines1 = @common.split_lines(content1)
+  let lines2 = @common.split_lines(content2)
   let duplicates : Array[DuplicateBlock] = []
   // Skip empty or very short files
   if lines1.length() < min_lines || lines2.length() < min_lines {
     return duplicates
   }
+  // Pre-compute trimmed lines to avoid repeated allocations
+  let trimmed1 : Array[String] = Array::make(lines1.length(), "")
+  let trimmed2 : Array[String] = Array::make(lines2.length(), "")
+  for i, line in lines1 {
+    trimmed1[i] = @common.trim_ascii_spaces(line)
+  }
+  for i, line in lines2 {
+    trimmed2[i] = @common.trim_ascii_spaces(line)
+  }
   // Build line hash map for file2
   let line_map : Map[String, Array[Int]] = {}
-  for i, line in lines2 {
-    let trimmed = trim_line(line)
+  for i, trimmed in trimmed2 {
     if trimmed.length() > 5 {
       // Skip very short lines
       match line_map.get(trimmed) {
@@ -500,24 +375,23 @@ fn find_duplicate_blocks(
   // Find matching blocks
   let mut i = 0
   while i < lines1.length() {
-    let trimmed = trim_line(lines1[i])
+    let trimmed = trimmed1[i]
     if trimmed.length() > 5 {
       match line_map.get(trimmed) {
         Some(positions) =>
           for j in positions {
-            // Count matching lines
+            // Count matching lines using pre-computed trimmed arrays
             let mut count = 0
             while i + count < lines1.length() &&
                   j + count < lines2.length() &&
-                  trim_line(lines1[i + count]) == trim_line(lines2[j + count]) {
+                  trimmed1[i + count] == trimmed2[j + count] {
               count = count + 1
             }
             if count >= min_lines {
-              // Check if this block starts with a function def
-              let func_name = if is_function_def(lines1[i]) {
-                Some(extract_func_name(lines1[i]))
-              } else {
-                None
+              // Look up function name from KGF-built map (1-indexed)
+              let func_name : String? = match line_funcs1.get(i + 1) {
+                Some(name) => Some(name)
+                None => line_funcs2.get(j + 1)
               }
               // Build preview (first 3 lines)
               let preview_lines : Array[String] = []
@@ -552,15 +426,7 @@ fn find_duplicate_blocks(
     i = i + 1
   }
   // Sort by line count (descending)
-  for a = 0; a < duplicates.length(); a = a + 1 {
-    for b = a + 1; b < duplicates.length(); b = b + 1 {
-      if duplicates[b].line_count > duplicates[a].line_count {
-        let tmp = duplicates[a]
-        duplicates[a] = duplicates[b]
-        duplicates[b] = tmp
-      }
-    }
-  }
+  duplicates.sort_by(fn(a, b) { b.line_count - a.line_count })
   duplicates
 }
 
@@ -603,12 +469,12 @@ fn suggest_shared_module(file1 : String, file2 : String) -> String {
 
 ///|
 /// Extract project name from directory path.
+/// Uses the last non-trivial path component (skipping "." and "..").
 fn extract_project_name(path : String) -> String {
   let parts = @common.split_by_slash(path)
-  // Find first meaningful part (skip "src", ".", etc.)
   for i = parts.length() - 1; i >= 0; i = i - 1 {
     let part = parts[i]
-    if part != "src" && part != "." && part != ".." && part.length() > 0 {
+    if part != "." && part != ".." && part.length() > 0 {
       return part
     }
   }
@@ -628,27 +494,149 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     show_help()
     return
   }
-  // Collect files
-  let files = collect_files(config.target_dir, config.includes, config.excludes)
+  // Progress output goes to stderr-equivalent: only print when stdout is not
+  // carrying a machine-readable payload (json to stdout).
+  let show_progress = config.output.length() > 0 || config.format != "json"
+  if show_progress {
+    println("=== indexion plan refactor ===")
+    println(
+      "Directory: " +
+      config.target_dir +
+      ", Strategy: " +
+      config.strategy +
+      ", Threshold: " +
+      config.threshold.to_string(),
+    )
+    println("")
+  }
+  // Load KGF registry for language detection
+  let registry = @kgf_features.load_registry(target_dir=config.target_dir)
+  // Detect project type from marker files (search target dir and ancestors)
+  let detected_markers : Array[String] = []
+  match registry {
+    Some(reg) => {
+      let markers = reg.get_project_markers()
+      let search_dirs = @common.ancestor_dirs(config.target_dir)
+      for dir in search_dirs {
+        let entries : Array[String] = try {
+          @fs.read_dir(dir)
+        } catch {
+          _ => continue
+        }
+        for marker in markers {
+          for entry in entries {
+            if @glob.glob_match(entry, marker) {
+              // Avoid duplicates
+              let mut exists = false
+              for existing in detected_markers {
+                if existing == marker {
+                  exists = true
+                  break
+                }
+              }
+              if !exists {
+                detected_markers.push(marker)
+              }
+              break
+            }
+          }
+        }
+      }
+    }
+    None => ()
+  }
+  if show_progress {
+    if detected_markers.length() > 0 {
+      let markers_str = detected_markers.iter().fold(
+        init="",
+        fn(acc, m) {
+          if acc.length() == 0 { m } else { acc + ", " + m }
+        },
+      )
+      println("Project type: " + markers_str)
+    } else {
+      println("Project type: unknown")
+    }
+    println("")
+  }
+  // [1/4] Collect files
+  if show_progress {
+    println("[1/4] Collecting files...")
+  }
+  let files = @common.collect_files(
+    [config.target_dir], includes=config.includes, excludes=config.excludes,
+  )
+  if show_progress {
+    println("      Found " + files.length().to_string() + " files")
+  }
   if files.length() < 2 {
     println("Error: Need at least 2 files to analyze.")
     return
   }
-  // Calculate all pairs using optimized batch processing for TF-IDF
+  // [2/4] Calculate all pairs using optimized batch processing for TF-IDF
+  if show_progress {
+    println("[2/4] Calculating similarity pairs...")
+  }
+  let sim_started = @env.now()
   let pairs : Array[SimilarPair] = []
+  let mut effective_threshold = config.threshold
   if config.strategy == "tfidf" {
-    // Load KGF registry for language-aware tokenization
-    let registry = @kgf_features.load_registry(target_dir=config.target_dir)
     // Tokenize files with KGF where available
+    if show_progress {
+      println("      Tokenizing with KGF lexer...")
+    }
+    let tok_started = @env.now()
     let (tokenized, _) = @kgf_features.tokenize_files_with_kgf(files, registry)
+    if show_progress {
+      println(
+        "      Tokenized " +
+        tokenized.length().to_string() +
+        " files (" +
+        @common.elapsed_ms(tok_started).to_string() +
+        "ms)",
+      )
+      println("      Building TF-IDF vectors...")
+    }
+    let build_started = @env.now()
     let batch = @tfidf.TfidfBatch::from_tokens(tokenized)
-    let results = batch.all_pairs_above_threshold(config.threshold)
+    if show_progress {
+      println(
+        "      Vectors built (" +
+        @common.elapsed_ms(build_started).to_string() +
+        "ms)",
+      )
+      // Adaptive threshold: for large file sets, start with a higher threshold
+      // and step down if too few results, to avoid O(n²) explosion
+      println("      Searching pairs...")
+    }
+    let (results, adapted) = adaptive_tfidf_search(
+      batch, files.length(), config.threshold,
+    )
+    effective_threshold = adapted
+    if show_progress && effective_threshold > config.threshold {
+      println(
+        "      Adaptive threshold: " +
+        config.threshold.to_string() +
+        " -> " +
+        effective_threshold.to_string(),
+      )
+    }
     for result in results {
       let (i, j, sim) = result
       pairs.push({ file1: files[i].0, file2: files[j].0, similarity: sim })
     }
   } else {
     // Fallback for NCD/Hybrid strategies
+    let total_pairs = files.length() * (files.length() - 1) / 2
+    if show_progress {
+      println(
+        "      Comparing " +
+        total_pairs.to_string() +
+        " pairs (" +
+        config.strategy +
+        ")...",
+      )
+    }
     for i = 0; i < files.length(); i = i + 1 {
       for j = i + 1; j < files.length(); j = j + 1 {
         let sim = calc_similarity(files[i].1, files[j].1, config.strategy)
@@ -658,26 +646,62 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
       }
     }
   }
-  // Find clusters
-  let clusters = find_clusters(files, pairs, config.threshold)
+  if show_progress {
+    println(
+      "      Found " +
+      pairs.length().to_string() +
+      " pairs above threshold (" +
+      @common.elapsed_ms(sim_started).to_string() +
+      "ms)",
+    )
+  }
+  // [3/4] Find clusters and build plan
+  if show_progress {
+    println("[3/4] Clustering and analyzing duplicates...")
+  }
+  let cluster_started = @env.now()
+  let clusters = find_clusters(files, pairs, effective_threshold)
+  if show_progress {
+    println(
+      "      Clustering: " +
+      clusters.length().to_string() +
+      " clusters (" +
+      @common.elapsed_ms(cluster_started).to_string() +
+      "ms)",
+    )
+  }
   // Build file contents map for concrete suggestions
   let file_contents : Map[String, String] = {}
   for f in files {
     file_contents.set(f.0, f.1)
   }
   // Build intermediate plan
-  let plan = build_refactor_plan(clusters, config, file_contents)
-  // Render to selected format/style
+  let plan_started = @env.now()
+  let plan = build_refactor_plan(
+    clusters, config, file_contents, effective_threshold~, registry~,
+  )
+  if show_progress {
+    println(
+      "      Plan build: " +
+      @common.elapsed_ms(plan_started).to_string() +
+      "ms",
+    )
+  }
+  // [4/4] Render to selected format/style
   let name = if config.project_name.length() > 0 {
     config.project_name
   } else {
     extract_project_name(config.target_dir)
   }
+  if show_progress {
+    println("[4/4] Rendering " + config.format + " output...")
+    println("")
+  }
   let output_content = match config.format {
     "github-issue" => {
       let doc = refactor_to_plan_document(plan, name)
       let issue = @plan_render.render_github_issue(doc)
-      format_refactor_issue(issue)
+      issue.format()
     }
     _ =>
       match config.style {
@@ -703,25 +727,47 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   }
 }
 
+// format_github_issue: use @plan_render.GitHubIssue::format (SoT)
+
+// marker_matches: use @glob.glob_match (SoT)
+// ancestor_dirs, parent_dir: use @common (SoT)
+
 ///|
-fn format_refactor_issue(issue : @plan_render.GitHubIssue) -> String {
-  let buf = StringBuilder::new()
-  buf.write_string("# ")
-  buf.write_string(issue.title)
-  buf.write_string("\n\n")
-  if issue.labels.length() > 0 {
-    buf.write_string("**Labels:** ")
-    for i, label in issue.labels {
-      if i > 0 {
-        buf.write_string(", ")
-      }
-      buf.write_string("`")
-      buf.write_string(label)
-      buf.write_string("`")
-    }
-    buf.write_string("\n\n")
+/// Adaptive TF-IDF search: for large file sets, start with a higher threshold
+/// and step down until we get enough results or reach the base threshold.
+///
+/// This avoids the pathological case where a low threshold produces hundreds of
+/// thousands of candidate pairs in the inverted index, making cosine evaluation
+/// extremely slow.
+fn adaptive_tfidf_search(
+  batch : @tfidf.TfidfBatch,
+  file_count : Int,
+  base_threshold : Double,
+) -> (Array[(Int, Int, Double)], Double) {
+  // For small file sets, just use the base threshold directly
+  let adaptive_file_threshold = 200
+  if file_count <= adaptive_file_threshold {
+    return (batch.all_pairs_above_threshold(base_threshold), base_threshold)
   }
-  buf.write_string("---\n\n")
-  buf.write_string(issue.body)
-  buf.to_string()
+  // Step down from 0.9 to base_threshold
+  let steps : Array[Double] = [0.9, 0.85, 0.8, 0.75]
+  let max_pairs = 10000
+  for step in steps {
+    if step <= base_threshold {
+      break
+    }
+    let results = batch.all_pairs_above_threshold(step)
+    if results.length() > 0 {
+      // If we got a reasonable number, return with this threshold
+      if results.length() <= max_pairs {
+        return (results, step)
+      }
+      // Too many even at this threshold, use it anyway (it's the best we can do)
+      return (results, step)
+    }
+  }
+  // Fall back to base threshold
+  (batch.all_pairs_above_threshold(base_threshold), base_threshold)
 }
+
+// elapsed_ms: use @common (SoT)

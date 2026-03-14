@@ -168,66 +168,7 @@ pub fn show_explore_help() -> Unit {
   println("  indexion explore --strategy=tsed --threshold=0.8 src/")
 }
 
-///|
-/// Collect files from multiple directories using pipeline.discover_files (SoT).
-/// When multiple directories are given, display_name is "dirname:relative_path".
-fn collect_files_multi(
-  dirs : Array[String],
-  extensions : Array[String],
-  includes : Array[String],
-  excludes : Array[String],
-) -> Array[(String, String)] {
-  let files : Array[(String, String)] = []
-  let multi_dir = dirs.length() > 1
-  // Get unique names for each directory (handles "src" vs "src" case)
-  let dir_names = @common.extract_unique_dir_names(dirs)
-  for i, dir in dirs {
-    // Use pipeline.discover_files as SoT for filtering
-    let opts = @pipeline.DiscoverOptions::new(
-      includes~,
-      excludes~,
-      root_dir=dir,
-    )
-    let paths = @pipeline.discover_files([dir], opts)
-    // Use unique dirname for prefix
-    let dirname = dir_names[i]
-    // Filter by extensions and read contents
-    for path in paths {
-      let basename = @pipeline.extract_basename(path)
-      // Check extension filter
-      let ext_ok = if extensions.length() == 0 {
-        true
-      } else {
-        let mut matched = false
-        for ext in extensions {
-          if basename.has_suffix(ext) {
-            matched = true
-            break
-          }
-        }
-        matched
-      }
-      if ext_ok {
-        try {
-          let content = @fs.read_file_to_string(path)
-          let relative = @common.make_relative_path(path, dir)
-          // Prefix with dirname when multiple directories
-          let display_name = if multi_dir {
-            dirname + ":" + relative
-          } else {
-            relative
-          }
-          files.push((display_name, content))
-        } catch {
-          _ => ()
-        }
-      }
-    }
-  }
-  files
-}
-
-// Path utilities: use @common (SoT)
+// collect_files: use @common (SoT)
 
 ///|
 /// Filter pairs to keep only cross-directory pairs.
@@ -275,15 +216,7 @@ fn pair_threshold_for_format(format : String, threshold : Double) -> Double {
   }
 }
 
-///|
-fn elapsed_ms(start_ms : UInt64) -> UInt64 {
-  let now = @env.now()
-  if now >= start_ms {
-    now - start_ms
-  } else {
-    0UL
-  }
-}
+// elapsed_ms: use @common (SoT)
 
 ///|
 fn average_count(total : Int, count : Int) -> Int {
@@ -369,7 +302,7 @@ fn calculate_pairs(
         "/" +
         files.length().to_string() +
         "] " +
-        truncate(files[i].0, 40),
+        @common.truncate(files[i].0, 40),
       )
     }
     for j = i + 1; j < files.length(); j = j + 1 {
@@ -387,12 +320,7 @@ fn calculate_pairs(
   pairs
 }
 
-///|
-/// Format double with 2 decimal places.
-fn format_percent(d : Double) -> String {
-  let percent = (d * 100.0).to_int()
-  percent.to_string() + "%"
-}
+// format_percent: use @common (SoT)
 
 ///|
 /// Output as matrix format.
@@ -415,7 +343,7 @@ fn output_matrix(
   // Header
   let mut header = "| |"
   for f in files {
-    header = header + " " + truncate(f.0, 10) + " |"
+    header = header + " " + @common.truncate(f.0, 10) + " |"
   }
   println(header)
   // Separator
@@ -426,14 +354,14 @@ fn output_matrix(
   println(sep)
   // Rows
   for f1 in files {
-    let mut row = "| " + truncate(f1.0, 10) + " |"
+    let mut row = "| " + @common.truncate(f1.0, 10) + " |"
     for f2 in files {
       if f1.0 == f2.0 {
         row = row + " - |"
       } else {
         let key = f1.0 + "|" + f2.0
         match pair_map.get(key) {
-          Some(sim) => row = row + " " + format_percent(sim) + " |"
+          Some(sim) => row = row + " " + @common.format_percent(sim) + " |"
           None => row = row + " ? |"
         }
       }
@@ -454,7 +382,7 @@ fn output_list(pairs : Array[FilePair]) -> Unit {
   println("")
   for pair in pairs {
     println(
-      format_percent(pair.similarity) + "  " + pair.file1 + " <-> " + pair.file2,
+      @common.format_percent(pair.similarity) + "  " + pair.file1 + " <-> " + pair.file2,
     )
   }
 }
@@ -506,7 +434,7 @@ fn output_cluster(
     }
     clusters.push(cluster)
   }
-  println("=== Clusters (threshold: " + format_percent(threshold) + ") ===")
+  println("=== Clusters (threshold: " + @common.format_percent(threshold) + ") ===")
   println("")
   for i, cluster in clusters {
     if cluster.length() > 0 {
@@ -553,21 +481,7 @@ fn output_json(
   println("}")
 }
 
-///|
-/// Truncate string to max length.
-fn truncate(s : String, max_len : Int) -> String {
-  let chars = s.to_array()
-  if chars.length() <= max_len {
-    return s
-  }
-  let result : Array[Char] = []
-  for i = 0; i < max_len - 2; i = i + 1 {
-    result.push(chars[i])
-  }
-  result.push('.')
-  result.push('.')
-  String::from_array(result)
-}
+// truncate: use @common (SoT)
 
 ///|
 /// Run the explore command with given arguments.
@@ -598,11 +512,11 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   println("")
   // Collect files with progress (respects .gitignore, .indexionignore)
   println("[1/2] Scanning files...")
-  let files = collect_files_multi(
+  let files = @common.collect_files(
     config.target_dirs,
-    config.extensions,
-    config.includes,
-    config.excludes,
+    includes=config.includes,
+    excludes=config.excludes,
+    extensions=config.extensions,
   )
   println("      Scan complete: " + files.length().to_string() + " files")
   if files.length() < 2 {
@@ -636,18 +550,18 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
       " with KGF, " +
       fallback_count.to_string() +
       " fallback in " +
-      elapsed_ms(tokenize_started).to_string() +
+      @common.elapsed_ms(tokenize_started).to_string() +
       "ms",
     )
     println("      Building TF-IDF vectors...")
     let build_started = @env.now()
     let batch = @tfidf.TfidfBatch::from_tokens(tokenized)
-    report_tfidf_build_stats(batch.build_stats(), elapsed_ms(build_started))
+    report_tfidf_build_stats(batch.build_stats(), @common.elapsed_ms(build_started))
     let search_started = @env.now()
     let (pairs, search_stats) = calculate_tfidf_pairs(
       batch, files, min_similarity,
     )
-    report_tfidf_search_stats(search_stats, elapsed_ms(search_started))
+    report_tfidf_search_stats(search_stats, @common.elapsed_ms(search_started))
     pairs
   } else {
     calculate_pairs(files, config.strategy, min_similarity)
@@ -671,7 +585,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
       "      Done (" +
       filtered_pairs.length().to_string() +
       " pairs kept at >= " +
-      format_percent(min_similarity) +
+      @common.format_percent(min_similarity) +
       ")",
     )
   } else {

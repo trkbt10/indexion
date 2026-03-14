@@ -1,7 +1,4 @@
-///|
-fn get_arg_value(arg : String, prefix_len : Int) -> String {
-  substring(arg, prefix_len, arg.length())
-}
+// get_arg_value: use @common (SoT)
 
 ///|
 fn substring(s : String, start : Int, end : Int) -> String {
@@ -28,62 +25,8 @@ fn lower_string(s : String) -> String {
   s.to_lower()
 }
 
-///|
-fn parse_int(s : String) -> Int {
-  let chars = trim_string(s).to_array()
-  if chars.length() == 0 {
-    return 0
-  }
-  let mut idx = 0
-  let mut negative = false
-  if chars[0] == '-' {
-    negative = true
-    idx = 1
-  }
-  let mut result = 0
-  while idx < chars.length() {
-    let ch = chars[idx]
-    if ch < '0' || ch > '9' {
-      break
-    }
-    result = result * 10 + (ch.to_int() - '0'.to_int())
-    idx = idx + 1
-  }
-  if negative {
-    -result
-  } else {
-    result
-  }
-}
-
-///|
-fn split_lines(content : String) -> Array[String] {
-  let lines : Array[String] = []
-  let chars = content.to_array()
-  let current : Array[Char] = []
-  let mut i = 0
-  while i < chars.length() {
-    let ch = chars[i]
-    if ch == '\n' {
-      lines.push(String::from_array(current))
-      current.clear()
-    } else if ch == '\r' {
-      // Normalize CRLF and lone CR.
-      if i + 1 < chars.length() && chars[i + 1] == '\n' {
-        ignore(i)
-      }
-      lines.push(String::from_array(current))
-      current.clear()
-    } else {
-      current.push(ch)
-    }
-    i = i + 1
-  }
-  if current.length() > 0 || content.length() == 0 {
-    lines.push(String::from_array(current))
-  }
-  lines
-}
+// parse_int: use @common (SoT)
+// split_lines: use @common (SoT)
 
 ///|
 fn join_lines(lines : Array[String]) -> String {

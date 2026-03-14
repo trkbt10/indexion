@@ -14,7 +14,7 @@ pub fn to_plan_document(
   // Metadata
   doc.set_meta("project_name", project_name)
   doc.set_meta("version", info.version)
-  doc.set_meta("coverage", format_percent(analysis.coverage_percent))
+  doc.set_meta("coverage", @common.format_percent(analysis.coverage_percent / 100.0))
   doc.set_meta("documented", analysis.total_documented.to_string())
   doc.set_meta("total", analysis.total_pub_items.to_string())
   doc.set_meta("labels", "documentation,plan")
@@ -61,11 +61,11 @@ fn build_coverage_section(analysis : DocAnalysis) -> @plan_types.PlanSection {
     "Functions",
     fn_doc.to_string(),
     fn_total.to_string(),
-    format_percent(
+    @common.format_percent(
       if fn_total > 0 {
-        fn_doc.to_double() / fn_total.to_double() * 100.0
+        fn_doc.to_double() / fn_total.to_double()
       } else {
-        100.0
+        1.0
       },
     ),
   ])
@@ -73,11 +73,11 @@ fn build_coverage_section(analysis : DocAnalysis) -> @plan_types.PlanSection {
     "Types",
     type_doc.to_string(),
     type_total.to_string(),
-    format_percent(
+    @common.format_percent(
       if type_total > 0 {
-        type_doc.to_double() / type_total.to_double() * 100.0
+        type_doc.to_double() / type_total.to_double()
       } else {
-        100.0
+        1.0
       },
     ),
   ])
@@ -119,15 +119,15 @@ fn build_inventory_section(analysis : DocAnalysis) -> @plan_types.PlanSection {
   ])
   for pkg in analysis.packages {
     let cov = if pkg.total_pub > 0 {
-      pkg.documented.to_double() / pkg.total_pub.to_double() * 100.0
+      pkg.documented.to_double() / pkg.total_pub.to_double()
     } else {
-      100.0
+      1.0
     }
     table.add_row([
       "`" + pkg.path + "`",
       pkg.total_pub.to_string(),
       pkg.documented.to_string(),
-      format_percent(cov),
+      @common.format_percent(cov),
       if pkg.has_readme {
         "Yes"
       } else {
@@ -200,13 +200,13 @@ fn build_action_section(analysis : DocAnalysis) -> @plan_types.PlanSection {
   if low_cov.length() > 0 {
     let items : Array[@plan_types.ChecklistItem] = []
     for pkg in low_cov {
-      let cov = pkg.documented.to_double() / pkg.total_pub.to_double() * 100.0
+      let cov = pkg.documented.to_double() / pkg.total_pub.to_double()
       items.push(
         @plan_types.ChecklistItem::with_priority(
           "Improve `" +
           pkg.path +
           "` coverage (currently " +
-          format_percent(cov) +
+          @common.format_percent(cov) +
           ")",
           3,
         ),

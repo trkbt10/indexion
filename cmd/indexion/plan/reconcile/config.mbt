@@ -115,36 +115,36 @@ fn parse_args_state(args : Array[String], start_idx : Int) -> ParsedArgsState {
       config = { ..config, show_help: true }
     } else if arg.has_prefix("--output=") || arg.has_prefix("-o=") {
       let prefix_len = if arg.has_prefix("--output=") { 9 } else { 3 }
-      config = { ..config, output: get_arg_value(arg, prefix_len) }
+      config = { ..config, output: @common.get_arg_value(arg, prefix_len) }
     } else if arg.has_prefix("--format=") {
-      config = { ..config, format: get_arg_value(arg, 9) }
+      config = { ..config, format: @common.get_arg_value(arg, 9) }
       state = { ..state, explicit_format: true }
     } else if arg.has_prefix("--scope=") {
-      config = update_documents_scope_name(config, get_arg_value(arg, 8))
+      config = update_documents_scope_name(config, @common.get_arg_value(arg, 8))
       state = { ..state, explicit_doc_scope: true }
     } else if arg.has_prefix("--specs=") || arg.has_prefix("--specs-dir=") {
       let prefix_len = if arg.has_prefix("--specs-dir=") { 12 } else { 8 }
-      config = { ..config, specs_dir: get_arg_value(arg, prefix_len) }
+      config = { ..config, specs_dir: @common.get_arg_value(arg, prefix_len) }
       state = { ..state, explicit_specs_dir: true }
     } else if arg.has_prefix("--index-dir=") {
-      config = { ..config, index_dir: get_arg_value(arg, 12) }
+      config = { ..config, index_dir: @common.get_arg_value(arg, 12) }
       state = { ..state, explicit_index_dir: true }
     } else if arg.has_prefix("--config=") {
-      config = { ..config, config_path: get_arg_value(arg, 9) }
+      config = { ..config, config_path: @common.get_arg_value(arg, 9) }
     } else if arg.has_prefix("--review-results=") {
-      config = { ..config, review_results_path: get_arg_value(arg, 17) }
+      config = { ..config, review_results_path: @common.get_arg_value(arg, 17) }
       state = { ..state, explicit_review_results_path: true }
     } else if arg.has_prefix("--threshold-seconds=") {
       config = {
         ..config,
-        threshold_seconds: parse_int(get_arg_value(arg, 20)),
+        threshold_seconds: @common.parse_int(@common.get_arg_value(arg, 20)),
       }
       state = { ..state, explicit_threshold_seconds: true }
     } else if arg.has_prefix("--max-candidates=") {
-      config = { ..config, max_candidates: parse_int(get_arg_value(arg, 17)) }
+      config = { ..config, max_candidates: @common.parse_int(@common.get_arg_value(arg, 17)) }
       state = { ..state, explicit_max_candidates: true }
     } else if arg.has_prefix("--doc=") {
-      let path = get_arg_value(arg, 6)
+      let path = @common.get_arg_value(arg, 6)
       config = if state.explicit_doc_paths {
         append_document_path(config, path)
       } else {
@@ -152,7 +152,7 @@ fn parse_args_state(args : Array[String], start_idx : Int) -> ParsedArgsState {
       }
       state = { ..state, explicit_doc_paths: true }
     } else if arg.has_prefix("--doc-spec=") {
-      let spec = get_arg_value(arg, 11)
+      let spec = @common.get_arg_value(arg, 11)
       config = if state.explicit_doc_specs {
         append_document_spec(config, spec)
       } else {

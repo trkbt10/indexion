@@ -316,7 +316,7 @@ fn analyze_mbt_file(
 ) -> Unit {
   try {
     let content = @fs.read_file_to_string(path)
-    let lines = split_lines(content)
+    let lines = @common.split_lines(content)
     let mut doc_buffer : Array[String] = []
     let mut in_doc_block = false
     for i, line in lines {
@@ -492,26 +492,7 @@ fn is_ident_char(c : Char) -> Bool {
   c == ':'
 }
 
-// String utilities
-
-///|
-fn split_lines(s : String) -> Array[String] {
-  let lines : Array[String] = []
-  let chars = s.to_array()
-  let current : Array[Char] = []
-  for c in chars {
-    if c == '\n' {
-      lines.push(String::from_array(current))
-      current.clear()
-    } else if c != '\r' {
-      current.push(c)
-    }
-  }
-  if current.length() > 0 {
-    lines.push(String::from_array(current))
-  }
-  lines
-}
+// use @common (SoT) — split_lines
 
 ///|
 fn trim_string(s : String) -> String {

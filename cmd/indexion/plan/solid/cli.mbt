@@ -179,7 +179,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     "github-issue" => {
       let doc = solid_to_plan_document(plan_json)
       let issue = @plan_render.render_github_issue(doc)
-      format_github_issue(issue)
+      issue.format()
     }
     "json" => {
       let doc = solid_to_plan_document(plan_json)
@@ -259,28 +259,7 @@ fn build_plan_json(
 
 // extract_unique_source_names, get_parent_dirname: use @common.extract_unique_dir_names (SoT)
 
-///|
-fn format_github_issue(issue : @plan_render.GitHubIssue) -> String {
-  let buf = StringBuilder::new()
-  buf.write_string("# ")
-  buf.write_string(issue.title)
-  buf.write_string("\n\n")
-  if issue.labels.length() > 0 {
-    buf.write_string("**Labels:** ")
-    for i, label in issue.labels {
-      if i > 0 {
-        buf.write_string(", ")
-      }
-      buf.write_string("`")
-      buf.write_string(label)
-      buf.write_string("`")
-    }
-    buf.write_string("\n\n")
-  }
-  buf.write_string("---\n\n")
-  buf.write_string(issue.body)
-  buf.to_string()
-}
+// format_github_issue: use @plan_render.GitHubIssue::format (SoT)
 
 ///|
 /// Load rules from file and inline arguments.
@@ -312,7 +291,7 @@ fn load_rules(config : SolidConfig) -> Array[SolidRule] {
 /// Parse rules from file content.
 fn parse_rules(content : String) -> Array[SolidRule] {
   let rules : Array[SolidRule] = []
-  let lines = split_lines(content)
+  let lines = @common.split_lines(content)
   for line in lines {
     let trimmed = trim_string(line)
     // Skip empty lines and comments
@@ -365,24 +344,7 @@ fn parse_rule(rule_str : String) -> SolidRule? {
   Some({ pattern, target })
 }
 
-///|
-fn split_lines(s : String) -> Array[String] {
-  let lines : Array[String] = []
-  let chars = s.to_array()
-  let current : Array[Char] = []
-  for c in chars {
-    if c == '\n' {
-      lines.push(String::from_array(current))
-      current.clear()
-    } else if c != '\r' {
-      current.push(c)
-    }
-  }
-  if current.length() > 0 {
-    lines.push(String::from_array(current))
-  }
-  lines
-}
+// split_lines: use @common (SoT)
 
 ///|
 fn trim_string(s : String) -> String {
@@ -407,7 +369,9 @@ fn trim_string(s : String) -> String {
 fn find_cross_matches(config : SolidConfig) -> Array[FileMatch] {
   let matches : Array[FileMatch] = []
   // Collect files from all source directories
-  let files = collect_files(config.from_dirs, config.includes, config.excludes)
+  let files = @common.collect_files(
+    config.from_dirs, includes=config.includes, excludes=config.excludes,
+  )
   if files.length() < 2 {
     return matches
   }
@@ -527,38 +491,7 @@ fn calculate_tree_pairs(
   pairs
 }
 
-///|
-fn collect_files(
-  dirs : Array[String],
-  includes : Array[String],
-  excludes : Array[String],
-) -> Array[(String, String)] {
-  let files : Array[(String, String)] = []
-  // Get unique names for each directory (handles "src" vs "src" case)
-  let dir_names = @common.extract_unique_dir_names(dirs)
-  for i, dir in dirs {
-    let opts = @pipeline.DiscoverOptions::new(
-      includes~,
-      excludes~,
-      root_dir=dir,
-    )
-    let paths = @pipeline.discover_files([dir], opts)
-    let dirname = dir_names[i]
-    for path in paths {
-      try {
-        let content = @fs.read_file_to_string(path)
-        let relative = @common.make_relative_path(path, dir)
-        let display_name = dirname + ":" + relative
-        files.push((display_name, content))
-      } catch {
-        _ => ()
-      }
-    }
-  }
-  files
-}
-
-// Path utilities: use @common (SoT)
+// collect_files: use @common (SoT)
 
 ///|
 /// Categorized matches by target.

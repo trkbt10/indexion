@@ -81,18 +81,7 @@ pub fn ReadmeConfig::default() -> ReadmeConfig {
   }
 }
 
-///|
-fn get_arg_value(arg : String, prefix_len : Int) -> String {
-  let chars = arg.to_array()
-  if prefix_len >= chars.length() {
-    return ""
-  }
-  let result : Array[Char] = []
-  for i = prefix_len; i < chars.length(); i = i + 1 {
-    result.push(chars[i])
-  }
-  String::from_array(result)
-}
+// use @common (SoT): get_arg_value
 
 ///|
 pub fn parse_args(args : Array[String], start_idx : Int) -> ReadmeConfig {
@@ -111,26 +100,26 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> ReadmeConfig {
     } else if arg == "--per-package" {
       config = { ..config, per_package: true }
     } else if arg.has_prefix("--specs-dir=") {
-      let value = get_arg_value(arg, 12)
+      let value = @common.get_arg_value(arg, 12)
       config = { ..config, specs_dir: value }
     } else if arg.has_prefix("--include=") {
-      let value = get_arg_value(arg, 10)
+      let value = @common.get_arg_value(arg, 10)
       includes.push(value)
     } else if arg.has_prefix("--exclude=") {
-      let value = get_arg_value(arg, 10)
+      let value = @common.get_arg_value(arg, 10)
       excludes.push(value)
     } else if arg.has_prefix("--format=") {
-      let value = get_arg_value(arg, 9)
+      let value = @common.get_arg_value(arg, 9)
       config = { ..config, format: value }
     } else if arg.has_prefix("--output=") || arg.has_prefix("-o=") {
       let prefix_len = if arg.has_prefix("--output=") { 9 } else { 3 }
-      let value = get_arg_value(arg, prefix_len)
+      let value = @common.get_arg_value(arg, prefix_len)
       config = { ..config, output: Some(value) }
     } else if arg.has_prefix("--template=") {
-      let value = get_arg_value(arg, 11)
+      let value = @common.get_arg_value(arg, 11)
       config = { ..config, template: Some(value) }
     } else if arg.has_prefix("--config=") {
-      let value = get_arg_value(arg, 9)
+      let value = @common.get_arg_value(arg, 9)
       config = { ..config, config_path: Some(value) }
     } else if not(arg.has_prefix("-")) {
       paths.push(arg)

@@ -100,6 +100,48 @@ pub fn tokenize_files_with_kgf(
 }
 
 ///|
+/// Build a map from line number (1-indexed) to function name using KGF function extraction.
+/// Used to annotate duplicate code blocks with function context.
+pub fn build_line_func_map(
+  content : String,
+  path : String,
+  registry : @kgf_registry.KGFRegistry?,
+) -> Map[Int, String] {
+  let result : Map[Int, String] = {}
+  let reg = match registry {
+    Some(r) => r
+    None => return result
+  }
+  let lang = match reg.detect_from_path(path) {
+    Some(l) => l
+    None => return result
+  }
+  let spec = match reg.get_spec(lang) {
+    Some(s) => s
+    None => return result
+  }
+  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+  let tokens = lexer.tokenize(content)
+  let functions = extract_functions(tokens, path)
+  // Build token_index -> line_number mapping by counting NL tokens
+  let token_lines : Array[Int] = Array::make(tokens.length(), 1)
+  let mut line = 1
+  for i, tok in tokens {
+    token_lines[i] = line
+    if tok.get_kind() == "NL" {
+      line += 1
+    }
+  }
+  // Map function start lines to function names
+  for func in functions {
+    if func.get_start() < token_lines.length() {
+      result.set(token_lines[func.get_start()], func.get_name())
+    }
+  }
+  result
+}
+
+///|
 /// Load KGF registry from kgfs directory if available.
 pub fn load_registry(
   explicit_path? : String = "",

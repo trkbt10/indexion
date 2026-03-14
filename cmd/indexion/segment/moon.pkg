@@ -1,5 +1,6 @@
 import {
   "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/cmd/indexion/common" @common,
   "trkbt10/indexion/src/segmentation" @seg,
   "trkbt10/indexion/src/segmentation/types" @types,
   "trkbt10/indexion/src/segmentation/window" @window,
