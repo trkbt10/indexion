@@ -49,6 +49,7 @@ fn compute_review_state_hash(
 }
 
 ///|
+/// Allocate the next vector ID from the manifest counter.
 pub fn ReconcileManifest::allocate_vector_id(
   self : ReconcileManifest,
 ) -> (ReconcileManifest, Int64) {

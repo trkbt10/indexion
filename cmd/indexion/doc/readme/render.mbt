@@ -7,6 +7,7 @@ pub enum OutputFormat {
 }
 
 ///|
+/// Parse an output format name into an OutputFormat variant.
 pub fn OutputFormat::from_string(s : String) -> OutputFormat {
   match s {
     "json" => Json

@@ -1,5 +1,5 @@
 ///|
-/// CLI and file-backed reconcile configuration.
+/// CLI and file-backed configuration for the reconcile command.
 pub struct ReconcileConfig {
   target_dir : String
   output : String
@@ -19,6 +19,7 @@ pub struct ReconcileConfig {
 } derive(Eq, Show)
 
 ///|
+/// Create a default reconcile configuration with sensible defaults.
 pub fn ReconcileConfig::default() -> ReconcileConfig {
   {
     target_dir: "",
@@ -40,6 +41,7 @@ pub fn ReconcileConfig::default() -> ReconcileConfig {
 }
 
 ///|
+/// Timestamp metadata for a file, including epoch time, source, and dirty flag.
 pub struct TimestampInfo {
   epoch_seconds : Int?
   source : String
@@ -47,11 +49,13 @@ pub struct TimestampInfo {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Create a timestamp with no known epoch time.
 pub fn TimestampInfo::unknown(source? : String = "unknown") -> TimestampInfo {
   { epoch_seconds: None, source, is_dirty: false }
 }
 
 ///|
+/// Tracked state of a source or document file for change detection.
 pub struct FileState {
   path : String
   file_kind : String
@@ -63,6 +67,7 @@ pub struct FileState {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// A code symbol extracted from the dependency graph for reconciliation.
 pub struct CodeUnit {
   symbol_id : String
   name : String
@@ -75,6 +80,7 @@ pub struct CodeUnit {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// A fragment of documentation extracted from a document file.
 pub struct DocFragment {
   id : String
   path : String
@@ -87,6 +93,7 @@ pub struct DocFragment {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Anchor referencing a code symbol within a reconcile candidate.
 pub struct CodeAnchor {
   symbol_id : String
   name : String
@@ -97,6 +104,7 @@ pub struct CodeAnchor {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Anchor referencing a documentation fragment within a reconcile candidate.
 pub struct DocAnchor {
   fragment_id : String
   path : String
@@ -107,6 +115,7 @@ pub struct DocAnchor {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Evidence supporting the code-to-doc mapping for a candidate.
 pub struct MappingEvidence {
   matched_terms : Array[String]
   match_kind : String
@@ -116,6 +125,7 @@ pub struct MappingEvidence {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// A candidate representing a code symbol that may need documentation updates.
 pub struct ReconcileCandidate {
   id : String
   symbol_id : String
@@ -134,6 +144,7 @@ pub struct ReconcileCandidate {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// A queued task for human logical review of a reconcile candidate.
 pub struct LogicalReviewTask {
   review_key : String
   candidate_id : String
@@ -147,6 +158,7 @@ pub struct LogicalReviewTask {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Aggregate statistics summarizing the reconcile report.
 pub struct ReconcileSummary {
   total_symbols : Int
   symbols_with_inline_doc : Int
@@ -167,6 +179,7 @@ pub struct ReconcileSummary {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Cache hit/miss state and fingerprint info for incremental runs.
 pub struct CacheState {
   cache_hit : Bool
   source_fingerprint : String
@@ -176,6 +189,7 @@ pub struct CacheState {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Snapshot of configuration settings stored within the reconcile report.
 pub struct ReconcileReportConfig {
   target_dir : String
   specs_dir : String
@@ -193,6 +207,7 @@ pub struct ReconcileReportConfig {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Grouped suggestion aggregating multiple candidates at module or project scope.
 pub struct ReconcileAggregateSuggestion {
   id : String
   scope : String
@@ -207,6 +222,7 @@ pub struct ReconcileAggregateSuggestion {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Full reconcile report output including candidates, reviews, and summary.
 pub struct ReconcileReport {
   version : String
   generated_at : Int
@@ -221,6 +237,7 @@ pub struct ReconcileReport {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// An entry in the index database tracking a record's digest and vector ID.
 pub struct IndexedRecordEntry {
   record_key : String
   record_kind : String
@@ -229,6 +246,7 @@ pub struct IndexedRecordEntry {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Persisted state of a logical review decision in the manifest.
 pub struct LogicalReviewEntry {
   review_key : String
   candidate_id : String
@@ -240,6 +258,7 @@ pub struct LogicalReviewEntry {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// User-supplied review decision for a logical review task.
 pub struct ReviewDecisionInput {
   review_key : String
   status : String
@@ -247,6 +266,7 @@ pub struct ReviewDecisionInput {
 } derive(Eq, Show, @json.FromJson)
 
 ///|
+/// Persistent manifest tracking indexed records, reviews, and fingerprints.
 pub struct ReconcileManifest {
   version : String
   updated_at : Int
@@ -261,6 +281,7 @@ pub struct ReconcileManifest {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Create an empty manifest with default version and zero counters.
 pub fn ReconcileManifest::empty() -> ReconcileManifest {
   {
     version: "reconcile-v1",

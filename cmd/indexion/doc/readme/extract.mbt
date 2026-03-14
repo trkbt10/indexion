@@ -10,6 +10,7 @@ pub struct ExtractedDoc {
 }
 
 ///|
+/// Create a new extracted documentation value.
 pub fn ExtractedDoc::new(
   title : String?,
   content : String,
@@ -137,7 +138,7 @@ fn join_with_newlines(parts : Array[String]) -> String {
 }
 
 ///|
-/// Extract summary from doc content (text before second ## heading).
+/// Extract summary text from doc content (text before second ## heading).
 pub fn extract_summary(content : String) -> String {
   let lines = @common.split_lines(content)
   let result : Array[String] = []

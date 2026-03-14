@@ -45,6 +45,7 @@ pub enum DocRootSection {
 } derive(Eq, Show)
 
 ///|
+/// Create an empty doc config with default values.
 pub fn DocConfig::empty() -> DocConfig {
   {
     version: "1.0",

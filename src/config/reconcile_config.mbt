@@ -26,6 +26,7 @@ pub struct ReconcileDocumentScope {
 } derive(Eq, Show)
 
 ///|
+/// Create an empty file config with all fields set to None.
 pub fn ReconcileFileConfig::empty() -> ReconcileFileConfig {
   {
     doc_scope: None,
@@ -44,6 +45,7 @@ pub fn ReconcileFileConfig::empty() -> ReconcileFileConfig {
 }
 
 ///|
+/// Resolve the KGF specs directory for reconcile, using explicit path or auto-detection.
 pub fn resolve_reconcile_specs_dir(
   target_dir : String,
   explicit_specs_dir? : String = "",
@@ -59,6 +61,7 @@ pub fn resolve_reconcile_specs_dir(
 }
 
 ///|
+/// Normalize a document scope name to a canonical value.
 pub fn normalize_reconcile_doc_scope(scope : String) -> String {
   match trim_string(scope).to_lower() {
     "package-docs" => "package-docs"
@@ -69,6 +72,7 @@ pub fn normalize_reconcile_doc_scope(scope : String) -> String {
 }
 
 ///|
+/// Return default document glob paths for a given scope preset.
 pub fn reconcile_doc_scope_paths(scope : String) -> Array[String] {
   match normalize_reconcile_doc_scope(scope) {
     "package-docs" => ["README.md", "docs/**/*.md"]
@@ -78,6 +82,7 @@ pub fn reconcile_doc_scope_paths(scope : String) -> Array[String] {
 }
 
 ///|
+/// Return default KGF spec names for a given scope preset.
 pub fn reconcile_doc_scope_specs(scope : String) -> Array[String] {
   match normalize_reconcile_doc_scope(scope) {
     "package-docs" | "tree-docs" => ["markdown"]
@@ -86,6 +91,7 @@ pub fn reconcile_doc_scope_specs(scope : String) -> Array[String] {
 }
 
 ///|
+/// Build a fully resolved document scope from scope name, paths, and specs.
 pub fn resolve_reconcile_document_scope(
   scope : String,
   doc_paths? : Array[String] = [],
@@ -111,6 +117,7 @@ pub fn resolve_reconcile_document_scope(
 }
 
 ///|
+/// Load reconcile file configuration from a TOML or JSON file.
 pub fn load_reconcile_file_config(path : String) -> ReconcileFileConfig {
   if path.length() == 0 {
     return ReconcileFileConfig::empty()
@@ -128,6 +135,7 @@ pub fn load_reconcile_file_config(path : String) -> ReconcileFileConfig {
 }
 
 ///|
+/// Parse reconcile configuration from TOML content.
 pub fn parse_reconcile_toml_config(content : String) -> ReconcileFileConfig {
   let mut file_config = ReconcileFileConfig::empty()
   let mut section = ""
@@ -479,6 +487,7 @@ fn parse_string_array_literal(value : String) -> Array[String] {
 }
 
 ///|
+/// Strip inline TOML comments while respecting quoted strings.
 pub fn trim_toml_comment(line : String) -> String {
   let chars = line.to_array()
   let result : Array[Char] = []

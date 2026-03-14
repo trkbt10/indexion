@@ -65,6 +65,7 @@ pub struct ReadmeConfig {
 }
 
 ///|
+/// Create a default README generation configuration.
 pub fn ReadmeConfig::default() -> ReadmeConfig {
   {
     paths: [],
@@ -84,6 +85,7 @@ pub fn ReadmeConfig::default() -> ReadmeConfig {
 // use @common (SoT): get_arg_value
 
 ///|
+/// Parse CLI arguments into a README generation configuration.
 pub fn parse_args(args : Array[String], start_idx : Int) -> ReadmeConfig {
   let mut config = ReadmeConfig::default()
   let paths : Array[String] = []
@@ -131,6 +133,7 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> ReadmeConfig {
 }
 
 ///|
+/// Print usage information for the doc readme subcommand.
 pub fn show_help() -> Unit {
   println("indexion doc readme - Extract documentation from source files")
   println("")
@@ -178,6 +181,7 @@ fn log_progress(msg : String) -> Unit {
 }
 
 ///|
+/// Entry point for the doc readme subcommand.
 pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let config = parse_args(args, start_idx)
   if config.show_help {

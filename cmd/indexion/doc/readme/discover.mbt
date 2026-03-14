@@ -10,6 +10,7 @@ pub struct PackageInfo {
 }
 
 ///|
+/// Create a new package info with path, name, and file list.
 pub fn PackageInfo::new(
   path : String,
   name : String,

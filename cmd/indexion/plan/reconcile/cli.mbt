@@ -114,6 +114,7 @@ fn maybe_use_cache(
 }
 
 ///|
+/// Entry point for the reconcile subcommand.
 pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let config = resolve_config(args, start_idx)
   if config.show_help {
@@ -139,12 +140,19 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   } else {
     db
   }
-  let (registry, discovered_paths, graph) = build_code_graph(
-    config.target_dir,
-    config.specs_dir,
+  // Fast path: KGF lexer-only symbol extraction (no PEG parse)
+  let registry = @registry.KGFRegistry::load_from_dir(config.specs_dir)
+  let kgf_ignore = registry.collect_ignore_patterns()
+  let discover_opts = @pipeline.DiscoverOptions::new(
+    kgf_ignore~,
+    root_dir=config.target_dir,
+  )
+  let discovered_paths = @pipeline.discover_files(
+    discovery_roots(config.target_dir),
+    discover_opts,
   )
   let project_markers = registry.get_project_markers()
-  let code_units = extract_code_units(graph, registry)
+  let code_units = build_code_units_fast(discovered_paths, registry)
   let (doc_fragments, doc_file_states, used_specs) = collect_document_fragments(
     discovered_paths, config, registry,
   )

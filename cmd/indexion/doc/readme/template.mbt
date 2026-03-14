@@ -12,6 +12,7 @@ pub struct TemplateContext {
 }
 
 ///|
+/// Create a new template rendering context.
 pub fn TemplateContext::new(
   base_dir : String,
   packages : Array[(PackageInfo, ExtractedDoc)],

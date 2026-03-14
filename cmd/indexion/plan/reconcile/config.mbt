@@ -185,6 +185,7 @@ fn parse_args_state(args : Array[String], start_idx : Int) -> ParsedArgsState {
 }
 
 ///|
+/// Parse CLI arguments into a reconcile configuration.
 pub fn parse_args(args : Array[String], start_idx : Int) -> ReconcileConfig {
   parse_args_state(args, start_idx).config
 }
@@ -347,6 +348,7 @@ fn resolve_inherited_config_path(
 }
 
 ///|
+/// Parse CLI arguments and merge with file-based configuration.
 pub fn resolve_config(args : Array[String], start_idx : Int) -> ReconcileConfig {
   let parsed = parse_args_state(args, start_idx)
   let cli = parsed.config
@@ -413,6 +415,7 @@ pub fn resolve_config(args : Array[String], start_idx : Int) -> ReconcileConfig 
 }
 
 ///|
+/// Print usage information for the reconcile subcommand.
 pub fn show_help() -> Unit {
   println("indexion plan reconcile - Detect implementation/documentation drift")
   println("")
