@@ -261,53 +261,15 @@ fn detect_project_with_kgf(
 ///|
 fn parse_project_config(filename : String, content : String) -> ProjectInfo {
   if filename.has_suffix(".json") {
-    let name = extract_json_string(content, "name")
-    let description = extract_json_string(content, "description")
+    let name = @common.extract_json_string(content, "name")
+    let description = @common.extract_json_string(content, "description")
     { name: if name.length() > 0 { name } else { "project" }, description }
   } else {
     ProjectInfo::default()
   }
 }
 
-///|
-fn extract_json_string(json : String, key : String) -> String {
-  let pattern = "\"" + key + "\":"
-  let chars = json.to_array()
-  let pat_chars = pattern.to_array()
-  let mut start = -1
-  for i = 0; i < chars.length() - pat_chars.length(); i = i + 1 {
-    let mut found = true
-    for j = 0; j < pat_chars.length(); j = j + 1 {
-      if chars[i + j] != pat_chars[j] {
-        found = false
-        break
-      }
-    }
-    if found {
-      start = i + pat_chars.length()
-      break
-    }
-  }
-  if start < 0 {
-    return ""
-  }
-  while start < chars.length() && (chars[start] == ' ' || chars[start] == '\t') {
-    start = start + 1
-  }
-  if start >= chars.length() || chars[start] != '"' {
-    return ""
-  }
-  start = start + 1
-  let result : Array[Char] = []
-  while start < chars.length() && chars[start] != '"' {
-    if chars[start] == '\\' && start + 1 < chars.length() {
-      start = start + 1
-    }
-    result.push(chars[start])
-    start = start + 1
-  }
-  String::from_array(result)
-}
+// extract_json_string: use @common (SoT)
 
 // Package discovery
 

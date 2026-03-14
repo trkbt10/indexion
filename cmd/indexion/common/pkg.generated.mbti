@@ -10,6 +10,10 @@ pub fn elapsed_ms(UInt64) -> UInt64
 
 pub fn extract_dirname(String) -> String
 
+pub fn extract_json_array(String, String) -> Array[String]
+
+pub fn extract_json_string(String, String) -> String
+
 pub fn extract_unique_dir_names(Array[String]) -> Array[String]
 
 pub fn format_percent(Double) -> String

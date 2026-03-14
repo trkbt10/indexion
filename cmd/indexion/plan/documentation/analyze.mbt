@@ -72,124 +72,16 @@ pub fn load_project_info(dir : String) -> ProjectInfo {
 fn parse_moon_mod_json(content : String) -> ProjectInfo {
   let mut info = ProjectInfo::default()
   // Simple JSON parsing for specific fields
-  info = { ..info, name: extract_json_string(content, "name") }
-  info = { ..info, version: extract_json_string(content, "version") }
-  info = { ..info, description: extract_json_string(content, "description") }
-  info = { ..info, repository: extract_json_string(content, "repository") }
-  info = { ..info, license: extract_json_string(content, "license") }
-  info = { ..info, keywords: extract_json_array(content, "keywords") }
+  info = { ..info, name: @common.extract_json_string(content, "name") }
+  info = { ..info, version: @common.extract_json_string(content, "version") }
+  info = { ..info, description: @common.extract_json_string(content, "description") }
+  info = { ..info, repository: @common.extract_json_string(content, "repository") }
+  info = { ..info, license: @common.extract_json_string(content, "license") }
+  info = { ..info, keywords: @common.extract_json_array(content, "keywords") }
   info
 }
 
-///|
-fn extract_json_string(json : String, key : String) -> String {
-  let pattern = "\"" + key + "\":"
-  let chars = json.to_array()
-  let pat_chars = pattern.to_array()
-  // Find pattern
-  let mut start = -1
-  for i = 0; i < chars.length() - pat_chars.length(); i = i + 1 {
-    let mut found = true
-    for j = 0; j < pat_chars.length(); j = j + 1 {
-      if chars[i + j] != pat_chars[j] {
-        found = false
-        break
-      }
-    }
-    if found {
-      start = i + pat_chars.length()
-      break
-    }
-  }
-  if start < 0 {
-    return ""
-  }
-  // Skip whitespace
-  while start < chars.length() && (chars[start] == ' ' || chars[start] == '\t') {
-    start = start + 1
-  }
-  // Expect opening quote
-  if start >= chars.length() || chars[start] != '"' {
-    return ""
-  }
-  start = start + 1
-  // Find closing quote
-  let result : Array[Char] = []
-  while start < chars.length() && chars[start] != '"' {
-    if chars[start] == '\\' && start + 1 < chars.length() {
-      start = start + 1 // skip escape
-    }
-    result.push(chars[start])
-    start = start + 1
-  }
-  String::from_array(result)
-}
-
-///|
-fn extract_json_array(json : String, key : String) -> Array[String] {
-  let result : Array[String] = []
-  let pattern = "\"" + key + "\":"
-  let chars = json.to_array()
-  let pat_chars = pattern.to_array()
-  // Find pattern
-  let mut start = -1
-  for i = 0; i < chars.length() - pat_chars.length(); i = i + 1 {
-    let mut found = true
-    for j = 0; j < pat_chars.length(); j = j + 1 {
-      if chars[i + j] != pat_chars[j] {
-        found = false
-        break
-      }
-    }
-    if found {
-      start = i + pat_chars.length()
-      break
-    }
-  }
-  if start < 0 {
-    return result
-  }
-  // Skip to [
-  while start < chars.length() && chars[start] != '[' {
-    start = start + 1
-  }
-  if start >= chars.length() {
-    return result
-  }
-  start = start + 1
-  // Parse array items
-  while start < chars.length() && chars[start] != ']' {
-    // Skip whitespace and commas
-    while start < chars.length() &&
-          (
-            chars[start] == ' ' ||
-            chars[start] == '\t' ||
-            chars[start] == '\n' ||
-            chars[start] == ','
-          ) {
-      start = start + 1
-    }
-    if start >= chars.length() || chars[start] == ']' {
-      break
-    }
-    // Parse string
-    if chars[start] == '"' {
-      start = start + 1
-      let item : Array[Char] = []
-      while start < chars.length() && chars[start] != '"' {
-        item.push(chars[start])
-        start = start + 1
-      }
-      if item.length() > 0 {
-        result.push(String::from_array(item))
-      }
-      start = start + 1
-    } else {
-      start = start + 1
-    }
-  }
-  result
-}
+// extract_json_string, extract_json_array: use @common (SoT)
 
 ///|
 /// Analyze documentation coverage in directory.
