@@ -1,5 +1,6 @@
 ///|
 /// Error type for update operations.
+
 ///|
 pub suberror UpdateError {
   NetworkError(String)
@@ -29,7 +30,8 @@ pub fn UpdateError::to_string(self : UpdateError) -> String {
 pub fn get_install_dir() -> String raise UpdateError {
   match @config.get_install_dir() {
     Some(dir) => dir
-    None => raise UpdateError::InstallError("Cannot determine install directory")
+    None =>
+      raise UpdateError::InstallError("Cannot determine install directory")
   }
 }
 
@@ -131,6 +133,8 @@ pub async fn perform_update(version : String) -> Unit raise UpdateError {
     println("KGF specs installed to " + dst_kgfs)
   }
   // Cleanup
-  @platform.remove_dir_recursive(tmp_dir) catch { _ => () }
+  @platform.remove_dir_recursive(tmp_dir) catch {
+    _ => ()
+  }
   println("Updated to " + version)
 }

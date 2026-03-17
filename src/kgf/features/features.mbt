@@ -184,12 +184,19 @@ fn is_visibility_keyword(kind : String) -> Bool {
 /// Returns the normalized kind name (e.g. "KW_fn" -> "fn", "KW_function" -> "function").
 fn declaration_kind(kind : String) -> String? {
   // Function declarations
-  if kind == "KW_fn" || kind == "KW_function" || kind == "KW_def" || kind == "KW_func" {
+  if kind == "KW_fn" ||
+    kind == "KW_function" ||
+    kind == "KW_def" ||
+    kind == "KW_func" {
     return Some(kind.substring(start=3))
   }
   // Type declarations
-  if kind == "KW_struct" || kind == "KW_class" || kind == "KW_enum" ||
-    kind == "KW_type" || kind == "KW_trait" || kind == "KW_interface" {
+  if kind == "KW_struct" ||
+    kind == "KW_class" ||
+    kind == "KW_enum" ||
+    kind == "KW_type" ||
+    kind == "KW_trait" ||
+    kind == "KW_interface" {
     return Some(kind.substring(start=3))
   }
   // Variable/constant declarations
@@ -242,7 +249,9 @@ pub fn extract_pub_declarations(
       // Skip whitespace/newlines between visibility and declaration
       while j < tokens.length() {
         let next_kind = tokens[j].get_kind()
-        if next_kind == "NL" || next_kind == "WS" || next_kind == "LPAREN" ||
+        if next_kind == "NL" ||
+          next_kind == "WS" ||
+          next_kind == "LPAREN" ||
           next_kind == "RPAREN" {
           j += 1
         } else {

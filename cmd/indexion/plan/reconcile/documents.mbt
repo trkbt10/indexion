@@ -255,7 +255,9 @@ fn extract_toml_fragments(
       continue
     }
     if line.has_prefix("[") && line.has_suffix("]") {
-      section = @common.trim_ascii_spaces(@common.substring(line, 1, line.length() - 1))
+      section = @common.trim_ascii_spaces(
+        @common.substring(line, 1, line.length() - 1),
+      )
       fragments.push(
         make_fragment(path, spec, "section", section, "[" + section + "]"),
       )
@@ -279,7 +281,9 @@ fn extract_toml_fragments(
       continue
     }
     let key = @common.trim_ascii_spaces(@common.substring(line, 0, eq_idx))
-    let value = @common.trim_ascii_spaces(@common.substring(line, eq_idx + 1, line.length()))
+    let value = @common.trim_ascii_spaces(
+      @common.substring(line, eq_idx + 1, line.length()),
+    )
     let title = if section.length() > 0 { section + "." + key } else { key }
     fragments.push(
       make_fragment(path, spec, "entry", title, key + " = " + value),

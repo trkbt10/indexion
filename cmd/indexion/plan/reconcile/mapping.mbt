@@ -408,7 +408,6 @@ fn build_fragment_terms(
   terms
 }
 
-
 ///|
 /// Build module coverage index using inverted index for O(tokens) lookups
 /// instead of O(modules × fragments × tokens²) brute force.
@@ -500,10 +499,11 @@ fn build_fragment_match_signals(
           spec, "reference_token_kinds",
         )
         if reference_kinds.is_empty() {
-          signals.set(
-            fragment.id,
-            { exact_tokens, reference_tokens, lowered_text },
-          )
+          signals.set(fragment.id, {
+            exact_tokens,
+            reference_tokens,
+            lowered_text,
+          })
           continue
         }
         let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
@@ -521,10 +521,7 @@ fn build_fragment_match_signals(
       }
       None => ()
     }
-    signals.set(
-      fragment.id,
-      { exact_tokens, reference_tokens, lowered_text },
-    )
+    signals.set(fragment.id, { exact_tokens, reference_tokens, lowered_text })
   }
   signals
 }
@@ -596,7 +593,10 @@ fn match_fragment(
   allow_file_fallback : Bool,
 ) -> (Int, String, Array[String]) {
   match_fragment_with_terms(
-    unit, unit_match_terms(unit), signals, allow_file_fallback,
+    unit,
+    unit_match_terms(unit),
+    signals,
+    allow_file_fallback,
   )
 }
 
@@ -826,12 +826,18 @@ fn match_units_batch(
     // Use inverted index to find candidate fragments
     let candidate_set : Map[Int, Bool] = {}
     match inverted_index.get(terms.lowered_name) {
-      Some(indices) => for idx in indices { candidate_set.set(idx, true) }
+      Some(indices) =>
+        for idx in indices {
+          candidate_set.set(idx, true)
+        }
       None => ()
     }
     if config.allow_file_fallback && terms.lowered_base.length() > 0 {
       match inverted_index.get(terms.lowered_base) {
-        Some(indices) => for idx in indices { candidate_set.set(idx, true) }
+        Some(indices) =>
+          for idx in indices {
+            candidate_set.set(idx, true)
+          }
         None => ()
       }
     }
@@ -843,7 +849,10 @@ fn match_units_batch(
         None => empty_signals
       }
       let (score, match_kind, matched_terms) = match_fragment_with_terms(
-        unit, terms, signals, config.allow_file_fallback,
+        unit,
+        terms,
+        signals,
+        config.allow_file_fallback,
       )
       if score > 0 {
         matches.push((score, match_kind, matched_terms, fragment))
@@ -951,10 +960,18 @@ fn build_candidates(
     config.documents.doc_paths,
   )
   let fragment_signals = build_fragment_match_signals(fragments, registry)
-  let inverted_index = build_fragment_inverted_index(fragments, fragment_signals)
+  let inverted_index = build_fragment_inverted_index(
+    fragments, fragment_signals,
+  )
   let (candidates, module_covered_symbols) = match_units_batch(
-    units, 0, units.length(), fragments, module_coverage, fragment_signals,
-    inverted_index, config,
+    units,
+    0,
+    units.length(),
+    fragments,
+    module_coverage,
+    fragment_signals,
+    inverted_index,
+    config,
   )
   candidates.sort_by(fn(a, b) {
     let status_cmp = status_priority(a.status).compare(

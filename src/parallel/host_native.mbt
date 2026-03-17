@@ -15,24 +15,15 @@ extern "C" fn c_parallel_flush_stdio() = "indexion_parallel_flush_stdio"
 
 ///|
 #borrow(path)
-extern "C" fn c_parallel_mkdir(
-  path : Bytes,
-  path_len : Int,
-) -> Int = "indexion_parallel_mkdir"
+extern "C" fn c_parallel_mkdir(path : Bytes, path_len : Int) -> Int = "indexion_parallel_mkdir"
 
 ///|
 #borrow(path)
-extern "C" fn c_parallel_unlink(
-  path : Bytes,
-  path_len : Int,
-) -> Int = "indexion_parallel_unlink"
+extern "C" fn c_parallel_unlink(path : Bytes, path_len : Int) -> Int = "indexion_parallel_unlink"
 
 ///|
 #borrow(path)
-extern "C" fn c_parallel_rmdir(
-  path : Bytes,
-  path_len : Int,
-) -> Int = "indexion_parallel_rmdir"
+extern "C" fn c_parallel_rmdir(path : Bytes, path_len : Int) -> Int = "indexion_parallel_rmdir"
 
 ///|
 extern "C" fn c_parallel_cpu_count() -> Int = "indexion_parallel_cpu_count"

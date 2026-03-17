@@ -120,7 +120,9 @@ fn build_code_units_fast(
     let tokens = lexer.tokenize(content)
     let functions = @kgf_features.extract_functions(tokens, path)
     let pub_decls = @kgf_features.extract_pub_declarations(
-      content, path, Some(registry),
+      content,
+      path,
+      Some(registry),
     )
     // Scan for doc comments and associate with declarations
     let lines = @common.split_lines(content)
@@ -199,7 +201,12 @@ fn build_code_units_fast(
         continue
       }
       let code_hash = make_hash([
-        symbol_id, func.get_name(), "function", "", module_id, "",
+        symbol_id,
+        func.get_name(),
+        "function",
+        "",
+        module_id,
+        "",
       ])
       units.push({
         symbol_id,

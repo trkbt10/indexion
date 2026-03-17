@@ -30,23 +30,21 @@ pub async fn install_binary(src : String, dst : String) -> Unit {
         }
         // Rename running binary out of the way (cmd /c move allows renaming in-use exe)
         let exit_code = @async_process.run(
-          "cmd", ["/c", "move", "/Y", dst, old_path][:],
+          "cmd",
+          ["/c", "move", "/Y", dst, old_path][:],
         )
         if exit_code != 0 {
-          fail(
-            "Failed to rename existing binary (exit code \{exit_code})",
-          )
+          fail("Failed to rename existing binary (exit code \{exit_code})")
         }
       }
       // Write new binary; rollback on failure
-      try {
-        @async_fs.write_file(dst, data, create=0o644)
-      } catch {
+      @async_fs.write_file(dst, data, create=0o644) catch {
         e => {
           // Rollback: restore old binary
           if dst_exists {
             let _ = @async_process.run(
-              "cmd", ["/c", "move", "/Y", old_path, dst][:],
+              "cmd",
+              ["/c", "move", "/Y", old_path, dst][:],
             )
           }
           raise e
@@ -70,8 +68,8 @@ pub async fn extract_archive(archive : String, dest : String) -> Unit {
       @async_process.run(
         "powershell",
         [
-          "-Command", "Expand-Archive", "-Path", archive, "-DestinationPath",
-          dest, "-Force",
+          "-Command", "Expand-Archive", "-Path", archive, "-DestinationPath", dest,
+          "-Force",
         ][:],
       )
     _ => @async_process.run("tar", ["-xzf", archive, "-C", dest][:])

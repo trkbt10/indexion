@@ -74,8 +74,14 @@ fn parse_moon_mod_json(content : String) -> ProjectInfo {
   // Simple JSON parsing for specific fields
   info = { ..info, name: @common.extract_json_string(content, "name") }
   info = { ..info, version: @common.extract_json_string(content, "version") }
-  info = { ..info, description: @common.extract_json_string(content, "description") }
-  info = { ..info, repository: @common.extract_json_string(content, "repository") }
+  info = {
+    ..info,
+    description: @common.extract_json_string(content, "description"),
+  }
+  info = {
+    ..info,
+    repository: @common.extract_json_string(content, "repository"),
+  }
   info = { ..info, license: @common.extract_json_string(content, "license") }
   info = { ..info, keywords: @common.extract_json_array(content, "keywords") }
   info
@@ -245,8 +251,7 @@ fn analyze_source_file(
       } else if in_doc_block {
         in_doc_block = false
         match decl_map.get(line_num) {
-          Some(decl) =>
-            items.push(make_pub_item(decl, rel_path, doc_buffer))
+          Some(decl) => items.push(make_pub_item(decl, rel_path, doc_buffer))
           None => ()
         }
         doc_buffer = []
@@ -280,7 +285,14 @@ fn make_pub_item(
   } else {
     ""
   }
-  { name: decl.name, kind: decl.kind, file, line: decl.line, has_doc, doc_preview }
+  {
+    name: decl.name,
+    kind: decl.kind,
+    file,
+    line: decl.line,
+    has_doc,
+    doc_preview,
+  }
 }
 
 // extract_identifier, is_ident_char: no longer needed (KGF handles identification)

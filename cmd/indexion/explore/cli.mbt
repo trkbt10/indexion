@@ -185,7 +185,6 @@ fn filter_cross_dir_pairs(pairs : Array[FilePair]) -> Array[FilePair] {
   result
 }
 
-
 ///|
 fn pair_threshold_for_format(format : String, threshold : Double) -> Double {
   match format {
@@ -279,9 +278,7 @@ fn calculate_pairs(
     "ncd" => fn(t1, t2) { @ncd.NCDStrategy::new().similarity(t1, t2) }
     _ => fn(t1, t2) { @hybrid.HybridStrategy::new().similarity(t1, t2) }
   }
-  let result = @batch.compare_with_prefilter(
-    entries, min_similarity, score_fn,
-  )
+  let result = @batch.compare_with_prefilter(entries, min_similarity, score_fn)
   let pairs : Array[FilePair] = []
   for m in result.matches {
     pairs.push({
@@ -356,7 +353,11 @@ fn output_list(pairs : Array[FilePair]) -> Unit {
   println("")
   for pair in pairs {
     println(
-      @common.format_percent(pair.similarity) + "  " + pair.file1 + " <-> " + pair.file2,
+      @common.format_percent(pair.similarity) +
+      "  " +
+      pair.file1 +
+      " <-> " +
+      pair.file2,
     )
   }
 }
@@ -408,7 +409,9 @@ fn output_cluster(
     }
     clusters.push(cluster)
   }
-  println("=== Clusters (threshold: " + @common.format_percent(threshold) + ") ===")
+  println(
+    "=== Clusters (threshold: " + @common.format_percent(threshold) + ") ===",
+  )
   println("")
   for i, cluster in clusters {
     if cluster.length() > 0 {
@@ -530,7 +533,10 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     println("      Building TF-IDF vectors...")
     let build_started = @env.now()
     let batch = @tfidf.TfidfBatch::from_tokens(tokenized)
-    report_tfidf_build_stats(batch.build_stats(), @common.elapsed_ms(build_started))
+    report_tfidf_build_stats(
+      batch.build_stats(),
+      @common.elapsed_ms(build_started),
+    )
     let search_started = @env.now()
     let (pairs, search_stats) = calculate_tfidf_pairs(
       batch, files, min_similarity,

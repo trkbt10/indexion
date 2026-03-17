@@ -65,9 +65,7 @@ pub fn compare_hybrid(
   let mut total_tree_nodes = 0
   let mut total_trees = 0
   for file in files {
-    let trees = @tree_extract.extract(
-      file.display_name, file.content, registry,
-    )
+    let trees = @tree_extract.extract(file.display_name, file.content, registry)
     for tree in trees {
       total_tree_nodes += tree.size()
       total_trees += 1
@@ -148,7 +146,11 @@ pub fn compare_hybrid(
     if combined >= threshold {
       matches.push(
         SimilarityMatch::new(
-          i, j, files[i].display_name, files[j].display_name, combined,
+          i,
+          j,
+          files[i].display_name,
+          files[j].display_name,
+          combined,
         ),
       )
     }
@@ -162,7 +164,11 @@ pub fn compare_hybrid(
     if not(seen.contains(key)) && sim >= threshold {
       matches.push(
         SimilarityMatch::new(
-          i, j, files[i].display_name, files[j].display_name, sim,
+          i,
+          j,
+          files[i].display_name,
+          files[j].display_name,
+          sim,
         ),
       )
     }
@@ -232,7 +238,11 @@ fn tfidf_to_result(
     let (i, j, sim) = pair
     matches.push(
       SimilarityMatch::new(
-        i, j, files[i].display_name, files[j].display_name, sim,
+        i,
+        j,
+        files[i].display_name,
+        files[j].display_name,
+        sim,
       ),
     )
   }

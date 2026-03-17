@@ -28,6 +28,7 @@ pub fn show_help() -> Unit {
   println(
     "  reconcile      Detect implementation/documentation drift candidates",
   )
+  println("  unwrap         Detect unnecessary wrappers for removal")
   println("")
   println(
     "Use 'indexion plan <command> --help' for more information about a command.",
@@ -48,6 +49,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     "readme" => @readme.run(args, start_idx + 1)
     "solid" => @solid.run(args, start_idx + 1)
     "reconcile" => @reconcile.run(args, start_idx + 1)
+    "unwrap" => @unwrap.run(args, start_idx + 1)
     "--help" | "-h" | "help" => show_help()
     _ => {
       println("Unknown plan command: " + subcommand)

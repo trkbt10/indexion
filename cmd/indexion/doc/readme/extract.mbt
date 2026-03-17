@@ -172,7 +172,6 @@ fn first_doc_line(doc : String) -> String {
   doc
 }
 
-
 ///|
 /// Extract title from document content (first # heading).
 fn extract_title_from_content(content : String) -> String? {

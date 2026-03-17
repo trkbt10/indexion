@@ -475,8 +475,8 @@ pub fn build_refactor_plan(
   clusters : Array[FileCluster],
   config : RefactorPlanConfig,
   file_contents : Map[String, String],
-  effective_threshold~ : Double = 0.0,
-  registry~ : @kgf_registry.KGFRegistry? = None,
+  effective_threshold? : Double = 0.0,
+  registry? : @kgf_registry.KGFRegistry? = None,
 ) -> RefactorPlanJSON {
   let threshold = if effective_threshold > 0.0 {
     effective_threshold
@@ -553,62 +553,66 @@ pub fn build_refactor_plan(
       let file2 = pair.file2
       let content1 = file_contents.get(file1)
       let content2 = file_contents.get(file2)
-        match (content1, content2) {
-          (Some(c1), Some(c2)) => {
-            // Build KGF line->func maps (cached per file)
-            let lf1 = match line_func_cache.get(file1) {
-              Some(m) => m
-              None => {
-                let m = @kgf_features.build_line_func_map(c1, file1, registry)
-                line_func_cache.set(file1, m)
-                m
-              }
-            }
-            let lf2 = match line_func_cache.get(file2) {
-              Some(m) => m
-              None => {
-                let m = @kgf_features.build_line_func_map(c2, file2, registry)
-                line_func_cache.set(file2, m)
-                m
-              }
-            }
-            let blocks = find_duplicate_blocks(
-              c1, c2, 5, line_funcs1=lf1, line_funcs2=lf2,
-            )
-            for block in blocks {
-              duplicates.push({
-                file1,
-                file2,
-                start_line1: block.start_line1,
-                start_line2: block.start_line2,
-                line_count: block.line_count,
-                func_name: block.func_name,
-                preview: block.preview,
-              })
-              match block.func_name {
-                Some(name) => {
-                  let mut exists = false
-                  for existing in func_names {
-                    if existing == name {
-                      exists = true
-                      break
-                    }
-                  }
-                  if not(exists) {
-                    func_names.push(name)
-                  }
-                }
-                None => ()
-              }
-            }
-            if shared_module.length() == 0 {
-              shared_module = suggest_shared_module(file1, file2)
+      match (content1, content2) {
+        (Some(c1), Some(c2)) => {
+          // Build KGF line->func maps (cached per file)
+          let lf1 = match line_func_cache.get(file1) {
+            Some(m) => m
+            None => {
+              let m = @kgf_features.build_line_func_map(c1, file1, registry)
+              line_func_cache.set(file1, m)
+              m
             }
           }
-          _ => ()
+          let lf2 = match line_func_cache.get(file2) {
+            Some(m) => m
+            None => {
+              let m = @kgf_features.build_line_func_map(c2, file2, registry)
+              line_func_cache.set(file2, m)
+              m
+            }
+          }
+          let blocks = find_duplicate_blocks(
+            c1,
+            c2,
+            5,
+            line_funcs1=lf1,
+            line_funcs2=lf2,
+          )
+          for block in blocks {
+            duplicates.push({
+              file1,
+              file2,
+              start_line1: block.start_line1,
+              start_line2: block.start_line2,
+              line_count: block.line_count,
+              func_name: block.func_name,
+              preview: block.preview,
+            })
+            match block.func_name {
+              Some(name) => {
+                let mut exists = false
+                for existing in func_names {
+                  if existing == name {
+                    exists = true
+                    break
+                  }
+                }
+                if not(exists) {
+                  func_names.push(name)
+                }
+              }
+              None => ()
+            }
+          }
+          if shared_module.length() == 0 {
+            shared_module = suggest_shared_module(file1, file2)
+          }
         }
-        dup_count = dup_count + 1
+        _ => ()
       }
+      dup_count = dup_count + 1
+    }
     let suggestions : RefactorSuggestion = {
       shared_module,
       functions_to_extract: func_names,

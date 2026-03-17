@@ -47,7 +47,11 @@ fn compare_trees_core(
     for file in files {
       file_pairs.push((file.display_name, file.content))
     }
-    @candidates.tfidf_prefilter(file_pairs, registry, threshold * prefilter_factor)
+    @candidates.tfidf_prefilter(
+      file_pairs,
+      registry,
+      threshold * prefilter_factor,
+    )
   } else {
     @candidates.brute_force(n)
   }
@@ -70,7 +74,11 @@ fn compare_trees_core(
     if best_sim >= threshold {
       matches.push(
         SimilarityMatch::new(
-          i, j, files[i].display_name, files[j].display_name, best_sim,
+          i,
+          j,
+          files[i].display_name,
+          files[j].display_name,
+          best_sim,
         ),
       )
     }

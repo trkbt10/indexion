@@ -7,4 +7,5 @@ import {
   "trkbt10/indexion/src/kgf/peg" @peg,
   "trkbt10/indexion/src/kgf/registry" @registry,
   "trkbt10/indexion/src/kgf/semantics" @semantics,
+  "trkbt10/indexion/src/kgf/features" @features,
 }

@@ -40,7 +40,9 @@ pub fn run_parallel(tasks : Array[() -> String]) -> Array[String] {
     if pid == 0 {
       // Child process
       let result = task()
-      @fs.write_string_to_file(path, result) catch { _ => () }
+      @fs.write_string_to_file(path, result) catch {
+        _ => ()
+      }
       exit_now(0)
     } else if pid > 0 {
       workers.push((pid, path))
@@ -54,12 +56,10 @@ pub fn run_parallel(tasks : Array[() -> String]) -> Array[String] {
     // Wait for already-forked children
     for w in workers {
       let _ = waitpid_native(w.0)
-
     }
     // Clean up partial results
     for w in workers {
       let _ = unlink_native(w.1)
-
     }
     let _ = rmdir_native(dir)
     // Run all tasks sequentially
@@ -76,7 +76,6 @@ pub fn run_parallel(tasks : Array[() -> String]) -> Array[String] {
     let data = @fs.read_file_to_string(w.1) catch { _ => "" }
     results.push(data)
     let _ = unlink_native(w.1)
-
   }
   let _ = rmdir_native(dir)
   results

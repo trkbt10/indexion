@@ -41,7 +41,7 @@ fn gen_test_pairs(
       pairs.push({
         file1: files[i].0,
         file2: files[j].0,
-        similarity: 0.7 + (((i + j) % 30).to_double() / 100.0),
+        similarity: 0.7 + ((i + j) % 30).to_double() / 100.0,
       })
       added = added + 1
     }

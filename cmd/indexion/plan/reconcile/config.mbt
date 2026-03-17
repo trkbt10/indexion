@@ -119,7 +119,10 @@ fn parse_args_state(args : Array[String], start_idx : Int) -> ParsedArgsState {
       config = { ..config, format: @common.get_arg_value(arg, 9) }
       state = { ..state, explicit_format: true }
     } else if arg.has_prefix("--scope=") {
-      config = update_documents_scope_name(config, @common.get_arg_value(arg, 8))
+      config = update_documents_scope_name(
+        config,
+        @common.get_arg_value(arg, 8),
+      )
       state = { ..state, explicit_doc_scope: true }
     } else if arg.has_prefix("--specs=") || arg.has_prefix("--specs-dir=") {
       let prefix_len = if arg.has_prefix("--specs-dir=") { 12 } else { 8 }
@@ -140,7 +143,10 @@ fn parse_args_state(args : Array[String], start_idx : Int) -> ParsedArgsState {
       }
       state = { ..state, explicit_threshold_seconds: true }
     } else if arg.has_prefix("--max-candidates=") {
-      config = { ..config, max_candidates: @common.parse_int(@common.get_arg_value(arg, 17)) }
+      config = {
+        ..config,
+        max_candidates: @common.parse_int(@common.get_arg_value(arg, 17)),
+      }
       state = { ..state, explicit_max_candidates: true }
     } else if arg.has_prefix("--doc=") {
       let path = @common.get_arg_value(arg, 6)

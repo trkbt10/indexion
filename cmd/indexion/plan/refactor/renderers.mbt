@@ -210,7 +210,9 @@ pub fn render_markdown(plan : RefactorPlanJSON) -> String {
     buf.write_string(
       "Structurally similar functions detected (including same-file):\n\n",
     )
-    buf.write_string("| Function 1 | File 1 | Function 2 | File 2 | Similarity |\n")
+    buf.write_string(
+      "| Function 1 | File 1 | Function 2 | File 2 | Similarity |\n",
+    )
     buf.write_string("|---|---|---|---|---|\n")
     let max_func_dups = 30
     let mut func_dup_count = 0
@@ -242,7 +244,9 @@ pub fn render_markdown(plan : RefactorPlanJSON) -> String {
       }
     }
     if same_file_dups.length() > 0 {
-      buf.write_string("**Same-file duplicates** (extract to shared function with parameter):\n\n")
+      buf.write_string(
+        "**Same-file duplicates** (extract to shared function with parameter):\n\n",
+      )
       for dup in same_file_dups {
         buf.write_string(
           "- `" +
@@ -275,7 +279,9 @@ pub fn render_text(plan : RefactorPlanJSON) -> String {
   buf.write_string("REFACTORING PLAN\n")
   buf.write_string("================\n\n")
   buf.write_string("Directory: " + plan.config.target_dir + "\n")
-  buf.write_string("Threshold: " + @common.format_percent(plan.config.threshold) + "\n")
+  buf.write_string(
+    "Threshold: " + @common.format_percent(plan.config.threshold) + "\n",
+  )
   buf.write_string("Strategy: " + plan.config.strategy + "\n")
   buf.write_string("\n")
   if plan.clusters.length() == 0 {

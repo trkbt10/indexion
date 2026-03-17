@@ -195,7 +195,10 @@ pub fn split_display_name(display_name : String) -> (String, String) {
   let chars = display_name.to_array()
   for i = 0; i < chars.length(); i = i + 1 {
     if chars[i] == ':' {
-      return (substring(display_name, 0, i), substring(display_name, i + 1, chars.length()))
+      return (
+        substring(display_name, 0, i),
+        substring(display_name, i + 1, chars.length()),
+      )
     }
   }
   ("", display_name)
@@ -240,6 +243,7 @@ pub fn split_by_slash(path : String) -> Array[String] {
 /// Extract unique display names for directories.
 /// If all end with same name (e.g., "src"), use parent directory name.
 /// Returns array of names in same order as input dirs.
+
 ///|
 /// Return elapsed milliseconds since start timestamp.
 pub fn elapsed_ms(start_ms : UInt64) -> UInt64 {
@@ -368,15 +372,19 @@ pub fn format_percent(d : Double) -> String {
 /// - Optional extensions filter (e.g. [".mbt", ".ts"]).
 pub fn collect_files(
   dirs : Array[String],
-  includes~ : Array[String] = [],
-  excludes~ : Array[String] = [],
-  extensions~ : Array[String] = [],
+  includes? : Array[String] = [],
+  excludes? : Array[String] = [],
+  extensions? : Array[String] = [],
 ) -> Array[(String, String)] {
   let files : Array[(String, String)] = []
   let multi_dir = dirs.length() > 1
   let dir_names = extract_unique_dir_names(dirs)
   for i, dir in dirs {
-    let opts = @pipeline.DiscoverOptions::new(includes~, excludes~, root_dir=dir)
+    let opts = @pipeline.DiscoverOptions::new(
+      includes~,
+      excludes~,
+      root_dir=dir,
+    )
     let paths = @pipeline.discover_files([dir], opts)
     let dirname = dir_names[i]
     for path in paths {
@@ -469,10 +477,7 @@ pub fn is_directory(path : String) -> Bool {
 ///|
 /// Find the character position after a JSON key pattern `"key":` in a string.
 /// Returns -1 if not found.
-fn find_json_key_position(
-  chars : Array[Char],
-  key : String,
-) -> Int {
+fn find_json_key_position(chars : Array[Char], key : String) -> Int {
   let pattern = "\"" + key + "\":"
   let pat_chars = pattern.to_array()
   for i = 0; i < chars.length() - pat_chars.length(); i = i + 1 {

@@ -14,7 +14,10 @@ pub fn to_plan_document(
   // Metadata
   doc.set_meta("project_name", project_name)
   doc.set_meta("version", info.version)
-  doc.set_meta("coverage", @common.format_percent(analysis.coverage_percent / 100.0))
+  doc.set_meta(
+    "coverage",
+    @common.format_percent(analysis.coverage_percent / 100.0),
+  )
   doc.set_meta("documented", analysis.total_documented.to_string())
   doc.set_meta("total", analysis.total_pub_items.to_string())
   doc.set_meta("labels", "documentation,plan")

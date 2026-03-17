@@ -55,4 +55,3 @@ fn extract_tag_name(json_str : String) -> String raise UpdateError {
       raise UpdateError::ParseError("Unexpected JSON structure from GitHub API")
   }
 }
-

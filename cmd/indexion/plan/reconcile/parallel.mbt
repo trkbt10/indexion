@@ -29,33 +29,37 @@ fn parallel_extract(
   config : ReconcileConfig,
   registry : @registry.KGFRegistry,
 ) -> (Array[CodeUnit], Array[DocFragment], Array[FileState], Array[String]) {
-  let results = @parallel.run_parallel(
-    [
-      fn() {
-        let code_units = build_code_units_fast(discovered_paths, registry)
-        let code_file_states = collect_code_file_states(code_units, config)
-        let result : CodeExtractResult = { code_units, code_file_states }
-        result.to_json().stringify()
-      },
-      fn() {
-        let (fragments, file_states, used_specs) = collect_document_fragments(
-          discovered_paths, config, registry,
-        )
-        let result : DocExtractResult = { fragments, file_states, used_specs }
-        result.to_json().stringify()
-      },
-    ],
-  )
-  let code_result : CodeExtractResult = deserialize_or_default(
-    results[0],
-    { code_units: [], code_file_states: [] },
-  )
-  let doc_result : DocExtractResult = deserialize_or_default(
-    results[1],
-    { fragments: [], file_states: [], used_specs: [] },
-  )
+  let results = @parallel.run_parallel([
+    fn() {
+      let code_units = build_code_units_fast(discovered_paths, registry)
+      let code_file_states = collect_code_file_states(code_units, config)
+      let result : CodeExtractResult = { code_units, code_file_states }
+      result.to_json().stringify()
+    },
+    fn() {
+      let (fragments, file_states, used_specs) = collect_document_fragments(
+        discovered_paths, config, registry,
+      )
+      let result : DocExtractResult = { fragments, file_states, used_specs }
+      result.to_json().stringify()
+    },
+  ])
+  let code_result : CodeExtractResult = deserialize_or_default(results[0], {
+    code_units: [],
+    code_file_states: [],
+  })
+  let doc_result : DocExtractResult = deserialize_or_default(results[1], {
+    fragments: [],
+    file_states: [],
+    used_specs: [],
+  })
   let all_file_states = code_result.code_file_states + doc_result.file_states
-  (code_result.code_units, doc_result.fragments, all_file_states, doc_result.used_specs)
+  (
+    code_result.code_units,
+    doc_result.fragments,
+    all_file_states,
+    doc_result.used_specs,
+  )
 }
 
 ///|
@@ -85,7 +89,11 @@ fn build_candidates_parallel(
   )
   let effective_workers = if num_workers > units.length() / 10 {
     let w = units.length() / 10
-    if w < 2 { 2 } else { w }
+    if w < 2 {
+      2
+    } else {
+      w
+    }
   } else {
     num_workers
   }
@@ -98,29 +106,27 @@ fn build_candidates_parallel(
     if s >= units.length() {
       break
     }
-    tasks.push(
-      fn() {
-        let (candidates, covered) = match_units_batch(
-          units, s, e, fragments, module_coverage, fragment_signals,
-          inverted_index, config,
-        )
-        let result : MatchChunkResult = {
-          candidates,
-          module_covered_symbols: covered,
-        }
-        result.to_json().stringify()
-      },
-    )
+    tasks.push(fn() {
+      let (candidates, covered) = match_units_batch(
+        units, s, e, fragments, module_coverage, fragment_signals, inverted_index,
+        config,
+      )
+      let result : MatchChunkResult = {
+        candidates,
+        module_covered_symbols: covered,
+      }
+      result.to_json().stringify()
+    })
   }
   let results = @parallel.run_parallel(tasks)
   // Merge results from all workers
   let all_candidates : Array[ReconcileCandidate] = []
   let mut total_covered = 0
   for json_str in results {
-    let chunk : MatchChunkResult = deserialize_or_default(
-      json_str,
-      { candidates: [], module_covered_symbols: 0 },
-    )
+    let chunk : MatchChunkResult = deserialize_or_default(json_str, {
+      candidates: [],
+      module_covered_symbols: 0,
+    })
     for c in chunk.candidates {
       all_candidates.push(c)
     }
@@ -145,5 +151,7 @@ fn[T : @json.FromJson] deserialize_or_default(
   default : T,
 ) -> T {
   let json = @json.parse(json_str) catch { _ => return default }
-  @json.from_json(json) catch { _ => default }
+  @json.from_json(json) catch {
+    _ => default
+  }
 }

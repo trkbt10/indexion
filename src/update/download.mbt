@@ -98,17 +98,21 @@ fn trim_string(s : String) -> String {
   let mut start = 0
   let mut end = chars.length()
   while start < end &&
-    (chars[start] == ' ' ||
-    chars[start] == '\t' ||
-    chars[start] == '\n' ||
-    chars[start] == '\r') {
+        (
+          chars[start] == ' ' ||
+          chars[start] == '\t' ||
+          chars[start] == '\n' ||
+          chars[start] == '\r'
+        ) {
     start += 1
   }
   while end > start &&
-    (chars[end - 1] == ' ' ||
-    chars[end - 1] == '\t' ||
-    chars[end - 1] == '\n' ||
-    chars[end - 1] == '\r') {
+        (
+          chars[end - 1] == ' ' ||
+          chars[end - 1] == '\t' ||
+          chars[end - 1] == '\n' ||
+          chars[end - 1] == '\r'
+        ) {
     end -= 1
   }
   let result : Array[Char] = []

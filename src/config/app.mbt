@@ -57,10 +57,7 @@ fn resolve_os_dir(
 /// Get OS-standard configuration directory for indexion.
 pub fn get_global_config_dir() -> String? {
   resolve_os_dir(
-    "Application Support/Indexion",
-    "XDG_CONFIG_HOME",
-    ".config/indexion",
-    "APPDATA",
+    "Application Support/Indexion", "XDG_CONFIG_HOME", ".config/indexion", "APPDATA",
     "/Indexion",
   )
 }
@@ -69,10 +66,7 @@ pub fn get_global_config_dir() -> String? {
 /// Get OS-standard data directory for indexion.
 pub fn get_global_data_dir() -> String? {
   resolve_os_dir(
-    "Application Support/Indexion",
-    "XDG_DATA_HOME",
-    ".local/share/indexion",
-    "LOCALAPPDATA",
+    "Application Support/Indexion", "XDG_DATA_HOME", ".local/share/indexion", "LOCALAPPDATA",
     "/Indexion",
   )
 }
@@ -81,11 +75,7 @@ pub fn get_global_data_dir() -> String? {
 /// Get OS-standard cache directory for indexion.
 pub fn get_global_cache_dir() -> String? {
   resolve_os_dir(
-    "Caches/Indexion",
-    "XDG_CACHE_HOME",
-    ".cache/indexion",
-    "LOCALAPPDATA",
-    "/Indexion/Cache",
+    "Caches/Indexion", "XDG_CACHE_HOME", ".cache/indexion", "LOCALAPPDATA", "/Indexion/Cache",
   )
 }
 

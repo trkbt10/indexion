@@ -190,7 +190,6 @@ pub fn show_help() -> Unit {
 
 // collect_files: use @common (SoT)
 
-
 ///|
 /// Find connected components (clusters) using Union-Find.
 fn find_clusters(
@@ -324,8 +323,8 @@ fn find_duplicate_blocks(
   content1 : String,
   content2 : String,
   min_lines : Int,
-  line_funcs1~ : Map[Int, String] = {},
-  line_funcs2~ : Map[Int, String] = {},
+  line_funcs1? : Map[Int, String] = {},
+  line_funcs2? : Map[Int, String] = {},
 ) -> Array[DuplicateBlock] {
   let lines1 = @common.split_lines(content1)
   let lines2 = @common.split_lines(content2)
@@ -501,11 +500,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
       let markers = reg.get_project_markers()
       let search_dirs = @common.ancestor_dirs(config.target_dir)
       for dir in search_dirs {
-        let entries : Array[String] = try {
-          @fs.read_dir(dir)
-        } catch {
-          _ => continue
-        }
+        let entries : Array[String] = @fs.read_dir(dir) catch { _ => continue }
         for marker in markers {
           for entry in entries {
             if @glob.glob_match(entry, marker) {
@@ -530,12 +525,15 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   }
   if show_progress {
     if detected_markers.length() > 0 {
-      let markers_str = detected_markers.iter().fold(
-        init="",
-        fn(acc, m) {
-          if acc.length() == 0 { m } else { acc + ", " + m }
-        },
-      )
+      let markers_str = detected_markers
+        .iter()
+        .fold(init="", fn(acc, m) {
+          if acc.length() == 0 {
+            m
+          } else {
+            acc + ", " + m
+          }
+        })
       println("Project type: " + markers_str)
     } else {
       println("Project type: unknown")
@@ -547,7 +545,9 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     println("[1/4] Collecting files...")
   }
   let files = @common.collect_files(
-    [config.target_dir], includes=config.includes, excludes=config.excludes,
+    [config.target_dir],
+    includes=config.includes,
+    excludes=config.excludes,
   )
   if show_progress {
     println("      Found " + files.length().to_string() + " files")
@@ -581,9 +581,7 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     // NCD: use batch comparison with TF-IDF pre-filtering
     if show_progress {
       println(
-        "      Comparing pairs with pre-filtering (" +
-        config.strategy +
-        ")...",
+        "      Comparing pairs with pre-filtering (" + config.strategy + ")...",
       )
     }
     let entries : Array[@batch.FileEntry] = []
@@ -595,7 +593,9 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
       _ => fn(t1, t2) { @hybrid.HybridStrategy::new().similarity(t1, t2) }
     }
     let result = @batch.compare_with_prefilter(
-      entries, config.threshold, score_fn,
+      entries,
+      config.threshold,
+      score_fn,
     )
     for m in result.matches {
       pairs.push({ file1: m.file1, file2: m.file2, similarity: m.similarity })
@@ -633,7 +633,11 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
   // Build intermediate plan
   let plan_started = @env.now()
   let plan = build_refactor_plan(
-    clusters, config, file_contents, effective_threshold~, registry~,
+    clusters,
+    config,
+    file_contents,
+    effective_threshold~,
+    registry~,
   )
   // Function-level duplicate detection (including same-file)
   let func_dups = find_function_duplicates(files, config.threshold, registry)
@@ -754,10 +758,13 @@ fn find_function_duplicates(
       }
       let body = body_lines
         .iter()
-        .fold(
-          init="",
-          fn(acc, l) { if acc.length() == 0 { l } else { acc + "\n" + l } },
-        )
+        .fold(init="", fn(acc, l) {
+          if acc.length() == 0 {
+            l
+          } else {
+            acc + "\n" + l
+          }
+        })
       func_names.push(func.get_name())
       func_bodies.push(body)
       func_files.push(path)

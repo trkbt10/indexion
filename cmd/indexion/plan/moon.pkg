@@ -4,4 +4,5 @@ import {
   "trkbt10/indexion/cmd/indexion/plan/readme" @readme,
   "trkbt10/indexion/cmd/indexion/plan/solid" @solid,
   "trkbt10/indexion/cmd/indexion/plan/reconcile" @reconcile,
+  "trkbt10/indexion/cmd/indexion/plan/unwrap" @unwrap,
 }

@@ -25,7 +25,11 @@ pub fn compare_tfidf(
     let (i, j, sim) = pair
     matches.push(
       SimilarityMatch::new(
-        i, j, files[i].display_name, files[j].display_name, sim,
+        i,
+        j,
+        files[i].display_name,
+        files[j].display_name,
+        sim,
       ),
     )
   }
@@ -51,7 +55,11 @@ pub fn compare_with_prefilter(
       file_pairs.push((file.display_name, file.content))
     }
     let registry = @kgf_features.load_registry()
-    @candidates.tfidf_prefilter(file_pairs, registry, threshold * prefilter_factor)
+    @candidates.tfidf_prefilter(
+      file_pairs,
+      registry,
+      threshold * prefilter_factor,
+    )
   } else {
     @candidates.brute_force(n)
   }
@@ -62,7 +70,11 @@ pub fn compare_with_prefilter(
     if sim >= threshold {
       matches.push(
         SimilarityMatch::new(
-          i, j, files[i].display_name, files[j].display_name, sim,
+          i,
+          j,
+          files[i].display_name,
+          files[j].display_name,
+          sim,
         ),
       )
     }

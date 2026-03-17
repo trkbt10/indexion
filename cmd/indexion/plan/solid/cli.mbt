@@ -352,7 +352,9 @@ fn find_cross_matches(config : SolidConfig) -> Array[FileMatch] {
   let matches : Array[FileMatch] = []
   // Collect files from all source directories
   let files = @common.collect_files(
-    config.from_dirs, includes=config.includes, excludes=config.excludes,
+    config.from_dirs,
+    includes=config.includes,
+    excludes=config.excludes,
   )
   if files.length() < 2 {
     return matches
