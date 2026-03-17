@@ -6,12 +6,10 @@
 
 ## Features
 
-- **Hybrid Similarity Analysis**: Dynamic TF-IDF + APTED comparison auto-selects the best strategy per dataset
-- **Refactoring Planning**: File-level and function-level duplicate detection with structural analysis
-- **Documentation Generation**: KGF-based intelligent doc extraction and coverage analysis
-- **Documentation Drift Detection**: Inverted-index-accelerated reconciliation
-- **Fork-based Parallelism**: Multi-process execution for large codebases on native targets
-- **Multi-language Support**: 60+ languages via extensible KGF specifications
+- **Similarity Analysis**: Find duplicated or similar code patterns
+- **Refactoring Planning**: Generate actionable refactoring checklists
+- **Documentation Generation**: KGF-based intelligent doc extraction
+- **Multi-language Support**: Extensible via KGF specifications
 
 ## Commands
 
@@ -63,6 +61,22 @@ Documentation commands for generating and managing documentation.
 
 
 [Full documentation](cmd/indexion/doc/README.md)
+
+### `indexion plan unwrap`
+
+Detect unnecessary wrapper functions and plan their removal.
+
+## Usage
+
+```bash
+indexion plan unwrap [options] <directory>
+indexion plan unwrap --dry-run --include='*.mbt' src/
+indexion plan unwrap --fix --include='*.mbt' --exclude='*_wbtest.mbt' src/
+```
+
+
+
+[Full documentation](cmd/indexion/plan/unwrap/README.md)
 
 ### `indexion doc readme`
 

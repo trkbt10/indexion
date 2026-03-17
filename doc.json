@@ -32,6 +32,12 @@
       "sections": ["overview"]
     },
     {
+      "path": "cmd/indexion/plan/unwrap",
+      "title": "plan unwrap",
+      "include_in_root": true,
+      "sections": ["overview", "usage"]
+    },
+    {
       "path": "cmd/indexion/doc/readme",
       "title": "doc readme",
       "include_in_root": true,

@@ -2,8 +2,12 @@
 /// # indexion plan unwrap
 ///
 /// Detect unnecessary wrapper functions and plan their removal.
-/// Wrappers are functions whose body is a single delegation call
-/// with no added logic — callers should use the delegate directly.
+///
+/// ## Overview
+///
+/// Scans source files for wrapper functions whose body is a single delegation
+/// call with no added logic. Callers should use the delegate directly.
+/// Supports report, dry-run preview, and auto-fix modes.
 ///
 /// ## Modes
 ///
@@ -34,6 +38,7 @@ pub struct UnwrapConfig {
 }
 
 ///|
+/// Create a default configuration with report mode and markdown format.
 pub fn UnwrapConfig::default() -> UnwrapConfig {
   {
     target_dir: "",
@@ -49,6 +54,7 @@ pub fn UnwrapConfig::default() -> UnwrapConfig {
 }
 
 ///|
+/// Parse CLI arguments into an UnwrapConfig starting from the given index.
 pub fn parse_args(args : Array[String], start_idx : Int) -> UnwrapConfig {
   let mut config = UnwrapConfig::default()
   for i = start_idx; i < args.length(); i = i + 1 {
@@ -81,6 +87,7 @@ pub fn parse_args(args : Array[String], start_idx : Int) -> UnwrapConfig {
 }
 
 ///|
+/// Print usage information and available options to stdout.
 pub fn show_help() -> Unit {
   println("indexion plan unwrap - Detect and remove unnecessary wrappers")
   println("")
@@ -123,6 +130,7 @@ pub fn show_help() -> Unit {
 }
 
 ///|
+/// Entry point: detect wrappers and report, preview, or apply fixes.
 pub fn run(args : Array[String], start_idx : Int) -> Unit {
   let config = parse_args(args, start_idx)
   if config.show_help {
