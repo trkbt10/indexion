@@ -144,7 +144,10 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     project_info.name
   }
   // Analyze documentation coverage
-  let analysis = analyze_documentation(config.target_dir, specs_dir=config.specs_dir)
+  let analysis = analyze_documentation(
+    config.target_dir,
+    specs_dir=config.specs_dir,
+  )
   // Generate output based on format
   let output_content = render_output(
     config, analysis, project_info, project_name,

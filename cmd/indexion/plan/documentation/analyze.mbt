@@ -93,7 +93,7 @@ fn parse_moon_mod_json(content : String) -> ProjectInfo {
 /// Analyze documentation coverage in directory.
 pub fn analyze_documentation(
   dir : String,
-  specs_dir~ : String = "kgfs",
+  specs_dir? : String = "kgfs",
 ) -> DocAnalysis {
   let packages : Array[PackageAnalysis] = []
   let all_items : Array[PubItem] = []

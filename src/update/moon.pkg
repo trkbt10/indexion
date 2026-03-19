@@ -1,6 +1,7 @@
 import {
   "trkbt10/indexion/src/config" @config,
   "trkbt10/indexion/src/platform" @platform,
+  "trkbt10/indexion/src/kgf/manage" @kgf_manage,
   "mizchi/x/http" @mhttp,
   "moonbitlang/core/json" @json,
   "moonbitlang/x/crypto" @crypto,

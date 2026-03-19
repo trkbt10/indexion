@@ -100,37 +100,16 @@ pub async fn perform_update(version : String) -> Unit raise UpdateError {
         "Failed to set executable permission: " + err.to_string(),
       )
   }
-  // Install kgfs to OS-standard data directory
+  // Install kgfs to OS-standard data directory (delegated to kgf manage SoT)
   let src_kgfs = @config.join_path(extracted_dir, "kgfs")
   let kgfs_exists = @platform.path_exists_async(src_kgfs) catch { _ => false }
   if kgfs_exists {
-    let data_dir = match @config.get_global_data_dir() {
-      Some(dir) => dir
-      None => install_dir
-    }
-    let dst_kgfs = @config.join_path(data_dir, "kgfs")
-    @platform.ensure_dir_async(data_dir) catch {
+    @kgf_manage.install_kgfs_from_dir(src_kgfs) catch {
       err =>
         raise UpdateError::InstallError(
-          "Failed to create data directory: " + err.to_string(),
+          "Failed to install kgfs: " + err.to_string(),
         )
     }
-    let old_exists = @platform.path_exists_async(dst_kgfs) catch { _ => false }
-    if old_exists {
-      @platform.remove_dir_recursive(dst_kgfs) catch {
-        err =>
-          raise UpdateError::InstallError(
-            "Failed to remove old kgfs: " + err.to_string(),
-          )
-      }
-    }
-    @platform.copy_dir_recursive(src_kgfs, dst_kgfs) catch {
-      err =>
-        raise UpdateError::InstallError(
-          "Failed to copy kgfs: " + err.to_string(),
-        )
-    }
-    println("KGF specs installed to " + dst_kgfs)
   }
   // Cleanup
   @platform.remove_dir_recursive(tmp_dir) catch {

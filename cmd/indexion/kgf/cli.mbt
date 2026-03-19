@@ -71,22 +71,120 @@ pub fn run(args : Array[String], start_idx : Int) -> Unit {
     show_help()
     return
   }
-  if config.file_path.length() == 0 {
-    println("Error: No file specified")
-    println("")
-    show_help()
-    return
-  }
   match config.subcommand {
-    "inspect" => run_inspect(config)
-    "tokens" => run_tokens(config)
-    "events" => run_events(config)
-    "edges" => run_edges(config)
+    // Management subcommands (no file_path required)
+    "list" => run_list()
+    "update" => run_kgf_update()
+    "add" => {
+      if config.file_path.length() == 0 {
+        println("Error: Spec name required")
+        println("")
+        println("Usage: indexion kgf add <spec-name>")
+        return
+      }
+      run_kgf_add(config.file_path)
+    }
+    // Inspection subcommands (file_path required)
+    "inspect" | "tokens" | "events" | "edges" => {
+      if config.file_path.length() == 0 {
+        println("Error: No file specified")
+        println("")
+        show_help()
+        return
+      }
+      match config.subcommand {
+        "inspect" => run_inspect(config)
+        "tokens" => run_tokens(config)
+        "events" => run_events(config)
+        "edges" => run_edges(config)
+        _ => ()
+      }
+    }
     _ => {
       println("Unknown subcommand: \{config.subcommand}")
       show_help()
     }
   }
+}
+
+///|
+/// List installed KGF specs.
+fn run_list() -> Unit {
+  let specs = @kgf_manage.list_installed_specs()
+  if specs.length() == 0 {
+    println("No KGF specs installed.")
+    match @kgf_manage.get_installed_kgfs_dir() {
+      Some(dir) => println("Searched: " + dir)
+      None => println("No kgfs directory found.")
+    }
+    return
+  }
+  // Print table header
+  println(pad_right("Category", 14) + pad_right("Name", 22) + "Sources")
+  println(
+    pad_right("─".repeat(12), 14) +
+    pad_right("─".repeat(20), 22) +
+    "─".repeat(20),
+  )
+  for spec in specs {
+    let sources = if spec.sources.length() > 0 {
+      spec.sources.join(", ")
+    } else {
+      "(none)"
+    }
+    let category = if spec.category.length() > 0 {
+      spec.category
+    } else {
+      "(root)"
+    }
+    println(pad_right(category, 14) + pad_right(spec.name, 22) + sources)
+  }
+  println("")
+  println("Total: \{specs.length()} specs")
+}
+
+///|
+/// Update KGF specs from GitHub.
+fn run_kgf_update() -> Unit {
+  @async.with_event_loop(async fn(_tg) {
+    @kgf_manage.update_kgfs() catch {
+      err => {
+        println("Error: " + err.to_string())
+        return
+      }
+    }
+  }) catch {
+    err => println("Error: " + err.to_string())
+  }
+}
+
+///|
+/// Add a single KGF spec from GitHub.
+fn run_kgf_add(spec_name : String) -> Unit {
+  @async.with_event_loop(async fn(_tg) {
+    @kgf_manage.add_kgf(spec_name) catch {
+      err => {
+        println("Error: " + err.to_string())
+        return
+      }
+    }
+  }) catch {
+    err => println("Error: " + err.to_string())
+  }
+}
+
+///|
+/// Pad string to the right with spaces.
+fn pad_right(s : String, width : Int) -> String {
+  if s.length() >= width {
+    return s
+  }
+  let buf = StringBuilder::new()
+  buf.write_string(s)
+  for i = s.length(); i < width; i = i + 1 {
+    buf.write_char(' ')
+  }
+  buf.to_string()
 }
 
 ///|
@@ -347,12 +445,17 @@ fn escape_string(s : String) -> String {
 ///|
 /// Show help message.
 fn show_help() -> Unit {
-  println("indexion kgf - KGF inspection tools")
+  println("indexion kgf - KGF spec management and inspection")
   println("")
   println("Usage:")
-  println("  indexion kgf <subcommand> [options] <file>")
+  println("  indexion kgf <subcommand> [options] [file]")
   println("")
-  println("Subcommands:")
+  println("Management:")
+  println("  list      List installed KGF specs")
+  println("  update    Update all specs from GitHub")
+  println("  add       Download and install a single spec")
+  println("")
+  println("Inspection:")
   println("  inspect   Full inspection (tokens, events, edges)")
   println("  tokens    Show tokenization only")
   println("  events    Show parse events only")
@@ -364,7 +467,8 @@ fn show_help() -> Unit {
   println("  --help, -h       Show this help message")
   println("")
   println("Examples:")
+  println("  indexion kgf list")
+  println("  indexion kgf update")
+  println("  indexion kgf add moonbit")
   println("  indexion kgf inspect Cargo.toml")
-  println("  indexion kgf tokens --spec=go-mod go.mod")
-  println("  indexion kgf edges fixtures/project/npm/package.json")
 }

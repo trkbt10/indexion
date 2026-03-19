@@ -1,0 +1,16 @@
+import {
+  "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/src/config" @config,
+  "trkbt10/indexion/src/platform" @platform,
+  "trkbt10/indexion/src/kgf/parser" @parser,
+  "mizchi/x/http" @mhttp,
+  "moonbitlang/core/json" @json,
+}
+
+options(
+  targets: {
+    "download.mbt": [ "native" ],
+    "install.mbt": [ "native" ],
+    "manage_stub.mbt": [ "wasm", "wasm-gc", "js" ],
+  },
+)

@@ -92,7 +92,9 @@ fn show_help() -> Unit {
   println("  segment     Split text into contextual segments")
   println("  plan        Generate planning documents (refactor, etc.)")
   println("  doc         Documentation commands (gen, etc.)")
-  println("  kgf         KGF spec inspection and debugging")
+  println(
+    "  kgf         KGF spec management (list, update, add) and inspection",
+  )
   println("  sim         Calculate text similarity/distance")
   println("  perf        Performance benchmark commands")
   println("  update      Check for and install updates")

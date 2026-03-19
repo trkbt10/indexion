@@ -1,7 +1,9 @@
 import {
   "moonbitlang/x/fs" @fs,
+  "moonbitlang/async" @async,
   "trkbt10/indexion/src/core/graph" @graph,
   "trkbt10/indexion/src/kgf/lexer" @lexer,
+  "trkbt10/indexion/src/kgf/manage" @kgf_manage,
   "trkbt10/indexion/src/kgf/peg" @peg,
   "trkbt10/indexion/src/kgf/registry" @registry,
   "trkbt10/indexion/src/kgf/semantics" @semantics,
