@@ -7,7 +7,9 @@
 pub async fn make_executable(path : String) -> Unit {
   match detect_platform() {
     Windows => ()
-    _ => @async_fs.chmod(path[:], 0o755)
+    _ => {
+      let _ = @async_process.run("chmod", ["+x", path][:])
+    }
   }
 }
 
