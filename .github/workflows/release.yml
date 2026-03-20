@@ -47,6 +47,10 @@ jobs:
           irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
           echo "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
+      - name: Setup MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Moon update
         run: moon update
 
