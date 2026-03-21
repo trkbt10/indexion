@@ -3,6 +3,8 @@ import {
   "mizchi/x/sys" @sys,
   "moonbitlang/async/fs" @async_fs,
   "moonbitlang/async/process" @async_process,
+  "trkbt10/osenv/platform" @osenv_platform,
+  "trkbt10/osenv/dirs" @osenv_dirs,
 }
 
 import {

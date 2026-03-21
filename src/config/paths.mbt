@@ -5,11 +5,7 @@
 ///|
 /// Normalize a project path for config/path resolution.
 pub fn normalize_path(path : String) -> String {
-  if path.length() == 0 {
-    "."
-  } else {
-    @path_utils.normalize_path(path)
-  }
+  @osenv_path.normalize(path)
 }
 
 ///|
@@ -20,38 +16,36 @@ pub fn join_path(base : String, child : String) -> String {
   } else if child.length() == 0 {
     normalize_path(base)
   } else {
-    @path_utils.join_path([base, child])
+    try {
+      @osenv_path.join([base, child])
+    } catch {
+      _ => normalize_path(base + "/" + child)
+    }
   }
 }
 
 ///|
 /// Directory name for a normalized path.
 pub fn dirname(path : String) -> String {
-  @path_utils.dirname(normalize_path(path))
+  @osenv_path.dirname(path)
 }
 
 ///|
 /// Basename for a normalized path.
 pub fn basename(path : String) -> String {
-  @path_utils.basename(normalize_path(path))
+  @osenv_path.basename(path)
 }
 
 ///|
 /// File extension including the leading dot.
 pub fn extension(path : String) -> String {
-  let base = basename(path)
-  let idx = find_last_char(base, '.')
-  if idx < 0 {
-    ""
-  } else {
-    slice_from(base, idx)
-  }
+  @osenv_path.extname(path)
 }
 
 ///|
 /// Return whether a path is absolute.
 pub fn is_absolute_path(path : String) -> Bool {
-  @path_utils.is_absolute(path)
+  @osenv_path.is_absolute(path)
 }
 
 ///|
@@ -73,15 +67,8 @@ pub fn relative_to(root : String, path : String) -> String {
   let normalized_path = normalize_path(path)
   if normalized_root == "." {
     normalized_path
-  } else if normalized_path == normalized_root {
-    "."
   } else {
-    let prefix = normalized_root + "/"
-    if normalized_path.has_prefix(prefix) {
-      slice_from(normalized_path, prefix.length())
-    } else {
-      normalized_path
-    }
+    @osenv_path.to_relative(normalized_path, normalized_root)
   }
 }
 
@@ -435,22 +422,6 @@ fn is_valid_file(path : String) -> Bool {
   @fs.is_file(path) catch {
     _ => false
   }
-}
-
-///|
-fn slice_from(text : String, start : Int) -> String {
-  let chars = text.to_array()
-  if start <= 0 {
-    return text
-  }
-  if start >= chars.length() {
-    return ""
-  }
-  let out : Array[Char] = []
-  for i = start; i < chars.length(); i = i + 1 {
-    out.push(chars[i])
-  }
-  String::from_array(out)
 }
 
 ///|

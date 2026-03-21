@@ -19,21 +19,15 @@ fn resolve_os_dir(
   windows_env : String,
   windows_subpath : String,
 ) -> String? {
-  match @platform.detect_platform() {
+  match @osenv_platform.platform() {
     MacOS =>
-      match @platform.get_home_dir() {
-        Some(home) => Some(home + "/Library/" + macos_subpath)
-        None => None
-      }
+      @osenv_dirs.home_dir().map(fn(home) { home + "/Library/" + macos_subpath })
     Linux => {
       match @sys.get_env_var(xdg_env) {
         Some(xdg) => if xdg.length() > 0 { return Some(xdg + "/indexion") }
         None => ()
       }
-      match @platform.get_home_dir() {
-        Some(home) => Some(home + "/" + linux_fallback)
-        None => None
-      }
+      @osenv_dirs.home_dir().map(fn(home) { home + "/" + linux_fallback })
     }
     Windows =>
       match @sys.get_env_var(windows_env) {
@@ -46,10 +40,7 @@ fn resolve_os_dir(
         None => None
       }
     Unknown =>
-      match @platform.get_home_dir() {
-        Some(home) => Some(home + "/" + linux_fallback)
-        None => None
-      }
+      @osenv_dirs.home_dir().map(fn(home) { home + "/" + linux_fallback })
   }
 }
 
@@ -88,10 +79,7 @@ pub fn get_install_dir() -> String? {
     Some(dir) => if dir.length() > 0 { return Some(dir) }
     None => ()
   }
-  match @platform.get_home_dir() {
-    Some(home) => Some(home + "/.indexion")
-    None => None
-  }
+  @osenv_dirs.home_dir().map(fn(home) { home + "/.indexion" })
 }
 
 ///|
@@ -105,7 +93,7 @@ pub fn get_platform_asset_name() -> String? {
     Arm64 => "arm64"
     UnknownArch => return None
   }
-  match @platform.detect_platform() {
+  match @osenv_platform.platform() {
     MacOS => Some("indexion-darwin-" + arch_str)
     Linux => Some("indexion-linux-" + arch_str)
     Windows => Some("indexion-windows-" + arch_str)
@@ -116,7 +104,7 @@ pub fn get_platform_asset_name() -> String? {
 ///|
 /// Get the archive extension for the current platform.
 pub fn get_archive_extension() -> String {
-  match @platform.detect_platform() {
+  match @osenv_platform.platform() {
     Windows => ".zip"
     _ => ".tar.gz"
   }
@@ -125,7 +113,7 @@ pub fn get_archive_extension() -> String {
 ///|
 /// Get the binary name for the current platform.
 pub fn get_binary_name() -> String {
-  match @platform.detect_platform() {
+  match @osenv_platform.platform() {
     Windows => "indexion.exe"
     _ => "indexion"
   }

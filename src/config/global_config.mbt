@@ -200,7 +200,7 @@ fn parse_reconcile_logical_review_key(
 /// Expand ~ to home directory in paths.
 fn expand_tilde(path : String) -> String {
   if path.has_prefix("~/") {
-    match @platform.get_home_dir() {
+    match @osenv_dirs.home_dir() {
       Some(home) => home + substring(path, 1, path.length())
       None => path
     }

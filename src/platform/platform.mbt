@@ -14,46 +14,18 @@ pub(all) enum Platform {
 ///|
 /// Detect the current operating system platform.
 pub fn detect_platform() -> Platform {
-  match @sys.get_env_var("USERPROFILE") {
-    Some(p) =>
-      if p.length() > 0 &&
-        (
-          p.has_prefix("C:\\") ||
-          p.has_prefix("c:\\") ||
-          p.contains("\\Users\\")
-        ) {
-        return Windows
-      }
-    None => ()
+  match @osenv_platform.platform() {
+    Linux => Linux
+    MacOS => MacOS
+    Windows => Windows
+    Unknown => Unknown
   }
-  match @sys.get_env_var("HOME") {
-    Some(h) =>
-      if h.length() > 0 {
-        if h.has_prefix("/Users/") {
-          return MacOS
-        }
-        if is_valid_dir_check(h + "/Library") {
-          return MacOS
-        }
-        return Linux
-      }
-    None => ()
-  }
-  Unknown
 }
 
 ///|
 /// Get user home directory.
 pub fn get_home_dir() -> String? {
-  match @sys.get_env_var("HOME") {
-    Some(h) => if h.length() > 0 { return Some(h) }
-    None => ()
-  }
-  match @sys.get_env_var("USERPROFILE") {
-    Some(h) => if h.length() > 0 { return Some(h) }
-    None => ()
-  }
-  None
+  @osenv_dirs.home_dir()
 }
 
 ///|

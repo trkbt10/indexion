@@ -5,7 +5,8 @@
     "moonbitlang/x": "0.4.40",
     "trkbt10/vcdb": "0.1.0",
     "moonbitlang/async": "0.16.7",
-    "mizchi/x": "0.1.5"
+    "mizchi/x": "0.1.5",
+    "trkbt10/osenv": "0.1.0"
   },
   "readme": "README.mbt.md",
   "repository": "https://github.com/trkbt10/indexion",

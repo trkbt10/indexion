@@ -1,8 +1,10 @@
 import {
   "moonbitlang/core/json" @json,
-  "trkbt10/indexion/src/kgf/resolver" @path_utils,
-  "trkbt10/indexion/src/scope" @scope,
+"trkbt10/indexion/src/scope" @scope,
   "trkbt10/indexion/src/platform" @platform,
   "moonbitlang/x/fs" @fs,
   "mizchi/x/sys" @sys,
+  "trkbt10/osenv/platform" @osenv_platform,
+  "trkbt10/osenv/dirs" @osenv_dirs,
+  "trkbt10/osenv/path" @osenv_path,
 }
