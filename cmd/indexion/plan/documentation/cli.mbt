@@ -89,11 +89,7 @@ pub fn command() -> @argparse.Command {
     "documentation",
     about="Generate documentation coverage analysis",
     options=[
-      @argparse.OptionArg(
-        "output",
-        short='o',
-        about="Output file path (default: stdout)",
-      ),
+      @argparse.OptionArg("output", short='o', about=@help.output),
       @argparse.OptionArg("style", about="Output style: coverage, full", default_values=[
         "full",
       ]),
@@ -107,7 +103,7 @@ pub fn command() -> @argparse.Command {
         "name",
         about="Project name (auto-detect from moon.mod.json)",
       ),
-      @argparse.OptionArg("specs-dir", about="KGF specs directory", default_values=[
+      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
     ],
@@ -122,7 +118,7 @@ pub fn command() -> @argparse.Command {
 pub fn run_matches(matches : @argparse.Matches) -> Unit {
   let config = DocPlanConfig::from_matches(matches)
   if config.target_dir.length() == 0 {
-    println("Error: Directory path required.")
+    println(@help.dir_required)
     return
   }
   // Load project info from moon.mod.json if available

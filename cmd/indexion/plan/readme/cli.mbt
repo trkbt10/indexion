@@ -89,7 +89,7 @@ pub fn command() -> @argparse.Command {
       @argparse.OptionArg("format", about="Output format: markdown, json", default_values=[
         "md",
       ]),
-      @argparse.OptionArg("specs-dir", about="KGF specs directory", default_values=[
+      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
       @argparse.OptionArg(

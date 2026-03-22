@@ -164,27 +164,15 @@ pub fn command() -> @argparse.Command {
         about="Similarity strategy: tfidf, apted, tsed",
         default_values=["tfidf"],
       ),
-      @argparse.OptionArg(
-        "include",
-        action=Append,
-        about="Include files matching glob pattern (repeatable)",
-      ),
-      @argparse.OptionArg(
-        "exclude",
-        action=Append,
-        about="Exclude files matching glob pattern (repeatable)",
-      ),
-      @argparse.OptionArg(
-        "output",
-        short='o',
-        about="Output file path (default: stdout)",
-      ),
+      @argparse.OptionArg("include", action=Append, about=@help.include_pattern),
+      @argparse.OptionArg("exclude", action=Append, about=@help.exclude_pattern),
+      @argparse.OptionArg("output", short='o', about=@help.output),
       @argparse.OptionArg(
         "format",
         about="Output format: md, json, github-issue",
         default_values=["md"],
       ),
-      @argparse.OptionArg("specs-dir", about="KGF specs directory", default_values=[
+      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
     ],

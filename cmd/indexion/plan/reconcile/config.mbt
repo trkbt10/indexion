@@ -219,11 +219,7 @@ pub fn command() -> @argparse.Command {
     "reconcile",
     about="Detect implementation/documentation drift",
     options=[
-      @argparse.OptionArg(
-        "output",
-        short='o',
-        about="Output file path (default: stdout)",
-      ),
+      @argparse.OptionArg("output", short='o', about=@help.output),
       @argparse.OptionArg(
         "format",
         about="Output format: json, md, github-issue",

@@ -114,25 +114,13 @@ pub fn command() -> @argparse.Command {
     "unwrap",
     about="Detect and remove unnecessary wrapper functions",
     options=[
-      @argparse.OptionArg(
-        "include",
-        action=Append,
-        about="Include files matching glob pattern (repeatable)",
-      ),
-      @argparse.OptionArg(
-        "exclude",
-        action=Append,
-        about="Exclude files matching glob pattern (repeatable)",
-      ),
-      @argparse.OptionArg(
-        "output",
-        short='o',
-        about="Output file path (default: stdout)",
-      ),
+      @argparse.OptionArg("include", action=Append, about=@help.include_pattern),
+      @argparse.OptionArg("exclude", action=Append, about=@help.exclude_pattern),
+      @argparse.OptionArg("output", short='o', about=@help.output),
       @argparse.OptionArg("format", about="Output format: md, json, text", default_values=[
         "md",
       ]),
-      @argparse.OptionArg("specs-dir", about="KGF specs directory", default_values=[
+      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
     ],
@@ -176,7 +164,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
 /// Entry point with a pre-built configuration.
 fn run_with_config(config : UnwrapConfig) -> Unit {
   if config.target_dir.length() == 0 {
-    println("Error: Directory path required.")
+    println(@help.dir_required)
     return
   }
   let show_progress = config.output.length() > 0 || config.format != "json"

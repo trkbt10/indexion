@@ -59,7 +59,7 @@ pub fn command() -> @argparse.Command {
     "init",
     about="Initialize documentation template structure",
     options=[
-      @argparse.OptionArg("specs-dir", about="KGF specs directory", default_values=[
+      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
     ],

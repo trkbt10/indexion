@@ -170,21 +170,9 @@ pub fn command() -> @argparse.Command {
       @argparse.OptionArg("strategy", about="Algorithm: hybrid, tfidf, ncd", default_values=[
         "hybrid",
       ]),
-      @argparse.OptionArg(
-        "include",
-        action=Append,
-        about="Include files matching glob pattern (repeatable)",
-      ),
-      @argparse.OptionArg(
-        "exclude",
-        action=Append,
-        about="Exclude files matching glob pattern (repeatable)",
-      ),
-      @argparse.OptionArg(
-        "output",
-        short='o',
-        about="Output file path (default: stdout)",
-      ),
+      @argparse.OptionArg("include", action=Append, about=@help.include_pattern),
+      @argparse.OptionArg("exclude", action=Append, about=@help.exclude_pattern),
+      @argparse.OptionArg("output", short='o', about=@help.output),
       @argparse.OptionArg(
         "format",
         about="Output format: md, json, text, github-issue",
@@ -194,7 +182,7 @@ pub fn command() -> @argparse.Command {
         "raw",
       ]),
       @argparse.OptionArg("name", about="Project name for structured output"),
-      @argparse.OptionArg("specs-dir", about="KGF specs directory", default_values=[
+      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
     ],
@@ -493,7 +481,7 @@ fn extract_project_name(path : String) -> String {
 /// Entry point with a pre-built configuration.
 fn run_with_config(config : RefactorPlanConfig) -> Unit {
   if config.target_dir.length() == 0 {
-    println("Error: Directory path required.")
+    println(@help.dir_required)
     return
   }
   // Progress output goes to stderr-equivalent: only print when stdout is not

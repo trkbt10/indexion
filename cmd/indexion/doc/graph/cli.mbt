@@ -87,7 +87,7 @@ pub fn command() -> @argparse.Command {
     about="Generate dependency graph in Mermaid format",
     options=[
       @argparse.OptionArg("output", about="Output file (default: stdout)"),
-      @argparse.OptionArg("specs-dir", about="KGF specs directory", default_values=[
+      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
       @argparse.OptionArg("title", about="Diagram title", default_values=[

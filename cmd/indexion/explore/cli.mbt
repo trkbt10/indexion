@@ -161,17 +161,9 @@ pub fn command() -> @argparse.Command {
         action=Append,
         about="File extension to include (repeatable)",
       ),
-      @argparse.OptionArg(
-        "include",
-        action=Append,
-        about="Include files matching glob pattern (repeatable)",
-      ),
-      @argparse.OptionArg(
-        "exclude",
-        action=Append,
-        about="Exclude files matching glob pattern (repeatable)",
-      ),
-      @argparse.OptionArg("specs-dir", about="KGF specs directory", default_values=[
+      @argparse.OptionArg("include", action=Append, about=@help.include_pattern),
+      @argparse.OptionArg("exclude", action=Append, about=@help.exclude_pattern),
+      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
     ],
@@ -491,7 +483,7 @@ fn output_json(
 pub fn run_matches(matches : @argparse.Matches) -> Unit {
   let config = ExploreConfig::from_matches(matches)
   if config.target_dirs.length() == 0 {
-    println("Error: Directory path required.")
+    println(@help.dir_required)
     return
   }
   println("=== indexion explore ===")

@@ -132,7 +132,7 @@ pub fn command() -> @argparse.Command {
     "readme",
     about="Extract documentation from source files and generate README files",
     options=[
-      @argparse.OptionArg("specs-dir", about="KGF specs directory", default_values=[
+      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
       @argparse.OptionArg(

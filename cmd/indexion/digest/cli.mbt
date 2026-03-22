@@ -155,7 +155,7 @@ pub fn command() -> @argparse.Command {
       ),
       @argparse.OptionArg(
         "specs",
-        about="KGF specs directory",
+        about=@help.specs_dir,
         default_values=["kgfs"],
         global=true,
       ),
