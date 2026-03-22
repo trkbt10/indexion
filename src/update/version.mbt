@@ -2,7 +2,7 @@
 /// Current version of indexion.
 /// NOTE: SoT is moon.mod.json "version" field.
 /// This constant must be kept in sync manually (MoonBit has no compile-time embedding).
-pub let current_version : String = "0.1.0"
+pub let current_version : String = "0.2.0"
 
 ///|
 /// GitHub repository owner/name.
