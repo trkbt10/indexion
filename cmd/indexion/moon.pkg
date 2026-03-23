@@ -16,4 +16,8 @@ import {
 
 options(
   "is-main": true,
+  targets: {
+    "main.mbt": [ "native" ],
+    "main_stub.mbt": [ "wasm", "wasm-gc", "js" ],
+  },
 )

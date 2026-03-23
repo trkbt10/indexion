@@ -618,7 +618,7 @@ let timestamp_cache : Map[String, TimestampInfo] = {}
 let repo_check_cache : Map[String, Bool] = {}
 
 ///|
-fn is_repo_cached(root : String) -> Bool {
+async fn is_repo_cached(root : String) -> Bool {
   match repo_check_cache.get(root) {
     Some(v) => v
     None => {
@@ -968,6 +968,82 @@ async fn build_candidates(
     }
   })
   { candidates, module_covered_symbols }
+}
+
+///|
+/// Build candidates using async task group concurrency.
+/// Partitions units across multiple workers and merges results.
+async fn build_candidates_concurrent(
+  units : Array[CodeUnit],
+  fragments : Array[DocFragment],
+  config : ReconcileConfig,
+  registry : @registry.KGFRegistry,
+  num_workers : Int,
+) -> CandidateBuildResult {
+  if units.length() < 20 || num_workers <= 1 {
+    return build_candidates(units, fragments, config, registry)
+  }
+  let module_coverage = build_module_coverage_index(
+    units,
+    fragments,
+    registry,
+    config.target_dir,
+    config.documents.doc_paths,
+  )
+  let fragment_signals = build_fragment_match_signals(fragments, registry)
+  let inverted_index = build_fragment_inverted_index(
+    fragments, fragment_signals,
+  )
+  let effective_workers = if num_workers > units.length() / 10 {
+    let w = units.length() / 10
+    if w < 2 {
+      2
+    } else {
+      w
+    }
+  } else {
+    num_workers
+  }
+  let chunk_size = (units.length() + effective_workers - 1) / effective_workers
+  @async.with_task_group(group => {
+    let tasks : Array[@async.Task[(Array[ReconcileCandidate], Int)]] = []
+    for w in 0..<effective_workers {
+      let s = w * chunk_size
+      let e_raw = (w + 1) * chunk_size
+      let e = if e_raw < units.length() { e_raw } else { units.length() }
+      if s >= units.length() {
+        break
+      }
+      tasks.push(
+        group.spawn(() => {
+          match_units_batch(
+            units, s, e, fragments, module_coverage, fragment_signals,
+            inverted_index, config,
+          )
+        }),
+      )
+    }
+    let all_candidates : Array[ReconcileCandidate] = []
+    let mut total_covered = 0
+    for task in tasks {
+      let (candidates, covered) = task.wait()
+      for c in candidates {
+        all_candidates.push(c)
+      }
+      total_covered += covered
+    }
+    all_candidates.sort_by(fn(a, b) {
+      let status_cmp = status_priority(a.status).compare(
+        status_priority(b.status),
+      )
+      if status_cmp != 0 {
+        status_cmp
+      } else {
+        b.mapping_confidence.compare(a.mapping_confidence)
+      }
+    })
+    { candidates: all_candidates, module_covered_symbols: total_covered }
+  })
 }
 
 ///|

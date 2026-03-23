@@ -1,16 +1,17 @@
 import {
-  "moonbitlang/core/encoding/utf8" @utf8,
   "trkbt10/indexion/src/config" @config_paths,
+  "trkbt10/indexion/src/platform" @platform,
   "moonbitlang/async/fs" @async_fs,
+  "moonbitlang/async/process" @async_process,
 }
 
 import {
+  "moonbitlang/async",
   "moonbitlang/core/env" @env,
   "moonbitlang/x/fs" @fs,
 } for "wbtest"
 
 options(
-  "native-stub": [ "git_stub.c" ],
   targets: {
     "host_native.mbt": [ "native" ],
     "host_stub.mbt": [ "wasm", "wasm-gc", "js", "llvm" ],

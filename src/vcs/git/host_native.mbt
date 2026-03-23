@@ -1,65 +1,88 @@
 ///|
-
-///|
-#borrow(root)
-extern "C" fn c_git_is_repo(root : Bytes, root_len : Int) -> Int = "indexion_git_is_repo"
-
-///|
-#borrow(root, path)
-extern "C" fn c_git_status_dirty(
-  root : Bytes,
-  root_len : Int,
-  path : Bytes,
-  path_len : Int,
-) -> Int = "indexion_git_status_dirty"
-
-///|
-#borrow(root, path)
-extern "C" fn c_git_last_commit_seconds(
-  root : Bytes,
-  root_len : Int,
-  path : Bytes,
-  path_len : Int,
-) -> Int64 = "indexion_git_last_commit_seconds"
-
-///|
-fn encode_path(text : String) -> Bytes {
-  @utf8.encode(text)
-}
-
-///|
-fn git_is_repo_native(root : String) -> Bool {
-  let root_bytes = encode_path(root)
-  c_git_is_repo(root_bytes, root_bytes.length()) == 1
-}
-
-///|
-fn git_status_dirty_native(root : String, path : String) -> Bool {
-  let root_bytes = encode_path(root)
-  let path_bytes = encode_path(path)
-  c_git_status_dirty(
-    root_bytes,
-    root_bytes.length(),
-    path_bytes,
-    path_bytes.length(),
-  ) ==
-  1
-}
-
-///|
-fn git_last_commit_seconds_native(root : String, path : String) -> Int? {
-  let root_bytes = encode_path(root)
-  let path_bytes = encode_path(path)
-  let seconds = c_git_last_commit_seconds(
-    root_bytes,
-    root_bytes.length(),
-    path_bytes,
-    path_bytes.length(),
-  )
-  if seconds < 0L {
-    None
+/// Parse an epoch timestamp (seconds) from git output text.
+fn parse_epoch_seconds(text : String) -> Int? {
+  let mut result = 0
+  let mut seen_digit = false
+  for ch in text {
+    if ch >= '0' && ch <= '9' {
+      seen_digit = true
+      result = result * 10 + (ch.to_int() - 48)
+    } else if ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t' {
+      if seen_digit {
+        break
+      }
+    } else {
+      return None
+    }
+  }
+  if seen_digit {
+    Some(result)
   } else {
-    Some(seconds.to_int())
+    None
+  }
+}
+
+///|
+/// Return the platform-appropriate null device path.
+fn null_device() -> String {
+  match @platform.detect_platform() {
+    Windows => "NUL"
+    _ => "/dev/null"
+  }
+}
+
+///|
+async fn git_is_repo_native(root : String) -> Bool {
+  try {
+    let devnull = @async_process.redirect_to_file(null_device())
+    let exit_code = @async_process.run(
+      "git",
+      ["-C", root, "rev-parse", "--is-inside-work-tree"][:],
+      stdout=devnull,
+      stderr=@async_process.redirect_to_file(null_device()),
+    )
+    exit_code == 0
+  } catch {
+    _ => false
+  }
+}
+
+///|
+async fn git_status_dirty_native(root : String, path : String) -> Bool {
+  try {
+    let (exit_code, stdout) = @async_process.collect_stdout(
+      "git",
+      ["-C", root, "status", "--porcelain=v1", "--", path][:],
+      stderr=@async_process.redirect_to_file(null_device()),
+    )
+    if exit_code != 0 {
+      return false
+    }
+    let output = stdout.text()
+    output.length() > 0
+  } catch {
+    _ => false
+  }
+}
+
+///|
+async fn git_last_commit_seconds_native(
+  root : String,
+  path : String,
+) -> Int? {
+  try {
+    let (exit_code, stdout) = @async_process.collect_stdout(
+      "git",
+      ["-C", root, "log", "-1", "--format=%ct", "--", path][:],
+      stderr=@async_process.redirect_to_file(null_device()),
+    )
+    if exit_code != 0 {
+      return None
+    }
+    let output = stdout.text()
+    parse_epoch_seconds(output)
+  } catch {
+    _ => None
   }
 }
 

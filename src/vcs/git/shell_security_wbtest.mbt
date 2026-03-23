@@ -13,7 +13,7 @@ fn remove_file_if_exists(path : String) -> Unit {
 }
 
 ///|
-fn current_repo_root() -> String? {
+async fn current_repo_root() -> String? {
   match @env.current_dir() {
     Some(dir) => {
       let mut current = @config_paths.normalize_path(dir)
@@ -34,14 +34,14 @@ fn current_repo_root() -> String? {
 }
 
 ///|
-test "vcs/git: native helpers resolve the current repository" {
+async test "vcs/git: native helpers resolve the current repository" {
   guard current_repo_root() is Some(root)
   assert_true(is_repo(root))
   assert_true(last_commit_seconds(root, "moon.mod.json") is Some(_))
 }
 
 ///|
-test "vcs/git: native helpers do not interpret root shell payloads" {
+async test "vcs/git: native helpers do not interpret root shell payloads" {
   guard current_repo_root() is Some(root)
   let marker = temp_git_dir(".indexion/vcs-git-shell-root-marker-")
   remove_file_if_exists(marker)
@@ -52,7 +52,7 @@ test "vcs/git: native helpers do not interpret root shell payloads" {
 }
 
 ///|
-test "vcs/git: native helpers do not interpret path shell payloads" {
+async test "vcs/git: native helpers do not interpret path shell payloads" {
   guard current_repo_root() is Some(root)
   let marker = temp_git_dir(".indexion/vcs-git-shell-path-marker-")
   remove_file_if_exists(marker)

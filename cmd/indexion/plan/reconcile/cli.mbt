@@ -141,10 +141,19 @@ async fn run_with_config(config : ReconcileConfig) -> Unit {
   )
   let project_markers = registry.get_project_markers()
   let code_units = build_code_units_fast(discovered_paths, registry)
-  let (doc_fragments, doc_file_states, used_specs) = collect_document_fragments(
-    discovered_paths, config, registry,
+  let (doc_fragments, doc_file_states, used_specs, code_file_states) = @async.with_task_group(
+    group => {
+      let doc_task = group.spawn(() => {
+        collect_document_fragments(discovered_paths, config, registry)
+      })
+      let code_task = group.spawn(() => {
+        collect_code_file_states(code_units, config)
+      })
+      let (doc_fragments, doc_file_states, used_specs) = doc_task.wait()
+      let code_file_states = code_task.wait()
+      (doc_fragments, doc_file_states, used_specs, code_file_states)
+    },
   )
-  let code_file_states = collect_code_file_states(code_units, config)
   let all_file_states = code_file_states + doc_file_states
   let config_hash = build_config_hash(config)
   let source_fingerprint = build_source_fingerprint(
@@ -162,7 +171,17 @@ async fn run_with_config(config : ReconcileConfig) -> Unit {
     }
     None => ()
   }
-  let candidate_build = build_candidates(code_units, doc_fragments, config, registry)
+  let candidate_build = if config.parallel && @parallel.available() {
+    build_candidates_concurrent(
+      code_units,
+      doc_fragments,
+      config,
+      registry,
+      @parallel.cpu_count(),
+    )
+  } else {
+    build_candidates(code_units, doc_fragments, config, registry)
+  }
   let raw_aggregate_suggestions = build_aggregate_suggestions(
     candidate_build.candidates,
     [],
