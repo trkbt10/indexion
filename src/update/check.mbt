@@ -14,16 +14,8 @@ pub async fn check_latest_version() -> String raise UpdateError {
     "Accept": "application/vnd.github.v3+json",
     "User-Agent": "indexion/" + current_version,
   }
-  let (response, body_data) = @mhttp.get(url, headers~) catch {
-    err => raise UpdateError::NetworkError(err.to_string())
-  }
-  if response.code != 200 {
-    raise UpdateError::ApiError(
-      "GitHub API returned status " + response.code.to_string(),
-    )
-  }
-  let body_str = body_data.text() catch {
-    _ => raise UpdateError::ParseError("Failed to decode API response body")
+  let body_str = @http.fetch_text(url, headers~) catch {
+    @http.FetchError(msg) => raise UpdateError::ApiError(msg)
   }
   extract_tag_name(body_str)
 }

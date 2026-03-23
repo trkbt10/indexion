@@ -26,79 +26,25 @@ pub fn build_checksum_url(version : String, asset : String) -> String {
 }
 
 ///|
-/// Maximum number of redirects to follow.
-let max_redirects : Int = 5
-
-///|
-/// Download a file from URL and return its content as Bytes.
-/// Follows HTTP 3xx redirects up to max_redirects times.
-pub async fn download_bytes(url : String) -> Bytes raise UpdateError {
-  let mut current_url = url
-  for i = 0; i < max_redirects; i = i + 1 {
-    let headers : Map[String, String] = {
-      "User-Agent": "indexion/" + current_version,
-    }
-    let (response, body_data) = @mhttp.get(current_url, headers~) catch {
-      err => raise UpdateError::NetworkError(err.to_string())
-    }
-    if response.code == 200 {
-      return body_data.binary()
-    }
-    if response.code >= 300 && response.code < 400 {
-      match response.headers.get("location") {
-        Some(location) => current_url = location
-        None =>
-          raise UpdateError::DownloadError(
-            "Redirect without Location header: " + current_url,
-          )
-      }
-      continue
-    }
-    raise UpdateError::DownloadError(
-      "Download failed with status " +
-      response.code.to_string() +
-      ": " +
-      current_url,
-    )
-  }
-  raise UpdateError::DownloadError("Too many redirects: " + url)
+/// Common HTTP headers for update requests.
+fn update_headers() -> Map[String, String] {
+  { "User-Agent": "indexion/" + current_version }
 }
 
 ///|
-/// Download a text file from URL.
-/// Follows HTTP 3xx redirects up to max_redirects times.
-pub async fn download_text(url : String) -> String raise UpdateError {
-  let mut current_url = url
-  for i = 0; i < max_redirects; i = i + 1 {
-    let headers : Map[String, String] = {
-      "User-Agent": "indexion/" + current_version,
-    }
-    let (response, body_data) = @mhttp.get(current_url, headers~) catch {
-      err => raise UpdateError::NetworkError(err.to_string())
-    }
-    if response.code == 200 {
-      return body_data.text() catch {
-        _ => raise UpdateError::ParseError("Failed to decode response as text")
-      }
-    }
-    if response.code >= 300 && response.code < 400 {
-      match response.headers.get("location") {
-        Some(location) => current_url = location
-        None =>
-          raise UpdateError::DownloadError(
-            "Redirect without Location header: " + current_url,
-          )
-      }
-      continue
-    }
-    raise UpdateError::DownloadError(
-      "Download failed with status " +
-      response.code.to_string() +
-      ": " +
-      current_url,
-    )
+/// Download a file from URL and return its content as Bytes (delegates to @http SoT).
+pub async fn download_bytes(url : String) -> Bytes raise UpdateError {
+  @http.fetch_bytes(url, headers=update_headers()) catch {
+    @http.FetchError(msg) => raise UpdateError::DownloadError(msg)
   }
-  raise UpdateError::DownloadError("Too many redirects: " + url)
+}
+
+///|
+/// Download a text file from URL (delegates to @http SoT).
+pub async fn download_text(url : String) -> String raise UpdateError {
+  @http.fetch_text(url, headers=update_headers()) catch {
+    @http.FetchError(msg) => raise UpdateError::DownloadError(msg)
+  }
 }
 
 ///|

@@ -12,32 +12,18 @@ fn github_headers() -> Map[String, String] {
 }
 
 ///|
-/// Validate HTTP response status, raising on non-200.
-fn check_status(code : Int, url : String) -> Unit raise KgfManageError {
-  if code != 200 {
-    raise KgfManageError::ApiError("HTTP " + code.to_string() + ": " + url)
-  }
-}
-
-///|
-/// Fetch bytes from a URL.
+/// Fetch bytes from a URL (delegates to @http SoT).
 async fn fetch(url : String) -> Bytes raise KgfManageError {
-  let (response, body_data) = @mhttp.get(url, headers=github_headers()) catch {
-    err => raise KgfManageError::NetworkError(err.to_string())
+  @http.fetch_bytes(url, headers=github_headers()) catch {
+    @http.FetchError(msg) => raise KgfManageError::ApiError(msg)
   }
-  check_status(response.code, url)
-  body_data.binary()
 }
 
 ///|
-/// Fetch text from a URL.
-async fn fetch_text(url : String) -> String raise KgfManageError {
-  let (response, body_data) = @mhttp.get(url, headers=github_headers()) catch {
-    err => raise KgfManageError::NetworkError(err.to_string())
-  }
-  check_status(response.code, url)
-  body_data.text() catch {
-    _ => raise KgfManageError::ApiError("Failed to decode response as text")
+/// Fetch text from a URL (delegates to @http SoT).
+async fn fetch_text_from(url : String) -> String raise KgfManageError {
+  @http.fetch_text(url, headers=github_headers()) catch {
+    @http.FetchError(msg) => raise KgfManageError::ApiError(msg)
   }
 }
 
@@ -106,7 +92,7 @@ pub async fn add_kgf(spec_name : String) -> Unit raise KgfManageError {
   let tree_url = "https://api.github.com/repos/" +
     kgf_repo +
     "/git/trees/main?recursive=1"
-  let body_str = fetch_text(tree_url)
+  let body_str = fetch_text_from(tree_url)
   match find_spec_in_tree(body_str, target_filename) {
     Some(path) => {
       println("Found: " + path)

@@ -3,7 +3,7 @@ import {
   "trkbt10/indexion/src/config" @config,
   "trkbt10/indexion/src/platform" @platform,
   "trkbt10/indexion/src/kgf/parser" @parser,
-  "mizchi/x/http" @mhttp,
+  "trkbt10/indexion/src/http" @http,
   "moonbitlang/core/json" @json,
 }
 
