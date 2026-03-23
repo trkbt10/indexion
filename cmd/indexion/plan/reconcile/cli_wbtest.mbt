@@ -335,7 +335,7 @@ test "reconcile: extract_toml_fragments keeps section keys" {
 }
 
 ///|
-test "reconcile: build_candidates reports stale and missing docs" {
+async test "reconcile: build_candidates reports stale and missing docs" {
   let config = {
     ..ReconcileConfig::default(),
     target_dir: ".",
@@ -380,7 +380,7 @@ test "reconcile: build_candidates reports stale and missing docs" {
 }
 
 ///|
-test "reconcile: build_candidates suppresses missing_doc when module docs cover the file" {
+async test "reconcile: build_candidates suppresses missing_doc when module docs cover the file" {
   let dir = temp_reconcile_dir(".indexion/reconcile-module-coverage-")
   @config_paths.ensure_dir_recursive(dir)
   let module_path = dir + "/config.mbt"
@@ -438,7 +438,7 @@ test "reconcile: build_candidates suppresses missing_doc when module docs cover 
 }
 
 ///|
-test "reconcile: module coverage does not bleed across sibling cli modules" {
+async test "reconcile: module coverage does not bleed across sibling cli modules" {
   let dir = temp_reconcile_dir(".indexion/reconcile-module-siblings-")
   @config_paths.ensure_dir_recursive(dir + "/reconcile")
   @config_paths.ensure_dir_recursive(dir + "/solid")

@@ -1,5 +1,5 @@
 ///|
-fn collect_document_fragments(
+async fn collect_document_fragments(
   discovered_paths : Array[String],
   config : ReconcileConfig,
   registry : @registry.KGFRegistry,
@@ -39,7 +39,7 @@ fn collect_document_fragments(
 }
 
 ///|
-fn collect_code_file_states(
+async fn collect_code_file_states(
   units : Array[CodeUnit],
   config : ReconcileConfig,
 ) -> Array[FileState] {
@@ -99,13 +99,13 @@ fn maybe_use_cache(
 
 ///|
 /// Entry point for the reconcile subcommand via argparse matches.
-pub fn run_matches(matches : @argparse.Matches) -> Unit {
+pub async fn run_matches(matches : @argparse.Matches) -> Unit {
   let config = resolve_config_from_matches(matches)
   run_with_config(config)
 }
 
 ///|
-fn run_with_config(config : ReconcileConfig) -> Unit {
+async fn run_with_config(config : ReconcileConfig) -> Unit {
   if config.target_dir.length() == 0 {
     println("Error: directory path required.")
     println("")
@@ -140,18 +140,12 @@ fn run_with_config(config : ReconcileConfig) -> Unit {
     discover_opts,
   )
   let project_markers = registry.get_project_markers()
-  let use_parallel = config.parallel && @parallel.available()
-  let (code_units, doc_fragments, all_file_states, used_specs) = if use_parallel {
-    parallel_extract(discovered_paths, config, registry)
-  } else {
-    let code_units = build_code_units_fast(discovered_paths, registry)
-    let (doc_fragments, doc_file_states, used_specs) = collect_document_fragments(
-      discovered_paths, config, registry,
-    )
-    let code_file_states = collect_code_file_states(code_units, config)
-    let all_file_states = code_file_states + doc_file_states
-    (code_units, doc_fragments, all_file_states, used_specs)
-  }
+  let code_units = build_code_units_fast(discovered_paths, registry)
+  let (doc_fragments, doc_file_states, used_specs) = collect_document_fragments(
+    discovered_paths, config, registry,
+  )
+  let code_file_states = collect_code_file_states(code_units, config)
+  let all_file_states = code_file_states + doc_file_states
   let config_hash = build_config_hash(config)
   let source_fingerprint = build_source_fingerprint(
     config_hash, all_file_states,
@@ -168,17 +162,7 @@ fn run_with_config(config : ReconcileConfig) -> Unit {
     }
     None => ()
   }
-  let candidate_build = if use_parallel {
-    build_candidates_parallel(
-      code_units,
-      doc_fragments,
-      config,
-      registry,
-      @parallel.cpu_count(),
-    )
-  } else {
-    build_candidates(code_units, doc_fragments, config, registry)
-  }
+  let candidate_build = build_candidates(code_units, doc_fragments, config, registry)
   let raw_aggregate_suggestions = build_aggregate_suggestions(
     candidate_build.candidates,
     [],

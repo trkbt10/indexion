@@ -39,7 +39,7 @@ fn get_fixtures_dir() -> String {
 }
 
 ///|
-test "reconcile: fixture typescript project validates cross-package drift detection" {
+async test "reconcile: fixture typescript project validates cross-package drift detection" {
   let fixture_root = get_fixtures_dir() + "/project/typescript-reconcile"
   let config = {
     ..ReconcileConfig::default(),

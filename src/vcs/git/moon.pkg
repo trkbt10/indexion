@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/encoding/utf8" @utf8,
   "trkbt10/indexion/src/config" @config_paths,
+  "moonbitlang/async/fs" @async_fs,
 }
 
 import {

@@ -632,7 +632,7 @@ fn is_repo_cached(root : String) -> Bool {
 ///|
 /// Get timestamp info for a path, with memoization.
 /// Each unique path's git status is queried at most once per run.
-fn timestamp_for_path(
+async fn timestamp_for_path(
   root : String,
   path : String,
   config : ReconcileConfig,
@@ -647,7 +647,7 @@ fn timestamp_for_path(
 }
 
 ///|
-fn timestamp_for_path_uncached(
+async fn timestamp_for_path_uncached(
   root : String,
   path : String,
   config : ReconcileConfig,
@@ -786,7 +786,7 @@ fn build_fragment_inverted_index(
 ///|
 /// Match a range of code units [start, end) against candidate fragments.
 /// Uses inverted index to avoid O(units × all_fragments) brute force.
-fn match_units_batch(
+async fn match_units_batch(
   units : Array[CodeUnit],
   start : Int,
   end : Int,
@@ -930,7 +930,7 @@ fn match_units_batch(
 }
 
 ///|
-fn build_candidates(
+async fn build_candidates(
   units : Array[CodeUnit],
   fragments : Array[DocFragment],
   config : ReconcileConfig,

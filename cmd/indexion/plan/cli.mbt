@@ -28,7 +28,7 @@ pub fn command() -> @argparse.Command {
 
 ///|
 /// Dispatch plan subcommand based on parsed matches.
-pub fn dispatch(matches : @argparse.Matches) -> Unit {
+pub async fn dispatch(matches : @argparse.Matches) -> Unit {
   guard matches.subcommand is Some((name, sub)) else { return }
   match name {
     "refactor" => @refactor.run_matches(sub)

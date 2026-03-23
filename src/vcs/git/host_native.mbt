@@ -23,10 +23,6 @@ extern "C" fn c_git_last_commit_seconds(
 ) -> Int64 = "indexion_git_last_commit_seconds"
 
 ///|
-#borrow(path)
-extern "C" fn c_file_mtime(path : Bytes, path_len : Int) -> Int64 = "indexion_git_file_mtime"
-
-///|
 fn encode_path(text : String) -> Bytes {
   @utf8.encode(text)
 }
@@ -69,12 +65,11 @@ fn git_last_commit_seconds_native(root : String, path : String) -> Int? {
 
 ///|
 /// Return the file modification time in seconds, or None if unavailable.
-pub fn file_mtime_seconds(path : String) -> Int? {
-  let path_bytes = encode_path(path)
-  let mtime = c_file_mtime(path_bytes, path_bytes.length())
-  if mtime < 0L {
-    None
-  } else {
-    Some(mtime.to_int())
+pub async fn file_mtime_seconds(path : String) -> Int? {
+  try {
+    let (seconds, _nanoseconds) = @async_fs.mtime(path)
+    Some(seconds.to_int())
+  } catch {
+    _ => None
   }
 }

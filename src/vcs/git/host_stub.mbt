@@ -15,6 +15,6 @@ fn git_last_commit_seconds_native(_root : String, _path : String) -> Int? {
 
 ///|
 /// Return the file modification time in seconds, or None if unavailable.
-pub fn file_mtime_seconds(_path : String) -> Int? {
+pub async fn file_mtime_seconds(_path : String) -> Int? {
   None
 }

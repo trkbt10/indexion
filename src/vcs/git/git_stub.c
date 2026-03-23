@@ -343,24 +343,3 @@ int64_t indexion_git_last_commit_seconds(
 #endif
 }
 
-MOONBIT_FFI_EXPORT
-int64_t indexion_git_file_mtime(const char *path, int32_t path_len) {
-  if (path == NULL || path_len <= 0) {
-    return -1;
-  }
-
-  char *path_cstr = (char *)malloc((size_t)path_len + 1);
-  if (path_cstr == NULL) {
-    return -1;
-  }
-  memcpy(path_cstr, path, (size_t)path_len);
-  path_cstr[path_len] = '\0';
-
-  struct stat st;
-  int ok = stat(path_cstr, &st);
-  free(path_cstr);
-  if (ok != 0) {
-    return -1;
-  }
-  return (int64_t)st.st_mtime;
-}
