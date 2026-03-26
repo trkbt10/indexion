@@ -64,7 +64,11 @@ pub fn discover_files(
         collect_files_impl(expanded_path, options, filter, file_paths)
       }
     } else {
-      collect_files_impl(path, options, filter, file_paths)
+      // Skip root filter for user-specified paths — they are explicit targets,
+      // not candidates for filtering (e.g., "." should not be excluded by ".*")
+      collect_files_impl(
+        path, options, filter, file_paths, skip_root_filter=true,
+      )
     }
   }
   file_paths
@@ -76,9 +80,11 @@ fn collect_files_impl(
   options : DiscoverOptions,
   filter : @filter.FilterConfig,
   file_paths : Array[String],
+  skip_root_filter~ : Bool = false,
 ) -> Unit {
   let clean_path = trim_trailing_slash(path)
-  if not(filter.should_include(clean_path, true).is_included()) {
+  if not(skip_root_filter) &&
+    not(filter.should_include(clean_path, true).is_included()) {
     return
   }
   try {
@@ -92,7 +98,11 @@ fn collect_files_impl(
         if dir_filter.should_skip_dir(entry) {
           continue
         }
-        let full_path = clean_path + "/" + entry
+        let full_path = if clean_path == "." {
+          entry
+        } else {
+          clean_path + "/" + entry
+        }
         if @fs.is_dir(full_path) {
           if options.recursive {
             collect_files_impl(full_path, options, dir_filter, file_paths)
