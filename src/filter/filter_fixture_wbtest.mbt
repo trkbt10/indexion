@@ -4,7 +4,7 @@
 
 ///|
 /// Base path for fixtures (relative to project root).
-const FIXTURES_BASE : String = "src/filter/fixtures"
+const FIXTURES_BASE : String = "fixtures/filter"
 
 ///|
 /// Build a FilterConfig from a fixture directory by directly loading
