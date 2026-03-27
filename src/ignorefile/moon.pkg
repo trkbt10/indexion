@@ -1,0 +1,4 @@
+import {
+  "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/src/kgf/parser" @parser,
+}

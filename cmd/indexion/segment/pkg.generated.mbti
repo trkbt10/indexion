@@ -1,12 +1,14 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/cmd/indexion/segment"
 
+import {
+  "moonbitlang/core/argparse",
+}
+
 // Values
-pub fn parse_args(Array[String], Int) -> SegmentConfig
+pub fn command() -> @argparse.Command
 
-pub fn run(Array[String], Int) -> Unit
-
-pub fn show_help() -> Unit
+pub fn run_matches(@argparse.Matches) -> Unit
 
 // Errors
 
@@ -25,9 +27,8 @@ pub struct SegmentConfig {
   ncd_weight : Double
   tfidf_weight : Double
   prefix : String
-  show_help : Bool
 }
-pub fn SegmentConfig::default() -> Self
+pub fn SegmentConfig::from_matches(@argparse.Matches) -> Self
 
 // Type aliases
 

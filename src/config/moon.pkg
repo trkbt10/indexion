@@ -2,6 +2,7 @@ import {
   "moonbitlang/core/json" @json,
   "trkbt10/indexion/src/scope" @scope,
   "trkbt10/indexion/src/platform" @platform,
+  "trkbt10/indexion/src/ignorefile" @ignorefile,
   "moonbitlang/x/fs" @fs,
   "mizchi/x/sys" @sys,
   "trkbt10/osenv/platform" @osenv_platform,

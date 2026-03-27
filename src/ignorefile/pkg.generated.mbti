@@ -1,0 +1,24 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/ignorefile"
+
+// Values
+pub fn load_from_dir(String, String) -> Array[IgnorePattern]
+
+pub fn parse(String, String) -> Array[IgnorePattern]
+
+// Errors
+
+// Types and methods
+pub(all) struct IgnorePattern {
+  pattern : String
+  negated : Bool
+  directory_only : Bool
+  anchored : Bool
+  source : String
+}
+pub fn IgnorePattern::new(String, negated? : Bool, directory_only? : Bool, anchored? : Bool, source? : String) -> Self
+
+// Type aliases
+
+// Traits
+

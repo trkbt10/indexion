@@ -70,8 +70,6 @@ pub fn SectionContent::to_json(Self) -> Json
 
 pub enum TableAlign {
   Left
-  Center
-  Right
 }
 pub fn TableAlign::default_left() -> Self
 

@@ -1,10 +1,14 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/cmd/indexion/digest"
 
-// Values
-pub fn parse_args(Array[String], Int) -> CliConfig
+import {
+  "moonbitlang/core/argparse",
+}
 
-pub async fn run(Array[String], Int) -> Unit
+// Values
+pub fn command() -> @argparse.Command
+
+pub async fn run_matches(@argparse.Matches) -> Unit
 
 // Errors
 
@@ -20,9 +24,9 @@ pub struct CliConfig {
   top_k : Int
   min_score : Double
   specs_dir : String
-  show_help : Bool
 }
 pub fn CliConfig::default() -> Self
+pub fn CliConfig::from_matches(@argparse.Matches) -> Self
 
 // Type aliases
 

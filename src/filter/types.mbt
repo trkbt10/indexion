@@ -1,41 +1,16 @@
 ///|
-/// Pattern for file/directory filtering.
-pub struct IgnorePattern {
-  /// The glob pattern (e.g., "*.log", "_build/", "**/node_modules")
-  pattern : String
-  /// If true, this pattern un-ignores (negates) matching files
-  negated : Bool
-  /// If true, only matches directories (pattern ends with /)
-  directory_only : Bool
-  /// If true, pattern is anchored to root (starts with / or contains /)
-  anchored : Bool
-  /// Source file this pattern came from (e.g., ".gitignore")
-  source : String
-}
-
-///|
-/// Create a new IgnorePattern with the given pattern string.
-pub fn IgnorePattern::new(
-  pattern : String,
-  negated? : Bool = false,
-  directory_only? : Bool = false,
-  anchored? : Bool = false,
-  source? : String = "",
-) -> IgnorePattern {
-  { pattern, negated, directory_only, anchored, source }
-}
-
-///|
 /// Filter configuration for file discovery.
+/// Pure data structure — no file I/O. Constructed by callers
+/// who load ignore patterns from appropriate sources.
 pub struct FilterConfig {
   /// Default exclude patterns (built-in, lowest priority fallback)
-  default_excludes : Array[IgnorePattern]
+  default_excludes : Array[@ignorefile.IgnorePattern]
   /// Patterns from KGF specs (language-specific)
-  kgf_ignore_patterns : Array[IgnorePattern]
+  kgf_ignore_patterns : Array[@ignorefile.IgnorePattern]
   /// Patterns from .gitignore files
-  gitignore_patterns : Array[IgnorePattern]
+  gitignore_patterns : Array[@ignorefile.IgnorePattern]
   /// Patterns from .indexionignore
-  indexionignore_patterns : Array[IgnorePattern]
+  indexionignore_patterns : Array[@ignorefile.IgnorePattern]
   /// CLI --include patterns (highest priority)
   user_includes : Array[String]
   /// CLI --exclude patterns (highest priority)
@@ -84,7 +59,6 @@ pub fn FilterConfig::with_kgf_ignore(
 ) -> FilterConfig {
   let new_patterns = self.kgf_ignore_patterns.copy()
   for p in patterns {
-    // Parse pattern (supports trailing / for directories)
     let (pattern, dir_only) = if p.has_suffix("/") {
       let chars = p.to_array()
       let trimmed : Array[Char] = []
@@ -96,7 +70,7 @@ pub fn FilterConfig::with_kgf_ignore(
       (p, false)
     }
     new_patterns.push(
-      IgnorePattern::new(
+      @ignorefile.IgnorePattern::new(
         pattern,
         directory_only=dir_only,
         source="kgf:" + language,
@@ -133,79 +107,59 @@ pub fn FilterConfig::with_excludes(
 }
 
 ///|
-/// Load FilterConfig from project root, reading gitignore and indexionignore.
-pub fn FilterConfig::from_project_root(root_dir : String) -> FilterConfig {
-  let config = FilterConfig::new()
-  // Load gitignore
-  let gitignore_path = root_dir + "/" + GITIGNORE_FILENAME
-  try {
-    let content = @fs.read_file_to_string(gitignore_path)
-    let patterns = parse_ignore_file(content, gitignore_path)
-    for p in patterns {
-      config.gitignore_patterns.push(p)
-    }
-  } catch {
-    _ => ()
+/// Add pre-loaded gitignore patterns.
+pub fn FilterConfig::with_gitignore_patterns(
+  self : FilterConfig,
+  patterns : Array[@ignorefile.IgnorePattern],
+) -> FilterConfig {
+  let new_patterns = self.gitignore_patterns.copy()
+  for p in patterns {
+    new_patterns.push(p)
   }
-  // Load indexionignore
-  let indexionignore_path = root_dir + "/" + INDEXIONIGNORE_FILENAME
-  try {
-    let content = @fs.read_file_to_string(indexionignore_path)
-    let patterns = parse_ignore_file(content, indexionignore_path)
-    for p in patterns {
-      config.indexionignore_patterns.push(p)
-    }
-  } catch {
-    _ => ()
-  }
-  config
+  { ..self, gitignore_patterns: new_patterns }
 }
 
 ///|
-/// Load gitignore from a directory and merge into config.
-/// Used for nested gitignore support during traversal.
+/// Add pre-loaded indexionignore patterns.
+pub fn FilterConfig::with_indexionignore_patterns(
+  self : FilterConfig,
+  patterns : Array[@ignorefile.IgnorePattern],
+) -> FilterConfig {
+  let new_patterns = self.indexionignore_patterns.copy()
+  for p in patterns {
+    new_patterns.push(p)
+  }
+  { ..self, indexionignore_patterns: new_patterns }
+}
+
+///|
+/// Load a gitignore-syntax file from a directory and merge into gitignore patterns.
+/// Callers must pass the filename from their domain's SoT constant.
 pub fn FilterConfig::with_gitignore_from_dir(
   self : FilterConfig,
   dir_path : String,
+  filename : String,
 ) -> FilterConfig {
-  let gitignore_path = dir_path + "/" + GITIGNORE_FILENAME
-  try {
-    let content = @fs.read_file_to_string(gitignore_path)
-    let patterns = parse_ignore_file(content, gitignore_path)
-    if patterns.is_empty() {
-      return self
-    }
-    let new_patterns = self.gitignore_patterns.copy()
-    for p in patterns {
-      new_patterns.push(p)
-    }
-    { ..self, gitignore_patterns: new_patterns }
-  } catch {
-    _ => self
+  let patterns = @ignorefile.load_from_dir(dir_path, filename)
+  if patterns.is_empty() {
+    return self
   }
+  self.with_gitignore_patterns(patterns)
 }
 
 ///|
-/// Load indexionignore from a directory and merge into config.
+/// Load a gitignore-syntax file from a directory and merge into indexionignore patterns.
+/// Callers must pass the filename from their domain's SoT constant.
 pub fn FilterConfig::with_indexionignore_from_dir(
   self : FilterConfig,
   dir_path : String,
+  filename : String,
 ) -> FilterConfig {
-  let ignore_path = dir_path + "/" + INDEXIONIGNORE_FILENAME
-  try {
-    let content = @fs.read_file_to_string(ignore_path)
-    let patterns = parse_ignore_file(content, ignore_path)
-    if patterns.is_empty() {
-      return self
-    }
-    let new_patterns = self.indexionignore_patterns.copy()
-    for p in patterns {
-      new_patterns.push(p)
-    }
-    { ..self, indexionignore_patterns: new_patterns }
-  } catch {
-    _ => self
+  let patterns = @ignorefile.load_from_dir(dir_path, filename)
+  if patterns.is_empty() {
+    return self
   }
+  self.with_indexionignore_patterns(patterns)
 }
 
 ///|

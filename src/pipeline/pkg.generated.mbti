@@ -2,11 +2,14 @@
 package "trkbt10/indexion/src/pipeline"
 
 import {
+  "trkbt10/indexion/src/filter",
   "trkbt10/indexion/src/kgf/registry",
   "trkbt10/indexion/src/kgf/types",
 }
 
 // Values
+pub fn build_filter_from_root(String) -> @filter.FilterConfig
+
 pub fn build_kgf_index(String) -> KGFIndex
 
 pub fn build_path_signals(Array[String]) -> Map[String, Bool]

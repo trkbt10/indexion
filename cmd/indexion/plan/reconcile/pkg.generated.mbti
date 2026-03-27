@@ -2,18 +2,17 @@
 package "trkbt10/indexion/cmd/indexion/plan/reconcile"
 
 import {
+  "moonbitlang/core/argparse",
   "moonbitlang/core/json",
   "trkbt10/indexion/src/config",
 }
 
 // Values
-pub fn parse_args(Array[String], Int) -> ReconcileConfig
+pub fn command() -> @argparse.Command
 
-pub fn resolve_config(Array[String], Int) -> ReconcileConfig
+pub fn resolve_config_from_matches(@argparse.Matches) -> ReconcileConfig
 
-pub fn run(Array[String], Int) -> Unit
-
-pub fn show_help() -> Unit
+pub async fn run_matches(@argparse.Matches) -> Unit
 
 // Errors
 
@@ -207,7 +206,6 @@ pub struct ReconcileConfig {
   mtime_fallback : Bool
   logical_review_mode : String
   parallel : Bool
-  show_help : Bool
 }
 pub fn ReconcileConfig::default() -> Self
 pub impl Eq for ReconcileConfig

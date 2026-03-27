@@ -78,17 +78,6 @@ pub struct MarkdownField {
   value : String
 }
 
-pub struct MarkdownTemplate {
-  content : String
-  placeholders : Array[TemplatePlaceholder]
-}
-
-pub struct TemplatePlaceholder {
-  key : String
-  start_pos : Int
-  end_pos : Int
-}
-
 pub struct TextareaField {
   id : String
   label : String

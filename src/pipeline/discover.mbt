@@ -41,9 +41,9 @@ pub fn discover_files(
   paths : Array[String],
   options : DiscoverOptions,
 ) -> Array[String] {
-  // Create filter config - load from project root if specified
+  // Create filter config - load ignore patterns from project root if specified
   let mut filter = if options.root_dir.length() > 0 {
-    @filter.FilterConfig::from_project_root(options.root_dir)
+    build_filter_from_root(options.root_dir)
   } else {
     @filter.FilterConfig::new()
   }
@@ -67,7 +67,11 @@ pub fn discover_files(
       // Skip root filter for user-specified paths — they are explicit targets,
       // not candidates for filtering (e.g., "." should not be excluded by ".*")
       collect_files_impl(
-        path, options, filter, file_paths, skip_root_filter=true,
+        path,
+        options,
+        filter,
+        file_paths,
+        skip_root_filter=true,
       )
     }
   }
@@ -80,7 +84,7 @@ fn collect_files_impl(
   options : DiscoverOptions,
   filter : @filter.FilterConfig,
   file_paths : Array[String],
-  skip_root_filter~ : Bool = false,
+  skip_root_filter? : Bool = false,
 ) -> Unit {
   let clean_path = trim_trailing_slash(path)
   if not(skip_root_filter) &&
@@ -91,8 +95,11 @@ fn collect_files_impl(
     if @fs.is_dir(clean_path) {
       // Load nested ignore files from this directory
       let dir_filter = filter
-        .with_gitignore_from_dir(clean_path)
-        .with_indexionignore_from_dir(clean_path)
+        .with_gitignore_from_dir(clean_path, @vcs_git.GITIGNORE_FILENAME)
+        .with_indexionignore_from_dir(
+          clean_path,
+          @config.INDEXIONIGNORE_FILENAME,
+        )
       let entries = @fs.read_dir(clean_path)
       for entry in entries {
         if dir_filter.should_skip_dir(entry) {
@@ -120,6 +127,18 @@ fn collect_files_impl(
   } catch {
     _ => ()
   }
+}
+
+///|
+/// Build a FilterConfig with hoisted ignore patterns from the project root.
+/// Loads .gitignore (hoisted from git root) and .indexionignore (hoisted from
+/// indexion root) and combines them into a single filter configuration.
+pub fn build_filter_from_root(root_dir : String) -> @filter.FilterConfig {
+  let git_patterns = @vcs_git.load_gitignore(root_dir)
+  let ixn_patterns = @config.load_indexionignore(root_dir)
+  let config = @filter.FilterConfig::new()
+  let config = config.with_gitignore_patterns(git_patterns)
+  config.with_indexionignore_patterns(ixn_patterns)
 }
 
 ///|

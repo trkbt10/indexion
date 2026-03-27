@@ -1,5 +1,10 @@
 import {
   "trkbt10/indexion/src/glob" @glob,
-  "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/src/ignorefile" @ignorefile,
   "trkbt10/indexion/src/kgf/parser" @parser,
 }
+
+import {
+  "trkbt10/indexion/src/vcs/git" @vcs_git,
+  "trkbt10/indexion/src/config" @config,
+} for "wbtest"

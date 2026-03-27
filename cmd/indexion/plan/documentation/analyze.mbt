@@ -98,7 +98,7 @@ pub fn analyze_documentation(
   let packages : Array[PackageAnalysis] = []
   let all_items : Array[PubItem] = []
   let normalized_dir = @common.normalize_path(dir)
-  let filter = @filter.FilterConfig::from_project_root(normalized_dir)
+  let filter = @pipeline.build_filter_from_root(normalized_dir)
   let registry = @kgf_features.load_registry(
     specs_dir~,
     target_dir=normalized_dir,
@@ -152,8 +152,8 @@ fn collect_packages(
     }
     // Load nested .gitignore/.indexionignore if present
     let local_filter = filter
-      .with_gitignore_from_dir(dir)
-      .with_indexionignore_from_dir(dir)
+      .with_gitignore_from_dir(dir, @vcs_git.GITIGNORE_FILENAME)
+      .with_indexionignore_from_dir(dir, @config.INDEXIONIGNORE_FILENAME)
     let entries = @fs.read_dir(dir)
     let mbt_files : Array[String] = []
     let mut has_moon_pkg = false

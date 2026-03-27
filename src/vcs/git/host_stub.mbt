@@ -9,10 +9,7 @@ async fn git_status_dirty_native(_root : String, _path : String) -> Bool {
 }
 
 ///|
-async fn git_last_commit_seconds_native(
-  _root : String,
-  _path : String,
-) -> Int? {
+async fn git_last_commit_seconds_native(_root : String, _path : String) -> Int? {
   None
 }
 

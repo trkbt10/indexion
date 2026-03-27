@@ -18,13 +18,13 @@ pub fn extract_unique_dir_names(Array[String]) -> Array[String]
 
 pub fn format_percent(Double) -> String
 
-pub fn get_arg_value(String, Int) -> String
-
 pub fn get_dirname_prefix(String) -> String
 
 pub fn get_relative_part(String) -> String
 
 pub fn is_directory(String) -> Bool
+
+pub fn join_lines(Array[String]) -> String
 
 pub fn make_relative_path(String, String) -> String
 
@@ -38,7 +38,7 @@ pub fn parse_double(String) -> Double
 
 pub fn parse_int(String) -> Int
 
-pub fn parse_output_arg(String) -> String?
+pub fn render_inline_code_list(StringBuilder, String, Array[String]) -> Unit
 
 pub fn split_by_slash(String) -> Array[String]
 
@@ -51,6 +51,8 @@ pub fn substring(String, Int, Int) -> String
 pub fn trim_ascii_spaces(String) -> String
 
 pub fn truncate(String, Int) -> String
+
+pub fn write_output(String, String, label? : String) -> Unit
 
 // Errors
 

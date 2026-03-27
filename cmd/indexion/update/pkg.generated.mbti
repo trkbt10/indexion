@@ -1,12 +1,24 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/cmd/indexion/update"
 
+import {
+  "moonbitlang/core/argparse",
+}
+
 // Values
-pub fn run(Array[String], Int) -> Unit
+pub fn command() -> @argparse.Command
+
+pub async fn run_matches(@argparse.Matches) -> Unit
 
 // Errors
 
 // Types and methods
+pub struct UpdateConfig {
+  check_only : Bool
+  force : Bool
+}
+pub fn UpdateConfig::default() -> Self
+pub fn UpdateConfig::from_matches(@argparse.Matches) -> Self
 
 // Type aliases
 

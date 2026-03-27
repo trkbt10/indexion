@@ -1,6 +1,8 @@
 ///|
 /// HTTP fetch error.
-pub suberror FetchError { FetchError(String) }
+pub suberror FetchError {
+  FetchError(String)
+}
 
 ///|
 /// Stub for non-native targets.

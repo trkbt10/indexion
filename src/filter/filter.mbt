@@ -1,7 +1,7 @@
 ///|
 /// Check if path matches an ignore pattern, handling directory-only semantics.
 pub fn pattern_matches(
-  pattern : IgnorePattern,
+  pattern : @ignorefile.IgnorePattern,
   path : String,
   is_dir : Bool,
 ) -> Bool {
@@ -37,8 +37,8 @@ pub fn pattern_matches(
 /// Priority (highest to lowest):
 /// 1. User --exclude (forces exclusion, highest priority)
 /// 2. User --include (whitelist mode when specified)
-/// 3. Project ignore file (INDEXIONIGNORE_FILENAME)
-/// 4. Git ignore file (GITIGNORE_FILENAME)
+/// 3. Project ignore file (".indexionignore")
+/// 4. Git ignore file (".gitignore")
 /// 5. KGF ignore patterns (language-specific)
 /// 6. Default excludes (fallback)
 pub fn FilterConfig::should_include(
@@ -97,7 +97,6 @@ pub fn FilterConfig::should_include(
     config.indexionignore_patterns,
     path,
     is_dir,
-    INDEXIONIGNORE_FILENAME,
   )
   match indexion_result {
     Some(result) => return result
@@ -109,7 +108,6 @@ pub fn FilterConfig::should_include(
       config.gitignore_patterns,
       path,
       is_dir,
-      GITIGNORE_FILENAME,
     )
     match git_result {
       Some(result) => return result
@@ -137,10 +135,9 @@ pub fn FilterConfig::should_include(
 /// Returns Some(result) if any pattern matches, None otherwise.
 /// Later patterns override earlier ones (gitignore semantics).
 fn check_ignore_patterns(
-  patterns : Array[IgnorePattern],
+  patterns : Array[@ignorefile.IgnorePattern],
   path : String,
   is_dir : Bool,
-  source_name : String,
 ) -> FilterResult? {
   let mut last_match : FilterResult? = None
   for pattern in patterns {
@@ -148,7 +145,7 @@ fn check_ignore_patterns(
       if pattern.negated {
         last_match = Some(Include)
       } else {
-        last_match = Some(Exclude(source_name + ": " + pattern.pattern))
+        last_match = Some(Exclude(pattern.source + ": " + pattern.pattern))
       }
     }
   }
@@ -259,6 +256,17 @@ fn dir_could_contain_pattern_match(dir : String, pattern : String) -> Bool {
   if pattern.has_prefix("**/") || pattern.has_prefix("**\\") {
     // Pattern like "**/test.mbt" matches anywhere
     return true
+  }
+  false
+}
+
+///|
+/// Check if string contains a slash.
+fn contains_slash(s : String) -> Bool {
+  for c in s {
+    if c == '/' {
+      return true
+    }
   }
   false
 }

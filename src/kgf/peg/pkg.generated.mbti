@@ -11,8 +11,6 @@ pub fn build_peg(@types.KGFSpec) -> PEG raise
 
 pub fn collect_active_rules(@types.KGFSpec) -> @hashset.HashSet[String]
 
-pub fn compute_brace_pairs(Array[@types.Tok]) -> BracePairs
-
 pub fn parse_expr(String) -> Node raise
 
 pub fn parse_expr_with_warnings(String) -> (Node, Array[String]) raise
@@ -30,12 +28,6 @@ pub fn run_parse_iter(PEG, @types.KGFSpec, String, Array[@types.Tok], @hashset.H
 // Errors
 
 // Types and methods
-pub struct BracePairs {
-  pairs : Array[Int]
-}
-pub fn BracePairs::get_close(Self, Int) -> Int?
-pub fn BracePairs::is_balanced_open(Self, Int) -> Bool
-
 pub enum CompiledNode {
   CEmpty
   CSym(String)

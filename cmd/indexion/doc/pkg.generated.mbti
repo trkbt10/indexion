@@ -1,10 +1,14 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/cmd/indexion/doc"
 
-// Values
-pub fn run(Array[String], Int) -> Unit
+import {
+  "moonbitlang/core/argparse",
+}
 
-pub fn show_help() -> Unit
+// Values
+pub fn command() -> @argparse.Command
+
+pub fn dispatch(@argparse.Matches) -> Unit
 
 // Errors
 

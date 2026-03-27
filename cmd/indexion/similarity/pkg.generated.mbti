@@ -1,12 +1,14 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/cmd/indexion/similarity"
 
+import {
+  "moonbitlang/core/argparse",
+}
+
 // Values
-pub fn parse_similarity_args(Array[String], Int) -> SimilarityConfig
+pub fn command() -> @argparse.Command
 
-pub fn run(Array[String], Int) -> Unit
-
-pub fn show_similarity_help() -> Unit
+pub fn run_matches(@argparse.Matches) -> Unit
 
 // Errors
 
@@ -15,12 +17,12 @@ pub struct SimilarityConfig {
   strategy : String
   ncd_weight : Double
   tfidf_weight : Double
-  output_format : String
+  format : String
   text1 : String
   text2 : String
-  show_help : Bool
 }
 pub fn SimilarityConfig::default() -> Self
+pub fn SimilarityConfig::from_matches(@argparse.Matches) -> Self
 
 // Type aliases
 

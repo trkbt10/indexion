@@ -2,15 +2,14 @@
 package "trkbt10/indexion/cmd/indexion/plan/solid"
 
 import {
+  "moonbitlang/core/argparse",
   "trkbt10/indexion/src/plan/types",
 }
 
 // Values
-pub fn parse_args(Array[String], Int) -> SolidConfig
+pub fn command() -> @argparse.Command
 
-pub fn run(Array[String], Int) -> Unit
-
-pub fn show_help() -> Unit
+pub fn run_matches(@argparse.Matches) -> Unit
 
 pub fn solid_to_plan_document(SolidPlanJSON) -> @types.PlanDocument
 
@@ -39,9 +38,10 @@ pub struct SolidConfig {
   excludes : Array[String]
   output : String
   format : String
-  show_help : Bool
+  specs_dir : String
 }
 pub fn SolidConfig::default() -> Self
+pub fn SolidConfig::from_matches(@argparse.Matches) -> Self
 
 pub struct SolidConfigJSON {
   sources : Array[String]

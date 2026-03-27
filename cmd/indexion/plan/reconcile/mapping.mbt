@@ -1017,8 +1017,8 @@ async fn build_candidates_concurrent(
       tasks.push(
         group.spawn(() => {
           match_units_batch(
-            units, s, e, fragments, module_coverage, fragment_signals,
-            inverted_index, config,
+            units, s, e, fragments, module_coverage, fragment_signals, inverted_index,
+            config,
           )
         }),
       )

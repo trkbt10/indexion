@@ -16,6 +16,8 @@ pub fn cosine_distance(TfidfVector, TfidfVector) -> Double
 
 pub fn cosine_similarity(TfidfVector, TfidfVector) -> Double
 
+pub fn sqrt(Double) -> Double
+
 // Errors
 
 // Types and methods

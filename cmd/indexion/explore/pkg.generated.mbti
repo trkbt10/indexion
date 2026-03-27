@@ -1,12 +1,14 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/cmd/indexion/explore"
 
+import {
+  "moonbitlang/core/argparse",
+}
+
 // Values
-pub fn parse_explore_args(Array[String], Int) -> ExploreConfig
+pub fn command() -> @argparse.Command
 
-pub fn run(Array[String], Int) -> Unit
-
-pub fn show_explore_help() -> Unit
+pub fn run_matches(@argparse.Matches) -> Unit
 
 // Errors
 
@@ -19,9 +21,10 @@ pub struct ExploreConfig {
   extensions : Array[String]
   includes : Array[String]
   excludes : Array[String]
-  show_help : Bool
+  specs_dir : String
 }
 pub fn ExploreConfig::default() -> Self
+pub fn ExploreConfig::from_matches(@argparse.Matches) -> Self
 
 // Type aliases
 

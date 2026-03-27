@@ -255,7 +255,7 @@ fn discover_existing_docs(
   spec : @kgf_types.KGFSpec?,
 ) -> Array[ExistingDoc] {
   let docs : Array[ExistingDoc] = []
-  let mut filter_config = @filter.FilterConfig::from_project_root(dir)
+  let mut filter_config = @pipeline.build_filter_from_root(dir)
   match spec {
     Some(s) =>
       match s.get_ignore() {
@@ -283,7 +283,10 @@ fn discover_docs_recursive(
 ) -> Unit {
   let entries = @fs.read_dir(current_dir) catch { _ => return }
   // Load nested .gitignore if present
-  let local_config = filter_config.with_gitignore_from_dir(current_dir)
+  let local_config = filter_config.with_gitignore_from_dir(
+    current_dir,
+    @vcs_git.GITIGNORE_FILENAME,
+  )
   for entry in entries {
     let full_path = current_dir + "/" + entry
     if entry.has_suffix(".md") && not(@common.is_directory(full_path)) {
@@ -325,7 +328,7 @@ fn discover_packages(
   registry : @kgf_registry.KGFRegistry?,
 ) -> Array[PackageInfo] {
   let packages : Array[PackageInfo] = []
-  let mut filter_config = @filter.FilterConfig::from_project_root(dir)
+  let mut filter_config = @pipeline.build_filter_from_root(dir)
   // Add KGF ignore patterns if spec is available
   match spec {
     Some(s) =>
@@ -355,7 +358,10 @@ fn discover_packages_recursive(
 ) -> Unit {
   let entries = @fs.read_dir(current_dir) catch { _ => return }
   // Load nested .gitignore if present
-  let local_config = filter_config.with_gitignore_from_dir(current_dir)
+  let local_config = filter_config.with_gitignore_from_dir(
+    current_dir,
+    @vcs_git.GITIGNORE_FILENAME,
+  )
   // Check if this directory has .mbt files (is a package)
   let mut has_mbt_files = false
   let mut pub_count = 0

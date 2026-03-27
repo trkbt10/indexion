@@ -141,8 +141,7 @@ async fn run_with_config(config : ReconcileConfig) -> Unit {
   )
   let project_markers = registry.get_project_markers()
   let code_units = build_code_units_fast(discovered_paths, registry)
-  let (doc_fragments, doc_file_states, used_specs, code_file_states) = @async.with_task_group(
-    group => {
+  let (doc_fragments, doc_file_states, used_specs, code_file_states) = @async.with_task_group(group => {
       let doc_task = group.spawn(() => {
         collect_document_fragments(discovered_paths, config, registry)
       })

@@ -151,6 +151,55 @@ pub fn ensure_dir_recursive(path : String) -> Unit {
 }
 
 ///|
+/// Find a project root by walking up from start_dir to the filesystem root,
+/// stopping at a directory that contains any of the given markers (as dir or file).
+/// Used for ignore file hoisting boundaries (.git, .indexion, etc.).
+pub fn find_project_root(
+  start_dir : String,
+  markers : Array[String],
+) -> String? {
+  let mut current = normalize_path(start_dir)
+  while true {
+    for marker in markers {
+      if @fs.path_exists(join_path(current, marker)) {
+        return Some(current)
+      }
+    }
+    let parent = dirname(current)
+    if parent == current {
+      break
+    }
+    current = parent
+  }
+  None
+}
+
+///|
+/// Collect ancestor directories from root down to target_dir (inclusive),
+/// ordered top-down. Used for hoisting ignore files from root to target.
+pub fn ancestors_top_down(target_dir : String, root : String) -> Array[String] {
+  let bottom_up : Array[String] = []
+  let mut current = normalize_path(target_dir)
+  let normalized_root = normalize_path(root)
+  while true {
+    bottom_up.push(current)
+    if current == normalized_root {
+      break
+    }
+    let parent = dirname(current)
+    if parent == current {
+      break
+    }
+    current = parent
+  }
+  let top_down : Array[String] = []
+  for i = bottom_up.length() - 1; i >= 0; i = i - 1 {
+    top_down.push(bottom_up[i])
+  }
+  top_down
+}
+
+///|
 /// Find the nearest directory containing any configured project marker pattern.
 /// Marker patterns are supplied by a caller-owned SoT, such as the KGF registry.
 pub fn find_nearest_marker_dir(

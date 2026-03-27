@@ -8,9 +8,17 @@ import {
 }
 
 // Values
+pub fn apply_edits(String, Array[UnwrapEdit]) -> String
+
 pub fn build_line_func_map(String, String, @registry.KGFRegistry?) -> Map[Int, String]
 
 pub fn count_pub_declarations(String, String, @registry.KGFRegistry?) -> Int
+
+pub fn delete_lines(String, Int, Int) -> String
+
+pub fn detect_proxy_functions(Array[@types.Tok], String, include_self_delegation? : Bool, include_bare_constructors? : Bool) -> Array[ProxyFunction]
+
+pub fn detect_proxy_functions_from_file(String, String, @registry.KGFRegistry?, include_self_delegation? : Bool, include_bare_constructors? : Bool) -> Array[ProxyFunction]
 
 pub fn extract_function_trees(Array[@types.Tok], String) -> Array[(ExtractedFunction, @apted.TreeNode)]
 
@@ -18,13 +26,17 @@ pub fn extract_functions(Array[@types.Tok], String) -> Array[ExtractedFunction]
 
 pub fn extract_pub_declarations(String, String, @registry.KGFRegistry?) -> Array[PubDeclaration]
 
+pub fn find_call_sites(String, String, Array[@types.Tok], String) -> Array[UnwrapEdit]
+
 pub fn find_kgfs_dir(explicit_path? : String, target_dir? : String, target_dirs? : Array[String]) -> String?
 
 pub fn is_identifier_kind(String) -> Bool
 
 pub fn kgf_tok_to_tfidf_token(@types.Tok) -> String
 
-pub fn load_registry(explicit_path? : String, target_dir? : String, target_dirs? : Array[String]) -> @registry.KGFRegistry?
+pub fn load_registry(specs_dir? : String, explicit_path? : String, target_dir? : String, target_dirs? : Array[String]) -> @registry.KGFRegistry?
+
+pub fn load_registry_or_empty(specs_dir? : String, target_dir? : String, target_dirs? : Array[String]) -> @registry.KGFRegistry
 
 pub fn tokenize_files_with_kgf(Array[(String, String)], @registry.KGFRegistry?) -> (Array[Array[String]], Int)
 
@@ -49,11 +61,33 @@ pub fn ExtractedFunction::new(String, Int, Int, String) -> Self
 pub fn ExtractedFunction::qualified_name(Self) -> String
 pub fn ExtractedFunction::token_count(Self) -> Int
 
+pub struct ProxyFunction {
+  name : String
+  file : String
+  line : Int
+  params : Array[String]
+  delegate_target : String
+  delegate_args : Array[String]
+  all_forwarded : Bool
+  def_start_line : Int
+  def_end_line : Int
+}
+
 pub struct PubDeclaration {
   kind : String
   name : String
   line : Int
 }
+
+pub struct UnwrapEdit {
+  file : String
+  start_offset : Int
+  end_offset : Int
+  old_text : String
+  new_text : String
+  line : Int
+}
+pub fn UnwrapEdit::new(String, Int, Int, String, String, Int) -> Self
 
 // Type aliases
 

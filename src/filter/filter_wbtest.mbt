@@ -1,37 +1,4 @@
 ///|
-test "parse_ignore_file: basic patterns" {
-  let content = "*.txt\nfoo/\n!important.txt\n"
-  let patterns = parse_ignore_file(content, GITIGNORE_FILENAME)
-  assert_eq(patterns.length(), 3)
-  assert_eq(patterns[0].pattern, "*.txt")
-  assert_false(patterns[0].negated)
-  assert_eq(patterns[1].pattern, "foo")
-  assert_true(patterns[1].directory_only)
-  assert_eq(patterns[2].pattern, "important.txt")
-  assert_true(patterns[2].negated)
-}
-
-///|
-test "parse_ignore_file: comments and blanks" {
-  let content = "# comment\n\n*.txt\n   \n# another\nfoo\n"
-  let patterns = parse_ignore_file(content, GITIGNORE_FILENAME)
-  assert_eq(patterns.length(), 2)
-  assert_eq(patterns[0].pattern, "*.txt")
-  assert_eq(patterns[1].pattern, "foo")
-}
-
-///|
-test "parse_ignore_file: anchored patterns" {
-  let content = "/root-only\ndir/specific\neverywhere\n"
-  let patterns = parse_ignore_file(content, GITIGNORE_FILENAME)
-  assert_eq(patterns.length(), 3)
-  assert_true(patterns[0].anchored)
-  assert_eq(patterns[0].pattern, "root-only")
-  assert_true(patterns[1].anchored) // Contains /
-  assert_false(patterns[2].anchored)
-}
-
-///|
 test "FilterConfig: default excludes VCS only" {
   // Default excludes only contain VCS directories
   let config = FilterConfig::new()

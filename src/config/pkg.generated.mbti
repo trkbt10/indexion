@@ -2,10 +2,15 @@
 package "trkbt10/indexion/src/config"
 
 import {
+  "trkbt10/indexion/src/ignorefile",
   "trkbt10/indexion/src/scope",
 }
 
 // Values
+pub const INDEXIONIGNORE_FILENAME : String = ".indexionignore"
+
+pub fn ancestors_top_down(String, String) -> Array[String]
+
 pub fn basename(String) -> String
 
 pub fn config_base_dir(String, String) -> String
@@ -26,7 +31,11 @@ pub fn find_indexion_config_path(String, explicit_path? : String) -> String
 
 pub fn find_kgfs_dir(explicit_path? : String, target_dir? : String, target_dirs? : Array[String]) -> String?
 
+pub fn find_last_char(String, Char) -> Int
+
 pub fn find_nearest_marker_dir(String, String, Array[String]) -> String?
+
+pub fn find_project_root(String, Array[String]) -> String?
 
 pub fn get_archive_extension() -> String
 
@@ -42,6 +51,8 @@ pub fn get_global_data_dir() -> String?
 
 pub fn get_install_dir() -> String?
 
+pub fn get_kgfs_install_dir() -> String?
+
 pub fn get_platform_asset_name() -> String?
 
 pub fn is_absolute_path(String) -> Bool
@@ -53,6 +64,8 @@ pub fn load_doc_config(String) -> DocConfig?
 pub fn load_effective_reconcile_config(String) -> ReconcileFileConfig
 
 pub fn load_global_config() -> GlobalConfig
+
+pub fn load_indexionignore(String) -> Array[@ignorefile.IgnorePattern]
 
 pub fn load_project_config(String) -> ProjectFileConfig
 

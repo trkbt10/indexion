@@ -1,16 +1,24 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/src/vcs/git"
 
+import {
+  "trkbt10/indexion/src/ignorefile",
+}
+
 // Values
-pub fn file_mtime_seconds(String) -> Int?
+pub const GITIGNORE_FILENAME : String = ".gitignore"
 
-pub fn is_repo(String) -> Bool
+pub async fn file_mtime_seconds(String) -> Int?
 
-pub fn last_commit_seconds(String, String) -> Int?
+pub async fn is_repo(String) -> Bool
+
+pub async fn last_commit_seconds(String, String) -> Int?
+
+pub fn load_gitignore(String) -> Array[@ignorefile.IgnorePattern]
 
 pub fn query_path(String, String) -> String
 
-pub fn status_dirty(String, String) -> Bool
+pub async fn status_dirty(String, String) -> Bool
 
 // Errors
 

@@ -4,7 +4,9 @@ let max_redirects : Int = 5
 
 ///|
 /// HTTP fetch error.
-pub suberror FetchError { FetchError(String) }
+pub suberror FetchError {
+  FetchError(String)
+}
 
 ///|
 /// Fetch bytes from a URL, following HTTP 3xx redirects.
@@ -24,15 +26,11 @@ pub async fn fetch_bytes(
       match response.headers.get("location") {
         Some(location) => current_url = location
         None =>
-          raise FetchError(
-            "Redirect without Location header: " + current_url,
-          )
+          raise FetchError("Redirect without Location header: " + current_url)
       }
       continue
     }
-    raise FetchError(
-      "HTTP " + response.code.to_string() + ": " + current_url,
-    )
+    raise FetchError("HTTP " + response.code.to_string() + ": " + current_url)
   }
   raise FetchError("Too many redirects: " + url)
 }
@@ -57,15 +55,11 @@ pub async fn fetch_text(
       match response.headers.get("location") {
         Some(location) => current_url = location
         None =>
-          raise FetchError(
-            "Redirect without Location header: " + current_url,
-          )
+          raise FetchError("Redirect without Location header: " + current_url)
       }
       continue
     }
-    raise FetchError(
-      "HTTP " + response.code.to_string() + ": " + current_url,
-    )
+    raise FetchError("HTTP " + response.code.to_string() + ": " + current_url)
   }
   raise FetchError("Too many redirects: " + url)
 }

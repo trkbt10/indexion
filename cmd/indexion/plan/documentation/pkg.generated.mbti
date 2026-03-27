@@ -2,15 +2,16 @@
 package "trkbt10/indexion/cmd/indexion/plan/documentation"
 
 import {
+  "moonbitlang/core/argparse",
   "trkbt10/indexion/src/plan/types",
 }
 
 // Values
-pub fn analyze_documentation(String) -> DocAnalysis
+pub fn analyze_documentation(String, specs_dir? : String) -> DocAnalysis
+
+pub fn command() -> @argparse.Command
 
 pub fn load_project_info(String) -> ProjectInfo
-
-pub fn parse_args(Array[String], Int) -> DocPlanConfig
 
 pub fn render_coverage(DocAnalysis, String) -> String
 
@@ -18,9 +19,7 @@ pub fn render_full(DocAnalysis, ProjectInfo, String) -> String
 
 pub fn render_readme_template(DocAnalysis, ProjectInfo) -> String
 
-pub fn run(Array[String], Int) -> Unit
-
-pub fn show_help() -> Unit
+pub fn run_matches(@argparse.Matches) -> Unit
 
 pub fn to_plan_document(DocAnalysis, ProjectInfo, String) -> @types.PlanDocument
 
@@ -42,9 +41,10 @@ pub struct DocPlanConfig {
   format : String
   template : String
   project_name : String
-  show_help : Bool
+  specs_dir : String
 }
 pub fn DocPlanConfig::default() -> Self
+pub fn DocPlanConfig::from_matches(@argparse.Matches) -> Self
 
 pub struct PackageAnalysis {
   path : String

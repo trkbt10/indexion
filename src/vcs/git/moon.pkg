@@ -1,5 +1,6 @@
 import {
   "trkbt10/indexion/src/config" @config_paths,
+  "trkbt10/indexion/src/ignorefile" @ignorefile,
   "trkbt10/indexion/src/platform" @platform,
   "moonbitlang/async/fs" @async_fs,
   "moonbitlang/async/process" @async_process,

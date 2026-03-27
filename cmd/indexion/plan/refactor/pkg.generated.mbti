@@ -2,6 +2,7 @@
 package "trkbt10/indexion/cmd/indexion/plan/refactor"
 
 import {
+  "moonbitlang/core/argparse",
   "trkbt10/indexion/src/kgf/registry",
   "trkbt10/indexion/src/plan/types",
 }
@@ -9,7 +10,7 @@ import {
 // Values
 pub fn build_refactor_plan(Array[FileCluster], RefactorPlanConfig, Map[String, String], effective_threshold? : Double, registry? : @registry.KGFRegistry?) -> RefactorPlanJSON
 
-pub fn parse_args(Array[String], Int) -> RefactorPlanConfig
+pub fn command() -> @argparse.Command
 
 pub fn refactor_to_plan_document(RefactorPlanJSON, String) -> @types.PlanDocument
 
@@ -21,9 +22,7 @@ pub fn render_structured(RefactorPlanJSON, String) -> String
 
 pub fn render_text(RefactorPlanJSON) -> String
 
-pub fn run(Array[String], Int) -> Unit
-
-pub fn show_help() -> Unit
+pub fn run_matches(@argparse.Matches) -> Unit
 
 // Errors
 
@@ -66,6 +65,19 @@ pub struct FunctionDuplicate {
 }
 pub impl ToJson for FunctionDuplicate
 
+pub struct MagicStringGroup {
+  value : String
+  occurrences : Array[MagicStringOccurrence]
+  file_count : Int
+}
+pub impl ToJson for MagicStringGroup
+
+pub struct MagicStringOccurrence {
+  file : String
+  line : Int
+}
+pub impl ToJson for MagicStringOccurrence
+
 pub struct PlanSummary {
   total_clusters : Int
   total_files_analyzed : Int
@@ -82,14 +94,16 @@ pub struct RefactorPlanConfig {
   format : String
   style : String
   project_name : String
-  show_help : Bool
+  specs_dir : String
 }
 pub fn RefactorPlanConfig::default() -> Self
+pub fn RefactorPlanConfig::from_matches(@argparse.Matches) -> Self
 
 pub struct RefactorPlanJSON {
   config : ConfigSummary
   clusters : Array[ClusterJSON]
   function_duplicates : Array[FunctionDuplicate]
+  magic_strings : Array[MagicStringGroup]
   mut summary : PlanSummary
 }
 pub fn RefactorPlanJSON::add_cluster(Self, ClusterJSON) -> Unit

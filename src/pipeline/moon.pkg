@@ -2,6 +2,8 @@ import {
   "moonbitlang/core/bench",
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/filter" @filter,
+  "trkbt10/indexion/src/config" @config,
+  "trkbt10/indexion/src/vcs/git" @vcs_git,
   "trkbt10/indexion/src/glob" @glob,
   "trkbt10/indexion/src/kgf/parser" @kgf_parser,
   "trkbt10/indexion/src/kgf/registry" @registry,

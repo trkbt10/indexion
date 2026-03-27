@@ -66,10 +66,7 @@ async fn git_status_dirty_native(root : String, path : String) -> Bool {
 }
 
 ///|
-async fn git_last_commit_seconds_native(
-  root : String,
-  path : String,
-) -> Int? {
+async fn git_last_commit_seconds_native(root : String, path : String) -> Int? {
   try {
     let (exit_code, stdout) = @async_process.collect_stdout(
       "git",

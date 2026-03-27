@@ -2,24 +2,28 @@
 package "trkbt10/indexion/cmd/indexion/doc/readme"
 
 import {
+  "moonbitlang/core/argparse",
   "trkbt10/indexion/src/kgf/registry",
-  "trkbt10/indexion/src/kgf/types",
 }
 
 // Values
+pub fn command() -> @argparse.Command
+
 pub fn discover_packages(@registry.KGFRegistry, Array[String], Array[String], Array[String], Bool) -> Array[PackageInfo]
 
 pub fn discover_packages_from_files(@registry.KGFRegistry, Array[String], Array[String], Array[String]) -> Array[PackageInfo]
 
 pub fn extract_overview(String) -> String
 
-pub fn extract_package_doc(PackageInfo, Map[String, @types.KGFSpec]) -> ExtractedDoc?
+pub fn extract_package_doc(PackageInfo, Map[String, @trkbt10/indexion/src/kgf/types.KGFSpec]) -> ExtractedDoc?
 
 pub fn extract_sections(String, Array[String]) -> String
 
 pub fn extract_summary(String) -> String
 
-pub fn parse_args(Array[String], Int) -> ReadmeConfig
+pub fn filter_parsed_sections(Array[@trkbt10/indexion/src/plan/types.PlanSection], Array[String]) -> Array[@trkbt10/indexion/src/plan/types.PlanSection]
+
+pub fn parse_markdown_to_sections(String) -> Array[@trkbt10/indexion/src/plan/types.PlanSection]
 
 pub fn render_json(Array[(PackageInfo, ExtractedDoc)]) -> String
 
@@ -31,13 +35,9 @@ pub fn render_template(String, TemplateContext) -> String
 
 pub fn render_template_file(String, TemplateContext) -> String?
 
-pub fn run(Array[String], Int) -> Unit
+pub fn run_matches(@argparse.Matches) -> Unit
 
 pub fn run_with_doc_config(String, ReadmeConfig) -> Unit
-
-pub fn show_help() -> Unit
-
-pub fn write_output(String, String?, Bool) -> Unit
 
 pub fn write_per_package(Array[(PackageInfo, ExtractedDoc)]) -> Unit
 
@@ -72,13 +72,13 @@ pub struct ReadmeConfig {
   excludes : Array[String]
   recursive : Bool
   format : String
-  output : String?
+  output : String
   template : String?
   config_path : String?
   per_package : Bool
-  show_help : Bool
 }
 pub fn ReadmeConfig::default() -> Self
+pub fn ReadmeConfig::from_matches(@argparse.Matches) -> Self
 
 pub struct TemplateContext {
   base_dir : String
