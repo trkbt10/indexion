@@ -1,6 +1,10 @@
 ///|
 fn temp_git_dir(prefix : String) -> String {
-  prefix + @env.now().to_string()
+  let base = match @config_paths.get_global_cache_dir() {
+    Some(dir) => dir + "/indexion-test"
+    None => "/tmp/indexion-test"
+  }
+  base + "/" + prefix + @env.now().to_string()
 }
 
 ///|
@@ -43,7 +47,7 @@ async test "vcs/git: native helpers resolve the current repository" {
 ///|
 async test "vcs/git: native helpers do not interpret root shell payloads" {
   guard current_repo_root() is Some(root)
-  let marker = temp_git_dir(".indexion/vcs-git-shell-root-marker-")
+  let marker = temp_git_dir("vcs-git-shell-root-marker-")
   remove_file_if_exists(marker)
   let injected_root = root + "; touch " + marker
   assert_true(not(is_repo(injected_root)))
@@ -54,7 +58,7 @@ async test "vcs/git: native helpers do not interpret root shell payloads" {
 ///|
 async test "vcs/git: native helpers do not interpret path shell payloads" {
   guard current_repo_root() is Some(root)
-  let marker = temp_git_dir(".indexion/vcs-git-shell-path-marker-")
+  let marker = temp_git_dir("vcs-git-shell-path-marker-")
   remove_file_if_exists(marker)
   let payloads = [
     "moon.mod.json; touch " + marker,

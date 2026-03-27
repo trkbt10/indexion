@@ -1,6 +1,10 @@
 ///|
 fn temp_config_dir(prefix : String) -> String {
-  prefix
+  let base = match get_global_cache_dir() {
+    Some(dir) => dir + "/indexion-test"
+    None => "/tmp/indexion-test"
+  }
+  base + "/" + prefix
 }
 
 ///|
@@ -82,7 +86,7 @@ test "config: resolve_reconcile_document_scope materializes shared path scope" {
 
 ///|
 test "config: load_reconcile_file_config loads target-local indexion config" {
-  let dir = temp_config_dir(".indexion/src-config-load-")
+  let dir = temp_config_dir("src-config-load-")
   remove_dir_if_exists(dir)
   ensure_dir_recursive(dir)
   let config_path = join_path(dir, ".indexion.toml")
@@ -138,7 +142,7 @@ test "config: select_kgfs_dir_candidate keeps project-local before data fallback
 
 ///|
 test "config: find_kgfs_dir scans target dirs in order" {
-  let dir = temp_config_dir(".indexion/src-config-kgfs-targets-")
+  let dir = temp_config_dir("src-config-kgfs-targets-")
   let target1 = join_path(dir, "pkg-a")
   let target2 = join_path(dir, "pkg-b")
   let kgfs_dir = join_path(target2, "kgfs")
@@ -164,7 +168,7 @@ test "config: path helpers normalize and derive file parts" {
 
 ///|
 test "config: find_nearest_marker_dir resolves nearest project marker" {
-  let dir = temp_config_dir(".indexion/src-config-package-dir-")
+  let dir = temp_config_dir("src-config-package-dir-")
   let package_dir = join_path(dir, "cmd/indexion/plan/reconcile")
   ensure_dir_recursive(package_dir)
   let manifest = join_path(package_dir, "package.json")
@@ -190,7 +194,7 @@ test "config: find_nearest_marker_dir resolves nearest project marker" {
 
 ///|
 test "config: find_nearest_marker_dir supports wildcard markers" {
-  let dir = temp_config_dir(".indexion/src-config-wildcard-dir-")
+  let dir = temp_config_dir("src-config-wildcard-dir-")
   let project_dir = join_path(dir, "apps/server")
   ensure_dir_recursive(project_dir)
   let marker = join_path(project_dir, "server.csproj")

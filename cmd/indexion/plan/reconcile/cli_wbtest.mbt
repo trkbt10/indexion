@@ -104,7 +104,11 @@ fn match_fragment(
 
 ///|
 fn temp_reconcile_dir(prefix : String) -> String {
-  prefix + @env.now().to_string()
+  let base = match @config_paths.get_global_cache_dir() {
+    Some(dir) => dir + "/indexion-test"
+    None => "/tmp/indexion-test"
+  }
+  base + "/" + prefix + @env.now().to_string()
 }
 
 ///|
@@ -132,7 +136,7 @@ fn remove_dir_if_exists(path : String) -> Unit {
 
 ///|
 test "reconcile: resolve_config keeps default index dir under target root" {
-  let dir = temp_reconcile_dir(".indexion/reconcile-config-default-")
+  let dir = temp_reconcile_dir("reconcile-config-default-")
   @config_paths.ensure_dir_recursive(dir)
   let matches = try! command().parse(argv=[dir][:], env={})
   let config = resolve_config_from_matches(matches)
@@ -143,7 +147,7 @@ test "reconcile: resolve_config keeps default index dir under target root" {
 
 ///|
 test "reconcile: resolve_config applies package-docs preset" {
-  let dir = temp_reconcile_dir(".indexion/reconcile-config-scope-package-")
+  let dir = temp_reconcile_dir("reconcile-config-scope-package-")
   @config_paths.ensure_dir_recursive(dir)
   let matches = try! command().parse(argv=["--scope=package-docs", dir][:], env={})
   let config = resolve_config_from_matches(matches)
@@ -156,7 +160,7 @@ test "reconcile: resolve_config applies package-docs preset" {
 
 ///|
 test "reconcile: explicit doc filters override scope preset defaults" {
-  let dir = temp_reconcile_dir(".indexion/reconcile-config-scope-explicit-")
+  let dir = temp_reconcile_dir("reconcile-config-scope-explicit-")
   @config_paths.ensure_dir_recursive(dir)
   let matches = try! command().parse(
     argv=[
@@ -173,7 +177,7 @@ test "reconcile: explicit doc filters override scope preset defaults" {
 
 ///|
 test "reconcile: explicit cli filters win over file config filters" {
-  let dir = temp_reconcile_dir(".indexion/reconcile-config-precedence-")
+  let dir = temp_reconcile_dir("reconcile-config-precedence-")
   @config_paths.ensure_dir_recursive(dir)
   let config_path = dir + "/.indexion.toml"
   let config_content =
@@ -203,7 +207,7 @@ test "reconcile: explicit cli filters win over file config filters" {
 
 ///|
 test "reconcile: explicit cli filters clear implicit file scope label" {
-  let dir = temp_reconcile_dir(".indexion/reconcile-config-scope-clear-")
+  let dir = temp_reconcile_dir("reconcile-config-scope-clear-")
   @config_paths.ensure_dir_recursive(dir)
   let config_path = dir + "/.indexion.toml"
   let config_content =
@@ -236,7 +240,7 @@ test "reconcile: document path selection uses shared scope matcher" {
 
 ///|
 test "reconcile: resolve_config rebases config-relative paths" {
-  let dir = temp_reconcile_dir(".indexion/reconcile-config-file-")
+  let dir = temp_reconcile_dir("reconcile-config-file-")
   @config_paths.ensure_dir_recursive(dir)
   let config_path = dir + "/.indexion.toml"
   let config_content =
@@ -260,7 +264,7 @@ test "reconcile: resolve_config rebases config-relative paths" {
 
 ///|
 test "reconcile: resolve_config rebases cli relative paths to target root" {
-  let dir = temp_reconcile_dir(".indexion/reconcile-config-cli-")
+  let dir = temp_reconcile_dir("reconcile-config-cli-")
   @config_paths.ensure_dir_recursive(dir)
   let matches = try! command().parse(
     argv=[
@@ -381,7 +385,7 @@ async test "reconcile: build_candidates reports stale and missing docs" {
 
 ///|
 async test "reconcile: build_candidates suppresses missing_doc when module docs cover the file" {
-  let dir = temp_reconcile_dir(".indexion/reconcile-module-coverage-")
+  let dir = temp_reconcile_dir("reconcile-module-coverage-")
   @config_paths.ensure_dir_recursive(dir)
   let module_path = dir + "/config.mbt"
   let module_source =
@@ -439,7 +443,7 @@ async test "reconcile: build_candidates suppresses missing_doc when module docs 
 
 ///|
 async test "reconcile: module coverage does not bleed across sibling cli modules" {
-  let dir = temp_reconcile_dir(".indexion/reconcile-module-siblings-")
+  let dir = temp_reconcile_dir("reconcile-module-siblings-")
   @config_paths.ensure_dir_recursive(dir + "/reconcile")
   @config_paths.ensure_dir_recursive(dir + "/solid")
   let reconcile_path = dir + "/reconcile/cli.mbt"
@@ -670,7 +674,7 @@ test "reconcile: git query path strips target root prefix" {
 
 ///|
 test "reconcile: cleanup_stale_index removes dead index.json" {
-  let dir = temp_reconcile_dir(".indexion/reconcile-cleanup-")
+  let dir = temp_reconcile_dir("reconcile-cleanup-")
   @config_paths.ensure_dir_recursive(dir)
   @fs.write_string_to_file(dir + "/index.json", "{}") catch {
     _ => ()
@@ -774,7 +778,7 @@ fn sample_fragment_for(
 
 ///|
 test "reconcile: build_aggregate_suggestions groups module and project candidates" {
-  let dir = temp_reconcile_dir(".indexion/reconcile-aggregate-")
+  let dir = temp_reconcile_dir("reconcile-aggregate-")
   let package_dir = dir + "/pkg"
   @config_paths.ensure_dir_recursive(package_dir)
   @fs.write_string_to_file(package_dir + "/package.json", "{}") catch {
@@ -864,7 +868,7 @@ test "reconcile: build_aggregate_suggestions groups module and project candidate
 
 ///|
 test "reconcile: collapse_aggregate_only_candidates hides symbol flood when project docs exist" {
-  let dir = temp_reconcile_dir(".indexion/reconcile-collapse-")
+  let dir = temp_reconcile_dir("reconcile-collapse-")
   let project_dir = dir + "/pkg"
   @config_paths.ensure_dir_recursive(project_dir)
   @fs.write_string_to_file(project_dir + "/package.json", "{}") catch {
