@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/manage"
+
+// Values
+pub async fn add_kgf(String) -> Unit raise KgfManageError
+
+pub fn get_installed_kgfs_dir() -> String?
+
+pub async fn install_kgfs_from_dir(String) -> Unit raise KgfManageError
+
+pub async fn install_single_kgf(String, Bytes) -> Unit raise KgfManageError
+
+pub fn list_installed_specs() -> Array[KgfSpecInfo]
+
+pub async fn update_kgfs() -> Unit raise KgfManageError
+
+// Errors
+pub suberror KgfManageError {
+  NetworkError(String)
+  ApiError(String)
+  InstallError(String)
+  NotFoundError(String)
+}
+pub fn KgfManageError::to_string(Self) -> String
+
+// Types and methods
+pub struct KgfSpecInfo {
+  name : String
+  category : String
+  sources : Array[String]
+  path : String
+}
+
+// Type aliases
+
+// Traits
+

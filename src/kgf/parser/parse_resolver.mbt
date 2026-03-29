@@ -296,6 +296,8 @@ fn parse_single_line_resolve_step(line : String) -> @types.ResolveStep? {
   let type_str = trim_str(substr(line, 0, colon_pos))
   let value = trim_str(substr_from(line, colon_pos + 1))
   match @types.ResolveStepType::from_string(type_str) {
+    Some(@types.ResolveStepType::Exact) =>
+      Some(@types.ResolveStep::exact())
     Some(@types.ResolveStepType::Manifest) => {
       // For manifest, we need more info, so it's not a single-line form
       // But we can support "manifest: package.json @ query" format

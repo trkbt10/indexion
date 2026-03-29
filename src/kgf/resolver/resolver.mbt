@@ -147,6 +147,13 @@ fn execute_resolve_step(
   file_resolver : &FileResolver,
 ) -> String? {
   match step.get_step_type() {
+    @types.ResolveStepType::Exact => {
+      // Check if the target path exists as-is
+      if file_resolver.file_exists(target_path) {
+        return Some(normalize_relative_result(project_root, target_path))
+      }
+      None
+    }
     @types.ResolveStepType::Manifest => {
       // Try to read manifest file and extract entry point
       let manifest_path = join_path([target_path, step.get_file()])

@@ -30,6 +30,8 @@ pub fn ModulePathStyle::as_string(self : ModulePathStyle) -> String {
 ///|
 /// ResolveStepType represents the type of resolution step.
 pub enum ResolveStepType {
+  /// Check if the target path exists as-is (exact match)
+  Exact
   /// Read a field from a manifest file (package.json, Cargo.toml)
   Manifest
   /// Check if a marker file exists (__init__.py)
@@ -48,6 +50,7 @@ pub enum ResolveStepType {
 /// Converts a string to ResolveStepType.
 pub fn ResolveStepType::from_string(s : String) -> ResolveStepType? {
   match s {
+    "exact" => Some(Exact)
     "manifest" => Some(Manifest)
     "marker" => Some(Marker)
     "index" => Some(Index)
@@ -62,6 +65,7 @@ pub fn ResolveStepType::from_string(s : String) -> ResolveStepType? {
 /// Converts ResolveStepType to string representation.
 pub fn ResolveStepType::as_string(self : ResolveStepType) -> String {
   match self {
+    Exact => "exact"
     Manifest => "manifest"
     Marker => "marker"
     Index => "index"
@@ -99,6 +103,12 @@ pub fn ResolveStep::new(
   when_condition? : String = "",
 ) -> ResolveStep {
   { step_type, file, query, files, prefix, when_condition }
+}
+
+///|
+/// Creates an Exact resolve step (checks target path as-is).
+pub fn ResolveStep::exact() -> ResolveStep {
+  ResolveStep::new(Exact)
 }
 
 ///|
