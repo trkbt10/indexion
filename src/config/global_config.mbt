@@ -7,12 +7,17 @@
 pub struct GlobalConfig {
   kgfs_dir : String?
   reconcile : ReconcileFileConfig
+  digest : DigestFileConfig
 } derive(Eq, Show)
 
 ///|
 /// Create empty global config.
 pub fn GlobalConfig::empty() -> GlobalConfig {
-  { kgfs_dir: None, reconcile: ReconcileFileConfig::empty() }
+  {
+    kgfs_dir: None,
+    reconcile: ReconcileFileConfig::empty(),
+    digest: DigestFileConfig::empty(),
+  }
 }
 
 ///|
@@ -99,6 +104,11 @@ pub fn parse_global_toml_config(content : String) -> GlobalConfig {
             key,
             value,
           ),
+        }
+      "digest" =>
+        config = {
+          ..config,
+          digest: parse_digest_section_key(config.digest, key, value),
         }
       _ => ()
     }

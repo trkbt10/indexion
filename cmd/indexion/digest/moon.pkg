@@ -14,4 +14,5 @@ import {
   "trkbt10/indexion/src/digest/embed" @embed,
   "trkbt10/indexion/src/pipeline" @pipeline,
   "trkbt10/indexion/src/docgen/build" @build,
+  "trkbt10/indexion/src/config" @config,
 }

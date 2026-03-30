@@ -187,6 +187,18 @@ fn write_file_if_ok(path : String, content : String, force : Bool) -> Bool {
 }
 
 ///|
+/// Write [digest] configuration section to a buffer.
+fn write_digest_section(buf : StringBuilder) -> Unit {
+  buf.write_string("[digest]\n")
+  buf.write_string("# provider = \"auto\"       # auto | tfidf | openai\n")
+  buf.write_string("# strategy = \"hnsw\"       # hnsw | bruteforce | ivf\n")
+  buf.write_string("# dim = 256              # TF-IDF dimension (ignored for openai)\n")
+  buf.write_string("# api_key_env = \"OPENAI_API_KEY\"  # env var name for API key\n")
+  buf.write_string("# api_base_url = \"https://api.openai.com/v1/embeddings\"\n")
+  buf.write_string("# model = \"text-embedding-3-small\"\n")
+}
+
+///|
 /// Write shared reconcile configuration sections to a buffer.
 fn write_reconcile_sections(buf : StringBuilder) -> Unit {
   buf.write_string("[reconcile.time]\n")
@@ -214,6 +226,8 @@ fn generate_global_config_template() -> String {
   buf.write_string("# max_candidates = 200\n")
   buf.write_string("\n")
   write_reconcile_sections(buf)
+  buf.write_string("\n")
+  write_digest_section(buf)
   buf.to_string()
 }
 
@@ -235,6 +249,8 @@ fn generate_project_config_template() -> String {
   buf.write_string("# max_candidates = 200\n")
   buf.write_string("\n")
   write_reconcile_sections(buf)
+  buf.write_string("\n")
+  write_digest_section(buf)
   buf.to_string()
 }
 

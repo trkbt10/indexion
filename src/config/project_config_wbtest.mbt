@@ -71,6 +71,7 @@ test "project_config: merge_global_into_file fills from global when file is empt
 ///|
 test "project_config: build_effective_reconcile_config preserves provenance" {
   let project : ProjectFileConfig = {
+    ..ProjectFileConfig::default(),
     inherit_global: true,
     reconcile: ReconcileFileConfig::empty(),
   }
@@ -100,6 +101,7 @@ test "project_config: build_effective_reconcile_config preserves provenance" {
 ///|
 test "project_config: build_effective_reconcile_config drops global when disabled" {
   let project : ProjectFileConfig = {
+    ..ProjectFileConfig::default(),
     inherit_global: false,
     reconcile: { ..ReconcileFileConfig::empty(), threshold_seconds: Some(30) },
   }
@@ -115,4 +117,66 @@ test "project_config: build_effective_reconcile_config drops global when disable
   assert_eq(effective.merged.threshold_seconds, Some(30))
   assert_eq(effective.global, GlobalConfig::empty())
   assert_eq(effective.global_config_path, None)
+}
+
+///|
+test "project_config: parse_project_toml_config parses digest section" {
+  let input =
+    #|[digest]
+    #|provider = "openai"
+    #|strategy = "hnsw"
+    #|dim = 1536
+    #|api_key_env = "MY_API_KEY"
+    #|api_base_url = "https://example.com/v1/embeddings"
+    #|model = "nomic-embed-text"
+  let config = parse_project_toml_config(input)
+  assert_eq(config.digest.provider, Some("openai"))
+  assert_eq(config.digest.strategy, Some("hnsw"))
+  assert_eq(config.digest.dim, Some(1536))
+  assert_eq(config.digest.api_key_env, Some("MY_API_KEY"))
+  assert_eq(config.digest.api_base_url, Some("https://example.com/v1/embeddings"))
+  assert_eq(config.digest.model, Some("nomic-embed-text"))
+}
+
+///|
+test "project_config: parse_project_toml_config digest defaults to empty" {
+  let input =
+    #|[indexion]
+    #|inherit = true
+  let config = parse_project_toml_config(input)
+  assert_eq(config.digest, DigestFileConfig::empty())
+}
+
+///|
+test "project_config: parse_project_json_config parses digest section" {
+  let input =
+    #|{
+    #|  "digest": {
+    #|    "provider": "openai",
+    #|    "strategy": "hnsw",
+    #|    "dim": 1536,
+    #|    "api_key_env": "MY_KEY"
+    #|  }
+    #|}
+  let config = parse_project_json_config(input)
+  assert_eq(config.digest.provider, Some("openai"))
+  assert_eq(config.digest.strategy, Some("hnsw"))
+  assert_eq(config.digest.dim, Some(1536))
+  assert_eq(config.digest.api_key_env, Some("MY_KEY"))
+}
+
+///|
+test "project_config: merge_digest_configs primary takes precedence" {
+  let primary : DigestFileConfig = {
+    ..DigestFileConfig::empty(),
+    provider: Some("openai"),
+  }
+  let fallback : DigestFileConfig = {
+    ..DigestFileConfig::empty(),
+    provider: Some("tfidf"),
+    strategy: Some("ivf"),
+  }
+  let merged = merge_digest_configs(primary, fallback)
+  assert_eq(merged.provider, Some("openai"))
+  assert_eq(merged.strategy, Some("ivf"))
 }

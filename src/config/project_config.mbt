@@ -7,6 +7,7 @@
 pub struct ProjectFileConfig {
   inherit_global : Bool
   reconcile : ReconcileFileConfig
+  digest : DigestFileConfig
 } derive(Eq, Show)
 
 ///|
@@ -21,7 +22,11 @@ pub struct EffectiveReconcileConfig {
 ///|
 /// Create default project config with inherit_globalance enabled.
 pub fn ProjectFileConfig::default() -> ProjectFileConfig {
-  { inherit_global: true, reconcile: ReconcileFileConfig::empty() }
+  {
+    inherit_global: true,
+    reconcile: ReconcileFileConfig::empty(),
+    digest: DigestFileConfig::empty(),
+  }
 }
 
 ///|
@@ -99,6 +104,11 @@ pub fn parse_project_toml_config(content : String) -> ProjectFileConfig {
             value,
           ),
         }
+      "digest" =>
+        config = {
+          ..config,
+          digest: parse_digest_section_key(config.digest, key, value),
+        }
       _ => ()
     }
   }
@@ -134,7 +144,9 @@ fn parse_project_json_config(content : String) -> ProjectFileConfig {
   }
   // Parse [reconcile] section (reuse existing logic)
   let reconcile = load_reconcile_from_json_root(root)
-  { ..config, reconcile, }
+  // Parse [digest] section
+  let digest = load_digest_from_json_root(root)
+  { ..config, reconcile, digest, }
 }
 
 ///|
@@ -305,4 +317,18 @@ pub fn load_effective_reconcile_config(
   project_config_path : String,
 ) -> ReconcileFileConfig {
   resolve_effective_reconcile_config(project_config_path).merged
+}
+
+///|
+/// Load merged digest config from project + global config files.
+pub fn load_effective_digest_config(
+  project_config_path : String,
+) -> DigestFileConfig {
+  let project = load_project_config(project_config_path)
+  if project.inherit_global {
+    let global = load_global_config()
+    merge_digest_configs(project.digest, global.digest)
+  } else {
+    project.digest
+  }
 }

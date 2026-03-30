@@ -1,4 +1,4 @@
-// OpenAI Embedding API client (native, async)
+// OpenAI-compatible Embedding API client (native, async)
 
 ///|
 /// Embedding error
@@ -9,8 +9,8 @@ pub(all) suberror EmbedError {
 }
 
 ///|
-/// OpenAI API configuration
-pub struct OpenAIConfig {
+/// OpenAI-compatible API configuration
+pub(all) struct OpenAIConfig {
   api_key : String
   model : String
   base_url : String
@@ -21,94 +21,53 @@ pub struct OpenAIConfig {
 pub fn OpenAIConfig::default(api_key : String) -> OpenAIConfig {
   {
     api_key,
-    model: "text-embedding-3-small",
-    base_url: "https://api.openai.com/v1/embeddings",
+    model: @config.DEFAULT_EMBEDDING_MODEL,
+    base_url: @config.DEFAULT_API_BASE_URL,
   }
 }
 
 ///|
-/// Build request body JSON
+/// Build request body JSON using @json library.
 fn build_request_body(texts : Array[String], model : String) -> String {
-  let escaped_texts : Array[String] = []
-  for text in texts {
-    escaped_texts.push("\"" + escape_json(text) + "\"")
-  }
-  "{\"input\":[" + escaped_texts.join(",") + "],\"model\":\"" + model + "\"}"
+  let input = Json::array(texts.map(Json::string))
+  let request = Json::object({
+    "input": input,
+    "model": Json::string(model),
+  })
+  request.stringify()
 }
 
 ///|
-/// Escape string for JSON
-fn escape_json(s : String) -> String {
-  let result : Array[Char] = []
-  for c in s {
-    if c == '"' {
-      result.push('\\')
-      result.push('"')
-    } else if c == '\\' {
-      result.push('\\')
-      result.push('\\')
-    } else if c == '\n' {
-      result.push('\\')
-      result.push('n')
-    } else if c == '\r' {
-      result.push('\\')
-      result.push('r')
-    } else if c == '\t' {
-      result.push('\\')
-      result.push('t')
-    } else {
-      result.push(c)
-    }
+/// Parse embedding response JSON.
+/// Expected format: { "data": [{ "index": 0, "embedding": [...] }, ...] }
+fn parse_embedding_response(
+  json_str : String,
+) -> Array[Array[Double]] raise EmbedError {
+  let json = @json.parse(json_str) catch {
+    _ => raise ParseError("Invalid JSON response")
   }
-  String::from_array(result)
-}
-
-///|
-/// Parse embedding response JSON
-fn parse_embedding_response(json_str : String) -> Array[Array[Double]]? {
-  let json = @json.parse(json_str) catch { _ => return None }
-  let obj = match json {
-    Object(m) => m
-    _ => return None
+  guard json is { "data": Array(data), .. } else {
+    raise ParseError("Missing 'data' array in response")
   }
-  let data = match obj.get("data") {
-    Some(Array(arr)) => arr
-    _ => return None
-  }
-  // Collect (index, embedding) pairs
   let indexed : Array[(Int, Array[Double])] = []
   for item in data {
-    match item {
-      Object(item_obj) => {
-        let embedding = match item_obj.get("embedding") {
-          Some(Array(emb_arr)) => {
-            let vec : Array[Double] = []
-            for v in emb_arr {
-              match v {
-                Number(n, ..) => vec.push(n)
-                _ => ()
-              }
-            }
-            vec
-          }
-          _ => continue
-        }
-        let index = match item_obj.get("index") {
-          Some(Number(n, ..)) => n.to_int()
-          _ => 0
-        }
-        indexed.push((index, embedding))
-      }
-      _ => ()
+    guard item
+      is { "embedding": Array(emb_arr), "index": Number(idx, ..), .. }
+    else {
+      continue
     }
+    let vec : Array[Double] = []
+    for v in emb_arr {
+      guard v is Number(n, ..) else { continue }
+      vec.push(n)
+    }
+    indexed.push((idx.to_int(), vec))
   }
-  // Sort by index
+  if indexed.is_empty() {
+    raise ParseError("No embeddings in response")
+  }
   indexed.sort_by(fn(a, b) { a.0.compare(b.0) })
-  let result : Array[Array[Double]] = []
-  for pair in indexed {
-    result.push(pair.1)
-  }
-  Some(result)
+  indexed.map(fn(pair) { pair.1 })
 }
 
 ///|
@@ -121,16 +80,15 @@ pub async fn get_embeddings(
   headers.set("Authorization", "Bearer " + config.api_key)
   headers.set("Content-Type", "application/json")
   let body = build_request_body(texts, config.model)
-  let (status, response_body) = @http.post_json(config.base_url, body, headers) catch {
+  let (status, response_body) = @http.post_json(
+    config.base_url, body, headers,
+  ) catch {
     err => raise ApiError(0, err.to_string())
   }
   if status != 200 {
     raise ApiError(status, response_body)
   }
-  match parse_embedding_response(response_body) {
-    Some(embeddings) => embeddings
-    None => raise ParseError("Failed to parse embedding response")
-  }
+  parse_embedding_response(response_body)
 }
 
 ///|

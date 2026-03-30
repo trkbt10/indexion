@@ -1,0 +1,29 @@
+# indexion project configuration
+# See: https://github.com/trkbt10/indexion
+
+[indexion]
+# inherit = true  # Set to false to ignore global config
+
+[reconcile]
+# doc_scope = "package-docs"  # package-docs | tree-docs | custom
+# doc_paths = ["README.md", "docs/**/*.md"]
+# threshold_seconds = 60
+# max_candidates = 200
+
+[reconcile.time]
+# git_preferred = true
+# mtime_fallback = true
+
+[reconcile.mapping]
+# allow_file_fallback = true
+
+[reconcile.output]
+# default_format = "json"
+
+[digest]
+provider = "openai"
+strategy = "hnsw"
+# dim = 256              # TF-IDF dimension (ignored for openai)
+# api_key_env = "OPENAI_API_KEY"  # env var name for API key
+# api_base_url = "https://api.openai.com/v1/embeddings"
+# model = "text-embedding-3-small"

@@ -40,12 +40,51 @@ pub(all) enum EmbeddingSource {
 } derive(Eq, Show)
 
 ///|
+/// Default embedding API key environment variable name.
+pub const DEFAULT_API_KEY_ENV : String = "OPENAI_API_KEY"
+
+///|
+/// Default embedding API base URL.
+pub const DEFAULT_API_BASE_URL : String = "https://api.openai.com/v1/embeddings"
+
+///|
+/// Default embedding model name.
+pub const DEFAULT_EMBEDDING_MODEL : String = "text-embedding-3-small"
+
+///|
+/// Configuration for embedding API (OpenAI-compatible).
+pub(all) struct EmbeddingApiConfig {
+  /// API key.
+  api_key : String
+  /// Environment variable name the API key was resolved from.
+  api_key_env : String
+  /// API base URL for embeddings endpoint.
+  base_url : String
+  /// Embedding model name.
+  model : String
+  /// Embedding vector dimension.
+  dim : Int
+} derive(Eq, Show)
+
+///|
+/// Create EmbeddingApiConfig with defaults for OpenAI.
+pub fn EmbeddingApiConfig::new(api_key : String) -> EmbeddingApiConfig {
+  {
+    api_key,
+    api_key_env: DEFAULT_API_KEY_ENV,
+    base_url: DEFAULT_API_BASE_URL,
+    model: DEFAULT_EMBEDDING_MODEL,
+    dim: OPENAI_EMBEDDING_DIM,
+  }
+}
+
+///|
 /// Embedding provider type.
 pub(all) enum EmbeddingProvider {
   /// Local TF-IDF (no external dependencies).
   TfIdf(Int) // dimension
-  /// Native HTTP to OpenAI API.
-  OpenAI(String) // api_key
+  /// OpenAI-compatible embedding API.
+  OpenAI(EmbeddingApiConfig)
   /// Pre-computed embeddings from file.
   Precomputed(String) // file_path
 } derive(Eq, Show)
@@ -141,7 +180,7 @@ pub fn DigestConfig::default() -> DigestConfig {
 pub fn DigestConfig::openai(api_key : String) -> DigestConfig {
   {
     embedding_source: Raw,
-    embedding_provider: OpenAI(api_key),
+    embedding_provider: OpenAI(EmbeddingApiConfig::new(api_key)),
     vcdb_strategy: Hnsw,
     include_external: false,
     exclude_kinds: default_exclude_kinds(),
@@ -155,7 +194,7 @@ pub fn DigestConfig::openai(api_key : String) -> DigestConfig {
 pub fn DigestConfig::with_impressions(api_key : String) -> DigestConfig {
   {
     embedding_source: Impression,
-    embedding_provider: OpenAI(api_key),
+    embedding_provider: OpenAI(EmbeddingApiConfig::new(api_key)),
     vcdb_strategy: Hnsw,
     include_external: false,
     exclude_kinds: default_exclude_kinds(),
@@ -197,8 +236,8 @@ pub fn DigestConfig::with_impress_prompt(
     Some(cfg) => { ..self, llm_config: Some({ ..cfg, system_prompt: prompt }) }
     None =>
       match self.embedding_provider {
-        OpenAI(key) =>
-          { ..self, llm_config: Some(LlmConfig::with_prompt(key, prompt)) }
+        OpenAI(cfg) =>
+          { ..self, llm_config: Some(LlmConfig::with_prompt(cfg.api_key, prompt)) }
         _ => self
       }
   }
@@ -214,8 +253,8 @@ pub fn DigestConfig::with_impress_model(
     Some(cfg) => { ..self, llm_config: Some({ ..cfg, model, }) }
     None =>
       match self.embedding_provider {
-        OpenAI(key) =>
-          { ..self, llm_config: Some(LlmConfig::with_model(key, model)) }
+        OpenAI(cfg) =>
+          { ..self, llm_config: Some(LlmConfig::with_model(cfg.api_key, model)) }
         _ => self
       }
   }
@@ -244,7 +283,7 @@ pub fn DigestConfig::with_exclude_kinds(
 pub fn DigestConfig::embedding_dim(self : DigestConfig) -> Int {
   match self.embedding_provider {
     TfIdf(dim) => dim
-    OpenAI(_) => OPENAI_EMBEDDING_DIM
+    OpenAI(cfg) => cfg.dim
     Precomputed(_) => OPENAI_EMBEDDING_DIM // assume OpenAI format
   }
 }

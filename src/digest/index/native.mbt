@@ -53,7 +53,7 @@ pub async fn DigestIndex::build_with_config(
   }
   // Get embeddings based on provider
   let all_embeddings = match digest_config.embedding_provider {
-    @config.OpenAI(api_key) => embed_with_openai(api_key, stale_texts)
+    @config.OpenAI(api_config) => embed_with_openai_config(api_config, stale_texts)
     @config.TfIdf(_dim) => {
       // Build TF-IDF vocabulary from all texts (including non-stale for IDF)
       let all_texts : Array[String] = []
@@ -104,12 +104,16 @@ pub async fn DigestIndex::build_with_config(
 }
 
 ///|
-/// Helper: Embed texts using OpenAI API with batching.
-async fn embed_with_openai(
-  api_key : String,
+/// Helper: Embed texts using OpenAI-compatible API with batching.
+async fn embed_with_openai_config(
+  api_config : @config.EmbeddingApiConfig,
   texts : Array[String],
 ) -> Array[Array[Double]] raise @embed.EmbedError {
-  let config = @embed.OpenAIConfig::default(api_key)
+  let config : @embed.OpenAIConfig = {
+    api_key: api_config.api_key,
+    model: api_config.model,
+    base_url: api_config.base_url,
+  }
   let all_embeddings : Array[Array[Double]] = []
   let batch_size = 100
   let mut i = 0
@@ -143,7 +147,7 @@ pub async fn DigestIndex::build_native(
 ) -> BuildResult raise @embed.EmbedError {
   let digest_config : @config.DigestConfig = {
     embedding_source: @config.Raw,
-    embedding_provider: @config.OpenAI(api_key),
+    embedding_provider: @config.OpenAI(@config.EmbeddingApiConfig::new(api_key)),
     vcdb_strategy: @config.Hnsw,
     include_external: extract_config.include_external,
     exclude_kinds: extract_config.exclude_kinds,
@@ -154,14 +158,18 @@ pub async fn DigestIndex::build_native(
 }
 
 ///|
-/// Query using native HTTP to OpenAI API (async).
+/// Query using OpenAI-compatible embedding API (async).
 pub async fn DigestIndex::query_native(
   self : DigestIndex,
   purpose : String,
   top_k : Int,
-  api_key : String,
+  api_config : @config.EmbeddingApiConfig,
 ) -> Array[@types.QueryHit] raise @embed.EmbedError {
-  let config = @embed.OpenAIConfig::default(api_key)
+  let config : @embed.OpenAIConfig = {
+    api_key: api_config.api_key,
+    model: api_config.model,
+    base_url: api_config.base_url,
+  }
   let vector = @embed.get_embedding(config, purpose)
   let hits = self.db.search(vector, top_k, None)
   let results : Array[@types.QueryHit] = []

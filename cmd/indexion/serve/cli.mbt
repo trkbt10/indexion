@@ -17,6 +17,9 @@ pub struct ServeConfig {
   strategy : String
   specs_dir : String
   cors : Bool
+  api_key_env : String
+  api_base_url : String
+  model : String
 }
 
 ///|
@@ -32,6 +35,9 @@ pub fn ServeConfig::default() -> ServeConfig {
     strategy: "hnsw",
     specs_dir: "kgfs",
     cors: false,
+    api_key_env: @dconfig.DEFAULT_API_KEY_ENV,
+    api_base_url: @dconfig.DEFAULT_API_BASE_URL,
+    model: @dconfig.DEFAULT_EMBEDDING_MODEL,
   }
 }
 
@@ -140,7 +146,7 @@ pub fn command() -> @argparse.Command {
       ),
       @argparse.OptionArg(
         "dim",
-        about="TF-IDF dimension",
+        about="Embedding dimension (default: 256 for tfidf, 1536 for openai)",
         default_values=[dim_default],
       ),
       @argparse.OptionArg(
@@ -176,8 +182,46 @@ struct ServerState {
 }
 
 ///|
+/// Apply DigestFileConfig from .indexion.toml as defaults for serve.
+/// CLI-explicit values (non-default) take precedence over file config.
+pub fn ServeConfig::apply_file_config(
+  self : ServeConfig,
+  file : @config.DigestFileConfig,
+) -> ServeConfig {
+  let defaults = ServeConfig::default()
+  let mut config = self
+  match file.provider {
+    Some(v) => if config.provider == defaults.provider { config = { ..config, provider: v } }
+    None => ()
+  }
+  match file.strategy {
+    Some(v) => if config.strategy == defaults.strategy { config = { ..config, strategy: v } }
+    None => ()
+  }
+  match file.dim {
+    Some(v) => if config.dim == defaults.dim { config = { ..config, dim: v } }
+    None => ()
+  }
+  match file.api_key_env {
+    Some(v) => if config.api_key_env == defaults.api_key_env { config = { ..config, api_key_env: v } }
+    None => ()
+  }
+  match file.api_base_url {
+    Some(v) => if config.api_base_url == defaults.api_base_url { config = { ..config, api_base_url: v } }
+    None => ()
+  }
+  match file.model {
+    Some(v) => if config.model == defaults.model { config = { ..config, model: v } }
+    None => ()
+  }
+  config
+}
+
+///|
 pub async fn run_matches(matches : @argparse.Matches) -> Unit {
-  let config = ServeConfig::from_matches(matches)
+  let config = ServeConfig::from_matches(matches).apply_file_config(
+    @digest_cli.load_digest_file_config(),
+  )
   let digest_cli_config = make_digest_cli_config(config)
   let digest_config = @digest_cli.build_digest_config(digest_cli_config)
   // Load existing index, or build if none exists
@@ -281,6 +325,9 @@ fn make_digest_cli_config(config : ServeConfig) -> @digest_cli.CliConfig {
     top_k: 10,
     min_score: 0.1,
     specs_dir: config.specs_dir,
+    api_key_env: config.api_key_env,
+    api_base_url: config.api_base_url,
+    model: config.model,
   }
 }
 
@@ -553,8 +600,8 @@ async fn handle_digest_query(
     0.1
   }
   let hits = match provider {
-    @dconfig.OpenAI(api_key) =>
-      index.query_native(purpose, top_k, api_key) catch {
+    @dconfig.OpenAI(api_config) =>
+      index.query_native(purpose, top_k, api_config) catch {
         _ => {
           send_json_error(conn, 500, "Embedding query failed", cors)
           return
@@ -607,7 +654,8 @@ fn build_stats_json(
 ) -> String {
   let provider_name = match digest_config.embedding_provider {
     @dconfig.TfIdf(dim) => "tfidf (" + dim.to_string() + " dims)"
-    @dconfig.OpenAI(_) => "openai (1536 dims)"
+    @dconfig.OpenAI(cfg) =>
+      cfg.model + " (" + cfg.dim.to_string() + " dims, " + cfg.base_url + ")"
     @dconfig.Precomputed(_) => "precomputed"
   }
   let dim = digest_config.embedding_dim()

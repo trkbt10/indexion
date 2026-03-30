@@ -17,6 +17,9 @@ pub(all) struct CliConfig {
   top_k : Int
   min_score : Double
   specs_dir : String
+  api_key_env : String
+  api_base_url : String
+  model : String
 }
 
 ///|
@@ -33,6 +36,9 @@ pub fn CliConfig::default() -> CliConfig {
     top_k: 10,
     min_score: 0.1,
     specs_dir: "kgfs",
+    api_key_env: @dconfig.DEFAULT_API_KEY_ENV,
+    api_base_url: @dconfig.DEFAULT_API_BASE_URL,
+    model: @dconfig.DEFAULT_EMBEDDING_MODEL,
   }
 }
 
@@ -143,7 +149,7 @@ pub fn command() -> @argparse.Command {
       ),
       @argparse.OptionArg(
         "dim",
-        about="TF-IDF dimension (ignored for openai)",
+        about="Embedding dimension (default: 256 for tfidf, 1536 for openai)",
         default_values=[dim_default],
         global=true,
       ),
@@ -197,9 +203,54 @@ pub fn command() -> @argparse.Command {
 }
 
 ///|
+/// Apply DigestFileConfig from .indexion.toml as defaults.
+/// CLI-explicit values (non-default) take precedence over file config.
+pub fn CliConfig::apply_file_config(
+  self : CliConfig,
+  file : @config.DigestFileConfig,
+) -> CliConfig {
+  let defaults = CliConfig::default()
+  let mut config = self
+  match file.provider {
+    Some(v) => if config.provider == defaults.provider { config = { ..config, provider: v } }
+    None => ()
+  }
+  match file.strategy {
+    Some(v) => if config.strategy == defaults.strategy { config = { ..config, strategy: v } }
+    None => ()
+  }
+  match file.dim {
+    Some(v) => if config.dim == defaults.dim { config = { ..config, dim: v } }
+    None => ()
+  }
+  match file.api_key_env {
+    Some(v) => if config.api_key_env == defaults.api_key_env { config = { ..config, api_key_env: v } }
+    None => ()
+  }
+  match file.api_base_url {
+    Some(v) => if config.api_base_url == defaults.api_base_url { config = { ..config, api_base_url: v } }
+    None => ()
+  }
+  match file.model {
+    Some(v) => if config.model == defaults.model { config = { ..config, model: v } }
+    None => ()
+  }
+  config
+}
+
+///|
+/// Load DigestFileConfig from .indexion.toml in the current directory.
+pub fn load_digest_file_config() -> @config.DigestFileConfig {
+  let config_path = @config.find_indexion_config_path(".")
+  @config.load_effective_digest_config(config_path)
+}
+
+///|
 /// Entry point for the digest subcommand using argparse Matches.
 pub async fn run_matches(matches : @argparse.Matches) -> Unit {
-  let config = CliConfig::from_matches(matches)
+  let config = CliConfig::from_matches(matches).apply_file_config(
+    load_digest_file_config(),
+  )
   match config.command {
     "build" => run_build_async(config)
     "query" => run_query_async(config)
@@ -225,24 +276,44 @@ pub fn log_error(msg : String) -> Unit {
 }
 
 ///|
+/// Build EmbeddingApiConfig from CLI config and resolved API key.
+fn build_api_config(config : CliConfig, api_key : String) -> @dconfig.EmbeddingApiConfig {
+  // If dim was not explicitly configured (still at TF-IDF default),
+  // use the OpenAI default dimension for API providers.
+  let dim = if config.dim == @dconfig.DEFAULT_TFIDF_DIM {
+    @dconfig.OPENAI_EMBEDDING_DIM
+  } else {
+    config.dim
+  }
+  {
+    api_key,
+    api_key_env: config.api_key_env,
+    base_url: config.api_base_url,
+    model: config.model,
+    dim,
+  }
+}
+
+///|
 /// Resolve embedding provider from CLI config.
 pub fn resolve_provider(config : CliConfig) -> @dconfig.EmbeddingProvider {
+  let env_name = config.api_key_env
   match config.provider {
     "openai" =>
-      match @sys.get_env_var("OPENAI_API_KEY") {
-        Some(key) => @dconfig.OpenAI(key)
+      match @sys.get_env_var(env_name) {
+        Some(key) => @dconfig.OpenAI(build_api_config(config, key))
         None => {
           log_error(
-            "OPENAI_API_KEY environment variable required for --provider=openai",
+            env_name + " environment variable required for --provider=openai",
           )
           @dconfig.TfIdf(config.dim)
         }
       }
     "tfidf" => @dconfig.TfIdf(config.dim)
     "auto" | "" =>
-      // Auto-detect: use OpenAI if API key present
-      match @sys.get_env_var("OPENAI_API_KEY") {
-        Some(key) => @dconfig.OpenAI(key)
+      // Auto-detect: use embedding API if key present
+      match @sys.get_env_var(env_name) {
+        Some(key) => @dconfig.OpenAI(build_api_config(config, key))
         None => @dconfig.TfIdf(config.dim)
       }
     _ => {
@@ -277,7 +348,8 @@ pub fn build_digest_config(config : CliConfig) -> @dconfig.DigestConfig {
 fn provider_name(provider : @dconfig.EmbeddingProvider) -> String {
   match provider {
     @dconfig.TfIdf(dim) => "TF-IDF (local, " + dim.to_string() + " dims)"
-    @dconfig.OpenAI(_) => "OpenAI text-embedding-3-small (1536 dims)"
+    @dconfig.OpenAI(cfg) =>
+      cfg.model + " (" + cfg.dim.to_string() + " dims, " + cfg.base_url + ")"
     @dconfig.Precomputed(_) => "Precomputed embeddings"
   }
 }
@@ -535,14 +607,16 @@ async fn run_query_async(config : CliConfig) -> Unit {
     }
   }
   // Auto-detect provider from manifest if not explicitly specified
+  let env_name = config.api_key_env
   let provider = if config.provider != "auto" && config.provider != "" {
     resolve_provider(config)
-    // Use saved provider type
   } else if manifest.embedding_provider == "openai" {
-    match @sys.get_env_var("OPENAI_API_KEY") {
-      Some(key) => @dconfig.OpenAI(key)
+    match @sys.get_env_var(env_name) {
+      Some(key) => @dconfig.OpenAI(build_api_config(config, key))
       None => {
-        log_error("Index was built with OpenAI. Set OPENAI_API_KEY to query.")
+        log_error(
+          "Index was built with OpenAI-compatible API. Set " + env_name + " to query.",
+        )
         return
       }
     }
@@ -588,8 +662,8 @@ async fn run_query_async(config : CliConfig) -> Unit {
   println("")
   // Use appropriate query method based on provider
   let hits = match provider {
-    @dconfig.OpenAI(api_key) =>
-      index.query_native(config.purpose, config.top_k, api_key) catch {
+    @dconfig.OpenAI(api_config) =>
+      index.query_native(config.purpose, config.top_k, api_config) catch {
         @embed.ParseError(msg) => {
           log_error("Parse error: " + msg)
           return
