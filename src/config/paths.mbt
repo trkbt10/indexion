@@ -406,6 +406,20 @@ pub fn get_kgfs_install_dir() -> String? {
 }
 
 ///|
+/// Get the wiki frontend installation directory.
+/// Returns the OS-standard data directory with wiki subdirectory.
+pub fn get_wiki_install_dir() -> String? {
+  match get_global_data_dir() {
+    Some(data_dir) => Some(join_path(data_dir, "wiki"))
+    None =>
+      match get_install_dir() {
+        Some(dir) => Some(join_path(dir, "wiki"))
+        None => None
+      }
+  }
+}
+
+///|
 fn normalize_kgfs_target_dirs(
   target_dir : String,
   target_dirs : Array[String],

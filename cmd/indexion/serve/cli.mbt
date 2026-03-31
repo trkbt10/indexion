@@ -396,11 +396,24 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         return
       }
       // Static file serving
-      if config.static_dir != "" &&
+      let effective_static_dir = if config.static_dir != "" {
+        config.static_dir
+      } else {
+        match @config.get_wiki_install_dir() {
+          Some(dir) =>
+            if @fs.path_exists(dir + "/index.html") {
+              dir
+            } else {
+              ""
+            }
+          None => ""
+        }
+      }
+      if effective_static_dir != "" &&
         req.meth == @mhttp.Get &&
         not(path.has_prefix("/api/")) {
         conn.skip_request_body()
-        serve_static(conn, config.static_dir, path)
+        serve_static(conn, effective_static_dir, path)
         return
       }
       // 404

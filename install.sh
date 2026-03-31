@@ -152,12 +152,19 @@ main() {
         chmod +x "$INSTALL_DIR/bin/$bin_name"
     fi
 
+    local data_dir=$(get_data_dir)
+    mkdir -p "$data_dir"
+
     if [[ -d "$tmp_dir/$asset/kgfs" ]]; then
-        local data_dir=$(get_data_dir)
-        mkdir -p "$data_dir"
         rm -rf "$data_dir/kgfs"
         cp -r "$tmp_dir/$asset/kgfs" "$data_dir/kgfs"
         info "KGF specs installed to $data_dir/kgfs"
+    fi
+
+    if [[ -d "$tmp_dir/$asset/wiki" ]]; then
+        rm -rf "$data_dir/wiki"
+        cp -r "$tmp_dir/$asset/wiki" "$data_dir/wiki"
+        info "Wiki frontend installed to $data_dir/wiki"
     fi
 
     if [[ ":$PATH:" != *":$INSTALL_DIR/bin:"* ]]; then

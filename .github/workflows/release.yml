@@ -57,6 +57,14 @@ jobs:
       - name: Build
         run: moon build --target native --release
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Build wiki frontend
+        run: |
+          bun install
+          bun run --filter @indexion/wiki build
+
       - name: Prepare package (Unix)
         if: runner.os != 'Windows'
         run: |
@@ -76,6 +84,11 @@ jobs:
 
           # Copy kgfs directory
           cp -r kgfs "$pkg_dir/"
+
+          # Copy wiki frontend
+          if [ -d "packages/wiki/dist/client" ]; then
+            cp -r packages/wiki/dist/client "$pkg_dir/wiki"
+          fi
 
           # Create archive
           tar -czvf "${{ matrix.asset }}.tar.gz" "$pkg_dir"
@@ -99,6 +112,11 @@ jobs:
 
           # Copy kgfs directory
           Copy-Item -Recurse kgfs "$pkgDir/"
+
+          # Copy wiki frontend
+          if (Test-Path "packages/wiki/dist/client") {
+            Copy-Item -Recurse "packages/wiki/dist/client" "$pkgDir/wiki"
+          }
 
           # Create archive
           Compress-Archive -Path $pkgDir -DestinationPath "${{ matrix.asset }}.zip"
