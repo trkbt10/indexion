@@ -131,8 +131,8 @@ pub async fn build_search_index(
 pub async fn WikiSearchIndex::search(
   self : WikiSearchIndex,
   query : String,
-  top_k~ : Int = 10,
-  min_score~ : Double = 0.05,
+  top_k? : Int = 10,
+  min_score? : Double = 0.05,
 ) -> Array[WikiSearchHit] {
   // Embed query using available provider
   let vector = match self.openai_config {
@@ -142,7 +142,7 @@ pub async fn WikiSearchIndex::search(
         model: api_config.model,
         base_url: api_config.base_url,
       }
-      let results = try { @embed.get_embeddings(cfg, [query]) } catch {
+      let results = @embed.get_embeddings(cfg, [query]) catch {
         _ =>
           // Fallback to TF-IDF on API error
           match self.tfidf_provider {
@@ -180,12 +180,11 @@ pub async fn WikiSearchIndex::search(
 
 ///|
 /// Serialize the search index to disk.
-pub fn WikiSearchIndex::save(
-  self : WikiSearchIndex,
-  wiki_dir : String,
-) -> Unit {
+pub fn WikiSearchIndex::save(self : WikiSearchIndex, wiki_dir : String) -> Unit {
   let db_bytes = self.db.serialize()
-  @fs.write_bytes_to_file(wiki_dir + "/vectors.db", db_bytes) catch { _ => () }
+  @fs.write_bytes_to_file(wiki_dir + "/vectors.db", db_bytes) catch {
+    _ => ()
+  }
 }
 
 // --- OpenAI batched embedding ---
@@ -232,15 +231,13 @@ fn extract_sections(
 ) -> Array[WikiSection] {
   let sections : Array[WikiSection] = []
   // Full page as a section
-  sections.push(
-    WikiSection::{
-      id: page_id,
-      title: page_title,
-      content: strip_markdown_headings(content),
-      page_id,
-      level: 1,
-    },
-  )
+  sections.push(WikiSection::{
+    id: page_id,
+    title: page_title,
+    content: strip_markdown_headings(content),
+    page_id,
+    level: 1,
+  })
   // Split at h2 boundaries
   let lines = @common.split_lines(content)
   let mut current_title = ""
@@ -251,15 +248,13 @@ fn extract_sections(
       if current_title.length() > 0 {
         let section_content = buf.to_string()
         if section_content.length() > 0 {
-          sections.push(
-            WikiSection::{
-              id: page_id + "#" + current_anchor,
-              title: current_title,
-              content: section_content,
-              page_id,
-              level: 2,
-            },
-          )
+          sections.push(WikiSection::{
+            id: page_id + "#" + current_anchor,
+            title: current_title,
+            content: section_content,
+            page_id,
+            level: 2,
+          })
         }
       }
       current_title = @common.substring(line, 3, line.to_array().length())
@@ -273,15 +268,13 @@ fn extract_sections(
   if current_title.length() > 0 {
     let section_content = buf.to_string()
     if section_content.length() > 0 {
-      sections.push(
-        WikiSection::{
-          id: page_id + "#" + current_anchor,
-          title: current_title,
-          content: section_content,
-          page_id,
-          level: 2,
-        },
-      )
+      sections.push(WikiSection::{
+        id: page_id + "#" + current_anchor,
+        title: current_title,
+        content: section_content,
+        page_id,
+        level: 2,
+      })
     }
   }
   sections

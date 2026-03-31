@@ -1,6 +1,6 @@
 ///|
 /// CLI and file-backed configuration for the reconcile command.
-pub struct ReconcileConfig {
+pub(all) struct ReconcileConfig {
   target_dir : String
   output : String
   format : String

@@ -237,7 +237,10 @@ pub fn DigestConfig::with_impress_prompt(
     None =>
       match self.embedding_provider {
         OpenAI(cfg) =>
-          { ..self, llm_config: Some(LlmConfig::with_prompt(cfg.api_key, prompt)) }
+          {
+            ..self,
+            llm_config: Some(LlmConfig::with_prompt(cfg.api_key, prompt)),
+          }
         _ => self
       }
   }
@@ -254,7 +257,10 @@ pub fn DigestConfig::with_impress_model(
     None =>
       match self.embedding_provider {
         OpenAI(cfg) =>
-          { ..self, llm_config: Some(LlmConfig::with_model(cfg.api_key, model)) }
+          {
+            ..self,
+            llm_config: Some(LlmConfig::with_model(cfg.api_key, model)),
+          }
         _ => self
       }
   }

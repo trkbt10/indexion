@@ -22,7 +22,7 @@
 
 ///|
 /// CLI configuration for the documentation plan subcommand.
-pub struct DocPlanConfig {
+pub(all) struct DocPlanConfig {
   target_dir : String
   output : String
   style : String // "coverage", "full"
@@ -114,35 +114,33 @@ pub fn command() -> @argparse.Command {
 }
 
 ///|
-/// Run the documentation plan command from argparse matches.
-pub fn run_matches(matches : @argparse.Matches) -> Unit {
-  let config = DocPlanConfig::from_matches(matches)
+/// Core documentation analysis. Returns rendered output or None.
+pub fn run_to_string(config : DocPlanConfig) -> String? {
   if config.target_dir.length() == 0 {
-    println(@help.dir_required)
-    return
+    return None
   }
-  // Load project info from moon.mod.json if available
   let project_info = load_project_info(config.target_dir)
   let project_name = if config.project_name.length() > 0 {
     config.project_name
   } else {
     project_info.name
   }
-  // Analyze documentation coverage
   let analysis = analyze_documentation(
     config.target_dir,
     specs_dir=config.specs_dir,
   )
-  // Generate output based on format
-  let output_content = render_output(
-    config, analysis, project_info, project_name,
-  )
-  // Output
-  @common.write_output(
-    config.output,
-    output_content,
-    label="Documentation plan",
-  )
+  Some(render_output(config, analysis, project_info, project_name))
+}
+
+///|
+/// Run the documentation plan command from argparse matches.
+pub fn run_matches(matches : @argparse.Matches) -> Unit {
+  let config = DocPlanConfig::from_matches(matches)
+  match run_to_string(config) {
+    Some(output) =>
+      @common.write_output(config.output, output, label="Documentation plan")
+    None => println(@help.dir_required)
+  }
 }
 
 ///|

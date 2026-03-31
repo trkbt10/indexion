@@ -73,8 +73,8 @@ pub fn WikiHeading::new(
 ///|
 pub fn WikiSourceRef::new(
   file~ : String,
-  start_line~ : Int = 0,
-  end_line~ : Int = 0,
+  start_line? : Int = 0,
+  end_line? : Int = 0,
 ) -> WikiSourceRef {
   { file, start_line, end_line }
 }
@@ -86,10 +86,10 @@ pub fn WikiPage::new(
   id~ : String,
   title~ : String,
   content~ : String,
-  sources~ : Array[WikiSourceRef] = [],
-  headings~ : Array[WikiHeading] = [],
-  children~ : Array[String] = [],
-  parent~ : String? = None,
+  sources? : Array[WikiSourceRef] = [],
+  headings? : Array[WikiHeading] = [],
+  children? : Array[String] = [],
+  parent? : String? = None,
 ) -> WikiPage {
   { id, title, content, sources, headings, children, parent }
 }
@@ -98,14 +98,14 @@ pub fn WikiPage::new(
 pub fn WikiNavItem::new(
   id~ : String,
   title~ : String,
-  children~ : Array[WikiNavItem] = [],
+  children? : Array[WikiNavItem] = [],
 ) -> WikiNavItem {
   { id, title, children }
 }
 
 ///|
-pub fn WikiNav::new(pages~ : Array[WikiNavItem] = []) -> WikiNav {
-  { pages }
+pub fn WikiNav::new(pages? : Array[WikiNavItem] = []) -> WikiNav {
+  { pages, }
 }
 
 ///|

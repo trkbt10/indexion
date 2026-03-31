@@ -338,9 +338,7 @@ fn is_doc_token_kind(kind : String) -> Bool {
 /// Returns Map[line_number, doc_text] where line_number is the first
 /// non-doc, non-whitespace line after the doc block.
 /// Uses KGF token kinds (DocComment, DocLine, DocSection) — language-agnostic.
-pub fn extract_doc_map(
-  tokens : Array[@kgf_types.Tok],
-) -> Map[Int, String] {
+pub fn extract_doc_map(tokens : Array[@kgf_types.Tok]) -> Map[Int, String] {
   let result : Map[Int, String] = {}
   let token_lines : Array[Int] = Array::make(tokens.length(), 1)
   let mut line = 1

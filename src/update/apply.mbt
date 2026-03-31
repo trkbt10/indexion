@@ -3,7 +3,6 @@
 
 ///|
 pub suberror UpdateError {
-  NetworkError(String)
   ApiError(String)
   ParseError(String)
   PlatformError(String)
@@ -16,7 +15,6 @@ pub suberror UpdateError {
 /// Format update error as human-readable string.
 pub fn UpdateError::to_string(self : UpdateError) -> String {
   match self {
-    NetworkError(msg) => "network error: " + msg
     ApiError(msg) => "API error: " + msg
     ParseError(msg) => "parse error: " + msg
     PlatformError(msg) => "platform error: " + msg

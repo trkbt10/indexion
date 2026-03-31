@@ -633,9 +633,7 @@ test "capture_group: skip_value takes precedence over capture" {
 
 ///|
 test "capture_group: lua doc comment --- extracts content" {
-  let lexer = Lexer::new([
-    @types.TokenDef::new("DocComment", "---(.*)")
-  ])
+  let lexer = Lexer::new([@types.TokenDef::new("DocComment", "---(.*)")])
   let tokens = lexer.tokenize("--- This is a Lua doc")
   assert_eq(tokens[0].get_kind(), "DocComment")
   assert_eq(tokens[0].get_value(), " This is a Lua doc")

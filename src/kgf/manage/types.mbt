@@ -1,7 +1,6 @@
 ///|
 /// Error type for kgf management operations.
 pub suberror KgfManageError {
-  NetworkError(String)
   ApiError(String)
   InstallError(String)
   NotFoundError(String)
@@ -11,7 +10,6 @@ pub suberror KgfManageError {
 /// Format error as human-readable string.
 pub fn KgfManageError::to_string(self : KgfManageError) -> String {
   match self {
-    NetworkError(msg) => "network error: " + msg
     ApiError(msg) => "API error: " + msg
     InstallError(msg) => "install error: " + msg
     NotFoundError(msg) => "not found: " + msg

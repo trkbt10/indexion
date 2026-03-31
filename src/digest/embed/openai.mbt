@@ -30,10 +30,7 @@ pub fn OpenAIConfig::default(api_key : String) -> OpenAIConfig {
 /// Build request body JSON using @json library.
 fn build_request_body(texts : Array[String], model : String) -> String {
   let input = Json::array(texts.map(Json::string))
-  let request = Json::object({
-    "input": input,
-    "model": Json::string(model),
-  })
+  let request = Json::object({ "input": input, "model": Json::string(model) })
   request.stringify()
 }
 
@@ -51,9 +48,7 @@ fn parse_embedding_response(
   }
   let indexed : Array[(Int, Array[Double])] = []
   for item in data {
-    guard item
-      is { "embedding": Array(emb_arr), "index": Number(idx, ..), .. }
-    else {
+    guard item is { "embedding": Array(emb_arr), "index": Number(idx, ..), .. } else {
       continue
     }
     let vec : Array[Double] = []
@@ -80,9 +75,7 @@ pub async fn get_embeddings(
   headers.set("Authorization", "Bearer " + config.api_key)
   headers.set("Content-Type", "application/json")
   let body = build_request_body(texts, config.model)
-  let (status, response_body) = @http.post_json(
-    config.base_url, body, headers,
-  ) catch {
+  let (status, response_body) = @http.post_json(config.base_url, body, headers) catch {
     err => raise ApiError(0, err.to_string())
   }
   if status != 200 {

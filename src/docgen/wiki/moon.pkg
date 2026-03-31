@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/json" @json,
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/cmd/indexion/common" @common,
   "trkbt10/indexion/src/config" @config,

@@ -358,9 +358,7 @@ pub fn ResolverSpec::get_project_config(self : ResolverSpec) -> String {
 
 ///|
 /// Returns the package boundary marker files.
-pub fn ResolverSpec::get_package_markers(
-  self : ResolverSpec,
-) -> Array[String] {
+pub fn ResolverSpec::get_package_markers(self : ResolverSpec) -> Array[String] {
   self.package_markers
 }
 

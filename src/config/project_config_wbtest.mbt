@@ -134,7 +134,10 @@ test "project_config: parse_project_toml_config parses digest section" {
   assert_eq(config.digest.strategy, Some("hnsw"))
   assert_eq(config.digest.dim, Some(1536))
   assert_eq(config.digest.api_key_env, Some("MY_API_KEY"))
-  assert_eq(config.digest.api_base_url, Some("https://example.com/v1/embeddings"))
+  assert_eq(
+    config.digest.api_base_url,
+    Some("https://example.com/v1/embeddings"),
+  )
   assert_eq(config.digest.model, Some("nomic-embed-text"))
 }
 

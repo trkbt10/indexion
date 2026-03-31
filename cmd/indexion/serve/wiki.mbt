@@ -15,14 +15,12 @@ async fn load_wiki_pages(
       @digest_cli.log_progress(
         "Wiki: " + data.pages.length().to_string() + " pages loaded.",
       )
-      let search = try {
-        @wiki.build_search_index(data.pages, provider)
-      } catch {
+      let search = @wiki.build_search_index(data.pages, provider) catch {
         _ => {
-          @digest_cli.log_progress("Wiki search: embedding failed, using TF-IDF fallback.")
-          try {
-            @wiki.build_search_index(data.pages, @dconfig.TfIdf(256))
-          } catch {
+          @digest_cli.log_progress(
+            "Wiki search: embedding failed, using TF-IDF fallback.",
+          )
+          @wiki.build_search_index(data.pages, @dconfig.TfIdf(256)) catch {
             _ => {
               @digest_cli.log_progress("Wiki search: failed to build index.")
               return (data, None)
@@ -71,17 +69,17 @@ async fn handle_wiki_search(
         send_json_error(conn, 400, "Missing 'query' field", cors)
         return
       }
-      let top_k = if json is { "topK": Number(n, ..) } {
+      let top_k = if json is { "topK": Number(n, ..), .. } {
         n.to_int()
       } else {
         10
       }
       let hits = idx.search(query, top_k~)
-      let results : Array[String] = []
+      let results : Array[Json] = []
       for hit in hits {
-        results.push(hit.to_json().stringify())
+        results.push(hit.to_json())
       }
-      send_json_ok(conn, "[" + results.join(",") + "]", cors)
+      send_json_ok(conn, Json::array(results).stringify(), cors)
     }
   }
 }
@@ -95,10 +93,8 @@ fn empty_wiki() -> @wiki.WikiData {
   )
   let pages : Map[String, @wiki.WikiPage] = {}
   pages["overview"] = placeholder
-  let nav = @wiki.WikiNav::new(
-    pages=[
-      @wiki.WikiNavItem::new(id="overview", title="Overview"),
-    ],
-  )
+  let nav = @wiki.WikiNav::new(pages=[
+    @wiki.WikiNavItem::new(id="overview", title="Overview"),
+  ])
   @wiki.WikiData::new(nav~, pages~)
 }

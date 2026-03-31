@@ -13,7 +13,7 @@
 
 ///|
 /// CLI configuration.
-pub struct SolidConfig {
+pub(all) struct SolidConfig {
   from_dirs : Array[String] // source directories to compare
   to_dir : String // target directory for extraction
   rules_file : String // path to rules file (.solidrc)
@@ -180,45 +180,38 @@ pub fn command() -> @argparse.Command {
 }
 
 ///|
-/// Entry point using argparse matches.
-pub fn run_matches(matches : @argparse.Matches) -> Unit {
-  let config = SolidConfig::from_matches(matches)
-  run_with_config(config)
-}
-
-///|
-/// Run the solid command with a pre-built configuration.
-fn run_with_config(config : SolidConfig) -> Unit {
+/// Core solid analysis. Returns rendered output or None.
+pub fn run_to_string(config : SolidConfig) -> String? {
   if config.from_dirs.length() < 2 {
-    println("Error: At least 2 source directories required (--from=dir1,dir2)")
-    return
+    return None
   }
-  // Parse rules
   let rules = load_rules(config)
-  // Collect and compare files
   let matches = find_cross_matches(config)
-  // Apply rules to matches
   let categorized = categorize_matches(matches, rules, config.to_dir)
-  // Build intermediate representation
   let plan_json = build_plan_json(categorized, config, rules)
-  // Convert to PlanDocument and render
+  let doc = solid_to_plan_document(plan_json)
   let output = match config.format {
     "github-issue" => {
-      let doc = solid_to_plan_document(plan_json)
       let issue = @plan_render.render_github_issue(doc)
       issue.format()
     }
-    "json" => {
-      let doc = solid_to_plan_document(plan_json)
-      doc.to_json().stringify(indent=2)
-    }
-    _ => {
-      let doc = solid_to_plan_document(plan_json)
-      @plan_render.render_markdown(doc)
-    }
+    "json" => doc.to_json().stringify(indent=2)
+    _ => @plan_render.render_markdown(doc)
   }
-  // Output
-  @common.write_output(config.output, output, label="Plan")
+  Some(output)
+}
+
+///|
+/// Entry point using argparse matches.
+pub fn run_matches(matches : @argparse.Matches) -> Unit {
+  let config = SolidConfig::from_matches(matches)
+  match run_to_string(config) {
+    Some(output) => @common.write_output(config.output, output, label="Plan")
+    None =>
+      println(
+        "Error: At least 2 source directories required (--from=dir1,dir2)",
+      )
+  }
 }
 
 ///|

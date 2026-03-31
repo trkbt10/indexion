@@ -82,7 +82,10 @@ fn Lexer::try_match(
       None
     }
     let end_pos = match_compiled_end_pos_with_chars(
-      compiled, input_chars, pos, captures~,
+      compiled,
+      input_chars,
+      pos,
+      captures~,
     )
     match end_pos {
       Some(end_pos_value) =>
@@ -118,10 +121,7 @@ fn has_case_insensitive_flag(flags : String?) -> Bool {
 /// Extracts the value from a token text using token definition settings.
 /// Handles: skip_value and quoted strings.
 /// Capture groups are handled separately in tokenize().
-fn extract_value(
-  text : String,
-  token_def : @types.TokenDef,
-) -> String? {
+fn extract_value(text : String, token_def : @types.TokenDef) -> String? {
   // skip_value: return empty string (for marker tokens like ///|)
   if token_def.is_skip_value() {
     return Some("")

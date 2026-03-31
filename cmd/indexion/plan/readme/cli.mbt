@@ -20,7 +20,7 @@
 
 ///|
 /// Configuration for plan readme command.
-pub struct ReadmePlanConfig {
+pub(all) struct ReadmePlanConfig {
   target_dir : String
   output : String
   format : String // "md", "json"
@@ -111,44 +111,28 @@ pub fn command() -> @argparse.Command {
 }
 
 ///|
-/// Run the plan readme command from argparse matches.
-pub fn run_matches(matches : @argparse.Matches) -> Unit {
-  let config = ReadmePlanConfig::from_matches(matches)
-  // Template is required for plan generation
+/// Core readme plan generation. Writes plan files and returns summary string, or None.
+pub fn run_to_string(config : ReadmePlanConfig) -> String? {
   if config.template.length() == 0 {
-    println("Error: --template=FILE is required.")
-    return
+    return None
   }
   let target_dir = @common.normalize_path(config.target_dir)
-  // Load KGF registry for ignore patterns
   let registry = @kgf_features.load_registry_or_empty(
     specs_dir=config.specs_dir,
     target_dir~,
   )
-  // Detect project type and get spec
   let (project_info, lang_spec) = detect_project_with_kgf(target_dir, registry)
-  // Read template and extract include paths
   let template_content = @fs.read_file_to_string(config.template) catch {
-    e => {
-      println("Error reading template: " + e.to_string())
-      return
-    }
+    _ => return None
   }
   let include_paths = extract_include_paths(template_content)
   if include_paths.length() == 0 {
-    println(
-      "Warning: No {{include:...}} placeholders found in template. Nothing to plan.",
-    )
-    return
+    return None
   }
-  // Discover packages for context
   let packages = discover_packages(target_dir, lang_spec, Some(registry))
-  // Discover existing documentation files
   let existing_docs = discover_existing_docs(target_dir, lang_spec)
-  // Create plans directory
   let plans_dir = target_dir + "/" + config.plans_dir
   create_dir_recursive(plans_dir)
-  // Generate a plan file for each include path
   let plans_created : Array[String] = []
   for include_path in include_paths {
     let plan_filename = get_plan_filename(include_path)
@@ -160,10 +144,9 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
       @fs.write_string_to_file(plan_path, plan_content)
       plans_created.push(plan_path)
     } catch {
-      e => println("Error writing plan: " + e.to_string())
+      _ => ()
     }
   }
-  // Render summary output
   let output_content = match config.format {
     "json" =>
       render_plans_json(include_paths, plans_created, project_info, plans_dir)
@@ -172,12 +155,25 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
         include_paths, plans_created, project_info, plans_dir, target_dir,
       )
   }
-  // Output summary
-  @common.write_output(
-    config.output,
-    output_content,
-    label="README plan summary",
-  )
+  Some(output_content)
+}
+
+///|
+/// Run the plan readme command from argparse matches.
+pub fn run_matches(matches : @argparse.Matches) -> Unit {
+  let config = ReadmePlanConfig::from_matches(matches)
+  if config.template.length() == 0 {
+    println("Error: --template=FILE is required.")
+    return
+  }
+  match run_to_string(config) {
+    Some(output) =>
+      @common.write_output(config.output, output, label="README plan summary")
+    None =>
+      println(
+        "Warning: No {{include:...}} placeholders found or template error.",
+      )
+  }
 }
 
 // Project info
@@ -401,27 +397,6 @@ fn discover_packages_recursive(
 ///|
 fn get_current_date() -> String {
   "2026-03-06"
-}
-
-///|
-fn escape_json(s : String) -> String {
-  let chars = s.to_array()
-  let result : Array[Char] = []
-  for c in chars {
-    if c == '"' {
-      result.push('\\')
-      result.push('"')
-    } else if c == '\\' {
-      result.push('\\')
-      result.push('\\')
-    } else if c == '\n' {
-      result.push('\\')
-      result.push('n')
-    } else {
-      result.push(c)
-    }
-  }
-  String::from_array(result)
 }
 
 // Template parsing and plan generation
@@ -682,44 +657,31 @@ fn render_plans_markdown(
 }
 
 ///|
-/// Render summary in JSON format.
+/// Render summary in JSON format using Json type.
 fn render_plans_json(
   include_paths : Array[String],
   plans_created : Array[String],
   project : ProjectInfo,
   plans_dir : String,
 ) -> String {
-  let buf = StringBuilder::new()
-  buf.write_string("{\n")
-  buf.write_string("  \"project\": \"")
-  buf.write_string(escape_json(project.name))
-  buf.write_string("\",\n")
-  buf.write_string("  \"date\": \"")
-  buf.write_string(get_current_date())
-  buf.write_string("\",\n")
-  buf.write_string("  \"plans_dir\": \"")
-  buf.write_string(escape_json(plans_dir))
-  buf.write_string("\",\n")
-  buf.write_string("  \"plans\": [\n")
+  let plans_arr : Array[Json] = []
   for i, include_path in include_paths {
-    buf.write_string("    {\n")
-    buf.write_string("      \"target\": \"")
-    buf.write_string(escape_json(include_path))
-    buf.write_string("\",\n")
-    buf.write_string("      \"plan\": \"")
-    if i < plans_created.length() {
-      buf.write_string(escape_json(plans_created[i]))
+    let obj : Map[String, Json] = {}
+    obj.set("target", include_path.to_json())
+    let plan_path = if i < plans_created.length() {
+      plans_created[i]
+    } else {
+      ""
     }
-    buf.write_string("\"\n")
-    buf.write_string("    }")
-    if i < include_paths.length() - 1 {
-      buf.write_string(",")
-    }
-    buf.write_string("\n")
+    obj.set("plan", plan_path.to_json())
+    plans_arr.push(Json::object(obj))
   }
-  buf.write_string("  ]\n")
-  buf.write_string("}\n")
-  buf.to_string()
+  let root : Map[String, Json] = {}
+  root.set("project", project.name.to_json())
+  root.set("date", get_current_date().to_json())
+  root.set("plans_dir", plans_dir.to_json())
+  root.set("plans", Json::array(plans_arr))
+  Json::object(root).stringify(indent=2)
 }
 
 // Utilities

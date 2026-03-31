@@ -291,34 +291,30 @@ fn run_inspect(config : KgfConfig) -> Unit {
   println("File: \{config.file_path}")
   println("")
   let registry = @registry.KGFRegistry::load_from_dir(config.kgf_dir)
-  let spec_name = if config.spec_name.length() > 0 {
-    config.spec_name
-  } else {
-    match registry.detect_from_path(config.file_path) {
-      Some(name) => name
-      None => {
-        println("Error: Cannot detect language for file")
-        println("Use --spec=<name> to specify explicitly")
-        return
-      }
+  let resolved = match
+    resolve_spec_name(config.file_path, config.spec_name, registry) {
+    Some(n) => n
+    None => {
+      println("Error: Cannot detect language for file")
+      println("Use --spec=<name> to specify explicitly")
+      return
     }
   }
-  println("Detected spec: \{spec_name}")
-  let spec = match registry.get_spec(spec_name) {
+  println("Detected spec: \{resolved}")
+  let spec = match registry.get_spec(resolved) {
     Some(s) => s
     None => {
-      println("Error: Spec '\{spec_name}' not found")
+      println("Error: Spec '\{resolved}' not found")
       return
     }
   }
-  let source = @fs.read_file_to_string(config.file_path) catch {
-    err => {
-      println("Error reading file: \{err}")
+  let source = match read_source(config.file_path) {
+    Some(s) => s
+    None => {
+      println("Error reading file: \{config.file_path}")
       return
     }
   }
-  // Ensure trailing newline
-  let source = if source.has_suffix("\n") { source } else { source + "\n" }
   println("Source length: \{source.length()} chars")
   println("")
   // Tokenize
@@ -499,4 +495,170 @@ fn escape_string(s : String) -> String {
     }
   }
   String::from_array(result)
+}
+
+///|
+/// List installed KGF specs as JSON string.
+pub fn list_specs_json() -> String {
+  let specs = @kgf_manage.list_installed_specs()
+  let arr : Array[Json] = specs
+    .iter()
+    .map(fn(spec) {
+      let obj : Map[String, Json] = {}
+      obj.set("name", spec.name.to_json())
+      obj.set("category", spec.category.to_json())
+      obj.set(
+        "sources",
+        Json::array(spec.sources.iter().map(fn(s) { s.to_json() }).collect()),
+      )
+      Json::object(obj)
+    })
+    .collect()
+  Json::array(arr).stringify()
+}
+
+///|
+/// Resolve spec name from file path (shared resolution logic).
+fn resolve_spec_name(
+  file_path : String,
+  spec_name : String,
+  registry : @registry.KGFRegistry,
+) -> String? {
+  if spec_name.length() > 0 {
+    Some(spec_name)
+  } else {
+    registry.detect_from_path(file_path)
+  }
+}
+
+///|
+/// Read file and ensure trailing newline.
+fn read_source(file_path : String) -> String? {
+  let source = @fs.read_file_to_string(file_path) catch { _ => return None }
+  Some(if source.has_suffix("\n") { source } else { source + "\n" })
+}
+
+///|
+/// Tokenize a file and return tokens as JSON string.
+pub fn tokenize_json(
+  file_path : String,
+  spec_name : String,
+  kgf_dir : String,
+) -> String? {
+  let registry = @registry.KGFRegistry::load_from_dir(kgf_dir)
+  let resolved = match resolve_spec_name(file_path, spec_name, registry) {
+    Some(n) => n
+    None => return None
+  }
+  let spec = match registry.get_spec(resolved) {
+    Some(s) => s
+    None => return None
+  }
+  let source = match read_source(file_path) {
+    Some(s) => s
+    None => return None
+  }
+  let lex = @lexer.Lexer::new(spec.get_tokens())
+  let tokens = lex.tokenize(source)
+  // Build pos → (line, col) lookup from source
+  let line_starts = build_line_starts(source)
+  let arr : Array[Json] = tokens
+    .iter()
+    .map(fn(tok) {
+      let (line, col) = pos_to_line_col(line_starts, tok.pos)
+      let obj : Map[String, Json] = {}
+      obj.set("kind", tok.kind.to_json())
+      obj.set("text", tok.text.to_json())
+      obj.set("line", line.to_json())
+      obj.set("col", col.to_json())
+      Json::object(obj)
+    })
+    .collect()
+  Some(Json::array(arr).stringify())
+}
+
+///|
+/// Extract edges from a file and return as JSON string.
+pub fn edges_json(
+  file_path : String,
+  spec_name : String,
+  kgf_dir : String,
+) -> String? {
+  let registry = @registry.KGFRegistry::load_from_dir(kgf_dir)
+  let resolved = match resolve_spec_name(file_path, spec_name, registry) {
+    Some(n) => n
+    None => return None
+  }
+  let spec = match registry.get_spec(resolved) {
+    Some(s) => s
+    None => return None
+  }
+  let source = match read_source(file_path) {
+    Some(s) => s
+    None => return None
+  }
+  let lex = @lexer.Lexer::new(spec.get_tokens())
+  let tokens = lex.tokenize(source)
+  let peg = @peg.build_peg(spec) catch { _ => return None }
+  let start_rule = spec.get_start_rule()
+  match @peg.run_parse(peg, spec, start_rule, tokens) {
+    Some(eval_result) => {
+      let events = eval_result.get_events()
+      let graph = @graph.CodeGraph::new()
+      let _ = graph.get_or_add_module(file_path, file=Some(file_path))
+      let ctx = @semantics.SemEvalCtx::new(
+        spec,
+        graph,
+        file_path,
+        "",
+        spec.get_language(),
+        fn(_path) { false },
+      )
+      for event in events {
+        @semantics.eval_rule_semantics(event.0, event.1, ctx)
+      }
+      let edges = graph.get_edges()
+      let arr : Array[Json] = edges
+        .iter()
+        .map(fn(edge) {
+          let obj : Map[String, Json] = {}
+          obj.set("from", edge.from.to_json())
+          obj.set("to", edge.to.to_json())
+          obj.set("kind", edge.kind.to_string().to_json())
+          Json::object(obj)
+        })
+        .collect()
+      Some(Json::array(arr).stringify())
+    }
+    None => None
+  }
+}
+
+///|
+/// Build an array of byte offsets where each line starts (1-indexed).
+fn build_line_starts(source : String) -> Array[Int] {
+  let starts : Array[Int] = [0] // line 1 starts at offset 0
+  for i, c in source {
+    if c == '\n' {
+      starts.push(i + 1)
+    }
+  }
+  starts
+}
+
+///|
+/// Convert a byte offset to (line, col), both 1-indexed.
+fn pos_to_line_col(line_starts : Array[Int], pos : Int) -> (Int, Int) {
+  // Binary search for the last line_start <= pos
+  let mut lo = 0
+  let mut hi = line_starts.length() - 1
+  while lo < hi {
+    let mid = (lo + hi + 1) / 2
+    if line_starts[mid] <= pos {
+      lo = mid
+    } else {
+      hi = mid - 1
+    }
+  }
+  (lo + 1, pos - line_starts[lo] + 1)
 }

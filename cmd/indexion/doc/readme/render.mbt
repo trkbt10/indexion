@@ -35,53 +35,24 @@ pub fn render_markdown(docs : Array[(PackageInfo, ExtractedDoc)]) -> String {
 }
 
 ///|
-/// Render extracted docs as JSON.
+/// Render extracted docs as JSON using Json type.
 pub fn render_json(docs : Array[(PackageInfo, ExtractedDoc)]) -> String {
-  let buf = StringBuilder::new()
-  buf.write_string("[\n")
-  for i, item in docs {
-    let (pkg, doc) = item
-    if i > 0 {
-      buf.write_string(",\n")
-    }
-    buf.write_string("  {\n")
-    buf.write_string("    \"path\": \"")
-    buf.write_string(escape_json_string(pkg.path))
-    buf.write_string("\",\n")
-    buf.write_string("    \"name\": \"")
-    buf.write_string(escape_json_string(pkg.name))
-    buf.write_string("\",\n")
-    match doc.title {
-      Some(t) => {
-        buf.write_string("    \"title\": \"")
-        buf.write_string(escape_json_string(t))
-        buf.write_string("\",\n")
+  let arr : Array[Json] = docs
+    .iter()
+    .map(fn(item) {
+      let (pkg, doc) = item
+      let obj : Map[String, Json] = {}
+      obj.set("path", pkg.path.to_json())
+      obj.set("name", pkg.name.to_json())
+      match doc.title {
+        Some(t) => obj.set("title", t.to_json())
+        None => ()
       }
-      None => ()
-    }
-    buf.write_string("    \"content\": \"")
-    buf.write_string(escape_json_string(doc.content))
-    buf.write_string("\"\n")
-    buf.write_string("  }")
-  }
-  buf.write_string("\n]\n")
-  buf.to_string()
-}
-
-///|
-fn escape_json_string(s : String) -> String {
-  let buf = StringBuilder::new()
-  for c in s {
-    match c {
-      '"' => buf.write_string("\\\"")
-      '\\' => buf.write_string("\\\\")
-      '\n' => buf.write_string("\\n")
-      '\r' => buf.write_string("\\r")
-      '\t' => buf.write_string("\\t")
-      _ => buf.write_char(c)
-    }
-  }
-  buf.to_string()
+      obj.set("content", doc.content.to_json())
+      Json::object(obj)
+    })
+    .collect()
+  Json::array(arr).stringify(indent=2)
 }
 
 ///|

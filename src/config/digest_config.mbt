@@ -43,9 +43,7 @@ pub fn parse_digest_section_key(
 
 ///|
 /// Load DigestFileConfig from JSON root object.
-pub fn load_digest_from_json_root(
-  root : Map[String, Json],
-) -> DigestFileConfig {
+pub fn load_digest_from_json_root(root : Map[String, Json]) -> DigestFileConfig {
   let digest_json = match root.get("digest") {
     Some(value) => value
     None => return DigestFileConfig::empty()
@@ -79,10 +77,7 @@ pub fn load_digest_from_json_root(
   match digest_obj.get("dim") {
     Some(value) =>
       match parse_json_int(value) {
-        Some(v) =>
-          if v > 0 {
-            config = { ..config, dim: Some(v) }
-          }
+        Some(v) => if v > 0 { config = { ..config, dim: Some(v) } }
         None => ()
       }
     None => ()
@@ -112,10 +107,7 @@ pub fn load_digest_from_json_root(
   match digest_obj.get("model") {
     Some(value) =>
       match parse_json_string(value) {
-        Some(v) =>
-          if v.length() > 0 {
-            config = { ..config, model: Some(v) }
-          }
+        Some(v) => if v.length() > 0 { config = { ..config, model: Some(v) } }
         None => ()
       }
     None => ()

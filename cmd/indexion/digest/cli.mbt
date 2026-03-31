@@ -212,11 +212,17 @@ pub fn CliConfig::apply_file_config(
   let defaults = CliConfig::default()
   let mut config = self
   match file.provider {
-    Some(v) => if config.provider == defaults.provider { config = { ..config, provider: v } }
+    Some(v) =>
+      if config.provider == defaults.provider {
+        config = { ..config, provider: v }
+      }
     None => ()
   }
   match file.strategy {
-    Some(v) => if config.strategy == defaults.strategy { config = { ..config, strategy: v } }
+    Some(v) =>
+      if config.strategy == defaults.strategy {
+        config = { ..config, strategy: v }
+      }
     None => ()
   }
   match file.dim {
@@ -224,15 +230,24 @@ pub fn CliConfig::apply_file_config(
     None => ()
   }
   match file.api_key_env {
-    Some(v) => if config.api_key_env == defaults.api_key_env { config = { ..config, api_key_env: v } }
+    Some(v) =>
+      if config.api_key_env == defaults.api_key_env {
+        config = { ..config, api_key_env: v }
+      }
     None => ()
   }
   match file.api_base_url {
-    Some(v) => if config.api_base_url == defaults.api_base_url { config = { ..config, api_base_url: v } }
+    Some(v) =>
+      if config.api_base_url == defaults.api_base_url {
+        config = { ..config, api_base_url: v }
+      }
     None => ()
   }
   match file.model {
-    Some(v) => if config.model == defaults.model { config = { ..config, model: v } }
+    Some(v) =>
+      if config.model == defaults.model {
+        config = { ..config, model: v }
+      }
     None => ()
   }
   config
@@ -277,7 +292,10 @@ pub fn log_error(msg : String) -> Unit {
 
 ///|
 /// Build EmbeddingApiConfig from CLI config and resolved API key.
-fn build_api_config(config : CliConfig, api_key : String) -> @dconfig.EmbeddingApiConfig {
+fn build_api_config(
+  config : CliConfig,
+  api_key : String,
+) -> @dconfig.EmbeddingApiConfig {
   // If dim was not explicitly configured (still at TF-IDF default),
   // use the OpenAI default dimension for API providers.
   let dim = if config.dim == @dconfig.DEFAULT_TFIDF_DIM {
@@ -615,7 +633,9 @@ async fn run_query_async(config : CliConfig) -> Unit {
       Some(key) => @dconfig.OpenAI(build_api_config(config, key))
       None => {
         log_error(
-          "Index was built with OpenAI-compatible API. Set " + env_name + " to query.",
+          "Index was built with OpenAI-compatible API. Set " +
+          env_name +
+          " to query.",
         )
         return
       }

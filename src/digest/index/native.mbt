@@ -53,7 +53,8 @@ pub async fn DigestIndex::build_with_config(
   }
   // Get embeddings based on provider
   let all_embeddings = match digest_config.embedding_provider {
-    @config.OpenAI(api_config) => embed_with_openai_config(api_config, stale_texts)
+    @config.OpenAI(api_config) =>
+      embed_with_openai_config(api_config, stale_texts)
     @config.TfIdf(_dim) => {
       // Build TF-IDF vocabulary from all texts (including non-stale for IDF)
       let all_texts : Array[String] = []

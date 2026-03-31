@@ -146,7 +146,7 @@ fn parse_project_json_config(content : String) -> ProjectFileConfig {
   let reconcile = load_reconcile_from_json_root(root)
   // Parse [digest] section
   let digest = load_digest_from_json_root(root)
-  { ..config, reconcile, digest, }
+  { ..config, reconcile, digest }
 }
 
 ///|

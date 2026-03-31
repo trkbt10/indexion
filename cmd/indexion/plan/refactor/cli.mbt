@@ -48,7 +48,7 @@
 
 ///|
 /// CLI configuration.
-pub struct RefactorPlanConfig {
+pub(all) struct RefactorPlanConfig {
   target_dir : String
   threshold : Double // similarity threshold (default: 0.7 = 70%)
   strategy : String // "hybrid", "ncd", "tfidf"
@@ -478,14 +478,121 @@ fn extract_project_name(path : String) -> String {
 }
 
 ///|
-/// Entry point with a pre-built configuration.
+/// Render a refactor plan to the configured output format.
+fn render_plan(config : RefactorPlanConfig, plan : RefactorPlanJSON) -> String {
+  let name = if config.project_name.length() > 0 {
+    config.project_name
+  } else {
+    extract_project_name(config.target_dir)
+  }
+  match config.format {
+    "github-issue" => {
+      let doc = refactor_to_plan_document(plan, name)
+      let issue = @plan_render.render_github_issue(doc)
+      issue.format()
+    }
+    _ =>
+      match config.style {
+        "structured" => render_structured(plan, name)
+        _ =>
+          match config.format {
+            "json" => render_json(plan)
+            "text" => render_text(plan)
+            _ => render_markdown(plan)
+          }
+      }
+  }
+}
+
+///|
+/// Collect similar pairs from files using the configured strategy.
+fn collect_similar_pairs(
+  files : Array[(String, String)],
+  config : RefactorPlanConfig,
+) -> Array[SimilarPair] {
+  let pairs : Array[SimilarPair] = []
+  if config.strategy == "tfidf" || config.strategy == "hybrid" {
+    let entries : Array[@batch.FileEntry] = []
+    for f in files {
+      entries.push(@batch.FileEntry::new(f.0, f.1))
+    }
+    let result = if config.strategy == "hybrid" {
+      @batch.compare_hybrid(entries, config.threshold)
+    } else {
+      @batch.compare_tfidf(entries, config.threshold)
+    }
+    for m in result.matches {
+      pairs.push({ file1: m.file1, file2: m.file2, similarity: m.similarity })
+    }
+  } else {
+    let entries : Array[@batch.FileEntry] = []
+    for f in files {
+      entries.push(@batch.FileEntry::new(f.0, f.1))
+    }
+    let score_fn : (String, String) -> Double = match config.strategy {
+      "ncd" => fn(t1, t2) { @ncd.NCDStrategy::new().similarity(t1, t2) }
+      _ => fn(t1, t2) { @hybrid.HybridStrategy::new().similarity(t1, t2) }
+    }
+    let result = @batch.compare_with_prefilter(
+      entries,
+      config.threshold,
+      score_fn,
+    )
+    for m in result.matches {
+      pairs.push({ file1: m.file1, file2: m.file2, similarity: m.similarity })
+    }
+  }
+  pairs
+}
+
+///|
+/// Core refactor analysis. Returns rendered output string or None.
+pub fn run_to_string(config : RefactorPlanConfig) -> String? {
+  if config.target_dir.length() == 0 {
+    return None
+  }
+  let registry = @kgf_features.load_registry(
+    specs_dir=config.specs_dir,
+    target_dir=config.target_dir,
+  )
+  let files = @common.collect_files(
+    [config.target_dir],
+    includes=config.includes,
+    excludes=config.excludes,
+  )
+  if files.length() < 2 {
+    return None
+  }
+  let pairs = collect_similar_pairs(files, config)
+  let clusters = find_clusters(files, pairs, config.threshold)
+  let file_contents : Map[String, String] = {}
+  for f in files {
+    file_contents.set(f.0, f.1)
+  }
+  let plan = build_refactor_plan(
+    clusters,
+    config,
+    file_contents,
+    effective_threshold=config.threshold,
+    registry~,
+  )
+  let func_dups = find_function_duplicates(files, config.threshold, registry)
+  let magic_strs = find_magic_strings(files, registry)
+  let plan = {
+    ..plan,
+    function_duplicates: func_dups,
+    magic_strings: magic_strs,
+  }
+  Some(render_plan(config, plan))
+}
+
+///|
+/// Entry point with a pre-built configuration (with CLI progress output).
 fn run_with_config(config : RefactorPlanConfig) -> Unit {
   if config.target_dir.length() == 0 {
     println(@help.dir_required)
     return
   }
-  // Progress output goes to stderr-equivalent: only print when stdout is not
-  // carrying a machine-readable payload (json to stdout).
   let show_progress = config.output.length() > 0 || config.format != "json"
   if show_progress {
     println("=== indexion plan refactor ===")
@@ -499,12 +606,11 @@ fn run_with_config(config : RefactorPlanConfig) -> Unit {
     )
     println("")
   }
-  // Load KGF registry for language detection
   let registry = @kgf_features.load_registry(
     specs_dir=config.specs_dir,
     target_dir=config.target_dir,
   )
-  // Detect project type from marker files (search target dir and ancestors)
+  // Detect project type from marker files
   let detected_markers : Array[String] = []
   match registry {
     Some(reg) => {
@@ -515,7 +621,6 @@ fn run_with_config(config : RefactorPlanConfig) -> Unit {
         for marker in markers {
           for entry in entries {
             if @glob.glob_match(entry, marker) {
-              // Avoid duplicates
               let mut exists = false
               for existing in detected_markers {
                 if existing == marker {
@@ -550,9 +655,6 @@ fn run_with_config(config : RefactorPlanConfig) -> Unit {
       println("Project type: unknown")
     }
     println("")
-  }
-  // [1/4] Collect files
-  if show_progress {
     println("[1/4] Collecting files...")
   }
   let files = @common.collect_files(
@@ -567,51 +669,11 @@ fn run_with_config(config : RefactorPlanConfig) -> Unit {
     println("Error: Need at least 2 files to analyze.")
     return
   }
-  // [2/4] Calculate all pairs using optimized batch processing for TF-IDF
   if show_progress {
     println("[2/4] Calculating similarity pairs...")
   }
   let sim_started = @env.now()
-  let pairs : Array[SimilarPair] = []
-  let effective_threshold = config.threshold
-  if config.strategy == "tfidf" || config.strategy == "hybrid" {
-    // Use batch comparison (hybrid combines TF-IDF + APTED)
-    let entries : Array[@batch.FileEntry] = []
-    for f in files {
-      entries.push(@batch.FileEntry::new(f.0, f.1))
-    }
-    let result = if config.strategy == "hybrid" {
-      @batch.compare_hybrid(entries, config.threshold)
-    } else {
-      @batch.compare_tfidf(entries, config.threshold)
-    }
-    for m in result.matches {
-      pairs.push({ file1: m.file1, file2: m.file2, similarity: m.similarity })
-    }
-  } else {
-    // NCD: use batch comparison with TF-IDF pre-filtering
-    if show_progress {
-      println(
-        "      Comparing pairs with pre-filtering (" + config.strategy + ")...",
-      )
-    }
-    let entries : Array[@batch.FileEntry] = []
-    for f in files {
-      entries.push(@batch.FileEntry::new(f.0, f.1))
-    }
-    let score_fn : (String, String) -> Double = match config.strategy {
-      "ncd" => fn(t1, t2) { @ncd.NCDStrategy::new().similarity(t1, t2) }
-      _ => fn(t1, t2) { @hybrid.HybridStrategy::new().similarity(t1, t2) }
-    }
-    let result = @batch.compare_with_prefilter(
-      entries,
-      config.threshold,
-      score_fn,
-    )
-    for m in result.matches {
-      pairs.push({ file1: m.file1, file2: m.file2, similarity: m.similarity })
-    }
-  }
+  let pairs = collect_similar_pairs(files, config)
   if show_progress {
     println(
       "      Found " +
@@ -620,13 +682,10 @@ fn run_with_config(config : RefactorPlanConfig) -> Unit {
       @common.elapsed_ms(sim_started).to_string() +
       "ms)",
     )
-  }
-  // [3/4] Find clusters and build plan
-  if show_progress {
     println("[3/4] Clustering and analyzing duplicates...")
   }
   let cluster_started = @env.now()
-  let clusters = find_clusters(files, pairs, effective_threshold)
+  let clusters = find_clusters(files, pairs, config.threshold)
   if show_progress {
     println(
       "      Clustering: " +
@@ -636,23 +695,19 @@ fn run_with_config(config : RefactorPlanConfig) -> Unit {
       "ms)",
     )
   }
-  // Build file contents map for concrete suggestions
   let file_contents : Map[String, String] = {}
   for f in files {
     file_contents.set(f.0, f.1)
   }
-  // Build intermediate plan
   let plan_started = @env.now()
   let plan = build_refactor_plan(
     clusters,
     config,
     file_contents,
-    effective_threshold~,
+    effective_threshold=config.threshold,
     registry~,
   )
-  // Function-level duplicate detection (including same-file)
   let func_dups = find_function_duplicates(files, config.threshold, registry)
-  // Magic string detection (repeated string literals across files)
   let magic_strs = find_magic_strings(files, registry)
   let plan = {
     ..plan,
@@ -670,35 +725,10 @@ fn run_with_config(config : RefactorPlanConfig) -> Unit {
       magic_strs.length().to_string() +
       ")",
     )
-  }
-  // [4/4] Render to selected format/style
-  let name = if config.project_name.length() > 0 {
-    config.project_name
-  } else {
-    extract_project_name(config.target_dir)
-  }
-  if show_progress {
     println("[4/4] Rendering " + config.format + " output...")
     println("")
   }
-  let output_content = match config.format {
-    "github-issue" => {
-      let doc = refactor_to_plan_document(plan, name)
-      let issue = @plan_render.render_github_issue(doc)
-      issue.format()
-    }
-    _ =>
-      match config.style {
-        "structured" => render_structured(plan, name)
-        _ =>
-          match config.format {
-            "json" => render_json(plan)
-            "text" => render_text(plan)
-            _ => render_markdown(plan)
-          }
-      }
-  }
-  // Output
+  let output_content = render_plan(config, plan)
   @common.write_output(config.output, output_content, label="Refactoring plan")
 }
 

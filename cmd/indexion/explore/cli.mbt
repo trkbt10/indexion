@@ -54,7 +54,7 @@
 
 ///|
 /// CLI configuration.
-pub struct ExploreConfig {
+pub(all) struct ExploreConfig {
   target_dirs : Array[String] // multiple directories supported
   format : String // "matrix", "list", "cluster", "json"
   strategy : String // "hybrid", "ncd", "tfidf", "apted", "tsed"
@@ -212,53 +212,6 @@ fn pair_threshold_for_format(format : String, threshold : Double) -> Double {
 }
 
 // elapsed_ms: use @common (SoT)
-
-///|
-fn average_count(total : Int, count : Int) -> Int {
-  if count <= 0 {
-    0
-  } else {
-    total / count
-  }
-}
-
-///|
-fn report_tfidf_build_stats(
-  stats : @tfidf.TfidfBatchBuildStats,
-  elapsed : UInt64,
-) -> Unit {
-  println(
-    "      TF-IDF build: " +
-    stats.total_tokens.to_string() +
-    " tokens (" +
-    average_count(stats.total_tokens, stats.document_count).to_string() +
-    "/file), " +
-    stats.total_vector_terms.to_string() +
-    " vector terms, " +
-    stats.vocabulary_size.to_string() +
-    " unique terms in " +
-    elapsed.to_string() +
-    "ms",
-  )
-}
-
-///|
-fn report_tfidf_search_stats(
-  stats : @tfidf.TfidfPairSearchStats,
-  elapsed : UInt64,
-) -> Unit {
-  println(
-    "      Candidate search: " +
-    stats.posting_hits.to_string() +
-    " posting hits, " +
-    stats.candidate_pairs.to_string() +
-    " candidate pairs, " +
-    stats.cosine_evaluations.to_string() +
-    " cosine evals in " +
-    elapsed.to_string() +
-    "ms",
-  )
-}
 
 ///|
 fn calculate_tfidf_pairs(
@@ -446,40 +399,94 @@ fn output_cluster(
 }
 
 ///|
+/// Build JSON result from files and pairs using Json type.
+fn build_json(files : Array[(String, String)], pairs : Array[FilePair]) -> Json {
+  let files_json : Array[Json] = files
+    .iter()
+    .map(fn(f) { f.0.to_json() })
+    .collect()
+  let pairs_json : Array[Json] = pairs
+    .iter()
+    .map(fn(pair) {
+      let obj : Map[String, Json] = {}
+      obj.set("file1", pair.file1.to_json())
+      obj.set("file2", pair.file2.to_json())
+      obj.set("similarity", pair.similarity.to_json())
+      Json::object(obj)
+    })
+    .collect()
+  let root : Map[String, Json] = {}
+  root.set("files", Json::array(files_json))
+  root.set("pairs", Json::array(pairs_json))
+  Json::object(root)
+}
+
+///|
 /// Output as JSON format.
 fn output_json(
   files : Array[(String, String)],
   pairs : Array[FilePair],
 ) -> Unit {
-  println("{")
-  println("  \"files\": [")
-  for i, f in files {
-    let comma = if i < files.length() - 1 { "," } else { "" }
-    println("    \"" + f.0 + "\"" + comma)
-  }
-  println("  ],")
-  println("  \"pairs\": [")
-  for i, pair in pairs {
-    let comma = if i < pairs.length() - 1 { "," } else { "" }
-    println(
-      "    {\"file1\": \"" +
-      pair.file1 +
-      "\", \"file2\": \"" +
-      pair.file2 +
-      "\", \"similarity\": " +
-      pair.similarity.to_string() +
-      "}" +
-      comma,
-    )
-  }
-  println("  ]")
-  println("}")
+  println(build_json(files, pairs).stringify(indent=2))
 }
 
 // truncate: use @common (SoT)
 
 ///|
-/// Run the explore command from argparse matches.
+/// Core explore logic. Returns (files, filtered_pairs) or None on failure.
+fn run_core(
+  config : ExploreConfig,
+) -> (Array[(String, String)], Array[FilePair])? {
+  if config.target_dirs.length() == 0 {
+    return None
+  }
+  let files = @common.collect_files(
+    config.target_dirs,
+    includes=config.includes,
+    excludes=config.excludes,
+    extensions=config.extensions,
+  )
+  if files.length() < 2 {
+    return None
+  }
+  let min_similarity = pair_threshold_for_format(
+    config.format,
+    config.threshold,
+  )
+  let is_tree_strategy = config.strategy == "apted" || config.strategy == "tsed"
+  let registry = @kgf_features.load_registry(
+    specs_dir=config.specs_dir,
+    target_dirs=config.target_dirs,
+  )
+  let pairs = if is_tree_strategy {
+    calculate_function_pairs(files, config.strategy, min_similarity, registry)
+  } else if config.strategy == "tfidf" {
+    let (tokenized, _) = @kgf_features.tokenize_files_with_kgf(files, registry)
+    let batch = @tfidf.TfidfBatch::from_tokens(tokenized)
+    let (pairs, _) = calculate_tfidf_pairs(batch, files, min_similarity)
+    pairs
+  } else {
+    calculate_pairs(files, config.strategy, min_similarity)
+  }
+  let filtered_pairs = if config.target_dirs.length() > 1 {
+    filter_cross_dir_pairs(pairs)
+  } else {
+    pairs
+  }
+  Some((files, filtered_pairs))
+}
+
+///|
+/// Run explore and return result as JSON string.
+pub fn run_to_json(config : ExploreConfig) -> String? {
+  match run_core(config) {
+    Some((files, pairs)) => Some(build_json(files, pairs).stringify())
+    None => None
+  }
+}
+
+///|
+/// Run the explore command from argparse matches (with CLI progress output).
 pub fn run_matches(matches : @argparse.Matches) -> Unit {
   let config = ExploreConfig::from_matches(matches)
   if config.target_dirs.length() == 0 {
@@ -499,99 +506,23 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   println("Directories: " + dirs_str)
   println("Strategy: " + config.strategy)
   println("")
-  // Collect files with progress (respects .gitignore, .indexionignore)
   println("[1/2] Scanning files...")
-  let files = @common.collect_files(
-    config.target_dirs,
-    includes=config.includes,
-    excludes=config.excludes,
-    extensions=config.extensions,
-  )
-  println("      Scan complete: " + files.length().to_string() + " files")
-  if files.length() < 2 {
-    println("Need at least 2 files to compare.")
-    return
+  // Delegate to run_core (SoT for explore logic)
+  let (files, filtered_pairs) = match run_core(config) {
+    Some(r) => r
+    None => {
+      println("Need at least 2 files to compare.")
+      return
+    }
   }
-  // Calculate total pairs for progress
-  let total_pairs = files.length() * (files.length() - 1) / 2
   println(
-    "[2/2] Calculating " + total_pairs.to_string() + " similarity pairs...",
+    "      Done (" +
+    filtered_pairs.length().to_string() +
+    " pairs from " +
+    files.length().to_string() +
+    " files)",
   )
-  let min_similarity = pair_threshold_for_format(
-    config.format,
-    config.threshold,
-  )
-  // Check if using tree-based strategy (function-level comparison)
-  let is_tree_strategy = config.strategy == "apted" || config.strategy == "tsed"
-  let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
-    target_dirs=config.target_dirs,
-  )
-  let pairs = if is_tree_strategy {
-    calculate_function_pairs(files, config.strategy, min_similarity, registry)
-  } else if config.strategy == "tfidf" {
-    println("      Tokenizing with KGF lexer...")
-    let tokenize_started = @env.now()
-    let (tokenized, kgf_hits) = @kgf_features.tokenize_files_with_kgf(
-      files, registry,
-    )
-    let fallback_count = files.length() - kgf_hits
-    println(
-      "      Tokenized: " +
-      kgf_hits.to_string() +
-      " with KGF, " +
-      fallback_count.to_string() +
-      " fallback in " +
-      @common.elapsed_ms(tokenize_started).to_string() +
-      "ms",
-    )
-    println("      Building TF-IDF vectors...")
-    let build_started = @env.now()
-    let batch = @tfidf.TfidfBatch::from_tokens(tokenized)
-    report_tfidf_build_stats(
-      batch.build_stats(),
-      @common.elapsed_ms(build_started),
-    )
-    let search_started = @env.now()
-    let (pairs, search_stats) = calculate_tfidf_pairs(
-      batch, files, min_similarity,
-    )
-    report_tfidf_search_stats(search_stats, @common.elapsed_ms(search_started))
-    pairs
-  } else {
-    calculate_pairs(files, config.strategy, min_similarity)
-  }
-  // Filter to cross-directory pairs when multiple directories
-  let filtered_pairs = if config.target_dirs.length() > 1 {
-    let cross = filter_cross_dir_pairs(pairs)
-    println(
-      "      Cross-directory filter: " +
-      cross.length().to_string() +
-      " pairs (from " +
-      pairs.length().to_string() +
-      " total)",
-    )
-    cross
-  } else {
-    pairs
-  }
-  if min_similarity > 0.0 {
-    println(
-      "      Done (" +
-      filtered_pairs.length().to_string() +
-      " pairs kept at >= " +
-      @common.format_percent(min_similarity) +
-      ")",
-    )
-  } else {
-    println(
-      "      Done (" +
-      filtered_pairs.length().to_string() +
-      " pairs calculated)",
-    )
-  }
   println("")
-  // Output based on format
   match config.format {
     "list" => output_list(filtered_pairs)
     "cluster" => output_cluster(files, filtered_pairs, config.threshold)

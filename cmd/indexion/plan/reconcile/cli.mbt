@@ -98,19 +98,29 @@ fn maybe_use_cache(
 }
 
 ///|
-/// Entry point for the reconcile subcommand via argparse matches.
-pub async fn run_matches(matches : @argparse.Matches) -> Unit {
-  let config = resolve_config_from_matches(matches)
-  run_with_config(config)
+/// Core analysis result — discriminated by whether cache was hit.
+priv enum AnalysisResult {
+  /// Cache hit: only the report is available, no sync state to persist.
+  Cached(ReconcileReport)
+  /// Full analysis: report + sync state needed for cache persistence.
+  Fresh(ReconcileReport, FreshAnalysisState)
 }
 
 ///|
-async fn run_with_config(config : ReconcileConfig) -> Unit {
+/// State from a full (non-cached) analysis, needed for CLI cache persistence.
+priv struct FreshAnalysisState {
+  sync_result : IndexSyncResult
+  all_file_states : Array[FileState]
+  config_hash : String
+  source_fingerprint : String
+  generated_at : Int
+}
+
+///|
+/// Core reconcile analysis. Returns analysis result or None.
+async fn run_analysis(config : ReconcileConfig) -> AnalysisResult? {
   if config.target_dir.length() == 0 {
-    println("Error: directory path required.")
-    println("")
-    println(command().render_help())
-    return
+    return None
   }
   let generated_at = current_epoch_seconds()
   let mut manifest = load_manifest(config.index_dir)
@@ -125,7 +135,6 @@ async fn run_with_config(config : ReconcileConfig) -> Unit {
   } else {
     db
   }
-  // Fast path: KGF lexer-only symbol extraction (no PEG parse)
   let registry = @kgf_features.load_registry_or_empty(
     specs_dir=config.specs_dir,
     target_dir=config.target_dir,
@@ -158,16 +167,10 @@ async fn run_with_config(config : ReconcileConfig) -> Unit {
   let source_fingerprint = build_source_fingerprint(
     config_hash, all_file_states,
   )
+  // Fast path: cache hit — no sync state to carry
   match
     maybe_use_cache(manifest, config_hash, source_fingerprint, config.index_dir) {
-    Some(report) => {
-      @common.write_output(
-        config.output,
-        render_output(report, config.format),
-        label="Reconcile report",
-      )
-      return
-    }
+    Some(report) => return Some(Cached(report))
     None => ()
   }
   let candidate_build = if config.parallel && @parallel.available() {
@@ -211,21 +214,6 @@ async fn run_with_config(config : ReconcileConfig) -> Unit {
     config.target_dir,
     project_markers,
   )
-  let manifest_to_save = {
-    ..sync_result.manifest,
-    version: "reconcile-v1",
-    updated_at: generated_at,
-    config_hash,
-    source_fingerprint,
-    report_path: report_cache_path(config.index_dir),
-    files: {
-      let map : Map[String, FileState] = {}
-      for state in all_file_states {
-        map.set(state.path, state)
-      }
-      map
-    },
-  }
   let report = {
     version: "reconcile-v1",
     generated_at,
@@ -247,18 +235,93 @@ async fn run_with_config(config : ReconcileConfig) -> Unit {
     cache_state: {
       cache_hit: false,
       source_fingerprint,
-      review_state_hash: manifest_to_save.review_state_hash,
+      review_state_hash: sync_result.manifest.review_state_hash,
       reused_candidates: sync_result.reused_candidates,
       reused_logical_reviews: sync_result.reused_logical_reviews,
     },
   }
-  save_cached_report(config.index_dir, report)
-  save_manifest(config.index_dir, manifest_to_save)
-  save_record_db(config.index_dir, sync_result.db)
-  cleanup_stale_index(config.index_dir)
-  @common.write_output(
-    config.output,
-    render_output(report, config.format),
-    label="Reconcile report",
+  Some(
+    Fresh(report, {
+      sync_result,
+      all_file_states,
+      config_hash,
+      source_fingerprint,
+      generated_at,
+    }),
   )
+}
+
+///|
+/// Extract the report from an analysis result.
+fn AnalysisResult::report(self : AnalysisResult) -> ReconcileReport {
+  match self {
+    Cached(r) => r
+    Fresh(r, _) => r
+  }
+}
+
+///|
+/// Core reconcile analysis. Returns rendered output or None.
+/// Does not save cache/manifest (side-effect-free for API usage).
+pub async fn run_to_string(config : ReconcileConfig) -> String? {
+  match run_analysis(config) {
+    Some(result) => Some(render_output(result.report(), config.format))
+    None => None
+  }
+}
+
+///|
+/// Entry point for the reconcile subcommand via argparse matches.
+pub async fn run_matches(matches : @argparse.Matches) -> Unit {
+  let config = resolve_config_from_matches(matches)
+  run_with_config(config)
+}
+
+///|
+async fn run_with_config(config : ReconcileConfig) -> Unit {
+  if config.target_dir.length() == 0 {
+    println("Error: directory path required.")
+    println("")
+    println(command().render_help())
+    return
+  }
+  let result = match run_analysis(config) {
+    Some(r) => r
+    None => return
+  }
+  // Persist cache/manifest only on fresh analysis
+  match result {
+    Fresh(report, state) => {
+      let manifest_to_save = {
+        ..state.sync_result.manifest,
+        version: "reconcile-v1",
+        updated_at: state.generated_at,
+        config_hash: state.config_hash,
+        source_fingerprint: state.source_fingerprint,
+        report_path: report_cache_path(config.index_dir),
+        files: {
+          let map : Map[String, FileState] = {}
+          for s in state.all_file_states {
+            map.set(s.path, s)
+          }
+          map
+        },
+      }
+      save_cached_report(config.index_dir, report)
+      save_manifest(config.index_dir, manifest_to_save)
+      save_record_db(config.index_dir, state.sync_result.db)
+      cleanup_stale_index(config.index_dir)
+      @common.write_output(
+        config.output,
+        render_output(report, config.format),
+        label="Reconcile report",
+      )
+    }
+    Cached(report) =>
+      @common.write_output(
+        config.output,
+        render_output(report, config.format),
+        label="Reconcile report",
+      )
+  }
 }

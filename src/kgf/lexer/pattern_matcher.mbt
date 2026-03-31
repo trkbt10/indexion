@@ -60,7 +60,7 @@ priv enum PatternElement {
 
 ///|
 /// Mutable capture group state for tracking during matching.
-struct CaptureState {
+priv struct CaptureState {
   /// (start, end) positions for each capture group, indexed by group number (1-based).
   groups : Array[(Int, Int)]
   /// Total number of capture groups in the pattern.
@@ -74,7 +74,12 @@ fn CaptureState::new(count : Int) -> CaptureState {
 }
 
 ///|
-fn CaptureState::set(self : CaptureState, index : Int, start : Int, end : Int) -> Unit {
+fn CaptureState::set(
+  self : CaptureState,
+  index : Int,
+  start : Int,
+  end : Int,
+) -> Unit {
   if index >= 0 && index < self.groups.length() {
     self.groups[index] = (start, end)
   }
@@ -152,7 +157,7 @@ priv enum FirstCharFilter {
 
 ///|
 /// Mutable state for pattern parsing — tracks capture group numbering.
-struct ParseContext {
+priv struct ParseContext {
   mut next_capture : Int
 }
 
@@ -546,8 +551,7 @@ fn parse_pattern_ctx(
             (Alternation(parsed_alternatives), group_end + 1)
           } else {
             match parse_pattern_ctx(group_pattern, ctx) {
-              Some(group_elems) =>
-                (Group(group_elems, None), group_end + 1)
+              Some(group_elems) => (Group(group_elems, None), group_end + 1)
               None => return None
             }
           }
@@ -1117,7 +1121,10 @@ fn enumerate_group_end_positions(
     // Optimization: single-element group — enumerate like a simple element
     let qe = elements[0]
     let max_possible = count_simple_matches(
-      qe.element, input_chars, pos, case_insensitive,
+      qe.element,
+      input_chars,
+      pos,
+      case_insensitive,
     )
     let bounds = quantifier_bounds(qe.quantifier, max_possible)
     match bounds {
@@ -1204,9 +1211,12 @@ fn compile_pattern(
     compiled_alts, case_insensitive,
   )
   let capture_count = ctx.next_capture - 1
-  Some(
-    { alternatives: compiled_alts, case_insensitive, first_char_filter, capture_count },
-  )
+  Some({
+    alternatives: compiled_alts,
+    case_insensitive,
+    first_char_filter,
+    capture_count,
+  })
 }
 
 ///|
@@ -1350,7 +1360,11 @@ fn match_elements_backtrack(
         )
       } else {
         match_group_positions(
-          group_elements, qe.quantifier, qe.lazy_, input_chars, pos,
+          group_elements,
+          qe.quantifier,
+          qe.lazy_,
+          input_chars,
+          pos,
           case_insensitive,
         )
       }

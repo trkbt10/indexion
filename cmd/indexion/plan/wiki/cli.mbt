@@ -55,16 +55,12 @@ pub fn command() -> @argparse.Command {
         about="Output format: md, json, github-issue",
         default_values=["md"],
       ),
-      @argparse.OptionArg(
-        "specs-dir",
-        about=@help.specs_dir,
-        default_values=["kgfs"],
-      ),
-      @argparse.OptionArg(
-        "wiki-dir",
-        about="Wiki directory",
-        default_values=[".indexion/wiki"],
-      ),
+      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
+        "kgfs",
+      ]),
+      @argparse.OptionArg("wiki-dir", about="Wiki directory", default_values=[
+        ".indexion/wiki",
+      ]),
     ],
     positionals=[
       @argparse.PositionArg(
@@ -80,17 +76,15 @@ pub fn command() -> @argparse.Command {
 pub fn run_matches(matches : @argparse.Matches) -> Unit {
   let config = WikiPlanConfig::from_matches(matches)
   println("Analyzing project structure...")
-  let graph = match @digest_cli.build_graph_from_source(
-    config.target_dir,
-    config.specs_dir,
-  ) {
+  let graph = match
+    @digest_cli.build_graph_from_source(config.target_dir, config.specs_dir) {
     Some(g) => g
     None => {
       println("Failed to build project graph.")
       return
     }
   }
-  let existing_wiki = @wiki.load_wiki(config.wiki_dir)
+  let existing_wiki = @docgen_wiki.load_wiki(config.wiki_dir)
   let plan = analyze_and_plan(graph, existing_wiki, config)
   let output_content = match config.format {
     "json" => plan.to_json().stringify(indent=2)
@@ -103,7 +97,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
 ///|
 fn analyze_and_plan(
   graph : @graph.CodeGraph,
-  existing : @wiki.WikiData?,
+  existing : @docgen_wiki.WikiData?,
   _config : WikiPlanConfig,
 ) -> @plan_types.PlanDocument {
   let doc = @plan_types.PlanDocument::new("Wiki Documentation Plan")
@@ -122,7 +116,10 @@ fn analyze_and_plan(
     Some(wiki) => {
       let updates = detect_update_needs(wiki)
       match updates.content {
-        @plan_types.Checklist(items) => if items.length() > 0 { doc.add_section(updates) }
+        @plan_types.Checklist(items) =>
+          if items.length() > 0 {
+            doc.add_section(updates)
+          }
         _ => ()
       }
     }
@@ -134,24 +131,16 @@ fn analyze_and_plan(
 // --- Sections ---
 
 ///|
-fn build_summary_section(
-  graph : @graph.CodeGraph,
-) -> @plan_types.PlanSection {
+fn build_summary_section(graph : @graph.CodeGraph) -> @plan_types.PlanSection {
   let items : Array[@plan_types.ListItem] = []
   items.push(
-    @plan_types.ListItem::simple(
-      "Modules: " + graph.module_count().to_string(),
-    ),
+    @plan_types.ListItem::simple("Modules: " + graph.module_count().to_string()),
   )
   items.push(
-    @plan_types.ListItem::simple(
-      "Symbols: " + graph.symbol_count().to_string(),
-    ),
+    @plan_types.ListItem::simple("Symbols: " + graph.symbol_count().to_string()),
   )
   items.push(
-    @plan_types.ListItem::simple(
-      "Edges: " + graph.edge_count().to_string(),
-    ),
+    @plan_types.ListItem::simple("Edges: " + graph.edge_count().to_string()),
   )
   let mut internal = 0
   let top_dirs : Map[String, Bool] = {}
@@ -171,9 +160,7 @@ fn build_summary_section(
     }
   }
   items.push(
-    @plan_types.ListItem::simple(
-      "Internal modules: " + internal.to_string(),
-    ),
+    @plan_types.ListItem::simple("Internal modules: " + internal.to_string()),
   )
   let dir_names : Array[String] = []
   for entry in top_dirs {
@@ -192,32 +179,26 @@ fn build_summary_section(
 }
 
 ///|
-fn propose_page_structure(
-  graph : @graph.CodeGraph,
-) -> @plan_types.PlanSection {
+fn propose_page_structure(graph : @graph.CodeGraph) -> @plan_types.PlanSection {
   let items : Array[@plan_types.ListItem] = []
   items.push(
     @plan_types.ListItem::with_desc(
-      "Overview",
-      "Project purpose, architecture overview, getting started links",
+      "Overview", "Project purpose, architecture overview, getting started links",
     ),
   )
   items.push(
     @plan_types.ListItem::with_desc(
-      "Getting Started",
-      "Installation, project setup, first commands",
+      "Getting Started", "Installation, project setup, first commands",
     ),
   )
   items.push(
     @plan_types.ListItem::with_desc(
-      "Core Concepts",
-      "Key abstractions and how they relate (data flow diagrams)",
+      "Core Concepts", "Key abstractions and how they relate (data flow diagrams)",
     ),
   )
   items.push(
     @plan_types.ListItem::with_desc(
-      "Architecture",
-      "Layered architecture, package organization, extension points",
+      "Architecture", "Layered architecture, package organization, extension points",
     ),
   )
   // Cluster-specific pages from module structure
@@ -246,7 +227,7 @@ fn propose_page_structure(
 ///|
 fn build_writing_tasks(
   graph : @graph.CodeGraph,
-  existing : @wiki.WikiData?,
+  existing : @docgen_wiki.WikiData?,
 ) -> @plan_types.PlanSection {
   let items : Array[@plan_types.ChecklistItem] = []
   let existing_pages : Map[String, Bool] = {}
@@ -259,15 +240,25 @@ fn build_writing_tasks(
   }
   // Core pages
   let core = [
-    ("overview", "Overview — project purpose, architecture diagram, key concepts"),
-    ("getting-started", "Getting Started — installation, setup, first commands"),
-    ("core-concepts", "Core Concepts — key abstractions, data flow, concept map"),
+    (
+      "overview", "Overview — project purpose, architecture diagram, key concepts",
+    ),
+    (
+      "getting-started", "Getting Started — installation, setup, first commands",
+    ),
+    (
+      "core-concepts", "Core Concepts — key abstractions, data flow, concept map",
+    ),
     ("architecture", "Architecture — layers, package org, extension points"),
   ]
   for pair in core {
     let (id, desc) = pair
     if existing_pages.contains(id) {
-      items.push(@plan_types.ChecklistItem::with_desc(desc, "Exists — review for accuracy"))
+      items.push(
+        @plan_types.ChecklistItem::with_desc(
+          desc, "Exists — review for accuracy",
+        ),
+      )
     } else {
       items.push(@plan_types.ChecklistItem::with_priority(desc, 1))
     }
@@ -280,7 +271,11 @@ fn build_writing_tasks(
     let slug = @common.slugify(cluster)
     let label = cluster + " (" + module_count.to_string() + " modules)"
     if existing_pages.contains(slug) {
-      items.push(@plan_types.ChecklistItem::with_desc(label, "Exists — review for accuracy"))
+      items.push(
+        @plan_types.ChecklistItem::with_desc(
+          label, "Exists — review for accuracy",
+        ),
+      )
     } else {
       items.push(@plan_types.ChecklistItem::with_priority(label, 2))
     }
@@ -293,7 +288,7 @@ fn build_writing_tasks(
 }
 
 ///|
-fn detect_update_needs(wiki : @wiki.WikiData) -> @plan_types.PlanSection {
+fn detect_update_needs(wiki : @docgen_wiki.WikiData) -> @plan_types.PlanSection {
   let items : Array[@plan_types.ChecklistItem] = []
   for entry in wiki.pages {
     let page = entry.1

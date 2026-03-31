@@ -33,7 +33,7 @@
 
 ///|
 /// CLI configuration for graph command.
-pub struct GraphConfig {
+pub(all) struct GraphConfig {
   output : String
   specs_dir : String
   title : String
@@ -151,18 +151,8 @@ fn generate_json_output(
 }
 
 ///|
-/// Progress callback for file analysis.
-fn print_progress(info : (Int, Int, String)) -> Unit {
-  let (current, total, path) = info
-  println(
-    "[" + current.to_string() + "/" + total.to_string() + "] Analyzing: " + path,
-  )
-}
-
-///|
-/// Run the graph command from argparse matches.
-pub fn run_matches(matches : @argparse.Matches) -> Unit {
-  let config = GraphConfig::from_matches(matches)
+/// Core graph generation logic. Returns rendered output or None.
+pub fn run_to_string(config : GraphConfig) -> String? {
   let mut has_existing_input = false
   for path in config.input_paths {
     let exists = (@fs.is_dir(path) || @fs.is_file(path)) catch { _ => false }
@@ -172,17 +162,12 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     }
   }
   if not(has_existing_input) {
-    println("No input files found.")
-    return
+    return None
   }
-  // Stage 1: Load KGF specs to get ignore patterns.
-  println("Loading language specs...")
   let registry = @kgf_features.load_registry_or_empty(
     specs_dir=config.specs_dir,
     target_dirs=config.input_paths,
   )
-  // Stage 2: Collect candidate files using KGF ignore patterns.
-  println("Collecting files...")
   let kgf_ignore = registry.collect_ignore_patterns()
   let discover_opts = @pipeline.DiscoverOptions::new(kgf_ignore~)
   let candidate_paths = @pipeline.discover_files(
@@ -190,31 +175,21 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     discover_opts,
   )
   if candidate_paths.length() == 0 {
-    println("No input files found.")
-    return
+    return None
   }
   let specs = registry.to_specs_map()
-  // Stage 3: Filter supported files and read contents.
   let files = @pipeline.collect_supported_files(candidate_paths, registry)
   if files.length() == 0 {
-    println("No input files found.")
-    return
+    return None
   }
-  println("Found " + files.length().to_string() + " files to analyze.")
-  // Stage 4: Build dependency graph using KGF parser pipeline.
   let doc_config = @build.DocConfig::new(
     files,
     specs,
     options=@render.RenderOptions::new(format=@render.OutputFormat::json()),
   )
-  let progress = @build.ProgressCallback::new(print_progress)
-  let (_, graph) = @build.build_with_graph_progress(doc_config, Some(progress))
-  println("Analysis complete.")
-  // Extract dependencies and circular references
+  let (_, graph) = @build.build_with_graph_progress(doc_config, None)
   let deps = @query.extract_module_deps(graph)
   let circulars = @query.extract_circular_deps(graph)
-  // Stage 5: Render graph output.
-  // Build intermediate GraphJSON for flexible rendering
   let graph_json = @diagram.build_graph_from_deps(
     deps,
     circulars~,
@@ -222,10 +197,8 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     title=config.title,
   )
   let output = if config.format == "json" {
-    // Raw dependency JSON
     generate_json_output(deps, circulars)
   } else if config.format == "codegraph" {
-    // Full CodeGraph JSON (for digest indexing)
     graph.to_json_string()
   } else if config.format == "dot" {
     @diagram.render_dot(graph_json)
@@ -234,27 +207,27 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   } else if config.format == "text" {
     @diagram.render_text(graph_json)
   } else {
-    // Default to Mermaid
     @diagram.render_mermaid(graph_json)
   }
-  // Handle empty graph case
   if output.length() == 0 {
     if config.format == "json" {
-      @common.write_output(
-        config.output,
+      return Some(
         "{\"dependencies\":[],\"circular_dependencies\":[],\"statistics\":{\"total_dependencies\":0,\"circular_count\":0}}",
       )
-    } else {
-      println("No dependencies found in the analyzed files.")
     }
-    return
+    return None
   }
-  @common.write_output(config.output, output)
-  // Print summary to stderr if outputting to file
-  if config.output.length() > 0 {
-    println("Dependencies: " + deps.length().to_string())
-    if circulars.length() > 0 {
-      println("Circular references: " + circulars.length().to_string())
-    }
+  Some(output)
+}
+
+///|
+/// Run the graph command from argparse matches (with CLI progress output).
+pub fn run_matches(matches : @argparse.Matches) -> Unit {
+  let config = GraphConfig::from_matches(matches)
+  println("Loading language specs...")
+  println("Collecting files...")
+  match run_to_string(config) {
+    Some(output) => @common.write_output(config.output, output)
+    None => println("No input files found.")
   }
 }

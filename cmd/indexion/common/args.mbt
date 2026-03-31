@@ -609,7 +609,7 @@ pub fn slugify(text : String) -> String {
     if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' {
       buf.write_char(c)
     } else if c >= 'A' && c <= 'Z' {
-      buf.write_char(Char::from_int(c.to_int() + 32))
+      buf.write_char((c.to_int() + 32).unsafe_to_char())
     } else if c == ' ' || c == '/' || c == '_' || c == '.' {
       buf.write_char('-')
     }
@@ -626,7 +626,7 @@ pub fn make_anchor(text : String) -> String {
     if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' {
       buf.write_char(c)
     } else if c >= 'A' && c <= 'Z' {
-      buf.write_char(Char::from_int(c.to_int() + 32))
+      buf.write_char((c.to_int() + 32).unsafe_to_char())
     } else if c == ' ' {
       buf.write_char('-')
     }
@@ -643,7 +643,7 @@ pub fn capitalize(text : String) -> String {
   let chars = text.to_array()
   if chars[0] >= 'a' && chars[0] <= 'z' {
     let buf = StringBuilder::new()
-    buf.write_char(Char::from_int(chars[0].to_int() - 32))
+    buf.write_char((chars[0].to_int() - 32).unsafe_to_char())
     for i = 1; i < chars.length(); i = i + 1 {
       buf.write_char(chars[i])
     }

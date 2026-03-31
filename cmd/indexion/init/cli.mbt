@@ -192,9 +192,15 @@ fn write_digest_section(buf : StringBuilder) -> Unit {
   buf.write_string("[digest]\n")
   buf.write_string("# provider = \"auto\"       # auto | tfidf | openai\n")
   buf.write_string("# strategy = \"hnsw\"       # hnsw | bruteforce | ivf\n")
-  buf.write_string("# dim = 256              # TF-IDF dimension (ignored for openai)\n")
-  buf.write_string("# api_key_env = \"OPENAI_API_KEY\"  # env var name for API key\n")
-  buf.write_string("# api_base_url = \"https://api.openai.com/v1/embeddings\"\n")
+  buf.write_string(
+    "# dim = 256              # TF-IDF dimension (ignored for openai)\n",
+  )
+  buf.write_string(
+    "# api_key_env = \"OPENAI_API_KEY\"  # env var name for API key\n",
+  )
+  buf.write_string(
+    "# api_base_url = \"https://api.openai.com/v1/embeddings\"\n",
+  )
   buf.write_string("# model = \"text-embedding-3-small\"\n")
 }
 

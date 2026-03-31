@@ -52,10 +52,7 @@ pub fn ServeConfig::from_matches(matches : @argparse.Matches) -> ServeConfig {
     None => ()
   }
   match matches.values.get("host") {
-    Some(vals) =>
-      if vals.length() > 0 {
-        config = { ..config, host: vals[0] }
-      }
+    Some(vals) => if vals.length() > 0 { config = { ..config, host: vals[0] } }
     None => ()
   }
   match matches.values.get("index-dir") {
@@ -120,21 +117,13 @@ pub fn command() -> @argparse.Command {
     "serve",
     about="Start HTTP server for codebase search",
     options=[
-      @argparse.OptionArg(
-        "port",
-        about="Server port",
-        default_values=["3741"],
-      ),
-      @argparse.OptionArg(
-        "host",
-        about="Server host",
-        default_values=["127.0.0.1"],
-      ),
-      @argparse.OptionArg(
-        "index-dir",
-        about="Digest index directory",
-        default_values=[@dconfig.DEFAULT_INDEX_DIR],
-      ),
+      @argparse.OptionArg("port", about="Server port", default_values=["3741"]),
+      @argparse.OptionArg("host", about="Server host", default_values=[
+        "127.0.0.1",
+      ]),
+      @argparse.OptionArg("index-dir", about="Digest index directory", default_values=[
+        @dconfig.DEFAULT_INDEX_DIR,
+      ]),
       @argparse.OptionArg(
         "static-dir",
         about="Static files directory for SPA serving",
@@ -149,18 +138,14 @@ pub fn command() -> @argparse.Command {
         about="Embedding dimension (default: 256 for tfidf, 1536 for openai)",
         default_values=[dim_default],
       ),
-      @argparse.OptionArg(
-        "strategy",
-        about="vcdb: bruteforce, hnsw, ivf",
-        default_values=["hnsw"],
-      ),
+      @argparse.OptionArg("strategy", about="vcdb: bruteforce, hnsw, ivf", default_values=[
+        "hnsw",
+      ]),
       @argparse.OptionArg("specs", about="KGF specs directory", default_values=[
         "kgfs",
       ]),
     ],
-    flags=[
-      @argparse.FlagArg("cors", about="Enable CORS headers"),
-    ],
+    flags=[@argparse.FlagArg("cors", about="Enable CORS headers")],
     positionals=[
       @argparse.PositionArg(
         "workspace",
@@ -173,7 +158,7 @@ pub fn command() -> @argparse.Command {
 
 ///|
 /// Mutable server state — replaced atomically on rebuild.
-struct ServerState {
+priv struct ServerState {
   mut graph_json : String
   mut index : @index.DigestIndex
   mut index_json : String
@@ -193,11 +178,17 @@ pub fn ServeConfig::apply_file_config(
   let defaults = ServeConfig::default()
   let mut config = self
   match file.provider {
-    Some(v) => if config.provider == defaults.provider { config = { ..config, provider: v } }
+    Some(v) =>
+      if config.provider == defaults.provider {
+        config = { ..config, provider: v }
+      }
     None => ()
   }
   match file.strategy {
-    Some(v) => if config.strategy == defaults.strategy { config = { ..config, strategy: v } }
+    Some(v) =>
+      if config.strategy == defaults.strategy {
+        config = { ..config, strategy: v }
+      }
     None => ()
   }
   match file.dim {
@@ -205,15 +196,24 @@ pub fn ServeConfig::apply_file_config(
     None => ()
   }
   match file.api_key_env {
-    Some(v) => if config.api_key_env == defaults.api_key_env { config = { ..config, api_key_env: v } }
+    Some(v) =>
+      if config.api_key_env == defaults.api_key_env {
+        config = { ..config, api_key_env: v }
+      }
     None => ()
   }
   match file.api_base_url {
-    Some(v) => if config.api_base_url == defaults.api_base_url { config = { ..config, api_base_url: v } }
+    Some(v) =>
+      if config.api_base_url == defaults.api_base_url {
+        config = { ..config, api_base_url: v }
+      }
     None => ()
   }
   match file.model {
-    Some(v) => if config.model == defaults.model { config = { ..config, model: v } }
+    Some(v) =>
+      if config.model == defaults.model {
+        config = { ..config, model: v }
+      }
     None => ()
   }
   config
@@ -237,19 +237,14 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
       }
   }
   // Start HTTP server
-  let server = @mhttp.Server::new(
-    host=config.host,
-    port=config.port,
-  ) catch {
+  let server = @mhttp.Server::new(host=config.host, port=config.port) catch {
     err => {
       @digest_cli.log_error("Server init failed: " + err.to_string())
       return
     }
   }
   let listen_port = server.port()
-  println(
-    "Serving on http://" + config.host + ":" + listen_port.to_string(),
-  )
+  println("Serving on http://" + config.host + ":" + listen_port.to_string())
   println("Press Ctrl+C to stop.")
   server.run_forever(
     (req, body, conn) => {
@@ -261,10 +256,18 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         send_cors_preflight(conn, cors_enabled)
         return
       }
+      // Health check
+      if req.meth == @mhttp.Get && is_path(req.path, "/api/health") {
+        conn.skip_request_body()
+        send_json_ok(conn, "{\"status\":\"ready\"}", cors_enabled)
+        return
+      }
       // Rebuild endpoint
       if req.meth == @mhttp.Post && path == "/api/digest/rebuild" {
         conn.skip_request_body()
-        handle_rebuild(conn, state, config, digest_cli_config, digest_config, cors_enabled)
+        handle_rebuild(
+          conn, state, config, digest_cli_config, digest_config, cors_enabled,
+        )
         return
       }
       // API routes
@@ -309,15 +312,86 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
       }
       if req.meth == @mhttp.Get && path.has_prefix("/api/wiki/pages/") {
         conn.skip_request_body()
-        let page_id = path[16:].to_string() catch { _ => "" }
+        let page_id = path[16:].to_string()
         match state.wiki.pages.get(page_id) {
-          Some(page) => send_json_ok(conn, page.to_json().stringify(), cors_enabled)
+          Some(page) =>
+            send_json_ok(conn, page.to_json().stringify(), cors_enabled)
           None => send_json_error(conn, 404, "Page not found", cors_enabled)
         }
         return
       }
+      // Explore endpoint
+      if req.meth == @mhttp.Post && path == "/api/explore" {
+        let body_data = body.read_all()
+        let body_text = body_data.text()
+        handle_explore(conn, body_text, config, cors_enabled)
+        return
+      }
+      // KGF endpoints
+      if req.meth == @mhttp.Get && is_path(req.path, "/api/kgf/list") {
+        conn.skip_request_body()
+        send_json_ok(conn, @kgf_cli.list_specs_json(), cors_enabled)
+        return
+      }
+      if req.meth == @mhttp.Post && path == "/api/kgf/tokens" {
+        let body_data = body.read_all()
+        let body_text = body_data.text()
+        handle_kgf_tokens(conn, body_text, config, cors_enabled)
+        return
+      }
+      if req.meth == @mhttp.Post && path == "/api/kgf/edges" {
+        let body_data = body.read_all()
+        let body_text = body_data.text()
+        handle_kgf_edges(conn, body_text, config, cors_enabled)
+        return
+      }
+      // Doc graph endpoint
+      if req.meth == @mhttp.Post && path == "/api/doc/graph" {
+        let body_data = body.read_all()
+        let body_text = body_data.text()
+        handle_doc_graph(conn, body_text, config, cors_enabled)
+        return
+      }
+      // Plan endpoints
+      if req.meth == @mhttp.Post && path == "/api/plan/refactor" {
+        let body_data = body.read_all()
+        let body_text = body_data.text()
+        handle_plan_refactor(conn, body_text, config, cors_enabled)
+        return
+      }
+      if req.meth == @mhttp.Post && path == "/api/plan/documentation" {
+        let body_data = body.read_all()
+        let body_text = body_data.text()
+        handle_plan_documentation(conn, body_text, config, cors_enabled)
+        return
+      }
+      if req.meth == @mhttp.Post && path == "/api/plan/reconcile" {
+        let body_data = body.read_all()
+        let body_text = body_data.text()
+        handle_plan_reconcile(conn, body_text, config, cors_enabled)
+        return
+      }
+      if req.meth == @mhttp.Post && path == "/api/plan/solid" {
+        let body_data = body.read_all()
+        let body_text = body_data.text()
+        handle_plan_solid(conn, body_text, config, cors_enabled)
+        return
+      }
+      if req.meth == @mhttp.Post && path == "/api/plan/unwrap" {
+        let body_data = body.read_all()
+        let body_text = body_data.text()
+        handle_plan_unwrap(conn, body_text, config, cors_enabled)
+        return
+      }
+      if req.meth == @mhttp.Post && path == "/api/plan/readme" {
+        let body_data = body.read_all()
+        let body_text = body_data.text()
+        handle_plan_readme(conn, body_text, config, cors_enabled)
+        return
+      }
       // Static file serving
-      if config.static_dir != "" && req.meth == @mhttp.Get &&
+      if config.static_dir != "" &&
+        req.meth == @mhttp.Get &&
         not(path.has_prefix("/api/")) {
         conn.skip_request_body()
         serve_static(conn, config.static_dir, path)
@@ -329,9 +403,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
     },
     allow_failure=true,
   ) catch {
-    err => {
-      @digest_cli.log_error("Server failed: " + err.to_string())
-    }
+    err => @digest_cli.log_error("Server failed: " + err.to_string())
   }
 }
 
@@ -370,7 +442,9 @@ async fn do_load(
     return None
   }
   @digest_cli.log_progress("Loading index from " + config.index_dir + "...")
-  let graph_json = @fs.read_file_to_string(graph_path) catch { _ => return None }
+  let graph_json = @fs.read_file_to_string(graph_path) catch {
+    _ => return None
+  }
   let graph = match @graph.CodeGraph::from_json_string(graph_json) {
     Some(g) => g
     None => return None
@@ -380,7 +454,9 @@ async fn do_load(
   )
   let index = @digest_cli.load_or_create_index(config.index_dir, digest_config)
   // Populate units from graph (incremental — skips unchanged)
-  let _ = index.build_with_config(graph, digest_config) catch { _ => return None }
+  let _ = index.build_with_config(graph, digest_config) catch {
+    _ => return None
+  }
   let provider = @digest_cli.resolve_provider(digest_cli_config)
   let index_json = build_index_json(index)
   let stats_json = build_stats_json(graph, config.index_dir, digest_config)
@@ -388,17 +464,15 @@ async fn do_load(
     "Ready: " + index.units.length().to_string() + " functions indexed.",
   )
   let (wiki, wiki_search) = load_wiki_pages(config, provider)
-  Some(
-    ServerState::{
-      graph_json,
-      index,
-      index_json,
-      stats_json,
-      provider,
-      wiki,
-      wiki_search,
-    },
-  )
+  Some(ServerState::{
+    graph_json,
+    index,
+    index_json,
+    stats_json,
+    provider,
+    wiki,
+    wiki_search,
+  })
 }
 
 ///|
@@ -410,10 +484,8 @@ async fn do_build(
 ) -> ServerState? {
   @digest_cli.log_progress("Building from " + config.workspace_dir + "...")
   // Build graph from source
-  let graph = match @digest_cli.build_graph_from_source(
-    config.workspace_dir,
-    config.specs_dir,
-  ) {
+  let graph = match
+    @digest_cli.build_graph_from_source(config.workspace_dir, config.specs_dir) {
     Some(g) => g
     None => {
       @digest_cli.log_error(
@@ -427,10 +499,7 @@ async fn do_build(
     "Graph: " + graph.symbol_count().to_string() + " symbols",
   )
   // Load existing index for incremental update, or create new
-  let index = @digest_cli.load_or_create_index(
-    config.index_dir,
-    digest_config,
-  )
+  let index = @digest_cli.load_or_create_index(config.index_dir, digest_config)
   // Build — this is incremental: hashes detect unchanged functions
   let result = index.build_with_config(graph, digest_config) catch {
     @embed.ParseError(msg) => {
@@ -484,17 +553,15 @@ async fn do_build(
     "Ready: " + index.units.length().to_string() + " functions indexed.",
   )
   let (wiki, wiki_search) = load_wiki_pages(config, provider)
-  Some(
-    ServerState::{
-      graph_json,
-      index,
-      index_json,
-      stats_json,
-      provider,
-      wiki,
-      wiki_search,
-    },
-  )
+  Some(ServerState::{
+    graph_json,
+    index,
+    index_json,
+    stats_json,
+    provider,
+    wiki,
+    wiki_search,
+  })
 }
 
 ///|
@@ -533,7 +600,7 @@ fn is_path(req_path : String, expected : String) -> Bool {
 fn strip_query_string(path : String) -> String {
   for i = 0; i < path.length(); i = i + 1 {
     if path[i] == '?' {
-      return path[:i].to_string() catch { _ => path }
+      return path[:i].to_string()
     }
   }
   path
@@ -562,7 +629,9 @@ async fn send_json_ok(
     _ => return
   }
   conn.write(response)
-  conn.end_response() catch { _ => () }
+  conn.end_response() catch {
+    _ => ()
+  }
 }
 
 ///|
@@ -585,7 +654,9 @@ async fn send_json_error(
     _ => return
   }
   conn.write(response)
-  conn.end_response() catch { _ => () }
+  conn.end_response() catch {
+    _ => ()
+  }
 }
 
 ///|
@@ -597,7 +668,9 @@ async fn send_cors_preflight(
   conn.send_response(204, "No Content", extra_headers=headers) catch {
     _ => return
   }
-  conn.end_response() catch { _ => () }
+  conn.end_response() catch {
+    _ => ()
+  }
 }
 
 ///|
@@ -620,12 +693,12 @@ async fn handle_digest_query(
     send_json_error(conn, 400, "Missing 'purpose' field", cors)
     return
   }
-  let top_k = if json is { "topK": Number(n, ..) } {
+  let top_k = if json is { "topK": Number(n, ..), .. } {
     n.to_int()
   } else {
     10
   }
-  let min_score = if json is { "minScore": Number(s, ..) } {
+  let min_score = if json is { "minScore": Number(s, ..), .. } {
     s
   } else {
     0.1
@@ -643,38 +716,31 @@ async fn handle_digest_query(
       @query.query_by_purpose(index, purpose, options)
     }
   }
-  let results : Array[String] = []
+  let results : Array[Json] = []
   for hit in hits {
     if hit.score >= min_score {
       results.push(query_hit_to_json(hit))
     }
   }
-  let data = "[" + results.join(",") + "]"
-  send_json_ok(conn, data, cors)
+  send_json_ok(conn, Json::array(results).stringify(), cors)
 }
 
 ///|
-fn query_hit_to_json(hit : @types.QueryHit) -> String {
-  let name = Json::string(hit.function.name()).stringify()
-  let file = Json::string(hit.function.module_id).stringify()
-  let score = hit.score.to_string()
+fn query_hit_to_json(hit : @types.QueryHit) -> Json {
+  let obj : Map[String, Json] = {}
+  obj.set("name", hit.function.name().to_json())
+  obj.set("file", hit.function.module_id.to_json())
+  obj.set("score", hit.score.to_json())
   let summary = match hit.function.symbol.doc {
-    Some(doc) => Json::string(doc).stringify()
+    Some(doc) => doc
     None =>
       match hit.function.impression {
-        Some(imp) => Json::string(imp.summary).stringify()
-        None => "\"\""
+        Some(imp) => imp.summary
+        None => ""
       }
   }
-  "{\"name\":" +
-  name +
-  ",\"file\":" +
-  file +
-  ",\"score\":" +
-  score +
-  ",\"summary\":" +
-  summary +
-  "}"
+  obj.set("summary", summary.to_json())
+  Json::object(obj)
 }
 
 ///|
@@ -689,92 +755,59 @@ fn build_stats_json(
       cfg.model + " (" + cfg.dim.to_string() + " dims, " + cfg.base_url + ")"
     @dconfig.Precomputed(_) => "precomputed"
   }
-  let dim = digest_config.embedding_dim()
-  "{\"indexDirectory\":" +
-  Json::string(index_dir).stringify() +
-  ",\"provider\":" +
-  Json::string(provider_name).stringify() +
-  ",\"embeddingDim\":" +
-  dim.to_string() +
-  ",\"totalSymbols\":" +
-  graph.symbol_count().to_string() +
-  ",\"totalModules\":" +
-  graph.module_count().to_string() +
-  ",\"totalEdges\":" +
-  graph.edge_count().to_string() +
-  "}"
+  let obj : Map[String, Json] = {}
+  obj.set("indexDirectory", index_dir.to_json())
+  obj.set("provider", provider_name.to_json())
+  obj.set("embeddingDim", digest_config.embedding_dim().to_json())
+  obj.set("totalSymbols", graph.symbol_count().to_json())
+  obj.set("totalModules", graph.module_count().to_json())
+  obj.set("totalEdges", graph.edge_count().to_json())
+  Json::object(obj).stringify()
+}
+
+///|
+fn function_unit_to_json(unit : @types.FunctionUnit) -> Json {
+  let obj : Map[String, Json] = {}
+  obj.set("id", unit.id().to_json())
+  obj.set("name", unit.name().to_json())
+  obj.set("module", unit.module_id.to_json())
+  obj.set("kind", unit.symbol.kind.to_json())
+  match unit.symbol.doc {
+    Some(d) => obj.set("doc", d.to_json())
+    None => obj.set("doc", Json::null())
+  }
+  match unit.impression {
+    Some(imp) => {
+      obj.set("summary", imp.summary.to_json())
+      obj.set(
+        "keywords",
+        Json::array(imp.keywords.iter().map(fn(k) { k.to_json() }).collect()),
+      )
+    }
+    None => {
+      obj.set("summary", Json::null())
+      obj.set("keywords", Json::array([]))
+    }
+  }
+  obj.set(
+    "callers",
+    Json::array(unit.callers.iter().map(fn(c) { c.to_json() }).collect()),
+  )
+  obj.set(
+    "callees",
+    Json::array(unit.callees.iter().map(fn(c) { c.to_json() }).collect()),
+  )
+  obj.set("depth", unit.depth.to_json())
+  Json::object(obj)
 }
 
 ///|
 fn build_index_json(index : @index.DigestIndex) -> String {
-  let items : Array[String] = []
+  let items : Array[Json] = []
   for entry in index.units {
-    let unit = entry.1
-    items.push(function_unit_to_json(unit))
+    items.push(function_unit_to_json(entry.1))
   }
-  "[" + items.join(",") + "]"
-}
-
-///|
-fn function_unit_to_json(unit : @types.FunctionUnit) -> String {
-  let name = Json::string(unit.name()).stringify()
-  let id = Json::string(unit.id()).stringify()
-  let module_id = Json::string(unit.module_id).stringify()
-  let kind = Json::string(unit.symbol.kind).stringify()
-  let doc = match unit.symbol.doc {
-    Some(d) => Json::string(d).stringify()
-    None => "null"
-  }
-  let summary = match unit.impression {
-    Some(imp) => Json::string(imp.summary).stringify()
-    None => "null"
-  }
-  let keywords = match unit.impression {
-    Some(imp) => {
-      let kw : Array[String] = []
-      for k in imp.keywords {
-        kw.push(Json::string(k).stringify())
-      }
-      "[" + kw.join(",") + "]"
-    }
-    None => "[]"
-  }
-  let callers_json = {
-    let arr : Array[String] = []
-    for c in unit.callers {
-      arr.push(Json::string(c).stringify())
-    }
-    "[" + arr.join(",") + "]"
-  }
-  let callees_json = {
-    let arr : Array[String] = []
-    for c in unit.callees {
-      arr.push(Json::string(c).stringify())
-    }
-    "[" + arr.join(",") + "]"
-  }
-  let depth = unit.depth.to_string()
-  "{\"id\":" +
-  id +
-  ",\"name\":" +
-  name +
-  ",\"module\":" +
-  module_id +
-  ",\"kind\":" +
-  kind +
-  ",\"doc\":" +
-  doc +
-  ",\"summary\":" +
-  summary +
-  ",\"keywords\":" +
-  keywords +
-  ",\"callers\":" +
-  callers_json +
-  ",\"callees\":" +
-  callees_json +
-  ",\"depth\":" +
-  depth +
-  "}"
+  Json::array(items).stringify()
 }
 
 ///|
@@ -808,7 +841,7 @@ fn get_extension(path : String) -> String {
     }
   }
   if last_dot >= 0 {
-    path[last_dot:].to_string() catch { _ => "" }
+    path[last_dot:].to_string()
   } else {
     ""
   }
@@ -840,9 +873,13 @@ async fn serve_static(
     let ct = content_type_for(ext)
     let headers : Map[String, String] = {}
     headers["content-type"] = ct
-    conn.send_response(200, "OK", extra_headers=headers) catch { _ => return }
+    conn.send_response(200, "OK", extra_headers=headers) catch {
+      _ => return
+    }
     conn.write(content)
-    conn.end_response() catch { _ => () }
+    conn.end_response() catch {
+      _ => ()
+    }
   } else {
     let index_path = static_dir + "/index.html"
     if @fs.path_exists(index_path) {
@@ -858,7 +895,9 @@ async fn serve_static(
         _ => return
       }
       conn.write(content)
-      conn.end_response() catch { _ => () }
+      conn.end_response() catch {
+        _ => ()
+      }
     } else {
       send_static_error(conn, 404, "Not Found")
     }
@@ -876,7 +915,11 @@ async fn send_static_error(
     404 => "Not Found"
     _ => "Error"
   }
-  conn.send_response(code, reason) catch { _ => return }
+  conn.send_response(code, reason) catch {
+    _ => return
+  }
   conn.write(msg)
-  conn.end_response() catch { _ => () }
+  conn.end_response() catch {
+    _ => ()
+  }
 }

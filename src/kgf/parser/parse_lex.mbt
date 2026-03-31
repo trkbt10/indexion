@@ -142,18 +142,6 @@ fn parse_token_attrs(text : String) -> (String?, Bool) {
 }
 
 ///|
-/// Parses an integer from a string.
-fn parse_int(s : String) -> Int {
-  let mut result = 0
-  for c in s {
-    if c >= '0' && c <= '9' {
-      result = result * 10 + (c.to_int() - '0'.to_int())
-    }
-  }
-  result
-}
-
-///|
 /// Finds the closing slash, handling escaped characters.
 fn find_closing_slash(text : String, start : Int) -> Int {
   let arr = text.to_array()

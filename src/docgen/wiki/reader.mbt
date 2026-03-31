@@ -9,12 +9,10 @@
 /// Returns None if wiki.json doesn't exist or can't be parsed.
 pub fn load_wiki(wiki_dir : String) -> WikiData? {
   let manifest_path = wiki_dir + "/wiki.json"
-  let manifest_text = try { @fs.read_file_to_string(manifest_path) } catch {
+  let manifest_text = @fs.read_file_to_string(manifest_path) catch {
     _ => return None
   }
-  let manifest : WikiManifest = try {
-    @json.from_json!(@json.parse!(manifest_text))
-  } catch {
+  let manifest : WikiManifest = @json.from_json(@json.parse(manifest_text)) catch {
     _ => return None
   }
   // Build page index from manifest
@@ -26,9 +24,7 @@ pub fn load_wiki(wiki_dir : String) -> WikiData? {
   let pages : Map[String, WikiPage] = {}
   for mp in manifest.pages {
     let md_path = wiki_dir + "/" + mp.file
-    let content = try { @fs.read_file_to_string(md_path) } catch {
-      _ => ""
-    }
+    let content = @fs.read_file_to_string(md_path) catch { _ => "" }
     let sources = parse_source_refs(mp.sources)
     let headings = extract_headings(content)
     // Resolve children from manifest
@@ -102,10 +98,7 @@ fn split_by_dash(s : String) -> Array[String] {
 }
 
 ///|
-fn find_parent(
-  page_id : String,
-  pages : Array[ManifestPage],
-) -> String? {
+fn find_parent(page_id : String, pages : Array[ManifestPage]) -> String? {
   for mp in pages {
     for child_id in mp.children {
       if child_id == page_id {
@@ -162,13 +155,19 @@ fn extract_headings(content : String) -> Array[WikiHeading] {
   for line in lines {
     if line.has_prefix("## ") {
       let text = @common.substring(line, 3, line.to_array().length())
-      headings.push(WikiHeading::new(level=2, text~, anchor=@common.make_anchor(text)))
+      headings.push(
+        WikiHeading::new(level=2, text~, anchor=@common.make_anchor(text)),
+      )
     } else if line.has_prefix("### ") {
       let text = @common.substring(line, 4, line.to_array().length())
-      headings.push(WikiHeading::new(level=3, text~, anchor=@common.make_anchor(text)))
+      headings.push(
+        WikiHeading::new(level=3, text~, anchor=@common.make_anchor(text)),
+      )
     } else if line.has_prefix("#### ") {
       let text = @common.substring(line, 5, line.to_array().length())
-      headings.push(WikiHeading::new(level=4, text~, anchor=@common.make_anchor(text)))
+      headings.push(
+        WikiHeading::new(level=4, text~, anchor=@common.make_anchor(text)),
+      )
     }
   }
   headings

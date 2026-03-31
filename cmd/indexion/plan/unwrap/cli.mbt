@@ -25,7 +25,7 @@
 
 ///|
 /// CLI configuration.
-pub struct UnwrapConfig {
+pub(all) struct UnwrapConfig {
   target_dir : String
   includes : Array[String]
   excludes : Array[String]
@@ -154,6 +154,110 @@ pub fn command() -> @argparse.Command {
 }
 
 ///|
+/// Shared scan: collect files, detect wrappers.
+fn collect_wrappers(
+  config : UnwrapConfig,
+) -> (
+  Array[(String, String)],
+  Array[@kgf_features.ProxyFunction],
+  @kgf_registry.KGFRegistry?,
+)? {
+  if config.target_dir.length() == 0 {
+    return None
+  }
+  let registry = @kgf_features.load_registry(
+    specs_dir=config.specs_dir,
+    target_dir=config.target_dir,
+  )
+  let files = @common.collect_files(
+    [config.target_dir],
+    includes=config.includes,
+    excludes=config.excludes,
+  )
+  if files.length() == 0 {
+    return None
+  }
+  let wrappers : Array[@kgf_features.ProxyFunction] = []
+  for file in files {
+    let (path, content) = file
+    let detected = @kgf_features.detect_proxy_functions_from_file(
+      content,
+      path,
+      registry,
+      include_self_delegation=config.include_self,
+      include_bare_constructors=config.include_bare,
+    )
+    for p in detected {
+      wrappers.push(p)
+    }
+  }
+  if wrappers.length() == 0 {
+    return None
+  }
+  Some((files, wrappers, registry))
+}
+
+///|
+/// Build candidates + count functions from wrappers (shared by report paths).
+fn build_report_plan(
+  config : UnwrapConfig,
+  files : Array[(String, String)],
+  wrappers : Array[@kgf_features.ProxyFunction],
+  registry : @kgf_registry.KGFRegistry?,
+) -> UnwrapPlanJSON {
+  let candidates : Array[UnwrapEntry] = []
+  for w in wrappers {
+    candidates.push({
+      file: w.file,
+      line: w.line,
+      name: w.name,
+      delegate_target: w.delegate_target,
+      params: w.params,
+      delegate_args: w.delegate_args,
+      all_forwarded: w.all_forwarded,
+    })
+  }
+  let mut total_functions = 0
+  match registry {
+    Some(reg) =>
+      for file in files {
+        let (path, content) = file
+        let lang = match reg.detect_from_path(path) {
+          Some(l) => l
+          None => continue
+        }
+        let spec = match reg.get_spec(lang) {
+          Some(s) => s
+          None => continue
+        }
+        let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+        let tokens = lexer.tokenize(content)
+        let funcs = @kgf_features.extract_functions(tokens, path)
+        total_functions += funcs.length()
+      }
+    None => ()
+  }
+  build_plan(config, candidates, files.length(), total_functions)
+}
+
+///|
+/// Core unwrap analysis (report mode). Returns rendered output or None.
+pub fn run_to_string(config : UnwrapConfig) -> String? {
+  let (files, wrappers, registry) = match collect_wrappers(config) {
+    Some(r) => r
+    None => return None
+  }
+  let plan = build_report_plan(config, files, wrappers, registry)
+  Some(
+    match config.format {
+      "json" => render_json(plan)
+      "text" => render_text(plan)
+      _ => render_markdown(plan)
+    },
+  )
+}
+
+///|
 /// Entry point using argparse matches.
 pub fn run_matches(matches : @argparse.Matches) -> Unit {
   let config = UnwrapConfig::from_matches(matches)
@@ -178,56 +282,29 @@ fn run_with_config(config : UnwrapConfig) -> Unit {
     println("Directory: " + config.target_dir)
     println("")
   }
-  let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
-    target_dir=config.target_dir,
-  )
-  // [1/4] Collect files
-  if show_progress {
-    println("[1/4] Collecting files...")
-  }
-  let files = @common.collect_files(
-    [config.target_dir],
-    includes=config.includes,
-    excludes=config.excludes,
-  )
-  if show_progress {
-    println("      Found " + files.length().to_string() + " files")
-  }
-  if files.length() == 0 {
-    println("No files found.")
-    return
-  }
-  // [2/4] Detect wrappers
-  if show_progress {
-    println("[2/4] Detecting wrappers...")
-  }
-  let wrappers : Array[@kgf_features.ProxyFunction] = []
-  for file in files {
-    let (path, content) = file
-    let detected = @kgf_features.detect_proxy_functions_from_file(
-      content,
-      path,
-      registry,
-      include_self_delegation=config.include_self,
-      include_bare_constructors=config.include_bare,
-    )
-    for p in detected {
-      wrappers.push(p)
+  let (files, wrappers, registry) = match collect_wrappers(config) {
+    Some(r) => r
+    None => {
+      println("No wrappers found.")
+      return
     }
   }
   if show_progress {
     println(
-      "      Found " + wrappers.length().to_string() + " wrappers to unwrap",
+      "      Found " +
+      files.length().to_string() +
+      " files, " +
+      wrappers.length().to_string() +
+      " wrappers",
     )
   }
-  if wrappers.length() == 0 {
-    println("No wrappers found.")
-    return
-  }
-  // For report mode, use the existing render path
+  // For report mode, delegate to run_to_string (SoT)
   if config.mode == "report" {
-    run_report(config, files, wrappers, registry, show_progress)
+    match run_to_string(config) {
+      Some(output) =>
+        @common.write_output(config.output, output, label="Unwrap report")
+      None => println("No wrappers found.")
+    }
     return
   }
   // [3/4] Find call sites for each wrapper
@@ -319,57 +396,6 @@ fn run_with_config(config : UnwrapConfig) -> Unit {
 }
 
 ///|
-/// Report mode: existing behavior.
-fn run_report(
-  config : UnwrapConfig,
-  files : Array[(String, String)],
-  wrappers : Array[@kgf_features.ProxyFunction],
-  registry : @kgf_registry.KGFRegistry?,
-  show_progress : Bool,
-) -> Unit {
-  let candidates : Array[UnwrapEntry] = []
-  let mut total_functions = 0
-  for w in wrappers {
-    candidates.push({
-      file: w.file,
-      line: w.line,
-      name: w.name,
-      delegate_target: w.delegate_target,
-      params: w.params,
-      delegate_args: w.delegate_args,
-      all_forwarded: w.all_forwarded,
-    })
-  }
-  // Count functions
-  let reg = match registry {
-    Some(r) => r
-    None => {
-      total_functions = 0
-      let plan = build_plan(config, candidates, files.length(), total_functions)
-      output_plan(config, plan, show_progress)
-      return
-    }
-  }
-  for file in files {
-    let (path, content) = file
-    let lang = match reg.detect_from_path(path) {
-      Some(l) => l
-      None => continue
-    }
-    let spec = match reg.get_spec(lang) {
-      Some(s) => s
-      None => continue
-    }
-    let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
-    let tokens = lexer.tokenize(content)
-    let funcs = @kgf_features.extract_functions(tokens, path)
-    total_functions += funcs.length()
-  }
-  let plan = build_plan(config, candidates, files.length(), total_functions)
-  output_plan(config, plan, show_progress)
-}
-
-///|
 fn build_plan(
   config : UnwrapConfig,
   candidates : Array[UnwrapEntry],
@@ -389,24 +415,6 @@ fn build_plan(
       unwrap_count: candidates.length(),
     },
   }
-}
-
-///|
-fn output_plan(
-  config : UnwrapConfig,
-  plan : UnwrapPlanJSON,
-  show_progress : Bool,
-) -> Unit {
-  if show_progress {
-    println("[3/3] Rendering " + config.format + " output...")
-    println("")
-  }
-  let output_content = match config.format {
-    "json" => render_json(plan)
-    "text" => render_text(plan)
-    _ => render_markdown(plan)
-  }
-  @common.write_output(config.output, output_content, label="Unwrap report")
 }
 
 ///|
