@@ -14,6 +14,7 @@ export const GraphPage = (): React.JSX.Element => {
   const indexState = useApiCall((signal) => fetchDigestIndex(client, signal));
   const containerRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState<FolderNode | null>(null);
+  const [focused, setFocused] = useState<FolderNode | null>(null);
 
   const tree = useMemo(() => {
     if (graphState.status !== "success") return null;
@@ -21,11 +22,12 @@ export const GraphPage = (): React.JSX.Element => {
   }, [graphState, indexState]);
 
   const handleHover = useCallback((n: FolderNode | null) => setHovered(n), []);
+  const handleClick = useCallback((n: FolderNode | null) => setFocused(n), []);
 
   useEffect(() => {
     if (!tree || !containerRef.current) return;
-    return buildScene(containerRef.current, tree, handleHover);
-  }, [tree, handleHover]);
+    return buildScene(containerRef.current, tree, handleHover, handleClick);
+  }, [tree, handleHover, handleClick]);
 
   const loading = graphState.status !== "success" || indexState.status === "loading";
   const error = graphState.status === "error" ? graphState.error
@@ -41,15 +43,15 @@ export const GraphPage = (): React.JSX.Element => {
           {tree ? `${tree.nodes.size} folders \u00b7 ${tree.edges.length} dependencies` : ""}
         </span>
       </div>
-      {hovered && (
+      {(hovered ?? focused) && (
         <Card className="pointer-events-none absolute right-4 top-14 z-10 max-w-xs">
           <CardHeader className="p-3">
-            <CardTitle className="font-mono text-sm">{hovered.path}</CardTitle>
+            <CardTitle className="font-mono text-sm">{(hovered ?? focused)!.path}</CardTitle>
             <CardDescription className="font-mono">
-              {hovered.fileCount} files &middot; {hovered.symbolCount} symbols &middot; {hovered.functionCount} fn
+              {(hovered ?? focused)!.fileCount} files &middot; {(hovered ?? focused)!.symbolCount} symbols &middot; {(hovered ?? focused)!.functionCount} fn
             </CardDescription>
-            {hovered.children.length > 0 && (
-              <CardDescription>{hovered.children.length} subdirectories</CardDescription>
+            {(hovered ?? focused)!.children.length > 0 && (
+              <CardDescription>{(hovered ?? focused)!.children.length} subdirectories</CardDescription>
             )}
           </CardHeader>
         </Card>

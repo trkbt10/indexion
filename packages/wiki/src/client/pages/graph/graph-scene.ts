@@ -8,6 +8,20 @@ import { computeLayout, FLOOR_H, LABEL_ZONE } from "./graph-layout.ts";
 const PAD = 0.4;
 const WALL = 0.08;
 
+// Camera animation
+const FLY_DURATION_MS = 600;
+const INITIAL_HEIGHT_FACTOR = 1.2;
+const DEFAULT_DISTANCE_FACTOR = 0.85;
+const CLICK_DRAG_THRESHOLD_SQ = 25;
+const DRAG_CANCEL_THRESHOLD_SQ = 9;
+
+// Focus camera
+const FOCUS_MIN_DIST = 4;
+const FOCUS_SPAN_FACTOR = 1.5;
+
+// Hover highlight
+const HOVER_EMISSIVE = 0x1a3a5c;
+
 const GRAPH_COLORS = [
   0x58a6ff, 0x3fb950, 0xd29922, 0xf85149, 0xbc8cff,
   0x79c0ff, 0x56d364, 0xe3b341,
@@ -42,12 +56,75 @@ const kindColor = (k: string): string => {
   }
 };
 
-// ── Build 3D scene ──
+// ── Smooth camera animation via spherical coordinates ──
+
+type SphericalCoord = { radius: number; polar: number; azimuth: number };
+
+const toSpherical = (pos: THREE.Vector3, target: THREE.Vector3): SphericalCoord => {
+  const dx = pos.x - target.x, dy = pos.y - target.y, dz = pos.z - target.z;
+  const radius = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  return {
+    radius,
+    polar: radius > 0 ? Math.acos(Math.min(1, Math.max(-1, dy / radius))) : 0,
+    azimuth: Math.atan2(dx, dz),
+  };
+};
+
+const fromSpherical = (s: SphericalCoord, target: THREE.Vector3): THREE.Vector3 =>
+  new THREE.Vector3(
+    target.x + s.radius * Math.sin(s.polar) * Math.sin(s.azimuth),
+    target.y + s.radius * Math.cos(s.polar),
+    target.z + s.radius * Math.sin(s.polar) * Math.cos(s.azimuth),
+  );
+
+const lerpAngle = (a: number, b: number, t: number): number => {
+  let d = b - a;
+  if (d > Math.PI) d -= 2 * Math.PI;
+  if (d < -Math.PI) d += 2 * Math.PI;
+  return a + d * t;
+};
+
+type CameraAnimation = {
+  fromSph: SphericalCoord;
+  toSph: SphericalCoord;
+  fromTarget: THREE.Vector3;
+  toTarget: THREE.Vector3;
+  startTime: number;
+  duration: number;
+};
+
+// Smooth ease-out for distance (no overshoot)
+const easeOutCubic = (t: number): number => 1 - (1 - t) ** 3;
+
+// Gentle elastic for angles: single subtle bounce then settle
+const easeOutElasticGentle = (t: number): number => {
+  if (t === 0 || t === 1) return t;
+  return 2 ** (-12 * t) * Math.sin((t - 0.075) * (2 * Math.PI) / 0.6) + 1;
+};
+
+const applyCameraAnim = (
+  anim: CameraAnimation,
+  t: number,
+  camera: THREE.PerspectiveCamera,
+  controls: OrbitControls,
+) => {
+  const eAngle = easeOutElasticGentle(t);
+  const eDist = easeOutCubic(t);
+  const sph: SphericalCoord = {
+    radius: anim.fromSph.radius + (anim.toSph.radius - anim.fromSph.radius) * eDist,
+    polar: anim.fromSph.polar + (anim.toSph.polar - anim.fromSph.polar) * eAngle,
+    azimuth: lerpAngle(anim.fromSph.azimuth, anim.toSph.azimuth, eAngle),
+  };
+  const target = new THREE.Vector3().lerpVectors(anim.fromTarget, anim.toTarget, eDist);
+  controls.target.copy(target);
+  camera.position.copy(fromSpherical(sph, target));
+};
 
 export const buildScene = (
   container: HTMLDivElement,
   tree: GraphTree,
   onHover: (node: FolderNode | null) => void,
+  onClick?: (node: FolderNode | null) => void,
 ): (() => void) => {
   const { nodes, edges, roots } = tree;
   const w0 = container.clientWidth, h0 = container.clientHeight;
@@ -77,13 +154,20 @@ export const buildScene = (
     Math.max(...all.map((b) => b.x + b.w)) - Math.min(...all.map((b) => b.x)),
     Math.max(...all.map((b) => b.z + b.d)) - Math.min(...all.map((b) => b.z)),
   );
-  const camera = new THREE.PerspectiveCamera(50, w0 / h0, 0.1, 1000);
-  camera.position.set(0, maxSpan * 0.6, maxSpan * 0.6);
+  const camera = new THREE.PerspectiveCamera(50, w0 / h0, 0.1, 2000);
+  // Start from top-down bird's-eye view
+  camera.position.set(0, maxSpan * INITIAL_HEIGHT_FACTOR, 0.01);
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(w0, h0); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   container.appendChild(renderer.domElement);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true; controls.dampingFactor = 0.08; controls.target.set(0, 0, 0);
+
+  const defaultTarget = new THREE.Vector3(0, 0, 0);
+  const defaultDist = maxSpan * DEFAULT_DISTANCE_FACTOR;
+
+  // No intro animation — start with top-down view and let the user explore
+  let cameraAnim: CameraAnimation | null = null;
   scene.add(new THREE.AmbientLight(0xffffff, 0.65));
   const dLight = new THREE.DirectionalLight(0xffffff, 0.55);
   dLight.position.set(20, 40, 30); scene.add(dLight);
@@ -355,28 +439,105 @@ export const buildScene = (
   const grid = new THREE.GridHelper(gridSize, Math.floor(gridSize / 4), 0x1a1f26, 0x13171e);
   grid.position.y = -0.1; scene.add(grid);
 
-  // ── Raycaster + animation ──
+  // ── Raycaster + pointer interaction (PointerEvent for touch + mouse) ──
+  const ac = new AbortController();
+  const { signal } = ac;
   const raycaster = new THREE.Raycaster();
-  const mouse = new THREE.Vector2(9999, 9999);
+  const pointer = new THREE.Vector2(9999, 9999);
   let hoverMesh: THREE.Mesh | null = null;
-  const onMM = (ev: MouseEvent) => {
+  let pointerDownPos = { x: 0, y: 0 };
+
+  const updatePointer = (ev: PointerEvent) => {
     const rect = renderer.domElement.getBoundingClientRect();
-    mouse.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
-    mouse.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+    pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
   };
-  renderer.domElement.addEventListener("mousemove", onMM);
+
+  const flyTo = (toSph: SphericalCoord, toTarget: THREE.Vector3) => {
+    cameraAnim = {
+      fromSph: toSpherical(camera.position, controls.target),
+      toSph,
+      fromTarget: controls.target.clone(),
+      toTarget,
+      startTime: performance.now(),
+      duration: FLY_DURATION_MS,
+    };
+  };
+
+  const el = renderer.domElement;
+  el.style.touchAction = "none";
+
+  el.addEventListener("pointermove", (ev) => {
+    updatePointer(ev);
+    const dx = ev.clientX - pointerDownPos.x, dy = ev.clientY - pointerDownPos.y;
+    if (ev.buttons > 0 && dx * dx + dy * dy > DRAG_CANCEL_THRESHOLD_SQ) {
+      cameraAnim = null;
+    }
+  }, { signal });
+
+  el.addEventListener("pointerdown", (ev) => {
+    pointerDownPos = { x: ev.clientX, y: ev.clientY };
+    updatePointer(ev);
+  }, { signal });
+
+  el.addEventListener("pointerup", (ev) => {
+    const dx = ev.clientX - pointerDownPos.x, dy = ev.clientY - pointerDownPos.y;
+    if (dx * dx + dy * dy > CLICK_DRAG_THRESHOLD_SQ) return;
+    updatePointer(ev);
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObjects(cardMeshes);
+    const hit = hits.length > 0 ? meshToNode.get(hits[0].object as THREE.Mesh) ?? null : null;
+    if (hit) {
+      const hitObj = hits[0].object as THREE.Mesh;
+      const worldPos = new THREE.Vector3();
+      hitObj.getWorldPosition(worldPos);
+      const nodeBox = boxes.get(hitObj.name);
+      const span = nodeBox ? Math.max(nodeBox.w, nodeBox.d) : 3;
+      const viewDist = Math.max(span * FOCUS_SPAN_FACTOR, FOCUS_MIN_DIST);
+      const currentSph = toSpherical(camera.position, controls.target);
+      flyTo(
+        { radius: viewDist, polar: currentSph.polar, azimuth: currentSph.azimuth },
+        worldPos,
+      );
+      onClick?.(hit);
+    } else {
+      const currentSph = toSpherical(camera.position, controls.target);
+      flyTo(
+        { radius: defaultDist, polar: currentSph.polar, azimuth: currentSph.azimuth },
+        defaultTarget.clone(),
+      );
+      onClick?.(null);
+    }
+  }, { signal });
+
+  el.addEventListener("wheel", () => { cameraAnim = null; }, { signal, passive: true });
 
   let animId = 0;
   const animate = () => {
     animId = requestAnimationFrame(animate);
+
+    if (cameraAnim) {
+      const elapsed = performance.now() - cameraAnim.startTime;
+      if (elapsed < 0) {
+        // Waiting for hold/delay
+      } else if (elapsed >= cameraAnim.duration) {
+        applyCameraAnim(cameraAnim, 1, camera, controls);
+        cameraAnim = null;
+      } else {
+        applyCameraAnim(cameraAnim, elapsed / cameraAnim.duration, camera, controls);
+      }
+    }
+
     controls.update();
-    raycaster.setFromCamera(mouse, camera);
+
+    raycaster.setFromCamera(pointer, camera);
     const hits = raycaster.intersectObjects(cardMeshes);
     const hit = hits.length > 0 ? (hits[0].object as THREE.Mesh) : null;
+    el.style.cursor = hit ? "pointer" : "grab";
     if (hit !== hoverMesh) {
       if (hoverMesh) { const mat = hoverMesh.material as THREE.MeshStandardMaterial; if (mat.emissive) mat.emissive.setHex(0); }
       hoverMesh = hit;
-      if (hoverMesh) { const mat = hoverMesh.material as THREE.MeshStandardMaterial; if (mat.emissive) mat.emissive.setHex(0x1a3a5c); onHover(meshToNode.get(hoverMesh) ?? null); }
+      if (hoverMesh) { const mat = hoverMesh.material as THREE.MeshStandardMaterial; if (mat.emissive) mat.emissive.setHex(HOVER_EMISSIVE); onHover(meshToNode.get(hoverMesh) ?? null); }
       else onHover(null);
     }
     renderer.render(scene, camera);
@@ -390,9 +551,10 @@ export const buildScene = (
   obs.observe(container);
 
   return () => {
-    cancelAnimationFrame(animId); obs.disconnect();
-    renderer.domElement.removeEventListener("mousemove", onMM);
+    cancelAnimationFrame(animId);
+    obs.disconnect();
+    ac.abort();
     renderer.dispose();
-    if (renderer.domElement.parentNode) container.removeChild(renderer.domElement);
+    if (el.parentNode) container.removeChild(el);
   };
 };

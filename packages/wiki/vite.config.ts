@@ -1,4 +1,3 @@
-import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -7,10 +6,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   root: "src/client",
   resolve: {
-    alias: {
-      "@indexion/api-client": resolve(__dirname, "../api-client/src/index.ts"),
-      "@indexion/api-client/react": resolve(__dirname, "../api-client/src/react.ts"),
-    },
+    conditions: ["bun", "module"],
   },
   build: {
     outDir: "../../dist/client",

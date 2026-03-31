@@ -55,14 +55,14 @@ export const BrowsePage = (): React.JSX.Element => {
           {tree?.length ?? 0} roots &middot; {totalFiles} files
         </span>
         <Input
-          className="ml-auto w-56"
+          className="ml-auto w-full max-w-56"
           placeholder="Filter..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
       </div>
 
-      <div className="grid min-h-0 grid-cols-[1fr] data-[detail]:grid-cols-[1fr_360px]" data-detail={selectedFn ? "" : undefined}>
+      <div className="relative grid min-h-0 grid-cols-[1fr] md:data-[detail]:grid-cols-[1fr_360px]" data-detail={selectedFn ? "" : undefined}>
         <ScrollArea className="h-full">
           <div className="p-2">
             {(filteredTree ?? []).map((folder) => (
@@ -71,7 +71,7 @@ export const BrowsePage = (): React.JSX.Element => {
           </div>
         </ScrollArea>
         {selectedFn && (
-          <ScrollArea className="h-full border-l">
+          <ScrollArea className="absolute inset-0 z-10 bg-background md:static md:inset-auto md:z-auto h-full border-l">
             <FunctionDetail fn={selectedFn} onClose={() => setSelectedSym(null)} />
           </ScrollArea>
         )}

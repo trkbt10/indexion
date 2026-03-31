@@ -5,7 +5,7 @@
  * endpoint URLs are never hard-coded in page components.
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useEffectEvent, useCallback, useRef } from "react";
 import type { ApiResponse } from "./types.ts";
 
 export type ApiState<T> =
@@ -18,37 +18,39 @@ export type ApiState<T> =
  * Fetch data via a typed api-client function.
  *
  * @param call - `(signal) => Promise<ApiResponse<T>>`, or `null` to skip.
- *               Re-fetches whenever the *identity* of `call` changes, so
- *               callers should wrap with `useCallback` when the function
- *               captures reactive values (e.g. a page id).
+ * @param deps - Re-fetches whenever any value in `deps` changes.
+ *               Defaults to `[]` (fetch once on mount).
  */
 export const useApiCall = <T>(
   call: ((signal: AbortSignal) => Promise<ApiResponse<T>>) | null,
+  deps: readonly unknown[] = [],
 ): ApiState<T> => {
   const [state, setState] = useState<ApiState<T>>({ status: "idle" });
 
-  useEffect(() => {
-    if (!call) {
-      setState({ status: "idle" });
-      return;
-    }
-
-    const controller = new AbortController();
-    setState({ status: "loading" });
-
-    call(controller.signal).then((result) => {
-      if (controller.signal.aborted) return;
-      if (result.ok) {
-        setState({ status: "success", data: result.data });
-      } else {
-        setState({ status: "error", error: result.error });
+  const onCall = useEffectEvent(
+    (signal: AbortSignal) => {
+      if (!call) {
+        setState({ status: "idle" });
+        return;
       }
-    });
+      setState({ status: "loading" });
+      call(signal).then((result) => {
+        if (signal.aborted) return;
+        if (result.ok) {
+          setState({ status: "success", data: result.data });
+        } else {
+          setState({ status: "error", error: result.error });
+        }
+      });
+    },
+  );
 
-    return () => {
-      controller.abort();
-    };
-  }, [call]);
+  useEffect(() => {
+    const controller = new AbortController();
+    onCall(controller.signal);
+    return () => { controller.abort(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
 
   return state;
 };
@@ -63,16 +65,13 @@ export const useApiMutationCall = <T>(): {
   mutate: (call: () => Promise<ApiResponse<T>>) => Promise<void>;
 } => {
   const [state, setState] = useState<ApiState<T>>({ status: "idle" });
-  const mountedRef = useRef(true);
-
-  useEffect(() => {
-    return () => { mountedRef.current = false; };
-  }, []);
+  const activeRef = useRef(0);
 
   const mutate = useCallback(async (call: () => Promise<ApiResponse<T>>) => {
+    const id = ++activeRef.current;
     setState({ status: "loading" });
     const result = await call();
-    if (!mountedRef.current) return;
+    if (activeRef.current !== id) return;
     if (result.ok) {
       setState({ status: "success", data: result.data });
     } else {

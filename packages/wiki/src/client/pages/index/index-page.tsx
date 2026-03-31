@@ -114,6 +114,7 @@ export const IndexPage = (): React.JSX.Element => {
 
       {/* Table */}
       <ScrollArea className="h-full">
+        <div className="min-w-[640px]">
         <table className="w-full text-left text-sm">
           <thead className="sticky top-0 z-10 bg-background border-b">
             <tr className="text-xs text-muted-foreground">
@@ -152,6 +153,7 @@ export const IndexPage = (): React.JSX.Element => {
             ))}
           </tbody>
         </table>
+        </div>
       </ScrollArea>
     </div>
   );

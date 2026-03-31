@@ -25,7 +25,7 @@ export const WikiToc = ({ headings }: Props): React.JSX.Element | null => {
               key={`${i}-${h.anchor}`}
               href={`#${h.anchor}`}
               className={cn(
-                "block truncate text-sm text-muted-foreground transition-colors hover:text-foreground",
+                "block text-sm leading-snug text-muted-foreground transition-colors hover:text-foreground",
                 h.level === 2 && "pl-0",
                 h.level === 3 && "pl-3",
                 h.level === 4 && "pl-6",
