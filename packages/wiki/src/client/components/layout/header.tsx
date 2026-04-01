@@ -52,10 +52,7 @@ export const Header = ({ onSearchClick }: Props): React.JSX.Element => (
             <TooltipTrigger asChild>
               <NavLink to="/settings">
                 {({ isActive }) => (
-                  <Button
-                    variant={isActive ? "secondary" : "ghost"}
-                    size="sm"
-                  >
+                  <Button variant={isActive ? "secondary" : "ghost"} size="sm">
                     <Settings className="size-4" />
                   </Button>
                 )}
