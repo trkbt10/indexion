@@ -111,46 +111,75 @@ pub fn ServeConfig::from_matches(matches : @argparse.Matches) -> ServeConfig {
 }
 
 ///|
-pub fn command() -> @argparse.Command {
+fn serve_options() -> Array[@argparse.OptionArg] {
   let dim_default = @dconfig.DEFAULT_TFIDF_DIM.to_string()
+  [
+    @argparse.OptionArg("port", about="Server port", default_values=["3741"]),
+    @argparse.OptionArg("host", about="Server host", default_values=[
+      "127.0.0.1",
+    ]),
+    @argparse.OptionArg("index-dir", about="Digest index directory", default_values=[
+      @dconfig.DEFAULT_INDEX_DIR,
+    ]),
+    @argparse.OptionArg(
+      "static-dir",
+      about="Static files directory for SPA serving",
+    ),
+    @argparse.OptionArg(
+      "provider",
+      about="Embedding provider: tfidf, openai, auto",
+      default_values=["auto"],
+    ),
+    @argparse.OptionArg(
+      "dim",
+      about="Embedding dimension (default: 256 for tfidf, 1536 for openai)",
+      default_values=[dim_default],
+    ),
+    @argparse.OptionArg("strategy", about="vcdb: bruteforce, hnsw, ivf", default_values=[
+      "hnsw",
+    ]),
+    @argparse.OptionArg("specs", about="KGF specs directory", default_values=[
+      "kgfs",
+    ]),
+  ]
+}
+
+///|
+pub fn command() -> @argparse.Command {
   @argparse.Command(
     "serve",
     about="Start HTTP server for codebase search",
-    options=[
-      @argparse.OptionArg("port", about="Server port", default_values=["3741"]),
-      @argparse.OptionArg("host", about="Server host", default_values=[
-        "127.0.0.1",
-      ]),
-      @argparse.OptionArg("index-dir", about="Digest index directory", default_values=[
-        @dconfig.DEFAULT_INDEX_DIR,
-      ]),
-      @argparse.OptionArg(
-        "static-dir",
-        about="Static files directory for SPA serving",
-      ),
-      @argparse.OptionArg(
-        "provider",
-        about="Embedding provider: tfidf, openai, auto",
-        default_values=["auto"],
-      ),
-      @argparse.OptionArg(
-        "dim",
-        about="Embedding dimension (default: 256 for tfidf, 1536 for openai)",
-        default_values=[dim_default],
-      ),
-      @argparse.OptionArg("strategy", about="vcdb: bruteforce, hnsw, ivf", default_values=[
-        "hnsw",
-      ]),
-      @argparse.OptionArg("specs", about="KGF specs directory", default_values=[
-        "kgfs",
-      ]),
-    ],
+    options=serve_options(),
     flags=[@argparse.FlagArg("cors", about="Enable CORS headers")],
     positionals=[
       @argparse.PositionArg(
         "workspace",
         about="Workspace directory",
         num_args=@argparse.ValueRange(lower=0, upper=1),
+      ),
+    ],
+    subcommands=[
+      @argparse.Command(
+        "export",
+        about="Export self-contained static site (wiki + explorer) for GitHub Pages",
+        options={
+          let opts = serve_options()
+          opts.push(
+            @argparse.OptionArg(
+              "output",
+              about="Output directory",
+              default_values=["dist/pages"],
+            ),
+          )
+          opts
+        },
+        positionals=[
+          @argparse.PositionArg(
+            "workspace",
+            about="Workspace directory",
+            num_args=@argparse.ValueRange(lower=0, upper=1),
+          ),
+        ],
       ),
     ],
   )
@@ -221,6 +250,14 @@ pub fn ServeConfig::apply_file_config(
 
 ///|
 pub async fn run_matches(matches : @argparse.Matches) -> Unit {
+  // Dispatch to subcommand if present
+  match matches.subcommand {
+    Some(("export", sub)) => {
+      run_export(sub)
+      return
+    }
+    _ => ()
+  }
   let config = ServeConfig::from_matches(matches).apply_file_config(
     @digest_cli.load_digest_file_config(),
   )
@@ -236,6 +273,8 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         None => return
       }
   }
+  // Build GET route table (SoT for API paths)
+  let get_routes = build_get_routes(state, config)
   // Start HTTP server
   let server = @mhttp.Server::new(host=config.host, port=config.port) catch {
     err => {
@@ -256,30 +295,25 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         send_cors_preflight(conn, cors_enabled)
         return
       }
-      // Health check
-      if req.meth == @mhttp.Get && is_path(req.path, "/api/health") {
+      // GET API routes — served from the route table (SoT)
+      if req.meth == @mhttp.Get && path.has_prefix("/api/") {
         conn.skip_request_body()
-        send_json_ok(conn, "{\"status\":\"ready\"}", cors_enabled)
-        return
+        match get_routes.get(path) {
+          Some(data) => {
+            send_json_ok(conn, data, cors_enabled)
+            return
+          }
+          None => ()
+        }
+        // Not in route table — fall through to POST handlers / static / 404
       }
-      // Config (readonly)
-      if req.meth == @mhttp.Get && is_path(req.path, "/api/config") {
-        conn.skip_request_body()
-        send_json_ok(conn, build_config_json(config), cors_enabled)
-        return
-      }
-      // Rebuild endpoint
+      // POST endpoints (not in route table — these are dynamic)
       if req.meth == @mhttp.Post && path == "/api/digest/rebuild" {
         conn.skip_request_body()
         handle_rebuild(
           conn, state, config, digest_cli_config, digest_config, cors_enabled,
+          get_routes,
         )
-        return
-      }
-      // API routes
-      if req.meth == @mhttp.Get && is_path(req.path, "/api/graph") {
-        conn.skip_request_body()
-        send_json_ok(conn, state.graph_json, cors_enabled)
         return
       }
       if req.meth == @mhttp.Post && path == "/api/digest/query" {
@@ -294,36 +328,10 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         )
         return
       }
-      if req.meth == @mhttp.Get && is_path(req.path, "/api/digest/index") {
-        conn.skip_request_body()
-        send_json_ok(conn, state.index_json, cors_enabled)
-        return
-      }
-      if req.meth == @mhttp.Get && is_path(req.path, "/api/digest/stats") {
-        conn.skip_request_body()
-        send_json_ok(conn, state.stats_json, cors_enabled)
-        return
-      }
-      // Wiki endpoints
-      if req.meth == @mhttp.Get && is_path(req.path, "/api/wiki/nav") {
-        conn.skip_request_body()
-        send_json_ok(conn, state.wiki.nav.to_json().stringify(), cors_enabled)
-        return
-      }
       if req.meth == @mhttp.Post && path == "/api/wiki/search" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_wiki_search(conn, body_text, state.wiki_search, cors_enabled)
-        return
-      }
-      if req.meth == @mhttp.Get && path.has_prefix("/api/wiki/pages/") {
-        conn.skip_request_body()
-        let page_id = path[16:].to_string()
-        match state.wiki.pages.get(page_id) {
-          Some(page) =>
-            send_json_ok(conn, page.to_json().stringify(), cors_enabled)
-          None => send_json_error(conn, 404, "Page not found", cors_enabled)
-        }
         return
       }
       // Explore endpoint
@@ -333,12 +341,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         handle_explore(conn, body_text, config, cors_enabled)
         return
       }
-      // KGF endpoints
-      if req.meth == @mhttp.Get && is_path(req.path, "/api/kgf/list") {
-        conn.skip_request_body()
-        send_json_ok(conn, @kgf_cli.list_specs_json(), cors_enabled)
-        return
-      }
+      // KGF POST endpoints
       if req.meth == @mhttp.Post && path == "/api/kgf/tokens" {
         let body_data = body.read_all()
         let body_text = body_data.text()
@@ -591,6 +594,7 @@ async fn handle_rebuild(
   digest_cli_config : @digest_cli.CliConfig,
   digest_config : @dconfig.DigestConfig,
   cors : Bool,
+  get_routes : Map[String, String],
 ) -> Unit {
   match do_build(config, digest_cli_config, digest_config) {
     Some(new_state) => {
@@ -601,6 +605,9 @@ async fn handle_rebuild(
       state.provider = new_state.provider
       state.wiki = new_state.wiki
       state.wiki_search = new_state.wiki_search
+      // Refresh the GET route table from updated state
+      let fresh = build_get_routes(state, config)
+      fresh.each(fn(k, v) { get_routes[k] = v })
       let msg = "{\"rebuilt\":true,\"functions\":" +
         state.index.units.length().to_string() +
         "}"
@@ -608,11 +615,6 @@ async fn handle_rebuild(
     }
     None => send_json_error(conn, 500, "Rebuild failed", cors)
   }
-}
-
-///|
-fn is_path(req_path : String, expected : String) -> Bool {
-  req_path == expected || req_path.has_prefix(expected + "?")
 }
 
 ///|
@@ -941,4 +943,30 @@ async fn send_static_error(
   conn.end_response() catch {
     _ => ()
   }
+}
+
+///|
+/// Build a lookup table of all GET API routes: path -> JSON response data.
+/// This is the **single source of truth** for API paths. Used by:
+///   - HTTP server: lookup on incoming GET requests
+///   - `serve export`: iterate to write static files
+/// Paths include the /api prefix to match incoming request paths directly.
+fn build_get_routes(
+  state : ServerState,
+  config : ServeConfig,
+) -> Map[String, String] {
+  let routes : Map[String, String] = {}
+  routes["/api/health"] = "{\"status\":\"ready\"}"
+  routes["/api/config"] = build_config_json(config)
+  routes["/api/graph"] = state.graph_json
+  routes["/api/digest/index"] = state.index_json
+  routes["/api/digest/stats"] = state.stats_json
+  routes["/api/wiki/nav"] = state.wiki.nav.to_json().stringify()
+  routes["/api/kgf/list"] = @kgf_cli.list_specs_json()
+  state.wiki.pages.each(
+    fn(id, page) {
+      routes["/api/wiki/pages/" + id] = page.to_json().stringify()
+    },
+  )
+  routes
 }

@@ -2,7 +2,11 @@ import { TreesIcon, TableIcon, GitFork, Box } from "lucide-react";
 import { Link } from "react-router";
 import { Input } from "../../components/ui/input.tsx";
 import { Button } from "../../components/ui/button.tsx";
-import { Tooltip, TooltipTrigger, TooltipContent } from "../../components/ui/tooltip.tsx";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "../../components/ui/tooltip.tsx";
 
 export type ExplorerView = "tree" | "table" | "graph";
 
@@ -14,16 +18,27 @@ type Props = {
   readonly stats: { roots: number; files: number; symbols: number };
 };
 
-const VIEW_OPTIONS: ReadonlyArray<{ value: ExplorerView; icon: typeof TreesIcon; label: string }> = [
+const VIEW_OPTIONS: ReadonlyArray<{
+  value: ExplorerView;
+  icon: typeof TreesIcon;
+  label: string;
+}> = [
   { value: "tree", icon: TreesIcon, label: "Tree" },
   { value: "table", icon: TableIcon, label: "Table" },
   { value: "graph", icon: GitFork, label: "2D Graph" },
 ];
 
-export const ExplorerToolbar = ({ view, onViewChange, filter, onFilterChange, stats }: Props): React.JSX.Element => (
+export const ExplorerToolbar = ({
+  view,
+  onViewChange,
+  filter,
+  onFilterChange,
+  stats,
+}: Props): React.JSX.Element => (
   <div className="flex flex-wrap items-center gap-3 border-b px-4 py-2">
     <span className="text-sm text-muted-foreground">
-      {stats.roots} roots &middot; {stats.files} files &middot; {stats.symbols} symbols
+      {stats.roots} roots &middot; {stats.files} files &middot; {stats.symbols}{" "}
+      symbols
     </span>
 
     <div className="ml-auto flex items-center gap-2">

@@ -9,7 +9,11 @@ import type { ApiResponse } from "@indexion/api-client";
 
 // ── Domains and keys (SoT) ──
 
-const Digest = { graph: "digest:graph", index: "digest:index", stats: "digest:stats" } as const;
+const Digest = {
+  graph: "digest:graph",
+  index: "digest:index",
+  stats: "digest:stats",
+} as const;
 const Wiki = { nav: "wiki:nav" } as const;
 const Server = { config: "server:config" } as const;
 
@@ -17,7 +21,10 @@ const Server = { config: "server:config" } as const;
 export const CacheKey = { digest: Digest, wiki: Wiki, server: Server } as const;
 
 type ValuesOf<T> = T[keyof T];
-type AllKeys = ValuesOf<typeof Digest> | ValuesOf<typeof Wiki> | ValuesOf<typeof Server>;
+type AllKeys =
+  | ValuesOf<typeof Digest>
+  | ValuesOf<typeof Wiki>
+  | ValuesOf<typeof Server>;
 export type CacheKeyValue = AllKeys;
 
 /** Invalidation scopes. `invalidateScope("digest")` clears all digest keys. */
@@ -38,7 +45,12 @@ const cache = new Map<string, CacheEntry<unknown>>();
 const listeners = new Set<() => void>();
 let version = 0;
 
-const notify = () => { version++; for (const fn of listeners) fn(); };
+const notify = () => {
+  version++;
+  for (const fn of listeners) {
+    fn();
+  }
+};
 
 // ── Public API ──
 
@@ -48,27 +60,38 @@ export const cachedFetch = <T>(
   fetch: () => Promise<ApiResponse<T>>,
 ): Promise<ApiResponse<T>> => {
   const existing = cache.get(key) as CacheEntry<T> | undefined;
-  if (existing) return existing.promise;
+  if (existing) {
+    return existing.promise;
+  }
 
   const promise = fetch().then((result) => {
     const entry = cache.get(key) as CacheEntry<T> | undefined;
-    if (entry) entry.result = result;
+    if (entry) {
+      entry.result = result;
+    }
     return result;
   });
 
-  cache.set(key, { promise: promise as Promise<ApiResponse<unknown>>, result: null });
+  cache.set(key, {
+    promise: promise as Promise<ApiResponse<unknown>>,
+    result: null,
+  });
   return promise;
 };
 
 /** Invalidate a named scope (e.g. "digest", "wiki"). */
 export const invalidateScope = (scope: keyof typeof SCOPES): void => {
-  for (const key of SCOPES[scope]) cache.delete(key);
+  for (const key of SCOPES[scope]) {
+    cache.delete(key);
+  }
   notify();
 };
 
 /** Invalidate specific keys. */
 export const invalidate = (...keys: CacheKeyValue[]): void => {
-  for (const key of keys) cache.delete(key);
+  for (const key of keys) {
+    cache.delete(key);
+  }
   notify();
 };
 
@@ -78,5 +101,7 @@ export const getCacheVersion = (): number => version;
 /** Subscribe to invalidation events. Returns unsubscribe. */
 export const subscribe = (fn: () => void): (() => void) => {
   listeners.add(fn);
-  return () => { listeners.delete(fn); };
+  return () => {
+    listeners.delete(fn);
+  };
 };

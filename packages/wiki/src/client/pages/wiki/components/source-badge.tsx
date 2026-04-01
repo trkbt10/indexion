@@ -20,7 +20,10 @@ export const SourceBadge = ({ source }: Props): React.JSX.Element => {
 
   return (
     <Link to={`/?file=${encodeURIComponent(source.file)}`}>
-      <Badge variant="outline" className="cursor-pointer gap-1 font-mono text-xs hover:bg-accent">
+      <Badge
+        variant="outline"
+        className="cursor-pointer gap-1 font-mono text-xs hover:bg-accent"
+      >
         <FileCode className="size-3" />
         {label}
       </Badge>

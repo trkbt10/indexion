@@ -5,7 +5,13 @@
  * endpoint URLs are never hard-coded in page components.
  */
 
-import { useState, useEffect, useEffectEvent, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useEffectEvent,
+  useCallback,
+  useRef,
+} from "react";
 import type { ApiResponse } from "./types.ts";
 
 export type ApiState<T> =
@@ -27,29 +33,30 @@ export const useApiCall = <T>(
 ): ApiState<T> => {
   const [state, setState] = useState<ApiState<T>>({ status: "idle" });
 
-  const onCall = useEffectEvent(
-    (signal: AbortSignal) => {
-      if (!call) {
-        setState({ status: "idle" });
+  const onCall = useEffectEvent((signal: AbortSignal) => {
+    if (!call) {
+      setState({ status: "idle" });
+      return;
+    }
+    setState({ status: "loading" });
+    call(signal).then((result) => {
+      if (signal.aborted) {
         return;
       }
-      setState({ status: "loading" });
-      call(signal).then((result) => {
-        if (signal.aborted) return;
-        if (result.ok) {
-          setState({ status: "success", data: result.data });
-        } else {
-          setState({ status: "error", error: result.error });
-        }
-      });
-    },
-  );
+      if (result.ok) {
+        setState({ status: "success", data: result.data });
+      } else {
+        setState({ status: "error", error: result.error });
+      }
+    });
+  });
 
   useEffect(() => {
     const controller = new AbortController();
     onCall(controller.signal);
-    return () => { controller.abort(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      controller.abort();
+    };
   }, deps);
 
   return state;
@@ -71,7 +78,9 @@ export const useApiMutationCall = <T>(): {
     const id = ++activeRef.current;
     setState({ status: "loading" });
     const result = await call();
-    if (activeRef.current !== id) return;
+    if (activeRef.current !== id) {
+      return;
+    }
     if (result.ok) {
       setState({ status: "success", data: result.data });
     } else {

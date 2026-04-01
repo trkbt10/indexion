@@ -54,14 +54,20 @@ export const WikiPage = (): React.JSX.Element => {
       </Button>
 
       {/* Nav sidebar — desktop: always visible, mobile: overlay */}
-      <div className={`
+      <div
+        className={`
         md:block
-        ${navOpen
-          ? "absolute inset-y-0 left-0 z-10 w-64 bg-background shadow-lg"
-          : "hidden"
+        ${
+          navOpen
+            ? "absolute inset-y-0 left-0 z-10 w-64 bg-background shadow-lg"
+            : "hidden"
         }
-      `}>
-        <WikiNav items={navState.data.pages} onNavigate={() => setNavOpen(false)} />
+      `}
+      >
+        <WikiNav
+          items={navState.data.pages}
+          onNavigate={() => setNavOpen(false)}
+        />
       </div>
 
       <WikiContentPane pageState={pageState} />

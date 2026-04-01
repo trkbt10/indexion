@@ -26,13 +26,17 @@ export const fetchGraph = (
   client: HttpClient,
   signal?: AbortSignal,
 ): Promise<ApiResponse<CodeGraph>> =>
-  client.get<CodeGraph>("/graph?format=codegraph", signal);
+  client.get<CodeGraph>("/graph", signal);
 
 // --- Digest ---
 
 export const queryDigest = (
   client: HttpClient,
-  body: { readonly purpose: string; readonly topK?: number; readonly minScore?: number },
+  body: {
+    readonly purpose: string;
+    readonly topK?: number;
+    readonly minScore?: number;
+  },
   signal?: AbortSignal,
 ): Promise<ApiResponse<ReadonlyArray<DigestMatch>>> =>
   client.post<ReadonlyArray<DigestMatch>>("/digest/query", body, signal);
@@ -51,8 +55,14 @@ export const fetchDigestStats = <T = unknown>(
 export const rebuildDigest = (
   client: HttpClient,
   signal?: AbortSignal,
-): Promise<ApiResponse<{ readonly rebuilt: boolean; readonly functions: number }>> =>
-  client.post<{ readonly rebuilt: boolean; readonly functions: number }>("/digest/rebuild", {}, signal);
+): Promise<
+  ApiResponse<{ readonly rebuilt: boolean; readonly functions: number }>
+> =>
+  client.post<{ readonly rebuilt: boolean; readonly functions: number }>(
+    "/digest/rebuild",
+    {},
+    signal,
+  );
 
 // --- Wiki ---
 
@@ -164,7 +174,10 @@ export const runPlanReconcile = (
 
 export const runPlanSolid = (
   client: HttpClient,
-  body: PlanRequest & { readonly fromDirs: ReadonlyArray<string>; readonly toDir?: string },
+  body: PlanRequest & {
+    readonly fromDirs: ReadonlyArray<string>;
+    readonly toDir?: string;
+  },
   signal?: AbortSignal,
 ): Promise<ApiResponse<string>> =>
   client.post<string>("/plan/solid", body, signal);

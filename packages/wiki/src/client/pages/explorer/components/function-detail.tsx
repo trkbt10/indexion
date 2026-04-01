@@ -9,9 +9,17 @@ type Props = {
   readonly onClose: () => void;
 };
 
-const Section = ({ label, children }: { label: string; children: React.ReactNode }) => (
+const Section = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) => (
   <div className="flex flex-col gap-1.5">
-    <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</h3>
+    <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      {label}
+    </h3>
     {children}
   </div>
 );
@@ -21,7 +29,9 @@ export const FunctionDetail = ({ fn, onClose }: Props): React.JSX.Element => (
     <div className="flex items-start justify-between">
       <div className="flex flex-col gap-1">
         <code className="font-mono text-base font-semibold">{fn.name}</code>
-        <span className="font-mono text-xs text-muted-foreground">{fn.module}</span>
+        <span className="font-mono text-xs text-muted-foreground">
+          {fn.module}
+        </span>
       </div>
       <Button variant="ghost" size="icon" className="size-7" onClick={onClose}>
         <X className="size-4" />
@@ -44,7 +54,9 @@ export const FunctionDetail = ({ fn, onClose }: Props): React.JSX.Element => (
 
     {fn.doc && (
       <Section label="Documentation">
-        <p className="whitespace-pre-wrap text-sm text-muted-foreground">{fn.doc}</p>
+        <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+          {fn.doc}
+        </p>
       </Section>
     )}
 
@@ -52,7 +64,9 @@ export const FunctionDetail = ({ fn, onClose }: Props): React.JSX.Element => (
       <Section label="Keywords">
         <div className="flex flex-wrap gap-1.5">
           {fn.keywords.map((kw) => (
-            <Badge key={kw} variant="outline" className="font-mono">{kw}</Badge>
+            <Badge key={kw} variant="outline" className="font-mono">
+              {kw}
+            </Badge>
           ))}
         </div>
       </Section>
@@ -62,7 +76,12 @@ export const FunctionDetail = ({ fn, onClose }: Props): React.JSX.Element => (
       <Section label={`Called by (${fn.callers.length})`}>
         <div className="flex flex-col gap-1">
           {fn.callers.map((c) => (
-            <code key={c} className="rounded-md bg-muted px-2 py-1 font-mono text-xs">{c}</code>
+            <code
+              key={c}
+              className="rounded-md bg-muted px-2 py-1 font-mono text-xs"
+            >
+              {c}
+            </code>
           ))}
         </div>
       </Section>
@@ -72,7 +91,12 @@ export const FunctionDetail = ({ fn, onClose }: Props): React.JSX.Element => (
       <Section label={`Calls (${fn.callees.length})`}>
         <div className="flex flex-col gap-1">
           {fn.callees.map((c) => (
-            <code key={c} className="rounded-md bg-muted px-2 py-1 font-mono text-xs">{c}</code>
+            <code
+              key={c}
+              className="rounded-md bg-muted px-2 py-1 font-mono text-xs"
+            >
+              {c}
+            </code>
           ))}
         </div>
       </Section>

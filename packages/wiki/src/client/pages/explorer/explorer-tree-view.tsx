@@ -7,11 +7,19 @@ type Props = {
   readonly onSelectSym: (sym: SymEntry) => void;
 };
 
-export const ExplorerTreeView = ({ tree, onSelectSym }: Props): React.JSX.Element => (
+export const ExplorerTreeView = ({
+  tree,
+  onSelectSym,
+}: Props): React.JSX.Element => (
   <ScrollArea className="h-full">
     <div className="p-2">
       {tree.map((folder) => (
-        <FolderItem key={folder.path} folder={folder} depth={0} onSelectSym={onSelectSym} />
+        <FolderItem
+          key={folder.path}
+          folder={folder}
+          depth={0}
+          onSelectSym={onSelectSym}
+        />
       ))}
     </div>
   </ScrollArea>

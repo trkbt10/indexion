@@ -26,7 +26,13 @@ export const WikiNav = ({ items, onNavigate }: Props): React.JSX.Element => {
         </h2>
         <nav className="space-y-0.5">
           {items.map((item) => (
-            <NavItem key={item.id} item={item} activeId={activeId} depth={0} onNavigate={onNavigate} />
+            <NavItem
+              key={item.id}
+              item={item}
+              activeId={activeId}
+              depth={0}
+              onNavigate={onNavigate}
+            />
           ))}
         </nav>
       </div>
@@ -41,7 +47,12 @@ type NavItemProps = {
   readonly onNavigate?: () => void;
 };
 
-const NavItem = ({ item, activeId, depth, onNavigate }: NavItemProps): React.JSX.Element => {
+const NavItem = ({
+  item,
+  activeId,
+  depth,
+  onNavigate,
+}: NavItemProps): React.JSX.Element => {
   const [open, setOpen] = useState(
     activeId === item.id || activeId.startsWith(item.id + "/"),
   );
@@ -73,7 +84,11 @@ const NavItem = ({ item, activeId, depth, onNavigate }: NavItemProps): React.JSX
             />
           </button>
         )}
-        <Link to={`/wiki/${item.id}`} className="flex-1 truncate" onClick={onNavigate}>
+        <Link
+          to={`/wiki/${item.id}`}
+          className="flex-1 truncate"
+          onClick={onNavigate}
+        >
           {item.title}
         </Link>
       </div>

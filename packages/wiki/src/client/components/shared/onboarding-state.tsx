@@ -8,7 +8,12 @@ type Props = {
   readonly functionCount: number;
 };
 
-export const OnboardingState = ({ onBuild, building, built, functionCount }: Props): React.JSX.Element => (
+export const OnboardingState = ({
+  onBuild,
+  building,
+  built,
+  functionCount,
+}: Props): React.JSX.Element => (
   <div className="flex h-full flex-col items-center justify-center gap-6 p-8">
     <div className="rounded-full bg-accent p-4">
       {built ? (

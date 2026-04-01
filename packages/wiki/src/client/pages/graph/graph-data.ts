@@ -1,25 +1,43 @@
 import type { CodeGraph, IndexedFunction } from "@indexion/api-client";
-import type { FileInfo, SymbolInfo, FolderNode, DepEdge, GraphTree } from "./graph-types.ts";
+import type {
+  FileInfo,
+  SymbolInfo,
+  FolderNode,
+  DepEdge,
+  GraphTree,
+} from "./graph-types.ts";
 
 const packageOf = (moduleId: string): string => {
   const idx = moduleId.lastIndexOf("/");
   return idx > 0 ? moduleId.slice(0, idx) : moduleId;
 };
 
-export const buildTree = (graph: CodeGraph, indexFns: ReadonlyArray<IndexedFunction>): GraphTree => {
+export const buildTree = (
+  graph: CodeGraph,
+  indexFns: ReadonlyArray<IndexedFunction>,
+): GraphTree => {
   // Internal modules: those with a file field in the graph (per CLAUDE.md SoT)
   const localModuleSet = new Set<string>();
   for (const [m, mod] of Object.entries(graph.modules)) {
-    if (mod.file != null) localModuleSet.add(m);
+    if (mod.file != null) {
+      localModuleSet.add(m);
+    }
   }
   const localModules = [...localModuleSet];
 
   const leafDirs = new Set<string>();
-  for (const m of localModules) { const p = packageOf(m); if (p && p !== m) leafDirs.add(p); }
+  for (const m of localModules) {
+    const p = packageOf(m);
+    if (p && p !== m) {
+      leafDirs.add(p);
+    }
+  }
   const allDirs = new Set<string>();
   for (const d of leafDirs) {
     const parts = d.split("/");
-    for (let i = 1; i <= parts.length; i++) allDirs.add(parts.slice(0, i).join("/"));
+    for (let i = 1; i <= parts.length; i++) {
+      allDirs.add(parts.slice(0, i).join("/"));
+    }
   }
 
   const fileSymbols = new Map<string, SymbolInfo[]>();
@@ -38,49 +56,80 @@ export const buildTree = (graph: CodeGraph, indexFns: ReadonlyArray<IndexedFunct
   }
   const symCount = new Map<string, number>();
   for (const [, sym] of Object.entries(graph.symbols)) {
-    if (!localModuleSet.has(sym.module)) continue;
-    const p = packageOf(sym.module); symCount.set(p, (symCount.get(p) ?? 0) + 1);
+    if (!localModuleSet.has(sym.module)) {
+      continue;
+    }
+    const p = packageOf(sym.module);
+    symCount.set(p, (symCount.get(p) ?? 0) + 1);
   }
   const fnCount = new Map<string, number>();
   for (const fn of indexFns) {
-    if (!localModuleSet.has(fn.module)) continue;
-    const p = packageOf(fn.module); fnCount.set(p, (fnCount.get(p) ?? 0) + 1);
+    if (!localModuleSet.has(fn.module)) {
+      continue;
+    }
+    const p = packageOf(fn.module);
+    fnCount.set(p, (fnCount.get(p) ?? 0) + 1);
   }
   const fileCnt = new Map<string, number>();
-  for (const m of localModules) { const p = packageOf(m); fileCnt.set(p, (fileCnt.get(p) ?? 0) + 1); }
+  for (const m of localModules) {
+    const p = packageOf(m);
+    fileCnt.set(p, (fileCnt.get(p) ?? 0) + 1);
+  }
 
   const nodes = new Map<string, FolderNode>();
   for (const dir of allDirs) {
     const parts = dir.split("/");
-    const hasChildDirs = [...allDirs].some((d) => d !== dir && d.startsWith(dir + "/"));
+    const hasChildDirs = [...allDirs].some(
+      (d) => d !== dir && d.startsWith(dir + "/"),
+    );
     nodes.set(dir, {
-      path: dir, name: parts[parts.length - 1], depth: parts.length - 1,
-      children: [], isLeaf: !hasChildDirs,
-      fileCount: fileCnt.get(dir) ?? 0, symbolCount: symCount.get(dir) ?? 0,
+      path: dir,
+      name: parts[parts.length - 1],
+      depth: parts.length - 1,
+      children: [],
+      isLeaf: !hasChildDirs,
+      fileCount: fileCnt.get(dir) ?? 0,
+      symbolCount: symCount.get(dir) ?? 0,
       functionCount: fnCount.get(dir) ?? 0,
       files: pkgFiles.get(dir) ?? [],
     });
   }
   for (const [path] of nodes) {
     const parts = path.split("/");
-    if (parts.length > 1) nodes.get(parts.slice(0, -1).join("/"))?.children.push(path);
+    if (parts.length > 1) {
+      nodes.get(parts.slice(0, -1).join("/"))?.children.push(path);
+    }
   }
-  for (const [, n] of nodes) n.children.sort();
+  for (const [, n] of nodes) {
+    n.children.sort();
+  }
 
   // Build edges: only between internal modules, resolved via the graph's own module IDs.
   // No prefix stripping — if both endpoints are internal (have file field), the edge is local.
-  const edges: DepEdge[] = []; const edgeSet = new Set<string>();
+  const edges: DepEdge[] = [];
+  const edgeSet = new Set<string>();
   for (const e of graph.edges) {
-    if (e.kind !== "module_depends_on") continue;
-    if (!localModuleSet.has(e.from)) continue;
+    if (e.kind !== "module_depends_on") {
+      continue;
+    }
+    if (!localModuleSet.has(e.from)) {
+      continue;
+    }
     // Target may be internal directly, or may reference an internal module
     // under a bare prefix. Resolve by checking if the target itself is internal.
-    if (!localModuleSet.has(e.to)) continue;
+    if (!localModuleSet.has(e.to)) {
+      continue;
+    }
     const fromDir = packageOf(e.from);
     const toDir = packageOf(e.to);
-    if (!leafDirs.has(fromDir) || !leafDirs.has(toDir) || fromDir === toDir) continue;
+    if (!leafDirs.has(fromDir) || !leafDirs.has(toDir) || fromDir === toDir) {
+      continue;
+    }
     const key = `${fromDir}\0${toDir}`;
-    if (!edgeSet.has(key)) { edgeSet.add(key); edges.push({ from: fromDir, to: toDir }); }
+    if (!edgeSet.has(key)) {
+      edgeSet.add(key);
+      edges.push({ from: fromDir, to: toDir });
+    }
   }
 
   const roots = [...nodes.keys()].filter((p) => {

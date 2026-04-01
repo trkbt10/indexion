@@ -11,7 +11,9 @@ type Props = {
 };
 
 export const WikiToc = ({ headings }: Props): React.JSX.Element | null => {
-  if (headings.length === 0) return null;
+  if (headings.length === 0) {
+    return null;
+  }
 
   return (
     <ScrollArea className="h-full border-l">

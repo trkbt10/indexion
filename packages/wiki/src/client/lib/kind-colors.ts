@@ -44,7 +44,9 @@ const assignments = new Map<string, number>();
 const indexOf = (kind: string): number => {
   const key = kind.toLowerCase();
   const existing = assignments.get(key);
-  if (existing != null) return existing;
+  if (existing != null) {
+    return existing;
+  }
   const idx = assignments.size;
   assignments.set(key, idx);
   return idx;

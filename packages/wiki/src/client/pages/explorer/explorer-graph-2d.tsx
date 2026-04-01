@@ -16,7 +16,9 @@ type Props = {
  */
 const pruneTree = (tree: GraphTree, maxNodes: number): GraphTree => {
   const { nodes, edges, roots } = tree;
-  if (nodes.size <= maxNodes) return tree;
+  if (nodes.size <= maxNodes) {
+    return tree;
+  }
 
   // Keep only non-leaf nodes (containers with children) + top N leaf nodes by edge count
   const edgeCount = new Map<string, number>();
@@ -44,7 +46,9 @@ const pruneTree = (tree: GraphTree, maxNodes: number): GraphTree => {
   }
 
   const prunedNodes = new Map<string, FolderNode>();
-  for (const id of kept) prunedNodes.set(id, nodes.get(id)!);
+  for (const id of kept) {
+    prunedNodes.set(id, nodes.get(id)!);
+  }
 
   const prunedEdges = edges.filter((e) => kept.has(e.from) && kept.has(e.to));
 
@@ -57,14 +61,19 @@ const treeToMermaid = (tree: GraphTree): string => {
 
   // Find longest common prefix to shorten labels
   const commonPrefix = (() => {
-    if (paths.length === 0) return "";
+    if (paths.length === 0) {
+      return "";
+    }
     const first = paths[0].split("/");
     let len = first.length;
     for (let i = 1; i < paths.length; i++) {
       const parts = paths[i].split("/");
       len = Math.min(len, parts.length);
       for (let j = 0; j < len; j++) {
-        if (parts[j] !== first[j]) { len = j; break; }
+        if (parts[j] !== first[j]) {
+          len = j;
+          break;
+        }
       }
     }
     return len > 0 ? first.slice(0, len).join("/") + "/" : "";
@@ -72,26 +81,36 @@ const treeToMermaid = (tree: GraphTree): string => {
 
   const nodeIds = new Map<string, string>();
   let idx = 0;
-  for (const id of paths) nodeIds.set(id, `N${idx++}`);
+  for (const id of paths) {
+    nodeIds.set(id, `N${idx++}`);
+  }
 
   const lines: string[] = ["graph LR"];
   for (const [id] of tree.nodes) {
     const nid = nodeIds.get(id)!;
     // Use path relative to common prefix for readability
-    const label = (commonPrefix ? id.slice(commonPrefix.length) : id).replace(/"/g, "#quot;");
+    const label = (commonPrefix ? id.slice(commonPrefix.length) : id).replace(
+      /"/g,
+      "#quot;",
+    );
     lines.push(`  ${nid}["${label}"]`);
   }
   for (const edge of tree.edges) {
     const from = nodeIds.get(edge.from);
     const to = nodeIds.get(edge.to);
-    if (from && to) lines.push(`  ${from} --> ${to}`);
+    if (from && to) {
+      lines.push(`  ${from} --> ${to}`);
+    }
   }
   return lines.join("\n");
 };
 
 const MAX_NODES = 50;
 
-export const ExplorerGraph2D = ({ graph, indexFns }: Props): React.JSX.Element => {
+export const ExplorerGraph2D = ({
+  graph,
+  indexFns,
+}: Props): React.JSX.Element => {
   const mermaidCode = useMemo(() => {
     const fullTree = buildTree(graph, indexFns);
     const pruned = pruneTree(fullTree, MAX_NODES);
@@ -106,10 +125,14 @@ export const ExplorerGraph2D = ({ graph, indexFns }: Props): React.JSX.Element =
       <div className="p-4">
         {isPruned && (
           <p className="mb-2 text-xs text-muted-foreground">
-            Showing top {MAX_NODES} of {tree.nodes.size} modules by connectivity.
+            Showing top {MAX_NODES} of {tree.nodes.size} modules by
+            connectivity.
           </p>
         )}
-        <MermaidDiagram code={mermaidCode} className="[&_svg]:max-w-full [&_svg]:h-auto" />
+        <MermaidDiagram
+          code={mermaidCode}
+          className="[&_svg]:max-w-full [&_svg]:h-auto"
+        />
       </div>
     </ScrollArea>
   );

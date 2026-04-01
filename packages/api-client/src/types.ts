@@ -138,4 +138,10 @@ export type ServerConfig = {
 
 export type ComparisonStrategy = "tfidf" | "ncd" | "hybrid" | "apted" | "tsed";
 
-export type DocGraphFormat = "mermaid" | "json" | "dot" | "d2" | "text" | "codegraph";
+export type DocGraphFormat =
+  | "mermaid"
+  | "json"
+  | "dot"
+  | "d2"
+  | "text"
+  | "codegraph";

@@ -6,7 +6,10 @@ const packageOf = (m: string): string => {
   return i > 0 ? m.slice(0, i) : m;
 };
 
-export const buildFolderTree = (graph: CodeGraph, _fns: ReadonlyArray<IndexedFunction>): FolderEntry[] => {
+export const buildFolderTree = (
+  graph: CodeGraph,
+  _fns: ReadonlyArray<IndexedFunction>,
+): FolderEntry[] => {
   const localMods = Object.entries(graph.modules)
     .filter(([, mod]) => mod.file != null)
     .map(([m]) => m);
@@ -19,18 +22,32 @@ export const buildFolderTree = (graph: CodeGraph, _fns: ReadonlyArray<IndexedFun
   }
 
   const leafDirs = new Set<string>();
-  for (const m of localMods) { const p = packageOf(m); if (p && p !== m) leafDirs.add(p); }
+  for (const m of localMods) {
+    const p = packageOf(m);
+    if (p && p !== m) {
+      leafDirs.add(p);
+    }
+  }
   const allDirs = new Set<string>();
   for (const d of leafDirs) {
     const parts = d.split("/");
-    for (let i = 1; i <= parts.length; i++) allDirs.add(parts.slice(0, i).join("/"));
+    for (let i = 1; i <= parts.length; i++) {
+      allDirs.add(parts.slice(0, i).join("/"));
+    }
   }
 
-  const dirFiles = new Map<string, { path: string; name: string; symbols: SymEntry[] }[]>();
+  const dirFiles = new Map<
+    string,
+    { path: string; name: string; symbols: SymEntry[] }[]
+  >();
   for (const m of localMods) {
     const p = packageOf(m);
     const arr = dirFiles.get(p) ?? [];
-    arr.push({ path: m, name: m.split("/").pop() ?? m, symbols: fileSym.get(m) ?? [] });
+    arr.push({
+      path: m,
+      name: m.split("/").pop() ?? m,
+      symbols: fileSym.get(m) ?? [],
+    });
     dirFiles.set(p, arr);
   }
 
@@ -51,7 +68,9 @@ export const buildFolderTree = (graph: CodeGraph, _fns: ReadonlyArray<IndexedFun
     path,
     name: path.split("/").pop() ?? path,
     children: (dirChildren.get(path) ?? []).sort().map(buildNode),
-    files: (dirFiles.get(path) ?? []).sort((a, b) => a.name.localeCompare(b.name)),
+    files: (dirFiles.get(path) ?? []).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    ),
   });
 
   const roots = [...allDirs].filter((d) => {
@@ -61,17 +80,27 @@ export const buildFolderTree = (graph: CodeGraph, _fns: ReadonlyArray<IndexedFun
   return roots.sort().map(buildNode);
 };
 
-export const filterTree = (tree: FolderEntry[], filter: string): FolderEntry[] => {
+export const filterTree = (
+  tree: FolderEntry[],
+  filter: string,
+): FolderEntry[] => {
   const lower = filter.toLowerCase();
   const filterFolder = (f: FolderEntry): FolderEntry | null => {
-    const matchedChildren = f.children.map(filterFolder).filter(Boolean) as FolderEntry[];
+    const matchedChildren = f.children
+      .map(filterFolder)
+      .filter(Boolean) as FolderEntry[];
     const matchedFiles = f.files.filter(
       (file) =>
         file.name.toLowerCase().includes(lower) ||
         file.symbols.some((s) => s.name.toLowerCase().includes(lower)),
     );
-    if (matchedChildren.length === 0 && matchedFiles.length === 0 && !f.name.toLowerCase().includes(lower))
+    if (
+      matchedChildren.length === 0 &&
+      matchedFiles.length === 0 &&
+      !f.name.toLowerCase().includes(lower)
+    ) {
       return null;
+    }
     return { ...f, children: matchedChildren, files: matchedFiles };
   };
   return tree.map(filterFolder).filter(Boolean) as FolderEntry[];

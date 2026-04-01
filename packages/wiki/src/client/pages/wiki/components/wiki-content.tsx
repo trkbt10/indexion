@@ -2,7 +2,7 @@
  * @file Central content area: Markdown rendering with source badges.
  */
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
@@ -19,7 +19,12 @@ type Props = {
 
 export const WikiContent = ({ page }: Props): React.JSX.Element => {
   const renderCode = useCallback(
-    (props: React.HTMLAttributes<HTMLElement> & { children?: React.ReactNode; className?: string }) => {
+    (
+      props: React.HTMLAttributes<HTMLElement> & {
+        children?: React.ReactNode;
+        className?: string;
+      },
+    ) => {
       const match = /language-mermaid/.exec(props.className ?? "");
       if (match) {
         const code = String(props.children).replace(/\n$/, "");
