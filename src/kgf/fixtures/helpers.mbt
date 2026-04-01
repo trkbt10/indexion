@@ -2,42 +2,49 @@
 /// Common helpers for fixture tests.
 
 ///|
-/// Find the fixtures directory by walking up from the test execution directory.
-/// Returns None if not found (e.g. CI where cwd is deep in _build/).
-pub fn find_fixtures_dir() -> String? {
-  let paths = [
-    "fixtures", "../fixtures", "../../fixtures", "../../../fixtures", "../../../../fixtures",
-    "../../../../../fixtures",
-  ]
-  for path in paths {
-    try {
-      if @fs.is_dir(path) {
-        return Some(path)
-      }
+/// Walk up from "." looking for a directory named `name`.
+/// Stops at filesystem root or on permission error.
+fn find_ancestor_dir(name : String) -> String? {
+  let mut prefix = ""
+  // Limit to prevent infinite loop, but the real stop is dirname convergence
+  for i = 0; i < 64; i = i + 1 {
+    let candidate = if prefix.length() == 0 { name } else { prefix + name }
+    let exists = try {
+      @fs.is_dir(candidate)
     } catch {
-      _ => continue
+      // Permission error or other OS error — stop walking
+      _ => return None
     }
+    if exists {
+      return Some(candidate)
+    }
+    // Check if we've reached the root (prefix didn't grow)
+    let parent = prefix + ".."
+    let can_access = try {
+      @fs.is_dir(parent)
+    } catch {
+      _ => return None
+    }
+    if !can_access {
+      return None
+    }
+    prefix = parent + "/"
   }
   None
 }
 
 ///|
-/// Find the kgfs directory by walking up from the test execution directory.
-/// Returns None if not found.
+/// Find the fixtures directory by walking up from cwd.
+/// Returns None if not reachable.
+pub fn find_fixtures_dir() -> String? {
+  find_ancestor_dir("fixtures")
+}
+
+///|
+/// Find the kgfs directory by walking up from cwd.
+/// Returns None if not reachable.
 pub fn find_kgfs_dir() -> String? {
-  let paths = [
-    "kgfs", "../kgfs", "../../kgfs", "../../../kgfs", "../../../../kgfs", "../../../../../kgfs",
-  ]
-  for path in paths {
-    try {
-      if @fs.is_dir(path) {
-        return Some(path)
-      }
-    } catch {
-      _ => continue
-    }
-  }
-  None
+  find_ancestor_dir("kgfs")
 }
 
 ///|
