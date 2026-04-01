@@ -5,9 +5,10 @@ fn build_code_graph(
 ) -> (@registry.KGFRegistry, Array[String], @graph.CodeGraph) {
   let registry = @kgf_features.load_registry_or_empty(specs_dir~, target_dir~)
   let kgf_ignore = registry.collect_ignore_patterns()
-  // Do not set root_dir for fixtures — gitignore hoisting from the
-  // enclosing repo can interfere with fixture file discovery.
-  let discover_opts = @pipeline.DiscoverOptions::new(kgf_ignore~)
+  let discover_opts = @pipeline.DiscoverOptions::new(
+    kgf_ignore~,
+    root_dir=target_dir,
+  )
   let discovered_paths = @pipeline.discover_files(
     discovery_roots(target_dir),
     discover_opts,

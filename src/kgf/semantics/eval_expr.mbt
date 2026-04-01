@@ -39,7 +39,7 @@ fn json_to_number(v : Json) -> Double {
     False => 0.0
     Number(n, ..) => n
     String(s) => {
-      let result : Double = @strconv.parse_double(s) catch { _ => 0.0 }
+      let result : Double = @string.parse_double(s) catch { _ => 0.0 }
       result
     }
     _ => 0.0

@@ -3,5 +3,5 @@ import {
   "trkbt10/indexion/src/kgf/resolver",
   "trkbt10/indexion/src/core/graph",
   "moonbitlang/core/json",
-  "moonbitlang/core/strconv",
+  "moonbitlang/core/string",
 }
