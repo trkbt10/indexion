@@ -323,10 +323,6 @@ claude plugin marketplace add trkbt10/indexion-skills
 - MoonBit toolchain (for building from source)
 - No runtime dependencies
 
-## Documentation
-
-[DeepWiki](https://trkbt10.github.io/indexion/) — Interactive documentation built with `indexion serve export`
-
 ## License
 
 Apache License 2.0
