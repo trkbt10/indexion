@@ -43,11 +43,11 @@ The extension does not reimplement any analysis logic. It acts as a thin UI laye
 3. Parses the JSON output.
 4. Displays results in tree views, webview panels, or notifications.
 
-The bridge layer (`src/bridge/`) encapsulates all process spawning. Each command has a dedicated bridge module (`explore.ts`, `plan.ts`, `doc.ts`, `digest.ts`, `kgf.ts`) that constructs the argument array and types the result.
+The bridge layer (`packages/vscode-plugin/src/bridge/`) encapsulates all process spawning. Each command has a dedicated bridge module (`explore.ts`, `plan.ts`, `doc.ts`, `digest.ts`, `kgf.ts`) that constructs the argument array and types the result.
 
 `BridgeConfig` carries three values resolved from VS Code settings: the path to the indexion binary, the workspace directory, and the KGF specs directory.
 
-> Source: `vscode-plugin/src/bridge/types.ts`, `vscode-plugin/src/bridge/process.ts`
+> Source: `packages/vscode-plugin/src/bridge/types.ts`, `packages/vscode-plugin/src/bridge/process.ts`
 
 ## Features
 
@@ -94,16 +94,16 @@ The extension registers several language intelligence providers:
 - **Semantic tokens** -- syntax highlighting augmented with KGF token data
 - **Dependency lens** -- CodeLens annotations showing module dependencies
 
-> Source: `vscode-plugin/src/providers/`
+> Source: `packages/vscode-plugin/src/providers/`
 
 ## Settings panel
 
 The `indexion.openSettings` command opens a webview-based settings panel for configuring binary path, specs directory, and default command options. Settings are persisted in VS Code's workspace configuration.
 
-> Source: `vscode-plugin/src/panels/settings/panel.ts`
+> Source: `packages/vscode-plugin/src/panels/settings/panel.ts`
 
 ## Webview communication
 
 Webview panels communicate with the extension host through a typed message bus (`src/webview/shared/message-bus.ts`). Messages are discriminated unions with a `type` field. The `vscode-api.ts` wrapper provides a typed interface to the VS Code webview API.
 
-> Source: `vscode-plugin/src/extension.ts`, `vscode-plugin/src/commands/index.ts`
+> Source: `packages/vscode-plugin/src/extension.ts`, `packages/vscode-plugin/src/commands/index.ts`

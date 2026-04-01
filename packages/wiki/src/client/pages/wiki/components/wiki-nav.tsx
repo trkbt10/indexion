@@ -53,11 +53,12 @@ const NavItem = ({
   depth,
   onNavigate,
 }: NavItemProps): React.JSX.Element => {
-  const [open, setOpen] = useState(
-    activeId === item.id || activeId.startsWith(item.id + "/"),
-  );
   const hasChildren = item.children.length > 0;
   const isActive = activeId === item.id;
+  const isAncestor = activeId.startsWith(item.id + "/");
+  const [open, setOpen] = useState(
+    depth < 2 || isActive || isAncestor,
+  );
 
   return (
     <div>
@@ -70,7 +71,7 @@ const NavItem = ({
         )}
         style={{ paddingLeft: `${8 + depth * 12}px` }}
       >
-        {hasChildren && (
+        {hasChildren ? (
           <button
             type="button"
             onClick={() => setOpen(!open)}
@@ -83,6 +84,8 @@ const NavItem = ({
               )}
             />
           </button>
+        ) : (
+          <span className="shrink-0 size-[18px]" />
         )}
         <Link
           to={`/wiki/${item.id}`}

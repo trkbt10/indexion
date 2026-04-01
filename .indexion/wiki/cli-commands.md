@@ -23,6 +23,7 @@ flowchart TD
     PLAN --> PU[unwrap]
     PLAN --> PREC[reconcile]
     PLAN --> PREADME[readme]
+    PLAN --> PWIKI[wiki]
 
     DOC --> DI[init]
     DOC --> DG[graph]
@@ -169,6 +170,22 @@ indexion plan readme [options] <directory>
 ```
 
 **When to use:** Planning a documentation sprint. Produces tasks that can be assigned to humans or LLMs.
+
+### plan wiki
+
+Analyze project structure and generate a wiki writing plan. Proposes concept-based page structure and detects pages that need updates based on source changes.
+
+```bash
+indexion plan wiki [options] <directory>
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--format=FORMAT` | `md`, `json`, `github-issue` | `md` |
+| `--wiki-dir=DIR` | Wiki directory | `.indexion/wiki` |
+| `-o=FILE` | Output to file | stdout |
+
+**When to use:** Planning wiki documentation. Generates a page structure proposal and identifies stale pages.
 
 ---
 
