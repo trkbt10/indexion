@@ -36,11 +36,28 @@ async test "reconcile: fixture typescript project validates cross-package drift 
     mtime_fallback: false,
     logical_review_mode: "off",
   }
+  let kgfs_dir = @kgf_fixtures.get_kgfs_dir()
   let (registry, discovered_paths, graph) = build_code_graph(
-    fixture_root,
-    @kgf_fixtures.get_kgfs_dir(),
+    fixture_root, kgfs_dir,
+  )
+  // Preconditions: verify registry loaded and files discovered
+  assert_true(
+    registry.spec_count() > 0,
+    msg="registry is empty — kgfs dir '" + kgfs_dir + "' may not exist",
+  )
+  assert_true(
+    discovered_paths.length() > 0,
+    msg="no files discovered in '" + fixture_root + "'",
   )
   let units = extract_code_units(graph, registry)
+  assert_true(
+    units.length() > 0,
+    msg="no code units extracted (discovered " +
+      discovered_paths.length().to_string() +
+      " files, " +
+      registry.spec_count().to_string() +
+      " specs)",
+  )
   assert_true(units.iter().any(fn(unit) { unit.name == "buildGraph" }))
   assert_true(units.iter().any(fn(unit) { unit.name == "ReconcileConfig" }))
   assert_true(units.iter().any(fn(unit) { unit.name == "ReportRenderer" }))
