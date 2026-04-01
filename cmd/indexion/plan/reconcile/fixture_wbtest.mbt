@@ -41,11 +41,6 @@ async test "reconcile: fixture typescript project validates cross-package drift 
     @kgf_fixtures.get_kgfs_dir(),
   )
   let units = extract_code_units(graph, registry)
-  let unit_names = units.iter().map(fn(u) { u.name }).collect()
-  println("DEBUG units: " + unit_names.to_string())
-  println("DEBUG units count: " + units.length().to_string())
-  println("DEBUG discovered_paths: " + discovered_paths.to_string())
-  println("DEBUG registry spec_count: " + registry.spec_count().to_string())
   assert_true(units.iter().any(fn(unit) { unit.name == "buildGraph" }))
   assert_true(units.iter().any(fn(unit) { unit.name == "ReconcileConfig" }))
   assert_true(units.iter().any(fn(unit) { unit.name == "ReportRenderer" }))
