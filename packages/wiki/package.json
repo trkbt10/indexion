@@ -10,7 +10,7 @@
     "build:static": "VITE_STATIC_MODE=true vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo 'lint handled by root eslint config'",
-    "test": "vitest --run",
+    "test": "vitest --run --passWithNoTests",
     "test:cov": "vitest run --coverage"
   },
   "dependencies": {

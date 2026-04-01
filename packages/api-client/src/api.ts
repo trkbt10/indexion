@@ -25,8 +25,7 @@ import type {
 export const fetchGraph = (
   client: HttpClient,
   signal?: AbortSignal,
-): Promise<ApiResponse<CodeGraph>> =>
-  client.get<CodeGraph>("/graph", signal);
+): Promise<ApiResponse<CodeGraph>> => client.get<CodeGraph>("/graph", signal);
 
 // --- Digest ---
 

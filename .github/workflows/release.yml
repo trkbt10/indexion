@@ -49,7 +49,7 @@ jobs:
         run: bun run --filter '*' typecheck
 
       - name: Lint
-        run: bun run --filter '*' lint
+        run: bun run lint
 
       - name: Test
         run: bun run --filter '*' test

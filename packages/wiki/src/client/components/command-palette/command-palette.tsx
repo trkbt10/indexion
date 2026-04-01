@@ -50,7 +50,8 @@ export const CommandPalette = ({
 
   const [query, setQuery] = useState("");
   const [graph, setGraph] = useState<CodeGraph | null>(null);
-  const [digestIndex, setDigestIndex] = useState<ReadonlyArray<IndexedFunction> | null>(null);
+  const [digestIndex, setDigestIndex] =
+    useState<ReadonlyArray<IndexedFunction> | null>(null);
   const [wikiNav, setWikiNav] = useState<WikiNav | null>(null);
   const [wikiResults, setWikiResults] = useState<ReadonlyArray<WikiSearchHit>>(
     [],
@@ -74,15 +75,23 @@ export const CommandPalette = ({
 
   // In static mode, pre-load data for client-side search
   useEffect(() => {
-    if (!open || !isStaticMode) return;
+    if (!open || !isStaticMode) {
+      return;
+    }
     if (scope === "explorer" && !digestIndex) {
-      cachedFetch(CacheKey.digest.index, () => fetchDigestIndex(client)).then((r) => {
-        if (r.ok) setDigestIndex(r.data);
-      });
+      cachedFetch(CacheKey.digest.index, () => fetchDigestIndex(client)).then(
+        (r) => {
+          if (r.ok) {
+            setDigestIndex(r.data);
+          }
+        },
+      );
     }
     if (scope === "wiki" && !wikiNav) {
       cachedFetch(CacheKey.wiki.nav, () => fetchWikiNav(client)).then((r) => {
-        if (r.ok) setWikiNav(r.data);
+        if (r.ok) {
+          setWikiNav(r.data);
+        }
       });
     }
   }, [open, scope, digestIndex, wikiNav]);
@@ -104,7 +113,13 @@ export const CommandPalette = ({
           for (const item of items) {
             if (item.title.toLowerCase().includes(lower)) {
               results.push({
-                section: { id: item.id, title: item.title, content: "", page_id: item.id, level: 1 },
+                section: {
+                  id: item.id,
+                  title: item.title,
+                  content: "",
+                  page_id: item.id,
+                  level: 1,
+                },
                 score: 1,
               });
             }
@@ -115,11 +130,21 @@ export const CommandPalette = ({
           return results;
         };
         setWikiResults(flattenNav(wikiNav.pages).slice(0, 10));
-      } else if (scope === "explorer" && digestIndex) {
+      }
+      if (scope === "explorer" && digestIndex) {
         const matches = digestIndex
-          .filter((fn) => fn.name.toLowerCase().includes(lower) || fn.module.toLowerCase().includes(lower))
+          .filter(
+            (fn) =>
+              fn.name.toLowerCase().includes(lower) ||
+              fn.module.toLowerCase().includes(lower),
+          )
           .slice(0, 10)
-          .map((fn) => ({ name: fn.name, file: fn.module, score: 1, summary: fn.doc ?? fn.summary ?? "" }));
+          .map((fn) => ({
+            name: fn.name,
+            file: fn.module,
+            score: 1,
+            summary: fn.doc ?? fn.summary ?? "",
+          }));
         setSemanticResults(matches);
       }
       return;

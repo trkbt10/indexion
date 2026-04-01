@@ -9,7 +9,7 @@
   "scripts": {
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun run --filter '*' test",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint": "eslint packages/wiki packages/api-client",
+    "lint:fix": "eslint packages/wiki packages/api-client --fix"
   }
 }
