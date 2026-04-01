@@ -201,10 +201,12 @@ jobs:
         run: |
           mkdir -p release
 
-          # Copy all archives
+          # Copy all archives (skip non-release artifacts like wiki-dist)
           for dir in artifacts/*/; do
             name=$(basename "$dir")
-            cp "$dir/$name" "release/$name"
+            if [ -f "$dir/$name" ]; then
+              cp "$dir/$name" "release/$name"
+            fi
           done
 
           # Generate checksums
