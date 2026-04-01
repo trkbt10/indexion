@@ -3,6 +3,8 @@ _build/
 .mooncakes/
 .moonagent/
 .docgen/
-.indexion/
+.indexion/*
+!.indexion/wiki/
+!.indexion/.gitignore
 node_modules/
 dist/

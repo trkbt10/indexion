@@ -1,0 +1,82 @@
+{
+  "title": "indexion",
+  "pages": [
+    {
+      "id": "overview",
+      "title": "Overview",
+      "file": "overview.md",
+      "sources": ["README.md", "moon.mod.json"],
+      "children": ["getting-started", "core-concepts", "architecture"]
+    },
+    {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "file": "getting-started.md",
+      "sources": ["README.md", "cmd/indexion/main.mbt"],
+      "children": []
+    },
+    {
+      "id": "core-concepts",
+      "title": "Core Concepts",
+      "file": "core-concepts.md",
+      "sources": ["src/kgf/", "src/core/graph/", "src/digest/"],
+      "children": []
+    },
+    {
+      "id": "architecture",
+      "title": "Architecture",
+      "file": "architecture.md",
+      "sources": ["src/", "cmd/indexion/"],
+      "children": ["kgf-system", "codegraph", "digest-pipeline", "analysis-tools", "cli-commands", "vscode-extension", "deepwiki-frontend"]
+    },
+    {
+      "id": "kgf-system",
+      "title": "KGF System",
+      "file": "kgf-system.md",
+      "sources": ["src/kgf/lexer/", "src/kgf/parser/", "src/kgf/registry/", "src/kgf/semantics/", "kgfs/"],
+      "children": []
+    },
+    {
+      "id": "codegraph",
+      "title": "CodeGraph",
+      "file": "codegraph.md",
+      "sources": ["src/core/graph/types.mbt", "src/core/graph/graph.mbt", "src/docgen/query/"],
+      "children": []
+    },
+    {
+      "id": "digest-pipeline",
+      "title": "Digest Pipeline",
+      "file": "digest-pipeline.md",
+      "sources": ["src/digest/", "cmd/indexion/digest/"],
+      "children": []
+    },
+    {
+      "id": "analysis-tools",
+      "title": "Analysis Tools",
+      "file": "analysis-tools.md",
+      "sources": ["cmd/indexion/plan/", "src/similarity/", "src/pipeline/comparison/"],
+      "children": []
+    },
+    {
+      "id": "cli-commands",
+      "title": "CLI Commands",
+      "file": "cli-commands.md",
+      "sources": ["cmd/indexion/"],
+      "children": []
+    },
+    {
+      "id": "vscode-extension",
+      "title": "VS Code Extension",
+      "file": "vscode-extension.md",
+      "sources": ["vscode-plugin/"],
+      "children": []
+    },
+    {
+      "id": "deepwiki-frontend",
+      "title": "DeepWiki Frontend",
+      "file": "deepwiki-frontend.md",
+      "sources": ["deepwiki/"],
+      "children": []
+    }
+  ]
+}
