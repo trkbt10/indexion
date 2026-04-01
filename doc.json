@@ -57,6 +57,7 @@
       { "type": "toc", "title": "Commands" },
       { "type": "packages", "filter": "cmd/**" },
       { "type": "static", "file": "docs/installation.md" },
+      { "type": "static", "file": "docs/documentation.md" },
       { "type": "static", "file": "docs/license.md" }
     ]
   }

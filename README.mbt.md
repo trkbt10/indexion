@@ -1,8 +1,8 @@
+# indexion
+
 <p align="center">
   <img src="docs/logo.svg" alt="indexion" height="64">
 </p>
-
-# indexion
 
 > "The map is not the territory" - Alfred Korzybski
 
@@ -322,6 +322,10 @@ claude plugin marketplace add trkbt10/indexion-skills
 
 - MoonBit toolchain (for building from source)
 - No runtime dependencies
+
+## Documentation
+
+[DeepWiki](https://trkbt10.github.io/indexion/) — Interactive documentation built with `indexion serve export`
 
 ## License
 
