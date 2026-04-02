@@ -12,7 +12,7 @@ pub fn render_mermaid(graph : GraphJSON) -> String {
   lines.push("graph LR")
   // Node definitions
   for node in graph.nodes {
-    let escaped = escape_mermaid_label(node.label)
+    let escaped = escape_mermaid(node.label)
     lines.push("  " + node.id + "[" + escaped + "]")
   }
   // Edge definitions
@@ -154,26 +154,6 @@ pub fn render_text(graph : GraphJSON) -> String {
 }
 
 // Helper functions
-
-///|
-fn escape_mermaid_label(s : String) -> String {
-  let result : Array[Char] = []
-  for c in s {
-    match c {
-      '"' => {
-        result.push('#')
-        result.push('q')
-        result.push('u')
-        result.push('o')
-        result.push('t')
-        result.push(';')
-      }
-      '[' | ']' | '(' | ')' | '{' | '}' => ()
-      _ => result.push(c)
-    }
-  }
-  String::from_array(result)
-}
 
 ///|
 fn escape_dot(s : String) -> String {
