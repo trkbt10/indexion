@@ -9,6 +9,7 @@ pub fn is_sentence_terminator(c : Char) -> Bool {
   c == '。' ||
   c == '！' ||
   c == '？' ||
+  c == '．' ||
   // English terminators
   c == '.' ||
   c == '!' ||
@@ -40,7 +41,7 @@ pub fn is_trailing_punctuation(c : Char) -> Bool {
 
 ///|
 /// Check if a character is an extended terminator (includes closing brackets).
-fn is_extended_terminator(c : Char) -> Bool {
+pub fn is_extended_terminator(c : Char) -> Bool {
   is_sentence_terminator(c) ||
   // Japanese closing brackets
   c == '」' ||

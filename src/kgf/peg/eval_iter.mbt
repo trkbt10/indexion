@@ -102,8 +102,8 @@ fn eval_iter_loop(ctx : IterEvalContext) -> Unit {
       LabelCont(label_name) => process_label_cont(ctx, label_name)
       RuleRefCont(rule_name, target_is_rule_ref, start_pos) =>
         process_rule_ref_cont(ctx, rule_name, target_is_rule_ref, start_pos)
-      AndCont(node_id, pos) => process_and_cont(ctx, node_id, pos)
-      NotCont(node_id, pos) => process_not_cont(ctx, node_id, pos)
+      AndCont(node_id, pos) => process_predicate_cont(ctx, node_id, pos, false)
+      NotCont(node_id, pos) => process_predicate_cont(ctx, node_id, pos, true)
     }
   }
 }
@@ -427,32 +427,24 @@ fn process_rule_ref_cont(
 }
 
 ///|
-/// Process And-predicate continuation.
-fn process_and_cont(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
+/// Process And/Not-predicate continuation (unified).
+/// When negate is false, behaves as And-predicate; when true, as Not-predicate.
+fn process_predicate_cont(
+  ctx : IterEvalContext,
+  node_id : Int,
+  pos : Int,
+  negate : Bool,
+) -> Unit {
   let result = ctx.results.pop().unwrap()
   let memo_idx = node_id * ctx.num_positions + pos
-  if result.ok {
+  let matched = if negate { !(result.ok) } else { result.ok }
+  if matched {
     let labels = empty_labels()
     ctx.memo[memo_idx] = Succeeded(pos, labels)
     ctx.results.push({ ok: true, end_pos: pos, labels })
   } else {
     ctx.memo[memo_idx] = Failed
     ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels() })
-  }
-}
-
-///|
-/// Process Not-predicate continuation.
-fn process_not_cont(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
-  let result = ctx.results.pop().unwrap()
-  let memo_idx = node_id * ctx.num_positions + pos
-  if result.ok {
-    ctx.memo[memo_idx] = Failed
-    ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels() })
-  } else {
-    let labels = empty_labels()
-    ctx.memo[memo_idx] = Succeeded(pos, labels)
-    ctx.results.push({ ok: true, end_pos: pos, labels })
   }
 }
 
