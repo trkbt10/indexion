@@ -64,6 +64,7 @@ pub struct GrepConfig {
   includes : Array[String]
   excludes : Array[String]
   specs_dir : String
+  semantic : String
   undocumented : Bool
   context_lines : Int
   count_only : Bool
@@ -78,6 +79,7 @@ pub fn GrepConfig::default() -> GrepConfig {
     includes: [],
     excludes: [],
     specs_dir: "kgfs",
+    semantic: "",
     undocumented: false,
     context_lines: 0,
     count_only: false,
@@ -111,6 +113,7 @@ pub fn GrepConfig::from_matches(matches : @argparse.Matches) -> GrepConfig {
     includes: get_all("include"),
     excludes: get_all("exclude"),
     specs_dir: get_str("specs-dir", "kgfs"),
+    semantic: get_str("semantic", ""),
     undocumented: get_flag("undocumented", false),
     context_lines: @common.parse_int(get_str("context", "0")),
     count_only: get_flag("count", false),
@@ -143,6 +146,10 @@ pub fn command() -> @argparse.Command {
         about="Exclude file glob pattern (repeatable)",
       ),
       @argparse.OptionArg(
+        "semantic",
+        about="Semantic query: proxy, short:N, long:N, params-gte:N, name:substr, undocumented",
+      ),
+      @argparse.OptionArg(
         "specs-dir",
         about="KGF specs directory",
         default_values=["kgfs"],
@@ -171,12 +178,28 @@ pub fn command() -> @argparse.Command {
 pub fn run_matches(matches : @argparse.Matches) -> Unit {
   let config = GrepConfig::from_matches(matches)
   let paths = if config.paths.length() == 0 { ["."] } else { config.paths }
+  // Handle --semantic queries
+  if config.semantic.length() > 0 {
+    match parse_semantic_query(config.semantic) {
+      Some(query) => {
+        run_semantic_search(paths, query, config)
+        return
+      }
+      None => {
+        println("Error: Unknown semantic query '" + config.semantic + "'")
+        println(
+          "Available: proxy, short:N, long:N, params-gte:N, name:substr, undocumented",
+        )
+        return
+      }
+    }
+  }
   if config.undocumented {
-    run_undocumented(paths, config)
+    run_semantic_search(paths, Undocumented, config)
     return
   }
   if config.pattern.length() == 0 {
-    println("Error: Pattern required (or use --undocumented)")
+    println("Error: Pattern required (or use --undocumented / --semantic=QUERY)")
     return
   }
   let matchers = parse_pattern(config.pattern)

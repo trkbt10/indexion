@@ -62,8 +62,12 @@ pub fn run_pattern_search(
 }
 
 ///|
-/// Run --undocumented search for pub declarations without doc comments.
-pub fn run_undocumented(paths : Array[String], config : GrepConfig) -> Unit {
+/// Run a semantic query search across files.
+pub fn run_semantic_search(
+  paths : Array[String],
+  query : SemanticQuery,
+  config : GrepConfig,
+) -> Unit {
   let registry = @kgf_features.load_registry(
     specs_dir=config.specs_dir,
     target_dirs=paths,
@@ -76,54 +80,43 @@ pub fn run_undocumented(paths : Array[String], config : GrepConfig) -> Unit {
     }
   }
   let files = collect_search_files(paths, config, reg)
-  let mut total = 0
-  let mut undocumented = 0
+  let mut total_matches = 0
+  let mut total_files = 0
   for file in files {
     let (path, content) = file
-    let (declarations, doc_map) = @kgf_features.extract_pub_declarations_and_doc_map(
-      content, path, registry,
-    )
-    let file_undoc : Array[(String, String, Int)] = []
-    for decl in declarations {
-      total += 1
-      match doc_map.get(decl.line) {
-        Some(_) => ()
-        None => {
-          undocumented += 1
-          file_undoc.push((decl.kind, decl.name, decl.line))
-        }
-      }
+    let tokens = match @kgf_features.tokenize_source(content, path, registry) {
+      Some(t) => t
+      None => continue
     }
-    if file_undoc.length() > 0 {
-      if config.files_only {
-        println(path)
-        continue
-      }
-      if config.count_only {
-        println(path + ":" + file_undoc.to_string())
-        continue
-      }
-      for entry in file_undoc {
-        let (kind, name, line) = entry
-        println(
-          path +
-          ":" +
-          line.to_string() +
-          ": pub " +
-          kind +
-          " " +
-          name +
-          "  (no doc comment)",
-        )
-      }
+    let matches = run_semantic_query_on_file(query, tokens, path, content, registry)
+    if matches.length() == 0 {
+      continue
+    }
+    total_files += 1
+    total_matches += matches.length()
+    if config.files_only {
+      println(path)
+      continue
+    }
+    if config.count_only {
+      println(path + ":" + matches.length().to_string())
+      continue
+    }
+    for m in matches {
+      println(
+        m.file + ":" + m.line.to_string() + ": " + m.kind + " " + m.name +
+        "  (" +
+        m.detail +
+        ")",
+      )
     }
   }
   println("")
   println(
-    undocumented.to_string() +
-    " undocumented out of " +
-    total.to_string() +
-    " pub declarations",
+    total_matches.to_string() +
+    " matches in " +
+    total_files.to_string() +
+    " files",
   )
 }
 
