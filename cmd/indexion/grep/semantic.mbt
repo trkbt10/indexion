@@ -16,6 +16,8 @@ pub enum SemanticQuery {
   Undocumented
   /// Find functions whose name contains a substring
   NameContains(String)
+  /// Vector similarity search — find code similar to a natural language query
+  Similar(String, Int) // (query_text, top_k)
 }
 
 ///|
@@ -28,7 +30,7 @@ pub fn parse_semantic_query(s : String) -> SemanticQuery? {
   if s == "undocumented" {
     return Some(Undocumented)
   }
-  // Parse "short:N", "long:N", "params-gte:N", "name:substr"
+  // Parse "short:N", "long:N", "params-gte:N", "name:substr", "similar:query"
   let colon = find_char(s, ':')
   if colon >= 0 {
     let key = @config.substring(s, 0, colon)
@@ -38,6 +40,7 @@ pub fn parse_semantic_query(s : String) -> SemanticQuery? {
       "long" => return Some(Long(@common.parse_int(val)))
       "params-gte" => return Some(ParamsGte(@common.parse_int(val)))
       "name" => return Some(NameContains(val))
+      "similar" => return Some(Similar(val, 20))
       _ => return None
     }
   }
@@ -70,6 +73,7 @@ pub fn run_semantic_query_on_file(
     ParamsGte(n) => query_by_params(tokens, path, min_params=n)
     Undocumented => query_undocumented(content, path, registry)
     NameContains(substr) => query_name_contains(tokens, path, substr)
+    Similar(_, _) => [] // Handled at corpus level in run_similar_search
   }
 }
 

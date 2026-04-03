@@ -68,6 +68,14 @@ pub fn run_semantic_search(
   query : SemanticQuery,
   config : GrepConfig,
 ) -> Unit {
+  // Vector similarity search has its own corpus-level flow
+  match query {
+    Similar(query_text, top_k) => {
+      run_similar_search(paths, query_text, top_k, config)
+      return
+    }
+    _ => ()
+  }
   let registry = @kgf_features.load_registry(
     specs_dir=config.specs_dir,
     target_dirs=paths,

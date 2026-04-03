@@ -3,7 +3,7 @@ import {
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/cmd/indexion/common" @common,
   "trkbt10/indexion/src/config" @config,
-  "trkbt10/indexion/src/digest/index" @dindex,
+  "trkbt10/indexion/src/text/embed" @text_embed,
   "trkbt10/indexion/src/digest/config" @dconfig,
   "trkbt10/indexion/src/digest/embed" @embed,
   "trkbt10/vcdb" @vcdb,

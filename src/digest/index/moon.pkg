@@ -9,6 +9,7 @@ import {
   "trkbt10/indexion/src/digest/config" @config,
   "trkbt10/indexion/src/text/tfidf" @tfidf,
   "trkbt10/indexion/src/text/tokenizer" @tokenizer,
+  "trkbt10/indexion/src/text/embed" @text_embed,
   "trkbt10/vcdb" @vcdb,
   "trkbt10/vcdb/core/types" @vcdb_core,
 }

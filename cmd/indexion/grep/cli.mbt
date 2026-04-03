@@ -188,7 +188,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
       None => {
         println("Error: Unknown semantic query '" + config.semantic + "'")
         println(
-          "Available: proxy, short:N, long:N, params-gte:N, name:substr, undocumented",
+          "Available: proxy, short:N, long:N, params-gte:N, name:substr, undocumented, similar:QUERY",
         )
         return
       }

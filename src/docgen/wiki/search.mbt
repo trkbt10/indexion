@@ -32,7 +32,7 @@ pub struct WikiSearchHit {
 pub struct WikiSearchIndex {
   db : @vcdb.VectorDB
   /// TF-IDF provider (used for local queries; None if OpenAI-only)
-  tfidf_provider : @dindex.TfidfEmbeddingProvider?
+  tfidf_provider : @text_embed.TfidfEmbeddingProvider?
   /// OpenAI config (used for remote queries; None if TF-IDF-only)
   openai_config : @dconfig.EmbeddingApiConfig?
   sections : Map[String, WikiSection]
@@ -71,7 +71,7 @@ pub async fn build_search_index(
   }
   let (embeddings, tfidf_prov, openai_cfg) = match provider {
     @dconfig.TfIdf(_) => {
-      let prov = @dindex.TfidfEmbeddingProvider::new(dim)
+      let prov = @text_embed.TfidfEmbeddingProvider::new(dim)
       prov.build_vocabulary(texts)
       let embs : Array[Array[Double]] = []
       for text in texts {
@@ -82,13 +82,13 @@ pub async fn build_search_index(
     @dconfig.OpenAI(api_config) => {
       let embs = embed_openai_batched(api_config, texts)
       // Also build TF-IDF as fallback for local queries
-      let prov = @dindex.TfidfEmbeddingProvider::new(dim)
+      let prov = @text_embed.TfidfEmbeddingProvider::new(dim)
       prov.build_vocabulary(texts)
       (embs, Some(prov), Some(api_config))
     }
     @dconfig.Precomputed(_) => {
       // Fallback to TF-IDF
-      let prov = @dindex.TfidfEmbeddingProvider::new(dim)
+      let prov = @text_embed.TfidfEmbeddingProvider::new(dim)
       prov.build_vocabulary(texts)
       let embs : Array[Array[Double]] = []
       for text in texts {
