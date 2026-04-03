@@ -90,6 +90,214 @@ pub fn load_wiki_auto(wiki_dir : String) -> @types.WikiData? {
   }
 }
 
+// --- Generic backend pipeline ---
+
+///|
+/// Shared invalid-in-filename characters (SoT for all backends).
+let filename_invalid_chars : Array[Char] = [
+  '(', ')', '&', ':', '*', '?', '"', '<', '>', '|', '\\',
+]
+
+///|
+/// Generic slug: lowercase, spaces→hyphens, strip invalid chars.
+/// Used as the default; backends can wrap this with additional transforms.
+pub fn title_to_slug(title : String, lowercase? : Bool = true) -> String {
+  let buf = StringBuilder::new()
+  for c in title {
+    if c == ' ' || c == '/' {
+      buf.write_char('-')
+    } else if filename_invalid_chars.contains(c) {
+      continue
+    } else if lowercase && c >= 'A' && c <= 'Z' {
+      buf.write_char((c.to_int() + 32).unsafe_to_char())
+    } else {
+      buf.write_char(c)
+    }
+  }
+  buf.to_string()
+}
+
+///|
+/// Convert slug to lowercase ID.
+pub fn slug_to_id(slug : String) -> String {
+  let buf = StringBuilder::new()
+  for c in slug {
+    if c >= 'A' && c <= 'Z' {
+      buf.write_char((c.to_int() + 32).unsafe_to_char())
+    } else {
+      buf.write_char(c)
+    }
+  }
+  buf.to_string()
+}
+
+///|
+/// Convert slug to display title (capitalize after hyphens).
+pub fn slug_to_title(slug : String) -> String {
+  let buf = StringBuilder::new()
+  let mut capitalize_next = true
+  for c in slug {
+    if c == '-' {
+      buf.write_char(' ')
+      capitalize_next = true
+    } else if c == '/' {
+      buf.write_char('/')
+      capitalize_next = true
+    } else if capitalize_next && c >= 'a' && c <= 'z' {
+      buf.write_char((c.to_int() - 32).unsafe_to_char())
+      capitalize_next = false
+    } else {
+      buf.write_char(c)
+      capitalize_next = false
+    }
+  }
+  buf.to_string()
+}
+
+///|
+/// Backend configuration for the generic load/export pipeline.
+pub struct WikiBackendConfig {
+  spec_name : String
+  file_to_id : (String) -> String
+  title_to_name : (String) -> String
+  name_to_title : (String) -> String
+  recursive : Bool
+}
+
+///|
+/// Generic load for any external wiki backend.
+pub fn load_external_wiki(
+  wiki_dir : String,
+  config : WikiBackendConfig,
+) -> @types.WikiData? {
+  let spec = match load_wiki_spec(config.spec_name) {
+    Some(s) => s
+    None => {
+      println(
+        "Warning: " +
+        config.spec_name +
+        " KGF spec not found. Ensure kgfs/ directory is accessible.",
+      )
+      return None
+    }
+  }
+  let files = if config.recursive {
+    list_md_files_recursive(wiki_dir, spec.special_files)
+  } else {
+    list_md_files(wiki_dir, spec.special_files)
+  }
+  if files.is_empty() {
+    return None
+  }
+  let file_to_id = config.file_to_id
+  let title_to_name = config.title_to_name
+  let name_to_title = config.name_to_title
+  let file_id_map : Map[String, String] = {}
+  for f in files {
+    file_id_map[f] = file_to_id(f)
+  }
+  let sidebar_path = wiki_dir + "/" + spec.nav_file
+  let sidebar_content = @fs.read_file_to_string(sidebar_path) catch { _ => "" }
+  let (nav_items, sidebar_titles) = if sidebar_content.length() > 0 {
+    parse_sidebar_kgf(
+      sidebar_content, file_id_map, file_to_id, title_to_name, spec,
+    )
+  } else {
+    let items : Array[@types.WikiNavItem] = []
+    let titles : Map[String, String] = {}
+    for f in files {
+      let id = file_id_map.get(f).unwrap_or(file_to_id(f))
+      let title = name_to_title(f)
+      items.push(@types.WikiNavItem::new(id~, title~))
+      titles[id] = title
+    }
+    (items, titles)
+  }
+  let pages : Map[String, @types.WikiPage] = {}
+  for f in files {
+    let id = file_id_map.get(f).unwrap_or(file_to_id(f))
+    let title = sidebar_titles.get(id).unwrap_or(name_to_title(f))
+    let raw_content = @fs.read_file_to_string(wiki_dir + "/" + f + ".md") catch {
+      _ => ""
+    }
+    let (content_without_meta, source_strings) = extract_sources_kgf(
+      raw_content, spec,
+    )
+    let content = convert_wikilinks_to_internal(
+      content_without_meta, file_id_map, file_to_id, title_to_name, spec,
+    )
+    let sources = parse_source_strings(source_strings)
+    let headings = @reader.extract_headings(content)
+    let children = find_children_for(id, nav_items)
+    let parent = find_parent_in_nav(id, nav_items)
+    pages[id] = @types.WikiPage::new(
+      id~,
+      title~,
+      content~,
+      sources~,
+      headings~,
+      children~,
+      parent~,
+    )
+  }
+  let nav = @types.WikiNav::new(pages=nav_items)
+  Some(@types.WikiData::new(nav~, pages~))
+}
+
+///|
+/// Generic export for any external wiki backend.
+pub fn export_external_wiki(
+  data : @types.WikiData,
+  config : WikiBackendConfig,
+) -> Array[(String, String)] {
+  let spec = match load_wiki_spec(config.spec_name) {
+    Some(s) => s
+    None => {
+      println("Warning: " + config.spec_name + " KGF spec not found.")
+      return []
+    }
+  }
+  let home_name = strip_md_ext(spec.home_file)
+  let result : Array[(String, String)] = []
+  let id_to_title : Map[String, String] = {}
+  let id_to_name : Map[String, String] = {}
+  let root_id = find_root_id(data.nav)
+  let title_to_name = config.title_to_name
+  for entry in data.pages {
+    let id = entry.0
+    let page = entry.1
+    id_to_title[id] = page.title
+    let name = if id == root_id { home_name } else { title_to_name(page.title) }
+    id_to_name[id] = name
+  }
+  for entry in data.pages {
+    let id = entry.0
+    let page = entry.1
+    let name = id_to_name.get(id).unwrap_or(title_to_name(page.title))
+    let converted = convert_internal_to_wikilinks(
+      page.content,
+      id_to_name,
+      id_to_title,
+    )
+    let sources_comment = embed_sources_comment(page.sources)
+    let full_content = if sources_comment.length() > 0 {
+      sources_comment + "\n" + converted
+    } else {
+      converted
+    }
+    result.push((name + ".md", full_content))
+  }
+  let sidebar = render_sidebar_wikilinks(
+    data.nav,
+    id_to_name,
+    id_to_title,
+    root_id,
+    home_name,
+  )
+  result.push((spec.nav_file, sidebar))
+  result
+}
+
 // --- Manifest generation ---
 
 ///|
@@ -166,7 +374,7 @@ pub fn extract_sources_kgf(
               7,
               trimmed.to_array().length(),
             )
-            for part in split_by_comma(after_key) {
+            for part in @common.split_by_char(after_key, ',') {
               let s = @common.trim_ascii_spaces(part)
               if s.length() > 0 {
                 sources.push(s)
@@ -711,24 +919,6 @@ pub fn count_leading_spaces(s : String) -> Int {
     }
   }
   count
-}
-
-///|
-pub fn split_by_comma(s : String) -> Array[String] {
-  let parts : Array[String] = []
-  let buf = StringBuilder::new()
-  for c in s {
-    if c == ',' {
-      parts.push(buf.to_string())
-      buf.reset()
-    } else {
-      buf.write_char(c)
-    }
-  }
-  if buf.to_string().length() > 0 {
-    parts.push(buf.to_string())
-  }
-  parts
 }
 
 ///|

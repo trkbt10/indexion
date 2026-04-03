@@ -202,6 +202,28 @@ pub fn get_relative_part(display_name : String) -> String {
 }
 
 ///|
+/// Split string by a single character delimiter.
+/// Example: split_by_char("a,b,c", ',') -> ["a", "b", "c"]
+pub fn split_by_char(s : String, delim : Char) -> Array[String] {
+  let parts : Array[String] = []
+  let buf = StringBuilder::new()
+  for c in s {
+    if c == delim {
+      if buf.to_string().length() > 0 {
+        parts.push(buf.to_string())
+        buf.reset()
+      }
+    } else {
+      buf.write_char(c)
+    }
+  }
+  if buf.to_string().length() > 0 {
+    parts.push(buf.to_string())
+  }
+  parts
+}
+
+///|
 /// Split path by slash separator.
 /// Example: "foo/bar/baz" -> ["foo", "bar", "baz"]
 pub fn split_by_slash(path : String) -> Array[String] {

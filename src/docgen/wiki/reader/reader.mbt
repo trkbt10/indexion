@@ -98,7 +98,7 @@ fn parse_source_refs(sources : Array[String]) -> Array[@types.WikiSourceRef] {
         colon_idx + 1,
         src.to_array().length(),
       )
-      let dash_parts = split_by_dash(range_str)
+      let dash_parts = @common.split_by_char(range_str, '-')
       if dash_parts.length() == 2 {
         let start = @common.parse_int(dash_parts[0])
         let end = @common.parse_int(dash_parts[1])
@@ -113,26 +113,6 @@ fn parse_source_refs(sources : Array[String]) -> Array[@types.WikiSourceRef] {
     }
   }
   result
-}
-
-///|
-fn split_by_dash(s : String) -> Array[String] {
-  let parts : Array[String] = []
-  let buf : Array[Char] = []
-  for c in s {
-    if c == '-' {
-      if buf.length() > 0 {
-        parts.push(String::from_array(buf))
-        buf.clear()
-      }
-    } else {
-      buf.push(c)
-    }
-  }
-  if buf.length() > 0 {
-    parts.push(String::from_array(buf))
-  }
-  parts
 }
 
 ///|
