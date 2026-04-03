@@ -1,6 +1,6 @@
 {
   "name": "trkbt10/indexion",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "deps": {
     "moonbitlang/x": "0.4.40",
     "trkbt10/vcdb": "0.1.0",

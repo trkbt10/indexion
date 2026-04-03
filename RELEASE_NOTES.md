@@ -1,3 +1,108 @@
+# v0.5.0
+
+## Highlights
+
+- **`indexion grep`** — New KGF-aware code search with token patterns, semantic queries, and vector similarity
+- **Pattern Aliases** — Write `pub fn *` instead of `KW_pub KW_fn *` — aliases auto-generated from KGF specs
+- **Shared Embedding Infrastructure** — `TfidfEmbeddingProvider` extracted to `src/text/embed/` as shared SoT for digest, wiki, and grep
+- **Performance Fix** — `plan documentation` no longer hangs on large codebases (was CPU 100%, now ~8 seconds)
+- **Major Deduplication** — 10+ duplicate functions eliminated, circular dependency resolved, -400 lines net
+
+## New Commands
+
+### `indexion grep`
+
+KGF-aware token pattern search, semantic queries, and vector similarity search.
+
+```bash
+# Token patterns with natural keyword aliases
+indexion grep "pub fn *" src/
+indexion grep "for ... for" src/          # find nested loops
+indexion grep "pub struct *" src/
+
+# Semantic queries
+indexion grep --semantic=proxy src/       # proxy functions
+indexion grep --semantic=long:30 src/     # functions > 30 lines
+indexion grep --semantic=params-gte:4 src/ # 4+ params
+indexion grep --semantic=name:sort src/   # name contains "sort"
+indexion grep --undocumented src/         # undocumented pub declarations
+
+# Vector similarity search (TF-IDF embeddings)
+indexion grep --semantic="similar:parse JSON configuration" src/
+```
+
+**Pattern syntax:**
+- Space-separated token matchers: `pub fn Ident:sort`
+- Wildcards: `*` (any token), `...` (zero or more), `!pub` (negation)
+- Aliases auto-generated from KGF `=== lex` keyword patterns — no hardcoded tables
+
+**Output modes:** `--files`, `--count`, `--context=N`, `--include`, `--exclude`
+
+## Improvements
+
+### `plan documentation`: Performance & Correctness
+
+- **Single-pass tokenization**: each file tokenized once instead of twice (was the primary bottleneck)
+- **KGF ignore patterns applied**: `*_test.mbt`, `*_wbtest.mbt`, `*_mbench.mbt` now excluded from analysis
+- **O(n²) → O(n log n) sort**: `sort_pub_items` replaced selection sort with `sort_by`
+- **`pub(all)` / `pub(readonly)` detection**: visibility modifier arguments now correctly skipped during declaration extraction
+
+### Shared `src/text/embed/` Package
+
+`TfidfEmbeddingProvider` extracted from `src/digest/index/` to `src/text/embed/`:
+- `digest`, `docgen/wiki`, and `grep` all use the same SoT
+- `cosine_similarity_dense` added for dense vector comparison
+- No more digest-specific coupling for embedding infrastructure
+
+### Sentence Boundary Unification
+
+- `Sentence` type moved from `segmentation/sentence/` to `segmentation/types/`, breaking a circular dependency
+- Fullwidth period `．` (U+FF0E) added to `is_sentence_terminator` to sync utils and splitter modules
+- 3 duplicate boundary functions deleted from `splitter.mbt`, now using `@utils`
+
+### TOML Config Parser
+
+- Shared `parse_shared_toml_sections` extracted from `parse_project_toml_config` and `parse_global_toml_config`
+- 6 identical reconcile/digest match arms consolidated
+
+## Refactoring
+
+Cross-package duplicate elimination validated by dogfooding `indexion plan refactor` and `indexion grep`:
+
+| Duplicate | Resolution |
+|-----------|-----------|
+| `join_lines` (2 files) | Made pub in `docgen/diagram`, removed from `docgen/render` |
+| `extract_substring` (2 files) | Made pub in `segmentation/types`, removed from `punctuation` |
+| `contains_slash` (2 files) | Made pub in `ignorefile`, removed from `filter` |
+| `is_whitespace_only` (2 files) | Removed private copy from `punctuation`, uses `@utils` |
+| `substr` / `substring` (5 files) | Consolidated to `@config.substring` / `@config.substring_from` SoT |
+| `extract_extension` (2 files) | `kgf/registry` uses `@config.extension`, `docgen/analyze` thin wrapper |
+| `escape_mermaid_label` (same pkg) | Deleted, reuses `escape_mermaid` |
+| `process_and_cont` / `process_not_cont` | Unified to `process_predicate_cont` with `negate` parameter |
+| `tokenize_source` boilerplate (3 functions) | Extracted shared `tokenize_source` helper |
+
+## Bug Fixes
+
+- Fix `plan documentation --style=coverage` hanging at CPU 100% on large codebases
+- Fix `pub(all) fn foo` not detected as a public declaration
+- Fix duplicate `.gitignore` loading in documentation analysis
+- Fix test files (`*_wbtest.mbt`) included in documentation coverage analysis
+
+## Skills
+
+- New: `indexion-grep` skill with full command reference
+- All 8 skills rewritten with verified option defaults, dogfooding lessons, and cross-command relationship tables
+- Fixed incorrect defaults (explore strategy, option names) across multiple skills
+
+## Internal
+
+- Version: 0.4.0 → 0.5.0
+- 0 warnings, 0 errors, 1173 tests
+- New package: `src/text/embed/` (shared TF-IDF embedding provider)
+- New package: `cmd/indexion/grep/` (5 files: cli, pattern, search, semantic, similar)
+
+---
+
 # v0.4.0
 
 ## Highlights
