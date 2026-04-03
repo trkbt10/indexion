@@ -107,7 +107,7 @@ fn render_coverage_section(buf : StringBuilder, analysis : DocAnalysis) -> Unit 
   let mut type_doc = 0
   for pkg in analysis.packages {
     for item in pkg.pub_items {
-      if item.kind == "fn" {
+      if item.kind_category == "function" {
         fn_total = fn_total + 1
         if item.has_doc {
           fn_doc = fn_doc + 1

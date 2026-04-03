@@ -195,6 +195,9 @@ pub struct PubDeclaration {
   name : String
   /// Line number (1-indexed).
   line : Int
+  /// Category: "function" for callable declarations, "type" for data/contract declarations.
+  /// Determined by the KGF spec's function_kinds feature.
+  category : String
 }
 
 ///|
@@ -288,6 +291,7 @@ pub fn extract_pub_declarations_from_tokens(
                   kind,
                   name: tokens[k].get_text(),
                   line: token_lines[i],
+                  category: "function",
                 })
                 break
               } else if kind_k == "NL" || kind_k == "LBRACE" {
@@ -491,6 +495,11 @@ pub fn extract_pub_declarations_and_doc_map(
   // Extract public declarations and doc map from declares edges
   let declarations : Array[PubDeclaration] = []
   let doc_map : Map[Int, String] = {}
+  // Build function_kinds set from KGF spec features
+  let function_kinds : Array[String] = match spec.get_feature("function_kinds") {
+    Some(kinds) => kinds
+    None => []
+  }
   // Build line number index from tokens for position lookup
   let line_offsets = build_line_offsets(content)
   let edges = graph.get_edges()
@@ -506,9 +515,15 @@ pub fn extract_pub_declarations_and_doc_map(
     let name = edge.attrs.get("name").unwrap_or("")
     let kind = edge.attrs.get("kind").unwrap_or("")
     let doc = edge.attrs.get("doc").unwrap_or("")
+    let normalized = normalize_kind(kind)
+    let category = if contains_str(function_kinds, kind) {
+      "function"
+    } else {
+      "type"
+    }
     // Estimate line number from edge target symbol
     let line = estimate_declaration_line(content, name, line_offsets)
-    declarations.push({ kind: normalize_kind(kind), name, line })
+    declarations.push({ kind: normalized, name, line, category })
     if doc.length() > 0 {
       doc_map.set(line, doc)
     }
@@ -582,8 +597,19 @@ fn normalize_kind(kind : String) -> String {
     "Const" => "const"
     "Property" => "property"
     "Method" => "method"
+    "Macro" => "macro"
     _ => kind
   }
+}
+
+///|
+fn contains_str(arr : Array[String], value : String) -> Bool {
+  for item in arr {
+    if item == value {
+      return true
+    }
+  }
+  false
 }
 
 ///|

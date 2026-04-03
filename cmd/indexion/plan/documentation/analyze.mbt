@@ -29,6 +29,7 @@ pub fn ProjectInfo::default() -> ProjectInfo {
 pub struct PubItem {
   name : String
   kind : String // "fn", "type", "struct", "enum", "trait"
+  kind_category : String // "function" or "type", from KGF function_kinds feature
   file : String
   line : Int
   has_doc : Bool
@@ -177,8 +178,7 @@ pub fn analyze_documentation(
   // Find critical missing (pub fn/type without docs)
   let critical : Array[PubItem] = []
   for item in all_items {
-    if !item.has_doc &&
-      (item.kind == "fn" || item.kind == "type" || item.kind == "struct") {
+    if !item.has_doc {
       critical.push(item)
     }
   }
@@ -260,6 +260,7 @@ fn make_pub_item(
   {
     name: decl.name,
     kind: decl.kind,
+    kind_category: decl.category,
     file,
     line: decl.line,
     has_doc,
