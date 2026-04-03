@@ -244,8 +244,6 @@ pub struct ResolverSpec {
   resolve_chain : Array[ResolveStep]
   /// Project-level config file (moon.mod.json, package.json, Cargo.toml, etc.)
   project_config : String
-  /// Package boundary marker files (moon.pkg, __init__.py, etc.)
-  package_markers : Array[String]
   /// Install command template. Use {name} as placeholder for package name.
   install_cmd : String
   /// Build command template.
@@ -266,7 +264,6 @@ pub fn ResolverSpec::new(
   ns_segments? : Int = 0,
   resolve_chain? : Array[ResolveStep] = [],
   project_config? : String = "",
-  package_markers? : Array[String] = [],
   install_cmd? : String = "",
   build_cmd? : String = "",
 ) -> ResolverSpec {
@@ -282,7 +279,6 @@ pub fn ResolverSpec::new(
     ns_segments,
     resolve_chain,
     project_config,
-    package_markers,
     install_cmd,
     build_cmd,
   }
@@ -364,12 +360,6 @@ pub fn ResolverSpec::has_resolve_chain(self : ResolverSpec) -> Bool {
 /// Returns the project config file name (e.g., moon.mod.json).
 pub fn ResolverSpec::get_project_config(self : ResolverSpec) -> String {
   self.project_config
-}
-
-///|
-/// Returns the package boundary marker files.
-pub fn ResolverSpec::get_package_markers(self : ResolverSpec) -> Array[String] {
-  self.package_markers
 }
 
 ///|

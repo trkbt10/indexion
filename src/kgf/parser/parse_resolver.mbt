@@ -445,7 +445,6 @@ fn build_resolver_spec_with_sources(
   let ns_segments = get_int(kv, "ns_segments", default=2)
   // Project config and commands
   let project_config = get_string(kv, "project_config")
-  let package_markers = get_list(kv, "package_markers")
   let install_cmd = get_string(kv, "install_cmd")
   let build_cmd = get_string(kv, "build_cmd")
   @types.ResolverSpec::new(
@@ -460,7 +459,6 @@ fn build_resolver_spec_with_sources(
     ns_segments~,
     resolve_chain~,
     project_config~,
-    package_markers~,
     install_cmd~,
     build_cmd~,
   )

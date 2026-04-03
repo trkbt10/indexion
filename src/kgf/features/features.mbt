@@ -212,7 +212,8 @@ fn declaration_kind(kind : String) -> String? {
   if kind == "KW_fn" ||
     kind == "KW_function" ||
     kind == "KW_def" ||
-    kind == "KW_func" {
+    kind == "KW_func" ||
+    kind == "KW_fun" {
     return Some(kind[3:].to_string())
   }
   // Type declarations
@@ -221,7 +222,12 @@ fn declaration_kind(kind : String) -> String? {
     kind == "KW_enum" ||
     kind == "KW_type" ||
     kind == "KW_trait" ||
-    kind == "KW_interface" {
+    kind == "KW_interface" ||
+    kind == "KW_protocol" ||
+    kind == "KW_actor" ||
+    kind == "KW_object" ||
+    kind == "KW_record" ||
+    kind == "KW_module" {
     return Some(kind[3:].to_string())
   }
   // Variable/constant declarations
@@ -439,17 +445,144 @@ pub fn extract_doc_map_from_source(
 }
 
 ///|
-/// Extract both public declarations and doc map from source in a single tokenization pass.
-/// Avoids the cost of tokenizing the same file twice.
+/// Extract public declarations and doc map using the full KGF pipeline
+/// (tokenize → parse → eval_semantics → declares edges).
+///
+/// Public declarations are identified by `visibility: "public"` attribute
+/// on `declares` edges, as defined in each language's KGF semantics.
+/// Doc comments are extracted from the `doc` attribute on declares edges.
 pub fn extract_pub_declarations_and_doc_map(
   content : String,
   path : String,
   registry : @kgf_registry.KGFRegistry?,
 ) -> (Array[PubDeclaration], Map[Int, String]) {
-  match tokenize_source(content, path, registry) {
-    Some(tokens) =>
-      (extract_pub_declarations_from_tokens(tokens), extract_doc_map(tokens))
-    None => ([], {})
+  let reg = match registry {
+    Some(r) => r
+    None => return ([], {})
+  }
+  let lang = match reg.detect_from_path(path) {
+    Some(l) => l
+    None => return ([], {})
+  }
+  let spec = match reg.get_spec(lang) {
+    Some(s) => s
+    None => return ([], {})
+  }
+  // Tokenize
+  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+  let tokens = lexer.tokenize(content)
+  // Parse
+  let peg = @kgf_peg.build_peg(spec) catch { _ => return ([], {}) }
+  let start_rule = spec.get_start_rule()
+  let parse_result = match @kgf_peg.run_parse(peg, spec, start_rule, tokens) {
+    Some(r) => r
+    None => return ([], {})
+  }
+  // Evaluate semantics
+  let graph = @graph.CodeGraph::new()
+  let _ = graph.get_or_add_module(path, file=Some(path))
+  let ctx = @kgf_semantics.SemEvalCtx::new(
+    spec, graph, path, "", spec.get_language(), fn(_) { false },
+  )
+  let events = parse_result.get_events()
+  for event in events {
+    @kgf_semantics.eval_rule_semantics(event.0, event.1, ctx)
+  }
+  // Extract public declarations and doc map from declares edges
+  let declarations : Array[PubDeclaration] = []
+  let doc_map : Map[Int, String] = {}
+  // Build line number index from tokens for position lookup
+  let line_offsets = build_line_offsets(content)
+  let edges = graph.get_edges()
+  for edge in edges {
+    if !(edge.kind is @graph.Declares) {
+      continue
+    }
+    // Only include declarations with visibility: "public"
+    let visibility = edge.attrs.get("visibility").unwrap_or("")
+    if visibility != "public" {
+      continue
+    }
+    let name = edge.attrs.get("name").unwrap_or("")
+    let kind = edge.attrs.get("kind").unwrap_or("")
+    let doc = edge.attrs.get("doc").unwrap_or("")
+    // Estimate line number from edge target symbol
+    let line = estimate_declaration_line(content, name, line_offsets)
+    declarations.push({ kind: normalize_kind(kind), name, line })
+    if doc.length() > 0 {
+      doc_map.set(line, doc)
+    }
+  }
+  (declarations, doc_map)
+}
+
+///|
+/// Build line start offsets for a source string.
+fn build_line_offsets(content : String) -> Array[Int] {
+  let offsets : Array[Int] = [0]
+  for i, c in content {
+    if c == '\n' {
+      offsets.push(i + 1)
+    }
+  }
+  offsets
+}
+
+///|
+/// Estimate the line number of a declaration by searching for its name in the source.
+fn estimate_declaration_line(
+  content : String,
+  name : String,
+  line_offsets : Array[Int],
+) -> Int {
+  if name.length() == 0 {
+    return 1
+  }
+  // Search for the name in the content
+  let content_chars = content.to_array()
+  let name_chars = name.to_array()
+  let content_len = content_chars.length()
+  let name_len = name_chars.length()
+  for i = 0; i < content_len - name_len + 1; i = i + 1 {
+    let mut matched = true
+    for j = 0; j < name_len; j = j + 1 {
+      if content_chars[i + j] != name_chars[j] {
+        matched = false
+        break
+      }
+    }
+    if matched {
+      // Found the name, calculate line number
+      for line = line_offsets.length() - 1; line >= 0; line = line - 1 {
+        if i >= line_offsets[line] {
+          return line + 1
+        }
+      }
+    }
+  }
+  1
+}
+
+///|
+/// Normalize edge kind to short form (e.g. "Function" -> "fn", "Class" -> "class").
+fn normalize_kind(kind : String) -> String {
+  match kind {
+    "Function" => "fn"
+    "Class" => "class"
+    "Struct" => "struct"
+    "Enum" => "enum"
+    "Interface" => "interface"
+    "Trait" => "trait"
+    "Type" => "type"
+    "Protocol" => "protocol"
+    "Actor" => "actor"
+    "Record" => "record"
+    "Module" => "module"
+    "Variable" => "var"
+    "Const" => "const"
+    "Property" => "property"
+    "Method" => "method"
+    _ => kind
   }
 }
 

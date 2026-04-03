@@ -265,22 +265,6 @@ pub fn KGFRegistry::get_project_markers(self : KGFRegistry) -> Array[String] {
   markers
 }
 
-///|
-/// Get package boundary marker files from all loaded KGF specs.
-/// Aggregates `package_markers` from each spec's resolver.
-pub fn KGFRegistry::get_package_markers(self : KGFRegistry) -> Array[String] {
-  let markers : Array[String] = []
-  for entry in self.specs {
-    let spec = entry.1
-    let resolver = spec.get_resolver()
-    for marker in resolver.get_package_markers() {
-      if !contains_string(markers, marker) {
-        markers.push(marker)
-      }
-    }
-  }
-  markers
-}
 
 // Helper functions
 

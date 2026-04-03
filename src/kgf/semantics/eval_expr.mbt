@@ -267,6 +267,9 @@ fn eval_func(
     "stripQuotes" => eval_func_strip_quotes(evaluated_args)
     "first" => eval_func_first(evaluated_args)
     "last" => eval_func_last(evaluated_args)
+    "toUpper" => eval_func_to_upper(evaluated_args)
+    "toLower" => eval_func_to_lower(evaluated_args)
+    "cond" => eval_func_cond(evaluated_args)
     "children" =>
       // Fallback for children() when not a simple var
       if evaluated_args.length() > 0 {
@@ -288,13 +291,16 @@ fn eval_func(
 
 ///|
 /// Evaluates the obj() function to create an object from key-value pairs.
+/// Null values are skipped — obj("a", "1", "b", null) produces {"a": "1"}.
 fn eval_func_obj(args : Array[Json]) -> Json {
   let obj : Map[String, Json] = {}
   let n = args.length()
   for i = 0; i < n; i = i + 2 {
     let key = json_to_string(args[i])
     let value = if i + 1 < n { args[i + 1] } else { Json::null() }
-    obj.set(key, value)
+    if !(value is Null) {
+      obj.set(key, value)
+    }
   }
   Json::object(obj)
 }
@@ -476,5 +482,64 @@ fn eval_func_last(args : Array[Json]) -> Json {
         Json::null()
       }
     _ => Json::null()
+  }
+}
+
+///|
+/// Evaluates the toUpper() function.
+/// Converts ASCII letters in the string to uppercase.
+fn eval_func_to_upper(args : Array[Json]) -> Json {
+  if args.length() == 0 {
+    return "".to_json()
+  }
+  let s = json_to_string(args[0])
+  let chars = s.to_array()
+  let sb = StringBuilder::new()
+  for c in chars {
+    if c >= 'a' && c <= 'z' {
+      sb.write_char(Char::from_int(c.to_int() - 32))
+    } else {
+      sb.write_char(c)
+    }
+  }
+  sb.to_string().to_json()
+}
+
+///|
+/// Evaluates the toLower() function.
+/// Converts ASCII letters in the string to lowercase.
+fn eval_func_to_lower(args : Array[Json]) -> Json {
+  if args.length() == 0 {
+    return "".to_json()
+  }
+  let s = json_to_string(args[0])
+  let chars = s.to_array()
+  let sb = StringBuilder::new()
+  for c in chars {
+    if c >= 'A' && c <= 'Z' {
+      sb.write_char(Char::from_int(c.to_int() + 32))
+    } else {
+      sb.write_char(c)
+    }
+  }
+  sb.to_string().to_json()
+}
+
+///|
+/// Evaluates the cond() function — conditional expression.
+/// cond(condition, then_value) returns then_value if condition is truthy, null otherwise.
+/// cond(condition, then_value, else_value) returns then_value or else_value.
+/// Combined with obj()'s null-skipping, enables conditional attributes
+/// without when/else duplication in KGF specs.
+fn eval_func_cond(args : Array[Json]) -> Json {
+  if args.length() < 2 {
+    return Json::null()
+  }
+  if is_truthy(args[0]) {
+    args[1]
+  } else if args.length() >= 3 {
+    args[2]
+  } else {
+    Json::null()
   }
 }
