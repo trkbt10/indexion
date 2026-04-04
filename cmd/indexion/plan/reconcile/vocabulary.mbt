@@ -282,8 +282,23 @@ fn extract_gap_terms_filtered(
   for entry in value_weights {
     gaps.push((entry.0, entry.1))
   }
+  if gaps.is_empty() {
+    return []
+  }
   gaps.sort_by(fn(a, b) { b.1.compare(a.1) })
-  let limit = if gaps.length() < 30 { gaps.length() } else { 30 }
+  // Apply adaptive thresholding (Otsu-style) to separate meaningful gap terms
+  // from noise. The weight distribution typically has two clusters:
+  // high-weight (package-specific concepts) and low-weight (common identifiers).
+  let weights : Array[Double] = []
+  for g in gaps {
+    weights.push(g.1)
+  }
+  let cutoff_idx = otsu_threshold_index(weights)
+  // Cap at 15 to keep gap terms actionable even when Otsu selects many
+  let limit = if cutoff_idx < 15 { cutoff_idx } else { 15 }
+  if limit == 0 {
+    return []
+  }
   let result : Array[String] = []
   for i = 0; i < limit; i = i + 1 {
     result.push(gaps[i].0)
@@ -341,6 +356,53 @@ fn extract_token_value(token : String) -> String {
     token.substring(start=colon_idx + 1)
   } else {
     token
+  }
+}
+
+///|
+
+///|
+/// Find optimal split index using Otsu's method on a descending-sorted weight array.
+/// Returns the number of items in the "foreground" (high-weight) class.
+/// The algorithm maximizes inter-class variance: the split point where the
+/// difference between the mean of the two groups is greatest, weighted by
+/// group sizes.
+fn otsu_threshold_index(weights : Array[Double]) -> Int {
+  let n = weights.length()
+  if n <= 1 {
+    return n
+  }
+  // Compute total sum and mean
+  let mut total_sum = 0.0
+  for w in weights {
+    total_sum += w
+  }
+  let mut best_idx = n
+  let mut best_variance = 0.0
+  let mut fg_sum = 0.0
+  for t = 1; t < n; t = t + 1 {
+    fg_sum += weights[t - 1]
+    let fg_count = t.to_double()
+    let bg_count = (n - t).to_double()
+    let fg_mean = fg_sum / fg_count
+    let bg_mean = (total_sum - fg_sum) / bg_count
+    let diff = fg_mean - bg_mean
+    // Inter-class variance: w_fg * w_bg * (mean_fg - mean_bg)^2
+    let variance = fg_count *
+      bg_count /
+      (n.to_double() * n.to_double()) *
+      diff *
+      diff
+    if variance > best_variance {
+      best_variance = variance
+      best_idx = t
+    }
+  }
+  // Ensure at least 1 term is returned if any exist
+  if best_idx == 0 {
+    1
+  } else {
+    best_idx
   }
 }
 
