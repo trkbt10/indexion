@@ -48,6 +48,66 @@
       "title": "sim",
       "include_in_root": true,
       "sections": ["overview", "usage"]
+    },
+    {
+      "path": "cmd/indexion/plan/documentation",
+      "title": "plan documentation",
+      "include_in_root": true,
+      "sections": ["overview", "usage"]
+    },
+    {
+      "path": "cmd/indexion/plan/readme",
+      "title": "plan readme",
+      "include_in_root": true,
+      "sections": ["overview", "usage"]
+    },
+    {
+      "path": "cmd/indexion/plan/wiki",
+      "title": "plan wiki",
+      "include_in_root": true,
+      "sections": ["overview", "usage"]
+    },
+    {
+      "path": "cmd/indexion/grep",
+      "title": "grep",
+      "include_in_root": true,
+      "sections": ["overview", "usage"]
+    },
+    {
+      "path": "cmd/indexion/search",
+      "title": "search",
+      "include_in_root": true,
+      "sections": ["overview", "usage"]
+    },
+    {
+      "path": "cmd/indexion/doc/wiki",
+      "title": "doc wiki",
+      "include_in_root": true,
+      "sections": ["overview", "usage"]
+    },
+    {
+      "path": "cmd/indexion/doc/graph",
+      "title": "doc graph",
+      "include_in_root": true,
+      "sections": ["overview", "usage"]
+    },
+    {
+      "path": "cmd/indexion/digest",
+      "title": "digest",
+      "include_in_root": true,
+      "sections": ["overview", "usage"]
+    },
+    {
+      "path": "cmd/indexion/serve",
+      "title": "serve",
+      "include_in_root": true,
+      "sections": ["overview", "usage"]
+    },
+    {
+      "path": "cmd/indexion/mcp",
+      "title": "mcp",
+      "include_in_root": true,
+      "sections": ["overview", "usage"]
     }
   ],
   "root": {

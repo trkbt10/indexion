@@ -103,6 +103,39 @@ indexion digest build src/
 indexion digest query --purpose="parse JSON from file" src/
 ```
 
+### Search code by meaning
+
+The `search` command performs semantic search across code, wiki, and documentation.
+
+```bash
+# Search for error handling code
+indexion search "error handling" src/
+
+# Filter by language
+indexion search "parser" --filter="language:moonbit" src/
+```
+
+### Structural code search
+
+The `grep` command uses KGF token patterns for structural queries that text-based grep cannot express.
+
+```bash
+# Find undocumented public declarations
+indexion grep --undocumented src/
+
+# Find all public functions
+indexion grep "KW_pub KW_fn Ident" src/
+```
+
+### MCP integration
+
+indexion can run as an MCP server, exposing its tools to AI assistants like Claude Code.
+
+```bash
+# Start MCP server (stdio, for editor integration)
+indexion mcp
+```
+
 ## What to read next
 
 - [[Core Concepts]] -- understand KGF, CodeGraph, and Digest at a conceptual level

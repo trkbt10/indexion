@@ -17,6 +17,8 @@ flowchart TD
     INDEXION --> UPDATE[update]
     INDEXION --> GREP[grep]
     INDEXION --> SERVE[serve]
+    INDEXION --> SEARCH[search]
+    INDEXION --> MCP[mcp]
 
     PLAN --> PR[refactor]
     PLAN --> PD[documentation]
@@ -29,6 +31,7 @@ flowchart TD
     DOC --> DI[init]
     DOC --> DG[graph]
     DOC --> DR[readme]
+    DOC --> DW[wiki]
 ```
 
 ---
@@ -231,6 +234,47 @@ indexion doc readme [options] <directory>
 
 **When to use:** Bootstrap documentation from existing doc comments. Use `--per-package` for monorepos.
 
+### doc wiki
+
+Convert wiki between indexion's internal format and external wiki formats (GitHub, GitLab).
+
+```bash
+indexion doc wiki <subcommand> [options]
+```
+
+#### doc wiki export
+
+Export the indexion wiki (`.indexion/wiki/`) to an external wiki format.
+
+```bash
+indexion doc wiki export --format=github --input=.indexion/wiki --output=./wiki
+```
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--format` | | Target format: `github`, `gitlab` | required |
+| `--input` | `-i` | Input wiki directory | `.indexion/wiki` |
+| `--output` | `-o` | Output directory | required |
+| `--force` | `-f` | Overwrite existing files | false |
+
+#### doc wiki import
+
+Import an external wiki into indexion's internal format.
+
+```bash
+indexion doc wiki import --input=./github-wiki --output=.indexion/wiki
+```
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--format` | | Source format: `github`, `gitlab`, `auto` | `auto` |
+| `--input` | `-i` | Input wiki directory | required |
+| `--output` | `-o` | Output directory | `.indexion/wiki` |
+| `--title` | | Wiki title for manifest | `Wiki` |
+| `--force` | `-f` | Overwrite existing files | false |
+
+**When to use:** Syncing wiki content between indexion's internal format and GitHub/GitLab wikis. Use `export` to publish, `import` to pull external changes back.
+
 ---
 
 ## digest
@@ -299,12 +343,35 @@ indexion grep [options] <pattern> [paths...]
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--spec=NAME` | Force a specific KGF spec | auto-detect |
-| `--include=PATTERN` | Include glob pattern (repeatable) | `*` |
-| `--exclude=PATTERN` | Exclude glob pattern (repeatable) | -- |
+| `--include=PATTERN` | Include file glob pattern (repeatable) | `*` |
+| `--exclude=PATTERN` | Exclude file glob pattern (repeatable) | -- |
+| `--specs-dir=DIR` | KGF specs directory | `kgfs` |
 | `--context=INT` | Lines of context around matches | `0` |
+| `--semantic=QUERY` | Semantic query: `proxy`, `short:N`, `long:N`, `params-gte:N`, `name:substr`, `undocumented`, `similar:QUERY` | -- |
+
+| Flag | Description |
+|------|-------------|
+| `--undocumented` | Find pub declarations without doc comments |
+| `--count` | Show match count per file only |
+| `--files` | Show matching file paths only |
 
 **Pattern syntax:** Space-separated token matchers. `KW_fn` matches a token kind exactly, `Ident:foo` matches kind and text, `*` matches any single token, `...` matches zero or more tokens, `!KW_pub` negates.
+
+**Examples:**
+
+```bash
+# Find all pub fn declarations
+indexion grep "KW_pub KW_fn Ident" src/
+
+# Find undocumented public declarations
+indexion grep --undocumented src/
+
+# Find nested for loops
+indexion grep "KW_for ... KW_for" src/
+
+# Find functions named "sort"
+indexion grep "KW_fn Ident:sort" src/
+```
 
 **When to use:** Structural code search. "Find all functions that don't have a doc comment" or "find nested for loops."
 
@@ -358,21 +425,133 @@ indexion update
 
 ## serve
 
-Start an HTTP server that exposes the CodeGraph, Digest index, and wiki content via REST endpoints. Powers the DeepWiki frontend.
+Start an HTTP server that exposes the CodeGraph, Digest index, and wiki content via REST endpoints. Powers the DeepWiki frontend and supports live rebuild of the digest index.
 
 ```bash
-indexion serve [options]
+indexion serve [options] [workspace_dir]
 ```
 
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--port=INT` | Listen port | `3741` |
 | `--host=HOST` | Listen address | `127.0.0.1` |
-| `--static-dir=DIR` | Static file directory for frontend | -- |
+| `--static-dir=DIR` | Static file directory for SPA serving | -- |
+| `--provider=TYPE` | Embedding provider: `tfidf`, `openai`, `auto` | `auto` |
+| `--dim=INT` | Embedding dimension | `256` (tfidf) / `1536` (openai) |
+| `--strategy=NAME` | vcdb strategy: `bruteforce`, `hnsw`, `ivf` | `hnsw` |
+| `--specs=DIR` | KGF specs directory | `kgfs` |
+| `--index-dir=DIR` | Digest index directory | project-based |
 | `--cors` | Enable CORS headers | false |
 
-API endpoints include `/graph`, `/digest/query`, `/digest/index`, `/wiki/nav`, and `/wiki/pages/:id`.
+**REST API endpoints (POST):**
 
-**When to use:** Running the DeepWiki frontend, or building custom tooling against the indexion API.
+| Endpoint | Description |
+|----------|-------------|
+| `/api/digest/rebuild` | Trigger rebuild of the digest index |
+| `/api/digest/query` | Query the digest index by purpose |
+| `/api/wiki/search` | Search wiki pages |
+| `/api/explore` | Run explore analysis |
+| `/api/kgf/tokens` | KGF tokenization |
+| `/api/kgf/edges` | KGF edge extraction |
+| `/api/doc/graph` | Dependency graph generation |
+| `/api/plan/refactor` | Refactoring plan |
+| `/api/plan/documentation` | Documentation coverage |
+| `/api/plan/reconcile` | Doc/code drift detection |
+| `/api/plan/solid` | Code solidification plan |
+| `/api/plan/unwrap` | Wrapper function detection |
+| `/api/plan/readme` | README generation plan |
+
+### serve export
+
+Export a self-contained static site (wiki + explorer) for GitHub Pages or GitLab Pages.
+
+```bash
+indexion serve export --format=github --output=dist/pages
+```
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--format` | | Target format: `github`, `gitlab` | required |
+| `--input` | `-i` | Input wiki directory | `.indexion/wiki` |
+| `--output` | `-o` | Output directory | `dist/pages` |
+| `--force` | `-f` | Overwrite existing files | false |
+
+**When to use:** Running the DeepWiki frontend, building custom tooling against the indexion API, or exporting a static wiki site.
+
+---
+
+## search
+
+Semantic search across code, wiki, and documentation. Uses TF-IDF vectors to find relevant content and supports filtering by node attributes.
+
+```bash
+indexion search [options] <query> [paths...]
+```
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--top-k` | `-k` | Number of results | `20` |
+| `--min-score=FLOAT` | | Minimum similarity threshold | `0.05` |
+| `--include=PATTERN` | | Include files matching glob pattern (repeatable) | -- |
+| `--exclude=PATTERN` | | Exclude files matching glob pattern (repeatable) | -- |
+| `--specs-dir=DIR` | | KGF specs directory | `kgfs` |
+| `--filter` | `-f` | Filter by attributes (e.g. `node_type:code`, `language:moonbit`). Comma-separated. | -- |
+
+| Flag | Description |
+|------|-------------|
+| `--files` | Show matching file paths only |
+| `--json` | Output as JSON |
+
+**Examples:**
+
+```bash
+# Search for error handling code
+indexion search "error handling" src/
+
+# Search wiki content
+indexion search "SemanticSearch" .indexion/wiki/
+
+# Filter by language
+indexion search "parser" --filter="language:moonbit" src/
+
+# Filter by node type
+indexion search "query" --filter="node_type:code" src/ .indexion/wiki/
+```
+
+**When to use:** Finding relevant code or documentation by natural language query. More context-aware than text grep, faster than manual browsing.
+
+---
+
+## mcp
+
+Start an MCP (Model Context Protocol) server that exposes indexion tools to AI assistants like Claude Code and Cursor.
+
+```bash
+indexion mcp [options] [workspace_dir]
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--transport=MODE` | Transport mode: `stdio`, `http` | `stdio` |
+| `--port=INT` | HTTP server port (http transport only) | `3741` |
+| `--host=HOST` | HTTP server host (http transport only) | `127.0.0.1` |
+| `--specs-dir=DIR` | KGF specs directory | `kgfs` |
+
+**Transport modes:**
+
+- **stdio** -- reads JSON-RPC from stdin, writes to stdout. Use this with Claude Code, Cursor, and other MCP-compatible editors.
+- **http** -- serves MCP over HTTP POST `/mcp` endpoint.
+
+**Examples:**
+
+```bash
+# stdio mode (for Claude Code, Cursor, etc.)
+indexion mcp
+
+# HTTP mode
+indexion mcp --transport=http --port=3741
+```
+
+**When to use:** Integrating indexion's analysis capabilities into AI-powered development workflows. The MCP server exposes tools for code search, graph analysis, and documentation queries.
 
 > **Source:** `cmd/indexion/main.mbt`, `cmd/indexion/*/cli.mbt`

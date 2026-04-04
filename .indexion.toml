@@ -20,6 +20,12 @@
 [reconcile.output]
 # default_format = "json"
 
+[reconcile.vocabulary]
+# threshold = 0.3  # Cosine distance threshold for vocabulary divergence (0.0-1.0)
+
+[doc]
+config_path = "doc.json"
+
 [digest]
 provider = "openai"
 strategy = "hnsw"

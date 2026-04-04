@@ -74,9 +74,12 @@ flowchart LR
         PDOC["plan documentation<br/>(coverage audit)"]
         PREAD["plan readme<br/>(README plans)"]
         PWIKI["plan wiki<br/>(wiki plans)"]
-        DOC["doc graph/readme/init<br/>(doc generation)"]
+        DOC["doc graph/readme/init/wiki<br/>(doc generation)"]
         GRP["grep<br/>(token search)"]
+        SRCH["search<br/>(semantic search)"]
         DIG["digest<br/>(semantic index)"]
+        SRV["serve<br/>(HTTP API)"]
+        MCPS["mcp<br/>(MCP server)"]
     end
 
     subgraph Output
@@ -155,9 +158,13 @@ as a subcommand of the `indexion` CLI:
 | `doc graph`          | Generates dependency graphs in Mermaid format                    |
 | `doc readme`         | Generates per-package README files from doc comments             |
 | `doc init`           | Initializes documentation template structure                     |
+| `doc wiki`           | Converts wiki between indexion format and GitHub/GitLab formats  |
 | `grep`               | KGF-aware token pattern search across source files               |
+| `search`             | Semantic search across code, wiki, and documentation             |
 | `sim`                | Point comparison of two texts with multiple algorithms           |
 | `digest`             | Builds a semantic index for purpose-based function lookup        |
+| `serve`              | HTTP server for CodeGraph, Digest, and wiki REST API             |
+| `mcp`                | MCP server exposing indexion tools to AI assistants              |
 
 Output can be rendered as Markdown, JSON, or GitHub Issue format depending on
 the `--format` flag.
@@ -344,29 +351,41 @@ indexion/
           unwrap,reconcile,   #     unwrap,reconcile,
           documentation,      #     documentation,
           readme,wiki}/       #     readme,wiki}
-    doc/{graph,readme,init}/  #   indexion doc {graph,readme,init}
+    doc/{graph,readme,       #   indexion doc {graph,readme,
+         init,wiki}/          #     init,wiki}
     digest/ similarity/       #   indexion digest, indexion sim
     grep/ perf/               #   indexion grep, indexion perf
     serve/ segment/ kgf/      #   indexion serve, segment, kgf
+    search/ mcp/              #   indexion search, indexion mcp
   src/
     core/graph/               # CodeGraph types and construction
     kgf/                      # KGF engine (lexer, peg, parser,
                               #   semantics, resolver, registry,
-                              #   features, types, cas, preprocess)
+                              #   features, types, cas, preprocess,
+                              #   manage)
     config/                   # OS paths, app config (@config)
+    mcp/                      # MCP protocol server (types,
+                              #   transport, server, protocol)
     pipeline/comparison/      # @batch similarity engine
     similarity/               # TF-IDF, APTED, NCD algorithms
     digest/                   # Semantic function index
+    search/                   # Semantic search engine
     plan/                     # Plan rendering and templates
     parallel/                 # Fork-based parallelism (native)
     glob/ ignorefile/ filter/ # Pattern matching and filtering
-    docgen/ scope/ text/      # Doc generation, scope, text utils
+    docgen/                   # Doc generation (types, diagram,
+                              #   render, analyze, query, wiki/)
+    scope/ text/              # Scope analysis, text utils
     segmentation/ vcs/ http/  # Segmentation, VCS, HTTP client
   kgfs/                       # KGF specification files
     programming/              #   25 programming language specs
     dsl/                      #   9 DSL/document format specs
     natural/                  #   4 natural language specs
     project/                  #   13 project manifest specs
+  packages/
+    wiki/                     # DeepWiki frontend (React/TypeScript)
+    api-client/               # REST API client
+    vscode-plugin/            # VS Code extension
 ```
 
 ---

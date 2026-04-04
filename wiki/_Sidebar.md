@@ -28,6 +28,8 @@
     * [[Glob Pattern Matching (src/glob)|Glob-Pattern-Matching-src-glob]]
     * [[Text Processing (src/text)|Text-Processing-src-text]]
     * [[File Filtering (src/filter)|File-Filtering-src-filter]]
+    * [[MCP Server (src/mcp)|MCP-Server-src-mcp]]
+    * [[Semantic Search (src/search)|Semantic-Search-src-search]]
 * [[CLI Entry Point (cmd/indexion)|CLI-Entry-Point-cmd-indexion]]
 * [[KGF Tokenizer (cmd/kgf-tokenizer)|KGF-Tokenizer-cmd-kgf-tokenizer]]
 * [[DeepWiki Frontend (packages/wiki)|DeepWiki-Frontend-packages-wiki]]

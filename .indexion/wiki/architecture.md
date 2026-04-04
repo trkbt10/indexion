@@ -13,6 +13,7 @@ graph TB
         VSCode["VS Code Extension"]
         DeepWiki["DeepWiki"]
         Serve["HTTP Server (cmd/indexion/serve/)"]
+        MCP["MCP Server (cmd/indexion/mcp/)"]
     end
 
     subgraph Output["Output Layer"]
@@ -25,6 +26,7 @@ graph TB
     subgraph Analysis["Analysis Layer"]
         Similarity["Similarity Engine\n(TF-IDF, APTED, NCD, Hybrid)"]
         Digest["Digest & Embedding"]
+        Search["Semantic Search\n(src/search/)"]
         PlanCmds["Plan Commands\n(refactor, docs, reconcile,\nunwrap, solid, readme, wiki)"]
         DocGen["DocGen\n(graph, readme, wiki)"]
     end
@@ -45,8 +47,11 @@ graph TB
     CLI --> DocGen
     CLI --> Similarity
     CLI --> Digest
+    CLI --> Search
     VSCode --> Serve
     DeepWiki --> Serve
+    MCP --> Search
+    MCP --> PlanCmds
 
     PlanCmds --> Output
     DocGen --> Output
@@ -167,6 +172,8 @@ Each package in `src/` is a self-contained library with no CLI dependencies:
 | `src/parallel/` | Fork-based parallelism (native only) | `run_parallel()`, `cpu_count()` |
 | `src/config/` | OS paths and project configuration | `get_global_cache_dir()`, `resolve_os_dir()` |
 | `src/scope/` | Scope analysis | Nested scope tracking |
+| `src/search/` | Semantic search engine | `SearchEngine`, `SearchDocument`, `inline_search()` |
+| `src/mcp/` | MCP protocol server | `McpServer`, JSON-RPC 2.0, stdio/HTTP transports |
 | `src/vcs/` | Version control integration | Git operations |
 | `src/http/` | HTTP client | Network requests for update checks, embeddings |
 
@@ -187,10 +194,12 @@ Each subdirectory under `cmd/indexion/` corresponds to a top-level subcommand. E
 | `cmd/indexion/plan/solid/` | `plan solid` | `src/pipeline/`, `src/plan/` |
 | `cmd/indexion/plan/readme/` | `plan readme` | `src/docgen/`, `src/plan/` |
 | `cmd/indexion/plan/wiki/` | `plan wiki` | `src/docgen/wiki/`, `src/plan/` |
-| `cmd/indexion/doc/` | `doc graph`, `doc readme`, `doc init` | `src/docgen/`, `src/core/graph/` |
+| `cmd/indexion/doc/` | `doc graph`, `doc readme`, `doc init`, `doc wiki` | `src/docgen/`, `src/core/graph/`, `src/docgen/wiki/` |
 | `cmd/indexion/digest/` | `digest` | `src/digest/` |
 | `cmd/indexion/kgf/` | `kgf` | `src/kgf/` |
 | `cmd/indexion/grep/` | `grep` | `src/kgf/`, KGF-aware token pattern search |
+| `cmd/indexion/search/` | `search` | `src/search/`, semantic search across code and docs |
+| `cmd/indexion/mcp/` | `mcp` | `src/mcp/`, MCP server for AI assistant integration |
 | `cmd/indexion/perf/` | `perf` | Performance benchmarks (KGF parse, etc.) |
 | `cmd/indexion/similarity/` | `sim` | `src/similarity/` |
 | `cmd/indexion/segment/` | `segment` | `src/segmentation/` |

@@ -27,7 +27,7 @@
       "title": "Architecture",
       "file": "architecture.md",
       "sources": ["src/", "cmd/indexion/"],
-      "children": ["kgf-system", "codegraph", "digest-pipeline", "analysis-tools", "cli-commands", "vscode-extension", "deepwiki-frontend", "src-pipeline", "src-kgf", "src-parallel", "src-core", "src-update", "src-config", "src-segmentation", "src-plan", "src-digest", "src-platform", "src-similarity", "src-ignorefile", "src-scope", "src-vcs", "src-http", "src-docgen", "src-glob", "src-text", "src-filter"]
+      "children": ["kgf-system", "codegraph", "digest-pipeline", "analysis-tools", "cli-commands", "vscode-extension", "deepwiki-frontend", "src-pipeline", "src-kgf", "src-parallel", "src-core", "src-update", "src-config", "src-segmentation", "src-plan", "src-digest", "src-platform", "src-similarity", "src-ignorefile", "src-scope", "src-vcs", "src-http", "src-docgen", "src-glob", "src-text", "src-filter", "src-mcp", "src-search"]
     },
     {
       "id": "kgf-system",
@@ -293,6 +293,20 @@
       "title": "File Filtering (src/filter)",
       "file": "src-filter.md",
       "sources": ["src/filter/"],
+      "children": []
+    },
+    {
+      "id": "src-mcp",
+      "title": "MCP Server (src/mcp)",
+      "file": "src-mcp.md",
+      "sources": ["src/mcp/"],
+      "children": []
+    },
+    {
+      "id": "src-search",
+      "title": "Semantic Search (src/search)",
+      "file": "src-search.md",
+      "sources": ["src/search/"],
       "children": []
     }
   ]
