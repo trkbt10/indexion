@@ -75,6 +75,7 @@ pub fn extract_functions(
     None => return []
   }
   let id_set = build_identifier_set(spec=spec)
+  let qualifier_set = build_qualifier_separator_set(spec)
   let keyword_kinds = spec.get_keyword_kinds()
   let functions : Array[ExtractedFunction] = []
   let mut i = 0
@@ -86,14 +87,14 @@ pub fn extract_functions(
       let mut name = ""
       let mut j = i + 1
       // Skip optional qualifiers (TypeIdent::, keywords, etc.) until identifier.
-      // An identifier followed by DCOLON is a qualifier (e.g. Type::method),
-      // not the function name. The function name is the first identifier NOT
-      // followed by DCOLON.
+      // An identifier followed by a qualifier separator is a qualifier
+      // (e.g. Type::method), not the function name. The function name is the
+      // first identifier NOT followed by a qualifier separator.
       while j < tokens.length() {
         let t = tokens[j]
         let kind = t.get_kind()
         if is_identifier_kind(kind, id_set~) {
-          // Look ahead past whitespace for DCOLON
+          // Look ahead past whitespace for qualifier separator
           let mut peek = j + 1
           while peek < tokens.length() {
             let pk = tokens[peek].get_kind()
@@ -103,8 +104,9 @@ pub fn extract_functions(
               break
             }
           }
-          if peek < tokens.length() && tokens[peek].get_kind() == "DCOLON" {
-            // This identifier is a qualifier (e.g. Type in Type::method) — skip it and the DCOLON
+          if peek < tokens.length() &&
+            qualifier_set.contains(tokens[peek].get_kind()) {
+            // This identifier is a qualifier (e.g. Type in Type::method) — skip it and the separator
             j = peek + 1
           } else {
             // This is the function name
@@ -112,7 +114,7 @@ pub fn extract_functions(
             j += 1
             break
           }
-        } else if kind == "DCOLON" || keyword_kinds.contains(kind) {
+        } else if qualifier_set.contains(kind) || keyword_kinds.contains(kind) {
           j += 1
         } else {
           break

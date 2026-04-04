@@ -79,6 +79,37 @@ fn build_allowed_keywords(spec : @kgf_types.KGFSpec) -> Map[String, Bool] {
 }
 
 ///|
+/// Build set of qualifier separator token kinds from KGF spec's
+/// `qualifier_separators` feature (e.g. DOT, DCOLON, OBJOP, SCOPE, ARROW).
+fn build_qualifier_separator_set(
+  spec : @kgf_types.KGFSpec,
+) -> Map[String, Bool] {
+  let set : Map[String, Bool] = {}
+  match spec.get_feature("qualifier_separators") {
+    Some(kinds) =>
+      for kind in kinds {
+        set[kind] = true
+      }
+    None => ()
+  }
+  set
+}
+
+///|
+/// Build set of self-keyword token kinds from KGF spec's `self_keyword` feature.
+fn build_self_keyword_set(spec : @kgf_types.KGFSpec) -> Map[String, Bool] {
+  let set : Map[String, Bool] = {}
+  match spec.get_feature("self_keyword") {
+    Some(keywords) =>
+      for kw in keywords {
+        set[kw] = true
+      }
+    None => ()
+  }
+  set
+}
+
+///|
 /// Token kinds that indicate control flow or bindings (non-proxy bodies).
 /// A keyword token in a function body likely means the body contains logic
 /// beyond a simple forwarding call.
@@ -146,6 +177,8 @@ pub fn detect_proxy_functions(
   let functions = extract_functions(tokens, file, spec=spec)
   let id_set = build_identifier_set(spec=spec)
   let allowed_kw = build_allowed_keywords(spec)
+  let qualifier_set = build_qualifier_separator_set(spec)
+  let self_kw_set = build_self_keyword_set(spec)
   let result : Array[ProxyFunction] = []
   // Build token index → line number mapping
   let token_lines : Array[Int] = Array::make(tokens.length(), 1)
@@ -157,14 +190,18 @@ pub fn detect_proxy_functions(
     }
   }
   for func in functions {
-    match analyze_proxy(tokens, func, token_lines, id_set, spec=spec, allowed_kw) {
-      Some(proxy) => {
-        // Filter self-delegation (e.g. self.field.method)
-        if !include_self_delegation && proxy.delegate_target.has_prefix("self.") {
+    match
+      analyze_proxy(
+        tokens, func, token_lines, id_set, spec=spec, allowed_kw, qualifier_set~,
+        self_kw_set~,
+      ) {
+      Some((proxy, call_info)) => {
+        // Filter self-delegation (e.g. self.field.method) using KGF self_keyword
+        if !include_self_delegation && call_info.starts_with_self {
           continue
         }
-        // Filter bare constructors (no qualifier — just a name like "Emit", "Str")
-        if !include_bare_constructors && is_bare_target(proxy.delegate_target) {
+        // Filter bare constructors (no qualifier separator found in call target)
+        if !include_bare_constructors && !call_info.has_qualifier {
           continue
         }
         result.push(proxy)
@@ -176,23 +213,8 @@ pub fn detect_proxy_functions(
 }
 
 ///|
-/// Check if a delegate target has no qualifier (no "." or "::").
-/// Such targets are typically enum constructors or local function aliases.
-fn is_bare_target(target : String) -> Bool {
-  let chars = target.to_array()
-  for i in 0..<chars.length() {
-    if chars[i] == '.' {
-      return false
-    }
-    if i + 1 < chars.length() && chars[i] == ':' && chars[i + 1] == ':' {
-      return false
-    }
-  }
-  true
-}
-
-///|
 /// Analyze a single function to determine if it is a proxy.
+/// Returns the proxy function along with call target metadata for filtering.
 fn analyze_proxy(
   tokens : Array[@kgf_types.Tok],
   func : ExtractedFunction,
@@ -200,7 +222,9 @@ fn analyze_proxy(
   id_set : Map[String, Bool],
   spec~ : @kgf_types.KGFSpec,
   allowed_kw : Map[String, Bool],
-) -> ProxyFunction? {
+  qualifier_set~ : Map[String, Bool],
+  self_kw_set~ : Map[String, Bool],
+) -> (ProxyFunction, CallTargetResult)? {
   let start = func.get_start()
   let end = func.get_end()
   if start >= end {
@@ -218,7 +242,7 @@ fn analyze_proxy(
     return None
   }
   // Extract parameter names from signature (between first LPAREN and its matching RPAREN, before body LBRACE)
-  let params = extract_param_names(tokens, start, body_start, id_set)
+  let params = extract_param_names(tokens, start, body_start, id_set, self_kw_set~)
   // Body tokens: between LBRACE+1 and RBRACE (end-1 is RBRACE)
   let body_end = end - 1 // RBRACE position
   if body_start + 1 >= body_end {
@@ -241,8 +265,8 @@ fn analyze_proxy(
     return None
   }
   // Parse as single call expression: [qualifier] callee LPAREN [args] RPAREN
-  match parse_single_call(body_tokens, id_set) {
-    Some((target, args)) => {
+  match parse_single_call(body_tokens, id_set, qualifier_set~, self_kw_set~) {
+    Some((call_result, args)) => {
       let all_forwarded = check_all_forwarded(params, args)
       let line_num = if start < token_lines.length() {
         token_lines[start]
@@ -274,17 +298,22 @@ fn analyze_proxy(
           break
         }
       }
-      Some({
-        name: func.get_name(),
-        file: func.get_file(),
-        line: line_num,
-        params,
-        delegate_target: target,
-        delegate_args: args,
-        all_forwarded,
-        def_start_line: def_start,
-        def_end_line: end_line,
-      })
+      Some(
+        (
+          {
+            name: func.get_name(),
+            file: func.get_file(),
+            line: line_num,
+            params,
+            delegate_target: call_result.target,
+            delegate_args: args,
+            all_forwarded,
+            def_start_line: def_start,
+            def_end_line: end_line,
+          },
+          call_result,
+        ),
+      )
     }
     None => None
   }
@@ -299,6 +328,7 @@ fn extract_param_names(
   start : Int,
   body_start : Int,
   id_set : Map[String, Bool],
+  self_kw_set~ : Map[String, Bool],
 ) -> Array[String] {
   let params : Array[String] = []
   // Find signature LPAREN (skip fn keyword, optional type qualifiers, function name)
@@ -342,28 +372,26 @@ fn extract_param_names(
     if expecting_param && is_identifier_kind(kind, id_set~) {
       params.push(tokens[i].get_text())
       expecting_param = false
+    } else if expecting_param && self_kw_set.contains(kind) {
+      // Skip self keyword — it's a method receiver, not a forwarded param
+      expecting_param = false
     } else if kind == "COMMA" {
       expecting_param = true
     }
   }
-  // Filter out "self" — it's part of method receiver, not a forwarded param
-  let filtered : Array[String] = []
-  for p in params {
-    if p != "self" {
-      filtered.push(p)
-    }
-  }
-  filtered
+  params
 }
 
 ///|
 /// Try to parse body tokens as a single call expression.
-/// Returns (delegate_target, args) if successful.
+/// Returns (CallTargetResult, args) if successful.
 /// Pattern: [qualifier] callee LPAREN [args] RPAREN
 fn parse_single_call(
   body_tokens : Array[@kgf_types.Tok],
   id_set : Map[String, Bool],
-) -> (String, Array[String])? {
+  qualifier_set~ : Map[String, Bool],
+  self_kw_set~ : Map[String, Bool],
+) -> (CallTargetResult, Array[String])? {
   let len = body_tokens.length()
   if len < 2 {
     return None // Minimum: callee LPAREN RPAREN = 3 tokens, but 0-arg = callee()
@@ -393,44 +421,64 @@ fn parse_single_call(
   }
   // Everything before call_lparen is the qualifier + callee
   // Parse qualifier chain
-  let target = build_call_target(body_tokens, 0, call_lparen, id_set)
-  if target.length() == 0 {
+  let result = build_call_target(
+    body_tokens, 0, call_lparen, id_set, qualifier_set~, self_kw_set~,
+  )
+  if result.target.length() == 0 {
     return None
   }
   // Parse arguments between LPAREN and RPAREN
   match parse_call_args(body_tokens, call_lparen + 1, len - 1, id_set) {
-    Some(args) => Some((target, args))
+    Some(args) => Some((result, args))
     None => None
   }
 }
 
 ///|
+/// Result of building a call target from tokens.
+/// Carries the target string along with metadata about its structure,
+/// so callers don't need to re-parse the string with hardcoded patterns.
+priv struct CallTargetResult {
+  /// The delegate target string (e.g. "@math.round", "Type::method", "self.field").
+  target : String
+  /// True if the target contains at least one qualifier separator.
+  has_qualifier : Bool
+  /// True if the first token is a self keyword (e.g. self.field.method).
+  starts_with_self : Bool
+}
+
+///|
 /// Build the delegate target string from qualifier + callee tokens.
-/// Valid patterns: PackageRef DOT [PackageRef DOT | TypeIdent DCOLON]* Ident
-///                 TypeIdent DCOLON Ident
-///                 Ident DOT Ident [DOT Ident]*
+/// Uses KGF-defined qualifier separators and self keywords instead of
+/// hardcoded DOT/DCOLON/"self." checks.
 fn build_call_target(
   tokens : Array[@kgf_types.Tok],
   start : Int,
   end : Int,
   id_set : Map[String, Bool],
-) -> String {
+  qualifier_set~ : Map[String, Bool],
+  self_kw_set~ : Map[String, Bool],
+) -> CallTargetResult {
   let buf = StringBuilder::new()
+  let mut has_qualifier = false
+  let mut starts_with_self = false
   for i = start; i < end; i = i + 1 {
     let kind = tokens[i].get_kind()
     let text = tokens[i].get_text()
-    if is_identifier_kind(kind, id_set~) {
+    if is_identifier_kind(kind, id_set~) || self_kw_set.contains(kind) {
       buf.write_string(text)
-    } else if kind == "DOT" {
-      buf.write_string(".")
-    } else if kind == "DCOLON" {
-      buf.write_string("::")
+      if i == start && self_kw_set.contains(kind) {
+        starts_with_self = true
+      }
+    } else if qualifier_set.contains(kind) {
+      buf.write_string(text)
+      has_qualifier = true
     } else {
       // Unexpected token in qualifier — not a valid call target
-      return ""
+      return { target: "", has_qualifier: false, starts_with_self: false }
     }
   }
-  buf.to_string()
+  { target: buf.to_string(), has_qualifier, starts_with_self }
 }
 
 ///|
@@ -546,6 +594,7 @@ pub fn find_call_sites(
   spec~ : @kgf_types.KGFSpec,
 ) -> Array[UnwrapEdit] {
   let id_set = build_identifier_set(spec=spec)
+  let qualifier_set = build_qualifier_separator_set(spec)
   // Resolve function keyword from spec to distinguish definitions from calls
   let fn_keyword = match spec.get_feature("function_keyword") {
     Some(keywords) => if keywords.length() > 0 { keywords[0] } else { return [] }
@@ -574,7 +623,7 @@ pub fn find_call_sites(
         next += 1
       }
       if next < tokens.length() && tokens[next].get_kind() == "LPAREN" {
-        // Check not preceded by function keyword (definition, not call)
+        // Check not preceded by function keyword or qualifier separator (definition, not call)
         let mut prev = i - 1
         while prev >= 0 && is_skip_token(tokens[prev].get_kind()) {
           prev -= 1
@@ -582,8 +631,7 @@ pub fn find_call_sites(
         let is_def = prev >= 0 &&
           (
             tokens[prev].get_kind() == fn_keyword ||
-            tokens[prev].get_kind() == "DCOLON" ||
-            tokens[prev].get_kind() == "DOT"
+            qualifier_set.contains(tokens[prev].get_kind())
           )
         if !is_def {
           let start_offset = tok.get_pos()
@@ -603,14 +651,15 @@ pub fn find_call_sites(
         }
       }
     }
-    // Pattern 2: PackageRef DOT Ident("wrapper_name") LPAREN
+    // Pattern 2: PackageRef <qualifier_sep> Ident("wrapper_name") LPAREN
     if kind == "PackageRef" {
-      // Look ahead: DOT Ident("wrapper_name") LPAREN
+      // Look ahead: qualifier_separator Ident("wrapper_name") LPAREN
       let mut j = i + 1
       while j < tokens.length() && is_skip_token(tokens[j].get_kind()) {
         j += 1
       }
-      if j < tokens.length() && tokens[j].get_kind() == "DOT" {
+      if j < tokens.length() && qualifier_set.contains(tokens[j].get_kind()) {
+        let sep_text = tokens[j].get_text()
         let mut k = j + 1
         while k < tokens.length() && is_skip_token(tokens[k].get_kind()) {
           k += 1
@@ -634,7 +683,7 @@ pub fn find_call_sites(
               let start_offset = tok.get_pos()
               let end_offset = tokens[k].get_pos() +
                 tokens[k].get_text().length()
-              let old = text + "." + tokens[k].get_text()
+              let old = text + sep_text + tokens[k].get_text()
               // Skip if already calling the delegate target directly
               if old == delegate_target {
                 i += 1
