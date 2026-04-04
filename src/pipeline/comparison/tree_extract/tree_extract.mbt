@@ -26,7 +26,7 @@ pub fn extract(
   }
   let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
   let kgf_tokens = lexer.tokenize(content)
-  let funcs = @kgf_features.extract_function_trees(kgf_tokens, display_name)
+  let funcs = @kgf_features.extract_function_trees(kgf_tokens, display_name, spec=spec)
   if funcs.is_empty() {
     trees.push(content_to_simple_tree(content))
   } else {

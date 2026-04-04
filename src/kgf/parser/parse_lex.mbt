@@ -8,9 +8,10 @@
 ///
 /// ```ebnf
 /// LexSection   ::= LexRule*
-/// LexRule      ::= SkipRule | TokenRule | Comment | BlankLine
+/// LexRule      ::= SkipRule | TokenRule | KeywordRule | Comment | BlankLine
 /// SkipRule     ::= "SKIP" Pattern
 /// TokenRule    ::= "TOKEN" TokenName Pattern Flags?
+/// KeywordRule  ::= "KEYWORD" TokenName Pattern Flags?
 /// TokenName    ::= UPPER_IDENT           (* e.g., "Ident", "KW_fn" *)
 /// Pattern      ::= "/" RegexBody "/"     (* JavaScript-style regex *)
 /// Flags        ::= [gimsuy]+             (* Optional regex flags *)
@@ -23,6 +24,11 @@
 /// |------|--------|-------------|
 /// | Skip | `SKIP /pattern/` | Matched but not emitted (whitespace, comments) |
 /// | Token | `TOKEN NAME /pattern/` | Matched and emitted with kind=NAME |
+/// | Keyword | `KEYWORD NAME /pattern/` | Emitted with kind=NAME, classified as keyword |
+///
+/// `KEYWORD` produces the same TokenDef as `TOKEN` but additionally registers
+/// the token name in `LexResult.keyword_kinds`, making the classification
+/// queryable without relying on naming conventions.
 ///
 /// ## Pattern Syntax
 ///
@@ -40,8 +46,8 @@
 /// SKIP /(\s+|\/\/[^\n]*|\/\*[\s\S]*?\*\/)+/
 ///
 /// # Keywords (order matters - check before identifiers)
-/// TOKEN KW_fn     /fn\b/
-/// TOKEN KW_let    /let\b/
+/// KEYWORD KW_fn     /fn\b/
+/// KEYWORD KW_let    /let\b/
 ///
 /// # Identifiers and literals
 /// TOKEN Ident     /[a-zA-Z_][a-zA-Z0-9_]*/
@@ -54,14 +60,34 @@
 /// ```
 
 ///|
-/// Parses the lex section into token definitions with optional SKIP rules.
+/// Result of parsing a lex section.
+/// Contains the token definitions and the set of token names declared as keywords.
+pub struct LexResult {
+  tokens : Array[@types.TokenDef]
+  keyword_kinds : Map[String, Bool]
+}
+
+///|
+pub fn LexResult::get_tokens(self : LexResult) -> Array[@types.TokenDef] {
+  self.tokens
+}
+
+///|
+pub fn LexResult::get_keyword_kinds(self : LexResult) -> Map[String, Bool] {
+  self.keyword_kinds
+}
+
+///|
+/// Parses the lex section into token definitions and keyword classification.
 ///
 /// Syntax:
 ///   SKIP /pattern/
 ///   TOKEN NAME /pattern/[flags]
-pub fn parse_lex(text : String) -> Array[@types.TokenDef] {
+///   KEYWORD NAME /pattern/[flags]
+pub fn parse_lex(text : String) -> LexResult {
   let lines = split_lines(text)
-  let result : Array[@types.TokenDef] = []
+  let tokens : Array[@types.TokenDef] = []
+  let keyword_kinds : Map[String, Bool] = {}
   for line in lines {
     let ln = trim_str(line)
     // Skip empty lines and comments
@@ -71,20 +97,31 @@ pub fn parse_lex(text : String) -> Array[@types.TokenDef] {
     // Parse SKIP rules
     if starts_with(ln, "SKIP") {
       match parse_skip_rule(ln) {
-        Some(tok) => result.push(tok)
+        Some(tok) => tokens.push(tok)
+        None => ()
+      }
+      continue
+    }
+    // Parse KEYWORD rules (same as TOKEN but registered as keyword)
+    if starts_with(ln, "KEYWORD") {
+      match parse_named_token_rule(ln, 7) {
+        Some(tok) => {
+          keyword_kinds[tok.get_name()] = true
+          tokens.push(tok)
+        }
         None => ()
       }
       continue
     }
     // Parse TOKEN rules
     if starts_with(ln, "TOKEN") {
-      match parse_token_rule(ln) {
-        Some(tok) => result.push(tok)
+      match parse_named_token_rule(ln, 5) {
+        Some(tok) => tokens.push(tok)
         None => ()
       }
     }
   }
-  result
+  { tokens, keyword_kinds }
 }
 
 ///|
@@ -102,10 +139,11 @@ fn parse_skip_rule(line : String) -> @types.TokenDef? {
 }
 
 ///|
-/// Parses a TOKEN rule: TOKEN NAME /pattern/[flags] [skip_value]
-fn parse_token_rule(line : String) -> @types.TokenDef? {
-  // Skip "TOKEN " prefix
-  let after_token = skip_whitespace(line, 6)
+/// Parses a named token rule (TOKEN or KEYWORD): PREFIX NAME /pattern/[flags] [skip_value]
+/// `prefix_len` is the length of the leading keyword ("TOKEN" = 5, "KEYWORD" = 7).
+fn parse_named_token_rule(line : String, prefix_len : Int) -> @types.TokenDef? {
+  // Skip prefix + whitespace
+  let after_token = skip_whitespace(line, prefix_len)
   // Read token name
   let (name, after_name) = read_identifier(line, after_token)
   guard name.length() > 0 else { return None }
@@ -126,7 +164,8 @@ fn parse_token_rule(line : String) -> @types.TokenDef? {
 }
 
 ///|
-/// Parses token attributes after the pattern: flags, skip_value
+/// Parses token attributes after the pattern: flags, skip_value, category.
+///
 fn parse_token_attrs(text : String) -> (String?, Bool) {
   let mut flags : String? = None
   let mut skip_value = false

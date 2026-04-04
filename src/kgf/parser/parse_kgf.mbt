@@ -181,7 +181,9 @@ pub fn parse_kgf_header(text : String) -> KGFHeader {
 pub fn parse_kgf(text : String) -> @types.KGFSpec? {
   let language = extract_language(text)
   let header_sources = extract_sources(text)
-  let tokens = parse_lex(section(text, "lex"))
+  let lex_result = parse_lex(section(text, "lex"))
+  let tokens = lex_result.get_tokens()
+  let keyword_kinds = lex_result.get_keyword_kinds()
   let rules = parse_rules(section(text, "grammar"))
   let attrs = parse_attrs(section(text, "attrs"))
   let features = parse_features(section(text, "features"))
@@ -197,6 +199,7 @@ pub fn parse_kgf(text : String) -> @types.KGFSpec? {
     @types.KGFSpec::new(
       language,
       tokens~,
+      keyword_kinds~,
       rules~,
       attrs~,
       resolver~,

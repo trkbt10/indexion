@@ -345,11 +345,20 @@ fn run_with_config(config : UnwrapConfig) -> Unit {
         Some(t) => t
         None => continue
       }
+      let s = match reg.detect_from_path(path) {
+        Some(lang) =>
+          match reg.get_spec(lang) {
+            Some(s) => s
+            None => continue
+          }
+        None => continue
+      }
       let edits = @kgf_features.find_call_sites(
         w.name,
         w.delegate_target,
         tokens,
         path,
+        spec=s,
       )
       for e in edits {
         total_edits.push(e)

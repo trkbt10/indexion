@@ -23,7 +23,11 @@ pub fn extract_code_documents(
         }
       None => None
     }
-    let functions = @kgf_features.extract_functions(tokens, path, spec?)
+    let s = match spec {
+      Some(s) => s
+      None => continue
+    }
+    let functions = @kgf_features.extract_functions(tokens, path, spec=s)
     let token_lines = build_token_lines(tokens)
     let lines = @common.split_lines(content)
     for func in functions {

@@ -4,6 +4,8 @@
 pub struct KGFSpec {
   language : String
   tokens : Array[TokenDef]
+  /// Token names classified as keywords by `KEYWORD` declarations in the lex section.
+  keyword_kinds : Map[String, Bool]
   rules : Map[String, RuleDef]
   attrs : Map[String, Array[AttrAction]]
   resolver : ResolverSpec
@@ -19,6 +21,7 @@ pub struct KGFSpec {
 pub fn KGFSpec::new(
   language : String,
   tokens? : Array[TokenDef] = [],
+  keyword_kinds? : Map[String, Bool] = {},
   rules? : Map[String, RuleDef] = Map::new(),
   attrs? : Map[String, Array[AttrAction]] = Map::new(),
   resolver? : ResolverSpec = ResolverSpec::new(),
@@ -31,6 +34,7 @@ pub fn KGFSpec::new(
   {
     language,
     tokens,
+    keyword_kinds,
     rules,
     attrs,
     resolver,
@@ -52,6 +56,18 @@ pub fn KGFSpec::get_language(self : KGFSpec) -> String {
 /// Returns the tokens.
 pub fn KGFSpec::get_tokens(self : KGFSpec) -> Array[TokenDef] {
   self.tokens
+}
+
+///|
+/// Returns the keyword kinds set.
+pub fn KGFSpec::get_keyword_kinds(self : KGFSpec) -> Map[String, Bool] {
+  self.keyword_kinds
+}
+
+///|
+/// Returns true if the given token kind is classified as a keyword.
+pub fn KGFSpec::is_keyword(self : KGFSpec, kind : String) -> Bool {
+  self.keyword_kinds.contains(kind)
 }
 
 ///|

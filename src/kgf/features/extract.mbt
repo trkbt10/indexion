@@ -64,20 +64,18 @@ pub fn ExtractedFunction::qualified_name(self : ExtractedFunction) -> String {
 ///|
 /// Extract functions from tokenized source code.
 /// Uses the KGF spec's `function_keyword` feature to identify the function declaration
-/// keyword. Falls back to "KW_fn" if the feature is not defined.
+/// keyword, and `keyword_kinds` (from KEYWORD declarations) to skip qualifier keywords.
 pub fn extract_functions(
   tokens : Array[@kgf_types.Tok],
   file : String,
-  spec? : @kgf_types.KGFSpec,
+  spec~ : @kgf_types.KGFSpec,
 ) -> Array[ExtractedFunction] {
-  let fn_keyword = match spec {
-    Some(s) =>
-      match s.get_feature("function_keyword") {
-        Some(keywords) => if keywords.length() > 0 { keywords[0] } else { "KW_fn" }
-        None => "KW_fn"
-      }
-    None => "KW_fn"
+  let fn_keyword = match spec.get_feature("function_keyword") {
+    Some(keywords) => if keywords.length() > 0 { keywords[0] } else { return [] }
+    None => return []
   }
+  let id_set = build_identifier_set(spec=spec)
+  let keyword_kinds = spec.get_keyword_kinds()
   let functions : Array[ExtractedFunction] = []
   let mut i = 0
   while i < tokens.length() {
@@ -87,15 +85,34 @@ pub fn extract_functions(
       let fn_start = i
       let mut name = ""
       let mut j = i + 1
-      // Skip optional qualifiers (TypeIdent::, keywords, etc.) until Ident
+      // Skip optional qualifiers (TypeIdent::, keywords, etc.) until identifier.
+      // An identifier followed by DCOLON is a qualifier (e.g. Type::method),
+      // not the function name. The function name is the first identifier NOT
+      // followed by DCOLON.
       while j < tokens.length() {
         let t = tokens[j]
         let kind = t.get_kind()
-        if is_identifier_kind(kind) || kind == "Ident" {
-          name = t.get_text()
-          j += 1
-          break
-        } else if kind == "TypeIdent" || kind == "DCOLON" || kind.has_prefix("KW_") {
+        if is_identifier_kind(kind, id_set~) {
+          // Look ahead past whitespace for DCOLON
+          let mut peek = j + 1
+          while peek < tokens.length() {
+            let pk = tokens[peek].get_kind()
+            if pk == "NL" || pk == "SKIP" || pk == "WS" {
+              peek += 1
+            } else {
+              break
+            }
+          }
+          if peek < tokens.length() && tokens[peek].get_kind() == "DCOLON" {
+            // This identifier is a qualifier (e.g. Type in Type::method) — skip it and the DCOLON
+            j = peek + 1
+          } else {
+            // This is the function name
+            name = t.get_text()
+            j += 1
+            break
+          }
+        } else if kind == "DCOLON" || keyword_kinds.contains(kind) {
           j += 1
         } else {
           break
@@ -155,11 +172,13 @@ pub fn tokens_to_tree_node(
   tokens : Array[@kgf_types.Tok],
   start : Int,
   end : Int,
+  spec~ : @kgf_types.KGFSpec,
 ) -> @apted.TreeNode {
   if start >= end {
     return @apted.TreeNode::leaf("Empty")
   }
-  build_tree_recursive(tokens, start, end)
+  let id_set = build_identifier_set(spec=spec)
+  build_tree_recursive(tokens, start, end, id_set)
 }
 
 ///|
@@ -168,6 +187,7 @@ fn build_tree_recursive(
   tokens : Array[@kgf_types.Tok],
   start : Int,
   end : Int,
+  id_set : Map[String, Bool],
 ) -> @apted.TreeNode {
   let children : Array[@apted.TreeNode] = []
   let mut i = start
@@ -179,7 +199,7 @@ fn build_tree_recursive(
       let close = find_matching_bracket(tokens, i, kind)
       if close > i && close < end {
         // Build subtree for nested content
-        let subtree = build_tree_recursive(tokens, i + 1, close)
+        let subtree = build_tree_recursive(tokens, i + 1, close, id_set)
         let wrapper = @apted.TreeNode::node(bracket_label(kind), [subtree])
         children.push(wrapper)
         i = close + 1
@@ -195,7 +215,7 @@ fn build_tree_recursive(
       continue
     } else {
       // Leaf node for other tokens
-      children.push(@apted.TreeNode::leaf(token_label(tok)))
+      children.push(@apted.TreeNode::leaf(token_label(tok, id_set)))
     }
     i += 1
   }
@@ -248,10 +268,10 @@ fn bracket_label(kind : String) -> String {
 
 ///|
 /// Get tree label for token.
-fn token_label(tok : @kgf_types.Tok) -> String {
+fn token_label(tok : @kgf_types.Tok, id_set : Map[String, Bool]) -> String {
   let kind = tok.get_kind()
   // Include text for identifiers
-  if is_identifier_kind(kind) {
+  if is_identifier_kind(kind, id_set~) {
     kind + ":" + tok.get_text()
   } else {
     kind
@@ -263,12 +283,12 @@ fn token_label(tok : @kgf_types.Tok) -> String {
 pub fn extract_function_trees(
   tokens : Array[@kgf_types.Tok],
   file : String,
-  spec? : @kgf_types.KGFSpec,
+  spec~ : @kgf_types.KGFSpec,
 ) -> Array[(ExtractedFunction, @apted.TreeNode)] {
-  let functions = extract_functions(tokens, file, spec?)
+  let functions = extract_functions(tokens, file, spec=spec)
   let result : Array[(ExtractedFunction, @apted.TreeNode)] = []
   for func in functions {
-    let tree = tokens_to_tree_node(tokens, func.start, func.end)
+    let tree = tokens_to_tree_node(tokens, func.start, func.end, spec=spec)
     result.push((func, tree))
   }
   result

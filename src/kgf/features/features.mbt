@@ -30,11 +30,30 @@ pub fn to_lower_str(s : String) -> String {
 }
 
 ///|
-/// Check if token kind represents an identifier.
-/// Handles variations: Ident, IDENT, identifier, etc.
-pub fn is_identifier_kind(kind : String) -> Bool {
-  let lower = to_lower_str(kind)
-  lower == "ident" || lower == "identifier" || lower == "id"
+/// Build identifier kind set from KGF spec's `identifier_kinds` feature.
+pub fn build_identifier_set(
+  spec~ : @kgf_types.KGFSpec,
+) -> Map[String, Bool] {
+  let set : Map[String, Bool] = {}
+  match spec.get_feature("identifier_kinds") {
+    Some(kinds) =>
+      for kind in kinds {
+        set[kind] = true
+      }
+    None => ()
+  }
+  if set.is_empty() {
+    // Spec has no identifier_kinds feature — nothing to identify
+    set["Ident"] = true
+  }
+  set
+}
+
+///|
+/// Check if token kind represents an identifier, using a prebuilt identifier set.
+/// The set should be obtained from `build_identifier_set`.
+pub fn is_identifier_kind(kind : String, id_set~ : Map[String, Bool]) -> Bool {
+  id_set.contains(kind)
 }
 
 ///|
@@ -43,9 +62,12 @@ pub fn is_identifier_kind(kind : String) -> Bool {
 /// - Identifiers: "kind:text" for name similarity
 /// - Keywords/operators: "kind" only for structural similarity
 /// - Literals: "kind" only (ignore actual values)
-pub fn kgf_tok_to_tfidf_token(tok : @kgf_types.Tok) -> String {
+pub fn kgf_tok_to_tfidf_token(
+  tok : @kgf_types.Tok,
+  id_set~ : Map[String, Bool],
+) -> String {
   let kind = tok.get_kind()
-  if is_identifier_kind(kind) {
+  if is_identifier_kind(kind, id_set~) {
     kind + ":" + tok.get_text()
   } else {
     kind
@@ -60,9 +82,10 @@ pub fn tokenize_with_kgf(
 ) -> Array[String] {
   let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
   let tokens = lexer.tokenize(content)
+  let id_set = build_identifier_set(spec=spec)
   let result : Array[String] = []
   for tok in tokens {
-    result.push(kgf_tok_to_tfidf_token(tok))
+    result.push(kgf_tok_to_tfidf_token(tok, id_set~))
   }
   result
 }

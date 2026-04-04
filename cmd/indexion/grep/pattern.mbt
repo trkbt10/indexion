@@ -38,8 +38,8 @@ pub fn build_alias_table(
       if tok_def.is_skip() {
         continue
       }
-      // Keywords: KW_pub with pattern "pub\b" → alias "pub" → "KW_pub"
-      if name.has_prefix("KW_") && pattern.has_suffix("\\b") {
+      // Keywords (KEYWORD declarations) with pattern "pub\b" → alias "pub" → "KW_pub"
+      if spec.is_keyword(name) && pattern.has_suffix("\\b") {
         let literal = @config.substring(
           pattern,
           0,

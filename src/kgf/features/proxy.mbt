@@ -55,18 +55,44 @@ pub fn UnwrapEdit::new(
 }
 
 ///|
+/// Build set of keywords that are allowed in proxy function bodies.
+/// These are keywords that don't imply control flow or additional logic:
+/// - `function_keyword`: closures/lambdas passed as arguments (e.g. KW_fn, KW_def)
+/// - `self_keyword`: method receiver references (e.g. KW_self)
+fn build_allowed_keywords(spec : @kgf_types.KGFSpec) -> Map[String, Bool] {
+  let allowed : Map[String, Bool] = {}
+  match spec.get_feature("function_keyword") {
+    Some(keywords) =>
+      for kw in keywords {
+        allowed[kw] = true
+      }
+    None => ()
+  }
+  match spec.get_feature("self_keyword") {
+    Some(keywords) =>
+      for kw in keywords {
+        allowed[kw] = true
+      }
+    None => ()
+  }
+  allowed
+}
+
+///|
 /// Token kinds that indicate control flow or bindings (non-proxy bodies).
-/// Any KW_ prefixed token is a keyword — if it appears in a function body
-/// it likely means the body contains logic beyond a simple forwarding call.
-/// Exceptions: KW_self (method receiver), KW_fn/KW_function/KW_def etc.
-/// (closures/lambdas passed as arguments are acceptable in a proxy body).
-fn is_disqualifying_keyword(kind : String) -> Bool {
-  if !kind.has_prefix("KW_") {
+/// A keyword token in a function body likely means the body contains logic
+/// beyond a simple forwarding call.
+/// Keywords listed in `function_keyword` and `self_keyword` features are
+/// allowed because they represent closures/lambdas or method receivers.
+fn is_disqualifying_keyword(
+  kind : String,
+  spec~ : @kgf_types.KGFSpec,
+  allowed_kw : Map[String, Bool],
+) -> Bool {
+  if !spec.is_keyword(kind) {
     return false
   }
-  // Allow keywords that don't imply control flow or bindings
-  kind != "KW_self" && kind != "KW_fn" && kind != "KW_function" &&
-  kind != "KW_def" && kind != "KW_func" && kind != "KW_fun"
+  !allowed_kw.contains(kind)
 }
 
 ///|
@@ -115,9 +141,11 @@ pub fn detect_proxy_functions(
   file : String,
   include_self_delegation? : Bool = false,
   include_bare_constructors? : Bool = false,
-  spec? : @kgf_types.KGFSpec,
+  spec~ : @kgf_types.KGFSpec,
 ) -> Array[ProxyFunction] {
-  let functions = extract_functions(tokens, file, spec?)
+  let functions = extract_functions(tokens, file, spec=spec)
+  let id_set = build_identifier_set(spec=spec)
+  let allowed_kw = build_allowed_keywords(spec)
   let result : Array[ProxyFunction] = []
   // Build token index → line number mapping
   let token_lines : Array[Int] = Array::make(tokens.length(), 1)
@@ -129,7 +157,7 @@ pub fn detect_proxy_functions(
     }
   }
   for func in functions {
-    match analyze_proxy(tokens, func, token_lines) {
+    match analyze_proxy(tokens, func, token_lines, id_set, spec=spec, allowed_kw) {
       Some(proxy) => {
         // Filter self-delegation (e.g. self.field.method)
         if !include_self_delegation && proxy.delegate_target.has_prefix("self.") {
@@ -169,6 +197,9 @@ fn analyze_proxy(
   tokens : Array[@kgf_types.Tok],
   func : ExtractedFunction,
   token_lines : Array[Int],
+  id_set : Map[String, Bool],
+  spec~ : @kgf_types.KGFSpec,
+  allowed_kw : Map[String, Bool],
 ) -> ProxyFunction? {
   let start = func.get_start()
   let end = func.get_end()
@@ -187,7 +218,7 @@ fn analyze_proxy(
     return None
   }
   // Extract parameter names from signature (between first LPAREN and its matching RPAREN, before body LBRACE)
-  let params = extract_param_names(tokens, start, body_start)
+  let params = extract_param_names(tokens, start, body_start, id_set)
   // Body tokens: between LBRACE+1 and RBRACE (end-1 is RBRACE)
   let body_end = end - 1 // RBRACE position
   if body_start + 1 >= body_end {
@@ -201,7 +232,7 @@ fn analyze_proxy(
       continue
     }
     // Early exit on disqualifying keywords
-    if is_disqualifying_keyword(kind) {
+    if is_disqualifying_keyword(kind, spec=spec, allowed_kw) {
       return None
     }
     body_tokens.push(tokens[i])
@@ -210,7 +241,7 @@ fn analyze_proxy(
     return None
   }
   // Parse as single call expression: [qualifier] callee LPAREN [args] RPAREN
-  match parse_single_call(body_tokens) {
+  match parse_single_call(body_tokens, id_set) {
     Some((target, args)) => {
       let all_forwarded = check_all_forwarded(params, args)
       let line_num = if start < token_lines.length() {
@@ -267,6 +298,7 @@ fn extract_param_names(
   tokens : Array[@kgf_types.Tok],
   start : Int,
   body_start : Int,
+  id_set : Map[String, Bool],
 ) -> Array[String] {
   let params : Array[String] = []
   // Find signature LPAREN (skip fn keyword, optional type qualifiers, function name)
@@ -307,7 +339,7 @@ fn extract_param_names(
     if is_skip_token(kind) {
       continue
     }
-    if expecting_param && (is_identifier_kind(kind) || kind == "Ident") {
+    if expecting_param && is_identifier_kind(kind, id_set~) {
       params.push(tokens[i].get_text())
       expecting_param = false
     } else if kind == "COMMA" {
@@ -330,6 +362,7 @@ fn extract_param_names(
 /// Pattern: [qualifier] callee LPAREN [args] RPAREN
 fn parse_single_call(
   body_tokens : Array[@kgf_types.Tok],
+  id_set : Map[String, Bool],
 ) -> (String, Array[String])? {
   let len = body_tokens.length()
   if len < 2 {
@@ -360,12 +393,12 @@ fn parse_single_call(
   }
   // Everything before call_lparen is the qualifier + callee
   // Parse qualifier chain
-  let target = build_call_target(body_tokens, 0, call_lparen)
+  let target = build_call_target(body_tokens, 0, call_lparen, id_set)
   if target.length() == 0 {
     return None
   }
   // Parse arguments between LPAREN and RPAREN
-  match parse_call_args(body_tokens, call_lparen + 1, len - 1) {
+  match parse_call_args(body_tokens, call_lparen + 1, len - 1, id_set) {
     Some(args) => Some((target, args))
     None => None
   }
@@ -380,15 +413,13 @@ fn build_call_target(
   tokens : Array[@kgf_types.Tok],
   start : Int,
   end : Int,
+  id_set : Map[String, Bool],
 ) -> String {
   let buf = StringBuilder::new()
   for i = start; i < end; i = i + 1 {
     let kind = tokens[i].get_kind()
     let text = tokens[i].get_text()
-    if kind == "PackageRef" ||
-      is_identifier_kind(kind) ||
-      kind == "TypeIdent" ||
-      kind == "Ident" {
+    if is_identifier_kind(kind, id_set~) {
       buf.write_string(text)
     } else if kind == "DOT" {
       buf.write_string(".")
@@ -409,6 +440,7 @@ fn parse_call_args(
   tokens : Array[@kgf_types.Tok],
   start : Int,
   end : Int,
+  id_set : Map[String, Bool],
 ) -> Array[String]? {
   let args : Array[String] = []
   if start >= end {
@@ -422,7 +454,7 @@ fn parse_call_args(
       continue
     }
     // Expect an identifier (possibly with TILDE for labeled args)
-    if is_identifier_kind(kind) || kind == "Ident" {
+    if is_identifier_kind(kind, id_set~) {
       args.push(tokens[i].get_text())
       i += 1
       // Skip optional TILDE after ident (labeled arg shorthand: name~)
@@ -432,11 +464,7 @@ fn parse_call_args(
       // Skip optional = Ident (named arg: name=value)
       if i < end && tokens[i].get_kind() == "EQ" {
         i += 1
-        if i < end &&
-          (
-            is_identifier_kind(tokens[i].get_kind()) ||
-            tokens[i].get_kind() == "Ident"
-          ) {
+        if i < end && is_identifier_kind(tokens[i].get_kind(), id_set~) {
           // Replace the arg name with the value being passed
           args[args.length() - 1] = tokens[i].get_text()
           i += 1
@@ -515,7 +543,14 @@ pub fn find_call_sites(
   delegate_target : String,
   tokens : Array[@kgf_types.Tok],
   file : String,
+  spec~ : @kgf_types.KGFSpec,
 ) -> Array[UnwrapEdit] {
+  let id_set = build_identifier_set(spec=spec)
+  // Resolve function keyword from spec to distinguish definitions from calls
+  let fn_keyword = match spec.get_feature("function_keyword") {
+    Some(keywords) => if keywords.length() > 0 { keywords[0] } else { return [] }
+    None => return []
+  }
   let edits : Array[UnwrapEdit] = []
   // Build token index → line number mapping
   let token_lines : Array[Int] = Array::make(tokens.length(), 1)
@@ -531,22 +566,22 @@ pub fn find_call_sites(
     let tok = tokens[i]
     let kind = tok.get_kind()
     let text = tok.get_text()
-    // Pattern 1: Ident("wrapper_name") LPAREN (not preceded by KW_fn)
-    if (kind == "Ident" || is_identifier_kind(kind)) && text == wrapper_name {
+    // Pattern 1: Ident("wrapper_name") LPAREN (not preceded by function keyword)
+    if is_identifier_kind(kind, id_set~) && text == wrapper_name {
       // Check next meaningful token is LPAREN
       let mut next = i + 1
       while next < tokens.length() && is_skip_token(tokens[next].get_kind()) {
         next += 1
       }
       if next < tokens.length() && tokens[next].get_kind() == "LPAREN" {
-        // Check not preceded by KW_fn (definition, not call)
+        // Check not preceded by function keyword (definition, not call)
         let mut prev = i - 1
         while prev >= 0 && is_skip_token(tokens[prev].get_kind()) {
           prev -= 1
         }
         let is_def = prev >= 0 &&
           (
-            tokens[prev].get_kind() == "KW_fn" ||
+            tokens[prev].get_kind() == fn_keyword ||
             tokens[prev].get_kind() == "DCOLON" ||
             tokens[prev].get_kind() == "DOT"
           )
@@ -581,10 +616,7 @@ pub fn find_call_sites(
           k += 1
         }
         if k < tokens.length() &&
-          (
-            tokens[k].get_kind() == "Ident" ||
-            is_identifier_kind(tokens[k].get_kind())
-          ) &&
+          is_identifier_kind(tokens[k].get_kind(), id_set~) &&
           tokens[k].get_text() == wrapper_name {
           // Check LPAREN follows
           let mut next = k + 1
@@ -592,12 +624,12 @@ pub fn find_call_sites(
             next += 1
           }
           if next < tokens.length() && tokens[next].get_kind() == "LPAREN" {
-            // Check not preceded by KW_fn
+            // Check not preceded by function keyword
             let mut prev = i - 1
             while prev >= 0 && is_skip_token(tokens[prev].get_kind()) {
               prev -= 1
             }
-            let is_def = prev >= 0 && tokens[prev].get_kind() == "KW_fn"
+            let is_def = prev >= 0 && tokens[prev].get_kind() == fn_keyword
             if !is_def {
               let start_offset = tok.get_pos()
               let end_offset = tokens[k].get_pos() +

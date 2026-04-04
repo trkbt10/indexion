@@ -55,7 +55,8 @@ test "parse_lex basic" {
     #|TOKEN IDENT /[a-z]+/
     #|TOKEN NUMBER /[0-9]+/i
     #|
-  let tokens = parse_lex(text)
+  let result = parse_lex(text)
+  let tokens = result.get_tokens()
   assert_eq(tokens.length(), 3)
   assert_eq(tokens[0].get_name(), "SKIP")
   assert_eq(tokens[0].get_pattern(), "\\s+")
@@ -66,6 +67,8 @@ test "parse_lex basic" {
   assert_eq(tokens[2].get_name(), "NUMBER")
   assert_eq(tokens[2].get_pattern(), "[0-9]+")
   assert_eq(tokens[2].get_flags(), Some("i"))
+  // No KEYWORD declarations → empty keyword_kinds
+  assert_eq(result.get_keyword_kinds().size(), 0)
 }
 
 ///|
@@ -74,7 +77,8 @@ test "parse_lex with comments" {
     #|# This is a comment
     #|TOKEN WORD /\w+/
     #|
-  let tokens = parse_lex(text)
+  let result = parse_lex(text)
+  let tokens = result.get_tokens()
   assert_eq(tokens.length(), 1)
   assert_eq(tokens[0].get_name(), "WORD")
 }
@@ -457,17 +461,23 @@ test "parse_kgf handles kgf version header" {
 test "parse_lex typescript style" {
   let text =
     #|SKIP        /(\s+|\/\/[^\n]*|\/\*[\s\S]*?\*\/)+/
-    #|TOKEN KW_import     /import\b/
-    #|TOKEN KW_from       /from\b/
+    #|KEYWORD KW_import     /import\b/
+    #|KEYWORD KW_from       /from\b/
     #|TOKEN STAR          /\*/
     #|TOKEN Ident         /[A-Za-z_\$][A-Za-z0-9_\$]*/
     #|TOKEN StringLit     /"([^"\\]|\\.)*"|'([^'\\]|\\.)*'/
     #|TOKEN LBRACE        /\{/
     #|TOKEN RBRACE        /\}/
-  let tokens = parse_lex(text)
+  let result = parse_lex(text)
+  let tokens = result.get_tokens()
   assert_eq(tokens.length(), 8)
   assert_eq(tokens[0].get_name(), "SKIP")
   assert_true(tokens[0].is_skip())
+  // KEYWORD declarations are registered in keyword_kinds
+  let kw = result.get_keyword_kinds()
+  assert_true(kw.contains("KW_import"))
+  assert_true(kw.contains("KW_from"))
+  assert_false(kw.contains("Ident"))
   assert_eq(tokens[1].get_name(), "KW_import")
   assert_eq(tokens[1].get_pattern(), "import\\b")
   assert_eq(tokens[4].get_name(), "Ident")
@@ -482,7 +492,8 @@ test "parse_lex japanese law style" {
     #|TOKEN ChapterLine /((?:第[一二三四五六七八九十百千〇零]+章))[^\r\n]*/
     #|TOKEN Kanji    /[一-龯々〆ヵヶ]+/
     #|TOKEN Hiragana /[ぁ-ゖー]+/
-  let tokens = parse_lex(text)
+  let result = parse_lex(text)
+  let tokens = result.get_tokens()
   assert_eq(tokens.length(), 6)
   assert_eq(tokens[0].get_name(), "SKIP")
   assert_eq(tokens[2].get_name(), "LawHeader")
@@ -836,7 +847,8 @@ test "parse_lex with comments in reference style" {
     #|# String literals
     #|TOKEN RawString /`[^`]*`/
     #|TOKEN String /"(?:[^"\\]|\\.)*"/
-  let tokens = parse_lex(text)
+  let result = parse_lex(text)
+  let tokens = result.get_tokens()
   assert_eq(tokens.length(), 4)
   assert_eq(tokens[0].get_name(), "LineComment")
   assert_eq(tokens[1].get_name(), "BlockComment")
