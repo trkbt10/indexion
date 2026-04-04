@@ -23,13 +23,14 @@ fn count_declares(
   }
   let graph = @graph.CodeGraph::new()
   let _ = graph.get_or_add_module(path, file=Some(path))
-  let ctx = @semantics.SemEvalCtx::new(
-    spec, graph, path, "", lang, fn(_) { false },
-  )
+  let ctx = @semantics.SemEvalCtx::new(spec, graph, path, "", lang, fn(_) {
+    false
+  })
   for event in parse_result.get_events() {
     @semantics.eval_rule_semantics(event.0, event.1, ctx)
   }
-  let function_kinds : Array[String] = match spec.get_feature("function_kinds") {
+  let function_kinds : Array[String] = match
+    spec.get_feature("function_kinds") {
     Some(kinds) => kinds
     None => []
   }
@@ -72,9 +73,11 @@ test "declares: moonbit pub fn and pub struct" {
     #|}
     #|
     #|fn private_helper() -> Unit { () }
-  let (fn_count, type_count, names) = count_declares(registry,"moonbit", source, "lib.mbt")
-  assert_eq(fn_count,2)
-  assert_eq(type_count,1)
+  let (fn_count, type_count, names) = count_declares(
+    registry, "moonbit", source, "lib.mbt",
+  )
+  assert_eq(fn_count, 2)
+  assert_eq(type_count, 1)
   assert_true(names.get("parse") == Some("function"))
   assert_true(names.get("format") == Some("function"))
   assert_true(names.get("ParsedValue") == Some("struct"))
@@ -100,9 +103,11 @@ test "declares: rust pub fn and pub struct" {
     #|}
     #|
     #|fn private_fn() {}
-  let (fn_count, type_count, names) = count_declares(registry,"rust", source, "config.rs")
-  assert_eq(fn_count,1)
-  assert_eq(type_count,1)
+  let (fn_count, type_count, names) = count_declares(
+    registry, "rust", source, "config.rs",
+  )
+  assert_eq(fn_count, 1)
+  assert_eq(type_count, 1)
   assert_true(names.get("load") == Some("function"))
   assert_true(names.get("Config") == Some("struct"))
   assert_true(!names.contains("private_fn"))
@@ -129,9 +134,11 @@ test "declares: go exported func and type" {
     #|}
     #|
     #|func helper() {}
-  let (fn_count, type_count, names) = count_declares(registry,"go", source, "server.go")
-  assert_eq(fn_count,2)
-  assert_eq(type_count,1)
+  let (fn_count, type_count, names) = count_declares(
+    registry, "go", source, "server.go",
+  )
+  assert_eq(fn_count, 2)
+  assert_eq(type_count, 1)
   assert_true(names.get("New") == Some("function"))
   assert_true(names.get("Run") == Some("function"))
   assert_true(names.get("Server") == Some("type"))
@@ -155,7 +162,9 @@ test "declares: typescript function and interface" {
     #|}
     #|
     #|function privateHelper() {}
-  let (fn_count, type_count, names) = count_declares(registry,"typescript", source, "utils.ts")
+  let (fn_count, type_count, names) = count_declares(
+    registry, "typescript", source, "utils.ts",
+  )
   // TS semantics emits declares for all top-level declarations (no vis filter)
   assert_eq(fn_count, 2)
   assert_eq(type_count, 1)
@@ -179,9 +188,11 @@ test "declares: python def and class" {
     #|
     #|def create_client(api_key: str):
     #|    return None
-  let (fn_count, type_count, names) = count_declares(registry,"python", source, "app.py")
-  assert_eq(fn_count,1)
-  assert_eq(type_count,2)
+  let (fn_count, type_count, names) = count_declares(
+    registry, "python", source, "app.py",
+  )
+  assert_eq(fn_count, 1)
+  assert_eq(type_count, 2)
   assert_true(names.get("create_client") == Some("function"))
   assert_true(names.get("User") == Some("class"))
   assert_true(names.get("Project") == Some("class"))
@@ -201,9 +212,11 @@ test "declares: java public class and method" {
     #|}
     #|
     #|public record UserRecord(String name, int age) {}
-  let (fn_count, type_count, names) = count_declares(registry,"java", source, "Service.java")
-  assert_eq(fn_count,1)
-  assert_eq(type_count,2)
+  let (fn_count, type_count, names) = count_declares(
+    registry, "java", source, "Service.java",
+  )
+  assert_eq(fn_count, 1)
+  assert_eq(type_count, 2)
   assert_true(names.get("process") == Some("method"))
   assert_true(names.get("Service") == Some("class"))
   assert_true(names.get("UserRecord") == Some("record"))
@@ -230,9 +243,11 @@ test "declares: csharp public class, interface, method" {
     #|{
     #|    private void DoSomething() { }
     #|}
-  let (fn_count, type_count, names) = count_declares(registry,"csharp", source, "Models.cs")
-  assert_eq(fn_count,1)
-  assert_eq(type_count,2)
+  let (fn_count, type_count, names) = count_declares(
+    registry, "csharp", source, "Models.cs",
+  )
+  assert_eq(fn_count, 1)
+  assert_eq(type_count, 2)
   assert_true(names.get("GetDisplayName") == Some("method"))
   assert_true(names.get("User") == Some("class"))
   assert_true(names.get("IValidator") == Some("interface"))
@@ -256,9 +271,11 @@ test "declares: swift public struct, protocol, func" {
     #|}
     #|
     #|internal class InternalHelper {}
-  let (fn_count, type_count, names) = count_declares(registry,"swift", source, "Models.swift")
-  assert_eq(fn_count,1)
-  assert_eq(type_count,2)
+  let (fn_count, type_count, names) = count_declares(
+    registry, "swift", source, "Models.swift",
+  )
+  assert_eq(fn_count, 1)
+  assert_eq(type_count, 2)
   assert_true(names.get("displayName") == Some("function"))
   assert_true(names.get("User") == Some("struct"))
   assert_true(names.get("Validator") == Some("protocol"))
@@ -284,7 +301,9 @@ test "declares: ruby class, module, public methods" {
     #|    end
     #|  end
     #|end
-  let (fn_count, type_count, names) = count_declares(registry,"ruby", source, "calculator.rb")
+  let (fn_count, type_count, names) = count_declares(
+    registry, "ruby", source, "calculator.rb",
+  )
   assert_true(names.get("Calculator") == Some("module"))
   assert_true(names.get("Basic") == Some("class"))
   assert_true(names.get("add") == Some("method"))
@@ -305,7 +324,9 @@ test "declares: php class and function" {
     #|}
     #|
     #|function createUserService(string $host) { return new UserService(); }
-  let (fn_count, type_count, names) = count_declares(registry,"php", source, "helpers.php")
+  let (fn_count, type_count, names) = count_declares(
+    registry, "php", source, "helpers.php",
+  )
   assert_true(names.get("UserService") == Some("class"))
   assert_true(names.get("createUserService") == Some("function"))
   assert_true(type_count >= 1)
@@ -327,7 +348,9 @@ test "declares: kotlin class and fun" {
     #|}
     #|
     #|fun createService(): UserService = UserService()
-  let (fn_count, type_count, names) = count_declares(registry,"kotlin", source, "Service.kt")
+  let (fn_count, type_count, names) = count_declares(
+    registry, "kotlin", source, "Service.kt",
+  )
   assert_true(names.get("UserService") == Some("class"))
   assert_true(names.get("Repository") == Some("interface"))
   assert_true(names.get("createService") == Some("function"))
@@ -346,7 +369,9 @@ test "declares: scala class, trait, def" {
     #|trait Repository {
     #|  def getAll(): List[String]
     #|}
-  let (fn_count, type_count, names) = count_declares(registry,"scala", source, "Service.scala")
+  let (fn_count, type_count, names) = count_declares(
+    registry, "scala", source, "Service.scala",
+  )
   assert_true(names.get("UserService") == Some("class"))
   assert_true(names.get("Repository") == Some("trait"))
   assert_true(names.get("findById") == Some("def"))
@@ -363,7 +388,9 @@ test "declares: zig pub fn" {
     #|}
     #|
     #|fn private_fn() void {}
-  let (fn_count, type_count, names) = count_declares(registry,"zig", source, "config.zig")
+  let (fn_count, type_count, names) = count_declares(
+    registry, "zig", source, "config.zig",
+  )
   assert_true(names.get("load") == Some("function"))
   assert_true(!names.contains("private_fn"))
   assert_true(fn_count >= 1)
@@ -383,7 +410,9 @@ test "declares: javascript function" {
     #|function helper() {
     #|  return 42;
     #|}
-  let (_fn_count, _type_count, names) = count_declares(registry,"javascript", source, "app.js")
+  let (_fn_count, _type_count, names) = count_declares(
+    registry, "javascript", source, "app.js",
+  )
   assert_true(names.get("greet") == Some("function"))
   assert_true(names.get("helper") == Some("function"))
 }
@@ -402,7 +431,9 @@ test "declares: c struct and function" {
     #|int add(int a, int b) {
     #|    return a + b;
     #|}
-  let (fn_count, type_count, names) = count_declares(registry,"c", source, "math.c")
+  let (fn_count, type_count, names) = count_declares(
+    registry, "c", source, "math.c",
+  )
   assert_true(names.get("Point") == Some("struct"))
   assert_true(names.get("add") == Some("function"))
 }
@@ -421,7 +452,9 @@ test "declares: cpp class, namespace, function" {
     #|};
     #|
     #|}
-  let (fn_count, type_count, names) = count_declares(registry,"cpp", source, "server.cpp")
+  let (fn_count, type_count, names) = count_declares(
+    registry, "cpp", source, "server.cpp",
+  )
   assert_true(names.get("app") == Some("namespace"))
   assert_true(names.get("Server") == Some("class"))
 }
@@ -436,7 +469,9 @@ test "declares: haskell data and function" {
     #|
     #|show_color :: Color -> String
     #|show_color Red = "red"
-  let (fn_count, type_count, names) = count_declares(registry,"haskell", source, "Color.hs")
+  let (fn_count, type_count, names) = count_declares(
+    registry, "haskell", source, "Color.hs",
+  )
   assert_true(names.get("Color") == Some("data"))
   assert_true(names.get("show_color") == Some("function"))
 }
@@ -470,7 +505,9 @@ test "declares: lua global function" {
     #|local function helper()
     #|  return 42
     #|end
-  let (fn_count, type_count, names) = count_declares(registry,"lua", source, "greet.lua")
+  let (fn_count, type_count, names) = count_declares(
+    registry, "lua", source, "greet.lua",
+  )
   assert_true(names.get("greet") == Some("function"))
   // local functions are private — should NOT be in declares
   assert_true(!names.contains("helper"))

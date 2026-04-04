@@ -31,9 +31,7 @@ pub fn to_lower_str(s : String) -> String {
 
 ///|
 /// Build identifier kind set from KGF spec's `identifier_kinds` feature.
-pub fn build_identifier_set(
-  spec~ : @kgf_types.KGFSpec,
-) -> Map[String, Bool] {
+pub fn build_identifier_set(spec~ : @kgf_types.KGFSpec) -> Map[String, Bool] {
   let set : Map[String, Bool] = {}
   match spec.get_feature("identifier_kinds") {
     Some(kinds) =>
@@ -82,7 +80,7 @@ pub fn tokenize_with_kgf(
 ) -> Array[String] {
   let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
   let tokens = lexer.tokenize(content)
-  let id_set = build_identifier_set(spec=spec)
+  let id_set = build_identifier_set(spec~)
   let result : Array[String] = []
   for tok in tokens {
     result.push(kgf_tok_to_tfidf_token(tok, id_set~))
@@ -145,7 +143,7 @@ pub fn build_line_func_map(
   }
   let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
   let tokens = lexer.tokenize(content)
-  let functions = extract_functions(tokens, path, spec=spec)
+  let functions = extract_functions(tokens, path, spec~)
   // Build token_index -> line_number mapping by counting NL tokens
   let token_lines : Array[Int] = Array::make(tokens.length(), 1)
   let mut line = 1
@@ -223,7 +221,6 @@ pub struct PubDeclaration {
   category : String
 }
 
-
 ///|
 /// Tokenize source content using KGF registry.
 /// Returns None if registry, language detection, or spec lookup fails.
@@ -247,7 +244,6 @@ pub fn tokenize_source(
   let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
   Some(lexer.tokenize(content))
 }
-
 
 ///|
 /// Count public declarations in source code using full KGF pipeline.
@@ -379,7 +375,12 @@ pub fn extract_pub_declarations_and_doc_map(
   let graph = @graph.CodeGraph::new()
   let _ = graph.get_or_add_module(path, file=Some(path))
   let ctx = @kgf_semantics.SemEvalCtx::new(
-    spec, graph, path, "", spec.get_language(), fn(_) { false },
+    spec,
+    graph,
+    path,
+    "",
+    spec.get_language(),
+    fn(_) { false },
   )
   let events = parse_result.get_events()
   for event in events {
@@ -389,7 +390,8 @@ pub fn extract_pub_declarations_and_doc_map(
   let declarations : Array[PubDeclaration] = []
   let doc_map : Map[Int, String] = {}
   // Build function_kinds set from KGF spec features
-  let function_kinds : Array[String] = match spec.get_feature("function_kinds") {
+  let function_kinds : Array[String] = match
+    spec.get_feature("function_kinds") {
     Some(kinds) => kinds
     None => []
   }
@@ -465,7 +467,6 @@ fn estimate_declaration_line(
   }
   1
 }
-
 
 ///|
 fn contains_str(arr : Array[String], value : String) -> Bool {
@@ -548,7 +549,6 @@ pub fn is_document_spec(spec : @kgf_types.KGFSpec) -> Bool {
   }
 }
 
-
 ///|
 /// Detect whether a file's KGF spec declares `content_type: document`.
 /// Returns Some(true) for document-oriented files, Some(false) for code,
@@ -603,7 +603,12 @@ pub fn extract_headings(
     None => return headings
   }
   let section_token = match the_spec.get_feature("section_token") {
-    Some(values) => if values.length() > 0 { values[0] } else { return headings }
+    Some(values) =>
+      if values.length() > 0 {
+        values[0]
+      } else {
+        return headings
+      }
     None => return headings
   }
   let section_level_strategy = match the_spec.get_feature("section_level") {
@@ -727,7 +732,7 @@ pub fn extract_sections_from_tokens(
   content : String,
   page_id : String,
   page_title : String,
-  split_level~ : Int = 2,
+  split_level? : Int = 2,
   spec? : @kgf_types.KGFSpec? = None,
 ) -> Array[(String, String, String, Int)] {
   let headings = extract_headings(tokens, spec~)
@@ -766,4 +771,3 @@ pub fn extract_sections_from_tokens(
   }
   results
 }
-

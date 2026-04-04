@@ -154,7 +154,7 @@ test "proxy: find_call_sites detects calls in caller file" {
       "@math.round_ties_even_f32",
       tokens,
       "caller.mbt",
-      spec=spec,
+      spec~,
     )
     // Should find 1 call site (line 3)
     assert_eq(edits.length(), 1)

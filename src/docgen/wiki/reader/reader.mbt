@@ -59,8 +59,7 @@ pub fn extract_headings(
   // Try with provided registry first, then fallback to default
   let effective_registry = match registry {
     Some(_) => registry
-    None =>
-      @kgf_features.load_registry(specs_dir="kgfs", target_dir=".")
+    None => @kgf_features.load_registry(specs_dir="kgfs", target_dir=".")
   }
   let reg = match effective_registry {
     Some(r) => r

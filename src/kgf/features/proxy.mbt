@@ -132,7 +132,9 @@ fn is_disqualifying_keyword(
 /// and doc tokens (Doc* prefix). These are KGF naming conventions
 /// shared across all language specs.
 fn is_skip_token(kind : String) -> Bool {
-  kind == "NL" || kind == "SKIP" || kind == "WS" ||
+  kind == "NL" ||
+  kind == "SKIP" ||
+  kind == "WS" ||
   kind.has_prefix("Doc") ||
   has_substring(kind, "Comment")
 }
@@ -174,8 +176,8 @@ pub fn detect_proxy_functions(
   include_bare_constructors? : Bool = false,
   spec~ : @kgf_types.KGFSpec,
 ) -> Array[ProxyFunction] {
-  let functions = extract_functions(tokens, file, spec=spec)
-  let id_set = build_identifier_set(spec=spec)
+  let functions = extract_functions(tokens, file, spec~)
+  let id_set = build_identifier_set(spec~)
   let allowed_kw = build_allowed_keywords(spec)
   let qualifier_set = build_qualifier_separator_set(spec)
   let self_kw_set = build_self_keyword_set(spec)
@@ -192,7 +194,13 @@ pub fn detect_proxy_functions(
   for func in functions {
     match
       analyze_proxy(
-        tokens, func, token_lines, id_set, spec=spec, allowed_kw, qualifier_set~,
+        tokens,
+        func,
+        token_lines,
+        id_set,
+        spec~,
+        allowed_kw,
+        qualifier_set~,
         self_kw_set~,
       ) {
       Some((proxy, call_info)) => {
@@ -242,7 +250,13 @@ fn analyze_proxy(
     return None
   }
   // Extract parameter names from signature (between first LPAREN and its matching RPAREN, before body LBRACE)
-  let params = extract_param_names(tokens, start, body_start, id_set, self_kw_set~)
+  let params = extract_param_names(
+    tokens,
+    start,
+    body_start,
+    id_set,
+    self_kw_set~,
+  )
   // Body tokens: between LBRACE+1 and RBRACE (end-1 is RBRACE)
   let body_end = end - 1 // RBRACE position
   if body_start + 1 >= body_end {
@@ -256,7 +270,7 @@ fn analyze_proxy(
       continue
     }
     // Early exit on disqualifying keywords
-    if is_disqualifying_keyword(kind, spec=spec, allowed_kw) {
+    if is_disqualifying_keyword(kind, spec~, allowed_kw) {
       return None
     }
     body_tokens.push(tokens[i])
@@ -422,7 +436,12 @@ fn parse_single_call(
   // Everything before call_lparen is the qualifier + callee
   // Parse qualifier chain
   let result = build_call_target(
-    body_tokens, 0, call_lparen, id_set, qualifier_set~, self_kw_set~,
+    body_tokens,
+    0,
+    call_lparen,
+    id_set,
+    qualifier_set~,
+    self_kw_set~,
   )
   if result.target.length() == 0 {
     return None
@@ -579,7 +598,7 @@ pub fn detect_proxy_functions_from_file(
     path,
     include_self_delegation~,
     include_bare_constructors~,
-    spec=spec,
+    spec~,
   )
 }
 
@@ -593,11 +612,16 @@ pub fn find_call_sites(
   file : String,
   spec~ : @kgf_types.KGFSpec,
 ) -> Array[UnwrapEdit] {
-  let id_set = build_identifier_set(spec=spec)
+  let id_set = build_identifier_set(spec~)
   let qualifier_set = build_qualifier_separator_set(spec)
   // Resolve function keyword from spec to distinguish definitions from calls
   let fn_keyword = match spec.get_feature("function_keyword") {
-    Some(keywords) => if keywords.length() > 0 { keywords[0] } else { return [] }
+    Some(keywords) =>
+      if keywords.length() > 0 {
+        keywords[0]
+      } else {
+        return []
+      }
     None => return []
   }
   let edits : Array[UnwrapEdit] = []

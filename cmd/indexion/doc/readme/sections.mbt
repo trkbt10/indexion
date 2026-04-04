@@ -312,10 +312,7 @@ pub fn filter_parsed_sections(
 fn tokenize_and_extract_headings(
   content : String,
 ) -> Array[@kgf_features.Heading] {
-  let registry = @kgf_features.load_registry(
-    specs_dir="kgfs",
-    target_dir=".",
-  )
+  let registry = @kgf_features.load_registry(specs_dir="kgfs", target_dir=".")
   let reg = match registry {
     Some(r) => r
     None => return []

@@ -26,8 +26,8 @@ pub struct SearchEngine {
 /// Create a vcdb-backed search engine. This is the SoT for vcdb construction.
 /// All consumers must use this function to obtain a vcdb instance.
 pub fn SearchEngine::create(
-  dim~ : Int = 256,
-  strategy~ : VcdbStrategy = Hnsw,
+  dim? : Int = 256,
+  strategy? : VcdbStrategy = Hnsw,
 ) -> SearchEngine {
   let db = match strategy {
     Hnsw => @vcdb.VectorDB::with_hnsw(dim)
@@ -118,7 +118,7 @@ pub fn SearchEngine::serialize(self : SearchEngine) -> Bytes {
 /// Convenience function for ad-hoc search (search CLI, wiki search).
 pub async fn SearchEngine::build(
   documents : Array[SearchDocument],
-  provider~ : @dconfig.EmbeddingProvider = @dconfig.TfIdf(256),
+  provider? : @dconfig.EmbeddingProvider = @dconfig.TfIdf(256),
 ) -> SearchEngine raise @embed.EmbedError {
   let texts : Array[String] = []
   for doc in documents {
@@ -183,11 +183,17 @@ pub fn SearchEngine::search_vector(
   self : SearchEngine,
   vector : Array[Double],
   top_k : Int,
-  filter~ : @vcdb_filter.FilterExpr? = None,
+  filter? : @vcdb_filter.FilterExpr? = None,
 ) -> Array[@vcdb_core.SearchHit] {
   match filter {
     Some(expr) =>
-      self.db.search_with_expr(vector, top_k, Some(expr), None, @vcdb_filter.Auto)
+      self.db.search_with_expr(
+        vector,
+        top_k,
+        Some(expr),
+        None,
+        @vcdb_filter.Auto,
+      )
     None => self.db.search(vector, top_k, None)
   }
 }
@@ -198,9 +204,9 @@ pub fn SearchEngine::search_vector(
 pub async fn SearchEngine::search(
   self : SearchEngine,
   query : String,
-  top_k~ : Int = 20,
-  min_score~ : Double = 0.05,
-  filter~ : @vcdb_filter.FilterExpr? = None,
+  top_k? : Int = 20,
+  min_score? : Double = 0.05,
+  filter? : @vcdb_filter.FilterExpr? = None,
 ) -> Array[SearchHit] {
   let vector = match self.openai_config {
     Some(api_config) => {

@@ -232,7 +232,7 @@ fn build_report_plan(
         }
         let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
         let tokens = lexer.tokenize(content)
-        let funcs = @kgf_features.extract_functions(tokens, path, spec=spec)
+        let funcs = @kgf_features.extract_functions(tokens, path, spec~)
         total_functions += funcs.length()
       }
     None => ()

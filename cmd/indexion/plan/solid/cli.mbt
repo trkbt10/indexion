@@ -442,7 +442,11 @@ fn calculate_tree_pairs(
           Some(spec) => {
             let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
             let tokens = lexer.tokenize(content)
-            let func_trees = @kgf_features.extract_function_trees(tokens, path, spec=spec)
+            let func_trees = @kgf_features.extract_function_trees(
+              tokens,
+              path,
+              spec~,
+            )
             for ft in func_trees {
               trees.push(ft)
             }

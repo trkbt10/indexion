@@ -52,7 +52,9 @@ fn build_code_units_fast(
     let content = @fs.read_file_to_string(path) catch { _ => continue }
     // Full KGF pipeline: tokenize → parse → eval_semantics → declares edges
     let (pub_decls, doc_map) = @kgf_features.extract_pub_declarations_and_doc_map(
-      content, path, Some(registry),
+      content,
+      path,
+      Some(registry),
     )
     // Optional kind filter from KGF spec's document_symbol_kinds feature
     let kind_filter = document_symbol_kinds(spec)
@@ -61,10 +63,7 @@ fn build_code_units_fast(
       let kind = decl.kind
       // Apply kind filter if the spec defines document_symbol_kinds
       match kind_filter {
-        Some(filter) =>
-          if !filter.contains(kind) {
-            continue
-          }
+        Some(filter) => if !filter.contains(kind) { continue }
         None => ()
       }
       let symbol_id = path + "::" + decl.name

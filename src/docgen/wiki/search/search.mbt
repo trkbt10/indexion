@@ -90,10 +90,7 @@ pub async fn WikiSearchIndex::search(
 
 ///|
 /// Serialize the search index to disk.
-pub fn WikiSearchIndex::save(
-  self : WikiSearchIndex,
-  wiki_dir : String,
-) -> Unit {
+pub fn WikiSearchIndex::save(self : WikiSearchIndex, wiki_dir : String) -> Unit {
   let db_bytes = self.engine.serialize()
   @fs.write_bytes_to_file(wiki_dir + "/vectors.db", db_bytes) catch {
     _ => ()
@@ -114,8 +111,7 @@ pub fn extract_sections(
 ) -> Array[WikiSection] {
   let effective_registry = match registry {
     Some(_) => registry
-    None =>
-      @kgf_features.load_registry(specs_dir="kgfs", target_dir=".")
+    None => @kgf_features.load_registry(specs_dir="kgfs", target_dir=".")
   }
   let effective_path = if path.length() > 0 { path } else { page_id }
   let effective_reg = match effective_registry {
@@ -136,9 +132,7 @@ pub fn extract_sections(
     None => None
   }
   let tokens = @kgf_features.tokenize_source(
-    content,
-    effective_path,
-    effective_registry,
+    content, effective_path, effective_registry,
   )
   match tokens {
     Some(toks) =>
@@ -176,7 +170,13 @@ fn extract_sections_from_tokens(
   let sections : Array[WikiSection] = []
   for section in raw_sections {
     let (id, title, section_content, level) = section
-    sections.push(WikiSection::{ id, title, content: section_content, page_id, level })
+    sections.push(WikiSection::{
+      id,
+      title,
+      content: section_content,
+      page_id,
+      level,
+    })
   }
   sections
 }

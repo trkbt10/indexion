@@ -562,7 +562,11 @@ fn calculate_function_pairs(
             let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
             let tokens = lexer.tokenize(content)
             // Extract functions and convert to TreeNodes
-            let func_trees = @kgf_features.extract_function_trees(tokens, path, spec=spec)
+            let func_trees = @kgf_features.extract_function_trees(
+              tokens,
+              path,
+              spec~,
+            )
             for ft in func_trees {
               all_functions.push(ft)
               total_functions += 1

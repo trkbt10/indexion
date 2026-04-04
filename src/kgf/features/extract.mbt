@@ -71,10 +71,15 @@ pub fn extract_functions(
   spec~ : @kgf_types.KGFSpec,
 ) -> Array[ExtractedFunction] {
   let fn_keyword = match spec.get_feature("function_keyword") {
-    Some(keywords) => if keywords.length() > 0 { keywords[0] } else { return [] }
+    Some(keywords) =>
+      if keywords.length() > 0 {
+        keywords[0]
+      } else {
+        return []
+      }
     None => return []
   }
-  let id_set = build_identifier_set(spec=spec)
+  let id_set = build_identifier_set(spec~)
   let qualifier_set = build_qualifier_separator_set(spec)
   let keyword_kinds = spec.get_keyword_kinds()
   let functions : Array[ExtractedFunction] = []
@@ -179,7 +184,7 @@ pub fn tokens_to_tree_node(
   if start >= end {
     return @apted.TreeNode::leaf("Empty")
   }
-  let id_set = build_identifier_set(spec=spec)
+  let id_set = build_identifier_set(spec~)
   build_tree_recursive(tokens, start, end, id_set)
 }
 
@@ -287,10 +292,10 @@ pub fn extract_function_trees(
   file : String,
   spec~ : @kgf_types.KGFSpec,
 ) -> Array[(ExtractedFunction, @apted.TreeNode)] {
-  let functions = extract_functions(tokens, file, spec=spec)
+  let functions = extract_functions(tokens, file, spec~)
   let result : Array[(ExtractedFunction, @apted.TreeNode)] = []
   for func in functions {
-    let tree = tokens_to_tree_node(tokens, func.start, func.end, spec=spec)
+    let tree = tokens_to_tree_node(tokens, func.start, func.end, spec~)
     result.push((func, tree))
   }
   result

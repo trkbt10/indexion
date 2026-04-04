@@ -80,10 +80,9 @@ pub fn DigestIndex::new(config : IndexConfig) -> DigestIndex {
     _ => @search.BruteForce
   }
   let provider = TfidfEmbeddingProvider::new(config.embedding_dim)
-  let engine = @search.SearchEngine::create(
-    dim=config.embedding_dim,
-    strategy~,
-  ).with_tfidf(provider)
+  let engine = @search.SearchEngine::create(dim=config.embedding_dim, strategy~).with_tfidf(
+    provider,
+  )
   { manifest, engine, provider, units: {} }
 }
 
@@ -137,7 +136,10 @@ pub fn DigestIndex::build(
       self.manifest = m
       // Create attributes
       let attrs = @search.empty_attrs()
-      attrs.set("node_type", @vcdb_core.AttrValue::String(@kgf_features.node_type_code))
+      attrs.set(
+        "node_type",
+        @vcdb_core.AttrValue::String(@kgf_features.node_type_code),
+      )
       attrs.set("node_kind", @vcdb_core.AttrValue::String(unit.symbol.kind))
       attrs.set("name", @vcdb_core.AttrValue::String(unit.name()))
       attrs.set("kind", @vcdb_core.AttrValue::String(unit.symbol.kind))
@@ -262,7 +264,10 @@ pub fn DigestIndex::build_with_remote(
           self.manifest = m
           // Create attributes
           let attrs = @search.empty_attrs()
-          attrs.set("node_type", @vcdb_core.AttrValue::String(@kgf_features.node_type_code))
+          attrs.set(
+            "node_type",
+            @vcdb_core.AttrValue::String(@kgf_features.node_type_code),
+          )
           attrs.set("node_kind", @vcdb_core.AttrValue::String(unit.symbol.kind))
           attrs.set("name", @vcdb_core.AttrValue::String(unit.name()))
           attrs.set("kind", @vcdb_core.AttrValue::String(unit.symbol.kind))

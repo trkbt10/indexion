@@ -12,7 +12,7 @@ pub fn inline_search(
   documents : Array[SearchDocument],
   query : String,
   top_k : Int,
-  dim~ : Int = 256,
+  dim? : Int = 256,
 ) -> Array[SearchHit] {
   if documents.is_empty() {
     return []

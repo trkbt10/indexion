@@ -25,11 +25,7 @@ fn build_corpus(
     }
   }
   // 2. Load KGF registry (shared by wiki and file corpus)
-  let all_target_dirs = if file_paths.length() > 0 {
-    file_paths
-  } else {
-    ["."]
-  }
+  let all_target_dirs = if file_paths.length() > 0 { file_paths } else { ["."] }
   let registry = @kgf_features.load_registry(
     specs_dir=config.specs_dir,
     target_dirs=all_target_dirs,
@@ -59,11 +55,7 @@ fn build_corpus(
       match @kgf_features.is_document_file(path, registry) {
         None => continue // No KGF spec — skip
         Some(is_doc) => {
-          let content = try {
-            @fs.read_file_to_string(path)
-          } catch {
-            _ => continue
-          }
+          let content = @fs.read_file_to_string(path) catch { _ => continue }
           if is_doc {
             doc_files.push((path, content))
           } else {

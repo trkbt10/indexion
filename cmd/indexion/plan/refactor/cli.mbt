@@ -766,7 +766,7 @@ fn find_function_duplicates(
     }
     let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
     let tokens = lexer.tokenize(content)
-    let functions = @kgf_features.extract_functions(tokens, path, spec=spec)
+    let functions = @kgf_features.extract_functions(tokens, path, spec~)
     let lines = @common.split_lines(content)
     // Build token index → line number
     let token_lines : Array[Int] = Array::make(tokens.length(), 1)

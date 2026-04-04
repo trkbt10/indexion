@@ -29,9 +29,7 @@ pub struct SearchConfig {
 }
 
 ///|
-pub fn SearchConfig::from_matches(
-  matches : @argparse.Matches,
-) -> SearchConfig {
+pub fn SearchConfig::from_matches(matches : @argparse.Matches) -> SearchConfig {
   let get_str = fn(key : String, default_ : String) -> String {
     match matches.values.get(key) {
       Some(arr) => if arr.length() > 0 { arr[0] } else { default_ }
@@ -70,10 +68,7 @@ pub fn command() -> @argparse.Command {
     "search",
     about="Semantic search across code, wiki, and documentation",
     flags=[
-      @argparse.FlagArg::new(
-        "files",
-        about="Show matching file paths only",
-      ),
+      @argparse.FlagArg::new("files", about="Show matching file paths only"),
       @argparse.FlagArg::new("json", about="Output as JSON"),
     ],
     options=[
@@ -88,16 +83,8 @@ pub fn command() -> @argparse.Command {
         about="Minimum similarity threshold (default: 0.05)",
         default_values=["0.05"],
       ),
-      @argparse.OptionArg(
-        "include",
-        action=Append,
-        about=@help.include_pattern,
-      ),
-      @argparse.OptionArg(
-        "exclude",
-        action=Append,
-        about=@help.exclude_pattern,
-      ),
+      @argparse.OptionArg("include", action=Append, about=@help.include_pattern),
+      @argparse.OptionArg("exclude", action=Append, about=@help.exclude_pattern),
       @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
@@ -143,7 +130,10 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
     }
     @embed.ApiError(code, msg) => {
       println(
-        "API error (" + code.to_string() + "): " + msg +
+        "API error (" +
+        code.to_string() +
+        "): " +
+        msg +
         ". Falling back to TF-IDF...",
       )
       @search_engine.SearchEngine::build(documents) catch {
@@ -181,9 +171,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
 /// Parse filter string into FilterExpr.
 /// Format: "key:value,key2:value2" → Must([match_(key, value), ...])
 /// Empty string → None (no filter).
-fn parse_filter(
-  filter_str : String,
-) -> @vcdb_filter.FilterExpr? {
+fn parse_filter(filter_str : String) -> @vcdb_filter.FilterExpr? {
   if filter_str.length() == 0 {
     return None
   }

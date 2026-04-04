@@ -28,18 +28,20 @@ fn format_text(
       } else {
         doc.source
       }
-      let kind_prefix = if doc.kind.length() > 0 {
-        doc.kind + " "
-      } else {
-        ""
-      }
+      let kind_prefix = if doc.kind.length() > 0 { doc.kind + " " } else { "" }
       let lang_suffix = match doc.attrs.get("language") {
         Some(lang) => "  [" + lang + "]"
         None => ""
       }
       println(
-        location + ": " + kind_prefix + doc.title + "  (" + score_str +
-        " similar)" + lang_suffix,
+        location +
+        ": " +
+        kind_prefix +
+        doc.title +
+        "  (" +
+        score_str +
+        " similar)" +
+        lang_suffix,
       )
     }
   }

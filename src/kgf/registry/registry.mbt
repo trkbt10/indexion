@@ -265,7 +265,6 @@ pub fn KGFRegistry::get_project_markers(self : KGFRegistry) -> Array[String] {
   markers
 }
 
-
 // Helper functions
 
 ///|
