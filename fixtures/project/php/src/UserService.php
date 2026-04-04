@@ -5,7 +5,7 @@ namespace App\Services;
 /**
  * Manages user operations.
  */
-public class UserService
+class UserService
 {
     private string $dbHost;
 
@@ -36,7 +36,7 @@ public class UserService
 /**
  * Represents a data transfer object.
  */
-public class UserDto
+class UserDto
 {
     public string $name;
     public int $age;
