@@ -1,3 +1,116 @@
+# v0.6.0
+
+## Highlights
+
+- **Vocabulary Divergence Detection** — `plan reconcile` gains a new signal that compares TF-IDF vocabulary distributions between source code and documentation, detecting terms present in code but absent from docs
+- **Otsu Adaptive Thresholding** — Gap terms are filtered using Otsu's method to separate package-specific concepts from language noise
+- **`vocabulary_token_kinds` KGF Feature** — 31 KGF specs gain a new feature declaration that enables sub-tokenization of doc comments and string literals for vocabulary analysis
+- **`.indexion.toml` `[doc]` Section** — `doc readme` auto-discovers `doc.json` config without `--config` flag
+- **JSON KGF Spec** — New `.json` file support prevents markdown spec misdetection
+- **Documentation Overhaul** — Wiki, READMEs, and CLI docs updated for search, mcp, grep, serve, doc wiki, plan wiki commands
+
+## New Features
+
+### `plan reconcile`: Vocabulary Divergence Signal
+
+A new multi-signal architecture for detecting documentation gaps. In addition to the existing symbol-level matching and timestamp drift, reconcile now compares the TF-IDF vocabulary of source files against co-located documentation.
+
+```bash
+indexion plan reconcile --scope=tree-docs --vocab-threshold=0.3 cmd/indexion/
+```
+
+**How it works:**
+1. Groups files by directory, separating source from documentation
+2. Tokenizes both using KGF (language-aware tokens + sub-tokenization via `vocabulary_token_kinds`)
+3. Builds project-wide IDF from per-file token arrays
+4. Computes module-local cosine distance for divergence detection
+5. Extracts gap terms using module-local IDF, filtered by project-wide DF to remove ubiquitous terms
+6. Applies Otsu's method to adaptively separate meaningful gap terms from noise
+
+**Output includes:**
+
+```markdown
+## Vocabulary Divergence
+
+| Module | Document | Distance | Gap Terms |
+|--------|----------|----------|----------|
+| `serve` | `README.md` | 74% | `config`, `json`, `conn`, `cors` |
+| `grep`  | `README.md` | 67% | `tokens`, `pattern`, `config` |
+```
+
+**New CLI option:** `--vocab-threshold=FLOAT` (default: 0.3, configurable via `[reconcile.vocabulary] threshold` in `.indexion.toml`)
+
+### `.indexion.toml` `[doc]` Section
+
+`doc readme` now auto-discovers `doc.json` from `.indexion.toml`:
+
+```toml
+[doc]
+config_path = "doc.json"
+```
+
+Running `indexion doc readme` without `--config` automatically loads the configured `doc.json`.
+
+### `vocabulary_token_kinds` KGF Feature
+
+New KGF feature declaration that tells vocabulary analysis which token kinds contain semantic text worth sub-tokenizing:
+
+```
+=== features
+vocabulary_token_kinds: DocComment, String
+```
+
+Added to all 25 programming language specs, 7 DSL specs, and the new JSON spec. Doc comments and string literals are now sub-tokenized into individual words for vocabulary comparison.
+
+### JSON KGF Spec
+
+New `kgfs/dsl/json.kgf` for `.json` files. Prevents markdown or wiki specs from misdetecting JSON files, reducing noise in vocabulary analysis and other KGF-based features.
+
+## Documentation
+
+### Wiki Updates
+
+- `CLI-Commands.md`: Added `search`, `mcp`, `doc wiki` sections; updated `grep` with `--semantic`/`--undocumented`/`--count`/`--files` flags; expanded `serve` with full REST API and export subcommand
+- `Home.md` (Overview): Added `doc wiki`, `search`, `serve`, `mcp` to command table and architecture diagram
+- `Architecture.md`: Added MCP Server and Semantic Search to layer diagram, library table, and CLI module table
+- `Getting-Started.md`: Added search, grep, mcp examples
+- New pages: `src-mcp.md` (MCP Server module), `src-search.md` (Semantic Search module)
+- `wiki.json`: Added `src-mcp` and `src-search` page definitions
+
+### README Updates
+
+READMEs rewritten with full Usage/Options/Examples for commands that had only API listings:
+- `cmd/indexion/doc/readme/README.md` — Added `--config`, `--template`, doc.json config, template syntax
+- `cmd/indexion/grep/README.md` — Full pattern syntax, options, semantic queries, examples
+- `cmd/indexion/serve/README.md` — REST API endpoints, export subcommand, configuration
+- `cmd/indexion/search/README.md` — Filter syntax, output modes, examples
+- `cmd/indexion/mcp/README.md` — Transport modes, configuration
+- `cmd/indexion/digest/README.md` — Subcommands (build/query/stats), configuration
+
+### Project README
+
+- `doc.json` expanded with 10 additional command entries
+- `docs/intro.md` updated with new features (semantic search, grep, MCP, wiki)
+- README regenerated via `indexion doc readme` (auto-discovered from `.indexion.toml`)
+
+## Fixtures
+
+- New: `fixtures/programming/clojure/core.clj`
+- New: `fixtures/programming/zig/main.zig`
+
+## Internal
+
+- Version: 0.5.0 -> 0.6.0
+- 0 errors, 1205 tests
+- New file: `cmd/indexion/plan/reconcile/vocabulary.mbt` (vocabulary divergence computation)
+- New file: `kgfs/dsl/json.kgf` (JSON file support)
+- New types: `VocabularyDivergence`, `TokenizedModuleGroup`
+- New functions: `compute_vocabulary_divergences`, `otsu_threshold_index`, `build_vocabulary_token_set`, `extract_gap_terms_filtered`
+- New config: `DocFileConfig` in `src/config/doc_config.mbt`, `[reconcile.vocabulary]` section
+- KGF specs modified: 31 files (vocabulary_token_kinds added)
+
+---
+
 # v0.5.0
 
 ## Highlights

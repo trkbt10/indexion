@@ -219,10 +219,38 @@ indexion sim [options] <text1> <text2>
 
 ### `indexion grep`
 
+KGF-aware token pattern search across source files.
+
+#### Overview
+
+Searches source files using KGF token patterns instead of raw text regex.
+Token-level matching enables structural searches like "pub fn without doc comment"
+or "nested for loops" that are impossible with text-based grep.
+
+#### Usage
+
+```bash
+indexion grep [options] <pattern> [paths...]
+```
+
 
 [Full documentation](cmd/indexion/grep/README.md)
 
 ### `indexion search`
+
+Semantic search across code, wiki, and documentation.
+
+#### Overview
+
+Searches source files, wiki pages, and documentation using TF-IDF vector
+similarity. Automatically detects content type from KGF spec features.
+Results can be filtered by node attributes such as `node_type` and `language`.
+
+#### Usage
+
+```bash
+indexion search [options] <query> [paths...]
+```
 
 
 [Full documentation](cmd/indexion/search/README.md)
@@ -239,15 +267,57 @@ indexion sim [options] <text1> <text2>
 
 ### `indexion digest`
 
+Build and query a purpose-based function index.
+
+#### Overview
+
+Extracts function-level content from the CodeGraph, computes embeddings
+(TF-IDF or OpenAI), and builds a queryable vector index. Supports
+incremental updates and multiple embedding providers.
+
+#### Usage
+
+```bash
+indexion digest <subcommand> [options] <directory>
+```
+
 
 [Full documentation](cmd/indexion/digest/README.md)
 
 ### `indexion serve`
 
+Start HTTP server for codebase search, graph, and wiki APIs.
+
+#### Overview
+
+Starts an HTTP server that exposes CodeGraph, Digest index, and wiki content
+via REST endpoints. Powers the DeepWiki frontend and supports live rebuild
+of the digest index.
+
+#### Usage
+
+```bash
+indexion serve [options] [workspace_dir]
+```
+
 
 [Full documentation](cmd/indexion/serve/README.md)
 
 ### `indexion mcp`
+
+Start MCP (Model Context Protocol) server exposing indexion tools.
+
+#### Overview
+
+Runs an MCP server that exposes indexion's analysis tools to AI assistants
+such as Claude Code, Cursor, and other MCP-compatible editors. Supports
+two transport modes: stdio (for editor integration) and HTTP.
+
+#### Usage
+
+```bash
+indexion mcp [options] [workspace_dir]
+```
 
 
 [Full documentation](cmd/indexion/mcp/README.md)
