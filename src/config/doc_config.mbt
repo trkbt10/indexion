@@ -224,6 +224,77 @@ fn parse_doc_root_section(value : Json) -> DocRootSection? {
   }
 }
 
+// --- .indexion.toml [doc] section ---
+
+///|
+/// Optional values loaded from `.indexion.toml` or `.indexion.json`
+/// for the `doc` command group. Points to the doc.json config file.
+pub struct DocFileConfig {
+  config_path : String?
+} derive(Eq, Show)
+
+///|
+/// Create an empty doc file config with all fields set to None.
+pub fn DocFileConfig::empty() -> DocFileConfig {
+  { config_path: None }
+}
+
+///|
+/// Parse key-value in [doc] section of TOML.
+pub fn parse_doc_section_key(
+  config : DocFileConfig,
+  key : String,
+  value : String,
+) -> DocFileConfig {
+  match key {
+    "config_path" => { config_path: Some(trim_quotes(value)) }
+    _ => config
+  }
+}
+
+///|
+/// Load DocFileConfig from JSON root object.
+pub fn load_doc_from_json_root(root : Map[String, Json]) -> DocFileConfig {
+  let doc_json = match root.get("doc") {
+    Some(value) => value
+    None => return DocFileConfig::empty()
+  }
+  let doc_obj : Map[String, Json] = @json.from_json(doc_json) catch {
+    _ => return DocFileConfig::empty()
+  }
+  let mut config = DocFileConfig::empty()
+  match doc_obj.get("config_path") {
+    Some(value) =>
+      match parse_doc_json_string(value) {
+        Some(v) => if v.length() > 0 { config = { config_path: Some(v) } }
+        None => ()
+      }
+    None => ()
+  }
+  config
+}
+
+///|
+/// Merge two DocFileConfigs. Primary takes precedence over fallback.
+pub fn merge_doc_configs(
+  primary : DocFileConfig,
+  fallback : DocFileConfig,
+) -> DocFileConfig {
+  { config_path: or_opt(primary.config_path, fallback.config_path) }
+}
+
+///|
+/// Load merged doc config from project + global config files.
+pub fn load_effective_doc_config(project_config_path : String) -> DocFileConfig {
+  let project = load_project_config(project_config_path)
+  if project.inherit_global {
+    let global = load_global_config()
+    merge_doc_configs(project.doc, global.doc)
+  } else {
+    project.doc
+  }
+}
+
 // JSON parsing helpers (local to doc_config)
 
 ///|

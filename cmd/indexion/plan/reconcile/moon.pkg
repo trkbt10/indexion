@@ -16,6 +16,7 @@ import {
   "trkbt10/indexion/src/kgf/types" @kgf_types,
   "trkbt10/indexion/src/parallel" @parallel,
   "trkbt10/indexion/src/pipeline" @pipeline,
+  "trkbt10/indexion/src/text/tfidf" @tfidf,
   "trkbt10/vcdb" @vcdb,
   "trkbt10/vcdb/core/types" @vcdb_core,
 }

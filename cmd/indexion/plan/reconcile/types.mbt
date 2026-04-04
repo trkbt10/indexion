@@ -16,6 +16,7 @@ pub(all) struct ReconcileConfig {
   mtime_fallback : Bool
   logical_review_mode : String
   parallel : Bool
+  vocabulary_divergence_threshold : Double
 } derive(Eq, Show)
 
 ///|
@@ -37,6 +38,7 @@ pub fn ReconcileConfig::default() -> ReconcileConfig {
     mtime_fallback: true,
     logical_review_mode: "queue",
     parallel: true,
+    vocabulary_divergence_threshold: 0.3,
   }
 }
 
@@ -176,6 +178,8 @@ pub struct ReconcileSummary {
   new_logical_reviews : Int
   reused_logical_reviews : Int
   completed_logical_reviews : Int
+  vocabulary_divergence_count : Int
+  max_vocabulary_divergence : Double
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
@@ -222,6 +226,19 @@ pub struct ReconcileAggregateSuggestion {
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Vocabulary-level divergence between a source module and its documentation.
+/// Complements symbol-level matching by comparing TF-IDF vocabulary distributions
+/// to detect terms present in source code but absent from documentation.
+pub struct VocabularyDivergence {
+  module_path : String
+  doc_path : String
+  cosine_distance : Double
+  gap_terms : Array[String]
+  source_term_count : Int
+  doc_term_count : Int
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+///|
 /// Full reconcile report output including candidates, reviews, and summary.
 pub struct ReconcileReport {
   version : String
@@ -231,6 +248,7 @@ pub struct ReconcileReport {
   aggregate_suggestions : Array[ReconcileAggregateSuggestion]
   candidates : Array[ReconcileCandidate]
   logical_reviews : Array[LogicalReviewTask]
+  vocabulary_divergences : Array[VocabularyDivergence]
   skipped : Array[String]
   used_specs : Array[String]
   cache_state : CacheState

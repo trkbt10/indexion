@@ -214,22 +214,32 @@ async fn run_analysis(config : ReconcileConfig) -> AnalysisResult? {
     config.target_dir,
     project_markers,
   )
+  let vocabulary_divergences = compute_vocabulary_divergences(
+    discovered_paths, config, registry,
+  )
+  let summary = build_summary(
+    code_units,
+    doc_fragments,
+    sync_result.candidates,
+    aggregate_suggestions,
+    candidate_build.module_covered_symbols,
+    sync_result.logical_reviews,
+    sync_result.reused_logical_reviews,
+  )
+  let summary = {
+    ..summary,
+    vocabulary_divergence_count: vocabulary_divergences.length(),
+    max_vocabulary_divergence: max_distance(vocabulary_divergences),
+  }
   let report = {
     version: "reconcile-v1",
     generated_at,
     config: report_config(config),
-    summary: build_summary(
-      code_units,
-      doc_fragments,
-      sync_result.candidates,
-      aggregate_suggestions,
-      candidate_build.module_covered_symbols,
-      sync_result.logical_reviews,
-      sync_result.reused_logical_reviews,
-    ),
+    summary,
     aggregate_suggestions,
     candidates: sync_result.candidates,
     logical_reviews: sync_result.logical_reviews,
+    vocabulary_divergences,
     skipped: [],
     used_specs: sort_strings(used_specs),
     cache_state: {

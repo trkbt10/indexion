@@ -55,6 +55,24 @@ pub fn is_identifier_kind(kind : String, id_set~ : Map[String, Bool]) -> Bool {
 }
 
 ///|
+/// Build vocabulary token kind set from KGF spec's `vocabulary_token_kinds` feature.
+/// Tokens of these kinds have their text content sub-tokenized into words
+/// for vocabulary-level comparison (e.g., doc comments, string literals).
+pub fn build_vocabulary_token_set(
+  spec~ : @kgf_types.KGFSpec,
+) -> Map[String, Bool] {
+  let set : Map[String, Bool] = {}
+  match spec.get_feature("vocabulary_token_kinds") {
+    Some(kinds) =>
+      for kind in kinds {
+        set[kind] = true
+      }
+    None => ()
+  }
+  set
+}
+
+///|
 /// Convert KGF token to TF-IDF feature string.
 /// Strategy:
 /// - Identifiers: "kind:text" for name similarity

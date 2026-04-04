@@ -1126,6 +1126,8 @@ fn build_summary(
     new_logical_reviews,
     reused_logical_reviews,
     completed_logical_reviews,
+    vocabulary_divergence_count: 0,
+    max_vocabulary_divergence: 0.0,
   }
 }
 

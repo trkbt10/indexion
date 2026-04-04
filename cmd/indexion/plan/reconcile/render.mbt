@@ -92,9 +92,15 @@ fn render_markdown(report : ReconcileReport) -> String {
   buf.write_string(report.summary.module_suggestions.to_string())
   buf.write_string(", project ")
   buf.write_string(report.summary.project_suggestions.to_string())
-  buf.write_string(")\n\n")
+  buf.write_string(")\n")
+  buf.write_string("- Vocabulary divergences: ")
+  buf.write_string(report.summary.vocabulary_divergence_count.to_string())
+  buf.write_string("\n\n")
+  render_vocabulary_divergences_md(buf, report)
   if report.candidates.length() == 0 {
-    buf.write_string("No suggestion candidates found.\n")
+    if report.vocabulary_divergences.length() == 0 {
+      buf.write_string("No suggestion candidates found.\n")
+    }
     return buf.to_string()
   }
   render_aggregate_suggestions(buf, report)
@@ -158,6 +164,7 @@ fn render_markdown(report : ReconcileReport) -> String {
       }
       buf.write_string("\n")
     }
+    buf.write_string("\n")
   }
   buf.to_string()
 }
@@ -202,7 +209,74 @@ fn render_github_issue(report : ReconcileReport) -> String {
     }
     buf.write_string("\n")
   }
+  buf.write_string("\n")
+  render_vocabulary_divergences_issue(buf, report)
   buf.to_string()
+}
+
+///|
+fn render_vocabulary_divergences_md(
+  buf : StringBuilder,
+  report : ReconcileReport,
+) -> Unit {
+  if report.vocabulary_divergences.length() == 0 {
+    return
+  }
+  buf.write_string("## Vocabulary Divergence\n\n")
+  buf.write_string(
+    "Source code contains terms not found in co-located documentation.\n\n",
+  )
+  buf.write_string("| Module | Document | Distance | Gap Terms |\n")
+  buf.write_string("|--------|----------|----------|----------|\n")
+  for d in report.vocabulary_divergences {
+    buf.write_string("| `")
+    buf.write_string(d.module_path)
+    buf.write_string("` | `")
+    buf.write_string(d.doc_path)
+    buf.write_string("` | ")
+    buf.write_string(@common.format_percent(d.cosine_distance))
+    buf.write_string(" | `")
+    let limit = if d.gap_terms.length() < 5 { d.gap_terms.length() } else { 5 }
+    let shown : Array[String] = []
+    for i = 0; i < limit; i = i + 1 {
+      shown.push(d.gap_terms[i])
+    }
+    buf.write_string(shown.join("`, `"))
+    buf.write_string("`")
+    if d.gap_terms.length() > 5 {
+      buf.write_string(" (+")
+      buf.write_string((d.gap_terms.length() - 5).to_string())
+      buf.write_string(")")
+    }
+    buf.write_string(" |\n")
+  }
+  buf.write_string("\n")
+}
+
+///|
+fn render_vocabulary_divergences_issue(
+  buf : StringBuilder,
+  report : ReconcileReport,
+) -> Unit {
+  if report.vocabulary_divergences.length() == 0 {
+    return
+  }
+  buf.write_string("## Vocabulary divergence\n\n")
+  for d in report.vocabulary_divergences {
+    buf.write_string("- [ ] `")
+    buf.write_string(d.module_path)
+    buf.write_string("` (distance: ")
+    buf.write_string(@common.format_percent(d.cosine_distance))
+    buf.write_string(") -- missing: `")
+    let limit = if d.gap_terms.length() < 5 { d.gap_terms.length() } else { 5 }
+    let shown : Array[String] = []
+    for i = 0; i < limit; i = i + 1 {
+      shown.push(d.gap_terms[i])
+    }
+    buf.write_string(shown.join("`, `"))
+    buf.write_string("`\n")
+  }
+  buf.write_string("\n")
 }
 
 ///|

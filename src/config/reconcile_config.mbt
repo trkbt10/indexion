@@ -14,6 +14,7 @@ pub struct ReconcileFileConfig {
   git_preferred : Bool?
   mtime_fallback : Bool?
   logical_review_mode : String?
+  vocabulary_divergence_threshold : Double?
 } derive(Eq, Show)
 
 ///|
@@ -41,6 +42,7 @@ pub fn ReconcileFileConfig::empty() -> ReconcileFileConfig {
     git_preferred: None,
     mtime_fallback: None,
     logical_review_mode: None,
+    vocabulary_divergence_threshold: None,
   }
 }
 
@@ -179,6 +181,8 @@ fn parse_shared_toml_sections(
       (parse_reconcile_time_key(reconcile, key, value), digest)
     "reconcile.logical_review" =>
       (parse_reconcile_logical_review_key(reconcile, key, value), digest)
+    "reconcile.vocabulary" =>
+      (parse_reconcile_vocabulary_key(reconcile, key, value), digest)
     "digest" => (reconcile, parse_digest_section_key(digest, key, value))
     _ => (reconcile, digest)
   }

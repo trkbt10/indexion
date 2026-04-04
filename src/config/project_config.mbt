@@ -9,6 +9,7 @@ pub struct ProjectFileConfig {
   reconcile : ReconcileFileConfig
   digest : DigestFileConfig
   mcp : McpFileConfig
+  doc : DocFileConfig
 } derive(Eq, Show)
 
 ///|
@@ -28,6 +29,7 @@ pub fn ProjectFileConfig::default() -> ProjectFileConfig {
     reconcile: ReconcileFileConfig::empty(),
     digest: DigestFileConfig::empty(),
     mcp: McpFileConfig::empty(),
+    doc: DocFileConfig::empty(),
   }
 }
 
@@ -78,6 +80,8 @@ pub fn parse_project_toml_config(content : String) -> ProjectFileConfig {
       }
     } else if section == "mcp" {
       config = { ..config, mcp: parse_mcp_section_key(config.mcp, key, value) }
+    } else if section == "doc" {
+      config = { ..config, doc: parse_doc_section_key(config.doc, key, value) }
     } else {
       let (reconcile, digest) = parse_shared_toml_sections(
         config.reconcile,
@@ -125,7 +129,9 @@ fn parse_project_json_config(content : String) -> ProjectFileConfig {
   let digest = load_digest_from_json_root(root)
   // Parse [mcp] section
   let mcp = load_mcp_from_json_root(root)
-  { ..config, reconcile, digest, mcp }
+  // Parse [doc] section
+  let doc = load_doc_from_json_root(root)
+  { ..config, reconcile, digest, mcp, doc }
 }
 
 ///|
@@ -244,6 +250,10 @@ pub fn merge_global_into_file(
     logical_review_mode: or_opt(
       file.logical_review_mode,
       global.logical_review_mode,
+    ),
+    vocabulary_divergence_threshold: or_opt(
+      file.vocabulary_divergence_threshold,
+      global.vocabulary_divergence_threshold,
     ),
   }
 }

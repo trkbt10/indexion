@@ -169,6 +169,11 @@ fn merge_file_config(
         None => config.logical_review_mode
       }
     },
+    vocabulary_divergence_threshold: match
+      file_config.vocabulary_divergence_threshold {
+      Some(value) => value
+      None => config.vocabulary_divergence_threshold
+    },
   }
 }
 
@@ -277,6 +282,11 @@ pub fn command() -> @argparse.Command {
       @argparse.OptionArg("logical-review", about="queue or off", default_values=[
         "queue",
       ]),
+      @argparse.OptionArg(
+        "vocab-threshold",
+        about="Vocabulary divergence threshold (cosine distance, 0.0-1.0)",
+        default_values=["0.3"],
+      ),
     ],
     flags=[
       @argparse.FlagArg::new(
@@ -401,6 +411,17 @@ fn parse_args_state_from_matches(
     Some(arr) =>
       if arr.length() > 0 {
         config = { ..config, logical_review_mode: arr[0] }
+      }
+    _ => ()
+  }
+  // vocab-threshold
+  match matches.values.get("vocab-threshold") {
+    Some(arr) =>
+      if arr.length() > 0 {
+        config = {
+          ..config,
+          vocabulary_divergence_threshold: @common.parse_double(arr[0]),
+        }
       }
     _ => ()
   }

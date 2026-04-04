@@ -9,6 +9,7 @@ pub struct GlobalConfig {
   reconcile : ReconcileFileConfig
   digest : DigestFileConfig
   mcp : McpFileConfig
+  doc : DocFileConfig
 } derive(Eq, Show)
 
 ///|
@@ -19,6 +20,7 @@ pub fn GlobalConfig::empty() -> GlobalConfig {
     reconcile: ReconcileFileConfig::empty(),
     digest: DigestFileConfig::empty(),
     mcp: McpFileConfig::empty(),
+    doc: DocFileConfig::empty(),
   }
 }
 
@@ -79,6 +81,8 @@ pub fn parse_global_toml_config(content : String) -> GlobalConfig {
       }
     } else if section == "mcp" {
       config = { ..config, mcp: parse_mcp_section_key(config.mcp, key, value) }
+    } else if section == "doc" {
+      config = { ..config, doc: parse_doc_section_key(config.doc, key, value) }
     } else {
       let (reconcile, digest) = parse_shared_toml_sections(
         config.reconcile,
@@ -180,6 +184,63 @@ fn parse_reconcile_logical_review_key(
     { ..config, logical_review_mode: Some(trim_quotes(value)) }
   } else {
     config
+  }
+}
+
+///|
+/// Parse key-value in [reconcile.vocabulary] section.
+fn parse_reconcile_vocabulary_key(
+  config : ReconcileFileConfig,
+  key : String,
+  value : String,
+) -> ReconcileFileConfig {
+  if key == "threshold" {
+    let parsed = parse_double_value(trim_string(value))
+    if parsed > 0.0 {
+      { ..config, vocabulary_divergence_threshold: Some(parsed) }
+    } else {
+      config
+    }
+  } else {
+    config
+  }
+}
+
+///|
+/// Parse a double value from a string (e.g. "0.3"). Returns 0.0 on failure.
+fn parse_double_value(text : String) -> Double {
+  let chars = text.to_array()
+  if chars.length() == 0 {
+    return 0.0
+  }
+  let mut idx = 0
+  let mut negative = false
+  if chars[0] == '-' {
+    negative = true
+    idx = 1
+  }
+  let mut integer_part = 0.0
+  while idx < chars.length() && chars[idx] >= '0' && chars[idx] <= '9' {
+    integer_part = integer_part * 10.0 +
+      (chars[idx].to_int() - '0'.to_int()).to_double()
+    idx += 1
+  }
+  let mut result = integer_part
+  if idx < chars.length() && chars[idx] == '.' {
+    idx += 1
+    let mut frac = 0.0
+    let mut divisor = 10.0
+    while idx < chars.length() && chars[idx] >= '0' && chars[idx] <= '9' {
+      frac += (chars[idx].to_int() - '0'.to_int()).to_double() / divisor
+      divisor *= 10.0
+      idx += 1
+    }
+    result += frac
+  }
+  if negative {
+    -result
+  } else {
+    result
   }
 }
 
