@@ -159,6 +159,6 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
     "http" => @transport.run_http(server, host=config.host, port=config.port)
     _ =>
       // Default: stdio
-      @transport.run_stdio(server, @mstdio.stdin)
+      @transport.run_stdio(server, @async_stdio.stdin)
   }
 }

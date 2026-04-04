@@ -1,6 +1,6 @@
 import {
   "moonbitlang/core/argparse" @argparse,
-  "mizchi/x/stdio" @mstdio,
+  "moonbitlang/async/stdio" @async_stdio,
   "trkbt10/indexion/cmd/indexion/common" @common,
   "trkbt10/indexion/cmd/indexion/help" @help,
   "trkbt10/indexion/cmd/indexion/explore" @explore_cli,
