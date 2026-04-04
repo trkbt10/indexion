@@ -507,11 +507,6 @@ pub fn extract_pub_declarations_and_doc_map(
     if !(edge.kind is @graph.Declares) {
       continue
     }
-    // Only include declarations with visibility: "public"
-    let visibility = edge.attrs.get("visibility").unwrap_or("")
-    if visibility != "public" {
-      continue
-    }
     let name = edge.attrs.get("name").unwrap_or("")
     let kind = edge.attrs.get("kind").unwrap_or("")
     let doc = edge.attrs.get("doc").unwrap_or("")

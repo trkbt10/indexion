@@ -185,6 +185,14 @@ fn eval_func(
       } else {
         Json::null()
       }
+    "not" => {
+      let val = if evaluated_args.length() > 0 {
+        evaluated_args[0]
+      } else {
+        Json::null()
+      }
+      (!is_truthy(val)).to_json()
+    }
     "eq" => {
       let a = if evaluated_args.length() > 0 {
         json_to_string(evaluated_args[0])
