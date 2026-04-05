@@ -323,7 +323,7 @@ fn tokenize_and_extract_headings(
   }
   let tokens = @kgf_features.tokenize_source(content, "doc.md", registry)
   match tokens {
-    Some(toks) => @kgf_features.extract_headings(toks, spec~)
+    Some(toks) => @kgf_features.extract_headings(toks, spec~, source=content)
     None => []
   }
 }

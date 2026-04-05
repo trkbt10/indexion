@@ -4,11 +4,11 @@ package "trkbt10/indexion/src/digest/index"
 import {
   "trkbt10/indexion/src/core/graph",
   "trkbt10/indexion/src/digest/config",
-  "trkbt10/indexion/src/digest/embed",
   "trkbt10/indexion/src/digest/extract",
   "trkbt10/indexion/src/digest/manifest",
   "trkbt10/indexion/src/digest/types",
-  "trkbt10/vcdb",
+  "trkbt10/indexion/src/search",
+  "trkbt10/vcdb/core/filter",
 }
 
 // Values
@@ -21,25 +21,23 @@ pub struct BuildResult {
   mut skipped_count : Int
   mut removed_count : Int
   errors : Array[String]
-}
+} derive(Eq, Show)
 pub fn BuildResult::new() -> Self
-pub impl Eq for BuildResult
-pub impl Show for BuildResult
 
 pub struct DigestIndex {
   mut manifest : @manifest.DigestManifest
-  db : @vcdb.VectorDB
-  provider : TfidfEmbeddingProvider
+  engine : @search.SearchEngine
+  provider : @trkbt10/indexion/src/text/embed.TfidfEmbeddingProvider
   units : Map[String, @types.FunctionUnit]
 }
 pub fn DigestIndex::build(Self, @graph.CodeGraph, @extract.ExtractConfig) -> BuildResult
-pub async fn DigestIndex::build_native(Self, @graph.CodeGraph, @extract.ExtractConfig, String) -> BuildResult raise @embed.EmbedError
-pub async fn DigestIndex::build_with_config(Self, @graph.CodeGraph, @config.DigestConfig) -> BuildResult raise @embed.EmbedError
+pub async fn DigestIndex::build_native(Self, @graph.CodeGraph, @extract.ExtractConfig, String) -> BuildResult raise @trkbt10/indexion/src/digest/embed.EmbedError
+pub async fn DigestIndex::build_with_config(Self, @graph.CodeGraph, @config.DigestConfig) -> BuildResult raise @trkbt10/indexion/src/digest/embed.EmbedError
 pub fn DigestIndex::build_with_remote(Self, @graph.CodeGraph, @extract.ExtractConfig, String) -> BuildResult
 pub fn DigestIndex::from_manifest(@manifest.DigestManifest, Bytes) -> Self
 pub fn DigestIndex::new(IndexConfig) -> Self
-pub fn DigestIndex::query(Self, String, Int) -> Array[@types.QueryHit]
-pub async fn DigestIndex::query_native(Self, String, Int, String) -> Array[@types.QueryHit] raise @embed.EmbedError
+pub fn DigestIndex::query(Self, String, Int, filter? : @filter.FilterExpr?) -> Array[@types.QueryHit]
+pub async fn DigestIndex::query_native(Self, String, Int, @config.EmbeddingApiConfig) -> Array[@types.QueryHit] raise @trkbt10/indexion/src/digest/embed.EmbedError
 pub fn DigestIndex::query_with_remote(Self, Array[Double], Int) -> Array[@types.QueryHit]
 pub fn DigestIndex::serialize(Self) -> (String, Bytes)
 pub fn DigestIndex::stats(Self) -> Map[String, Int]
@@ -49,24 +47,12 @@ pub struct IndexConfig {
   embedding_provider : String
   embedding_dim : Int
   vcdb_strategy : String
-}
+} derive(Eq, Show)
 pub fn IndexConfig::default() -> Self
 pub fn IndexConfig::remote() -> Self
-pub impl Eq for IndexConfig
-pub impl Show for IndexConfig
-
-pub struct TfidfEmbeddingProvider {
-  dim : Int
-  vocabulary : Map[String, Int]
-  idf : Map[String, Double]
-  built : Bool
-}
-pub fn TfidfEmbeddingProvider::build_vocabulary(Self, Array[String]) -> Unit
-pub fn TfidfEmbeddingProvider::dim(Self) -> Int
-pub fn TfidfEmbeddingProvider::embed(Self, String) -> Array[Double]
-pub fn TfidfEmbeddingProvider::new(Int) -> Self
 
 // Type aliases
+pub using @trkbt10/indexion/src/text/embed {type TfidfEmbeddingProvider}
 
 // Traits
 

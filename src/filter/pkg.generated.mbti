@@ -39,10 +39,8 @@ pub fn FilterConfig::with_user_patterns(Array[String], Array[String]) -> Self
 pub enum FilterResult {
   Include
   Exclude(String)
-}
+} derive(Eq, Show)
 pub fn FilterResult::is_included(Self) -> Bool
-pub impl Eq for FilterResult
-pub impl Show for FilterResult
 
 // Type aliases
 

@@ -2,6 +2,10 @@
 package "trkbt10/indexion/src/kgf/fixtures"
 
 // Values
+pub fn find_fixtures_dir() -> String?
+
+pub fn find_kgfs_dir() -> String?
+
 pub fn get_fixtures_dir() -> String
 
 pub fn get_kgfs_dir() -> String

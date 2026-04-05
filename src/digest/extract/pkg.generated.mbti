@@ -24,11 +24,9 @@ pub(all) struct ExtractConfig {
   include_external : Bool
   min_body_length : Int
   exclude_kinds : Array[String]
-}
+} derive(Eq, Show)
 pub fn ExtractConfig::all() -> Self
 pub fn ExtractConfig::default() -> Self
-pub impl Eq for ExtractConfig
-pub impl Show for ExtractConfig
 
 // Type aliases
 

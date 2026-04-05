@@ -1,0 +1,107 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/docgen/wiki/interop"
+
+import {
+  "trkbt10/indexion/src/kgf/lexer",
+  "trkbt10/indexion/src/kgf/peg",
+  "trkbt10/indexion/src/kgf/registry",
+}
+
+// Values
+pub fn apply_replacements(String, Array[(Int, Int, String)]) -> String
+
+pub fn build_tree_from_entries(Array[(Int, String, String)]) -> Array[@trkbt10/indexion/src/docgen/wiki/types.WikiNavItem]
+
+pub fn chars_to_string(Array[Char], Int, Int) -> String
+
+pub fn collect_pages_in_nav_order(Array[@trkbt10/indexion/src/docgen/wiki/types.WikiNavItem], Map[String, @trkbt10/indexion/src/docgen/wiki/types.WikiPage], Array[(String, @trkbt10/indexion/src/docgen/wiki/types.WikiPage)]) -> Unit
+
+pub fn convert_internal_to_wikilinks(String, Map[String, String], Map[String, String]) -> String
+
+pub fn convert_wikilinks_to_internal(String, Map[String, String], (String) -> String, (String) -> String, WikiBackendSpec) -> String
+
+pub fn count_leading_spaces(String) -> Int
+
+pub fn detect_wiki_format(String) -> WikiFormat
+
+pub fn detect_wiki_spec(String) -> String?
+
+pub fn embed_sources_comment(Array[@trkbt10/indexion/src/docgen/wiki/types.WikiSourceRef]) -> String
+
+pub fn export_external_wiki(@trkbt10/indexion/src/docgen/wiki/types.WikiData, WikiBackendConfig) -> Array[(String, String)]
+
+pub fn export_github_wiki(@trkbt10/indexion/src/docgen/wiki/types.WikiData) -> Array[(String, String)]
+
+pub fn export_gitlab_wiki(@trkbt10/indexion/src/docgen/wiki/types.WikiData) -> Array[(String, String)]
+
+pub fn extract_sources_kgf(String, WikiBackendSpec) -> (String, Array[String])
+
+pub fn find_char_in_string(String, Char) -> Int
+
+pub fn find_children_for(String, Array[@trkbt10/indexion/src/docgen/wiki/types.WikiNavItem]) -> Array[String]
+
+pub fn find_parent_in_nav(String, Array[@trkbt10/indexion/src/docgen/wiki/types.WikiNavItem]) -> String?
+
+pub fn find_root_id(@trkbt10/indexion/src/docgen/wiki/types.WikiNav) -> String
+
+pub fn generate_manifest_json(@trkbt10/indexion/src/docgen/wiki/types.WikiData, String) -> String
+
+pub fn list_md_files(String, Array[String]) -> Array[String]
+
+pub fn list_md_files_recursive(String, Array[String]) -> Array[String]
+
+pub fn load_external_wiki(String, WikiBackendConfig) -> @trkbt10/indexion/src/docgen/wiki/types.WikiData?
+
+pub fn load_github_wiki(String) -> @trkbt10/indexion/src/docgen/wiki/types.WikiData?
+
+pub fn load_gitlab_wiki(String) -> @trkbt10/indexion/src/docgen/wiki/types.WikiData?
+
+pub fn load_wiki_auto(String, registry? : @registry.KGFRegistry?) -> @trkbt10/indexion/src/docgen/wiki/types.WikiData?
+
+pub fn load_wiki_spec(String) -> WikiBackendSpec?
+
+pub fn parse_sidebar_kgf(String, Map[String, String], (String) -> String, (String) -> String, WikiBackendSpec) -> (Array[@trkbt10/indexion/src/docgen/wiki/types.WikiNavItem], Map[String, String])
+
+pub fn parse_source_strings(Array[String]) -> Array[@trkbt10/indexion/src/docgen/wiki/types.WikiSourceRef]
+
+pub fn render_sidebar_wikilinks(@trkbt10/indexion/src/docgen/wiki/types.WikiNav, Map[String, String], Map[String, String], String, String) -> String
+
+pub fn slug_to_id(String) -> String
+
+pub fn slug_to_title(String) -> String
+
+pub fn strip_md_ext(String) -> String
+
+pub fn title_to_slug(String, lowercase? : Bool) -> String
+
+// Errors
+
+// Types and methods
+pub struct WikiBackendConfig {
+  spec_name : String
+  file_to_id : (String) -> String
+  title_to_name : (String) -> String
+  name_to_title : (String) -> String
+  recursive : Bool
+}
+
+pub struct WikiBackendSpec {
+  spec : @trkbt10/indexion/src/kgf/types.KGFSpec
+  lexer : @lexer.Lexer
+  peg : @peg.PEG
+  nav_file : String
+  home_file : String
+  special_files : Array[String]
+}
+
+pub enum WikiFormat {
+  Indexion
+  GitHub
+  GitLab
+  Unknown
+}
+
+// Type aliases
+
+// Traits
+

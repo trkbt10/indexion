@@ -5,14 +5,19 @@ import {
   "moonbitlang/core/argparse",
   "moonbitlang/core/json",
   "trkbt10/indexion/src/config",
+  "trkbt10/indexion/src/kgf/registry",
 }
 
 // Values
 pub fn command() -> @argparse.Command
 
+pub fn compute_vocabulary_divergences(Array[String], ReconcileConfig, @registry.KGFRegistry) -> Array[VocabularyDivergence]
+
 pub fn resolve_config_from_matches(@argparse.Matches) -> ReconcileConfig
 
 pub async fn run_matches(@argparse.Matches) -> Unit
+
+pub async fn run_to_string(ReconcileConfig) -> String?
 
 // Errors
 
@@ -23,11 +28,7 @@ pub struct CacheState {
   review_state_hash : String
   reused_candidates : Int
   reused_logical_reviews : Int
-}
-pub impl Eq for CacheState
-pub impl Show for CacheState
-pub impl ToJson for CacheState
-pub impl @json.FromJson for CacheState
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct CodeAnchor {
   symbol_id : String
@@ -36,11 +37,7 @@ pub struct CodeAnchor {
   ns : String
   module_path : String
   inline_doc : String?
-}
-pub impl Eq for CodeAnchor
-pub impl Show for CodeAnchor
-pub impl ToJson for CodeAnchor
-pub impl @json.FromJson for CodeAnchor
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct CodeUnit {
   symbol_id : String
@@ -51,11 +48,7 @@ pub struct CodeUnit {
   module_path : String
   inline_doc : String?
   code_hash : String
-}
-pub impl Eq for CodeUnit
-pub impl Show for CodeUnit
-pub impl ToJson for CodeUnit
-pub impl @json.FromJson for CodeUnit
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct DocAnchor {
   fragment_id : String
@@ -64,11 +57,7 @@ pub struct DocAnchor {
   kind : String
   title : String
   preview : String
-}
-pub impl Eq for DocAnchor
-pub impl Show for DocAnchor
-pub impl ToJson for DocAnchor
-pub impl @json.FromJson for DocAnchor
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct DocFragment {
   id : String
@@ -79,11 +68,7 @@ pub struct DocFragment {
   content : String
   preview : String
   fragment_hash : String
-}
-pub impl Eq for DocFragment
-pub impl Show for DocFragment
-pub impl ToJson for DocFragment
-pub impl @json.FromJson for DocFragment
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct FileState {
   path : String
@@ -93,22 +78,14 @@ pub struct FileState {
   git_time : Int?
   mtime : Int?
   git_dirty : Bool
-}
-pub impl Eq for FileState
-pub impl Show for FileState
-pub impl ToJson for FileState
-pub impl @json.FromJson for FileState
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct IndexedRecordEntry {
   record_key : String
   record_kind : String
   digest : String
   vector_id : Int64
-}
-pub impl Eq for IndexedRecordEntry
-pub impl Show for IndexedRecordEntry
-pub impl ToJson for IndexedRecordEntry
-pub impl @json.FromJson for IndexedRecordEntry
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct LogicalReviewEntry {
   review_key : String
@@ -118,11 +95,7 @@ pub struct LogicalReviewEntry {
   verdict : String?
   updated_at : Int
   vector_id : Int64
-}
-pub impl Eq for LogicalReviewEntry
-pub impl Show for LogicalReviewEntry
-pub impl ToJson for LogicalReviewEntry
-pub impl @json.FromJson for LogicalReviewEntry
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct LogicalReviewTask {
   review_key : String
@@ -134,11 +107,7 @@ pub struct LogicalReviewTask {
   doc_anchor : DocAnchor?
   evidence : MappingEvidence
   recommended_action : String
-}
-pub impl Eq for LogicalReviewTask
-pub impl Show for LogicalReviewTask
-pub impl ToJson for LogicalReviewTask
-pub impl @json.FromJson for LogicalReviewTask
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct MappingEvidence {
   matched_terms : Array[String]
@@ -146,11 +115,7 @@ pub struct MappingEvidence {
   reason : String
   code_time : TimestampInfo
   doc_time : TimestampInfo
-}
-pub impl Eq for MappingEvidence
-pub impl Show for MappingEvidence
-pub impl ToJson for MappingEvidence
-pub impl @json.FromJson for MappingEvidence
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct ReconcileAggregateSuggestion {
   id : String
@@ -163,11 +128,7 @@ pub struct ReconcileAggregateSuggestion {
   symbol_ids : Array[String]
   symbol_names : Array[String]
   doc_paths : Array[String]
-}
-pub impl Eq for ReconcileAggregateSuggestion
-pub impl Show for ReconcileAggregateSuggestion
-pub impl ToJson for ReconcileAggregateSuggestion
-pub impl @json.FromJson for ReconcileAggregateSuggestion
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct ReconcileCandidate {
   id : String
@@ -184,13 +145,9 @@ pub struct ReconcileCandidate {
   logical_review_status : String
   logical_review_reused : Bool
   needs_logical_review : Bool
-}
-pub impl Eq for ReconcileCandidate
-pub impl Show for ReconcileCandidate
-pub impl ToJson for ReconcileCandidate
-pub impl @json.FromJson for ReconcileCandidate
+} derive(Eq, Show, ToJson, @json.FromJson)
 
-pub struct ReconcileConfig {
+pub(all) struct ReconcileConfig {
   target_dir : String
   output : String
   format : String
@@ -206,10 +163,9 @@ pub struct ReconcileConfig {
   mtime_fallback : Bool
   logical_review_mode : String
   parallel : Bool
-}
+  vocabulary_divergence_threshold : Double
+} derive(Eq, Show)
 pub fn ReconcileConfig::default() -> Self
-pub impl Eq for ReconcileConfig
-pub impl Show for ReconcileConfig
 
 pub struct ReconcileManifest {
   version : String
@@ -222,13 +178,9 @@ pub struct ReconcileManifest {
   files : Map[String, FileState]
   records : Map[String, IndexedRecordEntry]
   logical_reviews : Map[String, LogicalReviewEntry]
-}
+} derive(Eq, Show, ToJson, @json.FromJson)
 pub fn ReconcileManifest::allocate_vector_id(Self) -> (Self, Int64)
 pub fn ReconcileManifest::empty() -> Self
-pub impl Eq for ReconcileManifest
-pub impl Show for ReconcileManifest
-pub impl ToJson for ReconcileManifest
-pub impl @json.FromJson for ReconcileManifest
 
 pub struct ReconcileReport {
   version : String
@@ -238,14 +190,11 @@ pub struct ReconcileReport {
   aggregate_suggestions : Array[ReconcileAggregateSuggestion]
   candidates : Array[ReconcileCandidate]
   logical_reviews : Array[LogicalReviewTask]
+  vocabulary_divergences : Array[VocabularyDivergence]
   skipped : Array[String]
   used_specs : Array[String]
   cache_state : CacheState
-}
-pub impl Eq for ReconcileReport
-pub impl Show for ReconcileReport
-pub impl ToJson for ReconcileReport
-pub impl @json.FromJson for ReconcileReport
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct ReconcileReportConfig {
   target_dir : String
@@ -261,11 +210,7 @@ pub struct ReconcileReportConfig {
   git_preferred : Bool
   mtime_fallback : Bool
   logical_review_mode : String
-}
-pub impl Eq for ReconcileReportConfig
-pub impl Show for ReconcileReportConfig
-pub impl ToJson for ReconcileReportConfig
-pub impl @json.FromJson for ReconcileReportConfig
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct ReconcileSummary {
   total_symbols : Int
@@ -284,31 +229,31 @@ pub struct ReconcileSummary {
   new_logical_reviews : Int
   reused_logical_reviews : Int
   completed_logical_reviews : Int
-}
-pub impl Eq for ReconcileSummary
-pub impl Show for ReconcileSummary
-pub impl ToJson for ReconcileSummary
-pub impl @json.FromJson for ReconcileSummary
+  vocabulary_divergence_count : Int
+  max_vocabulary_divergence : Double
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct ReviewDecisionInput {
   review_key : String
   status : String
   verdict : String?
-}
-pub impl Eq for ReviewDecisionInput
-pub impl Show for ReviewDecisionInput
-pub impl @json.FromJson for ReviewDecisionInput
+} derive(Eq, Show, @json.FromJson)
 
 pub struct TimestampInfo {
   epoch_seconds : Int?
   source : String
   is_dirty : Bool
-}
+} derive(Eq, Show, ToJson, @json.FromJson)
 pub fn TimestampInfo::unknown(source? : String) -> Self
-pub impl Eq for TimestampInfo
-pub impl Show for TimestampInfo
-pub impl ToJson for TimestampInfo
-pub impl @json.FromJson for TimestampInfo
+
+pub struct VocabularyDivergence {
+  module_path : String
+  doc_path : String
+  cosine_distance : Double
+  gap_terms : Array[String]
+  source_term_count : Int
+  doc_term_count : Int
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 // Type aliases
 

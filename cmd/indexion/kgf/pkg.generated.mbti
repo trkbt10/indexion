@@ -6,9 +6,17 @@ import {
 }
 
 // Values
+pub fn all_specs_content() -> Map[String, String]
+
 pub fn command() -> @argparse.Command
 
+pub fn edges_json(String, String, String) -> String?
+
+pub fn list_specs_json() -> String
+
 pub async fn run_matches(@argparse.Matches) -> Unit
+
+pub fn tokenize_json(String, String, String) -> String?
 
 // Errors
 

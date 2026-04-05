@@ -205,12 +205,16 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
       doc_file_config.config_path
     }
   }
-  match effective_config_path {
-    Some(config_path) => {
-      run_with_doc_config(config_path, config)
-      return
+  // When --per-package is set, always use the KGF-based pipeline
+  // (doc.json drives root-level generation, not per-package READMEs)
+  if !config.per_package {
+    match effective_config_path {
+      Some(config_path) => {
+        run_with_doc_config(config_path, config)
+        return
+      }
+      None => ()
     }
-    None => ()
   }
   // Stage 1: Load KGF specs to get ignore patterns.
   log_progress("[1/4] Loading KGF specs...")

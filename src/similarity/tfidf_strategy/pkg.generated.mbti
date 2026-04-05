@@ -21,10 +21,8 @@ pub fn TfidfBatch::similarity(Self, Int, Int) -> Double
 
 pub struct TfidfStrategy {
   // private fields
-}
+} derive(Eq, Show)
 pub fn TfidfStrategy::new() -> Self
-pub impl Eq for TfidfStrategy
-pub impl Show for TfidfStrategy
 pub impl @types.SimilarityStrategy for TfidfStrategy
 
 // Type aliases

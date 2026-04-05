@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/mcp"
+
+import {
+  "moonbitlang/core/argparse",
+  "trkbt10/indexion/src/config",
+}
+
+// Values
+pub fn command() -> @argparse.Command
+
+pub async fn run_matches(@argparse.Matches) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct McpConfig {
+  transport : String
+  port : Int
+  host : String
+  specs_dir : String
+  workspace_dir : String
+}
+pub fn McpConfig::apply_file_config(Self, @config.McpFileConfig) -> Self
+pub fn McpConfig::default() -> Self
+pub fn McpConfig::from_matches(@argparse.Matches) -> Self
+
+// Type aliases
+
+// Traits
+

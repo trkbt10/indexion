@@ -22,12 +22,10 @@ pub struct TraversalResult {
   order : Array[String]
   depths : Map[String, Int]
   cycles : Array[(String, String)]
-}
+} derive(Eq, Show)
 pub fn TraversalResult::at_depth(Self, Int) -> Array[String]
 pub fn TraversalResult::max_depth(Self) -> Int
 pub fn TraversalResult::new() -> Self
-pub impl Eq for TraversalResult
-pub impl Show for TraversalResult
 
 // Type aliases
 

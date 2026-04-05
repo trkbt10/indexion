@@ -27,14 +27,12 @@ pub(all) suberror EmbedError {
 }
 
 // Types and methods
-pub struct OpenAIConfig {
+pub(all) struct OpenAIConfig {
   api_key : String
   model : String
   base_url : String
-}
+} derive(Eq, Show)
 pub fn OpenAIConfig::default(String) -> Self
-pub impl Eq for OpenAIConfig
-pub impl Show for OpenAIConfig
 
 // Type aliases
 

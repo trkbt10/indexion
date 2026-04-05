@@ -26,7 +26,7 @@ pub fn parse_kgf(String) -> @types.KGFSpec?
 
 pub fn parse_kgf_header(String) -> KGFHeader
 
-pub fn parse_lex(String) -> Array[@types.TokenDef]
+pub fn parse_lex(String) -> LexResult
 
 pub fn parse_list(String) -> Array[String]
 
@@ -61,6 +61,13 @@ pub struct KGFHeader {
 }
 pub fn KGFHeader::get_language(Self) -> String
 pub fn KGFHeader::get_sources(Self) -> Array[String]
+
+pub struct LexResult {
+  tokens : Array[@types.TokenDef]
+  keyword_kinds : Map[String, Bool]
+}
+pub fn LexResult::get_keyword_kinds(Self) -> Map[String, Bool]
+pub fn LexResult::get_tokens(Self) -> Array[@types.TokenDef]
 
 // Type aliases
 

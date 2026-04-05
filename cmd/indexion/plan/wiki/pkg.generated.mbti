@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/plan/wiki"
+
+import {
+  "moonbitlang/core/argparse",
+}
+
+// Values
+pub fn command() -> @argparse.Command
+
+pub fn run_matches(@argparse.Matches) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct WikiPlanConfig {
+  target_dir : String
+  output : String
+  format : String
+  specs_dir : String
+  wiki_dir : String
+}
+pub fn WikiPlanConfig::from_matches(@argparse.Matches) -> Self
+
+// Type aliases
+
+// Traits
+

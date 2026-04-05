@@ -613,6 +613,7 @@ pub(all) struct Heading {
 pub fn extract_headings(
   tokens : Array[@kgf_types.Tok],
   spec? : @kgf_types.KGFSpec? = None,
+  source? : String = "",
 ) -> Array[Heading] {
   let headings : Array[Heading] = []
   // Resolve section configuration from KGF spec features
@@ -644,6 +645,11 @@ pub fn extract_headings(
   // If heading_text_tokens includes the section_token itself,
   // the section token's text IS the heading text (e.g. TOML [section.name]).
   let section_is_text = text_token_set.contains(section_token)
+  // Pre-build line number lookup from source text when available.
+  // Without NL tokens (e.g., markdown SKIP includes newlines),
+  // we need the source text to compute line numbers from token positions.
+  let source_chars = source.to_array()
+  let has_source = source_chars.length() > 0
   let mut line = 1
   let mut i = 0
   while i < tokens.length() {
@@ -656,7 +662,19 @@ pub fn extract_headings(
     }
     if kind == section_token {
       let level = compute_section_level(tok.get_text(), section_level_strategy)
-      let heading_line = line
+      let heading_line = if has_source {
+        // Count newlines in source text up to token position
+        let pos = tok.get_pos()
+        let mut ln = 1
+        for j = 0; j < pos && j < source_chars.length(); j = j + 1 {
+          if source_chars[j] == '\n' {
+            ln += 1
+          }
+        }
+        ln
+      } else {
+        line
+      }
       let buf = StringBuilder::new()
       if section_is_text {
         // The section token itself carries the heading text
@@ -673,12 +691,31 @@ pub fn extract_headings(
             break
           }
         }
-        // Collect heading text tokens until NL
+        // Collect heading text tokens until NL, next section token, or line change.
+        // When NL tokens are absent (e.g., markdown SKIP includes newlines),
+        // detect line changes by checking if a newline exists between the
+        // heading token position and the current token position in the source.
+        let heading_pos = tok.get_pos()
         let mut first = true
         while i < tokens.length() {
           let k = tokens[i].get_kind()
-          if k == "NL" {
+          if k == "NL" || k == section_token {
             break
+          }
+          // If source is available, stop when a newline is found between
+          // the heading token and the current token (different line).
+          if has_source {
+            let cur_pos = tokens[i].get_pos()
+            let mut crossed_newline = false
+            for j = heading_pos; j < cur_pos && j < source_chars.length(); j = j + 1 {
+              if source_chars[j] == '\n' {
+                crossed_newline = true
+                break
+              }
+            }
+            if crossed_newline {
+              break
+            }
           }
           if text_token_set.contains(k) {
             if !first {

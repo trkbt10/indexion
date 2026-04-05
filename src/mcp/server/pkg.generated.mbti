@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/mcp/server"
+
+import {
+  "trkbt10/indexion/src/mcp/types",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct McpServer {
+  // private fields
+}
+pub async fn McpServer::handle_message(Self, String) -> String?
+pub fn McpServer::new(@types.ServerInfo) -> Self
+pub fn McpServer::register_tool(Self, @types.ToolDefinition, async (Json?) -> Json) -> Unit
+
+type RegisteredTool
+
+// Type aliases
+
+// Traits
+

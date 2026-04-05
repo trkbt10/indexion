@@ -28,7 +28,7 @@ pub fn relative_path(String, String) -> String
 
 pub fn resolve_module(@types.ResolverSpec, String, String, String, String, &FileResolver) -> String
 
-pub fn resolve_module_cached(@types.ResolutionCache, @types.ResolverSpec, String, String, String, String, (String) -> Bool) -> ResolutionResult
+pub fn resolve_module_cached(@types.ResolutionCache, @types.ResolverSpec, String, String, String, String, (String) -> Bool, (String) -> String?) -> ResolutionResult
 
 pub fn resolve_module_with_fn(@types.ResolverSpec, String, String, String, String, (String) -> Bool) -> String
 

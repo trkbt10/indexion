@@ -2,12 +2,11 @@
 package "trkbt10/indexion/src/segmentation/tfidf"
 
 import {
-  "trkbt10/indexion/src/segmentation/sentence",
   "trkbt10/indexion/src/segmentation/types",
 }
 
 // Values
-pub fn calculate_window_tfidf_divergence(Array[@sentence.Sentence], Int) -> @types.WindowDivergence
+pub fn calculate_window_tfidf_divergence(Array[@types.Sentence], Int) -> @types.WindowDivergence
 
 pub let default_max_chunk_size : Int
 
@@ -32,7 +31,7 @@ pub struct TfidfConfig {
   max_chunk_size : Int
   tfidf_threshold : Double
   window_size : Int
-}
+} derive(Eq, Show)
 pub fn TfidfConfig::create(Int, Int, Int, Double, Int) -> Self
 pub fn TfidfConfig::get_max_chunk_size(Self) -> Int
 pub fn TfidfConfig::get_min_chunk_size(Self) -> Int
@@ -40,17 +39,13 @@ pub fn TfidfConfig::get_target_chunk_size(Self) -> Int
 pub fn TfidfConfig::get_tfidf_threshold(Self) -> Double
 pub fn TfidfConfig::get_window_size(Self) -> Int
 pub fn TfidfConfig::new() -> Self
-pub impl Eq for TfidfConfig
-pub impl Show for TfidfConfig
 
 pub struct TfidfStrategy {
   config : TfidfConfig
-}
+} derive(Eq, Show)
 pub fn TfidfStrategy::get_config(Self) -> TfidfConfig
 pub fn TfidfStrategy::new() -> Self
 pub fn TfidfStrategy::with_config(TfidfConfig) -> Self
-pub impl Eq for TfidfStrategy
-pub impl Show for TfidfStrategy
 pub impl @types.SegmentationStrategy for TfidfStrategy
 
 // Type aliases
