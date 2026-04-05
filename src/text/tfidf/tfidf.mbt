@@ -369,3 +369,4 @@ pub fn TfidfBatch::all_pairs_above_threshold(
 ) -> Array[(Int, Int, Double)] {
   self.all_pairs_above_threshold_with_stats(threshold).0
 }
+

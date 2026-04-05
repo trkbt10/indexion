@@ -6,12 +6,10 @@ import {
   "trkbt10/indexion/cmd/indexion/common" @common,
   "trkbt10/indexion/src/glob" @glob,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
+  "trkbt10/indexion/src/kgf/tokenize" @kgf_tokenize,
   "trkbt10/indexion/src/kgf/registry" @registry,
-  "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
-  "trkbt10/indexion/src/kgf/types" @kgf_types,
   "trkbt10/indexion/src/pipeline" @pipeline,
-  "trkbt10/indexion/src/text/stats" @stats,
-  "trkbt10/indexion/src/text/tfidf" @tfidf,
+  "trkbt10/indexion/src/pipeline/vocabulary" @vocab,
 }
 
 import {

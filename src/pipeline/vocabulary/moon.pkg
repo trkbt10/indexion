@@ -1,0 +1,5 @@
+import {
+  "trkbt10/indexion/src/kgf/tokenize" @kgf_tokenize,
+  "trkbt10/indexion/src/text/stats" @stats,
+  "trkbt10/indexion/src/text/tfidf" @tfidf,
+}
