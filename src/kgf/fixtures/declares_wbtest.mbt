@@ -301,9 +301,7 @@ test "declares: ruby class, module, public methods" {
     #|    end
     #|  end
     #|end
-  let (fn_count, type_count, names) = count_declares(
-    registry, "ruby", source, "calculator.rb",
-  )
+  let (_, _, names) = count_declares(registry, "ruby", source, "calculator.rb")
   assert_true(names.get("Calculator") == Some("module"))
   assert_true(names.get("Basic") == Some("class"))
   assert_true(names.get("add") == Some("method"))
@@ -348,9 +346,7 @@ test "declares: kotlin class and fun" {
     #|}
     #|
     #|fun createService(): UserService = UserService()
-  let (fn_count, type_count, names) = count_declares(
-    registry, "kotlin", source, "Service.kt",
-  )
+  let (_, _, names) = count_declares(registry, "kotlin", source, "Service.kt")
   assert_true(names.get("UserService") == Some("class"))
   assert_true(names.get("Repository") == Some("interface"))
   assert_true(names.get("createService") == Some("function"))
@@ -369,9 +365,7 @@ test "declares: scala class, trait, def" {
     #|trait Repository {
     #|  def getAll(): List[String]
     #|}
-  let (fn_count, type_count, names) = count_declares(
-    registry, "scala", source, "Service.scala",
-  )
+  let (_, _, names) = count_declares(registry, "scala", source, "Service.scala")
   assert_true(names.get("UserService") == Some("class"))
   assert_true(names.get("Repository") == Some("trait"))
   assert_true(names.get("findById") == Some("def"))
@@ -431,9 +425,7 @@ test "declares: c struct and function" {
     #|int add(int a, int b) {
     #|    return a + b;
     #|}
-  let (fn_count, type_count, names) = count_declares(
-    registry, "c", source, "math.c",
-  )
+  let (_, _, names) = count_declares(registry, "c", source, "math.c")
   assert_true(names.get("Point") == Some("struct"))
   assert_true(names.get("add") == Some("function"))
 }
@@ -452,9 +444,7 @@ test "declares: cpp class, namespace, function" {
     #|};
     #|
     #|}
-  let (fn_count, type_count, names) = count_declares(
-    registry, "cpp", source, "server.cpp",
-  )
+  let (_, _, names) = count_declares(registry, "cpp", source, "server.cpp")
   assert_true(names.get("app") == Some("namespace"))
   assert_true(names.get("Server") == Some("class"))
 }
@@ -469,9 +459,7 @@ test "declares: haskell data and function" {
     #|
     #|show_color :: Color -> String
     #|show_color Red = "red"
-  let (fn_count, type_count, names) = count_declares(
-    registry, "haskell", source, "Color.hs",
-  )
+  let (_, _, names) = count_declares(registry, "haskell", source, "Color.hs")
   assert_true(names.get("Color") == Some("data"))
   assert_true(names.get("show_color") == Some("function"))
 }
@@ -505,9 +493,7 @@ test "declares: lua global function" {
     #|local function helper()
     #|  return 42
     #|end
-  let (fn_count, type_count, names) = count_declares(
-    registry, "lua", source, "greet.lua",
-  )
+  let (_, _, names) = count_declares(registry, "lua", source, "greet.lua")
   assert_true(names.get("greet") == Some("function"))
   // local functions are private — should NOT be in declares
   assert_true(!names.contains("helper"))

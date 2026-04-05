@@ -68,7 +68,7 @@ test "parse_lex basic" {
   assert_eq(tokens[2].get_pattern(), "[0-9]+")
   assert_eq(tokens[2].get_flags(), Some("i"))
   // No KEYWORD declarations → empty keyword_kinds
-  assert_eq(result.get_keyword_kinds().size(), 0)
+  assert_eq(result.get_keyword_kinds().length(), 0)
 }
 
 ///|

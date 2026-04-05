@@ -35,7 +35,7 @@ pub fn apply_fdr_correction(
   matches : Array[SimilarityMatch],
   alpha : Double,
   total_pairs : Int,
-  threshold~ : Double = 0.0,
+  threshold? : Double = 0.0,
 ) -> Array[SimilarityMatch] {
   if matches.length() == 0 || alpha <= 0.0 {
     return []
@@ -131,38 +131,6 @@ pub fn apply_fdr_correction(
 }
 
 ///|
-/// Standard normal CDF approximation.
-/// Uses the Abramowitz & Stegun (1964) approximation (equation 26.2.17)
-/// with maximum error < 7.5 × 10⁻⁸.
-fn normal_cdf(x : Double) -> Double {
-  if x < -8.0 {
-    return 0.0
-  }
-  if x > 8.0 {
-    return 1.0
-  }
-  // For negative x, use symmetry: Φ(-x) = 1 - Φ(x)
-  let (sign, abs_x) = if x >= 0.0 { (1.0, x) } else { (-1.0, -x) }
-  // Constants from Abramowitz & Stegun
-  let b1 = 0.319381530
-  let b2 = -0.356563782
-  let b3 = 1.781477937
-  let b4 = -1.821255978
-  let b5 = 1.330274429
-  let p = 0.2316419
-  let t = 1.0 / (1.0 + p * abs_x)
-  // Standard normal PDF: φ(x) = exp(-x²/2) / √(2π)
-  let pdf = @math.exp(-abs_x * abs_x / 2.0) / 2.506628274631
-  let poly = t * (b1 + t * (b2 + t * (b3 + t * (b4 + t * b5))))
-  let cdf_positive = 1.0 - pdf * poly
-  if sign > 0.0 {
-    cdf_positive
-  } else {
-    1.0 - cdf_positive
-  }
-}
-
-///|
 /// Apply FDR correction to a BatchResult, returning a new BatchResult
 /// with only statistically significant matches.
 ///
@@ -172,11 +140,14 @@ fn normal_cdf(x : Double) -> Double {
 pub fn BatchResult::apply_fdr(
   self : BatchResult,
   alpha : Double,
-  threshold~ : Double = 0.0,
+  threshold? : Double = 0.0,
 ) -> BatchResult {
   let total_pairs = self.file_count * (self.file_count - 1) / 2
   let filtered = apply_fdr_correction(
-    self.matches, alpha, total_pairs, threshold~,
+    self.matches,
+    alpha,
+    total_pairs,
+    threshold~,
   )
   {
     matches: filtered,

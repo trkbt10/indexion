@@ -505,7 +505,7 @@ fn eval_func_to_upper(args : Array[Json]) -> Json {
   let sb = StringBuilder::new()
   for c in chars {
     if c >= 'a' && c <= 'z' {
-      sb.write_char(Char::from_int(c.to_int() - 32))
+      sb.write_char(Int::unsafe_to_char(c.to_int() - 32))
     } else {
       sb.write_char(c)
     }
@@ -525,7 +525,7 @@ fn eval_func_to_lower(args : Array[Json]) -> Json {
   let sb = StringBuilder::new()
   for c in chars {
     if c >= 'A' && c <= 'Z' {
-      sb.write_char(Char::from_int(c.to_int() + 32))
+      sb.write_char(Int::unsafe_to_char(c.to_int() + 32))
     } else {
       sb.write_char(c)
     }
