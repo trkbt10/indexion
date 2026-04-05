@@ -1,0 +1,91 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/grep"
+
+import {
+  "moonbitlang/core/argparse",
+  "trkbt10/indexion/src/kgf/registry",
+  "trkbt10/indexion/src/kgf/types",
+  "trkbt10/indexion/src/search",
+}
+
+// Values
+pub fn build_alias_table(@registry.KGFRegistry?) -> Map[String, String]
+
+pub fn command() -> @argparse.Command
+
+pub fn extract_code_documents(Array[(String, String)], @registry.KGFRegistry?) -> Array[@search.SearchDocument]
+
+pub fn find_matches(Array[@types.Tok], Array[TokenMatcher], String, String) -> Array[GrepMatch]
+
+pub fn parse_pattern(String) -> Array[TokenMatcher]
+
+pub fn parse_pattern_with_aliases(String, Map[String, String]) -> Array[TokenMatcher]
+
+pub fn parse_semantic_query(String) -> SemanticQuery?
+
+pub fn run_matches(@argparse.Matches) -> Unit
+
+pub fn run_pattern_search(Array[String], Array[TokenMatcher], GrepConfig) -> Unit
+
+pub fn run_semantic_query_on_file(SemanticQuery, Array[@types.Tok], String, String, @registry.KGFRegistry?) -> Array[SemanticMatch]
+
+pub fn run_semantic_search(Array[String], SemanticQuery, GrepConfig) -> Unit
+
+pub fn run_similar_search(Array[String], String, Int, GrepConfig) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct GrepConfig {
+  pattern : String
+  paths : Array[String]
+  includes : Array[String]
+  excludes : Array[String]
+  specs_dir : String
+  semantic : String
+  undocumented : Bool
+  context_lines : Int
+  count_only : Bool
+  files_only : Bool
+}
+pub fn GrepConfig::default() -> Self
+pub fn GrepConfig::from_matches(@argparse.Matches) -> Self
+
+pub struct GrepMatch {
+  file : String
+  line : Int
+  start_tok : Int
+  end_tok : Int
+  matched_text : String
+}
+
+pub struct SemanticMatch {
+  file : String
+  line : Int
+  name : String
+  kind : String
+  detail : String
+}
+
+pub enum SemanticQuery {
+  Proxy
+  Short(Int)
+  Long(Int)
+  ParamsGte(Int)
+  Undocumented
+  NameContains(String)
+  Similar(String, Int)
+}
+
+pub enum TokenMatcher {
+  Kind(String)
+  KindText(String, String)
+  Any
+  Ellipsis
+  Not(String)
+}
+
+// Type aliases
+
+// Traits
+

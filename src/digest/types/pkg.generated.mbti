@@ -16,34 +16,23 @@ pub struct EmbeddingConfig {
   dim : Int
   endpoint : String?
   api_key : String?
-}
+} derive(Eq, Show, ToJson, @json.FromJson)
 pub fn EmbeddingConfig::default() -> Self
 pub fn EmbeddingConfig::remote(String, Int, api_key? : String?) -> Self
 pub fn EmbeddingConfig::tfidf(Int) -> Self
-pub impl Eq for EmbeddingConfig
-pub impl Show for EmbeddingConfig
-pub impl ToJson for EmbeddingConfig
-pub impl @json.FromJson for EmbeddingConfig
 
 pub struct FunctionEmbedding {
   function_id : String
   vector : Array[Double]
   source : String
-}
+} derive(Eq, Show)
 pub fn FunctionEmbedding::new(String, Array[Double], String) -> Self
-pub impl Eq for FunctionEmbedding
-pub impl Show for FunctionEmbedding
 
 pub struct FunctionHash {
   value : String
-}
+} derive(Eq, Hash, Show, ToJson, @json.FromJson)
 pub fn FunctionHash::from_string(String) -> Self
 pub fn FunctionHash::to_string(Self) -> String
-pub impl Eq for FunctionHash
-pub impl Hash for FunctionHash
-pub impl Show for FunctionHash
-pub impl ToJson for FunctionHash
-pub impl @json.FromJson for FunctionHash
 
 pub struct FunctionUnit {
   symbol : @graph.SymbolNode
@@ -54,70 +43,54 @@ pub struct FunctionUnit {
   callees : Array[String]
   impression : Impression?
   depth : Int
-}
+} derive(Eq, Show, ToJson, @json.FromJson)
 pub fn FunctionUnit::id(Self) -> String
 pub fn FunctionUnit::is_leaf(Self) -> Bool
 pub fn FunctionUnit::name(Self) -> String
 pub fn FunctionUnit::new(@graph.SymbolNode, String, FunctionHash, FunctionHash, Array[String], Array[String], Int) -> Self
 pub fn FunctionUnit::with_impression(Self, Impression) -> Self
-pub impl Eq for FunctionUnit
-pub impl Show for FunctionUnit
-pub impl ToJson for FunctionUnit
-pub impl @json.FromJson for FunctionUnit
 
 pub struct Impression {
   summary : String
   keywords : Array[String]
   context : String?
-}
+} derive(Eq, Show, ToJson, @json.FromJson)
 pub fn Impression::from_summary(String) -> Self
 pub fn Impression::new(String, Array[String], context? : String?) -> Self
 pub fn Impression::to_text(Self) -> String
-pub impl Eq for Impression
-pub impl Show for Impression
-pub impl ToJson for Impression
-pub impl @json.FromJson for Impression
 
 pub struct QueryHit {
   function : FunctionUnit
   score : Double
   matched_keywords : Array[String]
-}
+} derive(Eq, Show)
 pub fn QueryHit::new(FunctionUnit, Double, Array[String]) -> Self
-pub impl Eq for QueryHit
-pub impl Show for QueryHit
 
 pub struct QueryOptions {
   top_k : Int
   min_score : Double
   filter_module : String?
   filter_kind : String?
-}
+} derive(Eq, Show)
 pub fn QueryOptions::default() -> Self
 pub fn QueryOptions::with_top_k(Int) -> Self
-pub impl Eq for QueryOptions
-pub impl Show for QueryOptions
 
 pub struct RemoteEmbeddingConfig {
   embeddings_file : String
   dim : Int
-}
+} derive(Eq, Show)
 pub fn RemoteEmbeddingConfig::default() -> Self
-pub impl Eq for RemoteEmbeddingConfig
-pub impl Show for RemoteEmbeddingConfig
 
 pub struct RemoteEmbeddingProvider {
   config : RemoteEmbeddingConfig
   cache : Map[String, Array[Double]]
-}
+} derive(Eq, Show)
 pub fn RemoteEmbeddingProvider::cached_ids(Self) -> Array[String]
 pub fn RemoteEmbeddingProvider::dim(Self) -> Int
 pub fn RemoteEmbeddingProvider::get(Self, String) -> Array[Double]?
 pub fn RemoteEmbeddingProvider::has(Self, String) -> Bool
 pub fn RemoteEmbeddingProvider::load_from_file(Self, String) -> Int
 pub fn RemoteEmbeddingProvider::new(RemoteEmbeddingConfig) -> Self
-pub impl Eq for RemoteEmbeddingProvider
-pub impl Show for RemoteEmbeddingProvider
 
 // Type aliases
 

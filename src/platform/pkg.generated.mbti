@@ -35,18 +35,14 @@ pub(all) enum Arch {
   X64
   Arm64
   UnknownArch
-}
-pub impl Eq for Arch
-pub impl Show for Arch
+} derive(Eq, Show)
 
 pub(all) enum Platform {
   MacOS
   Linux
   Windows
   Unknown
-}
-pub impl Eq for Platform
-pub impl Show for Platform
+} derive(Eq, Show)
 
 // Type aliases
 

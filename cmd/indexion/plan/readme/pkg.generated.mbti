@@ -10,10 +10,12 @@ pub fn command() -> @argparse.Command
 
 pub fn run_matches(@argparse.Matches) -> Unit
 
+pub fn run_to_string(ReadmePlanConfig) -> String?
+
 // Errors
 
 // Types and methods
-pub struct ReadmePlanConfig {
+pub(all) struct ReadmePlanConfig {
   target_dir : String
   output : String
   format : String

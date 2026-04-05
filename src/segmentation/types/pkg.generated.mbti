@@ -2,6 +2,8 @@
 package "trkbt10/indexion/src/segmentation/types"
 
 // Values
+pub fn extract_substring(String, Int, Int) -> String
+
 pub fn segment_points_to_text_segments(Array[SegmentPoint], String) -> Array[TextSegment]
 
 // Errors
@@ -11,23 +13,30 @@ pub struct SegmentPoint {
   start : Int
   end : Int
   segment_type : SegmentType
-}
+} derive(Eq, Show)
 pub fn SegmentPoint::get_end(Self) -> Int
 pub fn SegmentPoint::get_start(Self) -> Int
 pub fn SegmentPoint::get_type(Self) -> SegmentType
 pub fn SegmentPoint::length(Self) -> Int
 pub fn SegmentPoint::new(Int, Int, SegmentType) -> Self
 pub fn SegmentPoint::to_text_segment(Self, String) -> TextSegment
-pub impl Eq for SegmentPoint
-pub impl Show for SegmentPoint
 
 pub(all) enum SegmentType {
   Paragraph
   Section
   Heading
-}
-pub impl Eq for SegmentType
-pub impl Show for SegmentType
+} derive(Eq, Show)
+
+pub struct Sentence {
+  text : String
+  start : Int
+  end : Int
+} derive(Eq, Show)
+pub fn Sentence::get_end(Self) -> Int
+pub fn Sentence::get_start(Self) -> Int
+pub fn Sentence::get_text(Self) -> String
+pub fn Sentence::length(Self) -> Int
+pub fn Sentence::new(String, Int, Int) -> Self
 
 pub struct TextSegment {
   text : String
@@ -35,7 +44,7 @@ pub struct TextSegment {
   end : Int
   segment_type : SegmentType
   heading_text : String?
-}
+} derive(Eq, Show)
 pub fn TextSegment::get_end(Self) -> Int
 pub fn TextSegment::get_heading_text(Self) -> String?
 pub fn TextSegment::get_start(Self) -> Int
@@ -44,18 +53,14 @@ pub fn TextSegment::get_type(Self) -> SegmentType
 pub fn TextSegment::length(Self) -> Int
 pub fn TextSegment::new(String, Int, Int, SegmentType) -> Self
 pub fn TextSegment::with_heading(String, Int, Int, SegmentType, String) -> Self
-pub impl Eq for TextSegment
-pub impl Show for TextSegment
 
 pub struct WindowDivergence {
   divergence_values : Array[Double]
   window_end_positions : Array[Int]
-}
+} derive(Eq, Show)
 pub fn WindowDivergence::get_positions(Self) -> Array[Int]
 pub fn WindowDivergence::get_values(Self) -> Array[Double]
 pub fn WindowDivergence::new(Array[Double], Array[Int]) -> Self
-pub impl Eq for WindowDivergence
-pub impl Show for WindowDivergence
 
 // Type aliases
 

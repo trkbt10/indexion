@@ -40,6 +40,7 @@ pub fn FstTransition::new(String, String, Array[FstAction]) -> Self
 pub struct KGFSpec {
   language : String
   tokens : Array[TokenDef]
+  keyword_kinds : Map[String, Bool]
   rules : Map[String, RuleDef]
   attrs : Map[String, Array[AttrAction]]
   resolver : ResolverSpec
@@ -54,6 +55,7 @@ pub fn KGFSpec::get_attrs(Self) -> Map[String, Array[AttrAction]]
 pub fn KGFSpec::get_feature(Self, String) -> Array[String]?
 pub fn KGFSpec::get_features(Self) -> Map[String, Array[String]]?
 pub fn KGFSpec::get_ignore(Self) -> Array[String]?
+pub fn KGFSpec::get_keyword_kinds(Self) -> Map[String, Bool]
 pub fn KGFSpec::get_language(Self) -> String
 pub fn KGFSpec::get_preprocess(Self) -> Array[String]?
 pub fn KGFSpec::get_preprocess_fst(Self) -> Array[PreprocessFstSpec]?
@@ -64,17 +66,16 @@ pub fn KGFSpec::get_semantic(Self, String) -> Array[SemOnBlock]?
 pub fn KGFSpec::get_semantics(Self) -> Map[String, Array[SemOnBlock]]?
 pub fn KGFSpec::get_start_rule(Self) -> String
 pub fn KGFSpec::get_tokens(Self) -> Array[TokenDef]
-pub fn KGFSpec::new(String, tokens? : Array[TokenDef], rules? : Map[String, RuleDef], attrs? : Map[String, Array[AttrAction]], resolver? : ResolverSpec, features? : Map[String, Array[String]]?, semantics? : Map[String, Array[SemOnBlock]]?, preprocess? : Array[String]?, preprocess_fst? : Array[PreprocessFstSpec]?, ignore? : Array[String]?) -> Self
+pub fn KGFSpec::is_keyword(Self, String) -> Bool
+pub fn KGFSpec::new(String, tokens? : Array[TokenDef], keyword_kinds? : Map[String, Bool], rules? : Map[String, RuleDef], attrs? : Map[String, Array[AttrAction]], resolver? : ResolverSpec, features? : Map[String, Array[String]]?, semantics? : Map[String, Array[SemOnBlock]]?, preprocess? : Array[String]?, preprocess_fst? : Array[PreprocessFstSpec]?, ignore? : Array[String]?) -> Self
 
 pub enum ModulePathStyle {
   Slash
   Dot
   ColonColon
-}
+} derive(Eq, Show)
 pub fn ModulePathStyle::as_string(Self) -> String
 pub fn ModulePathStyle::from_string(String) -> Self?
-pub impl Eq for ModulePathStyle
-pub impl Show for ModulePathStyle
 
 pub struct PreprocessFstSpec {
   name : String
@@ -116,10 +117,8 @@ pub struct ResolutionStats {
   mut cache_misses : Int
   mut file_checks : Int
   mut circular_detected : Int
-}
+} derive(Eq, Show)
 pub fn ResolutionStats::new() -> Self
-pub impl Eq for ResolutionStats
-pub impl Show for ResolutionStats
 
 pub struct ResolveStep {
   step_type : ResolveStepType
@@ -129,6 +128,8 @@ pub struct ResolveStep {
   prefix : String
   when_condition : String
 }
+pub fn ResolveStep::ancestors(Array[String]) -> Self
+pub fn ResolveStep::exact() -> Self
 pub fn ResolveStep::ext(Array[String]) -> Self
 pub fn ResolveStep::fallback(String) -> Self
 pub fn ResolveStep::get_file(Self) -> String
@@ -144,18 +145,18 @@ pub fn ResolveStep::marker(Array[String]) -> Self
 pub fn ResolveStep::new(ResolveStepType, file? : String, query? : String, files? : Array[String], prefix? : String, when_condition? : String) -> Self
 pub fn ResolveStep::sibling(Array[String]) -> Self
 
-pub enum ResolveStepType {
+pub(all) enum ResolveStepType {
+  Exact
   Manifest
   Marker
   Index
   Ext
   Sibling
+  Ancestors
   Fallback
-}
+} derive(Eq, Show)
 pub fn ResolveStepType::as_string(Self) -> String
 pub fn ResolveStepType::from_string(String) -> Self?
-pub impl Eq for ResolveStepType
-pub impl Show for ResolveStepType
 
 pub struct ResolverAlias {
   pattern : String
@@ -265,16 +266,14 @@ pub struct TokenDef {
   pattern : String
   skip : Bool
   flags : String?
-  strip : Int
   skip_value : Bool
 }
 pub fn TokenDef::get_flags(Self) -> String?
 pub fn TokenDef::get_name(Self) -> String
 pub fn TokenDef::get_pattern(Self) -> String
-pub fn TokenDef::get_strip(Self) -> Int
 pub fn TokenDef::is_skip(Self) -> Bool
 pub fn TokenDef::is_skip_value(Self) -> Bool
-pub fn TokenDef::new(String, String, skip? : Bool, flags? : String?, strip? : Int, skip_value? : Bool) -> Self
+pub fn TokenDef::new(String, String, skip? : Bool, flags? : String?, skip_value? : Bool) -> Self
 
 // Type aliases
 

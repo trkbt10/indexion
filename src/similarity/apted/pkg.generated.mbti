@@ -47,15 +47,13 @@ pub struct CostConfig {
   insert_cost : Double
   delete_cost : Double
   rename_cost : Double
-}
+} derive(Eq, Show)
 pub fn CostConfig::create(Double, Double, Double) -> Self
 pub fn CostConfig::default() -> Self
 pub fn CostConfig::get_delete_cost(Self) -> Double
 pub fn CostConfig::get_insert_cost(Self) -> Double
 pub fn CostConfig::get_rename_cost(Self) -> Double
 pub fn CostConfig::label_cost(Self, String, String) -> Double
-pub impl Eq for CostConfig
-pub impl Show for CostConfig
 
 pub struct IndexedTree {
   size : Int
@@ -63,13 +61,12 @@ pub struct IndexedTree {
   leftmost_leaf : Array[Int]
   keyroots : Array[Int]
   children_count : Array[Int]
-}
+} derive(Show)
 pub fn IndexedTree::from_tree(TreeNode) -> Self
 pub fn IndexedTree::get_keyroots(Self) -> Array[Int]
 pub fn IndexedTree::get_l(Self, Int) -> Int
 pub fn IndexedTree::get_label(Self, Int) -> String
 pub fn IndexedTree::get_size(Self) -> Int
-pub impl Show for IndexedTree
 
 pub struct NodeInfo {
   node : TreeNode
@@ -77,28 +74,24 @@ pub struct NodeInfo {
   parent : Int
   left_most_leaf : Int
   subtree_size : Int
-}
+} derive(Eq, Show)
 pub fn NodeInfo::get_id(Self) -> Int
 pub fn NodeInfo::get_left_most_leaf(Self) -> Int
 pub fn NodeInfo::get_node(Self) -> TreeNode
 pub fn NodeInfo::get_parent(Self) -> Int
 pub fn NodeInfo::get_subtree_size(Self) -> Int
 pub fn NodeInfo::new(TreeNode, Int, Int, Int, Int) -> Self
-pub impl Eq for NodeInfo
-pub impl Show for NodeInfo
 
 pub struct TSEDConfig {
   cost_config : CostConfig
   finalize_labels : Bool
-}
+} derive(Eq, Show)
 pub fn TSEDConfig::default() -> Self
-pub impl Eq for TSEDConfig
-pub impl Show for TSEDConfig
 
 pub struct TreeNode {
   label : String
   children : Array[TreeNode]
-}
+} derive(Eq, Show)
 pub fn TreeNode::get_children(Self) -> Array[Self]
 pub fn TreeNode::get_label(Self) -> String
 pub fn TreeNode::height(Self) -> Int
@@ -107,8 +100,6 @@ pub fn TreeNode::leaf(String) -> Self
 pub fn TreeNode::node(String, Array[Self]) -> Self
 pub fn TreeNode::size(Self) -> Int
 pub fn TreeNode::with_finalized_labels(Self) -> Self
-pub impl Eq for TreeNode
-pub impl Show for TreeNode
 
 // Type aliases
 

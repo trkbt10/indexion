@@ -1,0 +1,74 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/docgen/wiki/types"
+
+import {
+  "moonbitlang/core/json",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct ManifestPage {
+  id : String
+  title : String
+  file : String
+  sources : Array[String]
+  children : Array[String]
+} derive(Eq, Show, @json.FromJson)
+
+pub struct WikiData {
+  nav : WikiNav
+  pages : Map[String, WikiPage]
+}
+pub fn WikiData::new(nav~ : WikiNav, pages~ : Map[String, WikiPage]) -> Self
+
+pub struct WikiHeading {
+  level : Int
+  text : String
+  anchor : String
+} derive(ToJson)
+pub fn WikiHeading::new(level~ : Int, text~ : String, anchor~ : String) -> Self
+
+pub struct WikiManifest {
+  title : String
+  pages : Array[ManifestPage]
+} derive(Eq, Show, @json.FromJson)
+
+pub struct WikiNav {
+  pages : Array[WikiNavItem]
+} derive(ToJson)
+pub fn WikiNav::new(pages? : Array[WikiNavItem]) -> Self
+
+pub struct WikiNavItem {
+  id : String
+  title : String
+  children : Array[WikiNavItem]
+} derive(ToJson)
+pub fn WikiNavItem::new(id~ : String, title~ : String, children? : Array[Self]) -> Self
+
+pub struct WikiPage {
+  id : String
+  title : String
+  content : String
+  file : String
+  sources : Array[WikiSourceRef]
+  headings : Array[WikiHeading]
+  children : Array[String]
+  parent : String?
+} derive(ToJson)
+pub fn WikiPage::new(id~ : String, title~ : String, content~ : String, file? : String, sources? : Array[WikiSourceRef], headings? : Array[WikiHeading], children? : Array[String], parent? : String?) -> Self
+
+pub struct WikiSourceRef {
+  file : String
+  start_line : Int
+  end_line : Int
+}
+pub fn WikiSourceRef::new(file~ : String, start_line? : Int, end_line? : Int) -> Self
+pub impl ToJson for WikiSourceRef
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,65 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/mcp/types"
+
+// Values
+pub fn bool_prop(String, default? : String) -> PropertySchema
+
+pub fn call_result(Array[TextContent], is_error? : Bool) -> Json
+
+pub fn enum_prop(String, Array[String], default? : String) -> PropertySchema
+
+pub fn error_result(String) -> Json
+
+pub fn initialize_result(ServerInfo) -> Json
+
+pub fn number_prop(String, default? : String) -> PropertySchema
+
+pub fn server_capabilities() -> Json
+
+pub fn string_array_prop(String) -> PropertySchema
+
+pub fn string_prop(String, default? : String) -> PropertySchema
+
+pub fn text_result(String) -> Json
+
+// Errors
+
+// Types and methods
+pub(all) struct InputSchema {
+  properties : Map[String, PropertySchema]
+  required : Array[String]
+}
+pub fn InputSchema::to_json(Self) -> Json
+
+pub(all) struct PropertySchema {
+  type_ : String
+  description : String
+  enum_values : Array[String]
+  items : PropertySchema?
+  default : String
+}
+pub fn PropertySchema::to_json(Self) -> Json
+
+pub(all) struct ServerInfo {
+  name : String
+  version : String
+}
+pub fn ServerInfo::to_json(Self) -> Json
+
+pub(all) struct TextContent {
+  text : String
+  is_error : Bool
+}
+pub fn TextContent::to_json(Self) -> Json
+
+pub(all) struct ToolDefinition {
+  name : String
+  description : String
+  input_schema : InputSchema
+}
+pub fn ToolDefinition::to_json(Self) -> Json
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,42 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/docgen/wiki/search"
+
+import {
+  "trkbt10/indexion/src/digest/config",
+  "trkbt10/indexion/src/digest/embed",
+  "trkbt10/indexion/src/docgen/wiki/types",
+  "trkbt10/indexion/src/kgf/registry",
+}
+
+// Values
+pub async fn build_search_index(Map[String, @types.WikiPage], @config.EmbeddingProvider, registry? : @registry.KGFRegistry?) -> WikiSearchIndex raise @embed.EmbedError
+
+pub fn extract_sections(String, String, String, path? : String, registry? : @registry.KGFRegistry?) -> Array[WikiSection]
+
+// Errors
+
+// Types and methods
+pub struct WikiSearchHit {
+  section : WikiSection
+  score : Double
+} derive(ToJson)
+
+pub struct WikiSearchIndex {
+  engine : @trkbt10/indexion/src/search.SearchEngine
+  sections : Map[String, WikiSection]
+}
+pub fn WikiSearchIndex::save(Self, String) -> Unit
+pub async fn WikiSearchIndex::search(Self, String, top_k? : Int, min_score? : Double) -> Array[WikiSearchHit]
+
+pub struct WikiSection {
+  id : String
+  title : String
+  content : String
+  page_id : String
+  level : Int
+} derive(ToJson)
+
+// Type aliases
+
+// Traits
+

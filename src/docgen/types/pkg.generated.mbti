@@ -11,44 +11,38 @@ pub struct ComponentDoc {
   file_tag : String?
   description : String?
   example : String?
-}
+} derive(Eq, Show)
 pub fn ComponentDoc::get_description(Self) -> String?
 pub fn ComponentDoc::get_example(Self) -> String?
 pub fn ComponentDoc::get_file_tag(Self) -> String?
 pub fn ComponentDoc::get_name(Self) -> String
 pub fn ComponentDoc::make(String, String?, String?, String?) -> Self
 pub fn ComponentDoc::new(String) -> Self
-pub impl Eq for ComponentDoc
-pub impl Show for ComponentDoc
 
 pub struct TokenGroup {
   name : String
   description : String
   tokens : Array[TokenInfo]
-}
+} derive(Eq, Show)
 pub fn TokenGroup::add_token(Self, TokenInfo) -> Unit
 pub fn TokenGroup::get_description(Self) -> String
 pub fn TokenGroup::get_name(Self) -> String
 pub fn TokenGroup::get_tokens(Self) -> Array[TokenInfo]
 pub fn TokenGroup::new(String, String) -> Self
 pub fn TokenGroup::with_tokens(String, String, Array[TokenInfo]) -> Self
-pub impl Eq for TokenGroup
-pub impl Show for TokenGroup
 
 pub struct TokenInfo {
   name : String
   css_var : String
   description : String
   default_value : String?
-}
+} derive(Eq, Show)
 pub fn TokenInfo::get_css_var(Self) -> String
 pub fn TokenInfo::get_default_value(Self) -> String?
 pub fn TokenInfo::get_description(Self) -> String
 pub fn TokenInfo::get_name(Self) -> String
 pub fn TokenInfo::new(String, String, String) -> Self
 pub fn TokenInfo::with_default(String, String, String, String) -> Self
-pub impl Eq for TokenInfo
-pub impl Show for TokenInfo
 
 // Type aliases
 

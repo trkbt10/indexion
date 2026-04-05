@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/tokenize"
+
+import {
+  "trkbt10/indexion/src/kgf/registry",
+  "trkbt10/indexion/src/kgf/types",
+}
+
+// Values
+pub fn feature_has_value(String) -> Bool
+
+pub fn feature_kind(String) -> String
+
+pub fn feature_value(String) -> String
+
+pub fn sub_tokenize_vocab(String, Array[String]) -> Unit
+
+pub fn tok_to_feature(@types.Tok, id_set~ : Map[String, Bool]) -> String
+
+pub fn tokenize_file(String, String, @registry.KGFRegistry) -> Array[String]
+
+pub fn tokenize_with_spec(String, @types.KGFSpec, Array[String]) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

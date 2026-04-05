@@ -10,10 +10,12 @@ pub fn command() -> @argparse.Command
 
 pub fn run_matches(@argparse.Matches) -> Unit
 
+pub fn run_to_string(GraphConfig) -> String?
+
 // Errors
 
 // Types and methods
-pub struct GraphConfig {
+pub(all) struct GraphConfig {
   output : String
   specs_dir : String
   title : String

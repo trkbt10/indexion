@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/pipeline/vocabulary"
+
+// Values
+pub fn measure_divergence(Array[Array[String]], Array[Array[String]], GapConfig) -> DivergenceResult
+
+// Errors
+
+// Types and methods
+pub(all) struct DivergenceResult {
+  cosine_distance : Double
+  gap_terms : Array[GapTerm]
+} derive(Eq, Show)
+
+pub(all) struct GapConfig {
+  min_value_length : Int
+  max_terms : Int
+} derive(Eq, Show)
+pub fn GapConfig::default() -> Self
+
+pub(all) struct GapTerm {
+  term : String
+  value : String
+  weight : Double
+  kind : String
+} derive(Eq, Show)
+
+// Type aliases
+
+// Traits
+

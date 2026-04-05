@@ -1,0 +1,82 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/spec/verify"
+
+import {
+  "moonbitlang/core/argparse",
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn command() -> @argparse.Command
+
+pub fn run_matches(@argparse.Matches) -> Unit
+
+pub fn run_to_string(VerifyConfig) -> String?
+
+// Errors
+
+// Types and methods
+pub(all) struct ImplEvidence {
+  found_in : Array[String]
+  match_kind : String
+  note : String
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub(all) struct SpecSymbol {
+  identifier : String
+  kind : String
+  context : String
+  source_path : String
+  source_line : Int
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub(all) struct VerifyConfig {
+  spec_patterns : Array[String]
+  target_dir : String
+  root_dir : String?
+  specs_dir : String
+  format : String
+  focus : String
+  max_candidates : Int
+  output : String
+} derive(Eq, Show)
+pub fn VerifyConfig::default() -> Self
+
+pub(all) struct VerifyItem {
+  status : String
+  spec_symbol : SpecSymbol
+  evidence : ImplEvidence
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub(all) struct VerifyReport {
+  version : String
+  generated_at : Int
+  config : VerifyReportConfig
+  summary : VerifySummary
+  items : Array[VerifyItem]
+  used_specs : Array[String]
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub(all) struct VerifyReportConfig {
+  spec_paths : Array[String]
+  target_dir : String
+  focus : String
+  max_candidates : Int
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+pub(all) struct VerifySummary {
+  spec_files : Int
+  spec_symbols : Int
+  impl_files : Int
+  cosine_distance : Double
+  gap_count : Int
+  matched : Int
+  missing : Int
+  dead : Int
+  drift : Int
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+// Type aliases
+
+// Traits
+

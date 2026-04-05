@@ -2,14 +2,13 @@
 package "trkbt10/indexion/src/segmentation/window"
 
 import {
-  "trkbt10/indexion/src/segmentation/sentence",
   "trkbt10/indexion/src/segmentation/types",
 }
 
 // Values
-pub fn calculate_window_ncd_tfidf_divergence(Array[@sentence.Sentence], Int, Double, Double) -> @types.WindowDivergence
+pub fn calculate_window_ncd_tfidf_divergence(Array[@types.Sentence], Int, Double, Double) -> @types.WindowDivergence
 
-pub fn calculate_window_tfidf_divergence(Array[@sentence.Sentence], Int) -> @types.WindowDivergence
+pub fn calculate_window_tfidf_divergence(Array[@types.Sentence], Int) -> @types.WindowDivergence
 
 pub fn default_adaptive_config() -> AdaptiveConfig
 
@@ -39,7 +38,7 @@ pub struct AdaptiveConfig {
   min_chunk_size : Int
   max_chunk_size : Int
   window_size : Int
-}
+} derive(Eq, Show)
 pub fn AdaptiveConfig::get_max_chunk_size(Self) -> Int
 pub fn AdaptiveConfig::get_min_chunk_size(Self) -> Int
 pub fn AdaptiveConfig::get_minimum_threshold(Self) -> Double
@@ -47,8 +46,6 @@ pub fn AdaptiveConfig::get_percentile(Self) -> Double
 pub fn AdaptiveConfig::get_target_chunk_size(Self) -> Int
 pub fn AdaptiveConfig::get_window_size(Self) -> Int
 pub fn AdaptiveConfig::new(Double, Double, Int, Int, Int, Int) -> Self
-pub impl Eq for AdaptiveConfig
-pub impl Show for AdaptiveConfig
 
 pub struct HybridAdaptiveConfig {
   percentile : Double
@@ -59,7 +56,7 @@ pub struct HybridAdaptiveConfig {
   window_size : Int
   ncd_weight : Double
   tfidf_weight : Double
-}
+} derive(Eq, Show)
 pub fn HybridAdaptiveConfig::get_max_chunk_size(Self) -> Int
 pub fn HybridAdaptiveConfig::get_min_chunk_size(Self) -> Int
 pub fn HybridAdaptiveConfig::get_minimum_threshold(Self) -> Double
@@ -70,8 +67,6 @@ pub fn HybridAdaptiveConfig::get_tfidf_weight(Self) -> Double
 pub fn HybridAdaptiveConfig::get_window_size(Self) -> Int
 pub fn HybridAdaptiveConfig::new(Double, Double, Int, Int, Int, Int, Double, Double) -> Self
 pub fn HybridAdaptiveConfig::with_default_weights(Double, Double, Int, Int, Int, Int) -> Self
-pub impl Eq for HybridAdaptiveConfig
-pub impl Show for HybridAdaptiveConfig
 
 pub struct SegmentConfig {
   target_chunk_size : Int
@@ -79,24 +74,20 @@ pub struct SegmentConfig {
   max_chunk_size : Int
   threshold : Double
   window_size : Int
-}
+} derive(Eq, Show)
 pub fn SegmentConfig::get_max_chunk_size(Self) -> Int
 pub fn SegmentConfig::get_min_chunk_size(Self) -> Int
 pub fn SegmentConfig::get_target_chunk_size(Self) -> Int
 pub fn SegmentConfig::get_threshold(Self) -> Double
 pub fn SegmentConfig::get_window_size(Self) -> Int
 pub fn SegmentConfig::new(Int, Int, Int, Double, Int) -> Self
-pub impl Eq for SegmentConfig
-pub impl Show for SegmentConfig
 
 pub struct WindowStrategy {
   config : SegmentConfig
-}
+} derive(Eq, Show)
 pub fn WindowStrategy::get_config(Self) -> SegmentConfig
 pub fn WindowStrategy::new() -> Self
 pub fn WindowStrategy::with_config(SegmentConfig) -> Self
-pub impl Eq for WindowStrategy
-pub impl Show for WindowStrategy
 pub impl @types.SegmentationStrategy for WindowStrategy
 
 // Type aliases

@@ -21,6 +21,8 @@ pub fn render_readme_template(DocAnalysis, ProjectInfo) -> String
 
 pub fn run_matches(@argparse.Matches) -> Unit
 
+pub fn run_to_string(DocPlanConfig) -> String?
+
 pub fn to_plan_document(DocAnalysis, ProjectInfo, String) -> @types.PlanDocument
 
 // Errors
@@ -34,7 +36,7 @@ pub struct DocAnalysis {
   critical_missing : Array[PubItem]
 }
 
-pub struct DocPlanConfig {
+pub(all) struct DocPlanConfig {
   target_dir : String
   output : String
   style : String
@@ -68,6 +70,7 @@ pub fn ProjectInfo::default() -> Self
 pub struct PubItem {
   name : String
   kind : String
+  kind_category : String
   file : String
   line : Int
   has_doc : Bool

@@ -23,23 +23,19 @@ pub struct PunctuationConfig {
   target_chunk_size : Int
   min_chunk_size : Int
   max_chunk_size : Int
-}
+} derive(Eq, Show)
 pub fn PunctuationConfig::create(Int, Int, Int) -> Self
 pub fn PunctuationConfig::get_max_chunk_size(Self) -> Int
 pub fn PunctuationConfig::get_min_chunk_size(Self) -> Int
 pub fn PunctuationConfig::get_target_chunk_size(Self) -> Int
 pub fn PunctuationConfig::new() -> Self
-pub impl Eq for PunctuationConfig
-pub impl Show for PunctuationConfig
 
 pub struct PunctuationStrategy {
   config : PunctuationConfig
-}
+} derive(Eq, Show)
 pub fn PunctuationStrategy::get_config(Self) -> PunctuationConfig
 pub fn PunctuationStrategy::new() -> Self
 pub fn PunctuationStrategy::with_config(PunctuationConfig) -> Self
-pub impl Eq for PunctuationStrategy
-pub impl Show for PunctuationStrategy
 pub impl @types.SegmentationStrategy for PunctuationStrategy
 
 // Type aliases

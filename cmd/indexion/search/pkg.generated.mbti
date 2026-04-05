@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/search"
+
+import {
+  "moonbitlang/core/argparse",
+}
+
+// Values
+pub fn command() -> @argparse.Command
+
+pub async fn run_matches(@argparse.Matches) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct SearchConfig {
+  query : String
+  paths : Array[String]
+  top_k : Int
+  min_score : Double
+  includes : Array[String]
+  excludes : Array[String]
+  specs_dir : String
+  files_only : Bool
+  json_output : Bool
+  filter_str : String
+}
+pub fn SearchConfig::from_matches(@argparse.Matches) -> Self
+
+// Type aliases
+
+// Traits
+

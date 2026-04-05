@@ -107,24 +107,36 @@ fn extract_module_docs(graph : @graph.CodeGraph, pkg_path : String) -> String {
       Some(d) => d
       None => ""
     }
-    // Only include symbols with meaningful doc
-    if doc.length() > 20 {
-      symbols.push((sym.name, sym.kind, doc))
-    }
+    symbols.push((sym.name, sym.kind, doc))
   }
   // Sort by doc length (most documented = most important)
   symbols.sort_by(fn(a, b) { b.2.length() - a.2.length() })
+  let max_listed = 30
   if symbols.length() > 0 {
     buf.write_string("## API\n\n")
-    for item in symbols {
-      let (name, kind, doc) = item
+    let listed = if symbols.length() > max_listed {
+      max_listed
+    } else {
+      symbols.length()
+    }
+    for i = 0; i < listed; i = i + 1 {
+      let (name, kind, doc) = symbols[i]
       buf.write_string("- **`")
       buf.write_string(name)
       buf.write_string("`** (")
       buf.write_string(kind)
-      buf.write_string(") — ")
-      buf.write_string(first_doc_line(doc))
+      buf.write_string(")")
+      let first_line = first_doc_line(doc)
+      if first_line.length() > 0 {
+        buf.write_string(" — ")
+        buf.write_string(first_line)
+      }
       buf.write_string("\n")
+    }
+    if symbols.length() > max_listed {
+      buf.write_string("\nAnd ")
+      buf.write_string((symbols.length() - max_listed).to_string())
+      buf.write_string(" more symbols.\n")
     }
     buf.write_string("\n")
   }

@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/text/embed"
+
+// Values
+pub fn cosine_similarity_dense(Array[Double], Array[Double]) -> Double
+
+// Errors
+
+// Types and methods
+pub struct TfidfEmbeddingProvider {
+  dim : Int
+  vocabulary : Map[String, Int]
+  idf : Map[String, Double]
+}
+pub fn TfidfEmbeddingProvider::build_vocabulary(Self, Array[String]) -> Unit
+pub fn TfidfEmbeddingProvider::dim(Self) -> Int
+pub fn TfidfEmbeddingProvider::embed(Self, String) -> Array[Double]
+pub fn TfidfEmbeddingProvider::new(Int) -> Self
+
+// Type aliases
+
+// Traits
+

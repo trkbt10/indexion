@@ -2,6 +2,8 @@
 package "trkbt10/indexion/src/ignorefile"
 
 // Values
+pub fn contains_slash(String) -> Bool
+
 pub fn load_from_dir(String, String) -> Array[IgnorePattern]
 
 pub fn parse(String, String) -> Array[IgnorePattern]

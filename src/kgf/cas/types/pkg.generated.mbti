@@ -16,25 +16,16 @@ pub struct CASManifest {
   updated_at : String
   spec_hash : ContentHash
   modules : Map[String, ContentHash]
-}
+} derive(Eq, Show, ToJson, @json.FromJson)
 pub fn CASManifest::new(String, String, ContentHash, Map[String, ContentHash]) -> Self
 pub fn CASManifest::with_modules(Self, Map[String, ContentHash], String) -> Self
 pub fn CASManifest::with_spec_hash(Self, ContentHash, String) -> Self
-pub impl Eq for CASManifest
-pub impl Show for CASManifest
-pub impl ToJson for CASManifest
-pub impl @json.FromJson for CASManifest
 
 pub struct ContentHash {
   value : String
-}
+} derive(Eq, Hash, Show, ToJson, @json.FromJson)
 pub fn ContentHash::from_string(String) -> Self
 pub fn ContentHash::to_string(Self) -> String
-pub impl Eq for ContentHash
-pub impl Hash for ContentHash
-pub impl Show for ContentHash
-pub impl ToJson for ContentHash
-pub impl @json.FromJson for ContentHash
 
 pub struct ModuleChunk {
   hash : ContentHash
@@ -45,26 +36,18 @@ pub struct ModuleChunk {
   source_hash : ContentHash
   spec_hash : ContentHash
   external_refs : Array[SymbolicRef]
-}
+} derive(Eq, Show, ToJson, @json.FromJson)
 pub fn ModuleChunk::add_edge(Self, @graph.Edge) -> Unit
 pub fn ModuleChunk::add_external_ref(Self, SymbolicRef) -> Unit
 pub fn ModuleChunk::add_symbol(Self, String, @graph.SymbolNode) -> Unit
 pub fn ModuleChunk::new(ContentHash, String, @graph.ModuleNode, ContentHash, ContentHash) -> Self
-pub impl Eq for ModuleChunk
-pub impl Show for ModuleChunk
-pub impl ToJson for ModuleChunk
-pub impl @json.FromJson for ModuleChunk
 
 pub struct SymbolicRef {
   ref_str : String
   edge_kind : String
   via : String
-}
+} derive(Eq, Show, ToJson, @json.FromJson)
 pub fn SymbolicRef::new(String, String, String) -> Self
-pub impl Eq for SymbolicRef
-pub impl Show for SymbolicRef
-pub impl ToJson for SymbolicRef
-pub impl @json.FromJson for SymbolicRef
 
 // Type aliases
 
