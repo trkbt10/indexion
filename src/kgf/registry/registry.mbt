@@ -69,12 +69,25 @@ pub fn KGFRegistry::register_spec(
     self.lang_to_doc_spec.set(base_lang, lang)
   }
 
-  // Map extensions to language
+  // Map extensions to language.
+  // When multiple specs claim the same extension, prefer the more general spec.
+  // A spec with `special_files` feature is domain-specific (e.g., wiki specs)
+  // and should not override a general-purpose spec for the same extension.
+  let is_domain_specific = spec.get_feature("special_files") is Some(_)
   let resolver = spec.get_resolver()
   let sources = resolver.get_sources()
   for ext in sources {
     // sources contains extensions like ".ts", ".tsx"
-    self.ext_to_lang.set(ext, lang)
+    match self.ext_to_lang.get(ext) {
+      Some(_) =>
+        // Extension already registered. Only overwrite if the new spec is
+        // general-purpose (not domain-specific). Domain-specific specs
+        // (with special_files) should not steal extensions from general ones.
+        if !(is_domain_specific) {
+          self.ext_to_lang.set(ext, lang)
+        }
+      None => self.ext_to_lang.set(ext, lang)
+    }
   }
 }
 

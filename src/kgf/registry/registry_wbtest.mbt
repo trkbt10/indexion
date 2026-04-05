@@ -128,7 +128,14 @@ test "registry: comprehensive validation" {
   assert_false(registry.is_file_supported("moon.pkg.bak"))
   assert_false(registry.is_file_supported("file.xyz"))
 
-  // Test 8: project marker patterns come from KGF, not hardcoded caller lists
+  // Test 8: .md extension should map to markdown (not wiki specs)
+  // Wiki specs (gitlab-wiki, github-wiki) also claim .md but are domain-specific
+  // (have special_files feature) and should not override the general markdown spec.
+  assert_eq(registry.get_lang_from_ext(".md"), Some("markdown"))
+  assert_eq(registry.detect_from_path("docs/spec.md"), Some("markdown"))
+  assert_eq(registry.detect_from_path("README.md"), Some("markdown"))
+
+  // Test 9: project marker patterns come from KGF, not hardcoded caller lists
   let project_markers = registry.get_project_markers()
   assert_true(
     project_markers.iter().any(fn(marker) { marker == "package.json" }),
