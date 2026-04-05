@@ -7,12 +7,6 @@ import {
 }
 
 // Values
-pub const DEFAULT_API_BASE_URL : String = "https://api.openai.com/v1/embeddings"
-
-pub const DEFAULT_API_KEY_ENV : String = "OPENAI_API_KEY"
-
-pub const DEFAULT_EMBEDDING_MODEL : String = "text-embedding-3-small"
-
 pub const DEFAULT_IMPRESS_MODEL : String = "gpt-4o-mini"
 
 pub const DEFAULT_IMPRESS_PROMPT : String = "You are a code documentation expert. Given a function's metadata, generate a concise purpose description.\n\nOutput JSON with:\n- summary: One sentence describing what the function does\n- keywords: 3-5 key terms for search (English)\n\nBe specific and actionable. Focus on WHAT the function does, not HOW."
@@ -36,7 +30,7 @@ pub(all) struct DigestConfig {
   exclude_kinds : Array[String]
   index_dir : String
   llm_config : LlmConfig?
-} derive(Eq, Show)
+}
 pub fn DigestConfig::default() -> Self
 pub fn DigestConfig::embedding_dim(Self) -> Int
 pub fn DigestConfig::get_embedding_text(Self, @types.FunctionUnit) -> String
@@ -52,27 +46,24 @@ pub fn DigestConfig::with_impressions(String) -> Self
 pub fn DigestConfig::with_index_dir(Self, String) -> Self
 pub fn DigestConfig::with_llm(Self, LlmConfig) -> Self
 pub fn DigestConfig::with_provider(Self, EmbeddingProvider) -> Self
-
-pub(all) struct EmbeddingApiConfig {
-  api_key : String
-  api_key_env : String
-  base_url : String
-  model : String
-  dim : Int
-} derive(Eq, Show)
-pub fn EmbeddingApiConfig::new(String) -> Self
+pub impl Eq for DigestConfig
+pub impl Show for DigestConfig
 
 pub(all) enum EmbeddingProvider {
   TfIdf(Int)
-  OpenAI(EmbeddingApiConfig)
+  OpenAI(String)
   Precomputed(String)
-} derive(Eq, Show)
+}
+pub impl Eq for EmbeddingProvider
+pub impl Show for EmbeddingProvider
 
 pub(all) enum EmbeddingSource {
   Raw
   Impression
   RawWithContext
-} derive(Eq, Show)
+}
+pub impl Eq for EmbeddingSource
+pub impl Show for EmbeddingSource
 
 pub(all) struct LlmConfig {
   api_key : String
@@ -80,16 +71,20 @@ pub(all) struct LlmConfig {
   system_prompt : String
   base_url : String
   temperature : Double
-} derive(Eq, Show)
+}
 pub fn LlmConfig::openai(String) -> Self
 pub fn LlmConfig::with_model(String, String) -> Self
 pub fn LlmConfig::with_prompt(String, String) -> Self
+pub impl Eq for LlmConfig
+pub impl Show for LlmConfig
 
 pub(all) enum VcdbStrategy {
   BruteForce
   Hnsw
   Ivf
-} derive(Eq, Show)
+}
+pub impl Eq for VcdbStrategy
+pub impl Show for VcdbStrategy
 
 // Type aliases
 

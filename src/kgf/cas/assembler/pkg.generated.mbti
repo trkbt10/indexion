@@ -24,10 +24,12 @@ pub struct AssemblyResult {
   loaded_chunks : Array[@types.ContentHash]
   missing_chunks : Array[String]
   unresolved_refs : Array[String]
-} derive(Eq, Show)
+}
 pub fn AssemblyResult::all_resolved(Self) -> Bool
 pub fn AssemblyResult::empty() -> Self
 pub fn AssemblyResult::is_complete(Self) -> Bool
+pub impl Eq for AssemblyResult
+pub impl Show for AssemblyResult
 
 // Type aliases
 

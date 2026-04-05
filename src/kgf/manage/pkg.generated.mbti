@@ -16,6 +16,7 @@ pub async fn update_kgfs() -> Unit raise KgfManageError
 
 // Errors
 pub suberror KgfManageError {
+  NetworkError(String)
   ApiError(String)
   InstallError(String)
   NotFoundError(String)

@@ -2,17 +2,11 @@
 package "trkbt10/indexion/src/pipeline/comparison"
 
 // Values
-pub fn apply_fdr_correction(Array[SimilarityMatch], Double, Int, threshold? : Double) -> Array[SimilarityMatch]
-
 pub fn compare(Array[FileEntry], BatchConfig) -> BatchResult
 
 pub fn compare_apted(Array[FileEntry], Double) -> BatchResult
 
-pub fn compare_bm25(Array[FileEntry], Double) -> BatchResult
-
 pub fn compare_hybrid(Array[FileEntry], Double) -> BatchResult
-
-pub fn compare_jsd(Array[FileEntry], Double) -> BatchResult
 
 pub fn compare_tfidf(Array[FileEntry], Double) -> BatchResult
 
@@ -28,23 +22,28 @@ pub fn filter_cross_directory(Array[SimilarityMatch]) -> Array[SimilarityMatch]
 pub struct BatchConfig {
   threshold : Double
   strategy : String
-} derive(Eq, Show)
+}
 pub fn BatchConfig::create(Double, String) -> Self
 pub fn BatchConfig::new() -> Self
+pub impl Eq for BatchConfig
+pub impl Show for BatchConfig
 
 pub struct BatchResult {
   matches : Array[SimilarityMatch]
   file_count : Int
   pairs_compared : Int
-} derive(Eq, Show)
-pub fn BatchResult::apply_fdr(Self, Double, threshold? : Double) -> Self
+}
 pub fn BatchResult::get_matches(Self) -> Array[SimilarityMatch]
+pub impl Eq for BatchResult
+pub impl Show for BatchResult
 
 pub struct FileEntry {
   display_name : String
   content : String
-} derive(Eq, Show)
+}
 pub fn FileEntry::new(String, String) -> Self
+pub impl Eq for FileEntry
+pub impl Show for FileEntry
 
 pub struct SimilarityMatch {
   index1 : Int
@@ -52,8 +51,10 @@ pub struct SimilarityMatch {
   file1 : String
   file2 : String
   similarity : Double
-} derive(Eq, Show)
+}
 pub fn SimilarityMatch::new(Int, Int, String, String, Double) -> Self
+pub impl Eq for SimilarityMatch
+pub impl Show for SimilarityMatch
 
 // Type aliases
 

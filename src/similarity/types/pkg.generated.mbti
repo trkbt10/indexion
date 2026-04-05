@@ -9,20 +9,24 @@ package "trkbt10/indexion/src/similarity/types"
 pub struct HybridConfig {
   ncd_weight : Double
   tfidf_weight : Double
-} derive(Eq, Show)
+}
 pub fn HybridConfig::create(Double, Double) -> Self
 pub fn HybridConfig::get_ncd_weight(Self) -> Double
 pub fn HybridConfig::get_tfidf_weight(Self) -> Double
 pub fn HybridConfig::new() -> Self
+pub impl Eq for HybridConfig
+pub impl Show for HybridConfig
 
 pub struct SimilarityResult {
   distance : Double
   similarity : Double
-} derive(Eq, Show)
+}
 pub fn SimilarityResult::from_distance(Double) -> Self
 pub fn SimilarityResult::from_similarity(Double) -> Self
 pub fn SimilarityResult::get_distance(Self) -> Double
 pub fn SimilarityResult::get_similarity(Self) -> Double
+pub impl Eq for SimilarityResult
+pub impl Show for SimilarityResult
 
 // Type aliases
 

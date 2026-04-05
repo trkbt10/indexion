@@ -29,7 +29,7 @@ pub struct AnalysisResult {
   mut graph : @graph.CodeGraph
   symbols : Array[DocSymbol]
   module_docs : Map[String, String]
-} derive(Eq, Show)
+}
 pub fn AnalysisResult::add_file(Self, FileInfo) -> Unit
 pub fn AnalysisResult::add_symbol(Self, DocSymbol) -> Unit
 pub fn AnalysisResult::get_files(Self) -> Array[FileInfo]
@@ -39,6 +39,8 @@ pub fn AnalysisResult::get_symbols(Self) -> Array[DocSymbol]
 pub fn AnalysisResult::new() -> Self
 pub fn AnalysisResult::set_graph(Self, @graph.CodeGraph) -> Unit
 pub fn AnalysisResult::set_module_doc(Self, String, String) -> Unit
+pub impl Eq for AnalysisResult
+pub impl Show for AnalysisResult
 
 pub(all) enum DetectedLang {
   TypeScript
@@ -54,9 +56,11 @@ pub(all) enum DetectedLang {
   Json
   Yaml
   Unknown
-} derive(Eq, Show)
+}
 pub fn DetectedLang::doc_spec_name(Self) -> String
 pub fn DetectedLang::to_string(Self) -> String
+pub impl Eq for DetectedLang
+pub impl Show for DetectedLang
 
 pub(all) struct DocSymbol {
   id : String
@@ -66,7 +70,7 @@ pub(all) struct DocSymbol {
   mut parent : String?
   file : String
   children : Array[DocSymbol]
-} derive(Eq, Show)
+}
 pub fn DocSymbol::add_child(Self, Self) -> Unit
 pub fn DocSymbol::get_children(Self) -> Array[Self]
 pub fn DocSymbol::get_doc(Self) -> String?
@@ -78,18 +82,22 @@ pub fn DocSymbol::get_parent(Self) -> String?
 pub fn DocSymbol::new(String, String, String, String) -> Self
 pub fn DocSymbol::set_parent(Self, String) -> Unit
 pub fn DocSymbol::with_doc(String, String, String, String, String) -> Self
+pub impl Eq for DocSymbol
+pub impl Show for DocSymbol
 
 pub(all) struct FileInfo {
   path : String
   lang : DetectedLang
   ext : String
   spec_name : String
-} derive(Eq, Show)
+}
 pub fn FileInfo::get_ext(Self) -> String
 pub fn FileInfo::get_lang(Self) -> DetectedLang
 pub fn FileInfo::get_path(Self) -> String
 pub fn FileInfo::get_spec_name(Self) -> String
 pub fn FileInfo::new(String, DetectedLang, String, String) -> Self
+pub impl Eq for FileInfo
+pub impl Show for FileInfo
 
 // Type aliases
 

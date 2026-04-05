@@ -8,8 +8,6 @@ import {
 // Values
 pub fn brute_force(Int) -> Array[(Int, Int)]
 
-pub fn minhash_prefilter(Array[(String, String)], @registry.KGFRegistry?, Double) -> Array[(Int, Int)]
-
 pub fn normalize_pairs(Array[(Int, Int, Double)]) -> Array[(Int, Int)]
 
 pub fn pair_key(Int, Int) -> String

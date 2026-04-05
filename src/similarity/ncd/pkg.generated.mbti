@@ -13,8 +13,10 @@ pub fn calculate_adjacent_ncd(Array[String]) -> Array[Double]
 // Types and methods
 pub struct NCDStrategy {
   // private fields
-} derive(Eq, Show)
+}
 pub fn NCDStrategy::new() -> Self
+pub impl Eq for NCDStrategy
+pub impl Show for NCDStrategy
 pub impl @types.SimilarityStrategy for NCDStrategy
 
 // Type aliases

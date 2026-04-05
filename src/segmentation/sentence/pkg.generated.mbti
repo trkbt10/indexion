@@ -1,10 +1,6 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/src/segmentation/sentence"
 
-import {
-  "trkbt10/indexion/src/segmentation/types",
-}
-
 // Values
 pub fn count_sentences(String) -> Int
 
@@ -12,26 +8,40 @@ pub fn count_sentences_with_options(String, SplitOptions) -> Int
 
 pub let default_quote_safe_max_length : Int
 
-pub fn split_sentences(String) -> Array[@types.Sentence]
+pub fn split_sentences(String) -> Array[Sentence]
 
 pub fn split_sentences_text(String) -> Array[String]
 
 pub fn split_sentences_text_with_options(String, SplitOptions) -> Array[String]
 
-pub fn split_sentences_with_options(String, SplitOptions) -> Array[@types.Sentence]
+pub fn split_sentences_with_options(String, SplitOptions) -> Array[Sentence]
 
 // Errors
 
 // Types and methods
+pub struct Sentence {
+  text : String
+  start : Int
+  end : Int
+}
+pub fn Sentence::get_end(Self) -> Int
+pub fn Sentence::get_start(Self) -> Int
+pub fn Sentence::get_text(Self) -> String
+pub fn Sentence::length(Self) -> Int
+pub fn Sentence::new(String, Int, Int) -> Self
+pub impl Eq for Sentence
+pub impl Show for Sentence
+
 pub struct SplitOptions {
   quote_protection : Bool
   quote_safe_max_length : Int
   include_closing_brackets : Bool
-} derive(Eq, Show)
+}
 pub fn SplitOptions::default() -> Self
+pub impl Eq for SplitOptions
+pub impl Show for SplitOptions
 
 // Type aliases
-pub using @types {type Sentence}
 
 // Traits
 

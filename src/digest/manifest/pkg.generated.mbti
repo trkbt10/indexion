@@ -19,7 +19,7 @@ pub struct DigestManifest {
   files : Map[String, FileEntry]
   functions : Map[String, FunctionEntry]
   vector_id_counter : Int64
-} derive(Eq, Show, ToJson, @json.FromJson)
+}
 pub fn DigestManifest::allocate_vector_id(Self) -> (Self, Int64)
 pub fn DigestManifest::from_json_string(String) -> Self?
 pub fn DigestManifest::get_deleted_functions(Self, Array[String]) -> Array[String]
@@ -32,12 +32,20 @@ pub fn DigestManifest::remove_deleted_functions(Self, Array[String]) -> (Self, A
 pub fn DigestManifest::remove_function(Self, String) -> Self
 pub fn DigestManifest::to_json_string(Self) -> String
 pub fn DigestManifest::update_function(Self, FunctionEntry) -> Self
+pub impl Eq for DigestManifest
+pub impl Show for DigestManifest
+pub impl ToJson for DigestManifest
+pub impl @json.FromJson for DigestManifest
 
 pub struct FileEntry {
   file_path : String
   source_hash : @trkbt10/indexion/src/kgf/cas/types.ContentHash
   functions : Array[String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+}
+pub impl Eq for FileEntry
+pub impl Show for FileEntry
+pub impl ToJson for FileEntry
+pub impl @json.FromJson for FileEntry
 
 pub struct FunctionEntry {
   function_id : String
@@ -45,8 +53,12 @@ pub struct FunctionEntry {
   context_hash : @trkbt10/indexion/src/digest/types.FunctionHash
   vector_id : Int64?
   impression_hash : @trkbt10/indexion/src/digest/types.FunctionHash?
-} derive(Eq, Show, ToJson, @json.FromJson)
+}
 pub fn FunctionEntry::from_unit(@trkbt10/indexion/src/digest/types.FunctionUnit, Int64?) -> Self
+pub impl Eq for FunctionEntry
+pub impl Show for FunctionEntry
+pub impl ToJson for FunctionEntry
+pub impl @json.FromJson for FunctionEntry
 
 // Type aliases
 

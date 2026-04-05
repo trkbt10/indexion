@@ -24,8 +24,6 @@ pub fn render_text(RefactorPlanJSON) -> String
 
 pub fn run_matches(@argparse.Matches) -> Unit
 
-pub fn run_to_string(RefactorPlanConfig) -> String?
-
 // Errors
 
 // Types and methods
@@ -64,18 +62,21 @@ pub struct FunctionDuplicate {
   file2 : String
   similarity : Double
   same_file : Bool
-} derive(ToJson)
+}
+pub impl ToJson for FunctionDuplicate
 
 pub struct MagicStringGroup {
   value : String
   occurrences : Array[MagicStringOccurrence]
   file_count : Int
-} derive(ToJson)
+}
+pub impl ToJson for MagicStringGroup
 
 pub struct MagicStringOccurrence {
   file : String
   line : Int
-} derive(ToJson)
+}
+pub impl ToJson for MagicStringOccurrence
 
 pub struct PlanSummary {
   total_clusters : Int
@@ -83,10 +84,9 @@ pub struct PlanSummary {
   max_similarity : Double
 }
 
-pub(all) struct RefactorPlanConfig {
+pub struct RefactorPlanConfig {
   target_dir : String
   threshold : Double
-  fdr : Double
   strategy : String
   includes : Array[String]
   excludes : Array[String]

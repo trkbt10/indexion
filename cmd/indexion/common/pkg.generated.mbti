@@ -4,11 +4,7 @@ package "trkbt10/indexion/cmd/indexion/common"
 // Values
 pub fn ancestor_dirs(String) -> Array[String]
 
-pub fn capitalize(String) -> String
-
 pub fn collect_files(Array[String], includes? : Array[String], excludes? : Array[String], extensions? : Array[String]) -> Array[(String, String)]
-
-pub fn count_lines(String) -> Int
 
 pub fn elapsed_ms(UInt64) -> UInt64
 
@@ -20,8 +16,6 @@ pub fn extract_json_string(String, String) -> String
 
 pub fn extract_unique_dir_names(Array[String]) -> Array[String]
 
-pub fn first_sentence(String) -> String
-
 pub fn format_percent(Double) -> String
 
 pub fn get_dirname_prefix(String) -> String
@@ -31,8 +25,6 @@ pub fn get_relative_part(String) -> String
 pub fn is_directory(String) -> Bool
 
 pub fn join_lines(Array[String]) -> String
-
-pub fn make_anchor(String) -> String
 
 pub fn make_relative_path(String, String) -> String
 
@@ -47,10 +39,6 @@ pub fn parse_double(String) -> Double
 pub fn parse_int(String) -> Int
 
 pub fn render_inline_code_list(StringBuilder, String, Array[String]) -> Unit
-
-pub fn slugify(String) -> String
-
-pub fn split_by_char(String, Char) -> Array[String]
 
 pub fn split_by_slash(String) -> Array[String]
 

@@ -12,16 +12,20 @@ pub fn subject_matches_pattern(PathSubject, String) -> Bool
 pub struct PathScope {
   includes : Array[String]
   excludes : Array[String]
-} derive(Eq, Show)
+}
 pub fn PathScope::is_empty(Self) -> Bool
 pub fn PathScope::matches(Self, PathSubject) -> Bool
 pub fn PathScope::matches_path(Self, String) -> Bool
 pub fn PathScope::new(includes? : Array[String], excludes? : Array[String]) -> Self
+pub impl Eq for PathScope
+pub impl Show for PathScope
 
 pub struct PathSubject {
   candidate_paths : Array[String]
-} derive(Eq, Show)
+}
 pub fn PathSubject::new(String, additional_paths? : Array[String]) -> Self
+pub impl Eq for PathSubject
+pub impl Show for PathSubject
 
 // Type aliases
 

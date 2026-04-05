@@ -55,7 +55,6 @@ pub struct SemEvalCtx {
   call_stack : Array[String]
   events : Array[(String, Map[String, Json])]
   file_exists : (String) -> Bool
-  read_file : (String) -> String?
   resolution_cache : @types.ResolutionCache
 }
 pub fn SemEvalCtx::add_event(Self, String, Map[String, Json]) -> Unit
@@ -65,8 +64,8 @@ pub fn SemEvalCtx::current_scope(Self) -> ScopeEntry
 pub fn SemEvalCtx::get_graph(Self) -> @graph.CodeGraph
 pub fn SemEvalCtx::get_resolution_cache(Self) -> @types.ResolutionCache
 pub fn SemEvalCtx::lookup_scope(Self, String, String) -> String?
-pub fn SemEvalCtx::new(@types.KGFSpec, @graph.CodeGraph, String, String, String, (String) -> Bool, read_file? : (String) -> String?) -> Self
-pub fn SemEvalCtx::new_with_cache(@types.KGFSpec, @graph.CodeGraph, String, String, String, (String) -> Bool, @types.ResolutionCache, read_file? : (String) -> String?) -> Self
+pub fn SemEvalCtx::new(@types.KGFSpec, @graph.CodeGraph, String, String, String, (String) -> Bool) -> Self
+pub fn SemEvalCtx::new_with_cache(@types.KGFSpec, @graph.CodeGraph, String, String, String, (String) -> Bool, @types.ResolutionCache) -> Self
 pub fn SemEvalCtx::next_call_id(Self) -> String
 pub fn SemEvalCtx::next_sym_id(Self) -> String
 pub fn SemEvalCtx::pop_scope(Self) -> Unit

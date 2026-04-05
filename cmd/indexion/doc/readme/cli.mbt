@@ -205,17 +205,12 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
       doc_file_config.config_path
     }
   }
-  // per-package mode uses file-based discovery, not doc.json.
-  // doc.json defines the root README structure and does not know about
-  // individual package README generation.
-  if !(config.per_package) {
-    match effective_config_path {
-      Some(config_path) => {
-        run_with_doc_config(config_path, config)
-        return
-      }
-      None => ()
+  match effective_config_path {
+    Some(config_path) => {
+      run_with_doc_config(config_path, config)
+      return
     }
+    None => ()
   }
   // Stage 1: Load KGF specs to get ignore patterns.
   log_progress("[1/4] Loading KGF specs...")

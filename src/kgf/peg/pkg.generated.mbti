@@ -68,7 +68,7 @@ pub enum Node {
   Label(String, Node)
   And(Node)
   Not(Node)
-} derive(Eq, Hash, Show)
+}
 pub fn Node::get_and(Self) -> Self?
 pub fn Node::get_choice(Self) -> Array[Self]?
 pub fn Node::get_label(Self) -> (String, Self)?
@@ -88,6 +88,9 @@ pub fn Node::is_plus(Self) -> Bool
 pub fn Node::is_seq(Self) -> Bool
 pub fn Node::is_star(Self) -> Bool
 pub fn Node::is_sym(Self) -> Bool
+pub impl Eq for Node
+pub impl Hash for Node
+pub impl Show for Node
 
 pub struct PEG {
   tokens : @hashset.HashSet[String]

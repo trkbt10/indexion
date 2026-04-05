@@ -21,8 +21,6 @@ pub fn generate_hierarchy_diagram(Array[@query.TypeRelation], title? : String) -
 
 pub fn generate_overview_diagram(Array[@query.ModuleDep], Array[@query.SymbolDecl], max_symbols_per_module? : Int) -> String
 
-pub fn join_lines(Array[String]) -> String
-
 pub fn render_d2(GraphJSON) -> String
 
 pub fn render_dot(GraphJSON) -> String
@@ -39,7 +37,8 @@ pub struct GraphEdge {
   to : String
   kind : String
   metadata : Map[String, String]
-} derive(Eq)
+}
+pub impl Eq for GraphEdge
 
 pub struct GraphJSON {
   title : String
@@ -59,7 +58,8 @@ pub struct GraphNode {
   kind : String
   file : String?
   metadata : Map[String, String]
-} derive(Eq)
+}
+pub impl Eq for GraphNode
 
 // Type aliases
 

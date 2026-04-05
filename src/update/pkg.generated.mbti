@@ -28,6 +28,7 @@ pub fn verify_checksum(Bytes, String) -> Unit raise UpdateError
 
 // Errors
 pub suberror UpdateError {
+  NetworkError(String)
   ApiError(String)
   ParseError(String)
   PlatformError(String)

@@ -2,8 +2,6 @@
 package "trkbt10/indexion/src/text/tfidf"
 
 // Values
-pub fn build_bm25_vector(Array[String], Map[String, Int], Int, Double) -> TfidfVector
-
 pub fn build_document_frequency(Array[Array[String]]) -> Map[String, Int]
 
 pub fn build_term_frequency(Array[String]) -> Map[String, Int]
@@ -18,35 +16,11 @@ pub fn cosine_distance(TfidfVector, TfidfVector) -> Double
 
 pub fn cosine_similarity(TfidfVector, TfidfVector) -> Double
 
-pub fn jensen_shannon_divergence(Map[String, Int], Map[String, Int]) -> Double
-
-pub fn jsd_from_tokens(Array[String], Array[String]) -> Double
-
-pub fn jsd_similarity(Array[String], Array[String]) -> Double
-
 pub fn sqrt(Double) -> Double
 
 // Errors
 
 // Types and methods
-pub struct BM25Batch {
-  vectors : Array[TfidfVector]
-  norms : Array[Double]
-  build_stats : TfidfBatchBuildStats
-}
-pub fn BM25Batch::all_pairs_above_threshold(Self, Double) -> Array[(Int, Int, Double)]
-pub fn BM25Batch::from_tokens(Array[Array[String]]) -> Self
-pub fn BM25Batch::length(Self) -> Int
-pub fn BM25Batch::similarity(Self, Int, Int) -> Double
-
-pub struct JSDBatch {
-  term_freqs : Array[Map[String, Int]]
-}
-pub fn JSDBatch::all_pairs_above_threshold(Self, Double) -> Array[(Int, Int, Double)]
-pub fn JSDBatch::from_tokens(Array[Array[String]]) -> Self
-pub fn JSDBatch::length(Self) -> Int
-pub fn JSDBatch::similarity(Self, Int, Int) -> Double
-
 pub struct TfidfBatch {
   vectors : Array[TfidfVector]
   norms : Array[Double]

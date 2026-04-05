@@ -2,11 +2,12 @@
 package "trkbt10/indexion/src/segmentation/utils"
 
 import {
+  "trkbt10/indexion/src/segmentation/sentence",
   "trkbt10/indexion/src/segmentation/types",
 }
 
 // Values
-pub fn apply_size_constraints(Int, Array[Int], Array[@types.Sentence], Int, Int, Int) -> Array[Int]
+pub fn apply_size_constraints(Int, Array[Int], Array[@sentence.Sentence], Int, Int, Int) -> Array[Int]
 
 pub fn boundaries_to_segment_points(Array[Int], Int) -> Array[@types.SegmentPoint]
 
@@ -14,7 +15,7 @@ pub fn build_quote_stack_until(String, Int) -> Array[QuoteStackEntry]
 
 pub fn calculate_adjacent_ncd(Array[String]) -> Array[Double]
 
-pub fn combine_sentences(Array[@types.Sentence], Int, Int) -> String
+pub fn combine_sentences(Array[@sentence.Sentence], Int, Int) -> String
 
 pub fn compress(String) -> Bytes
 
@@ -24,7 +25,7 @@ pub let default_quote_safe_max_length : Int
 
 pub fn find_local_maxima(Array[Double], Double) -> Array[Int]
 
-pub fn find_nearest_sentence_end(Array[@types.Sentence], Int) -> Int
+pub fn find_nearest_sentence_end(Array[@sentence.Sentence], Int) -> Int
 
 pub fn find_next_boundary(String, Int, FindBoundariesOptions) -> Int
 
@@ -34,13 +35,11 @@ pub fn find_sentence_boundaries(String, FindBoundariesOptions) -> Array[Int]
 
 pub fn find_sentence_boundaries_default(String) -> Array[Int]
 
-pub fn get_window_end(Array[@types.Sentence], Int, Int) -> Int
+pub fn get_window_end(Array[@sentence.Sentence], Int, Int) -> Int
 
-pub fn handle_few_sentences(String, Array[@types.Sentence], Int, Int, Int) -> Array[@types.SegmentPoint]
+pub fn handle_few_sentences(String, Array[@sentence.Sentence], Int, Int, Int) -> Array[@types.SegmentPoint]
 
 pub fn is_at_boundary(String, Int) -> Bool
-
-pub fn is_extended_terminator(Char) -> Bool
 
 pub fn is_inside_protected_quote(Array[QuoteStackEntry], Int, Int) -> Bool
 
@@ -54,10 +53,6 @@ pub fn min_max_normalize(Array[Double]) -> Array[Double]
 
 pub fn ncd(String, String) -> Double
 
-pub fn reciprocal_rank_fusion(Array[Array[Double]], Double) -> Array[Double]
-
-pub fn robust_normalize(Array[Double]) -> Array[Double]
-
 pub fn update_quote_stack(Array[QuoteStackEntry], Char, Int) -> Unit
 
 // Errors
@@ -67,20 +62,24 @@ pub struct FindBoundariesOptions {
   include_closing_brackets : Bool
   respect_japanese_quotes : Bool
   quote_safe_max_length : Int
-} derive(Eq, Show)
+}
 pub fn FindBoundariesOptions::create(Bool, Bool, Int) -> Self
 pub fn FindBoundariesOptions::get_include_closing_brackets(Self) -> Bool
 pub fn FindBoundariesOptions::get_quote_safe_max_length(Self) -> Int
 pub fn FindBoundariesOptions::get_respect_japanese_quotes(Self) -> Bool
 pub fn FindBoundariesOptions::new() -> Self
+pub impl Eq for FindBoundariesOptions
+pub impl Show for FindBoundariesOptions
 
 pub struct QuoteStackEntry {
   open : Char
   start : Int
-} derive(Eq, Show)
+}
 pub fn QuoteStackEntry::get_open(Self) -> Char
 pub fn QuoteStackEntry::get_start(Self) -> Int
 pub fn QuoteStackEntry::new(Char, Int) -> Self
+pub impl Eq for QuoteStackEntry
+pub impl Show for QuoteStackEntry
 
 // Type aliases
 
