@@ -10,6 +10,7 @@ import {
   "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
   "trkbt10/indexion/src/pipeline" @pipeline,
+  "trkbt10/indexion/src/text/stats" @stats,
   "trkbt10/indexion/src/text/tfidf" @tfidf,
 }
 
