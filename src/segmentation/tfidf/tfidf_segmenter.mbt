@@ -37,8 +37,8 @@ pub fn calculate_window_tfidf_divergence(
     tokenized,
   )
 
-  // Normalize TF-IDF values
-  let normalized_tfidf = @utils.min_max_normalize(tfidf_values)
+  // Normalize TF-IDF values (robust z-score resists outliers)
+  let normalized_tfidf = @utils.robust_normalize(tfidf_values)
 
   // Build result
   let length = if normalized_tfidf.length() < window_ends.length() - 1 {

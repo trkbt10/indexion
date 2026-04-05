@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/math" @math,
   "trkbt10/indexion/src/text/tfidf" @tfidf,
   "trkbt10/indexion/src/text/tokenizer" @tokenizer,
 }

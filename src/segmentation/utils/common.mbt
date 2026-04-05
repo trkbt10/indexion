@@ -258,7 +258,96 @@ pub fn get_window_end(
 }
 
 ///|
+/// Smooth an array of values using a symmetric moving average.
+/// The window extends `radius` elements on each side (total width = 2*radius + 1).
+/// Edges use partial windows (naturally shrink).
+fn smooth_moving_average(values : Array[Double], radius : Int) -> Array[Double] {
+  let n = values.length()
+  if n == 0 || radius <= 0 {
+    return values.copy()
+  }
+  let result : Array[Double] = []
+  for i = 0; i < n; i = i + 1 {
+    let lo = if i - radius > 0 { i - radius } else { 0 }
+    let hi = if i + radius < n - 1 { i + radius } else { n - 1 }
+    let mut sum = 0.0
+    for j = lo; j <= hi; j = j + 1 {
+      sum += values[j]
+    }
+    result.push(sum / (hi - lo + 1).to_double())
+  }
+  result
+}
+
+///|
+/// Calculate peak prominence for each index.
+/// Prominence measures how much a peak stands out from its surrounding valleys.
+/// For each point, scan left and right until a higher value is found;
+/// the minimum encountered on each side is the "key col" (valley).
+/// Prominence = value - max(left_col, right_col).
+/// For boundary peaks (no higher peak on one side), only the other side counts.
+fn calculate_prominence(values : Array[Double]) -> Array[Double] {
+  let n = values.length()
+  let prominence = Array::make(n, 0.0)
+  if n == 0 {
+    return prominence
+  }
+  for i = 0; i < n; i = i + 1 {
+    // Scan left for the key col
+    let mut left_min = values[i]
+    let mut has_left = false
+    for j = i - 1; j >= 0; j = j - 1 {
+      if values[j] < left_min {
+        left_min = values[j]
+      }
+      if values[j] > values[i] {
+        has_left = true
+        break
+      }
+    }
+    // If no higher peak found on left, this point dominates the left boundary.
+    // In that case left_min is the global minimum to the left, which is valid.
+    if i > 0 {
+      has_left = true
+    }
+    // Scan right for the key col
+    let mut right_min = values[i]
+    let mut has_right = false
+    for j = i + 1; j < n; j = j + 1 {
+      if values[j] < right_min {
+        right_min = values[j]
+      }
+      if values[j] > values[i] {
+        has_right = true
+        break
+      }
+    }
+    if i < n - 1 {
+      has_right = true
+    }
+    // Prominence: distance from peak to the higher of the two key cols
+    let col = if has_left && has_right {
+      if left_min > right_min { left_min } else { right_min }
+    } else if has_left {
+      left_min
+    } else if has_right {
+      right_min
+    } else {
+      values[i] // single element: prominence is 0
+    }
+    prominence[i] = values[i] - col
+  }
+  prominence
+}
+
+///|
 /// Find local maxima indices where values exceed the threshold.
+/// Uses moving average smoothing (radius=1) to reduce noise, then filters
+/// by peak prominence to reject insignificant local bumps.
+/// A peak must satisfy:
+///   1. Smoothed value >= threshold
+///   2. Is a local maximum in the smoothed signal
+///   3. Peak prominence >= 20% of the signal range (adaptive)
 pub fn find_local_maxima(
   values : Array[Double],
   threshold : Double,
@@ -274,24 +363,47 @@ pub fn find_local_maxima(
     return maxima
   }
 
-  // Check first element
-  if values[0] >= threshold && values[0] >= values[1] {
-    maxima.push(0)
-  }
+  // Step 1: Smooth with moving average (radius=1 → 3-point window)
+  let smoothed = smooth_moving_average(values, 1)
 
-  // Check middle elements
-  for i = 1; i < values.length() - 1; i = i + 1 {
-    if values[i] >= threshold &&
-      values[i] >= values[i - 1] &&
-      values[i] >= values[i + 1] {
-      maxima.push(i)
+  // Step 2: Find candidate local maxima in smoothed signal
+  let candidates : Array[Int] = []
+  if smoothed[0] >= threshold && smoothed[0] >= smoothed[1] {
+    candidates.push(0)
+  }
+  for i = 1; i < smoothed.length() - 1; i = i + 1 {
+    if smoothed[i] >= threshold &&
+      smoothed[i] >= smoothed[i - 1] &&
+      smoothed[i] >= smoothed[i + 1] {
+      candidates.push(i)
     }
   }
+  let last_idx = smoothed.length() - 1
+  if smoothed[last_idx] >= threshold &&
+    smoothed[last_idx] >= smoothed[last_idx - 1] {
+    candidates.push(last_idx)
+  }
 
-  // Check last element
-  let last_idx = values.length() - 1
-  if values[last_idx] >= threshold && values[last_idx] >= values[last_idx - 1] {
-    maxima.push(last_idx)
+  // Step 3: Filter by peak prominence
+  let prominence = calculate_prominence(smoothed)
+  // Adaptive prominence threshold: 20% of signal range
+  let mut min_val = smoothed[0]
+  let mut max_val = smoothed[0]
+  for v in smoothed {
+    if v < min_val {
+      min_val = v
+    }
+    if v > max_val {
+      max_val = v
+    }
+  }
+  let signal_range = max_val - min_val
+  let min_prominence = signal_range * 0.2
+
+  for idx in candidates {
+    if prominence[idx] >= min_prominence {
+      maxima.push(idx)
+    }
   }
 
   maxima

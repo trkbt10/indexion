@@ -36,7 +36,7 @@ pub fn build_document_frequency(
 
 ///|
 /// Build a TF-IDF vector from tokens, document frequency, and total document count.
-/// TF(term, doc) = count(term) / total_tokens
+/// Uses sublinear TF (1 + ln(count)) to address term saturation.
 /// IDF(term) = log((1 + total_docs) / (1 + df)) + 1
 pub fn build_tfidf_vector(
   tokens : Array[String],
@@ -48,18 +48,18 @@ pub fn build_tfidf_vector(
   }
   let tf = build_term_frequency(tokens)
   let vector = TfidfVector::new()
-  let total_tokens = tokens.length().to_double()
   for entry in tf {
     let term = entry.0
     let count = entry.1
-    let normalized_tf = count.to_double() / total_tokens
+    // Sublinear TF: 1 + ln(count) — saturates high-frequency terms
+    let sublinear_tf = 1.0 + @math.ln(count.to_double())
     let term_df = df.get(term).unwrap_or(0)
     // IDF = log((1 + total_docs) / (1 + df)) + 1
     let idf = @math.ln(
         (1.0 + total_docs.to_double()) / (1.0 + term_df.to_double()),
       ) +
       1.0
-    vector.set(term, normalized_tf * idf)
+    vector.set(term, sublinear_tf * idf)
   }
   vector
 }

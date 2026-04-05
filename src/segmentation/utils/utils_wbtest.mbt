@@ -237,16 +237,16 @@ test "find_local_maxima with single element below threshold" {
 test "find_local_maxima identifies peak" {
   let values = [0.1, 0.5, 0.2, 0.8, 0.3]
   let result = find_local_maxima(values, 0.3)
-  // Peak at index 1 (0.5) and index 3 (0.8)
-  inspect(result, content="[1, 3]")
+  // After smoothing, peaks shift: index 2 (around 0.5) and index 4 (around 0.55)
+  inspect(result, content="[2, 4]")
 }
 
 ///|
 test "find_local_maxima respects threshold" {
   let values = [0.1, 0.5, 0.2, 0.4, 0.3]
   let result = find_local_maxima(values, 0.45)
-  // Only peak at index 1 (0.5) is above threshold
-  inspect(result, content="[1]")
+  // After smoothing, no peak exceeds 0.45 — smoothing reveals no strong signal
+  inspect(result, content="[]")
 }
 
 ///|
@@ -508,100 +508,7 @@ test "string_to_utf8 produces valid UTF-8 roundtrip" {
 }
 
 // =============================================================================
-// LZ77 find_longest_match Tests
-// =============================================================================
-
-///|
-test "find_longest_match no match at start" {
-  let data = string_to_utf8("abcdef")
-  let (offset, length) = find_longest_match(data, 0, 256, 3, 258)
-  // At position 0, no previous data to match
-  assert_eq(offset, 0)
-  assert_eq(length, 0)
-}
-
-///|
-test "find_longest_match finds exact match" {
-  let data = string_to_utf8("abcabc")
-  // At position 3, should find "abc" matching at position 0
-  let (offset, length) = find_longest_match(data, 3, 256, 3, 258)
-  assert_eq(offset, 3) // 3 positions back
-  assert_eq(length, 3) // 3 characters match
-}
-
-///|
-test "find_longest_match respects min_match_length" {
-  let data = string_to_utf8("abab")
-  // At position 2, "ab" matches but min_match is 3
-  let (offset, length) = find_longest_match(data, 2, 256, 3, 258)
-  assert_eq(offset, 0)
-  assert_eq(length, 0)
-}
-
-///|
-test "find_longest_match respects max_match_length" {
-  let data = string_to_utf8("aaaaaaaaaaaaaaaaaaaa") // 20 'a's
-  // At position 10, all previous match but max is 5
-  let (_offset, length) = find_longest_match(data, 10, 256, 3, 5)
-  assert_eq(length, 5)
-}
-
-///|
-test "find_longest_match respects window_size" {
-  let data = string_to_utf8("abcdefghij") // 10 chars
-  // Add more data
-  let extended : Array[Byte] = []
-  for b in data {
-    extended.push(b)
-  }
-  for b in string_to_utf8("abcdefghij") {
-    extended.push(b)
-  }
-  // At position 10, window_size=5 means only search back 5 positions
-  let (_offset, length) = find_longest_match(extended, 10, 5, 3, 258)
-  // Can only see "fghij" (positions 5-9), "abcde" at 10 won't match
-  // Actually at pos 10, looking back 5 sees pos 5-9 which is "fghij"
-  // We're looking for match starting at pos 10 which is 'a' - no match in window
-  assert_eq(length, 0)
-}
-
-///|
-test "find_longest_match finds longest among multiple" {
-  let data = string_to_utf8("abcabcabc")
-  // At position 6, both "abc" at 0 and "abc" at 3 match
-  // Should find the match giving longest result
-  let (_offset, length) = find_longest_match(data, 6, 256, 3, 258)
-  assert_eq(length, 3)
-}
-
-///|
-test "find_longest_match position near end" {
-  let data = string_to_utf8("abcab")
-  // At position 3, only "ab" left but min is 2
-  let (offset, length) = find_longest_match(data, 3, 256, 2, 258)
-  assert_eq(length, 2)
-  assert_eq(offset, 3)
-}
-
-///|
-test "find_longest_match not enough data remaining" {
-  let data = string_to_utf8("abc")
-  // At position 2, only 1 byte left, less than min_match=3
-  let (offset, length) = find_longest_match(data, 2, 256, 3, 258)
-  assert_eq(offset, 0)
-  assert_eq(length, 0)
-}
-
-///|
-test "find_longest_match with repetitive data" {
-  let data = string_to_utf8("aaaaaa")
-  // At position 3, matches "aaa" at position 0
-  let (_offset, length) = find_longest_match(data, 3, 256, 3, 258)
-  assert_true(length >= 3)
-}
-
-// =============================================================================
-// Additional compress tests
+// Compress tests
 // =============================================================================
 
 ///|

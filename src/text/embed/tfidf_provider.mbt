@@ -4,23 +4,6 @@
 /// text-to-vector conversion.
 
 ///|
-/// Natural logarithm approximation via series expansion.
-fn ln(x : Double) -> Double {
-  if x <= 0.0 {
-    return 0.0
-  }
-  let y = (x - 1.0) / (x + 1.0)
-  let y2 = y * y
-  let mut result = y
-  let mut term = y
-  for i = 1; i < 50; i = i + 1 {
-    term = term * y2
-    result = result + term / (2.0 * i.to_double() + 1.0)
-  }
-  2.0 * result
-}
-
-///|
 /// TF-IDF based embedding provider.
 /// Builds a vocabulary from a text corpus, then projects new texts into
 /// a fixed-dimension dense vector space using TF-IDF weights.
@@ -41,7 +24,8 @@ pub fn TfidfEmbeddingProvider::new(dim : Int) -> TfidfEmbeddingProvider {
 
 ///|
 /// Build vocabulary from a corpus of texts.
-/// Selects the top `dim` terms by document frequency and computes IDF weights.
+/// Selects the top `dim` terms by aggregate TF-IDF weight across the corpus,
+/// which naturally favors discriminative terms (high IDF) over ubiquitous noise.
 pub fn TfidfEmbeddingProvider::build_vocabulary(
   self : TfidfEmbeddingProvider,
   texts : Array[String],
@@ -52,22 +36,43 @@ pub fn TfidfEmbeddingProvider::build_vocabulary(
   }
   let df = @tfidf.build_document_frequency(tokenized)
   let total_docs = tokenized.length()
-  // Rank terms by document frequency descending
-  let term_counts : Array[(String, Int)] = []
+  // Precompute IDF for all terms
+  let idf_map : Map[String, Double] = {}
   for entry in df {
-    term_counts.push((entry.0, entry.1))
-  }
-  term_counts.sort_by(fn(a, b) { b.1.compare(a.1) })
-  // Take top dim terms
-  let mut idx = 0
-  for i = 0; i < term_counts.length() && idx < self.dim; i = i + 1 {
-    let term = term_counts[i].0
-    self.vocabulary.set(term, idx)
-    let term_df = df.get(term).unwrap_or(1)
-    let idf_val = ln(
+    let term = entry.0
+    let term_df = entry.1
+    let idf_val = @math.ln(
         (1.0 + total_docs.to_double()) / (1.0 + term_df.to_double()),
       ) +
       1.0
+    idf_map.set(term, idf_val)
+  }
+  // Accumulate aggregate TF-IDF weight per term across all documents
+  let aggregate_weight : Map[String, Double] = {}
+  for tokens in tokenized {
+    let tf = @tfidf.build_term_frequency(tokens)
+    for entry in tf {
+      let term = entry.0
+      let count = entry.1
+      let sublinear_tf = 1.0 + @math.ln(count.to_double())
+      let idf_val = idf_map.get(term).unwrap_or(1.0)
+      let weight = sublinear_tf * idf_val
+      let current = aggregate_weight.get(term).unwrap_or(0.0)
+      aggregate_weight.set(term, current + weight)
+    }
+  }
+  // Rank terms by aggregate TF-IDF weight descending
+  let term_weights : Array[(String, Double)] = []
+  for entry in aggregate_weight {
+    term_weights.push((entry.0, entry.1))
+  }
+  term_weights.sort_by(fn(a, b) { b.1.compare(a.1) })
+  // Take top dim terms
+  let mut idx = 0
+  for i = 0; i < term_weights.length() && idx < self.dim; i = i + 1 {
+    let term = term_weights[i].0
+    self.vocabulary.set(term, idx)
+    let idf_val = idf_map.get(term).unwrap_or(1.0)
     self.idf.set(term, idf_val)
     idx += 1
   }
@@ -82,17 +87,16 @@ pub fn TfidfEmbeddingProvider::embed(
 ) -> Array[Double] {
   let tokens = @tokenizer.tokenize_for_tfidf(text)
   let tf = @tfidf.build_term_frequency(tokens)
-  let total = tokens.length().to_double()
-  let safe_total = if total < 1.0 { 1.0 } else { total }
   let vector = Array::make(self.dim, 0.0)
   for entry in tf {
     let term = entry.0
     let count = entry.1
     match self.vocabulary.get(term) {
       Some(idx) => {
-        let normalized_tf = count.to_double() / safe_total
+        // Sublinear TF: 1 + ln(count) — saturates high-frequency terms
+        let sublinear_tf = 1.0 + @math.ln(count.to_double())
         let idf_val = self.idf.get(term).unwrap_or(1.0)
-        vector[idx] = normalized_tf * idf_val
+        vector[idx] = sublinear_tf * idf_val
       }
       None => ()
     }

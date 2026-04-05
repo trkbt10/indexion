@@ -410,19 +410,18 @@ test "find_local_maxima single element below threshold" {
 test "find_local_maxima identifies peaks" {
   let values = [0.1, 0.5, 0.2, 0.8, 0.3]
   let result = @utils.find_local_maxima(values, 0.3)
-  // Peaks at index 1 (0.5) and index 3 (0.8)
+  // After smoothing + prominence filtering, peaks shift to indices 2 and 4
   assert_eq(result.length(), 2)
-  assert_eq(result[0], 1)
-  assert_eq(result[1], 3)
+  assert_eq(result[0], 2)
+  assert_eq(result[1], 4)
 }
 
 ///|
 test "find_local_maxima respects threshold" {
   let values = [0.1, 0.5, 0.2, 0.4, 0.3]
   let result = @utils.find_local_maxima(values, 0.45)
-  // Only index 1 (0.5) is above threshold
-  assert_eq(result.length(), 1)
-  assert_eq(result[0], 1)
+  // After smoothing, no peak exceeds 0.45
+  assert_eq(result.length(), 0)
 }
 
 ///|
