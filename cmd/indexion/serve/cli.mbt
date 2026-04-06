@@ -201,7 +201,7 @@ priv struct ServerState {
   mut index : @index.DigestIndex
   mut index_json : String
   mut stats_json : String
-  mut provider : @dconfig.EmbeddingProvider
+  mut digest_config : @dconfig.DigestConfig
   mut wiki : @wiki_types.WikiData
   mut wiki_search : @wiki_search.WikiSearchIndex?
 }
@@ -315,7 +315,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         index: empty_index,
         index_json: "[]",
         stats_json: "{}",
-        provider,
+        digest_config,
         wiki,
         wiki_search,
       }
@@ -374,7 +374,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
           conn,
           body_text,
           state.index,
-          state.provider,
+          state.digest_config,
           cors_enabled,
         )
         return
@@ -509,9 +509,8 @@ async fn do_load(
   digest_config : @dconfig.DigestConfig,
 ) -> ServerState? {
   let mp = @dconfig.manifest_path(config.index_dir)
-  let vp = @dconfig.vectors_path(config.index_dir)
   let gp = @dconfig.graph_path(config.index_dir)
-  if !@fs.path_exists(mp) || !@fs.path_exists(vp) || !@fs.path_exists(gp) {
+  if !@fs.path_exists(mp) || !@fs.path_exists(gp) {
     return None
   }
   @digest_cli.log_progress("Loading index from " + config.index_dir + "...")
@@ -542,7 +541,7 @@ async fn do_load(
     index,
     index_json,
     stats_json,
-    provider,
+    digest_config,
     wiki,
     wiki_search,
   })
@@ -602,35 +601,13 @@ async fn do_build(
     ", removed: " +
     result.removed_count.to_string(),
   )
-  // Persist to disk
-  @config.ensure_dir_recursive(config.index_dir)
-  let (manifest_json, db_bytes) = index.serialize()
-  @fs.write_string_to_file(
-    @dconfig.manifest_path(config.index_dir),
-    manifest_json,
-  ) catch {
-    e => {
-      @digest_cli.log_error("Saving manifest: " + e.to_string())
-      return None
-    }
+  // Persist to disk using save_to_dir (SoT for persistence)
+  let save_errors = index.save_to_dir(config.index_dir, graph)
+  for err in save_errors {
+    @digest_cli.log_error(err)
   }
-  @fs.write_bytes_to_file(
-    @dconfig.vectors_path(config.index_dir),
-    db_bytes,
-  ) catch {
-    e => {
-      @digest_cli.log_error("Saving vectors: " + e.to_string())
-      return None
-    }
-  }
-  @fs.write_string_to_file(
-    @dconfig.graph_path(config.index_dir),
-    graph_json,
-  ) catch {
-    e => {
-      @digest_cli.log_error("Saving graph: " + e.to_string())
-      return None
-    }
+  if save_errors.length() > 0 {
+    return None
   }
   let provider = @digest_cli.resolve_provider(digest_cli_config)
   let index_json = build_index_json(index)
@@ -644,7 +621,7 @@ async fn do_build(
     index,
     index_json,
     stats_json,
-    provider,
+    digest_config,
     wiki,
     wiki_search,
   })
@@ -666,7 +643,7 @@ async fn handle_rebuild(
       state.index = new_state.index
       state.index_json = new_state.index_json
       state.stats_json = new_state.stats_json
-      state.provider = new_state.provider
+      state.digest_config = new_state.digest_config
       state.wiki = new_state.wiki
       state.wiki_search = new_state.wiki_search
       // Refresh the GET route table from updated state
@@ -763,7 +740,7 @@ async fn handle_digest_query(
   conn : @mhttp.ServerConnection,
   body_text : String,
   index : @index.DigestIndex,
-  provider : @dconfig.EmbeddingProvider,
+  digest_config : @dconfig.DigestConfig,
   cors : Bool,
 ) -> Unit {
   let json : Json = @json.parse(body_text) catch {
@@ -788,19 +765,8 @@ async fn handle_digest_query(
   } else {
     0.1
   }
-  let hits = match provider {
-    @dconfig.OpenAI(api_config) =>
-      index.query_native(purpose, top_k, api_config) catch {
-        _ => {
-          send_json_error(conn, 500, "Embedding query failed", cors)
-          return
-        }
-      }
-    _ => {
-      let options = @types.QueryOptions::with_top_k(top_k)
-      @query.query_by_purpose(index, purpose, options)
-    }
-  }
+  // Cascade: try remote providers first, fall back to local
+  let hits = serve_query_cascade(index, digest_config, purpose, top_k)
   let results : Array[Json] = []
   for hit in hits {
     if hit.score >= min_score {
@@ -829,21 +795,63 @@ fn query_hit_to_json(hit : @types.QueryHit) -> Json {
 }
 
 ///|
+/// Cascade query through providers: remote first, then local.
+async fn serve_query_cascade(
+  index : @index.DigestIndex,
+  digest_config : @dconfig.DigestConfig,
+  purpose : String,
+  top_k : Int,
+) -> Array[@types.QueryHit] {
+  for p in digest_config.providers {
+    if p.kind == "remote" && index.has_provider(p.key) {
+      match p.api_config {
+        Some(api_config) => {
+          let hits = try {
+            index.query_api(purpose, top_k, p.key, api_config)
+          } catch {
+            _ => continue
+          }
+          return hits
+        }
+        None => ()
+      }
+    }
+  }
+  for p in digest_config.providers {
+    if p.kind == "tfidf" && index.has_provider(p.key) {
+      return index.query_local(purpose, top_k, p.key)
+    }
+  }
+  []
+}
+
+///|
 fn build_stats_json(
   graph : @graph.CodeGraph,
   index_dir : String,
   digest_config : @dconfig.DigestConfig,
 ) -> String {
-  let provider_name = match digest_config.embedding_provider {
-    @dconfig.TfIdf(dim) => "tfidf (" + dim.to_string() + " dims)"
-    @dconfig.OpenAI(cfg) =>
-      cfg.model + " (" + cfg.dim.to_string() + " dims, " + cfg.base_url + ")"
-    @dconfig.Precomputed(_) => "precomputed"
+  let parts : Array[String] = []
+  for p in digest_config.providers {
+    parts.push(p.key + " (" + p.dim.to_string() + " dims)")
+  }
+  let provider_desc = if parts.length() > 0 {
+    parts.join(" + ")
+  } else {
+    "none"
   }
   let obj : Map[String, Json] = {}
   obj.set("indexDirectory", index_dir.to_json())
-  obj.set("provider", provider_name.to_json())
-  obj.set("embeddingDim", digest_config.embedding_dim().to_json())
+  obj.set("provider", provider_desc.to_json())
+  let provider_arr : Array[Json] = []
+  for p in digest_config.providers {
+    let po : Map[String, Json] = {}
+    po.set("key", p.key.to_json())
+    po.set("kind", p.kind.to_json())
+    po.set("dim", p.dim.to_json())
+    provider_arr.push(Json::object(po))
+  }
+  obj.set("providers", Json::array(provider_arr))
   obj.set("totalSymbols", graph.symbol_count().to_json())
   obj.set("totalModules", graph.module_count().to_json())
   obj.set("totalEdges", graph.edge_count().to_json())

@@ -1,5 +1,9 @@
 // DigestConfig - Single Source of Truth for digest configuration.
 // Consolidates all digest-related settings in one place.
+//
+// N-provider design: Any number of embedding providers (TF-IDF, remote APIs)
+// coexist in a single index. Each provider is identified by a stable string key
+// and persisted independently (separate vector DB files).
 
 ///|
 /// Default symbol kinds to exclude from indexing.
@@ -13,20 +17,11 @@ pub fn default_exclude_kinds() -> Array[String] {
 pub const DEFAULT_INDEX_DIR : String = ".indexion/digest"
 
 // --- Index file name constants (SoT) ---
-// All file names within the index directory are defined here.
-// Consumers MUST use these constants or the path functions below.
+// Static file names are defined here. Provider-specific file names are dynamic.
 
 ///|
 /// Manifest file name within the index directory.
 pub const INDEX_MANIFEST_FILE : String = "manifest.json"
-
-///|
-/// Vector database file name within the index directory.
-pub const INDEX_VECTORS_FILE : String = "vectors.db"
-
-///|
-/// TF-IDF vocabulary file name within the index directory.
-pub const INDEX_VOCABULARY_FILE : String = "vocabulary.json"
 
 ///|
 /// Code graph file name within the index directory.
@@ -37,11 +32,12 @@ pub const INDEX_GRAPH_FILE : String = "graph.json"
 pub const INDEX_LOCK_FILE : String = "build.lock"
 
 ///|
-/// All index file names that constitute a complete index.
-/// Used for cleanup (delete_index_files) and integrity checks.
-pub let index_file_names : Array[String] = [
-  INDEX_MANIFEST_FILE, INDEX_VECTORS_FILE, INDEX_VOCABULARY_FILE,
-  INDEX_GRAPH_FILE,
+/// Legacy file names from previous versions — used for cleanup only.
+let legacy_file_names : Array[String] = [
+  "vectors.db", // v2
+  "vectors_tfidf.db", // v3
+  "vectors_remote.db", // v3
+  "vocabulary.json", // v3 (non-keyed)
 ]
 
 ///|
@@ -57,18 +53,6 @@ pub fn manifest_path(index_dir : String) -> String {
 }
 
 ///|
-/// Path to the vector database within the given index directory.
-pub fn vectors_path(index_dir : String) -> String {
-  index_path(index_dir, INDEX_VECTORS_FILE)
-}
-
-///|
-/// Path to the TF-IDF vocabulary within the given index directory.
-pub fn vocabulary_path(index_dir : String) -> String {
-  index_path(index_dir, INDEX_VOCABULARY_FILE)
-}
-
-///|
 /// Path to the code graph within the given index directory.
 pub fn graph_path(index_dir : String) -> String {
   index_path(index_dir, INDEX_GRAPH_FILE)
@@ -81,12 +65,54 @@ pub fn lock_path(index_dir : String) -> String {
 }
 
 ///|
+/// Path to the vector database for a given provider key.
+/// e.g. vectors_tfidf.db, vectors_text-embedding-3-small.db
+pub fn vectors_db_path(
+  index_dir : String,
+  provider_key : String,
+) -> String {
+  index_path(index_dir, "vectors_" + provider_key + ".db")
+}
+
+///|
+/// Path to the vocabulary file for a given provider key (TF-IDF only).
+/// e.g. vocabulary_tfidf.json
+pub fn vocabulary_json_path(
+  index_dir : String,
+  provider_key : String,
+) -> String {
+  index_path(index_dir, "vocabulary_" + provider_key + ".json")
+}
+
+///|
+/// Compute the list of all index file names for a given set of provider keys.
+/// Used for cleanup (delete_index_files).
+pub fn compute_index_file_names(
+  provider_keys : Array[String],
+) -> Array[String] {
+  let names : Array[String] = [INDEX_MANIFEST_FILE, INDEX_GRAPH_FILE]
+  for key in provider_keys {
+    names.push("vectors_" + key + ".db")
+    names.push("vocabulary_" + key + ".json")
+  }
+  // Legacy cleanup
+  for name in legacy_file_names {
+    names.push(name)
+  }
+  names
+}
+
+///|
 /// Default TF-IDF dimension
 pub const DEFAULT_TFIDF_DIM : Int = 256
 
 ///|
 /// OpenAI text-embedding-3-small dimension
 pub const OPENAI_EMBEDDING_DIM : Int = 1536
+
+///|
+/// Default TF-IDF provider key
+pub const DEFAULT_TFIDF_KEY : String = "tfidf"
 
 ///|
 /// Default impression model
@@ -148,6 +174,7 @@ pub fn EmbeddingApiConfig::new(api_key : String) -> EmbeddingApiConfig {
 
 ///|
 /// Embedding provider type.
+/// Used for CLI parsing and display. The actual config uses providers array.
 pub(all) enum EmbeddingProvider {
   /// Local TF-IDF (no external dependencies).
   TfIdf(Int) // dimension
@@ -167,6 +194,60 @@ pub(all) enum VcdbStrategy {
   /// IVF (approximate, good for very large datasets).
   Ivf
 } derive(Eq, Show)
+
+///|
+/// Per-provider configuration.
+/// Each provider is identified by a unique key and has a kind ("tfidf" or "remote").
+pub(all) struct ProviderConfig {
+  /// Stable identifier used for file naming and manifest tracking.
+  key : String
+  /// Provider kind: "tfidf" for local TF-IDF, "remote" for API-based embedding.
+  kind : String
+  /// Embedding vector dimension.
+  dim : Int
+  /// API configuration (required for kind="remote", None for kind="tfidf").
+  api_config : EmbeddingApiConfig?
+} derive(Eq, Show)
+
+///|
+/// Create a default TF-IDF provider config.
+pub fn ProviderConfig::tfidf(
+  dim? : Int = DEFAULT_TFIDF_DIM,
+) -> ProviderConfig {
+  { key: DEFAULT_TFIDF_KEY, kind: "tfidf", dim, api_config: None }
+}
+
+///|
+/// Create a remote provider config from an EmbeddingApiConfig.
+/// Key defaults to the model name.
+pub fn ProviderConfig::remote(api_config : EmbeddingApiConfig) -> ProviderConfig {
+  {
+    key: sanitize_provider_key(api_config.model),
+    kind: "remote",
+    dim: api_config.dim,
+    api_config: Some(api_config),
+  }
+}
+
+///|
+/// Sanitize a string for use as a provider key (filesystem-safe).
+/// Replaces non-alphanumeric chars (except hyphen, underscore, dot) with hyphen.
+pub fn sanitize_provider_key(raw : String) -> String {
+  let buf = StringBuilder::new()
+  for ch in raw {
+    if (ch >= 'a' && ch <= 'z') ||
+      (ch >= 'A' && ch <= 'Z') ||
+      (ch >= '0' && ch <= '9') ||
+      ch == '-' ||
+      ch == '_' ||
+      ch == '.' {
+      buf.write_char(ch)
+    } else {
+      buf.write_char('-')
+    }
+  }
+  buf.to_string()
+}
 
 ///|
 /// LLM configuration for impression generation.
@@ -212,11 +293,15 @@ pub fn LlmConfig::with_model(api_key : String, model : String) -> LlmConfig {
 
 ///|
 /// Unified digest configuration.
+///
+/// N-provider design: `providers` is an ordered list of embedding providers.
+/// Each provider runs independently. The first provider is preferred for queries.
+/// Providers can be TF-IDF (local) or remote API (OpenAI-compatible).
 pub(all) struct DigestConfig {
   /// Embedding source: Raw, Impression, or RawWithContext.
   embedding_source : EmbeddingSource
-  /// Embedding provider: TfIdf, OpenAI, or Precomputed.
-  embedding_provider : EmbeddingProvider
+  /// Ordered list of embedding providers. First is preferred for queries.
+  providers : Array[ProviderConfig]
   /// vcdb indexing strategy.
   vcdb_strategy : VcdbStrategy
   /// Include external packages (no source file).
@@ -230,11 +315,11 @@ pub(all) struct DigestConfig {
 } derive(Eq, Show)
 
 ///|
-/// Default config: TF-IDF, raw embedding, HNSW, internal only.
+/// Default config: TF-IDF only, raw embedding, HNSW, internal only.
 pub fn DigestConfig::default() -> DigestConfig {
   {
     embedding_source: Raw,
-    embedding_provider: TfIdf(DEFAULT_TFIDF_DIM),
+    providers: [ProviderConfig::tfidf()],
     vcdb_strategy: Hnsw,
     include_external: false,
     exclude_kinds: default_exclude_kinds(),
@@ -244,11 +329,14 @@ pub fn DigestConfig::default() -> DigestConfig {
 }
 
 ///|
-/// Config for native OpenAI embedding.
+/// Config with OpenAI embedding (TF-IDF + OpenAI).
 pub fn DigestConfig::openai(api_key : String) -> DigestConfig {
   {
     embedding_source: Raw,
-    embedding_provider: OpenAI(EmbeddingApiConfig::new(api_key)),
+    providers: [
+      ProviderConfig::tfidf(),
+      ProviderConfig::remote(EmbeddingApiConfig::new(api_key)),
+    ],
     vcdb_strategy: Hnsw,
     include_external: false,
     exclude_kinds: default_exclude_kinds(),
@@ -258,30 +346,19 @@ pub fn DigestConfig::openai(api_key : String) -> DigestConfig {
 }
 
 ///|
-/// Config with impressions (best quality, requires LLM).
+/// Config with impressions (best quality, requires LLM + remote embeddings).
 pub fn DigestConfig::with_impressions(api_key : String) -> DigestConfig {
   {
     embedding_source: Impression,
-    embedding_provider: OpenAI(EmbeddingApiConfig::new(api_key)),
+    providers: [
+      ProviderConfig::tfidf(),
+      ProviderConfig::remote(EmbeddingApiConfig::new(api_key)),
+    ],
     vcdb_strategy: Hnsw,
     include_external: false,
     exclude_kinds: default_exclude_kinds(),
     index_dir: DEFAULT_INDEX_DIR,
     llm_config: Some(LlmConfig::openai(api_key)),
-  }
-}
-
-///|
-/// Config for precomputed embeddings file.
-pub fn DigestConfig::precomputed(embeddings_file : String) -> DigestConfig {
-  {
-    embedding_source: Raw,
-    embedding_provider: Precomputed(embeddings_file),
-    vcdb_strategy: Hnsw,
-    include_external: false,
-    exclude_kinds: default_exclude_kinds(),
-    index_dir: DEFAULT_INDEX_DIR,
-    llm_config: None,
   }
 }
 
@@ -302,15 +379,20 @@ pub fn DigestConfig::with_impress_prompt(
 ) -> DigestConfig {
   match self.llm_config {
     Some(cfg) => { ..self, llm_config: Some({ ..cfg, system_prompt: prompt }) }
-    None =>
-      match self.embedding_provider {
-        OpenAI(cfg) =>
-          {
-            ..self,
-            llm_config: Some(LlmConfig::with_prompt(cfg.api_key, prompt)),
-          }
-        _ => self
+    None => {
+      // Try to find a remote provider's API key
+      for p in self.providers {
+        match p.api_config {
+          Some(cfg) =>
+            return {
+              ..self,
+              llm_config: Some(LlmConfig::with_prompt(cfg.api_key, prompt)),
+            }
+          None => ()
+        }
       }
+      self
+    }
   }
 }
 
@@ -322,15 +404,19 @@ pub fn DigestConfig::with_impress_model(
 ) -> DigestConfig {
   match self.llm_config {
     Some(cfg) => { ..self, llm_config: Some({ ..cfg, model, }) }
-    None =>
-      match self.embedding_provider {
-        OpenAI(cfg) =>
-          {
-            ..self,
-            llm_config: Some(LlmConfig::with_model(cfg.api_key, model)),
-          }
-        _ => self
+    None => {
+      for p in self.providers {
+        match p.api_config {
+          Some(cfg) =>
+            return {
+              ..self,
+              llm_config: Some(LlmConfig::with_model(cfg.api_key, model)),
+            }
+          None => ()
+        }
       }
+      self
+    }
   }
 }
 
@@ -353,19 +439,41 @@ pub fn DigestConfig::with_exclude_kinds(
 }
 
 ///|
-/// Get embedding dimension for this config.
-pub fn DigestConfig::embedding_dim(self : DigestConfig) -> Int {
-  match self.embedding_provider {
-    TfIdf(dim) => dim
-    OpenAI(cfg) => cfg.dim
-    Precomputed(_) => OPENAI_EMBEDDING_DIM // assume OpenAI format
+/// Get the first provider of a given kind, if any.
+pub fn DigestConfig::first_of_kind(
+  self : DigestConfig,
+  kind : String,
+) -> ProviderConfig? {
+  for p in self.providers {
+    if p.kind == kind {
+      return Some(p)
+    }
   }
+  None
 }
 
 ///|
-/// Check if this config uses remote API.
-pub fn DigestConfig::is_remote(self : DigestConfig) -> Bool {
-  self.embedding_provider is OpenAI(_)
+/// Get a provider by key.
+pub fn DigestConfig::get_provider(
+  self : DigestConfig,
+  key : String,
+) -> ProviderConfig? {
+  for p in self.providers {
+    if p.key == key {
+      return Some(p)
+    }
+  }
+  None
+}
+
+///|
+/// Get all provider keys.
+pub fn DigestConfig::provider_keys(self : DigestConfig) -> Array[String] {
+  let keys : Array[String] = []
+  for p in self.providers {
+    keys.push(p.key)
+  }
+  keys
 }
 
 ///|
@@ -387,12 +495,19 @@ pub fn DigestConfig::to_extract_config(
 }
 
 ///|
-/// Set embedding provider.
-pub fn DigestConfig::with_provider(
-  self : DigestConfig,
-  provider : EmbeddingProvider,
-) -> DigestConfig {
-  { ..self, embedding_provider: provider }
+/// Construct DigestConfig from a resolved EmbeddingProvider enum.
+/// Used by CLI to convert the legacy provider selection into providers array.
+pub fn DigestConfig::from_provider(provider : EmbeddingProvider) -> DigestConfig {
+  match provider {
+    TfIdf(dim) =>
+      { ..DigestConfig::default(), providers: [ProviderConfig::tfidf(dim~)] }
+    OpenAI(cfg) =>
+      {
+        ..DigestConfig::default(),
+        providers: [ProviderConfig::tfidf(), ProviderConfig::remote(cfg)],
+      }
+    Precomputed(_) => DigestConfig::default()
+  }
 }
 
 ///|
@@ -404,7 +519,6 @@ pub fn DigestConfig::get_embedding_text(
 ) -> String {
   match self.embedding_source {
     Raw => {
-      // Prefer doc comment when available for better semantic matching
       let base = unit.name() + " " + unit.symbol.kind + " " + unit.symbol.ns
       match unit.symbol.doc {
         Some(doc) => base + " " + doc

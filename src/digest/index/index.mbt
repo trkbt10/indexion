@@ -1,5 +1,8 @@
 // DigestIndex - Main orchestration for reminiscent backtracking.
 // Integrates vcdb for vector storage with function extraction and embedding.
+//
+// N-provider design: Engines and reverse indexes are stored in Maps keyed by
+// provider key. Each provider has its own SearchEngine and vector ID space.
 
 ///|
 /// Result of building/updating the index.
@@ -21,41 +24,68 @@ pub fn BuildResult::new() -> BuildResult {
 }
 
 // TfidfEmbeddingProvider: use @text_embed.TfidfEmbeddingProvider (SoT)
-// Type alias for backward compatibility within digest package.
 
 ///|
 pub type TfidfEmbeddingProvider = @text_embed.TfidfEmbeddingProvider
 
 ///|
 /// DigestIndex - Main index structure.
-/// Uses SearchEngine as the vcdb backend for consistency with search command.
+/// N-provider: engines and reverse indexes are keyed by provider key.
 pub struct DigestIndex {
   /// Manifest for tracking state.
   mut manifest : @manifest.DigestManifest
-  /// Search engine wrapping vcdb.
-  engine : @search.SearchEngine
-  /// TF-IDF embedding provider.
-  provider : TfidfEmbeddingProvider
+  /// Search engines per provider (provider_key -> engine).
+  engines : Map[String, @search.SearchEngine]
+  /// TF-IDF embedding providers (provider_key -> provider, only for kind="tfidf").
+  tfidf_providers : Map[String, TfidfEmbeddingProvider]
   /// Cached function units.
   units : Map[String, @types.FunctionUnit]
-  /// Reverse index: vector_id -> function_id for O(1) query lookups.
-  vid_to_fid : Map[Int64, String]
+  /// Reverse index per provider (provider_key -> (vector_id -> function_id)).
+  vid_to_fid : Map[String, Map[Int64, String]]
 }
 
 ///|
-/// Query by purpose text with optional FilterExpr.
+/// Query using the first available TF-IDF provider (convenience method).
+/// Used by query_by_purpose and other callers that don't specify a provider key.
 pub fn DigestIndex::query(
   self : DigestIndex,
   purpose : String,
   top_k : Int,
   filter? : @vcdb_filter.FilterExpr? = None,
 ) -> Array[@types.QueryHit] {
-  let vector = self.provider.embed(purpose)
-  let hits = self.engine.search_vector(vector, top_k, filter~)
+  match self.first_provider_of_kind("tfidf") {
+    Some(key) => self.query_local(purpose, top_k, key, filter~)
+    None => []
+  }
+}
+
+///|
+/// Query by purpose text using a specific TF-IDF provider (synchronous).
+pub fn DigestIndex::query_local(
+  self : DigestIndex,
+  purpose : String,
+  top_k : Int,
+  provider_key : String,
+  filter? : @vcdb_filter.FilterExpr? = None,
+) -> Array[@types.QueryHit] {
+  let provider = match self.tfidf_providers.get(provider_key) {
+    Some(p) => p
+    None => return []
+  }
+  let engine = match self.engines.get(provider_key) {
+    Some(e) => e
+    None => return []
+  }
+  let reverse = match self.vid_to_fid.get(provider_key) {
+    Some(m) => m
+    None => return []
+  }
+  let vector = provider.embed(purpose)
+  let hits = engine.search_vector(vector, top_k, filter~)
   let results : Array[@types.QueryHit] = []
   for hit in hits {
     let vid = hit.id.to_int64()
-    match self.vid_to_fid.get(vid) {
+    match reverse.get(vid) {
       Some(fid) =>
         match self.units.get(fid) {
           Some(unit) =>
@@ -69,8 +99,40 @@ pub fn DigestIndex::query(
 }
 
 ///|
+/// Whether this index has a given provider.
+pub fn DigestIndex::has_provider(
+  self : DigestIndex,
+  key : String,
+) -> Bool {
+  self.engines.contains(key)
+}
+
+///|
+/// Get all provider keys.
+pub fn DigestIndex::provider_keys(self : DigestIndex) -> Array[String] {
+  let keys : Array[String] = []
+  for entry in self.engines {
+    keys.push(entry.0)
+  }
+  keys
+}
+
+///|
+/// Find the first provider key of a given kind.
+pub fn DigestIndex::first_provider_of_kind(
+  self : DigestIndex,
+  kind : String,
+) -> String? {
+  for entry in self.manifest.providers {
+    if entry.1.kind == kind && self.engines.contains(entry.0) {
+      return Some(entry.0)
+    }
+  }
+  None
+}
+
+///|
 /// Restore function units from a CodeGraph without re-embedding.
-/// Used by query path to populate the units cache from a persisted graph.
 pub fn DigestIndex::restore_units_from_graph(
   self : DigestIndex,
   graph : @graph.CodeGraph,
@@ -84,10 +146,16 @@ pub fn DigestIndex::restore_units_from_graph(
 
 ///|
 /// Serialize index for persistence.
-pub fn DigestIndex::serialize(self : DigestIndex) -> (String, Bytes) {
+/// Returns (manifest_json, provider_key -> vector_db_bytes).
+pub fn DigestIndex::serialize(
+  self : DigestIndex,
+) -> (String, Map[String, Bytes]) {
   let manifest_json = self.manifest.to_json_string()
-  let db_bytes = self.engine.serialize()
-  (manifest_json, db_bytes)
+  let db_map : Map[String, Bytes] = {}
+  for entry in self.engines {
+    db_map.set(entry.0, entry.1.serialize())
+  }
+  (manifest_json, db_map)
 }
 
 ///|
@@ -95,7 +163,9 @@ pub fn DigestIndex::serialize(self : DigestIndex) -> (String, Bytes) {
 pub fn DigestIndex::stats(self : DigestIndex) -> Map[String, Int] {
   let stats : Map[String, Int] = {}
   stats.set("function_count", self.manifest.functions.length())
-  stats.set("vector_count", self.engine.size())
-  stats.set("embedding_dim", self.provider.dim)
+  for entry in self.engines {
+    stats.set(entry.0 + "_vector_count", entry.1.size())
+    stats.set(entry.0 + "_dim", entry.1.dim())
+  }
   stats
 }

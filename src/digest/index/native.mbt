@@ -1,8 +1,11 @@
 // Native async embedding support using mizchi/x/http
+//
+// N-provider build: iterates over configured providers, generates embeddings
+// for each, and stores vectors in separate engines.
 
 ///|
 /// Build index using unified DigestConfig (async).
-/// Uses DigestConfig for embedding source selection and incremental updates.
+/// Iterates over all configured providers and generates embeddings for each.
 pub async fn DigestIndex::build_with_config(
   self : DigestIndex,
   graph : @graph.CodeGraph,
@@ -11,24 +14,17 @@ pub async fn DigestIndex::build_with_config(
 ) -> BuildResult raise @embed.EmbedError {
   let result = BuildResult::new()
   // --- Phase 1: Determine which files have changed ---
-  // Build module_id -> file_path mapping and identify changed files.
-  // A file is "changed" if:
-  //   (a) file_hashes is not provided (conservative: treat all as changed), or
-  //   (b) the file's content hash differs from what the manifest recorded, or
-  //   (c) the file is not yet tracked in the manifest
-  let changed_files : Map[String, Bool] = {} // file_path -> true
-  let file_to_modules : Map[String, Array[String]] = {} // file_path -> [module_ids]
+  let changed_files : Map[String, Bool] = {}
+  let file_to_modules : Map[String, Array[String]] = {}
   for entry in graph.get_modules() {
     let module_id = entry.0
     let module_node = entry.1
     match module_node.file {
       Some(file_path) => {
-        // Track file -> modules mapping
         match file_to_modules.get(file_path) {
           Some(mods) => mods.push(module_id)
           None => file_to_modules.set(file_path, [module_id])
         }
-        // Check if file has changed
         match file_hashes {
           Some(fh) =>
             match fh.get(file_path) {
@@ -36,19 +32,14 @@ pub async fn DigestIndex::build_with_config(
                 if !self.manifest.is_file_unchanged(file_path, current_hash) {
                   changed_files.set(file_path, true)
                 }
-              None =>
-                // File not in file_hashes — might be external or unsupported
-                ()
+              None => ()
             }
-          None =>
-            // No file hashes provided — conservatively treat all files as changed
-            changed_files.set(file_path, true)
+          None => changed_files.set(file_path, true)
         }
       }
-      None => () // External module, no file path
+      None => ()
     }
   }
-  // Build set of modules whose files have changed
   let changed_module_set : Map[String, Bool] = {}
   for entry in changed_files {
     match file_to_modules.get(entry.0) {
@@ -59,7 +50,7 @@ pub async fn DigestIndex::build_with_config(
       None => ()
     }
   }
-  // --- Phase 2: Extract function units with file-content-aware hashing ---
+  // --- Phase 2: Extract function units ---
   let extract_config = digest_config.to_extract_config()
   let units = @extract.extract_function_units(
     graph,
@@ -70,9 +61,6 @@ pub async fn DigestIndex::build_with_config(
     self.units.set(unit.id(), unit)
   }
   // --- Phase 3: Identify stale, deleted, and unchanged functions ---
-  // Only functions in changed modules need hash comparison.
-  // Functions in unchanged modules are definitively up-to-date because their
-  // source_hash is derived from file content, and the file hasn't changed.
   let candidates : Array[@types.FunctionUnit] = []
   let mut unchanged_file_skip_count = 0
   for unit in units {
@@ -83,32 +71,48 @@ pub async fn DigestIndex::build_with_config(
     }
   }
   let stale = self.manifest.get_stale_functions(candidates)
-  // Handle deleted functions
   let current_ids : Array[String] = []
   for unit in units {
     current_ids.push(unit.id())
   }
-  let (updated_manifest, removed_ids) = self.manifest.remove_deleted_functions(
+  let (updated_manifest, removed_by_provider) = self.manifest.remove_deleted_functions(
     current_ids,
   )
   self.manifest = updated_manifest
-  for vid in removed_ids {
-    let _ = self.engine.remove(vid)
+  // Remove deleted vectors from each engine
+  let mut total_removed = 0
+  for entry in removed_by_provider {
+    let key = entry.0
+    let vids = entry.1
+    match self.engines.get(key) {
+      Some(engine) =>
+        for vid in vids {
+          let _ = engine.remove(vid)
+          total_removed += 1
+        }
+      None => ()
+    }
   }
-  result.removed_count = removed_ids.length()
+  result.removed_count = total_removed
   // --- Phase 4: Remove stale functions' old vectors ---
   let stale_set : Map[String, Bool] = {}
   for id in stale {
     stale_set.set(id, true)
-    // Remove old vector before re-indexing
     match self.manifest.get_function(id) {
       Some(entry) =>
-        match entry.vector_id {
-          Some(vid) => {
-            let _ = self.engine.remove(vid)
-            self.vid_to_fid.remove(vid)
+        for vid_entry in entry.vector_ids {
+          let key = vid_entry.0
+          let vid = vid_entry.1
+          match self.engines.get(key) {
+            Some(engine) => {
+              let _ = engine.remove(vid)
+              match self.vid_to_fid.get(key) {
+                Some(reverse) => reverse.remove(vid)
+                None => ()
+              }
+            }
+            None => ()
           }
-          None => ()
         }
       None => ()
     }
@@ -124,81 +128,148 @@ pub async fn DigestIndex::build_with_config(
       result.skipped_count += 1
     }
   }
-  // Add unchanged-file skips
   result.skipped_count += unchanged_file_skip_count
   if stale_texts.length() == 0 {
-    // Update FileEntry even when no functions changed, to record current hashes
     self.update_file_entries(graph, file_hashes)
     return result
   }
-  // --- Phase 6: Generate embeddings ---
-  let all_embeddings = match digest_config.embedding_provider {
-    @config.OpenAI(api_config) =>
-      embed_with_openai_config(api_config, stale_texts)
-    @config.TfIdf(_dim) => {
-      // TF-IDF vocabulary strategy:
-      // - If vocabulary already exists (loaded from persistence) and the stale
-      //   ratio is low (< 50%), reuse the existing vocabulary. The top-dim terms
-      //   are unlikely to change significantly from a small number of edits.
-      // - Otherwise, rebuild vocabulary from all function texts. This is needed
-      //   on first build or when many functions have changed (IDF shifts).
-      let total = units.length()
-      let stale_ratio = if total > 0 {
-        stale_texts.length().to_double() / total.to_double()
-      } else {
-        1.0
-      }
-      if !self.provider.has_vocabulary() || stale_ratio >= 0.5 {
-        let all_texts : Array[String] = []
-        for unit in units {
-          all_texts.push(digest_config.get_embedding_text(unit))
-        }
-        self.provider.build_vocabulary(all_texts)
-      }
-      let embeddings : Array[Array[Double]] = []
-      for text in stale_texts {
-        embeddings.push(self.provider.embed(text))
-      }
-      embeddings
-    }
-    @config.Precomputed(_file) =>
-      raise @embed.ParseError(
-        "Precomputed embeddings not supported in async build",
-      )
+  // --- Phase 6-7: Generate embeddings & store per provider ---
+  let total = units.length()
+  let stale_ratio = if total > 0 {
+    stale_texts.length().to_double() / total.to_double()
+  } else {
+    1.0
   }
-  // --- Phase 7: Index stale functions ---
-  for j = 0; j < stale_units.length(); j = j + 1 {
-    let unit = stale_units[j]
-    let vector = all_embeddings[j]
-    let (m, vid) = self.manifest.allocate_vector_id()
-    self.manifest = m
-    let attrs = @search.empty_attrs()
-    attrs.set("node_type", @vcdb_core.String(@kgf_features.node_type_code))
-    attrs.set("node_kind", @vcdb_core.String(unit.symbol.kind))
-    attrs.set("name", @vcdb_core.String(unit.name()))
-    attrs.set("kind", @vcdb_core.String(unit.symbol.kind))
-    attrs.set("module", @vcdb_core.String(unit.module_id))
-    attrs.set("depth", @vcdb_core.Int(unit.depth.to_int64()))
-    attrs.set("source_hash", @vcdb_core.String(unit.source_hash.to_string()))
-    attrs.set("context_hash", @vcdb_core.String(unit.context_hash.to_string()))
-    match unit.symbol.doc {
-      Some(doc) => attrs.set("doc", @vcdb_core.String(doc))
+  // Collect all texts (for vocabulary rebuild) once, shared across TF-IDF providers
+  let mut all_texts_cache : Array[String]? = None
+  fn get_all_texts() -> Array[String] {
+    match all_texts_cache {
+      Some(texts) => texts
+      None => {
+        let texts : Array[String] = []
+        for unit in units {
+          texts.push(digest_config.get_embedding_text(unit))
+        }
+        all_texts_cache = Some(texts)
+        texts
+      }
+    }
+  }
+  for provider in digest_config.providers {
+    let key = provider.key
+    let engine = match self.engines.get(key) {
+      Some(e) => e
+      None => continue // Engine not initialized — skip
+    }
+    let reverse = match self.vid_to_fid.get(key) {
+      Some(m) => m
+      None => {
+        let m : Map[Int64, String] = {}
+        self.vid_to_fid.set(key, m)
+        m
+      }
+    }
+    // Generate embeddings for this provider
+    let embeddings : Array[Array[Double]]? = match provider.kind {
+      "tfidf" =>
+        match self.tfidf_providers.get(key) {
+          Some(tfidf_prov) => {
+            if !tfidf_prov.has_vocabulary() || stale_ratio >= 0.5 {
+              tfidf_prov.build_vocabulary(get_all_texts())
+            }
+            let embs : Array[Array[Double]] = []
+            for text in stale_texts {
+              embs.push(tfidf_prov.embed(text))
+            }
+            Some(embs)
+          }
+          None => None
+        }
+      _ =>
+        // Remote provider
+        match provider.api_config {
+          Some(api_config) =>
+            try {
+              Some(embed_with_openai_config(api_config, stale_texts))
+            } catch {
+              _ => {
+                result.errors.push(
+                  "Embedding failed for provider '" +
+                  key +
+                  "'; skipping",
+                )
+                None
+              }
+            }
+          None => None
+        }
+    }
+    // Store vectors
+    match embeddings {
+      Some(embs) =>
+        for j = 0; j < stale_units.length(); j = j + 1 {
+          let unit = stale_units[j]
+          let vector = embs[j]
+          if vector.length() == 0 {
+            continue // Skip empty placeholder from failed items
+          }
+          let (m, vid) = self.manifest.allocate_vector_id(key)
+          self.manifest = m
+          let attrs = build_function_attrs(unit)
+          engine.add_raw(vid, vector, attrs)
+          reverse.set(vid, unit.id())
+          // Update function entry vector_ids
+          match self.manifest.get_function(unit.id()) {
+            Some(existing) => {
+              existing.vector_ids.set(key, vid)
+              self.manifest = self.manifest.update_function(existing)
+            }
+            None => {
+              let vids : Map[String, Int64] = {}
+              vids.set(key, vid)
+              let entry = @manifest.FunctionEntry::from_unit(unit, vids)
+              self.manifest = self.manifest.update_function(entry)
+            }
+          }
+        }
       None => ()
     }
-    self.engine.add_raw(vid, vector, attrs)
-    self.vid_to_fid.set(vid, unit.id())
-    let entry = @manifest.FunctionEntry::from_unit(unit, Some(vid))
-    self.manifest = self.manifest.update_function(entry)
-    result.indexed_count += 1
   }
+  // Ensure all stale units have a FunctionEntry even if no provider succeeded
+  for j = 0; j < stale_units.length(); j = j + 1 {
+    let unit = stale_units[j]
+    if self.manifest.get_function(unit.id()) is None {
+      let entry = @manifest.FunctionEntry::from_unit(unit, {})
+      self.manifest = self.manifest.update_function(entry)
+    }
+  }
+  result.indexed_count = stale_units.length()
   // --- Phase 8: Update file entries in manifest ---
   self.update_file_entries(graph, file_hashes)
   result
 }
 
 ///|
+/// Build vcdb attrs for a function unit.
+fn build_function_attrs(unit : @types.FunctionUnit) -> @vcdb_core.Attrs {
+  let attrs = @search.empty_attrs()
+  attrs.set("node_type", @vcdb_core.String(@kgf_features.node_type_code))
+  attrs.set("node_kind", @vcdb_core.String(unit.symbol.kind))
+  attrs.set("name", @vcdb_core.String(unit.name()))
+  attrs.set("kind", @vcdb_core.String(unit.symbol.kind))
+  attrs.set("module", @vcdb_core.String(unit.module_id))
+  attrs.set("depth", @vcdb_core.Int(unit.depth.to_int64()))
+  attrs.set("source_hash", @vcdb_core.String(unit.source_hash.to_string()))
+  attrs.set("context_hash", @vcdb_core.String(unit.context_hash.to_string()))
+  match unit.symbol.doc {
+    Some(doc) => attrs.set("doc", @vcdb_core.String(doc))
+    None => ()
+  }
+  attrs
+}
+
+///|
 /// Update FileEntry records in the manifest with current file content hashes.
-/// Records which functions belong to each file for future file-level invalidation.
 fn DigestIndex::update_file_entries(
   self : DigestIndex,
   graph : @graph.CodeGraph,
@@ -206,7 +277,6 @@ fn DigestIndex::update_file_entries(
 ) -> Unit {
   match file_hashes {
     Some(fh) => {
-      // Build file_path -> function_ids mapping from current units
       let file_functions : Map[String, Array[String]] = {}
       for entry in self.units {
         let unit = entry.1
@@ -223,7 +293,6 @@ fn DigestIndex::update_file_entries(
           None => ()
         }
       }
-      // Update manifest file entries
       for entry in fh {
         let file_path = entry.0
         let content_hash = entry.1
@@ -243,7 +312,7 @@ fn DigestIndex::update_file_entries(
 }
 
 ///|
-/// Helper: Embed a single batch of texts. Returns embeddings or raises error.
+/// Helper: Embed a single batch of texts.
 async fn embed_batch(
   config : @embed.OpenAIConfig,
   batch : Array[String],
@@ -253,10 +322,6 @@ async fn embed_batch(
 
 ///|
 /// Helper: Embed texts using OpenAI-compatible API with batching and retry.
-/// On batch failure, halves the batch size and retries. Falls back to
-/// single-item requests as a last resort. Items that fail individually
-/// are skipped (zero-vector placeholder) and the error is not propagated,
-/// since the function will remain stale for the next build to retry.
 async fn embed_with_openai_config(
   api_config : @config.EmbeddingApiConfig,
   texts : Array[String],
@@ -268,7 +333,6 @@ async fn embed_with_openai_config(
   }
   let all_embeddings : Array[Array[Double]] = Array::make(texts.length(), [])
   let initial_batch_size = 100
-  // Process texts in batches with exponential backoff on failure
   let mut i = 0
   while i < texts.length() {
     let remaining = texts.length() - i
@@ -281,35 +345,30 @@ async fn embed_with_openai_config(
     for j = i; j < i + batch_size; j = j + 1 {
       batch.push(texts[j])
     }
-    // Try the full batch first
     let batch_result = try {
       embed_batch(config, batch)
     } catch {
       _ => {
-        // Full batch failed — try halving
         if batch_size > 1 {
           let half = batch_size / 2
-          // First half
           let first_half : Array[String] = []
           for j = 0; j < half; j = j + 1 {
             first_half.push(batch[j])
           }
           let first_result = try { embed_batch(config, first_half) } catch {
             _ => {
-              // Half batch also failed — fall back to individual items
               let individual : Array[Array[Double]] = []
               for j = 0; j < half; j = j + 1 {
                 let single_result = try {
                   embed_batch(config, [first_half[j]])
                 } catch {
-                  _ => [[]] // Placeholder for failed item
+                  _ => [[]]
                 }
                 individual.push(single_result[0])
               }
               individual
             }
           }
-          // Second half
           let second_half : Array[String] = []
           for j = half; j < batch_size; j = j + 1 {
             second_half.push(batch[j])
@@ -330,7 +389,6 @@ async fn embed_with_openai_config(
               individual
             }
           }
-          // Combine halves
           let combined : Array[Array[Double]] = []
           for emb in first_result {
             combined.push(emb)
@@ -340,7 +398,6 @@ async fn embed_with_openai_config(
           }
           combined
         } else {
-          // Single item failed — return empty placeholder
           [[]]
         }
       }
@@ -354,45 +411,33 @@ async fn embed_with_openai_config(
 }
 
 ///|
-/// Build index using native HTTP to OpenAI API (async).
-/// Backwards compatible wrapper - use build_with_config for new code.
-pub async fn DigestIndex::build_native(
-  self : DigestIndex,
-  graph : @graph.CodeGraph,
-  extract_config : @extract.ExtractConfig,
-  api_key : String,
-) -> BuildResult raise @embed.EmbedError {
-  let digest_config : @config.DigestConfig = {
-    embedding_source: @config.Raw,
-    embedding_provider: @config.OpenAI(@config.EmbeddingApiConfig::new(api_key)),
-    vcdb_strategy: @config.Hnsw,
-    include_external: extract_config.include_external,
-    exclude_kinds: extract_config.exclude_kinds,
-    index_dir: @config.DEFAULT_INDEX_DIR,
-    llm_config: None,
-  }
-  self.build_with_config(graph, digest_config)
-}
-
-///|
-/// Query using OpenAI-compatible embedding API (async).
-pub async fn DigestIndex::query_native(
+/// Query using a remote embedding API (async, OpenAI-compatible).
+pub async fn DigestIndex::query_api(
   self : DigestIndex,
   purpose : String,
   top_k : Int,
+  provider_key : String,
   api_config : @config.EmbeddingApiConfig,
 ) -> Array[@types.QueryHit] raise @embed.EmbedError {
+  let engine = match self.engines.get(provider_key) {
+    Some(e) => e
+    None => return []
+  }
+  let reverse = match self.vid_to_fid.get(provider_key) {
+    Some(m) => m
+    None => return []
+  }
   let config : @embed.OpenAIConfig = {
     api_key: api_config.api_key,
     model: api_config.model,
     base_url: api_config.base_url,
   }
   let vector = @embed.get_embedding(config, purpose)
-  let hits = self.engine.search_vector(vector, top_k)
+  let hits = engine.search_vector(vector, top_k)
   let results : Array[@types.QueryHit] = []
   for hit in hits {
     let vid = hit.id.to_int64()
-    match self.vid_to_fid.get(vid) {
+    match reverse.get(vid) {
       Some(fid) =>
         match self.units.get(fid) {
           Some(unit) =>
@@ -406,23 +451,43 @@ pub async fn DigestIndex::query_native(
 }
 
 ///|
-/// Create DigestIndex from saved manifest (for incremental updates).
+/// Create DigestIndex from saved manifest and vector databases.
 pub fn DigestIndex::from_manifest(
   manifest : @manifest.DigestManifest,
-  db_bytes : Bytes,
+  db_map : Map[String, Bytes],
 ) -> DigestIndex {
-  let dim = manifest.embedding_dim
-  let provider = TfidfEmbeddingProvider::new(dim)
-  let engine = @search.SearchEngine::from_bytes(db_bytes).with_tfidf(provider)
-  // Rebuild reverse index from manifest
-  let vid_to_fid : Map[Int64, String] = {}
-  for entry in manifest.functions {
-    match entry.1.vector_id {
-      Some(vid) => vid_to_fid.set(vid, entry.0)
-      None => ()
+  let engines : Map[String, @search.SearchEngine] = {}
+  let tfidf_providers : Map[String, TfidfEmbeddingProvider] = {}
+  let vid_to_fid : Map[String, Map[Int64, String]] = {}
+  // Create engines and reverse indexes from loaded bytes
+  for entry in db_map {
+    let key = entry.0
+    let bytes = entry.1
+    let meta = manifest.providers.get(key)
+    let engine = @search.SearchEngine::from_bytes(bytes)
+    // If this is a TF-IDF provider, create and attach provider
+    match meta {
+      Some(m) =>
+        if m.kind == "tfidf" {
+          let prov = TfidfEmbeddingProvider::new(m.dim)
+          tfidf_providers.set(key, prov)
+          engines.set(key, engine.with_tfidf(prov))
+        } else {
+          engines.set(key, engine)
+        }
+      None => engines.set(key, engine)
     }
+    // Build reverse index for this provider
+    let reverse : Map[Int64, String] = {}
+    for func_entry in manifest.functions {
+      match func_entry.1.vector_ids.get(key) {
+        Some(vid) => reverse.set(vid, func_entry.0)
+        None => ()
+      }
+    }
+    vid_to_fid.set(key, reverse)
   }
-  { manifest, engine, provider, units: {}, vid_to_fid }
+  { manifest, engines, tfidf_providers, units: {}, vid_to_fid }
 }
 
 ///|
@@ -431,38 +496,51 @@ pub fn DigestIndex::with_config(config : @config.DigestConfig) -> DigestIndex {
   let spec_hash = @hash.to_content_hash(
     @types.FunctionHash::from_string("digest-v1"),
   )
-  let provider_name = match config.embedding_provider {
-    @config.TfIdf(_) => "tfidf"
-    @config.OpenAI(_) => "openai"
-    @config.Precomputed(_) => "precomputed"
+  let provider_metas : Map[String, @manifest.ProviderMeta] = {}
+  for pc in config.providers {
+    let model : String? = match pc.api_config {
+      Some(cfg) => Some(cfg.model)
+      None => None
+    }
+    let base_url : String? = match pc.api_config {
+      Some(cfg) => Some(cfg.base_url)
+      None => None
+    }
+    provider_metas.set(pc.key, {
+      kind: pc.kind,
+      dim: pc.dim,
+      model,
+      base_url,
+      vector_id_counter: 1L,
+    })
   }
-  let manifest = @manifest.DigestManifest::new(
-    spec_hash,
-    provider_name,
-    config.embedding_dim(),
-  )
+  let manifest = @manifest.DigestManifest::new(spec_hash, provider_metas)
   let strategy : @search.VcdbStrategy = match config.vcdb_strategy {
     @config.Hnsw => @search.Hnsw
     @config.Ivf => @search.Ivf
     @config.BruteForce => @search.BruteForce
   }
-  let provider = TfidfEmbeddingProvider::new(config.embedding_dim())
-  let engine = @search.SearchEngine::create(
-    dim=config.embedding_dim(),
-    strategy~,
-  ).with_tfidf(provider)
-  { manifest, engine, provider, units: {}, vid_to_fid: {} }
+  let engines : Map[String, @search.SearchEngine] = {}
+  let tfidf_providers : Map[String, TfidfEmbeddingProvider] = {}
+  let vid_to_fid : Map[String, Map[Int64, String]] = {}
+  for pc in config.providers {
+    let engine = @search.SearchEngine::create(dim=pc.dim, strategy~)
+    if pc.kind == "tfidf" {
+      let prov = TfidfEmbeddingProvider::new(pc.dim)
+      tfidf_providers.set(pc.key, prov)
+      engines.set(pc.key, engine.with_tfidf(prov))
+    } else {
+      engines.set(pc.key, engine)
+    }
+    vid_to_fid.set(pc.key, {})
+  }
+  { manifest, engines, tfidf_providers, units: {}, vid_to_fid }
 }
 
 // --- Index store management (persistence, locking, cleanup) ---
 
-// Index file constants are defined in @config (SoT).
-// Use @config.index_file_names and @config.*_path() functions.
-
-
 ///|
 /// Acquire a build lock for the given index directory.
-/// Returns true if the lock was acquired, false if another build is in progress.
 pub fn acquire_build_lock(index_dir : String) -> Bool {
   let lp = @config.lock_path(index_dir)
   if @fs.path_exists(lp) {
@@ -484,8 +562,11 @@ pub fn release_build_lock(index_dir : String) -> Unit {
 
 ///|
 /// Delete all index files in the given directory (for full rebuild).
-pub fn delete_index_files(index_dir : String) -> Unit {
-  for name in @config.index_file_names {
+pub fn delete_index_files(
+  index_dir : String,
+  provider_keys : Array[String],
+) -> Unit {
+  for name in @config.compute_index_file_names(provider_keys) {
     let path = @config.index_path(index_dir, name)
     if @fs.path_exists(path) {
       @fs.remove_file(path) catch { _ => () }
@@ -495,45 +576,52 @@ pub fn delete_index_files(index_dir : String) -> Unit {
 
 ///|
 /// Load an existing index from disk, or create a new one if not found.
-/// Returns the loaded/created index. If the existing manifest is incompatible
-/// (version mismatch, provider mismatch), a new index is created.
 pub fn DigestIndex::load_or_create(
   index_dir : String,
   digest_config : @config.DigestConfig,
 ) -> DigestIndex {
   let mp = @config.manifest_path(index_dir)
-  let vp = @config.vectors_path(index_dir)
-  if @fs.path_exists(mp) && @fs.path_exists(vp) {
-    let manifest_content = @fs.read_file_to_string(mp) catch {
-      _ => return DigestIndex::with_config(digest_config)
+  if !@fs.path_exists(mp) {
+    return DigestIndex::with_config(digest_config)
+  }
+  let manifest_content = @fs.read_file_to_string(mp) catch {
+    _ => return DigestIndex::with_config(digest_config)
+  }
+  let manifest = match
+    @manifest.DigestManifest::from_json_string(manifest_content) {
+    Some(m) => m
+    None => return DigestIndex::with_config(digest_config)
+  }
+  // Load vector databases for each provider in the manifest
+  let db_map : Map[String, Bytes] = {}
+  for entry in manifest.providers {
+    let key = entry.0
+    let vp = @config.vectors_db_path(index_dir, key)
+    if @fs.path_exists(vp) {
+      let bytes = @fs.read_file_to_bytes(vp) catch { _ => continue }
+      db_map.set(key, bytes)
     }
-    let manifest = match
-      @manifest.DigestManifest::from_json_string(manifest_content) {
-      Some(m) => m
-      None => return DigestIndex::with_config(digest_config)
-    }
-    let db_bytes = @fs.read_file_to_bytes(vp) catch {
-      _ => return DigestIndex::with_config(digest_config)
-    }
-    let index = DigestIndex::from_manifest(manifest, db_bytes)
-    // Restore TF-IDF vocabulary if available
-    let vocab_path = @config.vocabulary_path(index_dir)
+  }
+  let index = DigestIndex::from_manifest(manifest, db_map)
+  // Restore TF-IDF vocabularies
+  for entry in index.tfidf_providers {
+    let key = entry.0
+    let prov = entry.1
+    let vocab_path = @config.vocabulary_json_path(index_dir, key)
     if @fs.path_exists(vocab_path) {
       let vocab_content = @fs.read_file_to_string(vocab_path) catch {
         _ => ""
       }
       if vocab_content.length() > 0 {
-        let _ = index.provider.load_from_json_string(vocab_content)
+        let _ = prov.load_from_json_string(vocab_content)
       }
     }
-    index
-  } else {
-    DigestIndex::with_config(digest_config)
   }
+  index
 }
 
 ///|
-/// Save the index to disk (manifest, vectors, vocabulary, graph).
+/// Save the index to disk.
 pub fn DigestIndex::save_to_dir(
   self : DigestIndex,
   index_dir : String,
@@ -541,22 +629,46 @@ pub fn DigestIndex::save_to_dir(
 ) -> Array[String] {
   let errors : Array[String] = []
   @app_config.ensure_dir_recursive(index_dir)
-  let (manifest_json, db_bytes) = self.serialize()
-  @fs.write_string_to_file(@config.manifest_path(index_dir), manifest_json) catch {
+  let (manifest_json, db_map) = self.serialize()
+  // Write manifest
+  @fs.write_string_to_file(
+    @config.manifest_path(index_dir),
+    manifest_json,
+  ) catch {
     e => errors.push("Saving manifest: " + e.to_string())
   }
-  @fs.write_bytes_to_file(@config.vectors_path(index_dir), db_bytes) catch {
-    e => errors.push("Saving vectors: " + e.to_string())
-  }
-  if self.provider.has_vocabulary() {
-    let vocab_json = self.provider.to_json_string()
-    @fs.write_string_to_file(
-      @config.vocabulary_path(index_dir),
-      vocab_json,
+  // Write vector databases per provider
+  for entry in db_map {
+    let key = entry.0
+    let bytes = entry.1
+    @fs.write_bytes_to_file(
+      @config.vectors_db_path(index_dir, key),
+      bytes,
     ) catch {
-      e => errors.push("Saving vocabulary: " + e.to_string())
+      e =>
+        errors.push(
+          "Saving vectors for '" + key + "': " + e.to_string(),
+        )
     }
   }
+  // Write TF-IDF vocabularies
+  for entry in self.tfidf_providers {
+    let key = entry.0
+    let prov = entry.1
+    if prov.has_vocabulary() {
+      let vocab_json = prov.to_json_string()
+      @fs.write_string_to_file(
+        @config.vocabulary_json_path(index_dir, key),
+        vocab_json,
+      ) catch {
+        e =>
+          errors.push(
+            "Saving vocabulary for '" + key + "': " + e.to_string(),
+          )
+      }
+    }
+  }
+  // Write graph
   let graph_json = graph.to_json_string()
   @fs.write_string_to_file(@config.graph_path(index_dir), graph_json) catch {
     e => errors.push("Saving graph: " + e.to_string())

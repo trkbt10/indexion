@@ -1,5 +1,8 @@
 // DigestManifest for incremental function index management.
 // Tracks function-level hashes and vector IDs for efficient updates.
+//
+// v4: N-provider support. Each embedding provider has its own vector ID space.
+// Providers are identified by string keys (e.g. "tfidf", "text-embedding-3-small").
 
 ///|
 /// Entry for a single file in the manifest.
@@ -21,15 +24,31 @@ pub struct FunctionEntry {
   source_hash : @types.FunctionHash
   /// Hash including call context.
   context_hash : @types.FunctionHash
-  /// vcdb vector ID (None if not yet indexed).
-  vector_id : Int64?
+  /// Vector IDs per provider (provider_key -> vector_id).
+  vector_ids : Map[String, Int64]
   /// Hash of impression (None if no impression).
   impression_hash : @types.FunctionHash?
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
+/// Per-provider metadata stored in the manifest.
+pub(all) struct ProviderMeta {
+  /// Provider kind: "tfidf" or "remote".
+  kind : String
+  /// Embedding vector dimension.
+  dim : Int
+  /// Model name for display (e.g. "text-embedding-3-small").
+  model : String?
+  /// API base URL for remote providers (stored without api_key).
+  base_url : String?
+  /// Monotonic counter for vector IDs in this provider's space.
+  vector_id_counter : Int64
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+///|
 /// Current manifest schema version. Increment when making incompatible changes.
-pub const MANIFEST_VERSION : Int = 2
+/// v4: N-provider (dynamic provider registry).
+pub const MANIFEST_VERSION : Int = 4
 
 ///|
 /// DigestManifest tracks function-level indexing state.
@@ -42,24 +61,19 @@ pub struct DigestManifest {
   updated_at : String
   /// KGF spec hash for invalidation.
   spec_hash : @cas_types.ContentHash
-  /// Embedding provider identifier.
-  embedding_provider : String
-  /// Embedding dimension.
-  embedding_dim : Int
+  /// Provider registry (provider_key -> metadata + counter).
+  providers : Map[String, ProviderMeta]
   /// File entries (file_path -> FileEntry).
   files : Map[String, FileEntry]
   /// Function entries (function_id -> FunctionEntry).
   functions : Map[String, FunctionEntry]
-  /// Monotonic counter for vector IDs.
-  vector_id_counter : Int64
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|
-/// Create a new DigestManifest.
+/// Create a new DigestManifest with the given provider registry.
 pub fn DigestManifest::new(
   spec_hash : @cas_types.ContentHash,
-  embedding_provider : String,
-  embedding_dim : Int,
+  providers : Map[String, ProviderMeta],
 ) -> DigestManifest {
   let now = get_timestamp()
   {
@@ -67,11 +81,9 @@ pub fn DigestManifest::new(
     created_at: now,
     updated_at: now,
     spec_hash,
-    embedding_provider,
-    embedding_dim,
+    providers,
     files: {},
     functions: {},
-    vector_id_counter: 1L,
   }
 }
 
@@ -83,17 +95,35 @@ fn get_timestamp() -> String {
 }
 
 ///|
-/// Allocate a new vector ID.
+/// Allocate a new vector ID for a given provider.
 pub fn DigestManifest::allocate_vector_id(
   self : DigestManifest,
+  provider_key : String,
 ) -> (DigestManifest, Int64) {
-  let id = self.vector_id_counter
-  let updated = {
-    ..self,
-    vector_id_counter: id + 1L,
-    updated_at: get_timestamp(),
+  match self.providers.get(provider_key) {
+    Some(meta) => {
+      let id = meta.vector_id_counter
+      self.providers.set(provider_key, {
+        ..meta,
+        vector_id_counter: id + 1L,
+      })
+      ({ ..self, updated_at: get_timestamp() }, id)
+    }
+    None => {
+      // Provider not registered — should not happen, but handle gracefully
+      (self, 0L)
+    }
   }
-  (updated, id)
+}
+
+///|
+/// Get provider keys.
+pub fn DigestManifest::provider_keys(self : DigestManifest) -> Array[String] {
+  let keys : Array[String] = []
+  for entry in self.providers {
+    keys.push(entry.0)
+  }
+  keys
 }
 
 ///|
@@ -187,36 +217,40 @@ pub fn DigestManifest::get_deleted_functions(
 
 ///|
 /// Remove deleted functions and return their vector IDs for cleanup.
+/// Returns (updated manifest, provider_key -> removed vector IDs).
 pub fn DigestManifest::remove_deleted_functions(
   self : DigestManifest,
   current_ids : Array[String],
-) -> (DigestManifest, Array[Int64]) {
+) -> (DigestManifest, Map[String, Array[Int64]]) {
   let deleted = self.get_deleted_functions(current_ids)
-  let removed_ids : Array[Int64] = []
+  let removed : Map[String, Array[Int64]] = {}
   let mut manifest = self
   for id in deleted {
     match manifest.functions.get(id) {
       Some(entry) =>
-        match entry.vector_id {
-          Some(vid) => removed_ids.push(vid)
-          None => ()
+        for vid_entry in entry.vector_ids {
+          let key = vid_entry.0
+          let vid = vid_entry.1
+          match removed.get(key) {
+            Some(arr) => arr.push(vid)
+            None => removed.set(key, [vid])
+          }
         }
       None => ()
     }
     manifest = manifest.remove_function(id)
   }
-  (manifest, removed_ids)
+  (manifest, removed)
 }
 
 ///|
 /// Create a FunctionEntry from a FunctionUnit.
 pub fn FunctionEntry::from_unit(
   unit : @types.FunctionUnit,
-  vector_id : Int64?,
+  vector_ids : Map[String, Int64],
 ) -> FunctionEntry {
   let impression_hash = match unit.impression {
     Some(imp) => {
-      // Compute hash from impression text
       let text = imp.to_text()
       Some(@types.FunctionHash::from_string(text))
     }
@@ -226,14 +260,13 @@ pub fn FunctionEntry::from_unit(
     function_id: unit.id(),
     source_hash: unit.source_hash,
     context_hash: unit.context_hash,
-    vector_id,
+    vector_ids,
     impression_hash,
   }
 }
 
 ///|
 /// Check if a file's content hash matches the stored hash.
-/// Returns true if the file is tracked and hash matches (file unchanged).
 pub fn DigestManifest::is_file_unchanged(
   self : DigestManifest,
   file_path : String,
@@ -274,18 +307,36 @@ pub fn DigestManifest::to_json_string(self : DigestManifest) -> String {
 /// which causes the caller to trigger a full rebuild.
 pub fn DigestManifest::from_json_string(json_str : String) -> DigestManifest? {
   let json : Json = @json.parse(json_str) catch { _ => return None }
-  // Check version before full deserialization.
-  // Old manifests without a version field (v1) are incompatible with the
-  // current schema (v2+: file-level hashing, source_hash semantics changed).
   match json {
     { "version": Number(v, ..), .. } =>
       if v.to_int() != MANIFEST_VERSION {
         return None
       }
-    _ => return None // No version field → v1 manifest, incompatible
+    _ => return None
   }
   let manifest : DigestManifest = @json.from_json(json) catch {
     _ => return None
   }
   Some(manifest)
+}
+
+///|
+/// Provider description for display purposes.
+pub fn DigestManifest::provider_description(self : DigestManifest) -> String {
+  let parts : Array[String] = []
+  for entry in self.providers {
+    let key = entry.0
+    let meta = entry.1
+    let desc = match meta.model {
+      Some(model) =>
+        key + " (" + model + ", " + meta.dim.to_string() + " dims)"
+      None => key + " (" + meta.kind + ", " + meta.dim.to_string() + " dims)"
+    }
+    parts.push(desc)
+  }
+  if parts.length() == 0 {
+    "none"
+  } else {
+    parts.join(" + ")
+  }
 }

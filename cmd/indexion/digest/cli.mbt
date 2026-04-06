@@ -2,7 +2,7 @@
 /// # indexion digest
 ///
 /// Build and query purpose-based function index.
-/// Supports TF-IDF (local) and OpenAI embeddings.
+/// Supports TF-IDF (local) and remote embedding API.
 
 ///|
 /// CLI configuration.
@@ -431,6 +431,7 @@ pub fn is_provider_available(config : CliConfig) -> Bool {
 
 ///|
 /// Build DigestConfig from CLI config.
+/// Converts EmbeddingProvider enum into providers array.
 pub fn build_digest_config(config : CliConfig) -> @dconfig.DigestConfig {
   let provider = resolve_provider(config)
   let vcdb_strategy = match config.strategy {
@@ -438,26 +439,68 @@ pub fn build_digest_config(config : CliConfig) -> @dconfig.DigestConfig {
     "ivf" => @dconfig.Ivf
     _ => @dconfig.Hnsw
   }
-  {
-    embedding_source: @dconfig.Raw,
-    embedding_provider: provider,
-    vcdb_strategy,
-    include_external: false,
-    exclude_kinds: @dconfig.default_exclude_kinds(),
-    index_dir: config.index_dir,
-    llm_config: None,
+  let base = @dconfig.DigestConfig::from_provider(provider)
+  { ..base, vcdb_strategy, index_dir: config.index_dir }
+}
+
+///|
+/// Get provider display name from DigestConfig.
+fn config_provider_name(config : @dconfig.DigestConfig) -> String {
+  let parts : Array[String] = []
+  for p in config.providers {
+    match p.api_config {
+      Some(cfg) =>
+        parts.push(
+          p.key + " (" + cfg.model + ", " + p.dim.to_string() + " dims)",
+        )
+      None =>
+        parts.push(p.key + " (" + p.kind + ", " + p.dim.to_string() + " dims)")
+    }
+  }
+  if parts.length() == 0 {
+    "none"
+  } else {
+    parts.join(" + ")
   }
 }
 
 ///|
-/// Get provider display name.
-fn provider_name(provider : @dconfig.EmbeddingProvider) -> String {
-  match provider {
-    @dconfig.TfIdf(dim) => "TF-IDF (local, " + dim.to_string() + " dims)"
-    @dconfig.OpenAI(cfg) =>
-      cfg.model + " (" + cfg.dim.to_string() + " dims, " + cfg.base_url + ")"
-    @dconfig.Precomputed(_) => "Precomputed embeddings"
+/// Query with cascade: try remote providers first, fall back to local.
+async fn query_with_cascade(
+  index : @index.DigestIndex,
+  digest_config : @dconfig.DigestConfig,
+  purpose : String,
+  top_k : Int,
+) -> Array[@types.QueryHit] {
+  // Try remote providers first (in order)
+  for p in digest_config.providers {
+    if p.kind == "remote" && index.has_provider(p.key) {
+      match p.api_config {
+        Some(api_config) => {
+          let hits = try {
+            index.query_api(purpose, top_k, p.key, api_config)
+          } catch {
+            _ => {
+              log_error(
+                "Query failed for provider '" + p.key + "', trying next",
+              )
+              continue
+            }
+          }
+          return hits
+        }
+        None => ()
+      }
+    }
   }
+  // Fall back to first local (TF-IDF) provider
+  for p in digest_config.providers {
+    if p.kind == "tfidf" && index.has_provider(p.key) {
+      return index.query_local(purpose, top_k, p.key)
+    }
+  }
+  // No provider available
+  []
 }
 
 ///|
@@ -596,7 +639,11 @@ async fn run_rebuild_async(config : CliConfig) -> Unit {
     return
   }
   log_progress("Deleting existing index for full rebuild...")
-  @index.delete_index_files(config.index_dir)
+  let digest_config = build_digest_config(config)
+  @index.delete_index_files(
+    config.index_dir,
+    digest_config.provider_keys(),
+  )
   log_progress("Starting full rebuild...")
   run_build_inner(config)
   @index.release_build_lock(config.index_dir)
@@ -608,7 +655,7 @@ async fn run_rebuild_async(config : CliConfig) -> Unit {
 async fn run_build_inner(config : CliConfig) -> Unit {
   let digest_config = build_digest_config(config)
   log_progress("Building digest index from: " + config.input_path)
-  log_progress("Provider: " + provider_name(digest_config.embedding_provider))
+  log_progress("Provider: " + config_provider_name(digest_config))
   // Detect input type and build graph.
   // When building from source directory, file content hashes are computed at
   // collection time (the only point where file content is in memory) and passed
@@ -744,33 +791,10 @@ async fn run_query_async(config : CliConfig) -> Unit {
   }
   let extract_config = digest_config.to_extract_config()
   index.restore_units_from_graph(graph, extract_config)
-  // Detect provider from manifest for query
-  let provider = digest_config.embedding_provider
-  // Query
+  // Query: cascade through providers (remote first, then local)
   println("Query: " + config.purpose)
   println("")
-  // Use appropriate query method based on provider
-  let hits = match provider {
-    @dconfig.OpenAI(api_config) =>
-      index.query_native(config.purpose, config.top_k, api_config) catch {
-        @embed.ParseError(msg) => {
-          log_error("Parse error: " + msg)
-          return
-        }
-        @embed.ApiError(code, msg) => {
-          log_error("API error (" + code.to_string() + "): " + msg)
-          return
-        }
-        @embed.NoResult => {
-          log_error("No embedding result")
-          return
-        }
-      }
-    _ => {
-      let options = @types.QueryOptions::with_top_k(config.top_k)
-      @query.query_by_purpose(index, config.purpose, options)
-    }
-  }
+  let hits = query_with_cascade(index, digest_config, config.purpose, config.top_k)
   println(@query.format_results(hits))
 }
 
@@ -815,8 +839,7 @@ fn run_stats(config : CliConfig) -> Unit {
   }
   println("Index statistics:")
   println("  Index directory: " + config.index_dir)
-  println("  Provider: " + manifest.embedding_provider)
-  println("  Embedding dim: " + manifest.embedding_dim.to_string())
+  println("  Provider: " + manifest.provider_description())
   println("  Indexed functions: " + manifest.functions.length().to_string())
   println("  Total symbols: " + graph.symbol_count().to_string())
   println("  Total modules: " + graph.module_count().to_string())
@@ -852,8 +875,7 @@ fn run_status(config : CliConfig) -> Unit {
   println("Index status:")
   println("  Directory:  " + config.index_dir)
   println("  Version:    " + manifest.version.to_string())
-  println("  Provider:   " + manifest.embedding_provider)
-  println("  Dimension:  " + manifest.embedding_dim.to_string())
+  println("  Provider:   " + manifest.provider_description())
   println("  Functions:  " + manifest.functions.length().to_string())
   println("  Files:      " + manifest.files.length().to_string())
   println("")
