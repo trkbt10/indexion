@@ -214,9 +214,12 @@ fn run_import(matches : @argparse.Matches) -> Unit {
       return
     }
   }
-  if @fs.path_exists(output_resolved + "/wiki.json") && !force {
+  let wiki_mp = @wiki_types.wiki_manifest_path(output_resolved)
+  if @fs.path_exists(wiki_mp) && !force {
     println(
-      "Error: wiki.json already exists at " +
+      "Error: " +
+      @wiki_types.WIKI_MANIFEST_FILE +
+      " already exists at " +
       output_resolved +
       "\nUse --force to overwrite.",
     )
@@ -224,9 +227,11 @@ fn run_import(matches : @argparse.Matches) -> Unit {
   }
   @config.ensure_dir_recursive(output_resolved)
   let manifest = @wiki_interop.generate_manifest_json(data, wiki_title)
-  @fs.write_string_to_file(output_resolved + "/wiki.json", manifest) catch {
+  @fs.write_string_to_file(wiki_mp, manifest) catch {
     e => {
-      println("Error writing wiki.json: " + e.to_string())
+      println(
+        "Error writing " + @wiki_types.WIKI_MANIFEST_FILE + ": " + e.to_string(),
+      )
       return
     }
   }

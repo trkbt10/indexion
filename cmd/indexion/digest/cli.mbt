@@ -728,7 +728,7 @@ async fn run_query_async(config : CliConfig) -> Unit {
     return
   }
   // Load graph for unit resolution
-  let graph_path = config.index_dir + "/graph.json"
+  let graph_path = @dconfig.graph_path(config.index_dir)
   let graph_content = @fs.read_file_to_string(graph_path) catch {
     e => {
       log_error("Reading graph: " + e.to_string())
@@ -777,15 +777,15 @@ async fn run_query_async(config : CliConfig) -> Unit {
 ///|
 /// Show index statistics.
 fn run_stats(config : CliConfig) -> Unit {
-  let manifest_path = config.index_dir + "/manifest.json"
-  let manifest_exists = @fs.is_file(manifest_path) catch { _ => false }
+  let mp = @dconfig.manifest_path(config.index_dir)
+  let manifest_exists = @fs.is_file(mp) catch { _ => false }
   if !manifest_exists {
     log_error("No index found at " + config.index_dir)
     println("Run 'indexion digest build <path>' first.")
     return
   }
   // Load manifest
-  let manifest_content = @fs.read_file_to_string(manifest_path) catch {
+  let manifest_content = @fs.read_file_to_string(mp) catch {
     e => {
       log_error("Reading manifest: " + e.to_string())
       return
@@ -799,7 +799,7 @@ fn run_stats(config : CliConfig) -> Unit {
       return
     }
   }
-  let graph_path = config.index_dir + "/graph.json"
+  let graph_path = @dconfig.graph_path(config.index_dir)
   let graph_content = @fs.read_file_to_string(graph_path) catch {
     e => {
       log_error("Reading graph: " + e.to_string())
@@ -826,14 +826,14 @@ fn run_stats(config : CliConfig) -> Unit {
 ///|
 /// Show index status including pending changes.
 fn run_status(config : CliConfig) -> Unit {
-  let manifest_path = config.index_dir + "/manifest.json"
-  let manifest_exists = @fs.is_file(manifest_path) catch { _ => false }
+  let mp = @dconfig.manifest_path(config.index_dir)
+  let manifest_exists = @fs.is_file(mp) catch { _ => false }
   if !manifest_exists {
     println("No index found at " + config.index_dir)
     println("Run 'indexion digest build <path>' to create one.")
     return
   }
-  let manifest_content = @fs.read_file_to_string(manifest_path) catch {
+  let manifest_content = @fs.read_file_to_string(mp) catch {
     e => {
       log_error("Reading manifest: " + e.to_string())
       return

@@ -105,7 +105,7 @@ pub fn detect_wiki_spec(dir : String) -> String? {
 ///|
 /// Detect wiki format from directory contents.
 pub fn detect_wiki_format(dir : String) -> WikiFormat {
-  if @fs.path_exists(dir + "/wiki.json") {
+  if @fs.path_exists(@types.wiki_manifest_path(dir)) {
     return WikiFormat::Indexion
   }
   match detect_wiki_spec(dir) {
@@ -124,7 +124,7 @@ pub fn load_wiki_auto(
   wiki_dir : String,
   registry? : @kgf_registry.KGFRegistry? = None,
 ) -> @types.WikiData? {
-  if @fs.path_exists(wiki_dir + "/wiki.json") {
+  if @fs.path_exists(@types.wiki_manifest_path(wiki_dir)) {
     return @reader.load_wiki(wiki_dir, registry~)
   }
   match detect_wiki_spec(wiki_dir) {

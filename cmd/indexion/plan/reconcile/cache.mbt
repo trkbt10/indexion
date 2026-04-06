@@ -1,16 +1,37 @@
+// --- Reconcile index file name constants (SoT within this package) ---
+// All reconcile-specific file names are defined here.
+// index_db.mbt also uses reconcile_path() for records.db.
+
+///|
+let reconcile_manifest_file : String = "manifest.json"
+
+///|
+let reconcile_report_file : String = "report.json"
+
+///|
+let reconcile_stale_index_file : String = "index.json"
+
+///|
+let reconcile_records_file : String = "records.db"
+
+///|
+fn reconcile_path(index_dir : String, file_name : String) -> String {
+  index_dir + "/" + file_name
+}
+
 ///|
 fn manifest_path(index_dir : String) -> String {
-  index_dir + "/manifest.json"
+  reconcile_path(index_dir, reconcile_manifest_file)
 }
 
 ///|
 fn report_cache_path(index_dir : String) -> String {
-  index_dir + "/report.json"
+  reconcile_path(index_dir, reconcile_report_file)
 }
 
 ///|
 fn stale_index_path(index_dir : String) -> String {
-  index_dir + "/index.json"
+  reconcile_path(index_dir, reconcile_stale_index_file)
 }
 
 ///|

@@ -90,9 +90,9 @@ fn build_corpus(
 }
 
 ///|
-/// Check if a directory contains wiki.json (wiki content).
+/// Check if a directory contains wiki manifest (wiki content).
 fn is_wiki_dir(path : String) -> Bool {
-  @fs.path_exists(path + "/wiki.json")
+  @fs.path_exists(@wiki_types.wiki_manifest_path(path))
 }
 
 ///|

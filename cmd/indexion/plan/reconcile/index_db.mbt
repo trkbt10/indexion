@@ -10,7 +10,7 @@ priv struct IndexSyncResult {
 
 ///|
 fn records_db_path(index_dir : String) -> String {
-  index_dir + "/records.db"
+  reconcile_path(index_dir, reconcile_records_file)
 }
 
 ///|

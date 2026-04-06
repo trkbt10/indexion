@@ -456,41 +456,37 @@ pub fn DigestIndex::with_config(config : @config.DigestConfig) -> DigestIndex {
 
 // --- Index store management (persistence, locking, cleanup) ---
 
-///|
-/// Index file names within the index directory.
-let index_files : Array[String] = [
-  "/manifest.json", "/vectors.db", "/vocabulary.json", "/graph.json",
-]
+// Index file constants are defined in @config (SoT).
+// Use @config.index_file_names and @config.*_path() functions.
 
 
 ///|
 /// Acquire a build lock for the given index directory.
 /// Returns true if the lock was acquired, false if another build is in progress.
 pub fn acquire_build_lock(index_dir : String) -> Bool {
-  let lock_path = index_dir + "/build.lock"
-  if @fs.path_exists(lock_path) {
-    let content = @fs.read_file_to_string(lock_path) catch { _ => "" }
+  let lp = @config.lock_path(index_dir)
+  if @fs.path_exists(lp) {
+    let content = @fs.read_file_to_string(lp) catch { _ => "" }
     if content == "locked" {
       return false
     }
   }
   @app_config.ensure_dir_recursive(index_dir)
-  @fs.write_string_to_file(lock_path, "locked") catch { _ => return false }
+  @fs.write_string_to_file(lp, "locked") catch { _ => return false }
   true
 }
 
 ///|
 /// Release the build lock for the given index directory.
 pub fn release_build_lock(index_dir : String) -> Unit {
-  let lock_path = index_dir + "/build.lock"
-  @fs.remove_file(lock_path) catch { _ => () }
+  @fs.remove_file(@config.lock_path(index_dir)) catch { _ => () }
 }
 
 ///|
 /// Delete all index files in the given directory (for full rebuild).
 pub fn delete_index_files(index_dir : String) -> Unit {
-  for suffix in index_files {
-    let path = index_dir + suffix
+  for name in @config.index_file_names {
+    let path = @config.index_path(index_dir, name)
     if @fs.path_exists(path) {
       @fs.remove_file(path) catch { _ => () }
     }
@@ -505,10 +501,10 @@ pub fn DigestIndex::load_or_create(
   index_dir : String,
   digest_config : @config.DigestConfig,
 ) -> DigestIndex {
-  let manifest_path = index_dir + "/manifest.json"
-  let vectors_path = index_dir + "/vectors.db"
-  if @fs.path_exists(manifest_path) && @fs.path_exists(vectors_path) {
-    let manifest_content = @fs.read_file_to_string(manifest_path) catch {
+  let mp = @config.manifest_path(index_dir)
+  let vp = @config.vectors_path(index_dir)
+  if @fs.path_exists(mp) && @fs.path_exists(vp) {
+    let manifest_content = @fs.read_file_to_string(mp) catch {
       _ => return DigestIndex::with_config(digest_config)
     }
     let manifest = match
@@ -516,12 +512,12 @@ pub fn DigestIndex::load_or_create(
       Some(m) => m
       None => return DigestIndex::with_config(digest_config)
     }
-    let db_bytes = @fs.read_file_to_bytes(vectors_path) catch {
+    let db_bytes = @fs.read_file_to_bytes(vp) catch {
       _ => return DigestIndex::with_config(digest_config)
     }
     let index = DigestIndex::from_manifest(manifest, db_bytes)
     // Restore TF-IDF vocabulary if available
-    let vocab_path = index_dir + "/vocabulary.json"
+    let vocab_path = @config.vocabulary_path(index_dir)
     if @fs.path_exists(vocab_path) {
       let vocab_content = @fs.read_file_to_string(vocab_path) catch {
         _ => ""
@@ -546,20 +542,23 @@ pub fn DigestIndex::save_to_dir(
   let errors : Array[String] = []
   @app_config.ensure_dir_recursive(index_dir)
   let (manifest_json, db_bytes) = self.serialize()
-  @fs.write_string_to_file(index_dir + "/manifest.json", manifest_json) catch {
+  @fs.write_string_to_file(@config.manifest_path(index_dir), manifest_json) catch {
     e => errors.push("Saving manifest: " + e.to_string())
   }
-  @fs.write_bytes_to_file(index_dir + "/vectors.db", db_bytes) catch {
+  @fs.write_bytes_to_file(@config.vectors_path(index_dir), db_bytes) catch {
     e => errors.push("Saving vectors: " + e.to_string())
   }
   if self.provider.has_vocabulary() {
     let vocab_json = self.provider.to_json_string()
-    @fs.write_string_to_file(index_dir + "/vocabulary.json", vocab_json) catch {
+    @fs.write_string_to_file(
+      @config.vocabulary_path(index_dir),
+      vocab_json,
+    ) catch {
       e => errors.push("Saving vocabulary: " + e.to_string())
     }
   }
   let graph_json = graph.to_json_string()
-  @fs.write_string_to_file(index_dir + "/graph.json", graph_json) catch {
+  @fs.write_string_to_file(@config.graph_path(index_dir), graph_json) catch {
     e => errors.push("Saving graph: " + e.to_string())
   }
   errors

@@ -508,16 +508,14 @@ async fn do_load(
   digest_cli_config : @digest_cli.CliConfig,
   digest_config : @dconfig.DigestConfig,
 ) -> ServerState? {
-  let manifest_path = config.index_dir + "/manifest.json"
-  let vectors_path = config.index_dir + "/vectors.db"
-  let graph_path = config.index_dir + "/graph.json"
-  if !@fs.path_exists(manifest_path) ||
-    !@fs.path_exists(vectors_path) ||
-    !@fs.path_exists(graph_path) {
+  let mp = @dconfig.manifest_path(config.index_dir)
+  let vp = @dconfig.vectors_path(config.index_dir)
+  let gp = @dconfig.graph_path(config.index_dir)
+  if !@fs.path_exists(mp) || !@fs.path_exists(vp) || !@fs.path_exists(gp) {
     return None
   }
   @digest_cli.log_progress("Loading index from " + config.index_dir + "...")
-  let graph_json = @fs.read_file_to_string(graph_path) catch {
+  let graph_json = @fs.read_file_to_string(gp) catch {
     _ => return None
   }
   let graph = match @graph.CodeGraph::from_json_string(graph_json) {
@@ -607,19 +605,28 @@ async fn do_build(
   // Persist to disk
   @config.ensure_dir_recursive(config.index_dir)
   let (manifest_json, db_bytes) = index.serialize()
-  @fs.write_string_to_file(config.index_dir + "/manifest.json", manifest_json) catch {
+  @fs.write_string_to_file(
+    @dconfig.manifest_path(config.index_dir),
+    manifest_json,
+  ) catch {
     e => {
       @digest_cli.log_error("Saving manifest: " + e.to_string())
       return None
     }
   }
-  @fs.write_bytes_to_file(config.index_dir + "/vectors.db", db_bytes) catch {
+  @fs.write_bytes_to_file(
+    @dconfig.vectors_path(config.index_dir),
+    db_bytes,
+  ) catch {
     e => {
       @digest_cli.log_error("Saving vectors: " + e.to_string())
       return None
     }
   }
-  @fs.write_string_to_file(config.index_dir + "/graph.json", graph_json) catch {
+  @fs.write_string_to_file(
+    @dconfig.graph_path(config.index_dir),
+    graph_json,
+  ) catch {
     e => {
       @digest_cli.log_error("Saving graph: " + e.to_string())
       return None

@@ -12,6 +12,7 @@ import {
   "trkbt10/indexion/src/pipeline" @pipeline,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
+  "trkbt10/indexion/src/docgen/wiki/types" @wiki_types,
   "trkbt10/indexion/src/docgen/wiki/interop" @wiki_interop,
   "trkbt10/indexion/src/docgen/wiki/search" @wiki_search,
   "trkbt10/vcdb/core/types" @vcdb_core,

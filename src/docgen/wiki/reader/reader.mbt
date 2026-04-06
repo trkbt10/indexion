@@ -11,7 +11,7 @@ pub fn load_wiki(
   wiki_dir : String,
   registry? : @kgf_registry.KGFRegistry? = None,
 ) -> @types.WikiData? {
-  let manifest_path = wiki_dir + "/wiki.json"
+  let manifest_path = @types.wiki_manifest_path(wiki_dir)
   let manifest_text = @fs.read_file_to_string(manifest_path) catch {
     _ => return None
   }

@@ -12,6 +12,74 @@ pub fn default_exclude_kinds() -> Array[String] {
 /// Default index directory
 pub const DEFAULT_INDEX_DIR : String = ".indexion/digest"
 
+// --- Index file name constants (SoT) ---
+// All file names within the index directory are defined here.
+// Consumers MUST use these constants or the path functions below.
+
+///|
+/// Manifest file name within the index directory.
+pub const INDEX_MANIFEST_FILE : String = "manifest.json"
+
+///|
+/// Vector database file name within the index directory.
+pub const INDEX_VECTORS_FILE : String = "vectors.db"
+
+///|
+/// TF-IDF vocabulary file name within the index directory.
+pub const INDEX_VOCABULARY_FILE : String = "vocabulary.json"
+
+///|
+/// Code graph file name within the index directory.
+pub const INDEX_GRAPH_FILE : String = "graph.json"
+
+///|
+/// Build lock file name within the index directory.
+pub const INDEX_LOCK_FILE : String = "build.lock"
+
+///|
+/// All index file names that constitute a complete index.
+/// Used for cleanup (delete_index_files) and integrity checks.
+pub let index_file_names : Array[String] = [
+  INDEX_MANIFEST_FILE, INDEX_VECTORS_FILE, INDEX_VOCABULARY_FILE,
+  INDEX_GRAPH_FILE,
+]
+
+///|
+/// Construct a full path by joining index_dir with a file name.
+pub fn index_path(index_dir : String, file_name : String) -> String {
+  index_dir + "/" + file_name
+}
+
+///|
+/// Path to the manifest file within the given index directory.
+pub fn manifest_path(index_dir : String) -> String {
+  index_path(index_dir, INDEX_MANIFEST_FILE)
+}
+
+///|
+/// Path to the vector database within the given index directory.
+pub fn vectors_path(index_dir : String) -> String {
+  index_path(index_dir, INDEX_VECTORS_FILE)
+}
+
+///|
+/// Path to the TF-IDF vocabulary within the given index directory.
+pub fn vocabulary_path(index_dir : String) -> String {
+  index_path(index_dir, INDEX_VOCABULARY_FILE)
+}
+
+///|
+/// Path to the code graph within the given index directory.
+pub fn graph_path(index_dir : String) -> String {
+  index_path(index_dir, INDEX_GRAPH_FILE)
+}
+
+///|
+/// Path to the build lock file within the given index directory.
+pub fn lock_path(index_dir : String) -> String {
+  index_path(index_dir, INDEX_LOCK_FILE)
+}
+
 ///|
 /// Default TF-IDF dimension
 pub const DEFAULT_TFIDF_DIM : Int = 256

@@ -119,6 +119,17 @@ pub fn WikiData::new(
 }
 
 ///|
+/// Wiki manifest file name (SoT).
+/// All consumers must use this constant instead of hardcoding "wiki.json".
+pub const WIKI_MANIFEST_FILE : String = "wiki.json"
+
+///|
+/// Construct the full path to the wiki manifest in a given directory.
+pub fn wiki_manifest_path(dir : String) -> String {
+  dir + "/" + WIKI_MANIFEST_FILE
+}
+
+///|
 /// A page entry in wiki.json manifest.
 pub struct ManifestPage {
   id : String
