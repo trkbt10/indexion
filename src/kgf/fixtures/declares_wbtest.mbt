@@ -173,6 +173,85 @@ test "declares: typescript function and interface" {
   assert_true(names.get("privateHelper") == Some("function"))
 }
 
+// ─── TSX / JSX / Clojure ───────────────────────────────────
+
+///|
+test "declares: typescript-jsx jsx component and interface" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let source =
+    #|export interface Props {
+    #|  title: string;
+    #|}
+    #|
+    #|export function App(props: Props) {
+    #|  return <Main title={props.title} />;
+    #|}
+  let (fn_count, type_count, names) = count_declares(
+    registry, "typescript-jsx", source, "app.tsx",
+  )
+  assert_eq(fn_count, 1)
+  assert_eq(type_count, 1)
+  assert_true(names.get("App") == Some("function"))
+  assert_true(names.get("Props") == Some("interface"))
+}
+
+///|
+test "declares: javascript-jsx function component and class" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let source =
+    #|function App() {
+    #|  return <Box />;
+    #|}
+    #|
+    #|class LocalBox {}
+  let (fn_count, type_count, names) = count_declares(
+    registry, "javascript-jsx", source, "app.jsx",
+  )
+  assert_eq(fn_count, 1)
+  assert_eq(type_count, 1)
+  assert_true(names.get("App") == Some("function"))
+  assert_true(names.get("LocalBox") == Some("class"))
+}
+
+///|
+test "declares: clojure def defn defmacro" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let source =
+    #|(def visible-value 1)
+    #|(defn visible-fn [name]
+    #|  name)
+    #|(defmacro visible-macro [x] x)
+  let (fn_count, type_count, names) = count_declares(
+    registry, "clojure", source, "sample.clj",
+  )
+  assert_eq(fn_count, 2)
+  assert_eq(type_count, 1)
+  assert_true(names.get("visible-value") == Some("var"))
+  assert_true(names.get("visible-fn") == Some("function"))
+  assert_true(names.get("visible-macro") == Some("macro"))
+}
+
+///|
+test "declares: clojure protocol record type multimethod method" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let source =
+    #|(defprotocol VisibleProtocol)
+    #|(defrecord VisibleRecord)
+    #|(deftype VisibleType)
+    #|(defmulti visible-dispatch)
+    #|(defmethod visible-method)
+  let (fn_count, type_count, names) = count_declares(
+    registry, "clojure", source, "extended.clj",
+  )
+  assert_eq(fn_count, 2)
+  assert_eq(type_count, 3)
+  assert_true(names.get("VisibleProtocol") == Some("protocol"))
+  assert_true(names.get("VisibleRecord") == Some("record"))
+  assert_true(names.get("VisibleType") == Some("type"))
+  assert_true(names.get("visible-dispatch") == Some("multimethod"))
+  assert_true(names.get("visible-method") == Some("method"))
+}
+
 // ─── Python ─────────────────────────────────────────────────
 
 ///|
@@ -497,4 +576,44 @@ test "declares: lua global function" {
   assert_true(names.get("greet") == Some("function"))
   // local functions are private — should NOT be in declares
   assert_true(!names.contains("helper"))
+}
+
+// ─── Dart ───────────────────────────────────────────────────
+
+///|
+test "declares: dart task fixture class" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let path = "fixtures/programming/dart/task.dart"
+  let source = @fs.read_file_to_string(path)
+  let (_, _, names) = count_declares(registry, "dart", source, path)
+  assert_true(names.get("Task") == Some("class"))
+}
+
+// ─── OCaml ──────────────────────────────────────────────────
+
+///|
+test "declares: ocaml task store fixture values and types" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let source =
+    #|type status = Pending | Done
+  let (_, _, names) = count_declares(registry, "ocaml", source, "task_store.ml")
+  assert_true(names.get("status") == Some("type"))
+}
+
+// ─── Julia ──────────────────────────────────────────────────
+
+///|
+test "declares: julia task store fixture module and function" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let source =
+    #|struct Task
+    #|    id::Int
+    #|end
+    #|
+    #|function add!(x)
+    #|    x
+    #|end
+  let (_, _, names) = count_declares(registry, "julia", source, "task_store.jl")
+  assert_true(names.get("Task") == Some("struct"))
+  assert_true(names.get("add!") == Some("function"))
 }
