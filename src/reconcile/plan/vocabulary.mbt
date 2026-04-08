@@ -17,21 +17,21 @@ priv struct TokenizedModuleGroup {
 /// Uses project-wide IDF to suppress ubiquitous terms (e.g., language primitives)
 /// so that gap terms reflect concepts specific to each module.
 pub fn compute_vocabulary_divergences(
-  discovered_paths : Array[String],
+  discovered_files : Array[@pipeline.SupportedFile],
   config : ReconcileConfig,
   registry : @registry.KGFRegistry,
 ) -> Array[VocabularyDivergence] {
-  let groups = group_files_by_directory(discovered_paths, config, registry)
+  let groups = group_files_by_directory(discovered_files, config, registry)
   let tokenized_groups : Array[TokenizedModuleGroup] = []
   for group in groups {
-    if group.source_paths.is_empty() || group.doc_paths.is_empty() {
+    if group.source_files.is_empty() || group.doc_files.is_empty() {
       continue
     }
     let source_per_file = tokenize_files_individually(
-      group.source_paths,
+      group.source_files,
       registry,
     )
-    let doc_per_file = tokenize_files_individually(group.doc_paths, registry)
+    let doc_per_file = tokenize_files_individually(group.doc_files, registry)
     if source_per_file.is_empty() && doc_per_file.is_empty() {
       continue
     }
@@ -39,7 +39,7 @@ pub fn compute_vocabulary_divergences(
       module_path: group.module_path,
       source_tokens: source_per_file,
       doc_tokens: doc_per_file,
-      doc_paths: group.doc_paths,
+      doc_paths: group.doc_files.map(fn(file) { file.path }),
     })
   }
   let results : Array[VocabularyDivergence] = []
@@ -80,20 +80,20 @@ pub fn compute_vocabulary_divergences(
 /// A group of source files and documentation files within a directory.
 priv struct ModuleFileGroup {
   module_path : String
-  source_paths : Array[String]
-  doc_paths : Array[String]
+  source_files : Array[@pipeline.SupportedFile]
+  doc_files : Array[@pipeline.SupportedFile]
 }
 
 ///|
 /// Group discovered files by their parent directory, separating source from docs.
 fn group_files_by_directory(
-  paths : Array[String],
+  files : Array[@pipeline.SupportedFile],
   config : ReconcileConfig,
   registry : @registry.KGFRegistry,
 ) -> Array[ModuleFileGroup] {
   let groups : Map[String, ModuleFileGroup] = {}
-  for path in paths {
-    let dir = @config_paths.dirname(path)
+  for file in files {
+    let dir = @config_paths.dirname(file.path)
     let rel_dir = @config_paths.relative_to(config.target_dir, dir)
     let module_path = if rel_dir.length() == 0 { "." } else { rel_dir }
     let group = match groups.get(module_path) {
@@ -101,17 +101,17 @@ fn group_files_by_directory(
       None => {
         let g : ModuleFileGroup = {
           module_path,
-          source_paths: [],
-          doc_paths: [],
+          source_files: [],
+          doc_files: [],
         }
         groups.set(module_path, g)
         g
       }
     }
-    if is_document_path(path, config, registry) {
-      group.doc_paths.push(path)
+    if is_document_candidate(file.path, file.content_type, config, registry) {
+      group.doc_files.push(file)
     } else {
-      group.source_paths.push(path)
+      group.source_files.push(file)
     }
   }
   let result : Array[ModuleFileGroup] = []
@@ -124,13 +124,12 @@ fn group_files_by_directory(
 ///|
 /// Tokenize files individually, returning one token array per file.
 fn tokenize_files_individually(
-  paths : Array[String],
+  files : Array[@pipeline.SupportedFile],
   registry : @registry.KGFRegistry,
 ) -> Array[Array[String]] {
   let result : Array[Array[String]] = []
-  for path in paths {
-    let content = @fs.read_file_to_string(path) catch { _ => continue }
-    let tokens = @kgf_tokenize.tokenize_file(content, path, registry)
+  for file in files {
+    let tokens = @kgf_tokenize.tokenize_file(file.content, file.path, registry)
     result.push(tokens)
   }
   result

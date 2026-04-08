@@ -38,11 +38,19 @@ pub fn run_pattern_search(
   let mut total_files = 0
   for file in files {
     let (path, content) = file
+    let spec = match registry {
+      Some(reg) =>
+        match reg.detect_from_path(path) {
+          Some(lang) => reg.get_spec(lang)
+          None => None
+        }
+      None => None
+    }
     let tokens = match @kgf_features.tokenize_source(content, path, registry) {
       Some(t) => t
       None => continue
     }
-    let matches = find_matches(tokens, matchers, path, content)
+    let matches = find_matches(tokens, matchers, path, content, spec~)
     if matches.length() == 0 {
       continue
     }
@@ -149,43 +157,17 @@ fn collect_search_files(
   let kgf_ignore = registry.collect_ignore_patterns()
   let discover_opts = @pipeline.DiscoverOptions::new(
     recursive=true,
+    includes=config.includes,
     excludes=config.excludes,
+    include_hidden=true,
     kgf_ignore~,
   )
-  let candidate_paths = @pipeline.discover_files(paths, discover_opts)
-  let extensions = registry.get_extensions()
   let results : Array[(String, String)] = []
-  for path in candidate_paths {
-    // Check include patterns
-    if config.includes.length() > 0 {
-      let mut matched = false
-      for inc in config.includes {
-        if @glob.glob_match(path, inc) {
-          matched = true
-          break
-        }
-      }
-      if !matched {
-        continue
-      }
-    }
-    // Check file has a registered extension
-    let mut has_ext = false
-    for ext in extensions {
-      if path.has_suffix(ext) {
-        has_ext = true
-        break
-      }
-    }
-    if !has_ext {
-      continue
-    }
-    try {
-      let content = @fs.read_file_to_string(path)
-      results.push((path, content))
-    } catch {
-      _ => ()
-    }
+  let supported = @pipeline.collect_supported_file_info(
+    paths, discover_opts, registry,
+  )
+  for file in supported {
+    results.push((file.path, file.content))
   }
   results
 }

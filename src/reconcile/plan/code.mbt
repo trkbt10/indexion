@@ -36,29 +36,27 @@ pub fn discovery_roots(target_dir : String) -> Array[String] {
 /// Code unit extraction using full KGF pipeline (tokenize → parse → eval_semantics → declares edges).
 /// All public declarations are identified via KGF semantics — no hardcoded keyword patterns.
 pub fn build_code_units_fast(
-  discovered_paths : Array[String],
+  discovered_files : Array[@pipeline.SupportedFile],
   registry : @registry.KGFRegistry,
 ) -> Array[CodeUnit] {
   let units : Array[CodeUnit] = []
-  for path in discovered_paths {
-    let lang = match registry.detect_from_path(path) {
-      Some(l) => l
-      None => continue
+  for file in discovered_files {
+    if file.content_type is Some(_) {
+      continue
     }
-    let spec = match registry.get_spec(lang) {
+    let spec = match registry.get_spec(file.language) {
       Some(s) => s
       None => continue
     }
-    let content = @fs.read_file_to_string(path) catch { _ => continue }
     // Full KGF pipeline: tokenize → parse → eval_semantics → declares edges
     let (pub_decls, doc_map) = @kgf_declarations.extract_pub_declarations_and_doc_map(
-      content,
-      path,
+      file.content,
+      file.path,
       Some(registry),
     )
     // Optional kind filter from KGF spec's document_symbol_kinds feature
     let kind_filter = document_symbol_kinds(spec)
-    let module_id = path
+    let module_id = file.path
     for decl in pub_decls {
       let kind = decl.kind
       // Apply kind filter if the spec defines document_symbol_kinds
@@ -66,7 +64,7 @@ pub fn build_code_units_fast(
         Some(filter) => if !filter.contains(kind) { continue }
         None => ()
       }
-      let symbol_id = path + "::" + decl.name
+      let symbol_id = file.path + "::" + decl.name
       let inline_doc = doc_map.get(decl.line)
       let code_hash = make_hash([
         symbol_id,
@@ -82,7 +80,7 @@ pub fn build_code_units_fast(
         kind,
         ns: "",
         module_id,
-        module_path: path,
+        module_path: file.path,
         inline_doc,
         code_hash,
       })

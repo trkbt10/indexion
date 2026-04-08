@@ -16,6 +16,10 @@ pub fn build_line_func_map(String, String, @registry.KGFRegistry?) -> Map[Int, S
 
 pub fn build_vocabulary_token_set(spec~ : @types.KGFSpec) -> Map[String, Bool]
 
+pub fn content_type_for_file(String, @registry.KGFRegistry?) -> String?
+
+pub fn content_type_for_spec(@types.KGFSpec) -> String?
+
 pub fn delete_lines(String, Int, Int) -> String
 
 pub fn detect_proxy_functions(Array[@types.Tok], String, include_self_delegation? : Bool, include_bare_constructors? : Bool, spec~ : @types.KGFSpec) -> Array[ProxyFunction]
@@ -49,6 +53,8 @@ pub let node_type_document : String
 pub fn preprocess_content(String, @types.KGFSpec) -> String
 
 pub fn to_lower_str(String) -> String
+
+pub fn token_search_terms(@types.Tok, spec~ : @types.KGFSpec) -> Array[String]
 
 pub fn tokenize_files_with_kgf(Array[(String, String)], @registry.KGFRegistry?) -> (Array[Array[String]], Int)
 

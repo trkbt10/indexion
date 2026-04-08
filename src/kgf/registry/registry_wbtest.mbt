@@ -48,6 +48,9 @@ test "registry: comprehensive validation" {
     (".tsx", "typescript-jsx"),
     (".js", "javascript"),
     (".jsx", "javascript-jsx"),
+    (".yml", "yaml"),
+    (".yaml", "yaml"),
+    (".sh", "shell"),
     (".py", "python"),
     (".go", "go"),
     (".rs", "rust"),
@@ -125,6 +128,9 @@ test "registry: comprehensive validation" {
   assert_true(registry.is_file_supported("src/main.ts"))
   assert_true(registry.is_file_supported("main.py"))
   assert_true(registry.is_file_supported("main.go"))
+  assert_true(registry.is_file_supported("scripts/sync-version.sh"))
+  assert_true(registry.is_file_supported(".github/workflows/release.yml"))
+  assert_true(registry.is_file_supported(".gitmodules"))
   assert_false(registry.is_file_supported("moon.pkg.bak"))
   assert_false(registry.is_file_supported("file.xyz"))
 
@@ -139,6 +145,12 @@ test "registry: comprehensive validation" {
     Some("rfc-plaintext"),
   )
   assert_true(registry.is_file_supported("fixtures/spec/rfc2795.rfc.txt"))
+  assert_eq(
+    registry.detect_from_path(".github/workflows/release.yml"),
+    Some("yaml"),
+  )
+  assert_eq(registry.detect_from_path("scripts/sync-version.sh"), Some("shell"))
+  assert_eq(registry.detect_from_path(".gitmodules"), Some("gitmodules"))
 
   // Test 9: project marker patterns come from KGF, not hardcoded caller lists
   let project_markers = registry.get_project_markers()
@@ -305,6 +317,40 @@ test "registry: parse markup and dsl" {
     assert_true(sql_result is Some(_))
     assert_true(sql_result.unwrap().ok)
   }
+
+  // YAML
+  let yaml_spec = registry.get_spec("yaml").unwrap()
+  let yaml_peg = @peg.build_peg(yaml_spec)
+  let yaml_lexer = @lexer.Lexer::new(yaml_spec.get_tokens())
+  let yaml_source = "name: release\non:\n  push:\n    tags:\n      - v*\n"
+  let yaml_tokens = yaml_lexer.tokenize(yaml_source)
+  let yaml_result = @peg.run_parse(yaml_peg, yaml_spec, "Doc", yaml_tokens)
+  assert_true(yaml_result is Some(_))
+  assert_true(yaml_result.unwrap().ok)
+
+  // Shell
+  let shell_spec = registry.get_spec("shell").unwrap()
+  let shell_peg = @peg.build_peg(shell_spec)
+  let shell_lexer = @lexer.Lexer::new(shell_spec.get_tokens())
+  let shell_source = "#!/bin/sh\nVERSION=\"$1\"\necho sync-version\n"
+  let shell_tokens = shell_lexer.tokenize(shell_source)
+  let shell_result = @peg.run_parse(
+    shell_peg, shell_spec, "Script", shell_tokens,
+  )
+  assert_true(shell_result is Some(_))
+  assert_true(shell_result.unwrap().ok)
+
+  // .gitmodules
+  let gitmodules_spec = registry.get_spec("gitmodules").unwrap()
+  let gitmodules_peg = @peg.build_peg(gitmodules_spec)
+  let gitmodules_lexer = @lexer.Lexer::new(gitmodules_spec.get_tokens())
+  let gitmodules_source = "[submodule \"kgfs\"]\n  path = kgfs\n  url = https://example.com/kgfs.git\n"
+  let gitmodules_tokens = gitmodules_lexer.tokenize(gitmodules_source)
+  let gitmodules_result = @peg.run_parse(
+    gitmodules_peg, gitmodules_spec, "Doc", gitmodules_tokens,
+  )
+  assert_true(gitmodules_result is Some(_))
+  assert_true(gitmodules_result.unwrap().ok)
 }
 
 ///|

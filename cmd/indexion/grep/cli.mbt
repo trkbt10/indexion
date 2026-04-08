@@ -21,6 +21,7 @@
 ///
 /// - `KW_fn` — match token kind exactly
 /// - `Ident:foo` — match kind and text (`kind:text`)
+/// - `version` — match normalized token text regardless of kind
 /// - `*` — match any single token
 /// - `...` — match zero or more tokens (non-greedy)
 /// - `!KW_pub` — negation (any token except this kind)

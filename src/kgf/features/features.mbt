@@ -73,6 +73,56 @@ pub fn build_vocabulary_token_set(
 }
 
 ///|
+/// Build normalized search terms for a token.
+/// Includes the raw normalized token text and, for token kinds listed in the
+/// spec's `vocabulary_token_kinds`, sub-tokenized vocabulary words.
+pub fn token_search_terms(
+  tok : @kgf_types.Tok,
+  spec~ : @kgf_types.KGFSpec,
+) -> Array[String] {
+  let result : Array[String] = []
+  let raw = to_lower_str(tok.get_text())
+  if raw.length() > 0 {
+    result.push(raw)
+  }
+  let vocab_kinds = build_vocabulary_token_set(spec~)
+  if !vocab_kinds.contains(tok.get_kind()) {
+    return result
+  }
+  for term in subtokenize_vocab_words(tok.get_text()) {
+    if term.length() > 0 && !result.contains(term) {
+      result.push(term)
+    }
+  }
+  result
+}
+
+///|
+fn subtokenize_vocab_words(text : String) -> Array[String] {
+  let result : Array[String] = []
+  let buf = StringBuilder::new()
+  for ch in text {
+    if (ch >= 'a' && ch <= 'z') ||
+      (ch >= 'A' && ch <= 'Z') ||
+      (ch >= '0' && ch <= '9') ||
+      ch == '_' {
+      buf.write_char(ch)
+    } else {
+      let word = to_lower_str(buf.to_string())
+      if word.length() >= 3 && !result.contains(word) {
+        result.push(word)
+      }
+      buf.reset()
+    }
+  }
+  let last = to_lower_str(buf.to_string())
+  if last.length() >= 3 && !result.contains(last) {
+    result.push(last)
+  }
+  result
+}
+
+///|
 /// Convert KGF token to TF-IDF feature string.
 /// Strategy:
 /// - Identifiers: "kind:text" for name similarity
@@ -277,21 +327,46 @@ pub let node_type_code : String = "code"
 pub let node_type_document : String = "document"
 
 ///|
-/// Check if a KGF spec is document-oriented via the `content_type` feature.
-/// Returns true if content_type is "document".
-/// This replaces the old HEADING token check — content type is now
-/// explicitly declared by each KGF spec, not inferred from token names.
-pub fn is_document_spec(spec : @kgf_types.KGFSpec) -> Bool {
+/// Return the declared content type for a KGF spec.
+pub fn content_type_for_spec(spec : @kgf_types.KGFSpec) -> String? {
   match spec.get_feature("content_type") {
-    Some(values) => values.length() > 0 && values[0] == "document"
-    None => false
+    Some(values) => if values.length() > 0 { Some(values[0]) } else { None }
+    None => None
   }
 }
 
 ///|
+/// Resolve the declared content type for a file path via its KGF spec.
+/// Returns None if the file has no matching spec or the spec declares no content type.
+pub fn content_type_for_file(
+  path : String,
+  registry : @kgf_registry.KGFRegistry?,
+) -> String? {
+  let reg = match registry {
+    Some(r) => r
+    None => return None
+  }
+  let lang = match reg.detect_from_path(path) {
+    Some(l) => l
+    None => return None
+  }
+  let spec = match reg.get_spec(lang) {
+    Some(s) => s
+    None => return None
+  }
+  content_type_for_spec(spec)
+}
+
+///|
+/// Check if a KGF spec is document-oriented via the `content_type` feature.
+pub fn is_document_spec(spec : @kgf_types.KGFSpec) -> Bool {
+  content_type_for_spec(spec) == Some("document")
+}
+
+///|
 /// Detect whether a file's KGF spec declares `content_type: document`.
-/// Returns Some(true) for document-oriented files, Some(false) for code,
-/// None if no spec matches the file.
+/// Returns Some(true) for document-oriented files, Some(false) for files with
+/// a matching non-document spec, and None if no spec matches the file.
 pub fn is_document_file(
   path : String,
   registry : @kgf_registry.KGFRegistry?,

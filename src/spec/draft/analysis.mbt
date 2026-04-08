@@ -33,23 +33,29 @@ fn collect_document_paths(
   if config.source_path.length() == 0 {
     return []
   }
+  let result : Array[String] = []
   if path_is_file(config.source_path) {
-    return match
-      @kgf_features.is_document_file(config.source_path, Some(registry)) {
-      Some(true) => [config.source_path]
-      _ => []
+    for
+      file in @pipeline.load_supported_file_info([config.source_path], registry) {
+      if file.content_type == Some("document") {
+        result.push(file.path)
+      }
     }
+    return result
   }
   let root = root_dir_for(config.source_path)
   let opts = @pipeline.DiscoverOptions::new(
     kgf_ignore=registry.collect_ignore_patterns(),
     root_dir=root,
   )
-  let paths = @pipeline.discover_files([config.source_path], opts)
-  let result : Array[String] = []
-  for path in paths {
-    if @kgf_features.is_document_file(path, Some(registry)) == Some(true) {
-      result.push(path)
+  for
+    file in @pipeline.collect_supported_file_info(
+      [config.source_path],
+      opts,
+      registry,
+    ) {
+    if file.content_type == Some("document") {
+      result.push(file.path)
     }
   }
   result

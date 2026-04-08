@@ -15,7 +15,7 @@ pub fn command() -> @argparse.Command
 
 pub fn extract_code_documents(Array[(String, String)], @registry.KGFRegistry?) -> Array[@search.SearchDocument]
 
-pub fn find_matches(Array[@types.Tok], Array[TokenMatcher], String, String) -> Array[GrepMatch]
+pub fn find_matches(Array[@types.Tok], Array[TokenMatcher], String, String, spec? : @types.KGFSpec?) -> Array[GrepMatch]
 
 pub fn parse_pattern(String) -> Array[TokenMatcher]
 
@@ -80,6 +80,7 @@ pub enum SemanticQuery {
 pub enum TokenMatcher {
   Kind(String)
   KindText(String, String)
+  Text(String)
   Any
   Ellipsis
   Not(String)

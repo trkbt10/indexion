@@ -19,37 +19,40 @@ fn report_config(config : ReconcileConfig) -> ReconcileReportConfig {
 
 ///|
 pub async fn collect_document_fragments(
-  discovered_paths : Array[String],
+  discovered_files : Array[@pipeline.SupportedFile],
   config : ReconcileConfig,
   registry : @registry.KGFRegistry,
 ) -> (Array[DocFragment], Array[FileState], Array[String]) {
   let fragments : Array[DocFragment] = []
   let file_states : Array[FileState] = []
   let used_specs : Array[String] = []
-  for path in discovered_paths {
-    if !is_document_path(path, config, registry) {
+  for file in discovered_files {
+    if !is_document_candidate(file.path, file.content_type, config, registry) {
       continue
     }
-    let spec = match select_document_spec(path, config, registry) {
+    let spec = match select_document_spec_for_file(file, config, registry) {
       Some(value) => value
       None => continue
     }
-    let content = @fs.read_file_to_string(path) catch { _ => continue }
-    let doc_fragments = extract_document_fragments(path, spec, content)
+    let doc_fragments = extract_document_fragments(
+      file.path,
+      spec,
+      file.content,
+    )
     for fragment in doc_fragments {
       fragments.push(fragment)
     }
     if !contains_string(used_specs, spec) {
       used_specs.push(spec)
     }
-    let ts = timestamp_for_path(config.target_dir, path, config)
+    let ts = timestamp_for_path(config.target_dir, file.path, config)
     let file_state = @reconcile_tracking.FileState::new(
-      path,
+      file.path,
       "doc",
       spec,
-      @cas_hash.compute_hash(content).to_string(),
+      @cas_hash.compute_hash(file.content).to_string(),
       ts.epoch_seconds,
-      @git.file_mtime_seconds(path),
+      @git.file_mtime_seconds(file.path),
       ts.is_dirty,
     )
     file_states.push(file_state)
@@ -176,11 +179,14 @@ async fn run_analysis(config : ReconcileConfig) -> AnalysisResult? {
     discovery_roots(config.target_dir),
     discover_opts,
   )
+  let discovered_files = @pipeline.load_supported_file_info(
+    discovered_paths, registry,
+  )
   let project_markers = registry.get_project_markers()
-  let code_units = build_code_units_fast(discovered_paths, registry)
+  let code_units = build_code_units_fast(discovered_files, registry)
   let (doc_fragments, doc_file_states, used_specs, code_file_states) = @async.with_task_group(group => {
       let doc_task = group.spawn(() => {
-        collect_document_fragments(discovered_paths, config, registry)
+        collect_document_fragments(discovered_files, config, registry)
       })
       let code_task = group.spawn(() => {
         collect_code_file_states(code_units, config)
@@ -242,7 +248,7 @@ async fn run_analysis(config : ReconcileConfig) -> AnalysisResult? {
     project_markers,
   )
   let vocabulary_divergences = compute_vocabulary_divergences(
-    discovered_paths, config, registry,
+    discovered_files, config, registry,
   )
   let summary = build_summary(
     code_units,

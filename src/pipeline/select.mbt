@@ -170,11 +170,8 @@ pub fn collect_supported_files(
   registry : @registry.KGFRegistry,
 ) -> Array[(String, String)] {
   let files : Array[(String, String)] = []
-  for path in file_paths {
-    if registry.is_file_supported(path) {
-      let content = @fs.read_file_to_string(path) catch { _ => continue }
-      files.push((path, content))
-    }
+  for file in load_supported_file_info(file_paths, registry) {
+    files.push((file.path, file.content))
   }
   files
 }

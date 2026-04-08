@@ -115,20 +115,22 @@ pub fn analyze_documentation(
     recursive=true,
     kgf_ignore~,
   )
-  let file_paths = @pipeline.discover_files([normalized_dir], discover_opts)
+  let supported_files = match registry {
+    Some(reg) =>
+      @pipeline.collect_supported_file_info(
+        [normalized_dir],
+        discover_opts,
+        reg,
+      )
+    None => []
+  }
   // Stage 2: Filter to KGF-supported files and group by directory
   let by_dir : Map[String, Array[String]] = {}
-  for path in file_paths {
-    let supported = match registry {
-      Some(reg) => reg.is_file_supported(path)
-      None => false
-    }
-    if supported {
-      let dir_path = @common.parent_dir(path)
-      match by_dir.get(dir_path) {
-        Some(arr) => arr.push(path)
-        None => by_dir.set(dir_path, [path])
-      }
+  for file in supported_files {
+    let dir_path = @common.parent_dir(file.path)
+    match by_dir.get(dir_path) {
+      Some(arr) => arr.push(file.path)
+      None => by_dir.set(dir_path, [file.path])
     }
   }
   // Stage 3: Analyze each directory group as a package

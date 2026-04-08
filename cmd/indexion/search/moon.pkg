@@ -19,3 +19,8 @@ import {
   "trkbt10/vcdb/core/types" @vcdb_core,
   "trkbt10/vcdb/core/filter" @vcdb_filter,
 }
+
+import {
+  "moonbitlang/core/env" @env,
+  "moonbitlang/async" @async,
+} for "wbtest"

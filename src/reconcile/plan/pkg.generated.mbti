@@ -6,6 +6,7 @@ import {
   "trkbt10/indexion/src/config",
   "trkbt10/indexion/src/kgf/registry",
   "trkbt10/indexion/src/kgf/types",
+  "trkbt10/indexion/src/pipeline",
   "trkbt10/indexion/src/reconcile/tracking",
   "trkbt10/vcdb",
 }
@@ -19,7 +20,7 @@ pub async fn build_candidates(Array[CodeUnit], Array[DocFragment], ReconcileConf
 
 pub async fn build_candidates_concurrent(Array[CodeUnit], Array[DocFragment], ReconcileConfig, @registry.KGFRegistry, Int) -> CandidateBuildResult
 
-pub fn build_code_units_fast(Array[String], @registry.KGFRegistry) -> Array[CodeUnit]
+pub fn build_code_units_fast(Array[@pipeline.SupportedFile], @registry.KGFRegistry) -> Array[CodeUnit]
 
 pub fn build_fragment_match_signals(Array[DocFragment], @registry.KGFRegistry) -> Map[String, FragmentMatchSignals]
 
@@ -31,9 +32,9 @@ pub fn cleanup_stale_index(String) -> Unit
 
 pub fn collapse_aggregate_only_candidates(Array[ReconcileCandidate], Array[ReconcileAggregateSuggestion], String, Array[String]) -> Array[ReconcileCandidate]
 
-pub async fn collect_document_fragments(Array[String], ReconcileConfig, @registry.KGFRegistry) -> (Array[DocFragment], Array[@tracking.FileState], Array[String])
+pub async fn collect_document_fragments(Array[@pipeline.SupportedFile], ReconcileConfig, @registry.KGFRegistry) -> (Array[DocFragment], Array[@tracking.FileState], Array[String])
 
-pub fn compute_vocabulary_divergences(Array[String], ReconcileConfig, @registry.KGFRegistry) -> Array[VocabularyDivergence]
+pub fn compute_vocabulary_divergences(Array[@pipeline.SupportedFile], ReconcileConfig, @registry.KGFRegistry) -> Array[VocabularyDivergence]
 
 pub fn contains_string(Array[String], String) -> Bool
 
@@ -46,6 +47,8 @@ pub fn extract_document_fragments(String, String, String) -> Array[DocFragment]
 pub fn extract_markdown_fragments(String, String, String) -> Array[DocFragment]
 
 pub fn extract_toml_fragments(String, String, String) -> Array[DocFragment]
+
+pub fn is_document_candidate(String, String?, ReconcileConfig, @registry.KGFRegistry) -> Bool
 
 pub fn is_document_path(String, ReconcileConfig, @registry.KGFRegistry) -> Bool
 
@@ -66,6 +69,8 @@ pub fn preview_text(String, max_len? : Int) -> String
 pub async fn report(ReconcileConfig) -> ReconcileReport?
 
 pub fn select_document_spec(String, ReconcileConfig, @registry.KGFRegistry) -> String?
+
+pub fn select_document_spec_for_file(@pipeline.SupportedFile, ReconcileConfig, @registry.KGFRegistry) -> String?
 
 pub fn sync_candidates_with_index(Array[ReconcileCandidate], ReconcileManifest, @vcdb.VectorDB, String, Int) -> IndexSyncResult
 

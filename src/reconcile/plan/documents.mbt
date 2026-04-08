@@ -18,17 +18,69 @@ pub fn is_document_path(
   config : ReconcileConfig,
   registry : @registry.KGFRegistry,
 ) -> Bool {
+  let content_type = @kgf_features.content_type_for_file(path, Some(registry))
+  is_document_candidate(path, content_type, config, registry)
+}
+
+///|
+pub fn is_document_candidate(
+  path : String,
+  content_type : String?,
+  config : ReconcileConfig,
+  registry : @registry.KGFRegistry,
+) -> Bool {
+  if content_type is None {
+    return false
+  }
   let rel = @config_paths.relative_to(config.target_dir, path)
   let subject = @scope.PathSubject::new(rel, additional_paths=[path])
   if !document_path_scope(config).matches(subject) {
     return false
   }
-  select_document_spec(path, config, registry) is Some(_)
+  select_document_spec_for_candidate(
+    path,
+    registry.detect_from_path(path),
+    config,
+    registry,
+  )
+  is Some(_)
 }
 
 ///|
 pub fn select_document_spec(
   path : String,
+  config : ReconcileConfig,
+  registry : @registry.KGFRegistry,
+) -> String? {
+  select_document_spec_for_candidate(
+    path,
+    registry.detect_from_path(path),
+    config,
+    registry,
+  )
+}
+
+///|
+pub fn select_document_spec_for_file(
+  file : @pipeline.SupportedFile,
+  config : ReconcileConfig,
+  registry : @registry.KGFRegistry,
+) -> String? {
+  if file.content_type is None {
+    return None
+  }
+  select_document_spec_for_candidate(
+    file.path,
+    Some(file.language),
+    config,
+    registry,
+  )
+}
+
+///|
+fn select_document_spec_for_candidate(
+  path : String,
+  detected : String?,
   config : ReconcileConfig,
   registry : @registry.KGFRegistry,
 ) -> String? {
@@ -42,7 +94,6 @@ pub fn select_document_spec(
 
   let ext = @config_paths.extension(path)
   let basename_ = @config_paths.basename(path)
-  let detected = registry.detect_from_path(path)
   let selected = match ext {
     ".md" | ".markdown" | ".mdx" =>
       match prefer_spec(registry, "markdown") {

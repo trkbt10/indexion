@@ -8,6 +8,7 @@ pub struct DiscoverOptions {
   recursive : Bool
   includes : Array[String]
   excludes : Array[String]
+  include_hidden : Bool
   /// KGF ignore patterns: (pattern, language)
   kgf_ignore : Array[(String, String)]
   /// Root directory for loading project-level ignore files (.gitignore, .indexionignore)
@@ -15,9 +16,24 @@ pub struct DiscoverOptions {
 }
 
 ///|
+pub struct SupportedFile {
+  path : String
+  content : String
+  language : String
+  content_type : String?
+}
+
+///|
 /// Create default discover options.
 pub fn DiscoverOptions::default() -> DiscoverOptions {
-  { recursive: true, includes: [], excludes: [], kgf_ignore: [], root_dir: "" }
+  {
+    recursive: true,
+    includes: [],
+    excludes: [],
+    include_hidden: false,
+    kgf_ignore: [],
+    root_dir: "",
+  }
 }
 
 ///|
@@ -26,10 +42,11 @@ pub fn DiscoverOptions::new(
   recursive? : Bool = true,
   includes? : Array[String] = [],
   excludes? : Array[String] = [],
+  include_hidden? : Bool = false,
   kgf_ignore? : Array[(String, String)] = [],
   root_dir? : String = "",
 ) -> DiscoverOptions {
-  { recursive, includes, excludes, kgf_ignore, root_dir }
+  { recursive, includes, excludes, include_hidden, kgf_ignore, root_dir }
 }
 
 ///|
@@ -79,6 +96,43 @@ pub fn discover_files(
 }
 
 ///|
+/// Load supported file metadata from an explicit path list.
+pub fn load_supported_file_info(
+  file_paths : Array[String],
+  registry : @registry.KGFRegistry,
+) -> Array[SupportedFile] {
+  let results : Array[SupportedFile] = []
+  for path in file_paths {
+    let language = match registry.detect_from_path(path) {
+      Some(value) => value
+      None => continue
+    }
+    let spec = match registry.get_spec(language) {
+      Some(value) => value
+      None => continue
+    }
+    let content = @fs.read_file_to_string(path) catch { _ => continue }
+    let content_type = match spec.get_feature("content_type") {
+      Some(values) => if values.length() > 0 { Some(values[0]) } else { None }
+      None => None
+    }
+    results.push({ path, content, language, content_type })
+  }
+  results
+}
+
+///|
+/// Discover files supported by the KGF registry and load their content together
+/// with resolved language and content type metadata.
+pub fn collect_supported_file_info(
+  paths : Array[String],
+  options : DiscoverOptions,
+  registry : @registry.KGFRegistry,
+) -> Array[SupportedFile] {
+  load_supported_file_info(discover_files(paths, options), registry)
+}
+
+///|
 fn collect_files_impl(
   path : String,
   options : DiscoverOptions,
@@ -87,7 +141,10 @@ fn collect_files_impl(
   skip_root_filter? : Bool = false,
 ) -> Unit {
   let clean_path = @config.normalize_path(trim_trailing_slash(path))
-  if !skip_root_filter && !filter.should_include(clean_path, true).is_included() {
+  let hidden_root = options.include_hidden && has_hidden_segment(clean_path)
+  if !skip_root_filter &&
+    !hidden_root &&
+    !filter.should_include(clean_path, true).is_included() {
     return
   }
   try {
@@ -101,19 +158,23 @@ fn collect_files_impl(
         )
       let entries = @fs.read_dir(clean_path)
       for entry in entries {
-        if dir_filter.should_skip_dir(entry) {
-          continue
-        }
         let full_path = if clean_path == "." {
           entry
         } else {
           clean_path + "/" + entry
         }
         if @fs.is_dir(full_path) {
+          if !options.include_hidden && dir_filter.should_skip_dir(entry) {
+            continue
+          }
           if options.recursive {
             collect_files_impl(full_path, options, dir_filter, file_paths)
           }
         } else if @fs.is_file(full_path) {
+          if options.include_hidden && has_hidden_segment(full_path) {
+            file_paths.push(full_path)
+            continue
+          }
           // Check file inclusion using dir filter
           if dir_filter.should_include(full_path, false).is_included() {
             file_paths.push(full_path)
@@ -126,6 +187,22 @@ fn collect_files_impl(
   } catch {
     _ => ()
   }
+}
+
+///|
+fn has_hidden_segment(path : String) -> Bool {
+  let part : Array[Char] = []
+  for ch in path {
+    if ch == '/' || ch == '\\' {
+      if part.length() > 0 && part[0] == '.' {
+        return true
+      }
+      part.clear()
+    } else {
+      part.push(ch)
+    }
+  }
+  part.length() > 0 && part[0] == '.'
 }
 
 ///|

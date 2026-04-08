@@ -8,6 +8,8 @@ pub enum TokenMatcher {
   Kind(String)
   /// Match kind and text (e.g. "Ident:foo")
   KindText(String, String)
+  /// Match normalized token text regardless of token kind
+  Text(String)
   /// Match any single token
   Any
   /// Match zero or more tokens (non-greedy)
@@ -116,11 +118,24 @@ pub fn parse_pattern_with_aliases(
         matchers.push(KindText(resolved_kind, text))
       } else {
         let resolved = resolve_alias(part, aliases)
-        matchers.push(Kind(resolved))
+        if resolved != part || looks_like_token_kind(part) {
+          matchers.push(Kind(resolved))
+        } else {
+          matchers.push(Text(normalize_token_text(part)))
+        }
       }
     }
   }
   matchers
+}
+
+///|
+fn looks_like_token_kind(text : String) -> Bool {
+  if text.length() == 0 {
+    return false
+  }
+  let first = text[0]
+  (first >= 'A' && first <= 'Z') || text.has_prefix("KW_")
 }
 
 ///|
@@ -158,14 +173,29 @@ fn find_char(s : String, target : Char) -> Int {
 
 ///|
 /// Check if a single token matches a matcher.
-fn matches_token(matcher : TokenMatcher, tok : @kgf_types.Tok) -> Bool {
+fn matches_token(
+  matcher : TokenMatcher,
+  tok : @kgf_types.Tok,
+  spec : @kgf_types.KGFSpec?,
+) -> Bool {
   match matcher {
     Kind(kind) => tok.get_kind() == kind
     KindText(kind, text) => tok.get_kind() == kind && tok.get_text() == text
+    Text(text) =>
+      match spec {
+        Some(value) =>
+          @kgf_features.token_search_terms(tok, spec=value).contains(text)
+        None => normalize_token_text(tok.get_text()) == text
+      }
     Any => true
     Ellipsis => true // Should not be called directly
     Not(kind) => tok.get_kind() != kind
   }
+}
+
+///|
+fn normalize_token_text(text : String) -> String {
+  @kgf_features.to_lower_str(text)
 }
 
 ///|
@@ -186,6 +216,7 @@ pub fn find_matches(
   matchers : Array[TokenMatcher],
   file : String,
   content : String,
+  spec? : @kgf_types.KGFSpec? = None,
 ) -> Array[GrepMatch] {
   let results : Array[GrepMatch] = []
   // Build token -> line number mapping
@@ -201,7 +232,7 @@ pub fn find_matches(
   }
   let mut pos = 0
   while pos < significant.length() {
-    match try_match_at(significant, matchers, pos) {
+    match try_match_at(significant, matchers, pos, spec) {
       Some(end) => {
         let (start_idx, _) = significant[pos]
         let (end_idx, _) = significant[end - 1]
@@ -248,8 +279,9 @@ fn try_match_at(
   tokens : Array[(Int, @kgf_types.Tok)],
   matchers : Array[TokenMatcher],
   pos : Int,
+  spec : @kgf_types.KGFSpec?,
 ) -> Int? {
-  match_recursive(tokens, matchers, 0, pos)
+  match_recursive(tokens, matchers, 0, pos, spec)
 }
 
 ///|
@@ -258,6 +290,7 @@ fn match_recursive(
   matchers : Array[TokenMatcher],
   mat_idx : Int,
   tok_idx : Int,
+  spec : @kgf_types.KGFSpec?,
 ) -> Int? {
   // All matchers consumed — success
   if mat_idx >= matchers.length() {
@@ -269,7 +302,7 @@ fn match_recursive(
       // Non-greedy: try matching rest at current position first, then expand
       let mut i = tok_idx
       while i <= tokens.length() {
-        match match_recursive(tokens, matchers, mat_idx + 1, i) {
+        match match_recursive(tokens, matchers, mat_idx + 1, i, spec) {
           Some(end) => return Some(end)
           None => ()
         }
@@ -282,8 +315,8 @@ fn match_recursive(
         return None
       }
       let (_, tok) = tokens[tok_idx]
-      if matches_token(matcher, tok) {
-        match_recursive(tokens, matchers, mat_idx + 1, tok_idx + 1)
+      if matches_token(matcher, tok, spec) {
+        match_recursive(tokens, matchers, mat_idx + 1, tok_idx + 1, spec)
       } else {
         None
       }

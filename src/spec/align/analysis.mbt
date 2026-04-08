@@ -48,14 +48,6 @@ fn path_is_dir(path : String) -> Bool {
 }
 
 ///|
-fn is_spec_file_path(path : String, registry : @registry.KGFRegistry) -> Bool {
-  match @kgf_features.is_document_file(path, Some(registry)) {
-    Some(is_document) => is_document
-    None => false
-  }
-}
-
-///|
 fn discover_spec_files(
   spec_path : String,
   registry : @registry.KGFRegistry,
@@ -63,33 +55,28 @@ fn discover_spec_files(
   if spec_path.length() == 0 || !file_exists(spec_path) {
     return []
   }
+  let result : Array[String] = []
   if !path_is_dir(spec_path) {
-    return if is_spec_file_path(spec_path, registry) { [spec_path] } else { [] }
+    for file in @pipeline.load_supported_file_info([spec_path], registry) {
+      if file.content_type == Some("document") {
+        result.push(file.path)
+      }
+    }
+    result.sort()
+    return result
   }
-  let discovered = @pipeline.discover_files(
+  let discovered = @pipeline.collect_supported_file_info(
     [spec_path],
     @pipeline.DiscoverOptions::new(),
+    registry,
   )
-  let result : Array[String] = []
-  for path in discovered {
-    if is_spec_file_path(path, registry) {
-      result.push(path)
+  for file in discovered {
+    if file.content_type == Some("document") {
+      result.push(file.path)
     }
   }
   result.sort()
   result
-}
-
-///|
-fn is_impl_file_path(path : String, registry : @registry.KGFRegistry) -> Bool {
-  match registry.detect_from_path(path) {
-    Some(name) =>
-      match registry.get_spec(name) {
-        Some(spec) => !@kgf_features.is_document_spec(spec)
-        None => false
-      }
-    None => false
-  }
 }
 
 ///|
@@ -100,18 +87,25 @@ fn discover_impl_files(
   if impl_path.length() == 0 || !file_exists(impl_path) {
     return []
   }
+  let result : Array[String] = []
   if !path_is_dir(impl_path) {
-    return if is_impl_file_path(impl_path, registry) { [impl_path] } else { [] }
+    for file in @pipeline.load_supported_file_info([impl_path], registry) {
+      if file.content_type is None {
+        result.push(file.path)
+      }
+    }
+    result.sort()
+    return result
   }
   let kgf_ignore = registry.collect_ignore_patterns()
-  let discovered = @pipeline.discover_files(
+  let discovered = @pipeline.collect_supported_file_info(
     [impl_path],
     @pipeline.DiscoverOptions::new(kgf_ignore~),
+    registry,
   )
-  let result : Array[String] = []
-  for path in discovered {
-    if is_impl_file_path(path, registry) {
-      result.push(path)
+  for file in discovered {
+    if file.content_type is None {
+      result.push(file.path)
     }
   }
   result.sort()

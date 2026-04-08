@@ -44,49 +44,127 @@ fn build_corpus(
       recursive=true,
       includes=config.includes,
       excludes=config.excludes,
+      include_hidden=true,
       kgf_ignore~,
     )
-    let discovered = @pipeline.discover_files(file_paths, opts)
-    // 4. Classify by KGF spec: document-oriented (content_type: document) vs code
+    let supported = match registry {
+      Some(reg) => @pipeline.collect_supported_file_info(file_paths, opts, reg)
+      None => []
+    }
+    // 4. Classify by KGF spec content type.
     let code_files : Array[(String, String)] = []
-    let doc_files : Array[(String, String)] = []
-    for path in discovered {
-      // Only process files that have a matching KGF spec
-      match @kgf_features.is_document_file(path, registry) {
-        None => continue // No KGF spec — skip
-        Some(is_doc) => {
-          let content = @fs.read_file_to_string(path) catch { _ => continue }
-          if is_doc {
-            doc_files.push((path, content))
-          } else {
-            code_files.push((path, content))
-          }
-        }
+    let structured_files : Array[(String, String, String)] = []
+    for file in supported {
+      match file.content_type {
+        Some(content_type) =>
+          structured_files.push((file.path, file.content, content_type))
+        None => code_files.push((file.path, file.content))
       }
     }
     // 5. Build code documents via CodeGraph (includes edge info)
     if code_files.length() > 0 {
-      // Use the first file_path's root for graph construction
-      let graph_target = if file_paths.length() > 0 {
-        file_paths[0]
+      if has_directory_input(file_paths) {
+        let graph_target = graph_target_dir(file_paths)
+        extract_code_documents_with_graph(
+          code_files,
+          registry,
+          config.specs_dir,
+          graph_target,
+          documents,
+        )
       } else {
-        "."
+        extract_code_file_documents(code_files, registry, documents)
       }
-      extract_code_documents_with_graph(
-        code_files,
-        registry,
-        config.specs_dir,
-        graph_target,
-        documents,
-      )
     }
-    // 6. Build document-oriented documents (section splitting via KGF section_token)
-    for file in doc_files {
-      let (path, content) = file
-      extract_document_sections(path, content, registry, documents)
+    // 6. Build structured documents.
+    for file in structured_files {
+      let (path, content, content_type) = file
+      extract_structured_documents(
+        path, content, content_type, registry, documents,
+      )
     }
   }
   documents
+}
+
+///|
+fn has_directory_input(paths : Array[String]) -> Bool {
+  for path in paths {
+    if path_is_dir(path) {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn path_is_dir(path : String) -> Bool {
+  @fs.is_dir(path) catch {
+    _ => false
+  }
+}
+
+///|
+fn graph_target_dir(paths : Array[String]) -> String {
+  if paths.is_empty() {
+    return "."
+  }
+  let normalized : Array[String] = []
+  for path in paths {
+    let candidate = if (@fs.is_dir(path) catch { _ => false }) {
+      path
+    } else {
+      @config.dirname(path)
+    }
+    normalized.push(if candidate.length() == 0 { "." } else { candidate })
+  }
+  let mut prefix = normalized[0]
+  for path in normalized {
+    prefix = common_dir_prefix(prefix, path)
+    if prefix == "." {
+      return "."
+    }
+  }
+  if prefix.length() == 0 {
+    "."
+  } else {
+    prefix
+  }
+}
+
+///|
+fn common_dir_prefix(left : String, right : String) -> String {
+  let absolute = left.has_prefix("/") && right.has_prefix("/")
+  let lhs = @common.split_by_char(left, '/')
+  let rhs = @common.split_by_char(right, '/')
+  let shared : Array[String] = []
+  let limit = if lhs.length() < rhs.length() {
+    lhs.length()
+  } else {
+    rhs.length()
+  }
+  let mut i = 0
+  while i < limit {
+    if lhs[i] != rhs[i] {
+      break
+    }
+    shared.push(lhs[i])
+    i += 1
+  }
+  if shared.is_empty() {
+    if absolute {
+      "/"
+    } else {
+      "."
+    }
+  } else {
+    let joined = shared.join("/")
+    if absolute {
+      "/" + joined
+    } else {
+      joined
+    }
+  }
 }
 
 ///|
@@ -172,27 +250,40 @@ fn extract_wiki_documents(
 }
 
 ///|
-/// Extract SearchDocuments from a document-oriented file using KGF tokenization.
-/// Section splitting is driven by the KGF spec's `section_token` feature.
-fn extract_document_sections(
+/// Extract SearchDocuments from a structured file using KGF tokenization.
+/// Files with `section_token` are split into sections; everything else is indexed
+/// as a single file-sized document.
+fn extract_structured_documents(
   path : String,
   content : String,
+  content_type : String,
   registry : @kgf_registry.KGFRegistry?,
   out : Array[@search_engine.SearchDocument],
 ) -> Unit {
-  let file_id = path
-  let file_title = @config.basename(path)
   let reg = match registry {
     Some(r) => r
-    None => return
+    None => {
+      push_whole_file_document(path, content, "", content_type, out)
+      return
+    }
   }
   let spec = match reg.detect_from_path(path) {
     Some(lang) => reg.get_spec(lang)
-    None => None
+    None => {
+      push_whole_file_document(path, content, "", content_type, out)
+      return
+    }
   }
   let tokens = match @kgf_features.tokenize_source(content, path, registry) {
     Some(toks) => toks
-    None => return
+    None => {
+      let lang = match reg.detect_from_path(path) {
+        Some(value) => value
+        None => ""
+      }
+      push_whole_file_document(path, content, lang, content_type, out)
+      return
+    }
   }
   let lang = match reg.detect_from_path(path) {
     Some(l) => l
@@ -204,6 +295,12 @@ fn extract_document_sections(
     spec~,
     path~,
   )
+  if raw_sections.length() == 0 {
+    push_whole_file_document(path, content, lang, content_type, out)
+    return
+  }
+  let file_id = path
+  let file_title = @config.basename(path)
   for idx, section in raw_sections {
     let id = if idx == 0 {
       file_id
@@ -214,6 +311,7 @@ fn extract_document_sections(
     let kind_str = if level == 1 { "page" } else { "section" }
     let doc_attrs : Map[String, String] = {}
     doc_attrs["node_type"] = @kgf_features.node_type_document
+    doc_attrs["content_type"] = content_type
     doc_attrs["node_kind"] = kind_str
     if lang.length() > 0 {
       doc_attrs["language"] = lang
@@ -233,6 +331,33 @@ fn extract_document_sections(
       attrs: doc_attrs,
     })
   }
+}
+
+///|
+fn push_whole_file_document(
+  path : String,
+  content : String,
+  lang : String,
+  content_type : String,
+  out : Array[@search_engine.SearchDocument],
+) -> Unit {
+  let attrs : Map[String, String] = {}
+  attrs["node_type"] = @kgf_features.node_type_document
+  attrs["node_kind"] = "file"
+  attrs["content_type"] = content_type
+  if lang.length() > 0 {
+    attrs["language"] = lang
+  }
+  let title = @config.basename(path)
+  out.push({
+    id: path,
+    text: title + " " + content,
+    title,
+    source: path,
+    line: 1,
+    kind: "file",
+    attrs,
+  })
 }
 
 ///|
@@ -298,7 +423,16 @@ fn extract_code_from_graph(
         }
       None => ""
     }
-    let text = symbol.name + " " + symbol.kind + " " + symbol.ns
+    let buf = StringBuilder::new()
+    buf.write_string(symbol.name)
+    buf.write_string(" ")
+    buf.write_string(symbol.kind)
+    buf.write_string(" ")
+    buf.write_string(symbol.ns)
+    buf.write_string(" ")
+    buf.write_string(@config.basename(module_file))
+    buf.write_string(" ")
+    buf.write_string(symbol.module_id)
     let callers = graph.get_callers(entry.0)
     let callees = graph.get_callees(entry.0)
     let doc_attrs : Map[String, String] = {}
@@ -311,17 +445,55 @@ fn extract_code_from_graph(
     doc_attrs["callers"] = callers.length().to_string()
     doc_attrs["callees"] = callees.length().to_string()
     match symbol.doc {
-      Some(doc) => doc_attrs["doc"] = doc
+      Some(doc) => {
+        doc_attrs["doc"] = doc
+        buf.write_string(" ")
+        buf.write_string(doc)
+      }
       None => ()
     }
     out.push({
       id: module_file + ":" + symbol.name,
-      text,
+      text: buf.to_string(),
       title: symbol.name,
       source: module_file,
       line: 0,
       kind: symbol.kind,
       attrs: doc_attrs,
+    })
+  }
+}
+
+///|
+fn extract_code_file_documents(
+  code_files : Array[(String, String)],
+  registry : @kgf_registry.KGFRegistry?,
+  out : Array[@search_engine.SearchDocument],
+) -> Unit {
+  for file in code_files {
+    let (path, content) = file
+    let lang = match registry {
+      Some(reg) =>
+        match reg.detect_from_path(path) {
+          Some(value) => value
+          None => ""
+        }
+      None => ""
+    }
+    let attrs : Map[String, String] = {}
+    attrs["node_type"] = @kgf_features.node_type_code
+    attrs["node_kind"] = "file"
+    if lang.length() > 0 {
+      attrs["language"] = lang
+    }
+    out.push({
+      id: path,
+      text: @config.basename(path) + " " + content,
+      title: @config.basename(path),
+      source: path,
+      line: 1,
+      kind: "file",
+      attrs,
     })
   }
 }

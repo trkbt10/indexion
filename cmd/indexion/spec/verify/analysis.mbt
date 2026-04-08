@@ -16,8 +16,9 @@ fn run_analysis(config : VerifyConfig) -> VerifyReport {
     target_dir=config.target_dir,
   )
   let spec_paths = expand_spec_patterns(config.spec_patterns)
-  if spec_paths.length() == 0 {
-    return empty_report(config, spec_paths, [])
+  let spec_files = collect_spec_files(spec_paths, registry)
+  if spec_files.length() == 0 {
+    return empty_report(config, [], [])
   }
   let kgf_ignore = registry.collect_ignore_patterns()
   let effective_root = match config.root_dir {
@@ -28,11 +29,19 @@ fn run_analysis(config : VerifyConfig) -> VerifyReport {
     kgf_ignore~,
     root_dir=effective_root,
   )
-  let impl_paths = @pipeline.discover_files([config.target_dir], discover_opts)
-  let spec_tokens = tokenize_file_set(spec_paths, registry)
-  let impl_tokens = tokenize_file_set(impl_paths, registry)
+  let impl_files = collect_impl_files(
+    config.target_dir,
+    discover_opts,
+    registry,
+  )
+  let spec_tokens = tokenize_file_set(spec_files, registry)
+  let impl_tokens = tokenize_file_set(impl_files, registry)
   if spec_tokens.length() == 0 {
-    return empty_report(config, spec_paths, impl_paths)
+    return empty_report(
+      config,
+      spec_files.map(fn(file) { file.path }),
+      impl_files.map(fn(file) { file.path }),
+    )
   }
   let result = @vocab.measure_divergence(spec_tokens, impl_tokens, {
     ..@vocab.GapConfig::default(),
@@ -41,20 +50,20 @@ fn run_analysis(config : VerifyConfig) -> VerifyReport {
   let filtered_gaps = apply_focus(result.gap_terms, config.focus)
   let items = gap_terms_to_items(filtered_gaps)
   let summary = build_summary(items, result.cosine_distance)
-  let used_specs = collect_used_specs(spec_paths, impl_paths, registry)
+  let used_specs = collect_used_specs(spec_files, impl_files)
   {
     version: "spec-verify-v1",
     generated_at: 0,
     config: {
-      spec_paths: spec_paths.copy(),
+      spec_paths: spec_files.map(fn(file) { file.path }),
       target_dir: config.target_dir,
       focus: config.focus,
       max_candidates: config.max_candidates,
     },
     summary: {
       ..summary,
-      spec_files: spec_paths.length(),
-      impl_files: impl_paths.length(),
+      spec_files: spec_files.length(),
+      impl_files: impl_files.length(),
       spec_symbols: spec_tokens.flatten().length(),
     },
     items,
@@ -63,15 +72,48 @@ fn run_analysis(config : VerifyConfig) -> VerifyReport {
 }
 
 ///|
+fn collect_spec_files(
+  paths : Array[String],
+  registry : @registry.KGFRegistry,
+) -> Array[@pipeline.SupportedFile] {
+  let result : Array[@pipeline.SupportedFile] = []
+  for file in @pipeline.load_supported_file_info(paths, registry) {
+    if file.content_type == Some("document") {
+      result.push(file)
+    }
+  }
+  result
+}
+
+///|
+fn collect_impl_files(
+  target_dir : String,
+  options : @pipeline.DiscoverOptions,
+  registry : @registry.KGFRegistry,
+) -> Array[@pipeline.SupportedFile] {
+  let result : Array[@pipeline.SupportedFile] = []
+  for
+    file in @pipeline.collect_supported_file_info(
+      [target_dir],
+      options,
+      registry,
+    ) {
+    if file.content_type is None {
+      result.push(file)
+    }
+  }
+  result
+}
+
+///|
 /// Tokenize a set of files individually, returning one token array per file.
 fn tokenize_file_set(
-  paths : Array[String],
+  files : Array[@pipeline.SupportedFile],
   registry : @registry.KGFRegistry,
 ) -> Array[Array[String]] {
   let result : Array[Array[String]] = []
-  for path in paths {
-    let content = @fs.read_file_to_string(path) catch { _ => continue }
-    let tokens = @kgf_tokenize.tokenize_file(content, path, registry)
+  for file in files {
+    let tokens = @kgf_tokenize.tokenize_file(file.content, file.path, registry)
     if tokens.length() > 0 {
       result.push(tokens)
     }
@@ -175,21 +217,16 @@ fn expand_spec_patterns(patterns : Array[String]) -> Array[String] {
 
 ///|
 fn collect_used_specs(
-  spec_paths : Array[String],
-  impl_paths : Array[String],
-  registry : @registry.KGFRegistry,
+  spec_files : Array[@pipeline.SupportedFile],
+  impl_files : Array[@pipeline.SupportedFile],
 ) -> Array[String] {
   let seen : Map[String, Bool] = {}
   let result : Array[String] = []
-  let all_paths = spec_paths + impl_paths
-  for path in all_paths {
-    match registry.detect_from_path(path) {
-      Some(lang) =>
-        if !seen.contains(lang) {
-          seen[lang] = true
-          result.push(lang)
-        }
-      None => ()
+  let all_files = spec_files + impl_files
+  for file in all_files {
+    if !seen.contains(file.language) {
+      seen[file.language] = true
+      result.push(file.language)
     }
   }
   result

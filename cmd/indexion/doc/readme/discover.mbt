@@ -52,13 +52,11 @@ pub fn discover_packages_from_files(
     .with_includes(includes)
     .with_excludes(excludes)
   let by_dir : Map[String, Array[String]] = {}
-  for path in file_paths {
-    if registry.is_file_supported(path) {
-      let dir = extract_parent_dir(path)
-      match by_dir.get(dir) {
-        Some(arr) => arr.push(path)
-        None => by_dir.set(dir, [path])
-      }
+  for file in @pipeline.load_supported_file_info(file_paths, registry) {
+    let dir = extract_parent_dir(file.path)
+    match by_dir.get(dir) {
+      Some(arr) => arr.push(file.path)
+      None => by_dir.set(dir, [file.path])
     }
   }
   let packages : Array[PackageInfo] = []
@@ -123,11 +121,15 @@ fn collect_supported_files(
   let files : Array[String] = []
   try {
     let entries = @fs.read_dir(dir)
+    let paths : Array[String] = []
     for entry in entries {
       let path = dir + "/" + entry
-      if @fs.is_file(path) && registry.is_file_supported(path) {
-        files.push(path)
+      if @fs.is_file(path) {
+        paths.push(path)
       }
+    }
+    for file in @pipeline.load_supported_file_info(paths, registry) {
+      files.push(file.path)
     }
   } catch {
     _ => ()

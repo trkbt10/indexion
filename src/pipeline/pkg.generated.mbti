@@ -14,6 +14,8 @@ pub fn build_kgf_index(String) -> KGFIndex
 
 pub fn build_path_signals(Array[String]) -> Map[String, Bool]
 
+pub fn collect_supported_file_info(Array[String], DiscoverOptions, @registry.KGFRegistry) -> Array[SupportedFile]
+
 pub fn collect_supported_files(Array[String], @registry.KGFRegistry) -> Array[(String, String)]
 
 pub fn discover_files(Array[String], DiscoverOptions) -> Array[String]
@@ -25,6 +27,8 @@ pub fn extract_extension(String) -> String
 pub fn load_registry_for_paths(String, Array[String]) -> @registry.KGFRegistry
 
 pub fn load_registry_from_index(KGFIndex, Map[String, Bool]) -> @registry.KGFRegistry
+
+pub fn load_supported_file_info(Array[String], @registry.KGFRegistry) -> Array[SupportedFile]
 
 pub fn matches_pattern(String, String) -> Bool
 
@@ -41,15 +45,23 @@ pub struct DiscoverOptions {
   recursive : Bool
   includes : Array[String]
   excludes : Array[String]
+  include_hidden : Bool
   kgf_ignore : Array[(String, String)]
   root_dir : String
 }
 pub fn DiscoverOptions::default() -> Self
-pub fn DiscoverOptions::new(recursive? : Bool, includes? : Array[String], excludes? : Array[String], kgf_ignore? : Array[(String, String)], root_dir? : String) -> Self
+pub fn DiscoverOptions::new(recursive? : Bool, includes? : Array[String], excludes? : Array[String], include_hidden? : Bool, kgf_ignore? : Array[(String, String)], root_dir? : String) -> Self
 
 pub struct KGFIndex {
   source_to_files : Map[String, Array[String]]
   all_files : Array[String]
+}
+
+pub struct SupportedFile {
+  path : String
+  content : String
+  language : String
+  content_type : String?
 }
 
 // Type aliases
