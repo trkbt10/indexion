@@ -53,6 +53,34 @@ fn count_declares(
   (fn_count, type_count, names)
 }
 
+///|
+fn programming_langs_from_kgfs() -> Map[String, Bool] {
+  let langs : Map[String, Bool] = {}
+  let entries = @fs.read_dir("kgfs/programming") catch { _ => [] }
+  for entry in entries {
+    if !entry.has_suffix(".kgf") {
+      continue
+    }
+    let lang = entry[0:entry.length() - 4].to_string()
+    langs.set(lang, true)
+  }
+  langs
+}
+
+///|
+test "declares: semantics coverage includes every programming kgf" {
+  let covered = [
+    "c", "clojure", "cpp", "csharp", "dart", "elixir", "go", "haskell", "java", "javascript",
+    "javascript-jsx", "julia", "kotlin", "lua", "moonbit", "ocaml", "php", "python",
+    "ruby", "rust", "scala", "swift", "typescript", "typescript-jsx", "zig",
+  ]
+  let langs = programming_langs_from_kgfs()
+  assert_eq(langs.length(), covered.length())
+  for lang in covered {
+    assert_true(langs.contains(lang))
+  }
+}
+
 // ─── MoonBit ────────────────────────────────────────────────
 
 ///|

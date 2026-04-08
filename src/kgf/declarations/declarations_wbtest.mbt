@@ -27,6 +27,34 @@ fn extract_declarations(
 }
 
 ///|
+fn programming_langs_from_kgfs() -> Map[String, Bool] {
+  let langs : Map[String, Bool] = {}
+  let entries = @fs.read_dir("kgfs/programming") catch { _ => [] }
+  for entry in entries {
+    if !entry.has_suffix(".kgf") {
+      continue
+    }
+    let lang = entry[0:entry.length() - 4].to_string()
+    langs.set(lang, true)
+  }
+  langs
+}
+
+///|
+test "declarations: coverage includes every programming kgf" {
+  let covered = [
+    "c", "clojure", "cpp", "csharp", "dart", "elixir", "go", "haskell", "java", "javascript",
+    "javascript-jsx", "julia", "kotlin", "lua", "moonbit", "ocaml", "php", "python",
+    "ruby", "rust", "scala", "swift", "typescript", "typescript-jsx", "zig",
+  ]
+  let langs = programming_langs_from_kgfs()
+  assert_eq(langs.length(), covered.length())
+  for lang in covered {
+    assert_true(langs.contains(lang))
+  }
+}
+
+///|
 test "declarations: RFC 3492 fixture extracts KGF top-level declarations" {
   let path = "fixtures/project/spec-align-rfc3492/typescript/src/punycode.ts"
   let source = @fs.read_file_to_string(path)
