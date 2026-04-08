@@ -477,7 +477,7 @@ fn parse_expr(s : String) -> @types.SemExpr {
     let arr = trimmed.to_array()
     if arr[0] == '"' && arr[trimmed.length() - 1] == '"' {
       let content = substr(trimmed, 1, trimmed.length() - 1)
-      return @types.SemExpr::str(content)
+      return @types.SemExpr::str(unescape_string_literal(content))
     }
   }
   // $call(args) - special call syntax
@@ -500,6 +500,33 @@ fn parse_expr(s : String) -> @types.SemExpr {
   }
   // Fallback to string
   @types.SemExpr::str(trimmed)
+}
+
+///|
+fn unescape_string_literal(text : String) -> String {
+  let chars = text.to_array()
+  let buf = StringBuilder::new()
+  let mut i = 0
+  while i < chars.length() {
+    let ch = chars[i]
+    if ch != '\\' || i + 1 >= chars.length() {
+      buf.write_char(ch)
+      i += 1
+      continue
+    }
+    let next = chars[i + 1]
+    match next {
+      'n' => buf.write_char('\n')
+      'r' => buf.write_char('\r')
+      't' => buf.write_char('\t')
+      '\\' => buf.write_char('\\')
+      '"' => buf.write_char('"')
+      '\'' => buf.write_char('\'')
+      _ => buf.write_char(next)
+    }
+    i += 2
+  }
+  buf.to_string()
 }
 
 ///|

@@ -4,6 +4,14 @@ fn supports_document_interpretation(spec : @kgf_types.KGFSpec) -> Bool {
 }
 
 ///|
+fn is_overlay_document_spec(spec : @kgf_types.KGFSpec) -> Bool {
+  match spec.get_feature("detection_scope") {
+    Some(values) => values.length() > 0 && values[0] == "overlay"
+    None => false
+  }
+}
+
+///|
 fn supported_document_specs(
   registry : @registry.KGFRegistry,
   explicit_format : String,
@@ -27,6 +35,13 @@ fn supported_document_specs(
       None => ()
     }
   }
+  specs.sort_by(fn(a, b) {
+    match (is_overlay_document_spec(a), is_overlay_document_spec(b)) {
+      (true, false) => -1
+      (false, true) => 1
+      _ => a.get_language().compare(b.get_language())
+    }
+  })
   specs
 }
 

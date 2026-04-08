@@ -59,6 +59,14 @@ export const keeperRequestCodes = {
 }
 
 /**
+ * RFC 2795 section 5.1 KEEPER request code ranges.
+ */
+export const keeperRequestCodeRanges = {
+  FUTURE: "8-512",
+  USER: "513+",
+}
+
+/**
  * RFC 2795 section 5.2 KEEPER response code table.
  */
 export const keeperResponseCodes = {
@@ -70,6 +78,14 @@ export const keeperResponseCodes = {
   DEAD: RESPONSE_DEAD,
   ACCEPT: RESPONSE_ACCEPT,
   REFUSE: RESPONSE_REFUSE,
+}
+
+/**
+ * RFC 2795 section 5.2 KEEPER response code ranges.
+ */
+export const keeperResponseCodeRanges = {
+  FUTURE: "9-512",
+  USER: "513+",
 }
 
 /**

@@ -887,6 +887,16 @@ test "parse_expr concat function" {
 }
 
 ///|
+test "parse_expr unescapes string literals" {
+  let result = parse_expr("\"See sections 6.1 and 6.2.\\n\"")
+  match result {
+    @types.SemExpr::Str(value) =>
+      assert_eq(value, "See sections 6.1 and 6.2.\n")
+    _ => fail("Expected String expression")
+  }
+}
+
+///|
 test "parse_semantics with concat and multiple module calls" {
   let text =
     #|on PngSig {

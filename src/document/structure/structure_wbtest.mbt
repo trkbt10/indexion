@@ -87,9 +87,7 @@ test "document semantics emit literals without illustrative examples" {
     #|The response SHALL return `200`.
   let interpreted = interpret_document(content, "/tmp/spec.md", spec)
   let literals = literals_for_line(interpreted, 1)
-  assert_true(literals.contains("36"))
-  assert_true(literals.contains("200"))
-  assert_false(literals.contains("99"))
+  assert_eq(literals, ["36", "200"])
 }
 
 ///|
@@ -106,8 +104,47 @@ test "document semantics emit section refs and table pairs" {
   let interpreted = interpret_document(content, "/tmp/rfc2795.rfc.txt", spec)
   let refs = section_refs_for_line(interpreted, 1)
   let pairs = table_pairs_for_line(interpreted, 1)
-  assert_true(refs.contains("6"))
-  assert_true(refs.contains("6.1"))
-  assert_true(refs.contains("6.2"))
-  assert_true(pairs.contains({ label: "REQUEST_STOP", literal: "7" }))
+  assert_eq(refs, ["6", "6.1", "6.2"])
+  assert_eq(pairs, [{ label: "REQUEST_STOP", literal: "7" }])
+}
+
+///|
+test "document semantics from kgf spec emit generic fact notes" {
+  let registry = test_registry()
+  let spec = match registry.get_spec("markdown") {
+    Some(value) => value
+    None => fail("missing markdown")
+  }
+  let graph = @graph.CodeGraph::new()
+  let _ = graph.get_or_add_module("/tmp/spec.md", file=Some("/tmp/spec.md"))
+  let ctx = @kgf_semantics.SemEvalCtx::new(
+    spec,
+    graph,
+    "/tmp/spec.md",
+    "",
+    spec.get_language(),
+    fn(_) { false },
+  )
+  let labels : Map[String, Json] = {}
+  labels.set("title", "Timeout".to_json())
+  labels.set(
+    "body",
+    "The value MUST be `36`.\nThe response SHALL return `200`.\n".to_json(),
+  )
+  labels.set("marker", "##".to_json())
+  labels.set("line", (1).to_json())
+  labels.set("end_line", (3).to_json())
+  @kgf_semantics.eval_rule_semantics("DocumentSection", labels, ctx)
+  let note_types : Array[String] = []
+  for event in ctx.get_events() {
+    if event.0 != "Note" {
+      continue
+    }
+    match event.1.get("type") {
+      Some(String(kind)) => note_types.push(kind)
+      _ => ()
+    }
+  }
+  assert_true(note_types.contains("document_literals"))
+  assert_true(note_types.contains("document_section_refs"))
 }

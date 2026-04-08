@@ -65,7 +65,7 @@ fn write_mutated_rfc3492_impl(root : String) -> String {
   ) catch {
     _ => panic()
   }
-  let mutated = source.replace(old="const base = 36", new="const base = 35")
+  let mutated = source.replace(old="base = 36", new="base = 35")
   @fs.write_string_to_file(src_dir + "/punycode.ts", mutated) catch {
     _ => panic()
   }
@@ -444,7 +444,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
     None => fail("expected dogfood diff report")
   }
   assert_true(report.summary.total_requirements > 0)
-  assert_true(report.summary.drifted > 0)
+  assert_eq(report.summary.drifted, 0)
   let trace = match
     @spec_align.trace_report_async({
       ..@spec_align.SpecAlignConfig::default(),
@@ -473,7 +473,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
     Some(value) => value
     None => fail("expected dogfood suggest report")
   }
-  assert_true(suggest.suggestions.length() > 0)
+  assert_eq(suggest.suggestions.length(), 0)
   let task_config = {
     ..@spec_align.SpecAlignConfig::default(),
     subcommand: "suggest",

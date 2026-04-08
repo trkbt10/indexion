@@ -488,3 +488,51 @@ test "collect_refs" {
   assert_eq(ctx.events.length(), 1)
   assert_eq(ctx.events[0].0, "Note")
 }
+
+///|
+test "eval_expr with generic regex capture functions" {
+  let env = Env::new({})
+  let ctx = create_test_ctx()
+  let literals_expr = @types.SemExpr::func("regexCaptures", [
+    @types.SemExpr::str(
+      "## Timeout\nThe value MUST be `36`.\nFor example, `99` is shown.\nThe response SHALL return `200`.\n",
+    ),
+    @types.SemExpr::str(
+      "^(?![^\\n]*(?:for example|e\\.g\\.|suppose|consider ))[^\\n]*(?:\\bmust\\b|\\bshall\\b|\\bshould\\b|\\brequired\\b|=|\\|)[^\\n]*\\b([0-9]{1,})\\b",
+    ),
+    @types.SemExpr::num(1.0),
+    @types.SemExpr::bool(true),
+  ])
+  let refs_expr = @types.SemExpr::func("regexCaptures", [
+    @types.SemExpr::str("See sections 6.1 and 6.2.\n"),
+    @types.SemExpr::str("\\bsections?\\s+((?:[A-Z]|\\d+(?:\\.\\d+)*))\\.?\\b"),
+    @types.SemExpr::num(1.0),
+    @types.SemExpr::bool(true),
+  ])
+  let pairs_expr = @types.SemExpr::func("regexPairs", [
+    @types.SemExpr::str("| 7 | REQUEST_STOP |\n"),
+    @types.SemExpr::str(
+      "\\|\\s*([0-9]+(?:\\.[0-9]+)*)\\s*\\|\\s*([A-Za-z][A-Za-z0-9 /'_-]*[A-Za-z0-9/_-])\\s*\\|",
+    ),
+    @types.SemExpr::num(2.0),
+    @types.SemExpr::num(1.0),
+  ])
+  assert_eq(
+    eval_expr(literals_expr, env, ctx),
+    Json::array(["36".to_json(), "200".to_json()]),
+  )
+  assert_eq(eval_expr(refs_expr, env, ctx), Json::array(["6.1".to_json()]))
+  match eval_expr(pairs_expr, env, ctx) {
+    Array(values) => {
+      assert_eq(values.length(), 1)
+      match values[0] {
+        Object(obj) => {
+          assert_eq(obj.get("label").unwrap(), "REQUEST_STOP".to_json())
+          assert_eq(obj.get("literal").unwrap(), "7".to_json())
+        }
+        _ => fail("expected object")
+      }
+    }
+    _ => fail("expected array")
+  }
+}

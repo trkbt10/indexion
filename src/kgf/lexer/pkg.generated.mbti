@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn find_pattern_captures(String, String, case_insensitive? : Bool) -> Array[CapturedMatch]
+
 pub fn lexer() -> LexerBuilder
 
 pub fn match_pattern(String, String, Int, case_insensitive? : Bool) -> MatchResult
@@ -15,6 +17,13 @@ pub fn matches_at(String, String, Int, case_insensitive? : Bool) -> Bool
 // Errors
 
 // Types and methods
+pub struct CapturedMatch {
+  start_pos : Int
+  end_pos : Int
+  text : String
+  captures : Array[String]
+}
+
 type CompiledToken
 
 pub struct Lexer {

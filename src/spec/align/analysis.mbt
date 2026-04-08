@@ -978,9 +978,12 @@ fn build_trace_edges(
     }
     scored.sort_by(fn(a, b) { b.1.compare(a.1) })
     let effective_threshold = adaptive_match_threshold(scored, config)
-    let limit = if scored.length() < 10 { scored.length() } else { 10 }
-    for i = 0; i < limit; i = i + 1 {
+    let minimum_limit = if scored.length() < 10 { scored.length() } else { 10 }
+    for i = 0; i < scored.length(); i = i + 1 {
       let (implementation_id, score) = scored[i]
+      if i >= minimum_limit && score < effective_threshold {
+        continue
+      }
       edges.push({
         requirement_id: requirement.id,
         implementation_id,

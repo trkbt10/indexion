@@ -286,9 +286,8 @@ fn eval_func(
     "countOccurrences" => eval_func_count_occurrences(evaluated_args)
     "collectLinesAfterPrefixes" =>
       eval_func_collect_lines_after_prefixes(evaluated_args)
-    "sectionRefs" => eval_func_section_refs(evaluated_args)
-    "literalValues" => eval_func_literal_values(evaluated_args)
-    "tablePairs" => eval_func_table_pairs(evaluated_args)
+    "regexCaptures" => eval_func_regex_captures(evaluated_args)
+    "regexPairs" => eval_func_regex_pairs(evaluated_args)
     "cond" => eval_func_cond(evaluated_args)
     "children" =>
       // Fallback for children() when not a simple var
@@ -310,445 +309,103 @@ fn eval_func(
 }
 
 ///|
-fn trim_ascii(text : String) -> String {
-  let chars = text.to_array()
-  let mut start = 0
-  let mut end_ = chars.length()
-  while start < chars.length() &&
-        (chars[start] == ' ' || chars[start] == '\t' || chars[start] == '\r') {
-    start += 1
-  }
-  while end_ > start &&
-        (
-          chars[end_ - 1] == ' ' ||
-          chars[end_ - 1] == '\t' ||
-          chars[end_ - 1] == '\r'
-        ) {
-    end_ -= 1
-  }
-  if start >= end_ {
-    ""
-  } else {
-    text[start:end_].to_string()
+fn json_to_int(v : Json) -> Int {
+  match v {
+    Number(n, ..) => n.to_int()
+    String(s) => @string.parse_int(s) catch { _ => 0 }
+    True => 1
+    _ => 0
   }
 }
 
 ///|
-fn lower_ascii(text : String) -> String {
-  let result : Array[Char] = []
-  for ch in text.to_array() {
-    if ch >= 'A' && ch <= 'Z' {
-      result.push((ch.to_int() + 32).unsafe_to_char())
-    } else {
-      result.push(ch)
-    }
+fn json_to_bool(v : Json) -> Bool {
+  match v {
+    True => true
+    False => false
+    Number(n, ..) => n != 0.0
+    String(s) => s == "true" || s == "1"
+    _ => false
   }
-  String::from_array(result)
 }
 
 ///|
-fn split_lines(text : String) -> Array[String] {
+fn unique_strings(values : Array[String]) -> Array[String] {
   let result : Array[String] = []
-  let current : Array[Char] = []
-  for ch in text.to_array() {
-    if ch == '\n' {
-      result.push(String::from_array(current))
-      current.clear()
-    } else if ch == '\r' {
-      continue
-    } else {
-      current.push(ch)
+  for value in values {
+    if value.length() > 0 && !result.contains(value) {
+      result.push(value)
     }
-  }
-  if current.length() > 0 {
-    result.push(String::from_array(current))
   }
   result
 }
 
 ///|
-fn strip_bracket_citations(text : String) -> String {
-  let buf = StringBuilder::new()
-  let mut depth = 0
-  for ch in text.to_array() {
-    if ch == '[' {
-      depth += 1
-      continue
-    }
-    if ch == ']' {
-      if depth > 0 {
-        depth -= 1
-      }
-      continue
-    }
-    if depth == 0 {
-      buf.write_char(ch)
-    }
-  }
-  buf.to_string()
-}
-
-///|
-fn has_digit_or_backtick(text : String) -> Bool {
-  for ch in text.to_array() {
-    if (ch >= '0' && ch <= '9') || ch == '`' {
-      return true
-    }
-  }
-  false
-}
-
-///|
-fn has_numeric_range_hyphen(text : String) -> Bool {
-  let chars = text.to_array()
-  if chars.length() < 3 {
-    return false
-  }
-  for i = 1; i + 1 < chars.length(); i = i + 1 {
-    if chars[i] == '-' &&
-      chars[i - 1] >= '0' &&
-      chars[i - 1] <= '9' &&
-      chars[i + 1] >= '0' &&
-      chars[i + 1] <= '9' {
-      return true
-    }
-  }
-  false
-}
-
-///|
-fn should_collect_literals(line : String) -> Bool {
-  let cleaned = trim_ascii(strip_bracket_citations(line))
-  if cleaned.length() == 0 || !has_digit_or_backtick(cleaned) {
-    return false
-  }
-  let lowered = lower_ascii(cleaned)
-  if lowered.contains("for example") ||
-    lowered.contains("e.g.") ||
-    lowered.contains("suppose") ||
-    lowered.contains("consider ") {
-    return false
-  }
-  if (lowered.contains("rfc ") || lowered.contains("bcp ")) &&
-    !cleaned.contains("=") &&
-    !cleaned.contains("|") {
-    return false
-  }
-  if cleaned.contains("=") {
-    return !cleaned.contains("..")
-  }
-  if cleaned.contains("|") {
-    return !cleaned.contains("..") &&
-      !cleaned.contains("+") &&
-      !has_numeric_range_hyphen(cleaned)
-  }
-  lowered.contains("must") ||
-  lowered.contains("shall") ||
-  lowered.contains("should") ||
-  lowered.contains("required")
-}
-
-///|
-fn starts_example_block(line : String) -> Bool {
-  let lowered = lower_ascii(trim_ascii(strip_bracket_citations(line)))
-  lowered.contains("for example") ||
-  lowered.contains("e.g.") ||
-  lowered.contains("suppose") ||
-  lowered.contains("consider ")
-}
-
-///|
-fn literal_values(text : String) -> Array[String] {
-  let values : Array[String] = []
-  let numeric : Array[Char] = []
-  let quoted : Array[Char] = []
-  let mut in_backtick = false
-
-  fn flush_numeric(values : Array[String], numeric : Array[Char]) -> Unit {
-    if numeric.length() >= 2 {
-      let value = String::from_array(numeric)
-      if !values.contains(value) {
-        values.push(value)
-      }
-    }
-    numeric.clear()
-  }
-
-  fn flush_quoted(values : Array[String], quoted : Array[Char]) -> Unit {
-    if quoted.length() > 0 {
-      let value = String::from_array(quoted)
-      if !values.contains(value) {
-        values.push(value)
-      }
-    }
-    quoted.clear()
-  }
-
-  for ch in text.to_array() {
-    if ch == '`' {
-      if in_backtick {
-        flush_quoted(values, quoted)
-      }
-      in_backtick = !in_backtick
-      flush_numeric(values, numeric)
-      continue
-    }
-    if in_backtick {
-      quoted.push(ch)
-      continue
-    }
-    if ch >= '0' && ch <= '9' {
-      numeric.push(ch)
-    } else {
-      flush_numeric(values, numeric)
-    }
-  }
-  flush_numeric(values, numeric)
-  flush_quoted(values, quoted)
-  values
-}
-
-///|
-fn required_literal_values(text : String) -> Array[String] {
-  let values : Array[String] = []
-  for line in split_lines(text) {
-    let trimmed = trim_ascii(line)
-    if trimmed.length() == 0 {
-      continue
-    }
-    if starts_example_block(line) {
-      continue
-    }
-    if !should_collect_literals(line) {
-      continue
-    }
-    for literal in literal_values(strip_bracket_citations(line)) {
-      if literal.length() > 0 && !values.contains(literal) {
-        values.push(literal)
-      }
-    }
-  }
-  values
-}
-
-///|
-fn is_section_ref_char(ch : Char) -> Bool {
-  (ch >= '0' && ch <= '9') || ch == '.'
-}
-
-///|
-fn normalize_section_ref(token : String) -> String {
-  let chars = token.to_array()
-  if chars.length() == 0 {
-    return ""
-  }
-  let end_ = if chars[chars.length() - 1] == '.' {
-    chars.length() - 1
+fn eval_func_regex_captures(args : Array[Json]) -> Json {
+  let text = if args.length() > 0 { json_to_string(args[0]) } else { "" }
+  let pattern = if args.length() > 1 { json_to_string(args[1]) } else { "" }
+  let group = if args.length() > 2 { json_to_int(args[2]) } else { 0 }
+  let case_insensitive = if args.length() > 3 {
+    json_to_bool(args[3])
   } else {
-    chars.length()
+    false
   }
-  if end_ <= 0 {
-    return ""
+  if pattern.length() == 0 {
+    return Json::array([])
   }
-  String::from_array(chars[:end_])
-}
-
-///|
-fn is_section_ref_token(token : String) -> Bool {
-  let normalized = normalize_section_ref(token)
-  let chars = normalized.to_array()
-  if chars.length() == 0 {
-    return false
-  }
-  let mut has_digit = false
-  for ch in chars {
-    if ch >= '0' && ch <= '9' {
-      has_digit = true
-      continue
-    }
-    if ch != '.' {
-      return false
-    }
-  }
-  has_digit
-}
-
-///|
-fn tokenize_section_words(text : String) -> Array[String] {
-  let tokens : Array[String] = []
-  let current : Array[Char] = []
-
-  fn flush(tokens : Array[String], current : Array[Char]) -> Unit {
-    if current.length() == 0 {
-      return
-    }
-    tokens.push(String::from_array(current))
-    current.clear()
-  }
-
-  for ch in text.to_array() {
-    if is_section_ref_char(ch) ||
-      (ch >= 'a' && ch <= 'z') ||
-      (ch >= 'A' && ch <= 'Z') {
-      current.push(ch)
+  let values : Array[String] = []
+  for matched in @lexer.find_pattern_captures(pattern, text, case_insensitive~) {
+    let value = if group <= 0 {
+      matched.text
+    } else if group <= matched.captures.length() {
+      matched.captures[group - 1]
     } else {
-      flush(tokens, current)
+      ""
+    }
+    if value.length() > 0 {
+      values.push(value)
     }
   }
-  flush(tokens, current)
-  tokens
+  Json::array(unique_strings(values).map(fn(value) { value.to_json() }))
 }
 
 ///|
-fn heading_section_ref(text : String) -> String? {
-  let trimmed = trim_ascii(text)
-  let chars = trimmed.to_array()
-  let prefix : Array[Char] = []
-  for ch in chars {
-    if ch == ' ' || ch == '\t' {
-      break
-    }
-    if !is_section_ref_char(ch) {
-      break
-    }
-    prefix.push(ch)
-  }
-  let token = normalize_section_ref(String::from_array(prefix))
-  if is_section_ref_token(token) {
-    Some(token)
+fn eval_func_regex_pairs(args : Array[Json]) -> Json {
+  let text = if args.length() > 0 { json_to_string(args[0]) } else { "" }
+  let pattern = if args.length() > 1 { json_to_string(args[1]) } else { "" }
+  let key_group = if args.length() > 2 { json_to_int(args[2]) } else { 1 }
+  let value_group = if args.length() > 3 { json_to_int(args[3]) } else { 2 }
+  let case_insensitive = if args.length() > 4 {
+    json_to_bool(args[4])
   } else {
-    None
+    false
   }
-}
-
-///|
-fn section_refs(text : String) -> Array[String] {
-  let refs : Array[String] = []
-  match heading_section_ref(text) {
-    Some(value) => if !refs.contains(value) { refs.push(value) }
-    None => ()
+  if pattern.length() == 0 {
+    return Json::array([])
   }
-  let tokens = tokenize_section_words(lower_ascii(text))
-  let mut capture = false
-  for token in tokens {
-    if token == "section" || token == "sections" {
-      capture = true
+  let seen : Map[String, Bool] = {}
+  let values : Array[Json] = []
+  for matched in @lexer.find_pattern_captures(pattern, text, case_insensitive~) {
+    if key_group <= 0 ||
+      value_group <= 0 ||
+      key_group > matched.captures.length() ||
+      value_group > matched.captures.length() {
       continue
     }
-    if !capture {
+    let key = matched.captures[key_group - 1]
+    let value = matched.captures[value_group - 1]
+    if key.length() == 0 || value.length() == 0 {
       continue
     }
-    let normalized = normalize_section_ref(token)
-    if is_section_ref_token(normalized) {
-      if !refs.contains(normalized) {
-        refs.push(normalized)
-      }
+    let dedupe = key + "\u0001" + value
+    if seen.contains(dedupe) {
       continue
     }
-    if token == "and" || token == "or" {
-      continue
-    }
-    capture = false
+    seen.set(dedupe, true)
+    values.push(
+      Json::object({ "label": key.to_json(), "literal": value.to_json() }),
+    )
   }
-  refs
-}
-
-///|
-fn identifier_tokens(text : String) -> Array[String] {
-  let result : Array[String] = []
-  let current : Array[Char] = []
-
-  fn flush(result : Array[String], current : Array[Char]) -> Unit {
-    if current.length() == 0 {
-      return
-    }
-    let token = String::from_array(current)
-    if token.length() > 1 && !result.contains(token) {
-      result.push(token)
-    }
-    current.clear()
-  }
-
-  for ch in text.to_array() {
-    let is_head = (ch >= 'A' && ch <= 'Z') ||
-      (ch >= 'a' && ch <= 'z') ||
-      ch == '_'
-    let is_tail = is_head || (ch >= '0' && ch <= '9')
-    if current.length() == 0 {
-      if is_head {
-        current.push(ch)
-      }
-    } else if is_tail {
-      current.push(ch)
-    } else {
-      flush(result, current)
-    }
-  }
-  flush(result, current)
-  result
-}
-
-///|
-fn table_pairs(text : String) -> Array[(String, String)] {
-  let pairs : Array[(String, String)] = []
-  for raw_line in split_lines(text) {
-    if !raw_line.contains("|") {
-      continue
-    }
-    let fields0 = raw_line.split("|")
-    let fields : Array[String] = []
-    for field in fields0 {
-      let value = trim_ascii(field.to_string())
-      if value.length() > 0 {
-        fields.push(value)
-      }
-    }
-    if fields.length() < 2 {
-      continue
-    }
-    let value = normalize_section_ref(fields[0])
-    let label = trim_ascii(fields[1])
-    let label_tokens = identifier_tokens(label)
-    if !is_section_ref_token(value) ||
-      label.length() == 0 ||
-      label.length() > 24 ||
-      label.contains("\"") ||
-      label_tokens.length() == 0 ||
-      label_tokens.length() > 3 {
-      continue
-    }
-    if !pairs.contains((label, value)) {
-      pairs.push((label, value))
-    }
-  }
-  pairs
-}
-
-///|
-fn eval_func_section_refs(args : Array[Json]) -> Json {
-  let text = if args.length() > 0 { json_to_string(args[0]) } else { "" }
-  let values : Array[Json] = section_refs(text).map(fn(value) {
-    value.to_json()
-  })
-  Json::array(values)
-}
-
-///|
-fn eval_func_literal_values(args : Array[Json]) -> Json {
-  let text = if args.length() > 0 { json_to_string(args[0]) } else { "" }
-  let values : Array[Json] = required_literal_values(text).map(fn(value) {
-    value.to_json()
-  })
-  Json::array(values)
-}
-
-///|
-fn eval_func_table_pairs(args : Array[Json]) -> Json {
-  let text = if args.length() > 0 { json_to_string(args[0]) } else { "" }
-  let values : Array[Json] = table_pairs(text).map(fn(pair) {
-    let (label, literal) = pair
-    Json::object({ "label": label.to_json(), "literal": literal.to_json() })
-  })
   Json::array(values)
 }
 

@@ -8,6 +8,15 @@ pub struct MatchResult {
 }
 
 ///|
+/// Regex match with capture groups.
+pub struct CapturedMatch {
+  start_pos : Int
+  end_pos : Int
+  text : String
+  captures : Array[String]
+}
+
+///|
 /// Creates a successful match result.
 pub fn MatchResult::success(end_pos : Int, text : String) -> MatchResult {
   { matched: true, end_pos, text }
@@ -1572,4 +1581,58 @@ pub fn matches_at(
   case_insensitive? : Bool = false,
 ) -> Bool {
   match_pattern(pattern, input, pos, case_insensitive~).matched
+}
+
+///|
+fn captured_match_from_state(
+  start_pos : Int,
+  end_pos : Int,
+  input : String,
+  input_chars : Array[Char],
+  captures : CaptureState,
+) -> CapturedMatch {
+  let groups : Array[String] = []
+  for i = 1; i <= captures.count; i = i + 1 {
+    groups.push(captures.get_group_text(i, input_chars).unwrap_or(""))
+  }
+  {
+    start_pos,
+    end_pos,
+    text: input[start_pos:end_pos].to_string(),
+    captures: groups,
+  }
+}
+
+///|
+pub fn find_pattern_captures(
+  pattern : String,
+  input : String,
+  case_insensitive? : Bool = false,
+) -> Array[CapturedMatch] {
+  let matches : Array[CapturedMatch] = []
+  let input_chars = build_input_chars(input)
+  let compiled = match compile_pattern(pattern, case_insensitive~) {
+    Some(value) => value
+    None => return matches
+  }
+  let mut pos = 0
+  while pos < input_chars.length() {
+    let captures = CaptureState::new(compiled.capture_count)
+    match
+      match_compiled_end_pos_with_chars(
+        compiled,
+        input_chars,
+        pos,
+        captures=Some(captures),
+      ) {
+      Some(end_pos) => {
+        matches.push(
+          captured_match_from_state(pos, end_pos, input, input_chars, captures),
+        )
+        pos = if end_pos > pos { end_pos } else { pos + 1 }
+      }
+      None => pos += 1
+    }
+  }
+  matches
 }
