@@ -34,6 +34,7 @@ flowchart TD
     WIKI --> WE[export]
     WIKI --> WM[import]
     WIKI --> WO[log]
+    WIKI --> WH[hook]
 
     WPAGES --> WP[plan]
     WPAGES --> WA[add]
@@ -41,6 +42,10 @@ flowchart TD
     WPAGES --> WI[ingest]
 
     WINDEX --> WIB[build]
+
+    WH --> WHI[install]
+    WH --> WHU[uninstall]
+    WH --> WHS[status]
 
     DOC --> DI[init]
     DOC --> DG[graph]
@@ -398,6 +403,49 @@ indexion wiki log [options]
 | `--json` | Output as JSON instead of text | false |
 
 Every wiki-modifying command (`pages add`, `pages update`, `pages ingest`, `index build`, `lint`) appends an entry to `.indexion/wiki/log.json`. Each entry records the timestamp, operation name, actor, summary, and affected page IDs.
+
+### wiki hook
+
+Manage VCS hooks that run wiki maintenance automatically after commits and branch switches. Hooks are non-destructive: they append to existing hook files using comment markers, so other tools can coexist.
+
+```bash
+indexion wiki hook <subcommand> [--vcs-dir=DIR]
+```
+
+| Subcommand | Description |
+|------------|-------------|
+| `install` | Install hooks into the VCS hooks directory |
+| `uninstall` | Remove only the indexion-managed section from hooks |
+| `status` | Show whether hooks are currently installed |
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--vcs-dir=DIR` | Repository root (default: auto-detect from cwd) | auto |
+
+**Installed hooks:**
+
+| Hook | Trigger | Action |
+|------|---------|--------|
+| `post-commit` | After every commit | `indexion wiki pages ingest --format=md` |
+| `post-checkout` | After branch switches (not file checkouts) | `indexion wiki pages ingest --format=md` |
+
+**VCS support:** Git and Jujutsu are detected automatically from `.git` / `.jj` directory markers. The hooks directory is resolved per-VCS via `src/vcs/vcs.mbt` (the SoT). Adding support for a new VCS requires only adding an entry to the `vcs_root_markers` and `vcs_hooks_subdirs` tables — no other code changes.
+
+**Marker format:** The indexion section is delimited by `# indexion-hook-start` and `# indexion-hook-end` comment lines. These are parsed by the KGF shell lexer, not hand-rolled string scanning, so quoting and escaping edge cases in existing hook files are handled correctly.
+
+```bash
+# Install hooks (auto-detects Git/Jujutsu)
+indexion wiki hook install
+
+# Check status
+indexion wiki hook status
+# VCS: Git
+# post-commit:   installed
+# post-checkout: installed
+
+# Remove only the indexion section (preserves other hook content)
+indexion wiki hook uninstall
+```
 
 ---
 

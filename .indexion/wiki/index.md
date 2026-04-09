@@ -94,16 +94,16 @@ Most-linked pages that serve as knowledge hubs:
 
 ## Recent Changes
 
+- pages update: architecture
+- ingest: overview
+- ingest: cli-commands
+- ingest: cmd-indexion
 - lint: core-concepts
 - lint: digest-pipeline
 - lint: kgf-system
 - lint: analysis-tools
 - lint: vscode-extension
 - lint: deepwiki-frontend
-- lint: overview
 - lint: getting-started
-- lint: cli-commands
 - lint: src-docgen
-- ingest: cmd-indexion
-- lint: architecture
 

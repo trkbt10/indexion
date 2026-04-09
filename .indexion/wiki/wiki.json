@@ -77,7 +77,8 @@
         "src-filter",
         "src-mcp",
         "src-search"
-      ]
+      ],
+      "last_actor": "user"
     },
     {
       "id": "kgf-system",

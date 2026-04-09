@@ -163,6 +163,7 @@ as a subcommand of the `indexion` CLI:
 | `wiki export`        | Converts wiki to GitHub/GitLab format                            |
 | `wiki import`        | Imports external wiki into indexion format                       |
 | `wiki log`           | Displays the wiki operation audit log                            |
+| `wiki hook`          | Installs/removes/inspects VCS hooks for automatic wiki maintenance |
 | `doc graph`          | Generates dependency graphs in Mermaid format                    |
 | `doc readme`         | Generates per-package README files from doc comments             |
 | `doc init`           | Initializes documentation template structure                     |
@@ -363,7 +364,7 @@ indexion/
              update,ingest}/ #       update,ingest}
       index/                 #     index build
       {lint,export,import,   #     lint,export,import,
-       log}/                 #       log
+       log,hook}/            #       log,hook
     doc/{graph,readme,init}/ #   indexion doc {graph,readme,init}
     digest/ similarity/       #   indexion digest, indexion sim
     grep/ perf/               #   indexion grep, indexion perf
@@ -388,7 +389,9 @@ indexion/
     docgen/                   # Doc generation (types, diagram,
                               #   render, analyze, query, wiki/)
     scope/ text/              # Scope analysis, text utils
-    segmentation/ vcs/ http/  # Segmentation, VCS, HTTP client
+    segmentation/ http/       # Segmentation, HTTP client
+    vcs/                      # VCS detection + hooks-dir SoT
+      git/                    #   Git-specific operations
   kgfs/                       # KGF specification files
     programming/              #   25 programming language specs
     dsl/                      #   9 DSL/document format specs

@@ -2,12 +2,12 @@
   "version": "1",
   "page_states": {
     "overview": {
-      "page_hash": "7580ef34e41f7f0e688987d240649bd5",
+      "page_hash": "9bf7264c103e6ce3906f6ff721ef2ba3",
       "source_hashes": {
         "README.md": "3fd31109f3aa7ca18dddbe49f8bd9a52",
         "moon.mod.json": "fefd53716f16b91d6ff0ea53133b4cb2",
         "cmd/indexion/main.mbt": "e0f804d058a6a737adf5eb805b96c6ba",
-        "cmd/indexion/wiki/cli.mbt": "98c44f68c1d0c572e8cb61518392ed3f"
+        "cmd/indexion/wiki/cli.mbt": "03003302e6a4ad691ef15c6071bcd82b"
       }
     },
     "getting-started": {
@@ -45,10 +45,10 @@
       "source_hashes": {}
     },
     "cli-commands": {
-      "page_hash": "f6034ed87b0a4adf479f2afeed209897",
+      "page_hash": "1bf325fd0fed8b6be26b1882ef465628",
       "source_hashes": {
         "cmd/indexion/main.mbt": "e0f804d058a6a737adf5eb805b96c6ba",
-        "cmd/indexion/wiki/cli.mbt": "98c44f68c1d0c572e8cb61518392ed3f",
+        "cmd/indexion/wiki/cli.mbt": "03003302e6a4ad691ef15c6071bcd82b",
         "cmd/indexion/plan/cli.mbt": "2877da72449681a6bb32d46785afdfbc",
         "cmd/indexion/doc/cli.mbt": "e98b2096f4bdb7333260d9ee203d3981"
       }
@@ -62,10 +62,10 @@
       "source_hashes": {}
     },
     "cmd-indexion": {
-      "page_hash": "d4db7fe64b58779cdb5be6a4c211d465",
+      "page_hash": "a41da72e515e780ff7aac242ff6e1d60",
       "source_hashes": {
         "cmd/indexion/main.mbt": "e0f804d058a6a737adf5eb805b96c6ba",
-        "cmd/indexion/wiki/cli.mbt": "98c44f68c1d0c572e8cb61518392ed3f",
+        "cmd/indexion/wiki/cli.mbt": "03003302e6a4ad691ef15c6071bcd82b",
         "cmd/indexion/plan/cli.mbt": "2877da72449681a6bb32d46785afdfbc",
         "cmd/indexion/doc/cli.mbt": "e98b2096f4bdb7333260d9ee203d3981"
       }
@@ -111,7 +111,7 @@
       "source_hashes": {}
     },
     "skills-skills": {
-      "page_hash": "aa231dee3153272d54ea7176f3cf92fd",
+      "page_hash": "8d0ff2259a7269828b7ed12fc218e48f",
       "source_hashes": {}
     },
     "src-pipeline": {
@@ -167,7 +167,7 @@
       "source_hashes": {}
     },
     "src-vcs": {
-      "page_hash": "b9e082c946c417c81b0d966fc39cdf46",
+      "page_hash": "3717da193893f8eaaa75ec9d7ba54373",
       "source_hashes": {}
     },
     "src-http": {
@@ -175,7 +175,7 @@
       "source_hashes": {}
     },
     "src-docgen": {
-      "page_hash": "7e165fab82e9979ccd55f88b3849d57c",
+      "page_hash": "97e11b41c444c901c6c691c24311d8f9",
       "source_hashes": {}
     },
     "src-glob": {

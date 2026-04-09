@@ -38,6 +38,7 @@ graph TD
     wiki --> wiki_export["wiki export"]
     wiki --> wiki_import["wiki import"]
     wiki --> wiki_log["wiki log"]
+    wiki --> wiki_hook["wiki hook"]
 
     wiki_pages --> wiki_plan["pages plan"]
     wiki_pages --> wiki_add["pages add"]
@@ -45,6 +46,10 @@ graph TD
     wiki_pages --> wiki_ingest["pages ingest"]
 
     wiki_index --> wiki_index_build["index build"]
+
+    wiki_hook --> wiki_hook_install["hook install"]
+    wiki_hook --> wiki_hook_uninstall["hook uninstall"]
+    wiki_hook --> wiki_hook_status["hook status"]
 
     doc --> doc_init["doc init"]
     doc --> doc_graph["doc graph"]
@@ -77,7 +82,7 @@ Nested dispatchers (`plan`, `doc`, `perf`) follow the same pattern internally, w
 | `init` | `cmd/indexion/init` | Initialize project configuration |
 | `explore` | `cmd/indexion/explore` | Analyze file similarity in a directory |
 | `plan` | `cmd/indexion/plan` | Generate planning documents (6 sub-subcommands) |
-| `wiki` | `cmd/indexion/wiki` | Wiki management (pages/index/lint/export/import/log) |
+| `wiki` | `cmd/indexion/wiki` | Wiki management (pages/index/lint/export/import/log/hook) |
 | `doc` | `cmd/indexion/doc` | Documentation generation (3 sub-subcommands) |
 | `kgf` | `cmd/indexion/kgf` | KGF spec management and inspection |
 | `digest` | `cmd/indexion/digest` | Purpose-based function index with embedding search |
@@ -103,6 +108,11 @@ The `wiki` package (`cmd/indexion/wiki/cli.mbt`) provides wiki management via tw
 | `export` | `cmd/indexion/wiki/export` | Export wiki to GitHub/GitLab format |
 | `import` | `cmd/indexion/wiki/import` | Import GitHub/GitLab wiki into indexion format |
 | `log` | `cmd/indexion/wiki/log` | Display the wiki operation audit log |
+| `hook install` | `cmd/indexion/wiki/hook` | Install VCS hooks (`post-commit`, `post-checkout`) |
+| `hook uninstall` | `cmd/indexion/wiki/hook` | Remove the indexion section from VCS hooks |
+| `hook status` | `cmd/indexion/wiki/hook` | Show whether hooks are installed |
+
+**VCS detection:** `hook` auto-detects the repository type (Git via `.git`, Jujutsu via `.jj`) using `src/vcs/vcs.mbt` and resolves the correct hooks directory per VCS. Hook file parsing uses the KGF shell lexer to locate marker comments, not hand-rolled string scanning.
 
 The underlying library modules live in `src/docgen/wiki/`: `types` (data model), `reader` (page loading), `lint` (structural checks), `ingest` (change detection), `index` (index generation), `log` (audit trail), `search` (semantic search), and `interop` (format conversion).
 
