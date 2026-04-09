@@ -383,28 +383,6 @@ pub fn log_error(msg : String) -> Unit {
 }
 
 ///|
-/// Build EmbeddingApiConfig from CLI config and resolved API key.
-fn build_api_config(
-  config : CliConfig,
-  api_key : String,
-) -> @dconfig.EmbeddingApiConfig {
-  // If dim was not explicitly configured (still at TF-IDF default),
-  // use the OpenAI default dimension for API providers.
-  let dim = if config.dim == @dconfig.DEFAULT_TFIDF_DIM {
-    @dconfig.OPENAI_EMBEDDING_DIM
-  } else {
-    config.dim
-  }
-  {
-    api_key,
-    api_key_env: config.api_key_env,
-    base_url: config.api_base_url,
-    model: config.model,
-    dim,
-  }
-}
-
-///|
 /// Resolve embedding provider from CLI config.
 /// Delegates to @embed_config.resolve_provider (SoT for provider resolution).
 /// dim is adjusted: if still at TF-IDF default and provider=openai, use OPENAI_EMBEDDING_DIM.

@@ -69,6 +69,7 @@ fn push_requirement(
   criteria : Array[String],
   source_file : String,
   source_line : Int,
+  level : Int,
   max_requirements : Int,
 ) -> Unit {
   if requirements.length() >= max_requirements {
@@ -89,6 +90,7 @@ fn push_requirement(
     criteria: criteria.copy(),
     source_file,
     source_line,
+    level,
   })
 }
 
@@ -131,6 +133,7 @@ fn collect_section_requirement(
 ) -> Unit {
   let content = trim(section.content)
   let criteria = criteria_for_section(facts, section.line, section.end_line)
+  let level = section.level.unwrap_or(2)
   push_requirement(
     requirements,
     section.title,
@@ -138,6 +141,7 @@ fn collect_section_requirement(
     criteria,
     path,
     section.line,
+    level,
     max_requirements,
   )
 }
@@ -279,6 +283,13 @@ fn build_report(config : DraftConfig) -> DraftReport? {
 }
 
 ///|
+///|
+/// Render requirements as cc-sdd compatible markdown.
+///
+/// Top-level sections (level ≤ 2) become `### Requirement N: Title`.
+/// Sub-sections (level ≥ 3) become `#### N.M: Title` under the preceding
+/// top-level requirement, producing the `N.M` IDs that cc-sdd design/tasks
+/// phases expect.
 fn render_markdown(report : DraftReport) -> String {
   let buf = StringBuilder::new()
   buf.write_string("# SDD Draft\n\n")
@@ -288,21 +299,34 @@ fn render_markdown(report : DraftReport) -> String {
     buf.write_string(path)
     buf.write_string("`\n")
   }
-  buf.write_string("\n")
+  buf.write_string("\n## Requirements\n\n")
+  let mut major = 0
+  let mut sub = 0
   for requirement in report.requirements {
-    buf.write_string("## Requirement ")
-    buf.write_string(
-      @common.substring(requirement.id, 4, requirement.id.length()),
-    )
-    buf.write_string(": ")
-    buf.write_string(requirement.title)
-    buf.write_string("\n")
+    if requirement.level <= 2 {
+      major += 1
+      sub = 0
+      buf.write_string("### Requirement ")
+      buf.write_string(major.to_string())
+      buf.write_string(": ")
+      buf.write_string(requirement.title)
+      buf.write_string("\n")
+    } else {
+      sub += 1
+      buf.write_string("#### ")
+      buf.write_string(major.to_string())
+      buf.write_string(".")
+      buf.write_string(sub.to_string())
+      buf.write_string(": ")
+      buf.write_string(requirement.title)
+      buf.write_string("\n")
+    }
     if requirement.description.length() > 0 {
       buf.write_string(requirement.description)
       buf.write_string("\n")
     }
     if requirement.criteria.length() > 0 {
-      buf.write_string("\n### Acceptance Criteria\n")
+      buf.write_string("\n#### Acceptance Criteria\n")
       for item in requirement.criteria {
         buf.write_string("- ")
         buf.write_string(item)

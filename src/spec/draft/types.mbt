@@ -28,6 +28,7 @@ pub struct DraftRequirement {
   criteria : Array[String]
   source_file : String
   source_line : Int
+  level : Int
 } derive(Eq, Show, ToJson, @json.FromJson)
 
 ///|

@@ -148,13 +148,28 @@ fn extract_gap_terms(
     gaps.push({ term: kind + ":" + value, value, weight, kind })
   }
   gaps.sort_by(fn(a, b) { b.weight.compare(a.weight) })
-  // Kneedle thresholding
+  // Kneedle thresholding: find the "knee" in the weight curve to separate
+  // signal from noise. However, when nearly all tokens are gaps (high cosine
+  // distance), the weight distribution is flat and Kneedle produces an
+  // artificially low cutoff. In that case, return all gaps.
   if gaps.length() <= 1 {
     return apply_limit(gaps, config.max_terms)
   }
   let weights = gaps.map(fn(g) { g.weight })
   let cutoff = @stats.kneedle_threshold_index(weights)
-  let limit = if cutoff < gaps.length() { cutoff } else { gaps.length() }
+  // If Kneedle would discard more than 90% of gaps, the weight curve is
+  // too flat for meaningful thresholding — return all gaps instead.
+  let min_cutoff = gaps.length() / 10 + 1
+  let effective_cutoff = if cutoff < min_cutoff {
+    gaps.length()
+  } else {
+    cutoff
+  }
+  let limit = if effective_cutoff < gaps.length() {
+    effective_cutoff
+  } else {
+    gaps.length()
+  }
   let result : Array[GapTerm] = []
   for i = 0; i < limit; i = i + 1 {
     result.push(gaps[i])

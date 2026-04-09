@@ -383,8 +383,10 @@ fn push_whole_file_document(
 
 ///|
 /// Build code documents via CodeGraph when possible.
+/// Uses a file-hash-based cache: if all source file hashes match the previous
+/// run, the cached graph is reused without re-analyzing. On any change (drift),
+/// the graph is rebuilt and the cache updated.
 /// Falls back to direct function extraction if graph construction fails.
-/// When CodeGraph is available, includes edge information (callers/callees count).
 fn extract_code_documents_with_graph(
   code_files : Array[(String, String)],
   registry : @kgf_registry.KGFRegistry?,
@@ -392,17 +394,94 @@ fn extract_code_documents_with_graph(
   target_dir : String,
   out : Array[@search_engine.SearchDocument],
 ) -> Unit {
-  let build_result = @digest_cli.build_graph_from_source(target_dir, specs_dir)
-  match build_result {
-    Some(r) => extract_code_from_graph(r.graph, code_files, registry, out)
+  let cache_dir = @config.join_path(
+    match @config.resolve_project_indexion_dir(target_dir, "cache") {
+      Some(dir) => dir
+      None => @config.join_path(target_dir, ".indexion/cache")
+    },
+    "search-graph",
+  )
+  // Try cache
+  match load_graph_cache(cache_dir, code_files) {
+    Some(graph) =>
+      extract_code_from_graph(graph, code_files, registry, out)
     None => {
-      // Fallback: use direct function extraction (no graph edges)
-      let code_docs = @grep.extract_code_documents(code_files, registry)
-      for doc in code_docs {
-        out.push(doc)
+      // Cache miss or drift — rebuild
+      let build_result = @digest_cli.build_graph_from_source(
+        target_dir, specs_dir,
+      )
+      match build_result {
+        Some(r) => {
+          save_graph_cache(cache_dir, r.graph, r.file_hashes)
+          extract_code_from_graph(r.graph, code_files, registry, out)
+        }
+        None => {
+          let code_docs = @grep.extract_code_documents(code_files, registry)
+          for doc in code_docs {
+            out.push(doc)
+          }
+        }
       }
     }
   }
+}
+
+///|
+/// Compute a combined hash of all source file hashes for cache validation.
+fn compute_files_fingerprint(
+  code_files : Array[(String, String)],
+) -> String {
+  let buf = StringBuilder::new()
+  for file in code_files {
+    buf.write_string(file.0)
+    buf.write_char(':')
+    buf.write_string(file.1.length().to_string())
+    buf.write_char('\n')
+  }
+  @cas_hash.compute_hash(buf.to_string()).to_string()
+}
+
+///|
+/// Try to load a cached graph if the fingerprint matches.
+fn load_graph_cache(
+  cache_dir : String,
+  code_files : Array[(String, String)],
+) -> @graph.CodeGraph? {
+  let fp_path = @config.join_path(cache_dir, "fingerprint.txt")
+  let graph_path = @config.join_path(cache_dir, "graph.json")
+  let saved_fp = @fs.read_file_to_string(fp_path) catch { _ => return None }
+  let current_fp = compute_files_fingerprint(code_files)
+  if @common.trim_ascii_spaces(saved_fp) != current_fp {
+    return None
+  }
+  let graph_json_str = @fs.read_file_to_string(graph_path) catch {
+    _ => return None
+  }
+  @graph.CodeGraph::from_json_string(graph_json_str)
+}
+
+///|
+/// Save graph and fingerprint to cache.
+fn save_graph_cache(
+  cache_dir : String,
+  graph : @graph.CodeGraph,
+  file_hashes : Map[String, @cas_types.ContentHash],
+) -> Unit {
+  @config.ensure_dir_recursive(cache_dir)
+  let fp_path = @config.join_path(cache_dir, "fingerprint.txt")
+  let graph_path = @config.join_path(cache_dir, "graph.json")
+  // Fingerprint from actual file hashes
+  let buf = StringBuilder::new()
+  for entry in file_hashes {
+    buf.write_string(entry.0)
+    buf.write_char(':')
+    buf.write_string(entry.1.to_string())
+    buf.write_char('\n')
+  }
+  let fp = @cas_hash.compute_hash(buf.to_string()).to_string()
+  @fs.write_string_to_file(fp_path, fp) catch { _ => () }
+  let graph_json = graph.to_json().stringify()
+  @fs.write_string_to_file(graph_path, graph_json) catch { _ => () }
 }
 
 ///|
