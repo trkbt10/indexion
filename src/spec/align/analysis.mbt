@@ -350,6 +350,27 @@ async fn collect_impl_data(
       )
     }
   }
+  // Add file-level implementation nodes so that spec requirements
+  // whose vocabulary appears in code comments, string literals, or
+  // validation logic (but not in symbol names) can still be matched.
+  for path in impl_files {
+    let content = match file_contents.get(path) {
+      Some(c) => c
+      None => continue
+    }
+    let basename = @config.basename(path)
+    implementations.push({
+      id: path,
+      name: basename,
+      kind: "file",
+      file: path,
+      start_line: 1,
+      end_line: @common.split_lines(content).length(),
+      signature: path,
+      declaration_text: content,
+      doc_comment: None,
+    })
+  }
   (implementations, used_specs, file_hashes, file_contents, file_states)
 }
 
