@@ -124,6 +124,17 @@ pub fn WikiData::new(
 pub const WIKI_MANIFEST_FILE : String = "wiki.json"
 
 ///|
+/// Wiki log file name (SoT).
+/// All consumers must use this constant instead of hardcoding "log.json".
+pub const WIKI_LOG_FILE : String = "log.json"
+
+///|
+/// Construct the full path to the wiki log file in a given directory.
+pub fn wiki_log_path(dir : String) -> String {
+  dir + "/" + WIKI_LOG_FILE
+}
+
+///|
 /// Construct the full path to the wiki manifest in a given directory.
 pub fn wiki_manifest_path(dir : String) -> String {
   dir + "/" + WIKI_MANIFEST_FILE
@@ -137,11 +148,70 @@ pub struct ManifestPage {
   file : String
   sources : Array[String]
   children : Array[String]
-} derive(Eq, Show, @json.FromJson)
+  /// Content provenance: "extracted" | "synthesized" | "manual".
+  /// None if not yet classified.
+  provenance : String?
+  /// Who last modified: "indexion" | "agent:<name>" | "user".
+  /// None if not yet tracked.
+  last_actor : String?
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+///|
+pub fn ManifestPage::new(
+  id~ : String,
+  title~ : String,
+  file~ : String,
+  sources? : Array[String] = [],
+  children? : Array[String] = [],
+  provenance? : String? = None,
+  last_actor? : String? = None,
+) -> ManifestPage {
+  { id, title, file, sources, children, provenance, last_actor }
+}
+
+///|
+/// Create an updated copy of a ManifestPage with selected fields replaced.
+pub fn ManifestPage::with_updates(
+  self : ManifestPage,
+  sources? : Array[String],
+  children? : Array[String],
+  provenance? : String?,
+  last_actor? : String?,
+) -> ManifestPage {
+  {
+    id: self.id,
+    title: self.title,
+    file: self.file,
+    sources: match sources {
+      Some(s) => s
+      None => self.sources
+    },
+    children: match children {
+      Some(c) => c
+      None => self.children
+    },
+    provenance: match provenance {
+      Some(p) => p
+      None => self.provenance
+    },
+    last_actor: match last_actor {
+      Some(a) => a
+      None => self.last_actor
+    },
+  }
+}
 
 ///|
 /// wiki.json manifest.
 pub struct WikiManifest {
   title : String
   pages : Array[ManifestPage]
-} derive(Eq, Show, @json.FromJson)
+} derive(Eq, Show, ToJson, @json.FromJson)
+
+///|
+pub fn WikiManifest::new(
+  title~ : String,
+  pages~ : Array[ManifestPage],
+) -> WikiManifest {
+  { title, pages }
+}

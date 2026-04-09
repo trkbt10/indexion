@@ -91,4 +91,8 @@ In production, the built frontend assets are served as static files by the index
 
 DeepWiki uses a set of shared UI components under `src/client/components/ui/`: Button, Badge, Input, Card, Separator, ScrollArea, Collapsible, and Tooltip. The layout shell (`AppLayout`) provides a persistent header with navigation links across all pages.
 
+## See Also
+
+- [DeepWiki Frontend (packages/wiki)](wiki://packages-wiki) -- package internals and build configuration
+
 > Source: `packages/wiki/src/client/router.tsx`, `packages/wiki/src/client/components/`

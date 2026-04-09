@@ -101,4 +101,8 @@ graph TD
 | hybrid | `@segmentation/utils`, `similarity/types` |
 | root | All subpackages |
 
+## See Also
+
+- [Analysis Tools](wiki://analysis-tools) -- how similarity algorithms are used by the plan commands
+
 > Source: `src/similarity/`

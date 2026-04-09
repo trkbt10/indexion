@@ -1,0 +1,7 @@
+import {
+  "moonbitlang/core/argparse" @argparse,
+  "moonbitlang/core/json" @json,
+  "trkbt10/indexion/cmd/indexion/common" @common,
+  "trkbt10/indexion/src/docgen/wiki/log" @wiki_log,
+  "trkbt10/indexion/src/config" @config,
+}

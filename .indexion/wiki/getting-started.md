@@ -139,6 +139,7 @@ indexion mcp
 
 - [Core Concepts](wiki://core-concepts) -- understand KGF, CodeGraph, and Digest at a conceptual level
 - [CLI Commands](wiki://cli-commands) -- full reference for every command and flag
+- [CLI Entry Point](wiki://cmd-indexion) -- how main.mbt wires up all subcommands
 - [Analysis Tools](wiki://analysis-tools) -- deep dive into the plan commands and similarity algorithms
 
 > **Source:** `cmd/indexion/main.mbt`, `cmd/indexion/explore/cli.mbt`, `cmd/indexion/plan/refactor/cli.mbt`, `cmd/indexion/doc/readme/cli.mbt`

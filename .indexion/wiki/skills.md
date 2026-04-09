@@ -11,12 +11,13 @@ skills/
 ├── .claude-plugin/
 │   ├── plugin.json          # Plugin manifest (name, version, description)
 │   └── marketplace.json     # Marketplace registry metadata
-├── skills/                  # Individual skill definitions (11 skills)
+├── skills/                  # Individual skill definitions (12 skills)
 │   ├── indexion-explore/
 │   ├── indexion-segment/
 │   ├── indexion-kgf/
 │   ├── indexion-grep/
 │   ├── indexion-doc/
+│   ├── indexion-wiki/
 │   ├── indexion-plan-refactor/
 │   ├── indexion-plan-docs/
 │   ├── indexion-plan-reconcile/
@@ -44,6 +45,9 @@ skills/
 **Documentation:**
 - `indexion-doc` -- Generate dependency graphs and READMEs
 
+**Wiki:**
+- `indexion-wiki` -- Build, maintain, and verify project wiki pages with indexion
+
 **Planning:**
 - `indexion-plan-refactor` -- Generate refactoring plans from similarity analysis
 - `indexion-plan-docs` -- Analyze documentation coverage
@@ -63,6 +67,6 @@ claude plugin install indexion-skills
 curl -fsSL https://raw.githubusercontent.com/trkbt10/indexion/main/install.sh | bash
 ```
 
-Once installed, skills are available as slash commands in Claude Code (e.g. `/indexion-explore`, `/indexion-plan-refactor`) and are automatically triggered when the user asks relevant questions.
+Once installed, skills are available as slash commands in Claude Code (e.g. `/indexion-explore`, `/indexion-wiki`, `/indexion-plan-refactor`) and are automatically triggered when the user asks relevant questions.
 
 > Source: `skills/`

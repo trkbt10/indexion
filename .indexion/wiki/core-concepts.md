@@ -110,4 +110,10 @@ Digest uses content hashing for incremental updates. Each function has a `source
 
 This layered architecture means adding support for a new language is a matter of writing a new `.kgf` file. No code changes are needed in the plan, doc, or digest layers.
 
+## See Also
+
+- [KGF Engine (src/kgf)](wiki://src-kgf) -- implementation details of the KGF parsing pipeline
+- [Digest Pipeline](wiki://digest-pipeline) -- how the purpose-based index is built and queried
+- [Digest Library (src/digest)](wiki://src-digest) -- digest subpackage internals
+
 > **Source:** `src/core/graph/types.mbt`, `src/core/graph/graph.mbt`, `src/kgf/features/`, `src/digest/`, `kgfs/*.kgf`

@@ -46,7 +46,7 @@ pub fn WikiPlanConfig::from_matches(
 ///|
 pub fn command() -> @argparse.Command {
   @argparse.Command(
-    "wiki",
+    "plan",
     about="Generate wiki writing plan from project analysis",
     options=[
       @argparse.OptionArg("output", short='o', about=@help.output),

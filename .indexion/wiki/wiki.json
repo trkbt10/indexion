@@ -5,308 +5,465 @@
       "id": "overview",
       "title": "Overview",
       "file": "overview.md",
-      "sources": ["README.md", "moon.mod.json"],
-      "children": ["getting-started", "core-concepts", "architecture"]
+      "sources": [
+        "README.md",
+        "moon.mod.json",
+        "cmd/indexion/main.mbt",
+        "cmd/indexion/wiki/cli.mbt"
+      ],
+      "children": [
+        "getting-started",
+        "core-concepts",
+        "architecture"
+      ],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "getting-started",
       "title": "Getting Started",
       "file": "getting-started.md",
-      "sources": ["README.md", "cmd/indexion/main.mbt"],
+      "sources": [
+        "README.md",
+        "cmd/indexion/main.mbt"
+      ],
       "children": []
     },
     {
       "id": "core-concepts",
       "title": "Core Concepts",
       "file": "core-concepts.md",
-      "sources": ["src/kgf/", "src/core/graph/", "src/digest/"],
+      "sources": [
+        "src/kgf/",
+        "src/core/graph/",
+        "src/digest/"
+      ],
       "children": []
     },
     {
       "id": "architecture",
       "title": "Architecture",
       "file": "architecture.md",
-      "sources": ["src/", "cmd/indexion/"],
-      "children": ["kgf-system", "codegraph", "digest-pipeline", "analysis-tools", "cli-commands", "vscode-extension", "deepwiki-frontend", "src-pipeline", "src-kgf", "src-parallel", "src-core", "src-update", "src-config", "src-segmentation", "src-plan", "src-digest", "src-platform", "src-similarity", "src-ignorefile", "src-scope", "src-vcs", "src-http", "src-docgen", "src-glob", "src-text", "src-filter", "src-mcp", "src-search"]
+      "sources": [
+        "src/",
+        "cmd/indexion/"
+      ],
+      "children": [
+        "kgf-system",
+        "codegraph",
+        "digest-pipeline",
+        "analysis-tools",
+        "cli-commands",
+        "vscode-extension",
+        "deepwiki-frontend",
+        "src-pipeline",
+        "src-kgf",
+        "src-parallel",
+        "src-core",
+        "src-update",
+        "src-config",
+        "src-segmentation",
+        "src-plan",
+        "src-digest",
+        "src-platform",
+        "src-similarity",
+        "src-ignorefile",
+        "src-scope",
+        "src-vcs",
+        "src-http",
+        "src-docgen",
+        "src-glob",
+        "src-text",
+        "src-filter",
+        "src-mcp",
+        "src-search"
+      ]
     },
     {
       "id": "kgf-system",
       "title": "KGF System",
       "file": "kgf-system.md",
-      "sources": ["src/kgf/lexer/", "src/kgf/parser/", "src/kgf/registry/", "src/kgf/semantics/", "kgfs/"],
+      "sources": [
+        "src/kgf/lexer/",
+        "src/kgf/parser/",
+        "src/kgf/registry/",
+        "src/kgf/semantics/",
+        "kgfs/"
+      ],
       "children": []
     },
     {
       "id": "codegraph",
       "title": "CodeGraph",
       "file": "codegraph.md",
-      "sources": ["src/core/graph/types.mbt", "src/core/graph/graph.mbt", "src/docgen/query/"],
+      "sources": [
+        "src/core/graph/types.mbt",
+        "src/core/graph/graph.mbt",
+        "src/docgen/query/"
+      ],
       "children": []
     },
     {
       "id": "digest-pipeline",
       "title": "Digest Pipeline",
       "file": "digest-pipeline.md",
-      "sources": ["src/digest/", "cmd/indexion/digest/"],
+      "sources": [
+        "src/digest/",
+        "cmd/indexion/digest/"
+      ],
       "children": []
     },
     {
       "id": "analysis-tools",
       "title": "Analysis Tools",
       "file": "analysis-tools.md",
-      "sources": ["cmd/indexion/plan/", "src/similarity/", "src/pipeline/comparison/"],
+      "sources": [
+        "cmd/indexion/plan/",
+        "src/similarity/",
+        "src/pipeline/comparison/"
+      ],
       "children": []
     },
     {
       "id": "cli-commands",
       "title": "CLI Commands",
       "file": "cli-commands.md",
-      "sources": ["cmd/indexion/"],
-      "children": []
+      "sources": [
+        "cmd/indexion/main.mbt",
+        "cmd/indexion/wiki/cli.mbt",
+        "cmd/indexion/plan/cli.mbt",
+        "cmd/indexion/doc/cli.mbt"
+      ],
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "vscode-extension",
       "title": "VS Code Extension",
       "file": "vscode-extension.md",
-      "sources": ["packages/vscode-plugin/"],
+      "sources": [
+        "packages/vscode-plugin/"
+      ],
       "children": []
     },
     {
       "id": "deepwiki-frontend",
       "title": "DeepWiki Frontend",
       "file": "deepwiki-frontend.md",
-      "sources": ["packages/wiki/"],
+      "sources": [
+        "packages/wiki/"
+      ],
       "children": []
     },
     {
       "id": "cmd-indexion",
       "title": "CLI Entry Point (cmd/indexion)",
       "file": "cmd-indexion.md",
-      "sources": ["cmd/indexion/"],
-      "children": []
+      "sources": [
+        "cmd/indexion/main.mbt",
+        "cmd/indexion/wiki/cli.mbt",
+        "cmd/indexion/plan/cli.mbt",
+        "cmd/indexion/doc/cli.mbt"
+      ],
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "cmd-kgf-tokenizer",
       "title": "KGF Tokenizer (cmd/kgf-tokenizer)",
       "file": "cmd-kgf-tokenizer.md",
-      "sources": ["cmd/kgf-tokenizer/"],
+      "sources": [
+        "cmd/kgf-tokenizer/"
+      ],
       "children": []
     },
     {
       "id": "packages-wiki",
       "title": "DeepWiki Frontend (packages/wiki)",
       "file": "packages-wiki.md",
-      "sources": ["packages/wiki/"],
+      "sources": [
+        "packages/wiki/"
+      ],
       "children": []
     },
     {
       "id": "packages-api-client",
       "title": "API Client (packages/api-client)",
       "file": "packages-api-client.md",
-      "sources": ["packages/api-client/"],
+      "sources": [
+        "packages/api-client/"
+      ],
       "children": []
     },
     {
       "id": "packages-vscode-plugin",
       "title": "VS Code Extension (packages/vscode-plugin)",
       "file": "packages-vscode-plugin.md",
-      "sources": ["packages/vscode-plugin/"],
+      "sources": [
+        "packages/vscode-plugin/"
+      ],
       "children": []
     },
     {
       "id": "kgfs",
       "title": "KGF Specifications (kgfs)",
       "file": "kgfs.md",
-      "sources": ["kgfs/"],
+      "sources": [
+        "kgfs/"
+      ],
       "children": []
     },
     {
       "id": "docs",
       "title": "Project Documentation (docs)",
       "file": "docs.md",
-      "sources": ["docs/"],
-      "children": ["docs-templates"]
+      "sources": [
+        "docs/"
+      ],
+      "children": [
+        "docs-templates"
+      ]
     },
     {
       "id": "docs-templates",
       "title": "Documentation Templates (docs/templates)",
       "file": "docs-templates.md",
-      "sources": ["docs/templates/"],
+      "sources": [
+        "docs/templates/"
+      ],
       "children": []
     },
     {
       "id": "eslint-plugins",
       "title": "ESLint Plugins (eslint/plugins)",
       "file": "eslint-plugins.md",
-      "sources": ["eslint/plugins/"],
-      "children": ["eslint-rules"]
+      "sources": [
+        "eslint/plugins/"
+      ],
+      "children": [
+        "eslint-rules"
+      ]
     },
     {
       "id": "eslint-rules",
       "title": "ESLint Rules (eslint/rules)",
       "file": "eslint-rules.md",
-      "sources": ["eslint/rules/"],
+      "sources": [
+        "eslint/rules/"
+      ],
       "children": []
     },
     {
       "id": "skills",
       "title": "Claude Code Skills (skills)",
       "file": "skills.md",
-      "sources": ["skills/"],
-      "children": ["skills-skills"]
+      "sources": [
+        "skills/"
+      ],
+      "children": [
+        "skills-skills"
+      ]
     },
     {
       "id": "skills-skills",
       "title": "Skill Definitions (skills/skills)",
       "file": "skills-skills.md",
-      "sources": ["skills/skills/"],
+      "sources": [
+        "skills/skills/"
+      ],
       "children": []
     },
     {
       "id": "src-pipeline",
       "title": "Pipeline (src/pipeline)",
       "file": "src-pipeline.md",
-      "sources": ["src/pipeline/"],
+      "sources": [
+        "src/pipeline/"
+      ],
       "children": []
     },
     {
       "id": "src-kgf",
       "title": "KGF Engine (src/kgf)",
       "file": "src-kgf.md",
-      "sources": ["src/kgf/"],
+      "sources": [
+        "src/kgf/"
+      ],
       "children": []
     },
     {
       "id": "src-parallel",
       "title": "Parallel Processing (src/parallel)",
       "file": "src-parallel.md",
-      "sources": ["src/parallel/"],
+      "sources": [
+        "src/parallel/"
+      ],
       "children": []
     },
     {
       "id": "src-core",
       "title": "Core Graph (src/core)",
       "file": "src-core.md",
-      "sources": ["src/core/"],
+      "sources": [
+        "src/core/"
+      ],
       "children": []
     },
     {
       "id": "src-update",
       "title": "Self-Update (src/update)",
       "file": "src-update.md",
-      "sources": ["src/update/"],
+      "sources": [
+        "src/update/"
+      ],
       "children": []
     },
     {
       "id": "src-config",
       "title": "Configuration (src/config)",
       "file": "src-config.md",
-      "sources": ["src/config/"],
+      "sources": [
+        "src/config/"
+      ],
       "children": []
     },
     {
       "id": "src-segmentation",
       "title": "Text Segmentation (src/segmentation)",
       "file": "src-segmentation.md",
-      "sources": ["src/segmentation/"],
+      "sources": [
+        "src/segmentation/"
+      ],
       "children": []
     },
     {
       "id": "src-plan",
       "title": "Plan IR & Rendering (src/plan)",
       "file": "src-plan.md",
-      "sources": ["src/plan/"],
+      "sources": [
+        "src/plan/"
+      ],
       "children": []
     },
     {
       "id": "src-digest",
       "title": "Digest Pipeline (src/digest)",
       "file": "src-digest.md",
-      "sources": ["src/digest/"],
+      "sources": [
+        "src/digest/"
+      ],
       "children": []
     },
     {
       "id": "src-platform",
       "title": "Platform Abstraction (src/platform)",
       "file": "src-platform.md",
-      "sources": ["src/platform/"],
+      "sources": [
+        "src/platform/"
+      ],
       "children": []
     },
     {
       "id": "src-similarity",
       "title": "Similarity Algorithms (src/similarity)",
       "file": "src-similarity.md",
-      "sources": ["src/similarity/"],
+      "sources": [
+        "src/similarity/"
+      ],
       "children": []
     },
     {
       "id": "src-ignorefile",
       "title": "Ignorefile Parser (src/ignorefile)",
       "file": "src-ignorefile.md",
-      "sources": ["src/ignorefile/"],
+      "sources": [
+        "src/ignorefile/"
+      ],
       "children": []
     },
     {
       "id": "src-scope",
       "title": "Scope Analysis (src/scope)",
       "file": "src-scope.md",
-      "sources": ["src/scope/"],
+      "sources": [
+        "src/scope/"
+      ],
       "children": []
     },
     {
       "id": "src-vcs",
       "title": "Git Operations (src/vcs)",
       "file": "src-vcs.md",
-      "sources": ["src/vcs/"],
+      "sources": [
+        "src/vcs/"
+      ],
       "children": []
     },
     {
       "id": "src-http",
       "title": "HTTP Client (src/http)",
       "file": "src-http.md",
-      "sources": ["src/http/"],
+      "sources": [
+        "src/http/"
+      ],
       "children": []
     },
     {
       "id": "src-docgen",
       "title": "Document Generation (src/docgen)",
       "file": "src-docgen.md",
-      "sources": ["src/docgen/"],
-      "children": []
+      "sources": [
+        "src/docgen/"
+      ],
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-glob",
       "title": "Glob Pattern Matching (src/glob)",
       "file": "src-glob.md",
-      "sources": ["src/glob/"],
+      "sources": [
+        "src/glob/"
+      ],
       "children": []
     },
     {
       "id": "src-text",
       "title": "Text Processing (src/text)",
       "file": "src-text.md",
-      "sources": ["src/text/"],
+      "sources": [
+        "src/text/"
+      ],
       "children": []
     },
     {
       "id": "src-filter",
       "title": "File Filtering (src/filter)",
       "file": "src-filter.md",
-      "sources": ["src/filter/"],
+      "sources": [
+        "src/filter/"
+      ],
       "children": []
     },
     {
       "id": "src-mcp",
       "title": "MCP Server (src/mcp)",
       "file": "src-mcp.md",
-      "sources": ["src/mcp/"],
+      "sources": [
+        "src/mcp/"
+      ],
       "children": []
     },
     {
       "id": "src-search",
       "title": "Semantic Search (src/search)",
       "file": "src-search.md",
-      "sources": ["src/search/"],
+      "sources": [
+        "src/search/"
+      ],
       "children": []
     }
   ]

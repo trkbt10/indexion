@@ -1,0 +1,5 @@
+import {
+  "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/src/docgen/wiki/types" @wiki_types,
+  "trkbt10/indexion/src/plan/types" @plan_types,
+}

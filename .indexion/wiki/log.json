@@ -1,0 +1,292 @@
+[
+  {
+    "timestamp": "0",
+    "operation": "lint",
+    "actor": "indexion",
+    "summary": "12 issues found across 44 pages",
+    "details": {},
+    "affected_pages": [
+      "overview",
+      "core-concepts",
+      "digest-pipeline",
+      "architecture",
+      "cli-commands",
+      "kgf-system",
+      "analysis-tools",
+      "vscode-extension",
+      "deepwiki-frontend"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "ingest",
+    "actor": "indexion",
+    "summary": "0 pages need attention (dry-run)",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "ingest",
+    "actor": "indexion",
+    "summary": "0 pages need attention",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "ingest",
+    "actor": "indexion",
+    "summary": "0 pages need attention (dry-run)",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "ingest",
+    "actor": "indexion",
+    "summary": "1 pages need attention (dry-run)",
+    "details": {},
+    "affected_pages": [
+      "getting-started"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "index",
+    "actor": "indexion",
+    "summary": "Generated index with 8 categories, 0 hub pages",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "lint",
+    "actor": "indexion",
+    "summary": "12 issues found across 44 pages",
+    "details": {},
+    "affected_pages": [
+      "overview",
+      "core-concepts",
+      "digest-pipeline",
+      "architecture",
+      "cli-commands",
+      "kgf-system",
+      "analysis-tools",
+      "vscode-extension",
+      "deepwiki-frontend"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "ingest",
+    "actor": "indexion",
+    "summary": "0 pages need attention",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "lint",
+    "actor": "indexion",
+    "summary": "12 issues found across 44 pages",
+    "details": {},
+    "affected_pages": [
+      "overview",
+      "core-concepts",
+      "digest-pipeline",
+      "architecture",
+      "cli-commands",
+      "kgf-system",
+      "analysis-tools",
+      "vscode-extension",
+      "deepwiki-frontend"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "lint",
+    "actor": "indexion",
+    "summary": "12 issues found across 44 pages",
+    "details": {},
+    "affected_pages": [
+      "overview",
+      "core-concepts",
+      "digest-pipeline",
+      "architecture",
+      "cli-commands",
+      "kgf-system",
+      "analysis-tools",
+      "vscode-extension",
+      "deepwiki-frontend"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "index",
+    "actor": "indexion",
+    "summary": "Generated index with 8 categories, 0 hub pages",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "update-page",
+    "actor": "agent:claude",
+    "summary": "Updated page: overview",
+    "details": {},
+    "affected_pages": [
+      "overview"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "update-page",
+    "actor": "agent:claude",
+    "summary": "Updated page: cli-commands",
+    "details": {},
+    "affected_pages": [
+      "cli-commands"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "update-page",
+    "actor": "agent:claude",
+    "summary": "Updated page: cmd-indexion",
+    "details": {},
+    "affected_pages": [
+      "cmd-indexion"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "update-page",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-docgen",
+    "details": {},
+    "affected_pages": [
+      "src-docgen"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "ingest",
+    "actor": "indexion",
+    "summary": "3 pages need attention",
+    "details": {},
+    "affected_pages": [
+      "overview",
+      "cli-commands",
+      "cmd-indexion"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "ingest",
+    "actor": "indexion",
+    "summary": "0 pages need attention",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "lint",
+    "actor": "indexion",
+    "summary": "18 issues found across 44 pages",
+    "details": {},
+    "affected_pages": [
+      "cli-commands",
+      "src-docgen",
+      "overview",
+      "getting-started",
+      "core-concepts",
+      "digest-pipeline",
+      "kgf-system",
+      "analysis-tools",
+      "vscode-extension",
+      "deepwiki-frontend"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "lint",
+    "actor": "indexion",
+    "summary": "13 issues found across 44 pages",
+    "details": {},
+    "affected_pages": [
+      "overview",
+      "getting-started",
+      "cli-commands",
+      "core-concepts",
+      "digest-pipeline",
+      "kgf-system",
+      "analysis-tools",
+      "vscode-extension",
+      "deepwiki-frontend"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "lint",
+    "actor": "indexion",
+    "summary": "8 issues found across 44 pages",
+    "details": {},
+    "affected_pages": [
+      "core-concepts",
+      "digest-pipeline",
+      "kgf-system",
+      "analysis-tools",
+      "vscode-extension",
+      "deepwiki-frontend"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "lint",
+    "actor": "indexion",
+    "summary": "0 issues found across 44 pages",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "index",
+    "actor": "indexion",
+    "summary": "Generated index with 8 categories, 9 hub pages",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "ingest",
+    "actor": "indexion",
+    "summary": "0 pages need attention",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "lint",
+    "actor": "indexion",
+    "summary": "0 issues found across 44 pages",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "lint",
+    "actor": "indexion",
+    "summary": "0 issues found across 44 pages",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "1775697973720",
+    "operation": "ingest",
+    "actor": "indexion",
+    "summary": "0 pages need attention",
+    "details": {},
+    "affected_pages": []
+  }
+]

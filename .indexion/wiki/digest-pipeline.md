@@ -163,4 +163,9 @@ The digest pipeline is exposed through two CLI paths:
 
 The `indexion serve` command also exposes the index via HTTP endpoints (`/digest/query`, `/digest/index`) for the DeepWiki frontend.
 
+## See Also
+
+- [Core Concepts](wiki://core-concepts) -- how Digest relates to CodeGraph and KGF
+- [Digest Library (src/digest)](wiki://src-digest) -- digest subpackage internals
+
 > Source: `cmd/indexion/digest/cli.mbt`, `cmd/indexion/serve/cli.mbt`

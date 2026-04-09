@@ -165,4 +165,9 @@ graph TD
 | `moonbitlang/core/json` | `parser`, `peg`, `semantics`, `resolver` | JSON operations |
 | `moonbitlang/x/fs` | `registry`, `manage`, `peg`, `fixtures` | Filesystem access |
 
+## See Also
+
+- [Core Concepts](wiki://core-concepts) -- how KGF fits into the overall architecture
+- [KGF System](wiki://kgf-system) -- user-facing guide to writing and using KGF specs
+
 > Source: `src/kgf/`

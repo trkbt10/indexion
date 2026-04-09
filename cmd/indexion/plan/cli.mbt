@@ -22,7 +22,6 @@ pub fn command() -> @argparse.Command {
       @solid.command(),
       @reconcile.command(),
       @unwrap.command(),
-      @wiki_plan.command(),
     ],
   )
 }
@@ -38,7 +37,6 @@ pub async fn dispatch(matches : @argparse.Matches) -> Unit {
     "solid" => @solid.run_matches(sub)
     "reconcile" => @reconcile.run_matches(sub)
     "unwrap" => @unwrap.run_matches(sub)
-    "wiki" => @wiki_plan.run_matches(sub)
     _ => ()
   }
 }

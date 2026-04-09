@@ -17,6 +17,7 @@ import {
   "trkbt10/indexion/cmd/indexion/search" @search_cli,
   "trkbt10/indexion/cmd/indexion/mcp" @mcp_cli,
   "trkbt10/indexion/cmd/indexion/spec" @spec_cli,
+  "trkbt10/indexion/cmd/indexion/wiki" @wiki_cli,
 }
 
 options(

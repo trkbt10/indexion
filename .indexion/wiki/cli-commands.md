@@ -8,6 +8,7 @@ flowchart TD
     INDEXION --> INIT[init]
     INDEXION --> EXPLORE[explore]
     INDEXION --> PLAN[plan]
+    INDEXION --> WIKI[wiki]
     INDEXION --> DOC[doc]
     INDEXION --> DIGEST[digest]
     INDEXION --> KGF[kgf]
@@ -26,12 +27,20 @@ flowchart TD
     PLAN --> PU[unwrap]
     PLAN --> PREC[reconcile]
     PLAN --> PREADME[readme]
-    PLAN --> PWIKI[wiki]
+
+    WIKI --> WP[plan]
+    WIKI --> WL[lint]
+    WIKI --> WI[ingest]
+    WIKI --> WX[index]
+    WIKI --> WA[add-page]
+    WIKI --> WU[update-page]
+    WIKI --> WE[export]
+    WIKI --> WM[import]
+    WIKI --> WO[log]
 
     DOC --> DI[init]
     DOC --> DG[graph]
     DOC --> DR[readme]
-    DOC --> DW[wiki]
 ```
 
 ---
@@ -177,10 +186,10 @@ indexion plan readme [options] <directory>
 
 ### plan wiki
 
-Analyze project structure and generate a wiki writing plan. Proposes concept-based page structure and detects pages that need updates based on source changes.
+Analyze project structure and generate a wiki writing plan. Proposes concept-based page structure based on CodeGraph analysis.
 
 ```bash
-indexion plan wiki [options] <directory>
+indexion wiki plan [options] <directory>
 ```
 
 | Option | Description | Default |
@@ -189,7 +198,176 @@ indexion plan wiki [options] <directory>
 | `--wiki-dir=DIR` | Wiki directory | `.indexion/wiki` |
 | `-o=FILE` | Output to file | stdout |
 
-**When to use:** Planning wiki documentation. Generates a page structure proposal and identifies stale pages.
+**When to use:** Starting a new wiki or planning a documentation sprint. Generates a page structure proposal.
+
+---
+
+## wiki
+
+Wiki management commands. All wiki operations are grouped under this top-level command.
+
+```bash
+indexion wiki <subcommand> [options]
+```
+
+### wiki plan
+
+Analyze project structure and generate a wiki writing plan from CodeGraph analysis.
+
+```bash
+indexion wiki plan [options] <directory>
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--format=FORMAT` | `md`, `json`, `github-issue` | `md` |
+| `--wiki-dir=DIR` | Wiki directory | `.indexion/wiki` |
+| `-o=FILE` | Output to file | stdout |
+
+### wiki lint
+
+Check wiki structural integrity. Runs six deterministic checks without requiring an LLM.
+
+```bash
+indexion wiki lint [options]
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--wiki-dir=DIR` | Wiki directory | `.indexion/wiki` |
+| `--format=FORMAT` | `md`, `json`, `github-issue` | `md` |
+| `--severity=LEVEL` | Minimum severity to show: `info`, `warning`, `error` | `info` |
+| `-o=FILE` | Output to file | stdout |
+
+**Checks performed:**
+1. **Broken internal links** -- `wiki://` link targets that don't exist
+2. **Orphan pages** -- pages reachable neither from navigation nor from any link
+3. **Missing cross-references** -- pages sharing source files that don't link to each other
+4. **Stale source references** -- `sources` entries pointing to files that no longer exist
+5. **Empty pages** -- pages with no meaningful content
+6. **Manifest-file mismatch** -- wiki.json entries with no corresponding .md file (or vice versa)
+
+**When to use:** After adding or updating wiki pages. Also exposed as an MCP tool (`wiki_lint`) for AI-driven workflows.
+
+### wiki ingest
+
+Detect source file changes since the last run and generate wiki update tasks for affected pages.
+
+```bash
+indexion wiki ingest [options]
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--wiki-dir=DIR` | Wiki directory | `.indexion/wiki` |
+| `--format=FORMAT` | `md`, `json`, `github-issue` | `md` |
+| `--dry-run` | Detect changes but don't update the ingest manifest | false |
+| `-o=FILE` | Output to file | stdout |
+
+Hashes each source file listed in `wiki.json` using content-addressable storage (`@cas_hash`), compares against `.indexion/wiki/ingest-manifest.json` (the previous state snapshot), and produces a task list of pages whose sources have changed. The tool generates tasks only -- actual page rewriting is the responsibility of the human or agent that receives the task list.
+
+**When to use:** After modifying source files, to identify which wiki pages need updating. Also exposed as `wiki_ingest` MCP tool.
+
+### wiki index
+
+Generate a navigational index page (`index.md`) for the wiki.
+
+```bash
+indexion wiki index [options]
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--wiki-dir=DIR` | Wiki directory | `.indexion/wiki` |
+| `--output=FILE` | Output path | `<wiki-dir>/index.md` |
+| `--dry-run` | Print to stdout instead of writing | false |
+
+The index groups pages by their top-level source directory (e.g., `src`, `cmd`, `kgfs`), identifies **hub pages** (most-linked via `wiki://` references), and lists recent changes from the operation log. LLM agents should consult `index.md` as the entry point for wiki navigation.
+
+### wiki add-page
+
+Add a new page to the wiki manifest and write the `.md` file.
+
+```bash
+indexion wiki add-page --id=<id> --title=<title> --content=<file.md> [options]
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--id` | Page ID (slug, e.g. `my-page`) | required |
+| `--title` | Page title | required |
+| `--content` | Path to `.md` file with page content | required |
+| `--parent` | Parent page ID (adds this page as a child) | -- |
+| `--sources` | Comma-separated source file paths | -- |
+| `--provenance` | `extracted`, `synthesized`, or `manual` | -- |
+| `--actor` | Who is adding: `indexion`, `agent:<name>`, `user` | `user` |
+| `--wiki-dir=DIR` | Wiki directory | `.indexion/wiki` |
+
+### wiki update-page
+
+Update an existing wiki page's content and metadata.
+
+```bash
+indexion wiki update-page --id=<id> --content=<file.md> [options]
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--id` | Page ID to update | required |
+| `--content` | Path to `.md` file with new content | required |
+| `--sources` | Comma-separated source paths (replaces existing) | -- |
+| `--provenance` | `extracted`, `synthesized`, or `manual` | -- |
+| `--actor` | Who is updating: `indexion`, `agent:<name>`, `user` | `user` |
+| `--wiki-dir=DIR` | Wiki directory | `.indexion/wiki` |
+
+### wiki export
+
+Export the indexion wiki (`.indexion/wiki/`) to an external wiki format.
+
+```bash
+indexion wiki export --format=github --input=.indexion/wiki --output=./wiki
+```
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--format` | | Target format: `github`, `gitlab` | required |
+| `--input` | `-i` | Input wiki directory | `.indexion/wiki` |
+| `--output` | `-o` | Output directory | required |
+| `--force` | `-f` | Overwrite existing files | false |
+
+### wiki import
+
+Import an external wiki into indexion's internal format.
+
+```bash
+indexion wiki import --input=./github-wiki --output=.indexion/wiki
+```
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--format` | | Source format: `github`, `gitlab`, `auto` | `auto` |
+| `--input` | `-i` | Input wiki directory | required |
+| `--output` | `-o` | Output directory | `.indexion/wiki` |
+| `--title` | | Wiki title for manifest | `Wiki` |
+| `--force` | `-f` | Overwrite existing files | false |
+
+**When to use:** Syncing wiki content between indexion's internal format and GitHub/GitLab wikis. Use `export` to publish, `import` to pull external changes back.
+
+### wiki log
+
+Display the wiki operation audit log.
+
+```bash
+indexion wiki log [options]
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--wiki-dir=DIR` | Wiki directory | `.indexion/wiki` |
+| `--tail=N` | Show only the last N entries | all |
+| `--json` | Output as JSON instead of text | false |
+
+Every wiki-modifying command (add-page, update-page, lint, ingest, index) appends an entry to `.indexion/wiki/log.json`. Each entry records the timestamp, operation name, actor, summary, and affected page IDs.
 
 ---
 
@@ -233,47 +411,6 @@ indexion doc readme [options] <directory>
 | `--template=FILE` | Custom template file |
 
 **When to use:** Bootstrap documentation from existing doc comments. Use `--per-package` for monorepos.
-
-### doc wiki
-
-Convert wiki between indexion's internal format and external wiki formats (GitHub, GitLab).
-
-```bash
-indexion doc wiki <subcommand> [options]
-```
-
-#### doc wiki export
-
-Export the indexion wiki (`.indexion/wiki/`) to an external wiki format.
-
-```bash
-indexion doc wiki export --format=github --input=.indexion/wiki --output=./wiki
-```
-
-| Option | Short | Description | Default |
-|--------|-------|-------------|---------|
-| `--format` | | Target format: `github`, `gitlab` | required |
-| `--input` | `-i` | Input wiki directory | `.indexion/wiki` |
-| `--output` | `-o` | Output directory | required |
-| `--force` | `-f` | Overwrite existing files | false |
-
-#### doc wiki import
-
-Import an external wiki into indexion's internal format.
-
-```bash
-indexion doc wiki import --input=./github-wiki --output=.indexion/wiki
-```
-
-| Option | Short | Description | Default |
-|--------|-------|-------------|---------|
-| `--format` | | Source format: `github`, `gitlab`, `auto` | `auto` |
-| `--input` | `-i` | Input wiki directory | required |
-| `--output` | `-o` | Output directory | `.indexion/wiki` |
-| `--title` | | Wiki title for manifest | `Wiki` |
-| `--force` | `-f` | Overwrite existing files | false |
-
-**When to use:** Syncing wiki content between indexion's internal format and GitHub/GitLab wikis. Use `export` to publish, `import` to pull external changes back.
 
 ---
 
@@ -553,5 +690,10 @@ indexion mcp --transport=http --port=3741
 ```
 
 **When to use:** Integrating indexion's analysis capabilities into AI-powered development workflows. The MCP server exposes tools for code search, graph analysis, and documentation queries.
+
+## See Also
+
+- [CLI Entry Point](wiki://cmd-indexion) -- internal architecture of the dispatch mechanism
+- [Overview](wiki://overview) -- architectural context for all commands
 
 > **Source:** `cmd/indexion/main.mbt`, `cmd/indexion/*/cli.mbt`

@@ -1,0 +1,202 @@
+{
+  "version": "1",
+  "page_states": {
+    "overview": {
+      "page_hash": "7580ef34e41f7f0e688987d240649bd5",
+      "source_hashes": {
+        "README.md": "3fd31109f3aa7ca18dddbe49f8bd9a52",
+        "moon.mod.json": "fefd53716f16b91d6ff0ea53133b4cb2",
+        "cmd/indexion/main.mbt": "e0f804d058a6a737adf5eb805b96c6ba",
+        "cmd/indexion/wiki/cli.mbt": "98c44f68c1d0c572e8cb61518392ed3f"
+      }
+    },
+    "getting-started": {
+      "page_hash": "61e63c658ece0f8ce242ad4f69bccd49",
+      "source_hashes": {
+        "README.md": "3fd31109f3aa7ca18dddbe49f8bd9a52",
+        "cmd/indexion/main.mbt": "e0f804d058a6a737adf5eb805b96c6ba"
+      }
+    },
+    "core-concepts": {
+      "page_hash": "164c4ebd77d5f28aa61b6597af5779cb",
+      "source_hashes": {}
+    },
+    "architecture": {
+      "page_hash": "cf708e768701c14532e8bac2fe9d286c",
+      "source_hashes": {}
+    },
+    "kgf-system": {
+      "page_hash": "221daad63ba800442e7d1fc1bb9635bf",
+      "source_hashes": {}
+    },
+    "codegraph": {
+      "page_hash": "037eb0c6cc12874ea129e8495638ce3e",
+      "source_hashes": {
+        "src/core/graph/types.mbt": "391756850fcaeea681dc43d74c1adbb8",
+        "src/core/graph/graph.mbt": "0137e64ae2550699a7f308642cedc699"
+      }
+    },
+    "digest-pipeline": {
+      "page_hash": "ee025a974431faf147026692df0e8bb5",
+      "source_hashes": {}
+    },
+    "analysis-tools": {
+      "page_hash": "bada170c9a90a45d898755ad8be2f45a",
+      "source_hashes": {}
+    },
+    "cli-commands": {
+      "page_hash": "f6034ed87b0a4adf479f2afeed209897",
+      "source_hashes": {
+        "cmd/indexion/main.mbt": "e0f804d058a6a737adf5eb805b96c6ba",
+        "cmd/indexion/wiki/cli.mbt": "98c44f68c1d0c572e8cb61518392ed3f",
+        "cmd/indexion/plan/cli.mbt": "2877da72449681a6bb32d46785afdfbc",
+        "cmd/indexion/doc/cli.mbt": "e98b2096f4bdb7333260d9ee203d3981"
+      }
+    },
+    "vscode-extension": {
+      "page_hash": "5cf94fb6e4e954243decfd5516175ade",
+      "source_hashes": {}
+    },
+    "deepwiki-frontend": {
+      "page_hash": "6b4861a134347f6a3df02322865809e3",
+      "source_hashes": {}
+    },
+    "cmd-indexion": {
+      "page_hash": "d4db7fe64b58779cdb5be6a4c211d465",
+      "source_hashes": {
+        "cmd/indexion/main.mbt": "e0f804d058a6a737adf5eb805b96c6ba",
+        "cmd/indexion/wiki/cli.mbt": "98c44f68c1d0c572e8cb61518392ed3f",
+        "cmd/indexion/plan/cli.mbt": "2877da72449681a6bb32d46785afdfbc",
+        "cmd/indexion/doc/cli.mbt": "e98b2096f4bdb7333260d9ee203d3981"
+      }
+    },
+    "cmd-kgf-tokenizer": {
+      "page_hash": "15111110e2630a74e517792f34e1877d",
+      "source_hashes": {}
+    },
+    "packages-wiki": {
+      "page_hash": "72ddbc7046eef74016d092a11bb8792d",
+      "source_hashes": {}
+    },
+    "packages-api-client": {
+      "page_hash": "7ca82ad8d0b66d8137953809b479ff51",
+      "source_hashes": {}
+    },
+    "packages-vscode-plugin": {
+      "page_hash": "db76d5f8766ab1c84cac923bdae96aa2",
+      "source_hashes": {}
+    },
+    "kgfs": {
+      "page_hash": "2caa38e5a5c1bd83ef3e1cf44de7142a",
+      "source_hashes": {}
+    },
+    "docs": {
+      "page_hash": "a4efccfecd1302eca5dada1111db9ffb",
+      "source_hashes": {}
+    },
+    "docs-templates": {
+      "page_hash": "330a2b043af7f4a6e32f16b78a4b1e1c",
+      "source_hashes": {}
+    },
+    "eslint-plugins": {
+      "page_hash": "8a626cb8541a5ea0da2dc3a2baeb11bd",
+      "source_hashes": {}
+    },
+    "eslint-rules": {
+      "page_hash": "3aca65de5284e95ff4390c3fd7684199",
+      "source_hashes": {}
+    },
+    "skills": {
+      "page_hash": "092dd3379763141c01ba1c0491defb7a",
+      "source_hashes": {}
+    },
+    "skills-skills": {
+      "page_hash": "aa231dee3153272d54ea7176f3cf92fd",
+      "source_hashes": {}
+    },
+    "src-pipeline": {
+      "page_hash": "a2ecdefe26527b9b628ba2285429501d",
+      "source_hashes": {}
+    },
+    "src-kgf": {
+      "page_hash": "2014fcba99a44d464bfc0d5c451dc348",
+      "source_hashes": {}
+    },
+    "src-parallel": {
+      "page_hash": "52c6edbc055c72a5d79593fbc5815f42",
+      "source_hashes": {}
+    },
+    "src-core": {
+      "page_hash": "fb6fbe642679a0d89fac53b6b955c03c",
+      "source_hashes": {}
+    },
+    "src-update": {
+      "page_hash": "a7812ae62142bc86a0bd79bb8391099c",
+      "source_hashes": {}
+    },
+    "src-config": {
+      "page_hash": "2e7b22e9a03b6432546000cebec34d70",
+      "source_hashes": {}
+    },
+    "src-segmentation": {
+      "page_hash": "9fce32fdadac766d9b09df3fdcf2fee7",
+      "source_hashes": {}
+    },
+    "src-plan": {
+      "page_hash": "a82b7dbae0452f5dc0f626c04694ad20",
+      "source_hashes": {}
+    },
+    "src-digest": {
+      "page_hash": "dee3f3959feec0f2e7626ffec0fff156",
+      "source_hashes": {}
+    },
+    "src-platform": {
+      "page_hash": "a0b8c650fd75b48351343cf9263fbb88",
+      "source_hashes": {}
+    },
+    "src-similarity": {
+      "page_hash": "f9a95ea2bc436e2a7a023a713e410c15",
+      "source_hashes": {}
+    },
+    "src-ignorefile": {
+      "page_hash": "28194fd2d87f286ef2d1ece0da4bfa85",
+      "source_hashes": {}
+    },
+    "src-scope": {
+      "page_hash": "e0cdafda33b4091711f321dd5d9555d5",
+      "source_hashes": {}
+    },
+    "src-vcs": {
+      "page_hash": "b9e082c946c417c81b0d966fc39cdf46",
+      "source_hashes": {}
+    },
+    "src-http": {
+      "page_hash": "204de07bcf5ff1b3ead779a4d9ec7f5c",
+      "source_hashes": {}
+    },
+    "src-docgen": {
+      "page_hash": "7e165fab82e9979ccd55f88b3849d57c",
+      "source_hashes": {}
+    },
+    "src-glob": {
+      "page_hash": "8c5f12ce32fcd868c320a9904469b9c9",
+      "source_hashes": {}
+    },
+    "src-text": {
+      "page_hash": "747ea76d946edd73f3a7e539d696ae5e",
+      "source_hashes": {}
+    },
+    "src-filter": {
+      "page_hash": "cf0b58f6875b7a7e4dcb6d5e4dc3dfba",
+      "source_hashes": {}
+    },
+    "src-mcp": {
+      "page_hash": "7dee9220a765b0cd2dda61dd8f0290b4",
+      "source_hashes": {}
+    },
+    "src-search": {
+      "page_hash": "e7906bfcf66b3859c1f37338b6d3d3ce",
+      "source_hashes": {}
+    }
+  }
+}

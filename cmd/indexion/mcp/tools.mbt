@@ -24,6 +24,8 @@ fn build_server(config : McpConfig) -> @mcp_server.McpServer {
   register_plan_solid(server, config)
   register_plan_unwrap(server, config)
   register_plan_readme(server, config)
+  register_wiki_lint(server, config)
+  register_wiki_ingest(server, config)
   server
 }
 
@@ -791,6 +793,124 @@ fn register_plan_readme(
         Some(result) => @mcp_types.text_result(result)
         None => @mcp_types.error_result("No results")
       }
+    },
+  )
+}
+
+// ── Wiki tools ──
+
+///|
+fn register_wiki_lint(
+  server : @mcp_server.McpServer,
+  config : McpConfig,
+) -> Unit {
+  let specs_dir = config.specs_dir
+  server.register_tool(
+    {
+      name: "wiki_lint",
+      description: "Check wiki structural integrity: broken links, orphan pages, stale sources, missing cross-references, empty pages.",
+      input_schema: {
+        properties: {
+          "wikiDir": @mcp_types.string_prop(
+            "Wiki directory (default: .indexion/wiki)",
+          ),
+          "format": @mcp_types.enum_prop(
+            "Output format",
+            ["md", "json"],
+            default="md",
+          ),
+        },
+        required: [],
+      },
+    },
+    fn(params) {
+      let wiki_dir_raw = json_string(params, "wikiDir", ".indexion/wiki")
+      let wiki_dir = if wiki_dir_raw == ".indexion/wiki" {
+        match @config.resolve_project_indexion_dir(".", "wiki") {
+          Some(dir) => dir
+          None => return @mcp_types.error_result("Project root not found")
+        }
+      } else {
+        wiki_dir_raw
+      }
+      let format = json_string(params, "format", "md")
+      let registry = @kgf_features.load_registry(
+        specs_dir=specs_dir,
+        target_dir=".",
+      )
+      let wiki = match @wiki_reader.load_wiki(wiki_dir, registry~) {
+        Some(w) => w
+        None => return @mcp_types.error_result("No wiki found at " + wiki_dir)
+      }
+      let report = @wiki_lint.lint(wiki, wiki_dir~)
+      let doc = report.to_plan_document()
+      let output = match format {
+        "json" => doc.to_json().stringify(indent=2)
+        _ => @plan_render.render_markdown(doc)
+      }
+      @mcp_types.text_result(output)
+    },
+  )
+}
+
+///|
+fn register_wiki_ingest(
+  server : @mcp_server.McpServer,
+  config : McpConfig,
+) -> Unit {
+  let specs_dir = config.specs_dir
+  server.register_tool(
+    {
+      name: "wiki_ingest",
+      description: "Detect source file changes and identify wiki pages needing updates. Returns update tasks without modifying pages.",
+      input_schema: {
+        properties: {
+          "wikiDir": @mcp_types.string_prop(
+            "Wiki directory (default: .indexion/wiki)",
+          ),
+          "format": @mcp_types.enum_prop(
+            "Output format",
+            ["md", "json"],
+            default="md",
+          ),
+          "dryRun": @mcp_types.bool_prop(
+            "Don't update manifest, just show changes",
+            default="true",
+          ),
+        },
+        required: [],
+      },
+    },
+    fn(params) {
+      let wiki_dir_raw = json_string(params, "wikiDir", ".indexion/wiki")
+      let wiki_dir = if wiki_dir_raw == ".indexion/wiki" {
+        match @config.resolve_project_indexion_dir(".", "wiki") {
+          Some(dir) => dir
+          None => return @mcp_types.error_result("Project root not found")
+        }
+      } else {
+        wiki_dir_raw
+      }
+      let format = json_string(params, "format", "md")
+      let dry_run = json_bool(params, "dryRun", true)
+      let registry = @kgf_features.load_registry(
+        specs_dir=specs_dir,
+        target_dir=".",
+      )
+      let wiki = match @wiki_reader.load_wiki(wiki_dir, registry~) {
+        Some(w) => w
+        None => return @mcp_types.error_result("No wiki found at " + wiki_dir)
+      }
+      let result = @wiki_ingest.analyze(wiki, wiki_dir)
+      if !dry_run {
+        @wiki_ingest.save_manifest(result.new_manifest, wiki_dir)
+      }
+      let doc = @wiki_ingest.tasks_to_plan_document(result.tasks)
+      let output = match format {
+        "json" => doc.to_json().stringify(indent=2)
+        _ => @plan_render.render_markdown(doc)
+      }
+      @mcp_types.text_result(output)
     },
   )
 }

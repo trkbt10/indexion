@@ -76,4 +76,8 @@ Each `.kgf` file contains sections separated by `===`:
 - `=== semantics` -- Actions to build semantic graphs (emit, link, scope)
 - `=== resolver` -- Module resolution config (relative_prefixes, bare_prefix, exts, etc.)
 
+## See Also
+
+- [KGF System](wiki://kgf-system) -- how specs are structured and how to write new ones
+
 > Source: `kgfs/`

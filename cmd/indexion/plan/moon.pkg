@@ -6,5 +6,4 @@ import {
   "trkbt10/indexion/cmd/indexion/plan/solid" @solid,
   "trkbt10/indexion/cmd/indexion/plan/reconcile" @reconcile,
   "trkbt10/indexion/cmd/indexion/plan/unwrap" @unwrap,
-  "trkbt10/indexion/cmd/indexion/plan/wiki" @wiki_plan,
 }

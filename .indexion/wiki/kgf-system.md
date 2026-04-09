@@ -302,3 +302,8 @@ The KGF system achieves language-agnostic code analysis through a clean separati
 - `src/kgf/features/` -- KGF-based feature extraction for downstream consumers
 
 This architecture means that the engine code changes only when new *capabilities* are needed (a new statement type, a new resolution strategy). Adding or improving language support is entirely a matter of editing `.kgf` files.
+
+## See Also
+
+- [KGF Specifications (kgfs)](wiki://kgfs) -- the bundled spec files for 63 languages and formats
+- [KGF Engine (src/kgf)](wiki://src-kgf) -- implementation internals of the parsing pipeline

@@ -106,4 +106,8 @@ The `indexion.openSettings` command opens a webview-based settings panel for con
 
 Webview panels communicate with the extension host through a typed message bus (`src/webview/shared/message-bus.ts`). Messages are discriminated unions with a `type` field. The `vscode-api.ts` wrapper provides a typed interface to the VS Code webview API.
 
+## See Also
+
+- [VS Code Extension (packages/vscode-plugin)](wiki://packages-vscode-plugin) -- package internals and build configuration
+
 > Source: `packages/vscode-plugin/src/extension.ts`, `packages/vscode-plugin/src/commands/index.ts`

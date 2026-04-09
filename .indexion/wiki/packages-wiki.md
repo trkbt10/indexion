@@ -106,4 +106,8 @@ Built with Radix UI primitives (Collapsible, Dialog, ScrollArea, Separator, Slot
 
 The Vite config (`vite.config.ts`) sets the root to `src/client`, outputs to `dist/client`, and proxies `/api` to `http://localhost:3741` during development. In static mode, the base path is set to `/indexion/` for GitHub Pages deployment.
 
+## See Also
+
+- [DeepWiki Frontend](wiki://deepwiki-frontend) -- user-facing guide to the web interface features
+
 > Source: `packages/wiki/`

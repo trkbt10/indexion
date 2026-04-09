@@ -240,4 +240,8 @@ Most plan commands share these flags:
 | `--output=FILE` / `-o=FILE` | Write output to a file instead of stdout |
 | `--specs-dir=DIR` | KGF specs directory (default: `kgfs`) |
 
+## See Also
+
+- [Similarity Algorithms (src/similarity)](wiki://src-similarity) -- NCD, TF-IDF, APTED, TSED algorithm internals
+
 > Source: `cmd/indexion/plan/cli.mbt`, `src/pipeline/comparison/`

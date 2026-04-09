@@ -1,0 +1,4 @@
+import {
+  "trkbt10/indexion/src/docgen/wiki/types" @wiki_types,
+  "trkbt10/indexion/src/docgen/wiki/log" @wiki_log,
+}

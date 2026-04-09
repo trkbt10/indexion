@@ -73,8 +73,8 @@ flowchart LR
         UNW["plan unwrap<br/>(wrapper removal)"]
         PDOC["plan documentation<br/>(coverage audit)"]
         PREAD["plan readme<br/>(README plans)"]
-        PWIKI["plan wiki<br/>(wiki plans)"]
-        DOC["doc graph/readme/init/wiki<br/>(doc generation)"]
+        WIKI["wiki plan/lint/ingest<br/>index/add-page/update-page<br/>export/import/log"]
+        DOC["doc graph/readme/init<br/>(doc generation)"]
         GRP["grep<br/>(token search)"]
         SRCH["search<br/>(semantic search)"]
         DIG["digest<br/>(semantic index)"]
@@ -154,11 +154,18 @@ as a subcommand of the `indexion` CLI:
 | `plan reconcile`     | Detects drift between code symbols and documentation             |
 | `plan documentation` | Audits documentation coverage across the codebase                |
 | `plan readme`        | Generates README writing plans for packages                      |
-| `plan wiki`          | Generates wiki writing/update plans from project analysis        |
+| `wiki plan`          | Generates wiki writing/update plans from project analysis        |
+| `wiki lint`          | Checks wiki structural integrity (broken links, orphans, etc.)   |
+| `wiki ingest`        | Detects source file changes and generates wiki update tasks      |
+| `wiki index`         | Generates wiki index page (category catalog + hub pages)         |
+| `wiki add-page`      | Adds a new page to the wiki manifest and writes the .md file     |
+| `wiki update-page`   | Updates an existing wiki page's content and metadata             |
+| `wiki export`        | Converts wiki to GitHub/GitLab format                            |
+| `wiki import`        | Imports external wiki into indexion format                       |
+| `wiki log`           | Displays the wiki operation audit log                            |
 | `doc graph`          | Generates dependency graphs in Mermaid format                    |
 | `doc readme`         | Generates per-package README files from doc comments             |
 | `doc init`           | Initializes documentation template structure                     |
-| `doc wiki`           | Converts wiki between indexion format and GitHub/GitLab formats  |
 | `grep`               | KGF-aware token pattern search across source files               |
 | `search`             | Semantic search across code, wiki, and documentation             |
 | `sim`                | Point comparison of two texts with multiple algorithms           |
@@ -350,9 +357,12 @@ indexion/
     plan/{refactor,solid,     #   indexion plan {refactor,solid,
           unwrap,reconcile,   #     unwrap,reconcile,
           documentation,      #     documentation,
-          readme,wiki}/       #     readme,wiki}
-    doc/{graph,readme,       #   indexion doc {graph,readme,
-         init,wiki}/          #     init,wiki}
+          readme}/            #     readme}
+    wiki/{plan,lint,ingest,  #   indexion wiki {plan,lint,ingest,
+          index,add_page,     #     index,add-page,update-page,
+          update_page,        #     export,import,log}
+          export,import,log}/
+    doc/{graph,readme,init}/ #   indexion doc {graph,readme,init}
     digest/ similarity/       #   indexion digest, indexion sim
     grep/ perf/               #   indexion grep, indexion perf
     serve/ segment/ kgf/      #   indexion serve, segment, kgf
@@ -436,7 +446,9 @@ indexion/
 
 | Topic                       | Location                                      |
 |-----------------------------|-----------------------------------------------|
-| CLI command documentation   | `cmd/indexion/*/README.md`                     |
+| Getting started             | [wiki://getting-started](wiki://getting-started) |
+| CLI command reference       | [wiki://cli-commands](wiki://cli-commands)     |
+| CLI entry point internals   | [wiki://cmd-indexion](wiki://cmd-indexion)     |
 | KGF spec format             | `kgfs/README.md`                              |
 | Similarity algorithms       | `src/similarity/README.md`                     |
 | Batch comparison engine     | `src/pipeline/README.md`                       |

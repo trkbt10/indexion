@@ -124,4 +124,9 @@ graph TD
 | query | `digest/index`, `digest/types` |
 | traverse | `@core/graph`, `digest/types` |
 
+## See Also
+
+- [Digest Pipeline](wiki://digest-pipeline) -- user-facing guide to building and querying the index
+- [Core Concepts](wiki://core-concepts) -- how Digest fits into the overall architecture
+
 > Source: `src/digest/`
