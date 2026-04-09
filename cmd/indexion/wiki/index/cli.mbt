@@ -51,6 +51,31 @@ fn build_command() -> @argparse.Command {
       @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
+      @argparse.OptionArg(
+        "provider",
+        about="Embedding provider for --full: tfidf | openai | auto (default: auto)",
+        default_values=["auto"],
+      ),
+      @argparse.OptionArg(
+        "api-key-env",
+        about="Environment variable name for OpenAI API key (default: OPENAI_API_KEY)",
+        default_values=[@embed_config.DEFAULT_API_KEY_ENV],
+      ),
+      @argparse.OptionArg(
+        "model",
+        about="Embedding model name (default: text-embedding-3-small)",
+        default_values=[@embed_config.DEFAULT_EMBEDDING_MODEL],
+      ),
+      @argparse.OptionArg(
+        "base-url",
+        about="Embedding API base URL",
+        default_values=[@embed_config.DEFAULT_API_BASE_URL],
+      ),
+      @argparse.OptionArg(
+        "dim",
+        about="Embedding dimension (default: 256 for tfidf, 1536 for openai)",
+        default_values=[@embed_config.DEFAULT_TFIDF_DIM.to_string()],
+      ),
     ],
   )
 }
@@ -128,7 +153,33 @@ async fn run_build(matches : @argparse.Matches) -> Unit {
   // Build vector search index if --full
   if full {
     println("Building vector search index...")
-    let provider : @embed_config.EmbeddingProvider = @embed_config.TfIdf(256)
+    let get_opt = fn(key : String, default_ : String) -> String {
+      match matches.values.get(key) {
+        Some(arr) => if arr.length() > 0 { arr[0] } else { default_ }
+        None => default_
+      }
+    }
+    let provider_name = get_opt("provider", "auto")
+    let api_key_env = get_opt("api-key-env", @embed_config.DEFAULT_API_KEY_ENV)
+    let model = get_opt("model", @embed_config.DEFAULT_EMBEDDING_MODEL)
+    let base_url = get_opt("base-url", @embed_config.DEFAULT_API_BASE_URL)
+    let dim = @common.parse_int(get_opt("dim", @embed_config.DEFAULT_TFIDF_DIM.to_string()))
+    let provider = @embed_config.resolve_provider(
+      provider_name,
+      api_key_env,
+      base_url,
+      model,
+      dim,
+    ) catch {
+      @embed_config.MissingApiKey(env) => {
+        println("Error: " + env + " not set. provider=openai requires an API key.")
+        return
+      }
+      @embed_config.UnknownProvider(name) => {
+        println("Error: Unknown provider: " + name)
+        return
+      }
+    }
     let search_index = @wiki_search.build_search_index(
       wiki.pages,
       provider,

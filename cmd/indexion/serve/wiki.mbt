@@ -2,7 +2,9 @@
 /// # Wiki Serving
 ///
 /// Loads wiki pages from .indexion/wiki/ directory.
-/// Builds a search index using the same embedding provider as digest.
+/// When a pre-built search index (vectors.db + search-sections.json) exists,
+/// it is loaded directly — no rebuild needed.
+/// Falls back to building from scratch when the pre-built index is absent.
 
 ///|
 async fn load_wiki_pages(
@@ -26,32 +28,47 @@ async fn load_wiki_pages(
       @digest_cli.log_progress(
         "Wiki: " + data.pages.length().to_string() + " pages loaded.",
       )
-      let search = @wiki_search.build_search_index(
-        data.pages,
-        provider,
-        registry~,
-      ) catch {
-        _ => {
+      // Prefer the pre-built index produced by `wiki index build --full`.
+      let search = match @wiki_search.WikiSearchIndex::load(wiki_dir) {
+        Some(idx) => {
           @digest_cli.log_progress(
-            "Wiki search: embedding failed, using TF-IDF fallback.",
+            "Wiki search: " +
+            idx.sections.length().to_string() +
+            " sections loaded from pre-built index.",
           )
-          @wiki_search.build_search_index(
-            data.pages,
-            @embed_config.TfIdf(256),
-            registry~,
-          ) catch {
-            _ => {
-              @digest_cli.log_progress("Wiki search: failed to build index.")
+          idx
+        }
+        None => {
+          // No pre-built index — build from scratch.
+          @digest_cli.log_progress(
+            "Wiki search: no pre-built index found, building from source...",
+          )
+          @wiki_search.build_search_index(data.pages, provider, registry~) catch {
+            @embed.ParseError(msg) => {
+              @digest_cli.log_progress(
+                "Wiki search: embedding failed (" + msg + "). Index unavailable.",
+              )
+              return (data, None)
+            }
+            @embed.ApiError(code, msg) => {
+              @digest_cli.log_progress(
+                "Wiki search: API error (" +
+                code.to_string() +
+                "): " +
+                msg +
+                ". Index unavailable.",
+              )
+              return (data, None)
+            }
+            @embed.NoResult => {
+              @digest_cli.log_progress(
+                "Wiki search: no embedding result. Index unavailable.",
+              )
               return (data, None)
             }
           }
         }
       }
-      @digest_cli.log_progress(
-        "Wiki search: " +
-        search.sections.length().to_string() +
-        " sections indexed.",
-      )
       (data, Some(search))
     }
     None => {
@@ -93,7 +110,25 @@ async fn handle_wiki_search(
       } else {
         10
       }
-      let hits = idx.search(query, top_k~)
+      let hits = idx.search(query, top_k~) catch {
+        @embed.ParseError(msg) => {
+          send_json_error(conn, 500, "Search embedding error: " + msg, cors)
+          return
+        }
+        @embed.ApiError(code, msg) => {
+          send_json_error(
+            conn,
+            502,
+            "Search API error (" + code.to_string() + "): " + msg,
+            cors,
+          )
+          return
+        }
+        @embed.NoResult => {
+          send_json_error(conn, 500, "Search returned no embedding result", cors)
+          return
+        }
+      }
       let results : Array[Json] = []
       for hit in hits {
         results.push(hit.to_json())

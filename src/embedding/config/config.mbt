@@ -68,6 +68,105 @@ pub(all) enum EmbeddingProvider {
 } derive(Eq, Show)
 
 ///|
+/// Serialize EmbeddingProvider to JSON.
+/// Format: {"kind": "tfidf", "dim": 256}
+///       | {"kind": "openai", "api_key": "...", "api_key_env": "...",
+///            "base_url": "...", "model": "...", "dim": 1536}
+///       | {"kind": "precomputed", "path": "..."}
+pub fn EmbeddingProvider::to_json(self : EmbeddingProvider) -> Json {
+  match self {
+    TfIdf(dim) => { "kind": "tfidf", "dim": dim.to_json() }
+    OpenAI(cfg) => {
+      {
+        "kind": "openai",
+        "api_key": cfg.api_key.to_json(),
+        "api_key_env": cfg.api_key_env.to_json(),
+        "base_url": cfg.base_url.to_json(),
+        "model": cfg.model.to_json(),
+        "dim": cfg.dim.to_json(),
+      }
+    }
+    Precomputed(path) => { "kind": "precomputed", "path": path.to_json() }
+  }
+}
+
+///|
+/// Error from resolve_provider.
+pub(all) suberror ProviderError {
+  /// Provider name is unknown.
+  UnknownProvider(String)
+  /// API key environment variable is not set.
+  MissingApiKey(String)
+}
+
+///|
+/// Resolve an EmbeddingProvider from named CLI/config parameters.
+///
+/// provider_name: "openai" | "tfidf" | "auto" | ""
+/// api_key_env:   environment variable name for the API key
+/// base_url:      API base URL
+/// model:         embedding model name
+/// dim:           embedding dimension
+///
+/// Rules:
+/// - "tfidf": always returns TfIdf(dim).
+/// - "openai": requires the env var to be set; returns Err if missing.
+/// - "auto" / "": uses OpenAI if the env var is set, TfIdf otherwise.
+/// - Unknown name: returns Err.
+pub fn resolve_provider(
+  provider_name : String,
+  api_key_env : String,
+  base_url : String,
+  model : String,
+  dim : Int,
+) -> EmbeddingProvider raise ProviderError {
+  match provider_name {
+    "tfidf" => TfIdf(dim)
+    "openai" =>
+      match @sys.get_env_var(api_key_env) {
+        Some(api_key) =>
+          OpenAI({ api_key, api_key_env, base_url, model, dim })
+        None => raise MissingApiKey(api_key_env)
+      }
+    "auto" | "" =>
+      match @sys.get_env_var(api_key_env) {
+        Some(api_key) =>
+          OpenAI({ api_key, api_key_env, base_url, model, dim })
+        None => TfIdf(dim)
+      }
+    _ => raise UnknownProvider(provider_name)
+  }
+}
+
+///|
+/// Deserialize EmbeddingProvider from JSON.
+/// Returns TfIdf(DEFAULT_TFIDF_DIM) if the JSON is unrecognized.
+pub fn EmbeddingProvider::from_json(json : Json) -> EmbeddingProvider {
+  match json {
+    { "kind": String("tfidf"), "dim": Number(d, ..), .. } =>
+      TfIdf(d.to_int())
+    { "kind": String("tfidf"), .. } => TfIdf(DEFAULT_TFIDF_DIM)
+    {
+      "kind": String("openai"),
+      "api_key": String(api_key),
+      "base_url": String(base_url),
+      "model": String(model),
+      "dim": Number(dim, ..),
+      ..
+    } => {
+      let api_key_env = match json {
+        { "api_key_env": String(e), .. } => e
+        _ => DEFAULT_API_KEY_ENV
+      }
+      OpenAI({ api_key, api_key_env, base_url, model, dim: dim.to_int() })
+    }
+    { "kind": String("precomputed"), "path": String(path), .. } =>
+      Precomputed(path)
+    _ => TfIdf(DEFAULT_TFIDF_DIM)
+  }
+}
+
+///|
 /// vcdb indexing strategy (Single Source of Truth).
 pub(all) enum VcdbStrategy {
   /// Brute force (exact, slow for large datasets).

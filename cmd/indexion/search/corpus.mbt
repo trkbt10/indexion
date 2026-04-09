@@ -174,12 +174,12 @@ fn is_wiki_dir(path : String) -> Bool {
 }
 
 ///|
-/// Try to load a pre-built wiki search engine from vectors.db.
-/// Returns Some(engine) when the path is a single wiki directory with a
-/// persisted index; None otherwise (caller should fall back to build_corpus).
-pub fn load_prebuilt_wiki_engine(
+/// Try to load a pre-built wiki search index from vectors.db + sections JSON.
+/// Returns Some(WikiSearchIndex) when the path is a single wiki directory with
+/// a persisted index; None otherwise (caller should fall back to build_corpus).
+pub fn load_prebuilt_wiki_index(
   paths : Array[String],
-) -> @search_engine.SearchEngine? {
+) -> @wiki_search.WikiSearchIndex? {
   // Only applies when the sole target is a wiki directory
   if paths.length() != 1 {
     return None
@@ -191,10 +191,7 @@ pub fn load_prebuilt_wiki_engine(
   if !@wiki_search.exists(resolved) {
     return None
   }
-  match @wiki_search.load(resolved) {
-    Some(idx) => Some(idx.engine)
-    None => None
-  }
+  @wiki_search.load(resolved)
 }
 
 ///|
@@ -235,7 +232,7 @@ fn extract_wiki_documents(
     } else {
       page_id + ".md"
     }
-    let page_path = wiki_dir + "/" + page_file
+    let page_path = @config.join_path(wiki_dir, page_file)
     let lang = match registry {
       Some(reg) =>
         match reg.detect_from_path(page_path) {

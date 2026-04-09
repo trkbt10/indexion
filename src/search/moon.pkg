@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/cmp" @cmp,
   "trkbt10/indexion/src/text/embed" @text_embed,
   "trkbt10/indexion/src/embedding/config" @embed_config,
   "trkbt10/indexion/src/digest/embed" @embed,

@@ -8,6 +8,7 @@ import {
   "trkbt10/indexion/src/core/graph" @graph,
   "trkbt10/indexion/src/config" @config,
   "trkbt10/indexion/src/document/structure" @doc_structure,
+  "trkbt10/indexion/src/embedding/config" @embed_config,
   "trkbt10/indexion/src/search" @search_engine,
   "trkbt10/indexion/src/digest/embed" @embed,
   "trkbt10/indexion/src/pipeline" @pipeline,

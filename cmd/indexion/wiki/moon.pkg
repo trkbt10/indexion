@@ -6,4 +6,5 @@ import {
   "trkbt10/indexion/cmd/indexion/wiki/export" @wiki_export,
   "trkbt10/indexion/cmd/indexion/wiki/import" @wiki_import,
   "trkbt10/indexion/cmd/indexion/wiki/log" @wiki_log_cli,
+  "trkbt10/indexion/cmd/indexion/wiki/hook" @wiki_hook_cli,
 }

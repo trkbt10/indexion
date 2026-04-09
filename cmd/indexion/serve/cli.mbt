@@ -311,7 +311,16 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
           "No existing index found. Use POST /api/digest/rebuild to build.",
         )
       }
-      let provider = @digest_cli.resolve_provider(digest_cli_config)
+      let provider = @digest_cli.resolve_provider(digest_cli_config) catch {
+        @embed_config.MissingApiKey(env) => {
+          @digest_cli.log_error(env + " not set. provider=openai requires an API key.")
+          @embed_config.TfIdf(@embed_config.DEFAULT_TFIDF_DIM)
+        }
+        @embed_config.UnknownProvider(name) => {
+          @digest_cli.log_error("Unknown provider: " + name + ", using tfidf")
+          @embed_config.TfIdf(@embed_config.DEFAULT_TFIDF_DIM)
+        }
+      }
       let (wiki, wiki_search) = load_wiki_pages(config, provider)
       let empty_index = @index.DigestIndex::load_or_create(
         config.index_dir,
@@ -564,10 +573,6 @@ async fn do_load(
     config.index_dir,
     digest_config,
   )
-  // Populate units from graph (incremental — skips unchanged)
-  let _ = index.build_with_config(graph, digest_config) catch {
-    _ => return None
-  }
   let provider = @digest_cli.resolve_provider(digest_cli_config)
   let index_json = build_index_json(index)
   let stats_json = build_stats_json(graph, config.index_dir, digest_config)

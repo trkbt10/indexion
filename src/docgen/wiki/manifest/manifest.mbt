@@ -27,12 +27,13 @@ pub fn load_manifest(
       return None
     }
   }
-  @json.from_json(manifest_json) catch {
+  let manifest : @wiki_types.WikiManifest = @json.from_json(manifest_json) catch {
     e => {
       println("Error decoding manifest: " + e.to_string())
       return None
     }
   }
+  Some(manifest)
 }
 
 ///|

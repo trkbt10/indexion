@@ -158,7 +158,66 @@ pub struct ManifestPage {
   /// Who last modified: "indexion" | "agent:<name>" | "user".
   /// None if not yet tracked.
   last_actor : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Show, ToJson)
+
+///|
+pub impl @json.FromJson for ManifestPage with from_json(json, path) {
+  guard json is Object(obj) else {
+    raise @json.JsonDecodeError((path, "ManifestPage::from_json: expected object"))
+  }
+  let id = match obj.get("id") {
+    Some(String(s)) => s
+    _ => raise @json.JsonDecodeError((path, "ManifestPage: missing 'id'"))
+  }
+  let title = match obj.get("title") {
+    Some(String(s)) => s
+    _ => raise @json.JsonDecodeError((path, "ManifestPage: missing 'title'"))
+  }
+  let file = match obj.get("file") {
+    Some(String(s)) => s
+    _ => raise @json.JsonDecodeError((path, "ManifestPage: missing 'file'"))
+  }
+  let sources : Array[String] = match obj.get("sources") {
+    Some(Array(arr)) => {
+      let result : Array[String] = []
+      for item in arr {
+        if item is String(s) {
+          result.push(s)
+        }
+      }
+      result
+    }
+    Some(Null) | None => []
+    _ => raise @json.JsonDecodeError((path, "ManifestPage: invalid 'sources'"))
+  }
+  let children : Array[String] = match obj.get("children") {
+    Some(Array(arr)) => {
+      let result : Array[String] = []
+      for item in arr {
+        if item is String(s) {
+          result.push(s)
+        }
+      }
+      result
+    }
+    Some(Null) | None => []
+    _ =>
+      raise @json.JsonDecodeError((path, "ManifestPage: invalid 'children'"))
+  }
+  let provenance : String? = match obj.get("provenance") {
+    Some(String(s)) => Some(s)
+    Some(Null) | None => None
+    _ =>
+      raise @json.JsonDecodeError((path, "ManifestPage: invalid 'provenance'"))
+  }
+  let last_actor : String? = match obj.get("last_actor") {
+    Some(String(s)) => Some(s)
+    Some(Null) | None => None
+    _ =>
+      raise @json.JsonDecodeError((path, "ManifestPage: invalid 'last_actor'"))
+  }
+  { id, title, file, sources, children, provenance, last_actor }
+}
 
 ///|
 pub fn ManifestPage::new(
@@ -210,7 +269,37 @@ pub fn ManifestPage::with_updates(
 pub struct WikiManifest {
   title : String
   pages : Array[ManifestPage]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Show, ToJson)
+
+///|
+pub impl @json.FromJson for WikiManifest with from_json(json, path) {
+  guard json is Object(obj) else {
+    raise @json.JsonDecodeError((path, "WikiManifest::from_json: expected object"))
+  }
+  let title = match obj.get("title") {
+    Some(String(s)) => s
+    _ => raise @json.JsonDecodeError((path, "WikiManifest: missing 'title'"))
+  }
+  let pages : Array[ManifestPage] = match obj.get("pages") {
+    Some(Array(arr)) => {
+      let result : Array[ManifestPage] = []
+      for i, item in arr {
+        result.push(
+          @json.from_json(item) catch {
+            e =>
+              raise @json.JsonDecodeError(
+                (path.add_index(i), "WikiManifest: invalid page: " + e.to_string()),
+              )
+          },
+        )
+      }
+      result
+    }
+    Some(Null) | None => []
+    _ => raise @json.JsonDecodeError((path, "WikiManifest: invalid 'pages'"))
+  }
+  { title, pages }
+}
 
 ///|
 pub fn WikiManifest::new(

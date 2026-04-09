@@ -406,32 +406,22 @@ fn build_api_config(
 
 ///|
 /// Resolve embedding provider from CLI config.
-pub fn resolve_provider(config : CliConfig) -> @dconfig.EmbeddingProvider {
-  let env_name = config.api_key_env
-  match config.provider {
-    "openai" =>
-      match @sys.get_env_var(env_name) {
-        Some(key) => @embed_config.OpenAI(build_api_config(config, key))
-        None => {
-          log_error(
-            env_name +
-            " environment variable not set. Semantic search requires an API key when provider=openai.",
-          )
-          @embed_config.TfIdf(config.dim)
-        }
-      }
-    "tfidf" => @embed_config.TfIdf(config.dim)
-    "auto" | "" =>
-      // Auto-detect: use embedding API if key present, otherwise tfidf
-      match @sys.get_env_var(env_name) {
-        Some(key) => @embed_config.OpenAI(build_api_config(config, key))
-        None => @embed_config.TfIdf(config.dim)
-      }
-    _ => {
-      log_error("Unknown provider: " + config.provider + ", using tfidf")
-      @embed_config.TfIdf(config.dim)
-    }
+/// Delegates to @embed_config.resolve_provider (SoT for provider resolution).
+/// dim is adjusted: if still at TF-IDF default and provider=openai, use OPENAI_EMBEDDING_DIM.
+/// Raises String with an error message if the provider cannot be resolved.
+pub fn resolve_provider(config : CliConfig) -> @dconfig.EmbeddingProvider raise @embed_config.ProviderError {
+  let dim = if config.provider == "openai" && config.dim == @dconfig.DEFAULT_TFIDF_DIM {
+    @dconfig.OPENAI_EMBEDDING_DIM
+  } else {
+    config.dim
   }
+  @embed_config.resolve_provider(
+    config.provider,
+    config.api_key_env,
+    config.api_base_url,
+    config.model,
+    dim,
+  )
 }
 
 ///|
@@ -460,7 +450,16 @@ pub fn build_digest_config(
     resolve_file_providers(file_providers, config)
   } else {
     // Fall back to CLI --provider flag
-    let provider = resolve_provider(config)
+    let provider = resolve_provider(config) catch {
+      @embed_config.MissingApiKey(env) => {
+        log_error(env + " not set. provider=openai requires an API key.")
+        @embed_config.TfIdf(config.dim)
+      }
+      @embed_config.UnknownProvider(name) => {
+        log_error("Unknown provider: " + name + ", using tfidf")
+        @embed_config.TfIdf(config.dim)
+      }
+    }
     @dconfig.DigestConfig::from_provider(provider).providers
   }
   {

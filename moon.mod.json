@@ -3,7 +3,7 @@
   "version": "0.7.0",
   "deps": {
     "moonbitlang/x": "0.4.41",
-    "trkbt10/vcdb": "0.1.0",
+    "trkbt10/vcdb": "0.3.0",
     "moonbitlang/async": "0.16.7",
     "mizchi/x": "0.1.7",
     "trkbt10/osenv": "0.1.0"

@@ -1,7 +1,11 @@
 ///|
 /// # indexion wiki pages update
 ///
-/// Update an existing wiki page's content and metadata.
+/// Update an existing wiki page's content, metadata, and search index.
+/// When a pre-built vector index exists (vectors.db + search-sections.json),
+/// it is updated incrementally via WikiSearchIndex::update_page.
+/// If no index exists, only the page file and manifest are updated;
+/// run `wiki index build --full` to create the initial index.
 
 ///|
 pub fn command() -> @argparse.Command {
@@ -37,7 +41,7 @@ pub fn command() -> @argparse.Command {
 }
 
 ///|
-pub fn run_matches(matches : @argparse.Matches) -> Unit {
+pub async fn run_matches(matches : @argparse.Matches) -> Unit {
   let id = match matches.values.get("id") {
     Some(arr) => if arr.length() > 0 { arr[0] } else { "" }
     _ => ""
@@ -122,7 +126,42 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   if !@wiki_manifest.write_page(wiki_dir_resolved, new_manifest, id, content) {
     return
   }
-  println("Updated page '" + id + "'")
+  // Update the vector search index incrementally if one exists.
+  // If no index exists yet, skip silently — run `wiki index build --full` to create it.
+  match @wiki_search.WikiSearchIndex::load(wiki_dir_resolved) {
+    Some(idx) => {
+      let registry = @kgf_features.load_registry(target_dir=".")
+      let mut page_title = id
+      for mp in new_manifest.pages {
+        if mp.id == id {
+          page_title = mp.title
+          break
+        }
+      }
+      let path = wiki_dir_resolved + "/" + id + ".md"
+      idx.update_page(id, page_title, content, path~, registry~) catch {
+        @embed.ParseError(msg) =>
+          println("Warning: search index not updated: " + msg)
+        @embed.ApiError(code, msg) =>
+          println(
+            "Warning: search index not updated (API " +
+            code.to_string() +
+            "): " +
+            msg,
+          )
+        @embed.NoResult =>
+          println("Warning: search index not updated: no embedding result")
+      }
+      idx.save(wiki_dir_resolved)
+      println("Updated page '" + id + "' (search index updated)")
+    }
+    None =>
+      println(
+        "Updated page '" +
+        id +
+        "' (no search index; run `wiki index build --full` to create one)",
+      )
+  }
   let log = @wiki_log.WikiLog::load(wiki_dir_resolved)
   log.append(
     @wiki_log.WikiLogEntry::new(

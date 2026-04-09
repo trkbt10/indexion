@@ -67,6 +67,11 @@ fn search_config() -> SearchConfig {
     files_only: false,
     json_output: false,
     filter_str: "",
+    provider_name: "tfidf",
+    api_key_env: @embed_config.DEFAULT_API_KEY_ENV,
+    model: @embed_config.DEFAULT_EMBEDDING_MODEL,
+    base_url: @embed_config.DEFAULT_API_BASE_URL,
+    dim: @embed_config.DEFAULT_TFIDF_DIM,
   }
 }
 
@@ -159,12 +164,9 @@ async test "search self-host retrieval finds versioning metadata chain" {
   let _unit = @async.with_task_group(_group => ())
   let root = fixture_root()
   let docs = build_corpus([root], search_config())
-  let engine = @search_engine.SearchEngine::build(docs) catch { _ => panic() }
-  let hits = engine.search(
-    "project version release current_version sync version",
-    top_k=12,
-    min_score=0.05,
-  )
+  let provider = @embed_config.TfIdf(@embed_config.DEFAULT_TFIDF_DIM)
+  let engine = @search_engine.build_index(docs, provider) catch { _ => panic() }
+  let hits = @search_engine.search_index(engine, "project version release current_version sync version", provider, 12, 0.05) catch { _ => panic() }
   assert_true(has_hit_source(hits, root + "/scripts/sync-version.sh"))
   assert_true(has_hit_source(hits, root + "/.github/workflows/release.yml"))
   assert_true(has_hit_source(hits, root + "/moon.mod.json"))
@@ -175,12 +177,9 @@ async test "search retrieval follows code-side version SoT context" {
   let _unit = @async.with_task_group(_group => ())
   let root = code_fixture_root()
   let docs = build_corpus([root], search_config())
-  let engine = @search_engine.SearchEngine::build(docs) catch { _ => panic() }
-  let hits = engine.search(
-    "moon.mod.json version field auto synced",
-    top_k=12,
-    min_score=0.05,
-  )
+  let provider = @embed_config.TfIdf(@embed_config.DEFAULT_TFIDF_DIM)
+  let engine = @search_engine.build_index(docs, provider) catch { _ => panic() }
+  let hits = @search_engine.search_index(engine, "moon.mod.json version field auto synced", provider, 12, 0.05) catch { _ => panic() }
   assert_true(has_hit_source(hits, root + "/src/update/version.mbt"))
 }
 
@@ -197,12 +196,9 @@ async test "search retrieval keeps code-side version SoT with explicit file list
     ],
     search_config(),
   )
-  let engine = @search_engine.SearchEngine::build(docs) catch { _ => panic() }
-  let hits = engine.search(
-    "moon.mod.json version field auto synced",
-    top_k=12,
-    min_score=0.05,
-  )
+  let provider = @embed_config.TfIdf(@embed_config.DEFAULT_TFIDF_DIM)
+  let engine = @search_engine.build_index(docs, provider) catch { _ => panic() }
+  let hits = @search_engine.search_index(engine, "moon.mod.json version field auto synced", provider, 12, 0.05) catch { _ => panic() }
   assert_true(has_document_for_source(docs, root + "/moon.mod.json"))
   assert_true(has_hit_source(hits, root + "/src/update/version.mbt"))
 }
