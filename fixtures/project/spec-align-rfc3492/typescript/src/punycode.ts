@@ -1,8 +1,4 @@
-/**
- * RFC 3492 section 5 parameter values for Punycode.
- * base = 36, tmin = 1, tmax = 26, skew = 38, damp = 700,
- * initial_bias = 72, initial_n = 0x80, delimiter = 0x2D.
- */
+// RFC 3492 section 5 parameter values for Punycode.
 const base = 36
 const tmin = 1
 const tmax = 26
