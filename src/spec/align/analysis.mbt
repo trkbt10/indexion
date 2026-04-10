@@ -863,6 +863,58 @@ fn normalize_identifier_words(text : String) -> String {
 }
 
 ///|
+///|
+/// Extract backtick-enclosed identifiers from criteria text.
+/// E.g. "include a `detail` message" → ["detail"]
+fn extract_inline_code_refs(criteria : Array[String]) -> Array[String] {
+  let refs : Array[String] = []
+  for criterion in criteria {
+    let chars = criterion.to_array()
+    let mut i = 0
+    while i < chars.length() {
+      if chars[i] == '`' {
+        let start = i + 1
+        i += 1
+        while i < chars.length() && chars[i] != '`' {
+          i += 1
+        }
+        if i < chars.length() {
+          let ref_text = @common.substring(criterion, start, i)
+          let trimmed = trim(ref_text)
+          if trimmed.length() > 0 && !refs.contains(trimmed) {
+            refs.push(trimmed)
+          }
+        }
+      }
+      i += 1
+    }
+  }
+  refs
+}
+
+///|
+/// Score based on direct identifier matching between spec inline code refs
+/// and implementation symbol name. Returns a high score (0.5) if the
+/// implementation name contains any of the spec identifiers.
+fn identifier_match_score(
+  spec_identifiers : Array[String],
+  impl_name : String,
+) -> Double {
+  if spec_identifiers.length() == 0 {
+    return 0.0
+  }
+  let impl_lower = lower_ascii(impl_name)
+  let impl_normalized = lower_ascii(normalize_identifier_words(impl_name))
+  for ref in spec_identifiers {
+    let ref_lower = lower_ascii(ref)
+    if impl_lower.contains(ref_lower) || impl_normalized.contains(ref_lower) {
+      return 0.5
+    }
+  }
+  0.0
+}
+
+///|
 fn clamp_similarity(value : Double) -> Double {
   if value < 0.0 {
     0.0
@@ -939,9 +991,41 @@ fn build_trace_edges(
     let req_section_refs = requirement_section_refs(requirement, scenarios)
     let req_literals = requirement_literals(requirement, scenarios)
     let req_pairs = requirement_table_pairs(requirement, scenarios)
+    // Pre-compute per-criterion boost: for each acceptance criterion,
+    // find the max similarity across ALL implementations. This allows
+    // abstract requirements (security, behavioral) to match specific
+    // implementation functions whose body contains criterion vocabulary.
+    let criteria_texts = requirement.criteria
+    // Extract inline code references from criteria (e.g. `detail`, `status`).
+    // These are concrete identifiers that should directly match implementation
+    // symbol names, bypassing TF-IDF vocabulary comparison.
+    let spec_identifiers = extract_inline_code_refs(criteria_texts)
     for implementation in implementations {
       let impl_text = implementation_text(implementation)
       let base_score = score_texts(req_text, impl_text, config.algorithm)
+      // Per-implementation criteria boost
+      let mut best_criterion_score = 0.0
+      for criterion in criteria_texts {
+        let s = score_texts(criterion, impl_text, config.algorithm)
+        if s > best_criterion_score {
+          best_criterion_score = s
+        }
+      }
+      // Direct identifier match boost: if spec criteria mention `detail`
+      // and the implementation name contains "detail", boost the score.
+      let ident_boost = identifier_match_score(
+        spec_identifiers, implementation.name,
+      )
+      let candidate_score = if best_criterion_score > base_score {
+        best_criterion_score
+      } else {
+        base_score
+      }
+      let boosted_base = if ident_boost > candidate_score {
+        ident_boost
+      } else {
+        candidate_score
+      }
       let title_score = tfidf_similarity(
         requirement.title,
         normalize_identifier_words(implementation.name),
@@ -955,21 +1039,21 @@ fn build_trace_edges(
         req_pairs,
         implementation_evidence_text(implementation),
       )
-      let score = if title_score > base_score &&
+      let score = if title_score > boosted_base &&
         title_score > section_score &&
         title_score > literal_score &&
         title_score > table_score {
         title_score
-      } else if section_score > base_score &&
+      } else if section_score > boosted_base &&
         section_score > literal_score &&
         section_score > table_score {
         section_score
-      } else if literal_score > base_score && literal_score > table_score {
+      } else if literal_score > boosted_base && literal_score > table_score {
         literal_score
-      } else if table_score > base_score {
+      } else if table_score > boosted_base {
         table_score
       } else {
-        base_score
+        boosted_base
       }
       scored.push((implementation.id, score))
     }
