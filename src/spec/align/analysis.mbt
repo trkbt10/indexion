@@ -905,8 +905,8 @@ fn identifier_match_score(
   }
   let impl_lower = lower_ascii(impl_name)
   let impl_normalized = lower_ascii(normalize_identifier_words(impl_name))
-  for ref in spec_identifiers {
-    let ref_lower = lower_ascii(ref)
+  for ident in spec_identifiers {
+    let ref_lower = lower_ascii(ident)
     if impl_lower.contains(ref_lower) || impl_normalized.contains(ref_lower) {
       return 0.5
     }
@@ -942,17 +942,6 @@ fn ncd_similarity(a : String, b : String) -> Double {
 }
 
 ///|
-fn score_texts(a : String, b : String, algorithm : String) -> Double {
-  let tfidf = tfidf_similarity(a, b)
-  let ncd = ncd_similarity(a, b)
-  match algorithm {
-    "tfidf" => tfidf
-    "ncd" => ncd
-    _ => clamp_similarity((tfidf + ncd) / 2.0)
-  }
-}
-
-///|
 fn adaptive_match_threshold(
   scored : Array[(String, Double)],
   config : SpecAlignConfig,
@@ -984,35 +973,73 @@ fn build_trace_edges(
   implementations : Array[ImplementationNode],
   config : SpecAlignConfig,
 ) -> Array[TraceEdge] {
-  let edges : Array[TraceEdge] = []
+  // Build BM25 batch from all texts: requirements, criteria, implementations.
+  // Document indices:
+  //   [0 .. R-1]                  = requirement full texts
+  //   [R .. R+C-1]                = per-criterion texts (flattened)
+  //   [R+C .. R+C+I-1]            = implementation texts
+  let req_texts : Array[String] = []
   for requirement in requirements {
+    req_texts.push(requirement_text(requirement, scenarios))
+  }
+  let criteria_flat : Array[String] = []
+  let criteria_req_index : Array[Int] = [] // maps criterion → requirement index
+  for ri, requirement in requirements {
+    for criterion in requirement.criteria {
+      criteria_flat.push(criterion)
+      criteria_req_index.push(ri)
+    }
+  }
+  let impl_texts : Array[String] = []
+  for implementation in implementations {
+    impl_texts.push(implementation_text(implementation))
+  }
+  let all_texts : Array[String] = []
+  for t in req_texts { all_texts.push(t) }
+  for t in criteria_flat { all_texts.push(t) }
+  for t in impl_texts { all_texts.push(t) }
+  let all_tokenized = all_texts.map(fn(t) { @tokenizer.tokenize_for_tfidf(t) })
+  let bm25 = @tfidf.BM25Batch::from_tokens(all_tokenized)
+  let r_count = requirements.length()
+  let c_count = criteria_flat.length()
+  let impl_offset = r_count + c_count
+  let edges : Array[TraceEdge] = []
+  for ri, requirement in requirements {
     let scored : Array[(String, Double)] = []
-    let req_text = requirement_text(requirement, scenarios)
     let req_section_refs = requirement_section_refs(requirement, scenarios)
     let req_literals = requirement_literals(requirement, scenarios)
     let req_pairs = requirement_table_pairs(requirement, scenarios)
-    // Pre-compute per-criterion boost: for each acceptance criterion,
-    // find the max similarity across ALL implementations. This allows
-    // abstract requirements (security, behavioral) to match specific
-    // implementation functions whose body contains criterion vocabulary.
-    let criteria_texts = requirement.criteria
-    // Extract inline code references from criteria (e.g. `detail`, `status`).
-    // These are concrete identifiers that should directly match implementation
-    // symbol names, bypassing TF-IDF vocabulary comparison.
-    let spec_identifiers = extract_inline_code_refs(criteria_texts)
-    for implementation in implementations {
-      let impl_text = implementation_text(implementation)
-      let base_score = score_texts(req_text, impl_text, config.algorithm)
-      // Per-implementation criteria boost
+    let spec_identifiers = extract_inline_code_refs(requirement.criteria)
+    for ii, implementation in implementations {
+      // BM25 similarity: requirement full text vs implementation
+      let bm25_score = clamp_similarity(
+        bm25.similarity(ri, impl_offset + ii),
+      )
+      // NCD for hybrid algorithm
+      let ncd_score = if config.algorithm == "tfidf" {
+        0.0
+      } else {
+        ncd_similarity(req_texts[ri], impl_texts[ii])
+      }
+      let base_score = match config.algorithm {
+        "tfidf" => bm25_score
+        "ncd" => ncd_score
+        _ => clamp_similarity((bm25_score + ncd_score) / 2.0)
+      }
+      // Per-implementation criteria boost via BM25
       let mut best_criterion_score = 0.0
-      for criterion in criteria_texts {
-        let s = score_texts(criterion, impl_text, config.algorithm)
+      for ci = 0; ci < c_count; ci = ci + 1 {
+        if criteria_req_index[ci] != ri {
+          continue
+        }
+        let s = clamp_similarity(
+          bm25.similarity(r_count + ci, impl_offset + ii),
+        )
         if s > best_criterion_score {
           best_criterion_score = s
         }
       }
-      // Direct identifier match boost: if spec criteria mention `detail`
-      // and the implementation name contains "detail", boost the score.
+      // Direct identifier match
       let ident_boost = identifier_match_score(
         spec_identifiers, implementation.name,
       )
@@ -1030,7 +1057,7 @@ fn build_trace_edges(
         requirement.title,
         normalize_identifier_words(implementation.name),
       )
-      let section_score = section_reference_score(req_section_refs, impl_text)
+      let section_score = section_reference_score(req_section_refs, impl_texts[ii])
       let literal_score = literal_overlap_score(
         req_literals,
         implementation_evidence_text(implementation),

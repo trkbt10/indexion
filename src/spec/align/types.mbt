@@ -18,7 +18,7 @@ pub(all) struct SpecAlignConfig {
   watch_mode : String
   watch_interval : Int
   watch_limit : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub fn SpecAlignConfig::default() -> SpecAlignConfig {
@@ -51,7 +51,7 @@ pub struct AlignCommitInfo {
   short_head : String
   committed_at : Int?
   dirty : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct AlignHistoryEntry {
@@ -59,7 +59,7 @@ pub struct AlignHistoryEntry {
   source_fingerprint : String
   summary : AlignSummary
   commit : AlignCommitInfo?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct RequirementNode {
@@ -75,7 +75,7 @@ pub struct RequirementNode {
   section_refs : Array[String]
   literals : Array[String]
   table_pairs : Array[String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct ScenarioNode {
@@ -91,7 +91,7 @@ pub struct ScenarioNode {
   section_refs : Array[String]
   literals : Array[String]
   table_pairs : Array[String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct ImplementationNode {
@@ -104,7 +104,7 @@ pub struct ImplementationNode {
   signature : String
   declaration_text : String
   doc_comment : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct TraceEdge {
@@ -114,7 +114,7 @@ pub struct TraceEdge {
   algorithm : String
   status : String
   rank : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct AlignDiffItem {
@@ -132,7 +132,7 @@ pub struct AlignDiffItem {
   impl_line : Int?
   spec_excerpt : String?
   impl_excerpt : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct AlignSummary {
@@ -144,7 +144,7 @@ pub struct AlignSummary {
   total_requirements : Int
   total_implementations : Int
   total_edges : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct AlignSnapshot {
@@ -163,7 +163,7 @@ pub struct AlignSnapshot {
   commit : AlignCommitInfo?
   history : Array[AlignHistoryEntry]
   cache_hit : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub(all) struct AlignCacheManifest {
@@ -176,7 +176,7 @@ pub(all) struct AlignCacheManifest {
   used_specs : Array[String]
   commit : AlignCommitInfo?
   history_count : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub(all) struct AlignTraceStore {
@@ -184,17 +184,17 @@ pub(all) struct AlignTraceStore {
   scenarios : Array[ScenarioNode]
   implementations : Array[ImplementationNode]
   edges : Array[TraceEdge]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub(all) struct AlignDiffStore {
   items : Array[AlignDiffItem]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub(all) struct AlignHistoryStore {
   entries : Array[AlignHistoryEntry]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct AlignDiffReport {
@@ -207,7 +207,7 @@ pub struct AlignDiffReport {
   source_fingerprint : String
   commit : AlignCommitInfo?
   cache_hit : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct AlignTraceReport {
@@ -222,7 +222,7 @@ pub struct AlignTraceReport {
   commit : AlignCommitInfo?
   history : Array[AlignHistoryEntry]
   cache_hit : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct AlignSuggestion {
@@ -235,7 +235,7 @@ pub struct AlignSuggestion {
   patch : String?
   task : String?
   reasons : Array[String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct AlignSuggestReport {
@@ -248,7 +248,7 @@ pub struct AlignSuggestReport {
   source_fingerprint : String
   commit : AlignCommitInfo?
   cache_hit : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct AlignStatusReport {
@@ -263,4 +263,4 @@ pub struct AlignStatusReport {
   source_fingerprint : String
   commit : AlignCommitInfo?
   cache_hit : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
