@@ -1,9 +1,7 @@
 name: Release
 
 on:
-  pull_request:
   push:
-    branches: [main]
     tags:
       - 'v*'
 
@@ -61,27 +59,16 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Typecheck
-        run: bun run --filter '*' typecheck
-
-      - name: Lint
-        run: bun run lint
-
-      - name: Test
-        run: bun run --filter '*' test
-
       - name: Build wiki
         run: bun run --filter @indexion/wiki build
 
       - name: Upload wiki artifact
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: wiki-dist
           path: packages/wiki/dist/client
 
   build:
-    if: startsWith(github.ref, 'refs/tags/v')
     needs: [moonbit, frontend]
     strategy:
       matrix:
@@ -106,6 +93,18 @@ jobs:
         with:
           submodules: true
 
+      # Windows: copy project to C:\s to shorten absolute paths.
+      # moonc link-core concatenates all .core paths into one CreateProcessW
+      # call; D:\a\indexion\indexion\_build\... exceeds the 32k char limit.
+      # robocopy works even when cwd holds the source directory.
+      - name: Copy to short path (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          robocopy "${{ github.workspace }}" "C:\s" /E /NFL /NDL /NJH /NJS /NC /NS /NP
+          # robocopy exit codes 0-7 are success
+          if ($LASTEXITCODE -gt 7) { exit $LASTEXITCODE } else { $global:LASTEXITCODE = 0 }
+
       - name: Install MoonBit CLI (Unix)
         if: runner.os != 'Windows'
         run: |
@@ -124,16 +123,24 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Moon update
+      - name: Moon update (Unix)
+        if: runner.os != 'Windows'
         run: moon update
 
-      - name: Sync version from moon.mod.json
+      - name: Moon update (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: C:\s
+        run: moon update
+
+      - name: Sync version from moon.mod.json (Unix)
         if: runner.os != 'Windows'
         run: ./scripts/sync-version.sh
 
       - name: Sync version from moon.mod.json (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
+        working-directory: C:\s
         run: |
           $version = (Get-Content moon.mod.json | ConvertFrom-Json).version
           $file = "src/update/version.mbt"
@@ -143,7 +150,14 @@ jobs:
             (Get-Content $mkt) -replace '"version": "[^"]*"', "`"version`": `"$version`"" | Set-Content $mkt
           }
 
-      - name: Build
+      - name: Build (Unix)
+        if: runner.os != 'Windows'
+        run: moon build --target native --release
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: C:\s
         run: moon build --target native --release
 
       - name: Download wiki artifact
@@ -151,6 +165,14 @@ jobs:
         with:
           name: wiki-dist
           path: wiki-dist
+
+      - name: Copy wiki artifact to short path (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (Test-Path "wiki-dist") {
+            Copy-Item -Recurse "wiki-dist" "C:\s\wiki-dist"
+          }
 
       - name: Prepare package (Unix)
         if: runner.os != 'Windows'
@@ -161,61 +183,51 @@ jobs:
             exit 1
           fi
 
-          # Create package directory
           pkg_dir="${{ matrix.asset }}"
           mkdir -p "$pkg_dir"
-
-          # Copy binary
           cp "$bin_path" "$pkg_dir/indexion"
           chmod +x "$pkg_dir/indexion"
-
-          # Copy kgfs directory
           cp -r kgfs "$pkg_dir/"
-
-          # Copy wiki frontend
           if [ -d "wiki-dist" ]; then
             cp -r wiki-dist "$pkg_dir/wiki"
           fi
-
-          # Create archive
           tar -czvf "${{ matrix.asset }}.tar.gz" "$pkg_dir"
 
       - name: Prepare package (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
+        working-directory: C:\s
         run: |
-          $binPath = "_build/native/release/build/cmd/indexion/indexion.exe"
+          $binPath = "_build\native\release\build\cmd\indexion\indexion.exe"
           if (-not (Test-Path $binPath)) {
             Write-Error "indexion binary not found at $binPath"
             exit 1
           }
 
-          # Create package directory
           $pkgDir = "${{ matrix.asset }}"
           New-Item -ItemType Directory -Force -Path $pkgDir
-
-          # Copy binary
-          Copy-Item $binPath "$pkgDir/indexion.exe"
-
-          # Copy kgfs directory
-          Copy-Item -Recurse kgfs "$pkgDir/"
-
-          # Copy wiki frontend
+          Copy-Item $binPath "$pkgDir\indexion.exe"
+          Copy-Item -Recurse kgfs "$pkgDir\"
           if (Test-Path "wiki-dist") {
-            Copy-Item -Recurse "wiki-dist" "$pkgDir/wiki"
+            Copy-Item -Recurse "wiki-dist" "$pkgDir\wiki"
           }
-
-          # Create archive
           Compress-Archive -Path $pkgDir -DestinationPath "${{ matrix.asset }}.zip"
 
-      - name: Upload artifact
+      - name: Upload artifact (Unix)
+        if: runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset }}.${{ matrix.archive }}
           path: ${{ matrix.asset }}.${{ matrix.archive }}
 
+      - name: Upload artifact (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}.${{ matrix.archive }}
+          path: C:\s\${{ matrix.asset }}.${{ matrix.archive }}
+
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -233,7 +245,6 @@ jobs:
         run: |
           mkdir -p release
 
-          # Copy all archives (skip non-release artifacts like wiki-dist)
           for dir in artifacts/*/; do
             name=$(basename "$dir")
             if [ -f "$dir/$name" ]; then
@@ -241,13 +252,11 @@ jobs:
             fi
           done
 
-          # Generate checksums
           cd release
           for f in *; do
             sha256sum "$f" > "$f.sha256"
           done
 
-          # List release contents
           echo "Release assets:"
           ls -la
 
