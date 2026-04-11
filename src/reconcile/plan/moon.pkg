@@ -21,4 +21,5 @@ import {
   "trkbt10/indexion/src/vcs/git" @git,
   "trkbt10/vcdb" @vcdb,
   "trkbt10/vcdb/core/types" @vcdb_core,
+  "trkbt10/indexion/src/vfs" @vfs,
 }

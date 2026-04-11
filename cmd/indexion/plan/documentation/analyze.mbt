@@ -124,13 +124,15 @@ pub fn analyze_documentation(
       )
     None => []
   }
-  // Stage 2: Filter to KGF-supported files and group by directory
-  let by_dir : Map[String, Array[String]] = {}
+  // Stage 2: Group files by directory (real or virtual).
+  // For virtual paths (archive entries), parent_dir yields a virtual directory
+  // like "report.pptx!/ppt/slides" — this groups archive entries correctly.
+  let by_dir : Map[String, Array[@pipeline.SupportedFile]] = {}
   for file in supported_files {
     let dir_path = @common.parent_dir(file.path)
     match by_dir.get(dir_path) {
-      Some(arr) => arr.push(file.path)
-      None => by_dir.set(dir_path, [file.path])
+      Some(arr) => arr.push(file)
+      None => by_dir.set(dir_path, [file])
     }
   }
   // Stage 3: Analyze each directory group as a package
@@ -140,19 +142,23 @@ pub fn analyze_documentation(
     let files = entry.1
     let rel_path = @common.make_relative_path(pkg_dir, normalized_dir)
     let pkg_path = if rel_path.length() > 0 { rel_path } else { "." }
-    // Check README presence
-    let has_readme = dir_has_readme(pkg_dir)
-    // Analyze source files
+    // Check README presence — only meaningful for real directories
+    let has_readme = if @vfs.is_virtual_path(pkg_dir) {
+      false
+    } else {
+      dir_has_readme(pkg_dir)
+    }
+    // Analyze source files — use content from SupportedFile, not re-reading from disk
     let pub_items : Array[PubItem] = []
-    for file_path in files {
-      let file_rel = @common.make_relative_path(file_path, normalized_dir)
-      analyze_source_file(file_path, file_rel, pub_items, registry)
+    for file in files {
+      let file_rel = @common.make_relative_path(file.path, normalized_dir)
+      analyze_source_file(file.path, file.content, file_rel, pub_items, registry)
     }
     let documented = pub_items
       .iter()
       .filter(fn(i) { i.has_doc })
       .fold(init=0, fn(acc, _) { acc + 1 })
-    let file_names = files.map(fn(f) { @config.basename(f) })
+    let file_names = files.map(fn(f) { @config.basename(f.path) })
     packages.push({
       path: pkg_path,
       files: file_names,
@@ -214,14 +220,15 @@ fn dir_has_readme(dir : String) -> Bool {
 ///|
 /// Analyze source file for public declarations using KGF tokenization.
 /// Associates doc comments with declarations via single-pass KGF token extraction.
+/// Content is passed directly to avoid re-reading from disk (required for virtual paths).
 fn analyze_source_file(
   path : String,
+  content : String,
   rel_path : String,
   items : Array[PubItem],
   registry : @kgf_registry.KGFRegistry?,
 ) -> Unit {
   try {
-    let content = @fs.read_file_to_string(path)
     // Extract both declarations and doc map in a single tokenization pass
     let (declarations, doc_map) = @kgf_declarations.extract_pub_declarations_and_doc_map(
       content, path, registry,

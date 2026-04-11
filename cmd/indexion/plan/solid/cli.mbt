@@ -363,18 +363,19 @@ fn parse_rule(rule_str : String) -> SolidRule? {
 fn find_cross_matches(config : SolidConfig) -> Array[FileMatch] {
   let matches : Array[FileMatch] = []
   // Collect files from all source directories
-  let files = @common.collect_files(
-    config.from_dirs,
-    includes=config.includes,
-    excludes=config.excludes,
-  )
-  if files.length() < 2 {
-    return matches
-  }
   let registry = @kgf_features.load_registry(
     specs_dir=config.specs_dir,
     target_dirs=config.from_dirs,
   )
+  let files = @common.collect_files(
+    config.from_dirs,
+    includes=config.includes,
+    excludes=config.excludes,
+    registry~,
+  )
+  if files.length() < 2 {
+    return matches
+  }
   // Check if using tree-based strategy
   let is_tree_strategy = config.strategy == "apted" || config.strategy == "tsed"
   let pairs : Array[(Int, Int, Double)] = if is_tree_strategy {

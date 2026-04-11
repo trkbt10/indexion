@@ -457,11 +457,16 @@ fn run_core(
   if config.target_dirs.length() == 0 {
     return None
   }
+  let registry = @kgf_features.load_registry(
+    specs_dir=config.specs_dir,
+    target_dirs=config.target_dirs,
+  )
   let files = @common.collect_files(
     config.target_dirs,
     includes=config.includes,
     excludes=config.excludes,
     extensions=config.extensions,
+    registry~,
   )
   if files.length() < 2 {
     return None
@@ -471,10 +476,6 @@ fn run_core(
     config.threshold,
   )
   let is_tree_strategy = config.strategy == "apted" || config.strategy == "tsed"
-  let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
-    target_dirs=config.target_dirs,
-  )
   let pairs = if is_tree_strategy {
     calculate_function_pairs(files, config.strategy, min_similarity, registry)
   } else if config.strategy == "tfidf" {

@@ -382,6 +382,7 @@ pub fn collect_files(
   includes? : Array[String] = [],
   excludes? : Array[String] = [],
   extensions? : Array[String] = [],
+  registry? : @registry.KGFRegistry? = None,
 ) -> Array[(String, String)] {
   let files : Array[(String, String)] = []
   let multi_dir = dirs.length() > 1
@@ -409,6 +410,13 @@ pub fn collect_files(
           continue
         }
       }
+      // Archive expansion: if registry is available and file is an archive,
+      // expand it via VFS and emit inner entries instead.
+      if try_expand_archive(
+        path, dir, dirname, multi_dir, registry, files,
+      ) {
+        continue
+      }
       try {
         let content = @fs.read_file_to_string(path)
         let relative = make_relative_path(path, dir)
@@ -424,6 +432,53 @@ pub fn collect_files(
     }
   }
   files
+}
+
+///|
+/// Try to expand an archive file via VFS. Returns true if the file was
+/// an archive and was expanded (or failed to expand), false if it's a
+/// regular file that should be handled normally.
+fn try_expand_archive(
+  path : String,
+  dir : String,
+  dirname : String,
+  multi_dir : Bool,
+  registry : @registry.KGFRegistry?,
+  files : Array[(String, String)],
+) -> Bool {
+  let reg = match registry {
+    Some(r) => r
+    None => return false
+  }
+  let language = match reg.detect_from_path(path) {
+    Some(v) => v
+    None => return false
+  }
+  let spec = match reg.get_spec(language) {
+    Some(v) => v
+    None => return false
+  }
+  if !@vfs.is_archive_spec(spec) {
+    return false
+  }
+  // This is an archive — expand it
+  let archive_spec = @vfs.ArchiveSpec::from_spec(spec)
+  let vfs_entries = @vfs.expand_archive(path, archive_spec) catch {
+    _ => return true // Failed to expand, skip
+  }
+  for entry in vfs_entries {
+    if entry.is_binary {
+      continue // Skip binary entries for text-based comparison
+    }
+    let relative = make_relative_path(entry.virtual_path, dir)
+    let display_name = if multi_dir {
+      dirname + ":" + relative
+    } else {
+      relative
+    }
+    files.push((display_name, entry.content))
+  }
+  true
 }
 
 ///|

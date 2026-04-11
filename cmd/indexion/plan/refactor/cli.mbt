@@ -576,6 +576,7 @@ pub fn run_to_string(config : RefactorPlanConfig) -> String? {
     [config.target_dir],
     includes=config.includes,
     excludes=config.excludes,
+    registry~,
   )
   if files.length() < 2 {
     return None
@@ -678,6 +679,7 @@ fn run_with_config(config : RefactorPlanConfig) -> Unit {
     [config.target_dir],
     includes=config.includes,
     excludes=config.excludes,
+    registry~,
   )
   if show_progress {
     println("      Found " + files.length().to_string() + " files")

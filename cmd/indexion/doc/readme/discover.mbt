@@ -53,6 +53,13 @@ pub fn discover_packages_from_files(
     .with_excludes(excludes)
   let by_dir : Map[String, Array[String]] = {}
   for file in @pipeline.load_supported_file_info(file_paths, registry) {
+    // Archive-internal files cannot participate in README generation:
+    // PackageInfo.files is later read from disk by extract_docs, and
+    // virtual paths have no filesystem representation. The content exists
+    // only in the SupportedFile.content field which PackageInfo does not carry.
+    if @vfs.is_virtual_path(file.path) {
+      continue
+    }
     let dir = extract_parent_dir(file.path)
     match by_dir.get(dir) {
       Some(arr) => arr.push(file.path)

@@ -1,0 +1,5 @@
+import {
+  "moonbitlang/x/fs" @fs,
+  "hustcer/fzip" @fzip,
+  "trkbt10/indexion/src/glob" @glob,
+}

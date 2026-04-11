@@ -1,0 +1,23 @@
+import {
+  "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/src/zip" @zip,
+
+  "trkbt10/indexion/src/kgf/registry" @registry,
+  "trkbt10/indexion/src/kgf/types" @kgf_types,
+}
+
+import {
+  "hustcer/fzip" @fzip,
+  "moonbitlang/core/env" @env,
+  "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/src/glob" @glob,
+  "trkbt10/indexion/src/config" @config,
+} for "wbtest"
+
+options(
+  targets: {
+    "docx_wbtest.mbt": [ "native" ],
+    "pptx_wbtest.mbt": [ "native" ],
+    "xlsx_wbtest.mbt": [ "native" ],
+  },
+)

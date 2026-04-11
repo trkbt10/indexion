@@ -173,6 +173,7 @@ fn collect_wrappers(
     [config.target_dir],
     includes=config.includes,
     excludes=config.excludes,
+    registry~,
   )
   if files.length() == 0 {
     return None

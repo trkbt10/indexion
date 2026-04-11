@@ -15,4 +15,5 @@ import {
   "trkbt10/indexion/src/pipeline" @pipeline,
   "trkbt10/indexion/src/plan/types" @plan_types,
   "trkbt10/indexion/src/plan/render" @plan_render,
+  "trkbt10/indexion/src/vfs" @vfs,
 }
