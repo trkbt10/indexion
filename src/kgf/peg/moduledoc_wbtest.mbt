@@ -309,3 +309,43 @@ test "moonbit kgf: multi-line doc comment text is fully preserved" {
   assert_true(doc.contains("* matches any sequence of characters"))
   assert_true(doc.contains("? matches single character"))
 }
+
+// ---------------------------------------------------------------------------
+// Fixture: exact doc text after trim — no leading/trailing whitespace
+// ---------------------------------------------------------------------------
+
+///|
+test "moonbit kgf: single-line doc text is trimmed exactly" {
+  let source =
+    #|///|
+    #|/// Create a new value.
+    #|pub fn new_value() -> Unit {
+    #|  ()
+    #|}
+  let graph = run_moonbit_pipeline(source)
+  let edges = get_declares_edges(graph)
+  let edge = find_edge(edges, "new_value")
+  assert_true(edge is Some(_))
+  let doc = edge.unwrap().2
+  // trim() in semantics strips leading \n and spaces from _text accumulation
+  assert_eq(doc, "Create a new value.")
+}
+
+///|
+test "moonbit kgf: multi-line doc preserves internal newlines" {
+  let source =
+    #|///|
+    #|/// Line one.
+    #|/// Line two.
+    #|/// Line three.
+    #|pub fn multi() -> Unit {
+    #|  ()
+    #|}
+  let graph = run_moonbit_pipeline(source)
+  let edges = get_declares_edges(graph)
+  let edge = find_edge(edges, "multi")
+  assert_true(edge is Some(_))
+  let doc = edge.unwrap().2
+  // trim() strips leading \n+space, internal structure preserved
+  assert_eq(doc, "Line one.\n Line two.\n Line three.")
+}
