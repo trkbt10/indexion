@@ -67,8 +67,11 @@ cd skills && git add .claude-plugin/marketplace.json && git commit -m "release: 
 ```bash
 git add moon.mod.json src/update/version.mbt skills
 git commit -m "release: vX.Y.Z"
-git tag vX.Y.Z
+git tag -a vX.Y.Z -m "release: vX.Y.Z"
 ```
+
+Use `git tag -a` (annotated tag). `--follow-tags` only pushes annotated tags.
+Lightweight tags (`git tag` without `-a`) require a separate `git push origin vX.Y.Z`.
 
 ### 6. Push
 
