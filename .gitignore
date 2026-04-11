@@ -6,5 +6,11 @@ _build/
 .indexion/*
 !.indexion/wiki/
 !.indexion/.gitignore
+# .claude: global gitignore excludes the .claude directory entirely,
+# so files under skills/ require `git add -f` to track.
+# settings.local.json and worktrees/ must never be committed.
+.claude/settings.local.json
+.claude/worktrees/
+packages/vscode-plugin/
 node_modules/
 dist/

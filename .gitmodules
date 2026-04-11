@@ -1,6 +1,8 @@
 [submodule "kgfs"]
 	path = kgfs
 	url = git@github.com:trkbt10/indexion-kgf.git
+	pushRecurseSubmodules = on-demand
 [submodule "skills"]
 	path = skills
 	url = https://github.com/trkbt10/indexion-skills.git
+	pushRecurseSubmodules = on-demand
