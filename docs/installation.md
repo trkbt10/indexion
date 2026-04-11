@@ -40,8 +40,9 @@ mv indexion-darwin-arm64/kgfs ~/.indexion/
 git clone https://github.com/trkbt10/indexion.git
 cd indexion
 moon build --target native --release
-# Binary: _build/native/release/build/cmd/indexion/indexion.exe
 ```
+
+Binary output: `_build/native/release/build/cmd/indexion/indexion.exe`
 
 ### KGF Specs Location
 
