@@ -27,7 +27,7 @@
 config_path = "doc.json"
 
 [digest]
-provider = "openai"
+provider = "auto"
 strategy = "hnsw"
 # dim = 256              # TF-IDF dimension (ignored for openai)
 # api_key_env = "OPENAI_API_KEY"  # env var name for API key
