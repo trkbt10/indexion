@@ -16,33 +16,15 @@ pub struct DiscoverOptions {
 }
 
 ///|
+/// SoT: `path` is always a real filesystem path.
+/// Archive files are represented as a single entry with concatenated content.
+/// Virtual paths (archive-internal) never appear here — they are handled
+/// by `@common.collect_files` for per-inner-file expansion.
 pub(all) struct SupportedFile {
   path : String
   content : String
   language : String
   content_type : String?
-  /// For archive-internal files: the real archive path (e.g. "docs/report.pptx").
-  /// For real files: None.
-  /// Use this for git/timestamp operations instead of `path`.
-  archive_source : String?
-}
-
-///|
-/// Return the real filesystem path for this file.
-/// For archive-internal files, this is the enclosing archive.
-/// For regular files, this is `path` itself.
-/// Use this for git operations, timestamp queries, and any `@fs.*` calls.
-pub fn SupportedFile::fs_path(self : SupportedFile) -> String {
-  match self.archive_source {
-    Some(source) => source
-    None => self.path
-  }
-}
-
-///|
-/// Whether this file is inside an archive (virtual path).
-pub fn SupportedFile::is_virtual(self : SupportedFile) -> Bool {
-  self.archive_source is Some(_)
 }
 
 ///|
@@ -119,9 +101,15 @@ pub fn discover_files(
 
 ///|
 /// Load supported file metadata from an explicit path list.
-/// Archive files (content_type: archive) are expanded into their inner entries
-/// via the VFS layer. Inner entries are re-detected by the KGF registry
-/// using their virtual path (e.g. "report.pptx!/ppt/slides/slide1.xml").
+///
+/// SoT guarantee: every `SupportedFile.path` is a real filesystem path.
+/// Archive files (content_type: archive) are expanded via VFS, and their
+/// text content is concatenated into a single entry keyed by the archive's
+/// real path. This ensures downstream code can safely perform `@fs.*`
+/// operations on `SupportedFile.path` without encountering virtual paths.
+///
+/// For per-inner-file archive expansion (needed by explore/search/grep),
+/// use `@common.collect_files` with a KGF registry instead.
 pub fn load_supported_file_info(
   file_paths : Array[String],
   registry : @registry.KGFRegistry,
@@ -136,46 +124,27 @@ pub fn load_supported_file_info(
       Some(value) => value
       None => continue
     }
-    // Archive files: expand via VFS and re-detect inner entries
-    if @vfs.is_archive_spec(spec) {
-      let archive_spec = @vfs.ArchiveSpec::from_spec(spec)
-      let vfs_entries = @vfs.expand_archive(path, archive_spec) catch {
-        _ => continue
-      }
-      for entry in vfs_entries {
-        // Detect language from the inner path portion
-        let inner = @vfs.inner_path(entry.virtual_path)
-        let inner_language = match registry.detect_from_path(inner) {
-          Some(v) => v
-          None => continue
-        }
-        let inner_spec = match registry.get_spec(inner_language) {
-          Some(v) => v
-          None => continue
-        }
-        let inner_content_type = match inner_spec.get_feature("content_type") {
-          Some(values) =>
-            if values.length() > 0 { Some(values[0]) } else { None }
-          None => None
-        }
+    // Archive files: use @vfs SoT to extract concatenated text content.
+    // The archive's real path is preserved — virtual paths never enter SupportedFile.
+    let archive_result : String?? = @vfs.try_extract_archive_text(path, spec) catch {
+      _ => Some(None)
+    }
+    match archive_result {
+      Some(Some(content)) => {
         results.push(
-          {
-            path: entry.virtual_path,
-            content: entry.content,
-            language: inner_language,
-            content_type: inner_content_type,
-            archive_source: entry.archive_source,
-          },
+          { path, content, language, content_type: Some("document") },
         )
+        continue
       }
-      continue
+      Some(None) => continue // Archive but empty or failed
+      None => () // Not an archive, fall through to normal file read
     }
     let content = @fs.read_file_to_string(path) catch { _ => continue }
     let content_type = match spec.get_feature("content_type") {
       Some(values) => if values.length() > 0 { Some(values[0]) } else { None }
       None => None
     }
-    results.push({ path, content, language, content_type, archive_source: None })
+    results.push({ path, content, language, content_type })
   }
   results
 }

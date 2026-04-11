@@ -106,58 +106,80 @@ pub fn expand_archive(
 }
 
 ///|
-/// Create a VFSEntry from a regular (non-archive) file.
-pub fn entry_from_file(path : String) -> VFSEntry raise Error {
-  let content = @fs.read_file_to_string(path)
-  {
-    virtual_path: path,
-    content,
-    archive_source: None,
-    is_binary: false,
+/// Extract concatenated text content from an archive file.
+/// Returns all non-binary inner entries joined by newlines.
+/// This is the SoT for "read an archive as a single document".
+pub fn extract_text_content(
+  archive_path : String,
+  archive_spec : ArchiveSpec,
+) -> String raise Error {
+  let entries = expand_archive(archive_path, archive_spec)
+  let buf = StringBuilder::new()
+  let mut has_content = false
+  for entry in entries {
+    if entry.is_binary {
+      continue
+    }
+    if has_content {
+      buf.write_string("\n")
+    }
+    buf.write_string(entry.content)
+    has_content = true
+  }
+  buf.to_string()
+}
+
+///|
+/// Extract individual text entries from an archive as (virtual_path, content) pairs.
+/// This is the SoT for "enumerate an archive's text files for per-file comparison".
+pub fn extract_text_entries(
+  archive_path : String,
+  archive_spec : ArchiveSpec,
+) -> Array[(String, String)] raise Error {
+  let entries = expand_archive(archive_path, archive_spec)
+  let result : Array[(String, String)] = []
+  for entry in entries {
+    if entry.is_binary {
+      continue
+    }
+    result.push((entry.virtual_path, entry.content))
+  }
+  result
+}
+
+///|
+/// Try to extract concatenated text from an archive, given a KGF spec.
+/// Returns None if the spec is not an archive type.
+/// This is the single entry point for "does this spec represent an archive,
+/// and if so, give me its text content".
+pub fn try_extract_archive_text(
+  path : String,
+  spec : @kgf_types.KGFSpec,
+) -> String?? raise Error {
+  if !is_archive_spec(spec) {
+    return None
+  }
+  let archive_spec = ArchiveSpec::from_spec(spec)
+  let content = extract_text_content(path, archive_spec)
+  if content.length() > 0 {
+    Some(Some(content))
+  } else {
+    Some(None)
   }
 }
 
 ///|
-/// Resolve a list of file paths into VFSEntry items.
-/// Archive files (detected via KGF registry) are expanded into their inner entries.
-/// Regular files become single VFSEntry items.
-pub fn resolve_paths(
-  file_paths : Array[String],
-  registry : @registry.KGFRegistry,
-) -> Array[VFSEntry] {
-  let entries : Array[VFSEntry] = []
-  for path in file_paths {
-    let language = match registry.detect_from_path(path) {
-      Some(v) => v
-      None => {
-        // Unrecognized file — try to read as regular file anyway
-        let entry = entry_from_file(path) catch { _ => continue }
-        entries.push(entry)
-        continue
-      }
-    }
-    let spec = match registry.get_spec(language) {
-      Some(v) => v
-      None => {
-        let entry = entry_from_file(path) catch { _ => continue }
-        entries.push(entry)
-        continue
-      }
-    }
-    if is_archive_spec(spec) {
-      let archive_spec = ArchiveSpec::from_spec(spec)
-      let inner_entries = expand_archive(path, archive_spec) catch {
-        _ => continue
-      }
-      for ie in inner_entries {
-        entries.push(ie)
-      }
-    } else {
-      let entry = entry_from_file(path) catch { _ => continue }
-      entries.push(entry)
-    }
+/// Try to extract individual text entries from an archive, given a KGF spec.
+/// Returns None if the spec is not an archive type.
+pub fn try_extract_archive_entries(
+  path : String,
+  spec : @kgf_types.KGFSpec,
+) -> Array[(String, String)]? raise Error {
+  if !is_archive_spec(spec) {
+    return None
   }
-  entries
+  let archive_spec = ArchiveSpec::from_spec(spec)
+  Some(extract_text_entries(path, archive_spec))
 }
 
 ///|

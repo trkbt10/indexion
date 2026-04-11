@@ -124,9 +124,8 @@ pub fn analyze_documentation(
       )
     None => []
   }
-  // Stage 2: Group files by directory (real or virtual).
-  // For virtual paths (archive entries), parent_dir yields a virtual directory
-  // like "report.pptx!/ppt/slides" — this groups archive entries correctly.
+  // Stage 2: Group files by directory.
+  // SoT: SupportedFile.path is always a real filesystem path.
   let by_dir : Map[String, Array[@pipeline.SupportedFile]] = {}
   for file in supported_files {
     let dir_path = @common.parent_dir(file.path)
@@ -142,12 +141,8 @@ pub fn analyze_documentation(
     let files = entry.1
     let rel_path = @common.make_relative_path(pkg_dir, normalized_dir)
     let pkg_path = if rel_path.length() > 0 { rel_path } else { "." }
-    // Check README presence — only meaningful for real directories
-    let has_readme = if @vfs.is_virtual_path(pkg_dir) {
-      false
-    } else {
-      dir_has_readme(pkg_dir)
-    }
+    // SoT: pkg_dir is always a real directory path.
+    let has_readme = dir_has_readme(pkg_dir)
     // Analyze source files — use content from SupportedFile, not re-reading from disk
     let pub_items : Array[PubItem] = []
     for file in files {

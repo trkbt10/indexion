@@ -1,51 +1,4 @@
 ///|
-/// Collapse archive-internal entries into a single SupportedFile per archive.
-/// Real files pass through unchanged. For each unique archive_source,
-/// content is concatenated and the archive path is used as the file path.
-fn collapse_archive_entries(
-  files : Array[@pipeline.SupportedFile],
-) -> Array[@pipeline.SupportedFile] {
-  let result : Array[@pipeline.SupportedFile] = []
-  let archive_contents : Map[String, StringBuilder] = {}
-  let archive_meta : Map[String, (String, String?)] = {} // source -> (language, content_type)
-  for file in files {
-    if file.is_virtual() {
-      let source = file.fs_path()
-      match archive_contents.get(source) {
-        Some(buf) => {
-          buf.write_string("\n")
-          buf.write_string(file.content)
-        }
-        None => {
-          let buf = StringBuilder::new()
-          buf.write_string(file.content)
-          archive_contents.set(source, buf)
-          archive_meta.set(source, (file.language, file.content_type))
-        }
-      }
-    } else {
-      result.push(file)
-    }
-  }
-  for entry in archive_contents {
-    let source = entry.0
-    let buf = entry.1
-    let (language, content_type) = match archive_meta.get(source) {
-      Some(meta) => meta
-      None => continue
-    }
-    result.push({
-      path: source,
-      content: buf.to_string(),
-      language,
-      content_type,
-      archive_source: None, // Now it's a real path
-    })
-  }
-  result
-}
-
-///|
 fn report_config(config : ReconcileConfig) -> ReconcileReportConfig {
   {
     target_dir: config.target_dir,
@@ -92,18 +45,16 @@ pub async fn collect_document_fragments(
     if !contains_string(used_specs, spec) {
       used_specs.push(spec)
     }
-    // For archive-internal files, use the archive's filesystem identity
-    // for timestamps and git operations. The virtual path has no filesystem
-    // representation — only the enclosing archive does.
-    let real_path = file.fs_path()
-    let ts = timestamp_for_path(config.target_dir, real_path, config)
+    // SoT: file.path is always a real filesystem path (guaranteed by
+    // load_supported_file_info), so git/mtime operations are safe.
+    let ts = timestamp_for_path(config.target_dir, file.path, config)
     let file_state = @reconcile_tracking.FileState::new(
       file.path,
       "doc",
       spec,
       @cas_hash.compute_hash(file.content).to_string(),
       ts.epoch_seconds,
-      @git.file_mtime_seconds(real_path),
+      @git.file_mtime_seconds(file.path),
       ts.is_dirty,
     )
     file_states.push(file_state)
@@ -123,12 +74,6 @@ async fn collect_code_file_states(
       continue
     }
     file_map.set(unit.module_path, true)
-    // CodeUnit.module_path should always be a real filesystem path
-    // (code graph is built from source files, not archives).
-    // Guard against virtual paths reaching here in the future.
-    if @vfs.is_virtual_path(unit.module_path) {
-      continue
-    }
     let content = @fs.read_file_to_string(unit.module_path) catch {
       _ => continue
     }
@@ -236,15 +181,9 @@ async fn run_analysis(config : ReconcileConfig) -> AnalysisResult? {
     discovery_roots(config.target_dir),
     discover_opts,
   )
-  let discovered_all = @pipeline.load_supported_file_info(
+  let discovered_files = @pipeline.load_supported_file_info(
     discovered_paths, registry,
   )
-  // Reconcile tracks per-file change state using filesystem operations
-  // (git mtime, stat, dirty detection). Archive-internal files (virtual paths)
-  // have no filesystem identity — their parent archive is the unit of change.
-  // Collapse archive entries: keep real files as-is, and for each archive
-  // source create a single SupportedFile with concatenated content.
-  let discovered_files = collapse_archive_entries(discovered_all)
   let project_markers = registry.get_project_markers()
   let code_units = build_code_units_fast(discovered_files, registry)
   let (doc_fragments, doc_file_states, used_specs, code_file_states) = @async.with_task_group(group => {

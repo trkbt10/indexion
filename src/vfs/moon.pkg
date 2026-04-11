@@ -1,8 +1,5 @@
 import {
-  "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/zip" @zip,
-
-  "trkbt10/indexion/src/kgf/registry" @registry,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
 }
 

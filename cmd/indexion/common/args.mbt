@@ -458,25 +458,23 @@ fn try_expand_archive(
     Some(v) => v
     None => return false
   }
-  if !@vfs.is_archive_spec(spec) {
-    return false
+  // Use @vfs SoT for archive text extraction
+  let text_entries : Array[(String, String)]? = @vfs.try_extract_archive_entries(
+    path, spec,
+  ) catch { _ => return true }
+  let entries = match text_entries {
+    Some(e) => e
+    None => return false // Not an archive
   }
-  // This is an archive — expand it
-  let archive_spec = @vfs.ArchiveSpec::from_spec(spec)
-  let vfs_entries = @vfs.expand_archive(path, archive_spec) catch {
-    _ => return true // Failed to expand, skip
-  }
-  for entry in vfs_entries {
-    if entry.is_binary {
-      continue // Skip binary entries for text-based comparison
-    }
-    let relative = make_relative_path(entry.virtual_path, dir)
+  for entry in entries {
+    let (virtual_path, content) = entry
+    let relative = make_relative_path(virtual_path, dir)
     let display_name = if multi_dir {
       dirname + ":" + relative
     } else {
       relative
     }
-    files.push((display_name, entry.content))
+    files.push((display_name, content))
   }
   true
 }

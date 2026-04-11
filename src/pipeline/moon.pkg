@@ -14,4 +14,7 @@ import {
 import {
   "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
   "trkbt10/indexion/src/kgf/peg" @kgf_peg,
+  "hustcer/fzip" @fzip,
+  "trkbt10/indexion/src/kgf/features" @kgf_features,
+  "moonbitlang/core/env" @env,
 } for "wbtest"
