@@ -4,11 +4,11 @@ package "trkbt10/indexion/src/reconcile/store"
 // Values
 pub fn cache_path(String, String) -> String
 
-pub fn ensure_cache_dir(String, String) -> Bool
+pub fn ensure_cache_dir(String, String) -> Result[Unit, String]
 
-pub fn read_json_file(String, String) -> Json?
+pub fn read_json_file(String, String) -> Result[Json, String]
 
-pub fn write_json_file(String, Json, String) -> Bool
+pub fn write_json_file(String, Json, String) -> Result[Unit, String]
 
 // Errors
 

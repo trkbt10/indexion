@@ -39,12 +39,15 @@ fn resolve_cache_dir(config : SpecAlignConfig) -> String? {
 
 ///|
 fn write_json_file(path : String, json : Json) -> Bool {
-  @reconcile_store.write_json_file(path, json, "align cache file")
+  @reconcile_store.write_json_file(path, json, "align cache file") is Ok(_)
 }
 
 ///|
 fn read_json_file(path : String) -> Json? {
-  @reconcile_store.read_json_file(path, "align cache file")
+  match @reconcile_store.read_json_file(path, "align cache file") {
+    Ok(json) => Some(json)
+    Err(_) => None
+  }
 }
 
 ///|
@@ -58,15 +61,7 @@ fn load_history_entries(cache_dir : String) -> Array[AlignHistoryEntry]? {
     None => return None
   }
   let store : AlignHistoryStore = @json.from_json(json) catch {
-    err => {
-      println(
-        "Error: failed to decode align history store `" +
-        path +
-        "`: " +
-        err.to_string(),
-      )
-      return None
-    }
+    _ => return None
   }
   Some(store.entries)
 }
@@ -96,37 +91,13 @@ fn load_snapshot(cache_dir : String) -> AlignSnapshot? {
     None => return None
   }
   let manifest : AlignCacheManifest = @json.from_json(manifest_json) catch {
-    err => {
-      println(
-        "Error: failed to decode align manifest `" +
-        manifest_path +
-        "`: " +
-        err.to_string(),
-      )
-      return None
-    }
+    _ => return None
   }
   let trace : AlignTraceStore = @json.from_json(trace_json) catch {
-    err => {
-      println(
-        "Error: failed to decode align trace store `" +
-        cache_file_path(cache_dir, align_trace_file) +
-        "`: " +
-        err.to_string(),
-      )
-      return None
-    }
+    _ => return None
   }
   let report : AlignDiffStore = @json.from_json(report_json) catch {
-    err => {
-      println(
-        "Error: failed to decode align report store `" +
-        cache_file_path(cache_dir, align_report_file) +
-        "`: " +
-        err.to_string(),
-      )
-      return None
-    }
+    _ => return None
   }
   Some({
     version: manifest.version,
@@ -163,26 +134,13 @@ fn purge_cache_file(cache_dir : String, file_name : String) -> Bool {
     return true
   }
   @fs.remove_file(path) catch {
-    err => {
-      println(
-        "Error: failed to remove align cache file `" +
-        path +
-        "`: " +
-        err.to_string(),
-      )
-      return false
-    }
+    _ => return false
   }
   true
 }
 
 ///|
 fn purge_corrupt_snapshot_cache(cache_dir : String) -> Bool {
-  println(
-    "Warning: removing invalid spec align cache from `" +
-    cache_dir +
-    "` and rebuilding.",
-  )
   purge_cache_file(cache_dir, align_manifest_file) &&
   purge_cache_file(cache_dir, align_trace_file) &&
   purge_cache_file(cache_dir, align_report_file) &&
@@ -218,7 +176,7 @@ fn append_history_entry(
 
 ///|
 fn save_snapshot(cache_dir : String, snapshot : AlignSnapshot) -> Bool {
-  if !@reconcile_store.ensure_cache_dir(cache_dir, "align cache path") {
+  if @reconcile_store.ensure_cache_dir(cache_dir, "align cache path") is Err(_) {
     return false
   }
   let history_entries = match load_history_entries(cache_dir) {

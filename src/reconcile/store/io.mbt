@@ -4,11 +4,16 @@ pub fn cache_path(dir : String, file_name : String) -> String {
 }
 
 ///|
-pub fn ensure_cache_dir(cache_dir : String, label : String) -> Bool {
+/// Ensures that `cache_dir` exists and is a directory.
+/// Returns `Ok(())` on success, or `Err(message)` describing the failure.
+pub fn ensure_cache_dir(
+  cache_dir : String,
+  label : String,
+) -> Result[Unit, String] {
   if @fs.path_exists(cache_dir) {
     let is_dir = @fs.is_dir(cache_dir) catch {
       err => {
-        println(
+        return Err(
           "Error: failed to inspect " +
           label +
           " `" +
@@ -16,29 +21,33 @@ pub fn ensure_cache_dir(cache_dir : String, label : String) -> Bool {
           "`: " +
           err.to_string(),
         )
-        return false
       }
     }
     if !is_dir {
-      println(
+      return Err(
         "Error: " +
         label +
         " `" +
         cache_dir +
         "` exists and is not a directory.",
       )
-      return false
     }
   }
   @config.ensure_dir_recursive(cache_dir)
-  true
+  Ok(())
 }
 
 ///|
-pub fn write_json_file(path : String, json : Json, label : String) -> Bool {
+/// Writes JSON to `path`. Returns `Ok(())` on success,
+/// or `Err(message)` describing the failure.
+pub fn write_json_file(
+  path : String,
+  json : Json,
+  label : String,
+) -> Result[Unit, String] {
   @fs.write_string_to_file(path, json.stringify(indent=2)) catch {
     err => {
-      println(
+      return Err(
         "Error: failed to write " +
         label +
         " `" +
@@ -46,25 +55,33 @@ pub fn write_json_file(path : String, json : Json, label : String) -> Bool {
         "`: " +
         err.to_string(),
       )
-      return false
     }
   }
-  true
+  Ok(())
 }
 
 ///|
-pub fn read_json_file(path : String, label : String) -> Json? {
+/// Reads and parses a JSON file at `path`. Returns `Ok(json)` on success,
+/// or `Err(message)` describing the failure.
+pub fn read_json_file(
+  path : String,
+  label : String,
+) -> Result[Json, String] {
   let text = @fs.read_file_to_string(path) catch {
     err => {
-      println(
-        "Error: failed to read " + label + " `" + path + "`: " + err.to_string(),
+      return Err(
+        "Error: failed to read " +
+        label +
+        " `" +
+        path +
+        "`: " +
+        err.to_string(),
       )
-      return None
     }
   }
   let json : Json = @json.parse(text) catch {
     err => {
-      println(
+      return Err(
         "Error: failed to parse " +
         label +
         " `" +
@@ -72,8 +89,7 @@ pub fn read_json_file(path : String, label : String) -> Json? {
         "`: " +
         err.to_string(),
       )
-      return None
     }
   }
-  Some(json)
+  Ok(json)
 }
