@@ -7,6 +7,8 @@ pub struct PubDeclaration {
   end_pos : Int
   category : String
   end_line : Int
+  start_tok : Int // token index (inclusive), -1 if unavailable
+  end_tok : Int // token index (exclusive), -1 if unavailable
 }
 
 ///|
@@ -15,6 +17,19 @@ priv struct DeclarationSpan {
   start_pos : Int
   end_pos : Int
   end_line : Int
+  start_tok : Int
+  end_tok : Int
+}
+
+///|
+/// Span selection preference for declaration matching.
+pub(all) enum SpanPreference {
+  /// Prefer the longest span containing the name (captures full declaration + body).
+  /// Used by reconcile to cover the entire documented surface.
+  Longest
+  /// Prefer the shortest span containing the name (pinpoints the declaration itself).
+  /// Used by function extraction to avoid selecting a parent class span.
+  Shortest
 }
 
 ///|
@@ -212,8 +227,15 @@ pub fn extract_pub_declarations_and_doc_map(
       "type"
     }
     let approx_line = estimate_declaration_line(prepared, name, line_offsets)
+    // Functions use Shortest to pinpoint the method, not the enclosing class.
+    // Types use Longest to capture the full declaration.
+    let pref : SpanPreference = if category == "function" {
+      Shortest
+    } else {
+      Longest
+    }
     let span = best_declaration_span(
-      declaration_spans, prepared, name, approx_line,
+      declaration_spans, prepared, name, approx_line, preference=pref,
     )
     let line = match span {
       Some(value) => value.line
@@ -231,6 +253,14 @@ pub fn extract_pub_declarations_and_doc_map(
       Some(value) => value.end_line
       None => line
     }
+    let start_tok = match span {
+      Some(value) => value.start_tok
+      None => -1
+    }
+    let end_tok = match span {
+      Some(value) => value.end_tok
+      None => -1
+    }
     declarations.push({
       kind: normalized,
       name,
@@ -239,6 +269,8 @@ pub fn extract_pub_declarations_and_doc_map(
       end_pos,
       category,
       end_line,
+      start_tok,
+      end_tok,
     })
     if doc.length() > 0 {
       doc_map.set(line, doc)
@@ -339,7 +371,7 @@ fn extract_declaration_spans(
     }
     let line = line_for_char_offset(line_offsets, start_pos)
     let end_line = line_for_char_offset(line_offsets, end_pos - 1)
-    spans.push({ line, start_pos, end_pos, end_line })
+    spans.push({ line, start_pos, end_pos, end_line, start_tok, end_tok })
   }
   spans
 }
@@ -350,10 +382,14 @@ fn best_declaration_span(
   content : String,
   name : String,
   approx_line : Int,
+  preference~ : SpanPreference = Longest,
 ) -> DeclarationSpan? {
   let mut best : DeclarationSpan? = None
   let mut best_distance = 1 << 30
-  let mut best_len = 1 << 30
+  let mut best_len : Int = match preference {
+    Longest => 0 // start small, pick larger
+    Shortest => 1 << 30 // start large, pick smaller
+  }
   for span in spans {
     let span_text = content[span.start_pos:span.end_pos].to_string()
     if !span_text.contains(name) {
@@ -361,10 +397,12 @@ fn best_declaration_span(
     }
     let distance = (span.line - approx_line).abs()
     let length = span.end_pos - span.start_pos
-    // Prefer the LONGEST span at the same distance: this captures the full
-    // declaration (signature + body) rather than just the body block.
+    let better_len = match preference {
+      Longest => length > best_len
+      Shortest => length < best_len
+    }
     let better = distance < best_distance ||
-      (distance == best_distance && length > best_len)
+      (distance == best_distance && better_len)
     if better {
       best = Some(span)
       best_distance = distance

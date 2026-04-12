@@ -62,96 +62,94 @@ pub fn ExtractedFunction::qualified_name(self : ExtractedFunction) -> String {
 }
 
 ///|
-/// Extract functions from tokenized source code.
-/// Uses the KGF spec's `function_keyword` feature to identify the function declaration
-/// keyword, and `keyword_kinds` (from KEYWORD declarations) to skip qualifier keywords.
+/// Extract functions from source code using KGF grammar pipeline.
+/// Uses the full KGF pipeline (tokenize→parse→eval_semantics→declares edges)
+/// for accurate function boundary detection across all languages.
+///
+/// The `content` parameter is the source text; `registry` is the KGF registry.
+/// The `tokens` parameter is retained for compatibility with callers that
+/// already have a token array (e.g. for tree extraction), but the function
+/// detection itself is grammar-based.
 pub fn extract_functions(
   tokens : Array[@kgf_types.Tok],
   file : String,
+  content? : String = "",
+  registry? : @kgf_registry.KGFRegistry? = None,
   spec~ : @kgf_types.KGFSpec,
 ) -> Array[ExtractedFunction] {
-  let fn_keyword = match spec.get_feature("function_keyword") {
-    Some(keywords) =>
-      if keywords.length() > 0 {
-        keywords[0]
-      } else {
-        return []
-      }
-    None => return []
+  // Reconstruct content from tokens if not provided
+  let resolved_content = if content.length() > 0 {
+    content
+  } else {
+    reconstruct_content_from_tokens(tokens)
   }
-  let id_set = build_identifier_set(spec~)
-  let qualifier_set = build_qualifier_separator_set(spec)
-  let keyword_kinds = spec.get_keyword_kinds()
+  let (decls, _) = @kgf_declarations.extract_pub_declarations_and_doc_map(
+    resolved_content, file, registry,
+  )
   let functions : Array[ExtractedFunction] = []
-  let mut i = 0
-  while i < tokens.length() {
-    let tok = tokens[i]
-    if tok.get_kind() == fn_keyword {
-      // Find function name (next identifier after optional qualifiers)
-      let fn_start = i
-      let mut name = ""
+  for decl in decls {
+    if decl.category != "function" {
+      continue
+    }
+    // Use token indices from PubDeclaration if available,
+    // otherwise fall back to scanning tokens for the name
+    let start_tok = if decl.start_tok >= 0 {
+      decl.start_tok
+    } else {
+      find_token_by_name(tokens, decl.name, spec)
+    }
+    let end_tok = if decl.end_tok >= 0 {
+      decl.end_tok
+    } else if start_tok >= 0 {
+      // Approximate: scan forward to find closing brace/end
+      tokens.length()
+    } else {
+      continue
+    }
+    if start_tok >= 0 && end_tok > start_tok {
+      functions.push(ExtractedFunction::new(decl.name, start_tok, end_tok, file))
+    }
+  }
+  functions
+}
+
+///|
+/// Reconstruct source content from token array.
+/// Used as fallback when content string is not provided.
+fn reconstruct_content_from_tokens(tokens : Array[@kgf_types.Tok]) -> String {
+  let buf = StringBuilder::new()
+  for tok in tokens {
+    buf.write_string(tok.get_text())
+  }
+  buf.to_string()
+}
+
+///|
+/// Find the first token matching a function name (identifier followed by LPAREN).
+fn find_token_by_name(
+  tokens : Array[@kgf_types.Tok],
+  name : String,
+  spec : @kgf_types.KGFSpec,
+) -> Int {
+  let id_set = build_identifier_set(spec~)
+  for i, tok in tokens {
+    if is_identifier_kind(tok.get_kind(), id_set~) && tok.get_text() == name {
+      // Check if followed by LPAREN (skipping whitespace)
       let mut j = i + 1
-      // Skip optional qualifiers (TypeIdent::, keywords, etc.) until identifier.
-      // An identifier followed by a qualifier separator is a qualifier
-      // (e.g. Type::method), not the function name. The function name is the
-      // first identifier NOT followed by a qualifier separator.
       while j < tokens.length() {
-        let t = tokens[j]
-        let kind = t.get_kind()
-        if is_identifier_kind(kind, id_set~) {
-          // Look ahead past whitespace for qualifier separator
-          let mut peek = j + 1
-          while peek < tokens.length() {
-            let pk = tokens[peek].get_kind()
-            if pk == "NL" || pk == "SKIP" || pk == "WS" {
-              peek += 1
-            } else {
-              break
-            }
-          }
-          if peek < tokens.length() &&
-            qualifier_set.contains(tokens[peek].get_kind()) {
-            // This identifier is a qualifier (e.g. Type in Type::method) — skip it and the separator
-            j = peek + 1
-          } else {
-            // This is the function name
-            name = t.get_text()
-            j += 1
-            break
-          }
-        } else if qualifier_set.contains(kind) || keyword_kinds.contains(kind) {
+        let kind = tokens[j].get_kind()
+        if kind == "NL" || kind == "SKIP" || kind == "WS" {
           j += 1
         } else {
           break
         }
       }
-      // Find body start (LBRACE)
-      let mut body_start = -1
-      while j < tokens.length() {
-        let t = tokens[j]
-        if t.get_kind() == "LBRACE" {
-          body_start = j
-          break
-        } else if t.get_kind() == "NL" && body_start < 0 {
-          // Function declaration without body (trait method / signature)
-          break
-        }
-        j += 1
-      }
-      if body_start >= 0 && name.length() > 0 {
-        let fn_end = find_matching_brace(tokens, body_start)
-        if fn_end > body_start {
-          functions.push(
-            ExtractedFunction::new(name, fn_start, fn_end + 1, file),
-          )
-          i = fn_end + 1
-          continue
-        }
+      if j < tokens.length() && tokens[j].get_kind() == "LPAREN" {
+        return i
       }
     }
-    i += 1
   }
-  functions
+  -1
 }
 
 ///|

@@ -7,9 +7,9 @@ import {
   "trkbt10/indexion/src/scope" @scope,
   "trkbt10/indexion/src/text/tfidf" @tfidf,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
-  "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
+  "trkbt10/indexion/src/kgf/declarations" @kgf_declarations,
   "trkbt10/indexion/src/kgf/registry" @registry,
-  "trkbt10/indexion/src/similarity/apted" @apted,
   "trkbt10/indexion/src/plan/types" @plan_types,
   "trkbt10/indexion/src/plan/render" @plan_render,
+  "trkbt10/indexion/src/pipeline/comparison" @batch,
 }
