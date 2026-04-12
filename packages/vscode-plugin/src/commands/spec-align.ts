@@ -3,18 +3,11 @@
  */
 
 import * as vscode from "vscode";
-import {
-  runSpecAlignDiff,
-  runSpecAlignTrace,
-  runSpecAlignSuggest,
-  runSpecAlignStatus,
-} from "@indexion/api-client";
+import { runSpecAlignDiff, runSpecAlignTrace, runSpecAlignSuggest, runSpecAlignStatus } from "@indexion/api-client";
 import { runPlanCommand, requireConfig } from "./plan-common.ts";
 
 /** Prompt user to pick spec and impl files, returns undefined on cancel. */
-const pickSpecImplPaths = async (): Promise<
-  { specPath: string; implPath: string } | undefined
-> => {
+const pickSpecImplPaths = async (): Promise<{ specPath: string; implPath: string } | undefined> => {
   const specUris = await vscode.window.showOpenDialog({
     canSelectMany: false,
     openLabel: "Select Spec File",
@@ -56,11 +49,7 @@ export const executeSpecAlignDiff = async (): Promise<void> => {
     "Spec Align: Diff",
     "indexion: Comparing spec vs implementation...",
     (client, _config, signal) =>
-      runSpecAlignDiff(
-        client,
-        { specPath: paths.specPath, implPath: paths.implPath, format: "md" },
-        signal,
-      ),
+      runSpecAlignDiff(client, { specPath: paths.specPath, implPath: paths.implPath, format: "md" }, signal),
   );
 };
 
@@ -75,11 +64,7 @@ export const executeSpecAlignTrace = async (): Promise<void> => {
     "Spec Align: Trace",
     "indexion: Tracing spec/impl relationships...",
     (client, _config, signal) =>
-      runSpecAlignTrace(
-        client,
-        { specPath: paths.specPath, implPath: paths.implPath, format: "md" },
-        signal,
-      ),
+      runSpecAlignTrace(client, { specPath: paths.specPath, implPath: paths.implPath, format: "md" }, signal),
   );
 };
 
@@ -94,11 +79,7 @@ export const executeSpecAlignSuggest = async (): Promise<void> => {
     "Spec Align: Suggest",
     "indexion: Generating spec improvement suggestions...",
     (client, _config, signal) =>
-      runSpecAlignSuggest(
-        client,
-        { specPath: paths.specPath, implPath: paths.implPath, format: "md" },
-        signal,
-      ),
+      runSpecAlignSuggest(client, { specPath: paths.specPath, implPath: paths.implPath, format: "md" }, signal),
   );
 };
 
@@ -113,10 +94,6 @@ export const executeSpecAlignStatus = async (): Promise<void> => {
     "Spec Align: Status",
     "indexion: Checking spec alignment status...",
     (client, _config, signal) =>
-      runSpecAlignStatus(
-        client,
-        { specPath: paths.specPath, implPath: paths.implPath, format: "md" },
-        signal,
-      ),
+      runSpecAlignStatus(client, { specPath: paths.specPath, implPath: paths.implPath, format: "md" }, signal),
   );
 };

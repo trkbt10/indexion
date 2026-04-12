@@ -23,9 +23,7 @@ export const executeGrep = async (): Promise<void> => {
     return; // cancelled
   }
 
-  const body = pattern.length > 0
-    ? { pattern }
-    : { undocumented: true };
+  const body = pattern.length > 0 ? { pattern } : { undocumented: true };
 
   const result = await runWithProgress("indexion: Grep searching...", (token) => {
     const abortController = new AbortController();
