@@ -619,8 +619,8 @@ fn find_cross_function_matches(
     // Grammar-based function extraction via KGF full pipeline.
     // PubDeclaration with Shortest span preference gives accurate
     // function boundaries for all languages.
-    let (declarations, _) = @kgf_declarations.extract_pub_declarations_and_doc_map(
-      content, rel_path, registry,
+    let (declarations, _) = @kgf_declarations.extract_declarations(
+      content, rel_path, registry, visibility=All,
     )
     for decl in declarations {
       if decl.category != "function" {

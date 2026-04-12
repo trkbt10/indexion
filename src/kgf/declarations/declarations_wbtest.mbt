@@ -13,7 +13,7 @@ fn declaration_names(decls : Array[PubDeclaration]) -> Map[String, Bool] {
 }
 
 ///|
-fn extract_declarations(
+fn extract_test_declarations(
   path : String,
   source : String,
 ) -> (Array[PubDeclaration], Map[String, Bool]) {
@@ -94,7 +94,7 @@ test "declarations: moonbit extracts public top-level declarations" {
     #|fn hidden() -> Int { 0 }
     #|pub struct Box { value : Int }
     #|pub let answer : Int = 42
-  let (decls, names) = extract_declarations("memory/sample.mbt", source)
+  let (decls, names) = extract_test_declarations("memory/sample.mbt", source)
   assert_true(decls.length() >= 3)
   assert_true(names.contains("visible"))
   assert_true(names.contains("Box"))
@@ -113,7 +113,7 @@ test "declarations: python extracts top-level function and class" {
     #|
     #|def visible():
     #|    return None
-  let (decls, names) = extract_declarations("memory/sample.py", source)
+  let (decls, names) = extract_test_declarations("memory/sample.py", source)
   assert_true(decls.length() >= 3)
   assert_true(names.contains("visible"))
   assert_true(names.contains("User"))
@@ -135,7 +135,7 @@ test "declarations: rust extracts pub declarations" {
     #|}
     #|
     #|fn private_fn() {}
-  let (decls, names) = extract_declarations("memory/config.rs", source)
+  let (decls, names) = extract_test_declarations("memory/config.rs", source)
   assert_true(decls.length() >= 1)
   assert_true(names.contains("Config"))
   assert_true(names.contains("load"))
@@ -152,7 +152,7 @@ test "declarations: go extracts exported declarations" {
     #|type VisibleType struct {}
     #|var VisibleVar = 1
     #|const VisibleConst = 2
-  let (decls, names) = extract_declarations("memory/sample.go", source)
+  let (decls, names) = extract_test_declarations("memory/sample.go", source)
   assert_true(decls.length() >= 4)
   assert_true(names.contains("Visible"))
   assert_true(names.contains("VisibleType"))
@@ -171,7 +171,7 @@ test "declarations: javascript extracts top-level function and class" {
     #|function helper() {
     #|  return 42;
     #|}
-  let (decls, names) = extract_declarations("memory/sample.js", source)
+  let (decls, names) = extract_test_declarations("memory/sample.js", source)
   assert_true(decls.length() >= 2)
   assert_true(names.contains("visible"))
   assert_true(names.contains("helper"))
@@ -185,7 +185,7 @@ test "declarations: javascript-jsx extracts function component and class" {
     #|}
     #|
     #|class LocalBox {}
-  let (decls, names) = extract_declarations("memory/sample.jsx", source)
+  let (decls, names) = extract_test_declarations("memory/sample.jsx", source)
   assert_true(decls.length() >= 2)
   assert_true(names.contains("App"))
   assert_true(names.contains("LocalBox"))
@@ -202,7 +202,7 @@ test "declarations: typescript extracts exported function and interface" {
     #|  host: string
     #|  port: number
     #|}
-  let (decls, names) = extract_declarations("memory/sample.ts", source)
+  let (decls, names) = extract_test_declarations("memory/sample.ts", source)
   assert_true(decls.length() >= 2)
   assert_true(names.contains("formatClassName"))
   assert_true(names.contains("Config"))
@@ -218,7 +218,7 @@ test "declarations: typescript-jsx extracts jsx component and interface" {
     #|export function App(props: Props) {
     #|  return <Main title={props.title} />;
     #|}
-  let (decls, names) = extract_declarations("memory/sample.tsx", source)
+  let (decls, names) = extract_test_declarations("memory/sample.tsx", source)
   assert_true(decls.length() >= 2)
   assert_true(names.contains("Props"))
   assert_true(names.contains("App"))
@@ -231,7 +231,7 @@ test "declarations: clojure extracts def defn defmacro" {
     #|(defn visible-fn [name]
     #|  name)
     #|(defmacro visible-macro [x] x)
-  let (decls, names) = extract_declarations("memory/sample.clj", source)
+  let (decls, names) = extract_test_declarations("memory/sample.clj", source)
   assert_true(decls.length() >= 3)
   assert_true(names.contains("visible-value"))
   assert_true(names.contains("visible-fn"))
@@ -246,7 +246,7 @@ test "declarations: clojure extracts protocol record type multimethod method" {
     #|(deftype VisibleType)
     #|(defmulti visible-dispatch)
     #|(defmethod visible-method)
-  let (decls, names) = extract_declarations("memory/extended.clj", source)
+  let (decls, names) = extract_test_declarations("memory/extended.clj", source)
   assert_true(decls.length() >= 5)
   assert_true(names.contains("VisibleProtocol"))
   assert_true(names.contains("VisibleRecord"))
@@ -262,7 +262,7 @@ test "declarations: c extracts top-level declarations" {
     #|typedef int count_t;
     #|int visible(void) { return 0; }
     #|int data;
-  let (decls, names) = extract_declarations("memory/sample.c", source)
+  let (decls, names) = extract_test_declarations("memory/sample.c", source)
   assert_true(decls.length() >= 4)
   assert_true(names.contains("Box"))
   assert_true(names.contains("count_t"))
@@ -276,7 +276,7 @@ test "declarations: cpp extracts top-level declarations" {
     #|class Box {};
     #|void visible() {}
     #|int data;
-  let (decls, names) = extract_declarations("memory/sample.cpp", source)
+  let (decls, names) = extract_test_declarations("memory/sample.cpp", source)
   assert_true(decls.length() >= 3)
   assert_true(names.contains("Box"))
   assert_true(names.contains("visible"))
@@ -289,7 +289,7 @@ test "declarations: csharp extracts public declarations" {
     #|public class Box {}
     #|class Hidden {}
     #|public interface Visible {}
-  let (decls, names) = extract_declarations("memory/sample.cs", source)
+  let (decls, names) = extract_test_declarations("memory/sample.cs", source)
   assert_true(decls.length() >= 2)
   assert_true(names.contains("Box"))
   assert_true(names.contains("Visible"))
@@ -302,7 +302,7 @@ test "declarations: java extracts public declarations" {
     #|public class Box {}
     #|class Hidden {}
     #|public interface Visible {}
-  let (decls, names) = extract_declarations("memory/sample.java", source)
+  let (decls, names) = extract_test_declarations("memory/sample.java", source)
   assert_true(decls.length() >= 2)
   assert_true(names.contains("Box"))
   assert_true(names.contains("Visible"))
@@ -315,7 +315,7 @@ test "declarations: php extracts top-level class and function" {
     #|<?php
     #|class Box {}
     #|function visible() {}
-  let (decls, names) = extract_declarations("memory/sample.php", source)
+  let (decls, names) = extract_test_declarations("memory/sample.php", source)
   assert_true(decls.length() >= 2)
   assert_true(names.contains("Box"))
   assert_true(names.contains("visible"))
@@ -327,7 +327,7 @@ test "declarations: kotlin extracts top-level declarations" {
     #|class Box
     #|fun visible() = 1
     #|val visibleValue = 1
-  let (decls, names) = extract_declarations("memory/sample.kt", source)
+  let (decls, names) = extract_test_declarations("memory/sample.kt", source)
   assert_true(decls.length() >= 3)
   assert_true(names.contains("Box"))
   assert_true(names.contains("visible"))
@@ -341,7 +341,7 @@ test "declarations: swift extracts public declarations" {
     #|class Hidden {}
     #|public func visible() {}
     #|public typealias Answer = Int
-  let (decls, names) = extract_declarations("memory/sample.swift", source)
+  let (decls, names) = extract_test_declarations("memory/sample.swift", source)
   assert_true(decls.length() >= 3)
   assert_true(names.contains("Box"))
   assert_true(names.contains("visible"))
@@ -355,7 +355,7 @@ test "declarations: scala extracts top-level declarations" {
     #|class Box
     #|def visible = 1
     #|object Tools
-  let (decls, names) = extract_declarations("memory/sample.scala", source)
+  let (decls, names) = extract_test_declarations("memory/sample.scala", source)
   assert_true(decls.length() >= 3)
   assert_true(names.contains("Box"))
   assert_true(names.contains("visible"))
@@ -374,7 +374,7 @@ test "declarations: ruby extracts public class module method" {
     #|def visible
     #|  1
     #|end
-  let (decls, names) = extract_declarations("memory/sample.rb", source)
+  let (decls, names) = extract_test_declarations("memory/sample.rb", source)
   assert_true(decls.length() >= 3)
   assert_true(names.contains("Box"))
   assert_true(names.contains("Tools"))
@@ -389,7 +389,7 @@ test "declarations: zig extracts pub declarations" {
     #|}
     #|
     #|fn hidden() void {}
-  let (decls, names) = extract_declarations("memory/sample.zig", source)
+  let (decls, names) = extract_test_declarations("memory/sample.zig", source)
   assert_true(decls.length() >= 1)
   assert_true(names.contains("visible"))
   assert_false(names.contains("hidden"))
@@ -399,7 +399,7 @@ test "declarations: zig extracts pub declarations" {
 test "declarations: ocaml extracts top-level declarations" {
   let source =
     #|type status = Pending | Done
-  let (decls, names) = extract_declarations("memory/sample.ml", source)
+  let (decls, names) = extract_test_declarations("memory/sample.ml", source)
   assert_true(decls.length() >= 1)
   assert_true(names.contains("status"))
 }
@@ -411,7 +411,7 @@ test "declarations: haskell extracts top-level declarations" {
     #|
     #|visible :: Box -> String
     #|visible Red = "red"
-  let (decls, names) = extract_declarations("memory/sample.hs", source)
+  let (decls, names) = extract_test_declarations("memory/sample.hs", source)
   assert_true(decls.length() >= 2)
   assert_true(names.contains("Box"))
   assert_true(names.contains("visible"))
@@ -426,7 +426,7 @@ test "declarations: elixir extracts public module and defs" {
     #|end
     #|
     #|defguard is_box(value) when value > 0
-  let (decls, names) = extract_declarations("memory/sample.ex", source)
+  let (decls, names) = extract_test_declarations("memory/sample.ex", source)
   assert_true(decls.length() >= 3)
   assert_true(names.contains("Box"))
   assert_true(names.contains("visible"))
@@ -438,7 +438,7 @@ test "declarations: elixir extracts public module and defs" {
 test "declarations: dart extracts public declarations" {
   let path = "fixtures/programming/dart/task.dart"
   let source = @fs.read_file_to_string(path)
-  let (decls, names) = extract_declarations(path, source)
+  let (decls, names) = extract_test_declarations(path, source)
   assert_true(decls.length() >= 1)
   assert_true(names.contains("Task"))
 }
@@ -453,7 +453,7 @@ test "declarations: lua extracts global declarations" {
     #|local function hidden()
     #|  return 0
     #|end
-  let (decls, names) = extract_declarations("memory/sample.lua", source)
+  let (decls, names) = extract_test_declarations("memory/sample.lua", source)
   assert_true(decls.length() >= 1)
   assert_true(names.contains("visible"))
   assert_false(names.contains("hidden"))
@@ -465,7 +465,7 @@ test "declarations: julia extracts top-level declarations" {
     #|struct Task
     #|    id::Int
     #|end
-  let (decls, names) = extract_declarations("memory/sample.jl", source)
+  let (decls, names) = extract_test_declarations("memory/sample.jl", source)
   assert_true(decls.length() >= 1)
   assert_true(names.contains("Task"))
 }

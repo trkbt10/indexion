@@ -25,11 +25,18 @@ priv struct DeclarationSpan {
 /// Span selection preference for declaration matching.
 pub(all) enum SpanPreference {
   /// Prefer the longest span containing the name (captures full declaration + body).
-  /// Used by reconcile to cover the entire documented surface.
   Longest
   /// Prefer the shortest span containing the name (pinpoints the declaration itself).
-  /// Used by function extraction to avoid selecting a parent class span.
   Shortest
+}
+
+///|
+/// Visibility filter for declaration extraction.
+pub(all) enum DeclarationVisibility {
+  /// All declarations regardless of visibility (uses parse events + attrs directly).
+  All
+  /// Public declarations only (uses semantics evaluation with `when` conditions).
+  PublicOnly
 }
 
 ///|
@@ -160,58 +167,116 @@ pub fn extract_doc_map_from_source(
 }
 
 ///|
+/// Result of parsing source code.
+priv struct ParsedSource {
+  spec : @kgf_types.KGFSpec
+  tokens : Array[@kgf_types.Tok]
+  events : Array[(String, Map[String, Json])]
+  prepared : String
+  line_offsets : Array[Int]
+}
+
+///|
+/// Shared parse step: content → spec → tokenize → parse.
+/// Returns None if any step fails (no spec, parse error, etc.)
+fn parse_source(
+  content : String,
+  path : String,
+  registry : @kgf_registry.KGFRegistry?,
+) -> ParsedSource? {
+  let reg = match registry {
+    Some(r) => r
+    None => return None
+  }
+  let lang = match reg.detect_from_path(path) {
+    Some(l) => l
+    None => return None
+  }
+  let spec = match reg.get_spec(lang) {
+    Some(s) => s
+    None => return None
+  }
+  let prepared = preprocess_content(content, spec)
+  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+  let tokens = lexer.tokenize(prepared)
+  let peg = @kgf_peg.build_peg(spec) catch { _ => return None }
+  let start_rule = spec.get_start_rule()
+  let parse_result = match @kgf_peg.run_parse(peg, spec, start_rule, tokens) {
+    Some(r) => r
+    None => return None
+  }
+  let line_offsets = build_line_offsets(prepared)
+  Some({ spec, tokens, events: parse_result.get_events(), prepared, line_offsets })
+}
+
+///|
+/// Extract declarations from source code.
+///
+/// `visibility`:
+/// - `All`: all declarations via parse events + attrs (no semantics evaluation)
+/// - `PublicOnly`: public declarations via semantics `when` conditions + doc_map
+///
+/// doc_map is populated only in PublicOnly mode (semantics needed for $scope doc resolution).
+pub fn extract_declarations(
+  content : String,
+  path : String,
+  registry : @kgf_registry.KGFRegistry?,
+  visibility~ : DeclarationVisibility = PublicOnly,
+) -> (Array[PubDeclaration], Map[Int, String]) {
+  match visibility {
+    All => (extract_all_declarations_from_events(content, path, registry), {})
+    PublicOnly =>
+      extract_pub_declarations_via_semantics(content, path, registry)
+  }
+}
+
+///|
+/// Extract public declarations via semantics (declares edges) + doc map.
+/// Convenience wrapper over `extract_declarations(visibility=PublicOnly)`.
 pub fn extract_pub_declarations_and_doc_map(
   content : String,
   path : String,
   registry : @kgf_registry.KGFRegistry?,
 ) -> (Array[PubDeclaration], Map[Int, String]) {
-  let reg = match registry {
-    Some(r) => r
-    None => return ([], {})
-  }
-  let lang = match reg.detect_from_path(path) {
-    Some(l) => l
-    None => return ([], {})
-  }
-  let spec = match reg.get_spec(lang) {
-    Some(s) => s
-    None => return ([], {})
-  }
-  let prepared = preprocess_content(content, spec)
-  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
-  let tokens = lexer.tokenize(prepared)
-  let peg = @kgf_peg.build_peg(spec) catch { _ => return ([], {}) }
-  let start_rule = spec.get_start_rule()
-  let parse_result = match @kgf_peg.run_parse(peg, spec, start_rule, tokens) {
-    Some(r) => r
+  extract_declarations(content, path, registry, visibility=PublicOnly)
+}
+
+///|
+/// Internal: public declarations via semantics evaluation.
+fn extract_pub_declarations_via_semantics(
+  content : String,
+  path : String,
+  registry : @kgf_registry.KGFRegistry?,
+) -> (Array[PubDeclaration], Map[Int, String]) {
+  let parsed = match parse_source(content, path, registry) {
+    Some(result) => result
     None => return ([], {})
   }
   let graph = @graph.CodeGraph::new()
   let _ = graph.get_or_add_module(path, file=Some(path))
   let ctx = @kgf_semantics.SemEvalCtx::new(
-    spec,
+    parsed.spec,
     graph,
     path,
     "",
-    spec.get_language(),
+    parsed.spec.get_language(),
     fn(_) { false },
   )
-  for event in parse_result.get_events() {
+  for event in parsed.events {
     @kgf_semantics.eval_rule_semantics(event.0, event.1, ctx)
   }
   let declarations : Array[PubDeclaration] = []
   let doc_map : Map[Int, String] = {}
   let function_kinds : Array[String] = match
-    spec.get_feature("function_kinds") {
+    parsed.spec.get_feature("function_kinds") {
     Some(kinds) => kinds
     None => []
   }
-  let line_offsets = build_line_offsets(prepared)
   let declaration_spans = extract_declaration_spans(
-    parse_result.get_events(),
-    tokens,
-    prepared,
-    line_offsets,
+    parsed.events,
+    parsed.tokens,
+    parsed.prepared,
+    parsed.line_offsets,
   )
   for edge in graph.get_edges() {
     if !(edge.kind is @graph.Declares) {
@@ -226,16 +291,16 @@ pub fn extract_pub_declarations_and_doc_map(
     } else {
       "type"
     }
-    let approx_line = estimate_declaration_line(prepared, name, line_offsets)
-    // Functions use Shortest to pinpoint the method, not the enclosing class.
-    // Types use Longest to capture the full declaration.
+    let approx_line = estimate_declaration_line(
+      parsed.prepared, name, parsed.line_offsets,
+    )
     let pref : SpanPreference = if category == "function" {
       Shortest
     } else {
       Longest
     }
     let span = best_declaration_span(
-      declaration_spans, prepared, name, approx_line, preference=pref,
+      declaration_spans, parsed.prepared, name, approx_line, preference=pref,
     )
     let line = match span {
       Some(value) => value.line
@@ -291,22 +356,14 @@ pub fn extract_all_declarations_from_events(
   path : String,
   registry : @kgf_registry.KGFRegistry?,
 ) -> Array[PubDeclaration] {
-  let reg = match registry {
-    Some(r) => r
-    None => return []
-  }
-  let lang = match reg.detect_from_path(path) {
-    Some(l) => l
-    None => return []
-  }
-  let spec = match reg.get_spec(lang) {
-    Some(s) => s
+  let parsed = match parse_source(content, path, registry) {
+    Some(result) => result
     None => return []
   }
   // Build mapping from attrs: rule_name → (id_field_name, kind_value)
   // for all rules with a `def` action
   let def_rules : Map[String, (String, String)] = {}
-  for entry in spec.get_attrs() {
+  for entry in parsed.spec.get_attrs() {
     let rule_name = entry.0
     let actions = entry.1
     for action in actions {
@@ -324,27 +381,16 @@ pub fn extract_all_declarations_from_events(
   }
   // Determine function_kinds for category assignment
   let function_kinds : Map[String, Bool] = {}
-  match spec.get_feature("function_kinds") {
+  match parsed.spec.get_feature("function_kinds") {
     Some(kinds) =>
       for kind in kinds {
         function_kinds.set(kind, true)
       }
     None => ()
   }
-  // Tokenize and parse
-  let prepared = preprocess_content(content, spec)
-  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
-  let tokens = lexer.tokenize(prepared)
-  let peg = @kgf_peg.build_peg(spec) catch { _ => return [] }
-  let start_rule = spec.get_start_rule()
-  let parse_result = match @kgf_peg.run_parse(peg, spec, start_rule, tokens) {
-    Some(r) => r
-    None => return []
-  }
-  let line_offsets = build_line_offsets(prepared)
   let result : Array[PubDeclaration] = []
   // Scan parse events for rules with def actions
-  for event in parse_result.get_events() {
+  for event in parsed.events {
     let rule_name = event.0
     let labels = event.1
     match def_rules.get(rule_name) {
@@ -369,21 +415,23 @@ pub fn extract_all_declarations_from_events(
           Some(value) => value
           None => continue
         }
-        if start_tok < 0 || end_tok <= start_tok || start_tok >= tokens.length() {
+        if start_tok < 0 ||
+          end_tok <= start_tok ||
+          start_tok >= parsed.tokens.length() {
           continue
         }
         // Calculate line numbers from token positions
-        let start_pos = tokens[start_tok].get_pos()
-        let last_tok_index = if end_tok - 1 < tokens.length() {
+        let start_pos = parsed.tokens[start_tok].get_pos()
+        let last_tok_index = if end_tok - 1 < parsed.tokens.length() {
           end_tok - 1
         } else {
-          tokens.length() - 1
+          parsed.tokens.length() - 1
         }
-        let end_pos = tokens[last_tok_index].get_pos() +
-          tokens[last_tok_index].get_text().length()
-        let line = line_for_char_offset(line_offsets, start_pos)
+        let end_pos = parsed.tokens[last_tok_index].get_pos() +
+          parsed.tokens[last_tok_index].get_text().length()
+        let line = line_for_char_offset(parsed.line_offsets, start_pos)
         let end_line = if end_pos > start_pos {
-          line_for_char_offset(line_offsets, end_pos - 1)
+          line_for_char_offset(parsed.line_offsets, end_pos - 1)
         } else {
           line
         }

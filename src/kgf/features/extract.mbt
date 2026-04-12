@@ -67,8 +67,8 @@ pub fn extract_functions(
   file : String,
   registry : @kgf_registry.KGFRegistry?,
 ) -> Array[ExtractedFunction] {
-  let decls = @kgf_declarations.extract_all_declarations_from_events(
-    content, file, registry,
+  let (decls, _) = @kgf_declarations.extract_declarations(
+    content, file, registry, visibility=All,
   )
   let functions : Array[ExtractedFunction] = []
   for decl in decls {

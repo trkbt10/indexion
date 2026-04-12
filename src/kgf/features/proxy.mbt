@@ -178,8 +178,8 @@ pub fn detect_proxy_functions(
   spec~ : @kgf_types.KGFSpec,
 ) -> Array[ProxyFunction] {
   // Get all declarations from parse events (visibility-independent)
-  let all_decls = @kgf_declarations.extract_all_declarations_from_events(
-    content, file, registry,
+  let (all_decls, _) = @kgf_declarations.extract_declarations(
+    content, file, registry, visibility=All,
   )
   // Filter to function declarations
   let functions : Array[ExtractedFunction] = []
