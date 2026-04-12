@@ -53,6 +53,9 @@ fn apply_one(
   } else if step.has_prefix("blankLineIfTrimHasPrefix:") {
     let prefix = step["blankLineIfTrimHasPrefix:".length():].to_string()
     blank_line_if_trim_has_prefix(input, prefix)
+  } else if step.has_prefix("blankLineIfRegex:") {
+    let pattern = step["blankLineIfRegex:".length():].to_string()
+    blank_line_if_regex(input, pattern)
   } else if step == "base64ToHex" {
     base64_to_hex(input)
   } else {
@@ -105,6 +108,13 @@ fn blank_line_if_contains(input : String, needle : String) -> String {
 ///|
 fn blank_line_if_trim_has_prefix(input : String, prefix : String) -> String {
   blank_matching_lines(input, fn(_raw, trimmed) { trimmed.has_prefix(prefix) })
+}
+
+///|
+fn blank_line_if_regex(input : String, pattern : String) -> String {
+  blank_matching_lines(input, fn(_raw, trimmed) {
+    @kgf_lexer.matches_at(pattern, trimmed, 0)
+  })
 }
 
 ///|

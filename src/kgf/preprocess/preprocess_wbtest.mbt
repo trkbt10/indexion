@@ -238,3 +238,14 @@ test "apply_preprocess with FST" {
   )
   assert_eq(result, "Hello")
 }
+
+///|
+test "apply_preprocess with blankLineIfRegex" {
+  let input = "ISO 32000-2:2020(E) \n42\nkeep this\n123\nAnother line\n"
+  let result = apply_preprocess(
+    input,
+    Some(["blankLineIfRegex:^ISO[\\s_/-]\\d+", "blankLineIfRegex:^\\d{1,3}\\s*$"]),
+    None,
+  )
+  assert_eq(result, "\n\nkeep this\n\nAnother line\n")
+}
