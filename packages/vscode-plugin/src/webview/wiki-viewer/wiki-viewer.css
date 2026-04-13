@@ -78,7 +78,30 @@ code, pre {
   max-width: 100%;
 }
 
-/* Override prose link color to match VSCode theme */
-.prose a {
-  color: var(--vscode-textLink-foreground, oklch(0.6 0.15 250));
+/**
+ * Override Tailwind Typography prose variables with VSCode theme variables.
+ *
+ * The shared WikiContent uses `prose dark:prose-invert`, but `dark:` relies
+ * on `prefers-color-scheme` or a `.dark` class on <html> — neither of which
+ * VSCode webviews provide. VSCode instead sets `--vscode-*` CSS variables
+ * that already adapt to the active theme, so we map prose variables directly
+ * to them, making the typography layer theme-aware regardless of dark/light.
+ */
+.prose {
+  --tw-prose-body: var(--vscode-foreground);
+  --tw-prose-headings: var(--vscode-foreground);
+  --tw-prose-links: var(--vscode-textLink-foreground, oklch(0.6 0.15 250));
+  --tw-prose-bold: var(--vscode-foreground);
+  --tw-prose-counters: var(--vscode-descriptionForeground);
+  --tw-prose-bullets: var(--vscode-descriptionForeground);
+  --tw-prose-hr: var(--vscode-panel-border);
+  --tw-prose-quotes: var(--vscode-foreground);
+  --tw-prose-quote-borders: var(--vscode-panel-border);
+  --tw-prose-captions: var(--vscode-descriptionForeground);
+  --tw-prose-kbd: var(--vscode-foreground);
+  --tw-prose-code: var(--vscode-foreground);
+  --tw-prose-pre-code: var(--vscode-foreground);
+  --tw-prose-pre-bg: var(--vscode-textCodeBlock-background);
+  --tw-prose-th-borders: var(--vscode-panel-border);
+  --tw-prose-td-borders: var(--vscode-panel-border);
 }
