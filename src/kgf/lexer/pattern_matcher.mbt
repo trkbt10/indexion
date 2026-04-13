@@ -990,6 +990,135 @@ fn match_simple(
 }
 
 ///|
+/// Checks if a PatternElement can be matched with match_char (single char, no recursion).
+fn is_simple_element(e : PatternElement) -> Bool {
+  match e {
+    Literal(_) | CharClass(_, _) | AnyChar | Escape(_) => true
+    _ => false
+  }
+}
+
+///|
+/// Returns the fixed character width of a simple-element sequence,
+/// or None if any element is non-simple or has a non-One quantifier.
+fn sequence_fixed_width(elements : Array[QuantifiedElement]) -> Int? {
+  let mut width = 0
+  for qe in elements {
+    guard qe.quantifier is One else { return None }
+    guard is_simple_element(qe.element) else { return None }
+    width = width + 1
+  }
+  Some(width)
+}
+
+///|
+/// Matches a fixed-width sequence of simple elements without recursion.
+fn try_match_simple_sequence(
+  elements : Array[QuantifiedElement],
+  input_chars : Array[Char],
+  pos : Int,
+  case_insensitive : Bool,
+) -> Int? {
+  let input_len = input_chars.length()
+  let mut current = pos
+  for qe in elements {
+    if current >= input_len {
+      return None
+    }
+    if match_char(qe.element, input_chars[current], case_insensitive) {
+      current = current + 1
+    } else {
+      return None
+    }
+  }
+  Some(current)
+}
+
+///|
+/// Fast path for repeated alternation: (A|B|C)* or (A|B|C)+
+/// where each alternative is a fixed-width sequence of simple elements.
+///
+/// Instead of calling match_elements_backtrack recursively for each
+/// repetition step, this matches directly in a flat loop — O(N) per
+/// repetition instead of O(N * recursion_overhead).
+///
+/// Returns None if any alternative is not amenable (caller falls
+/// through to the generic backtracking path).
+fn try_collect_repeat_positions_fast(
+  alternatives : Array[Array[QuantifiedElement]],
+  quantifier : Quantifier,
+  lazy_ : Bool,
+  input_chars : Array[Char],
+  pos : Int,
+  case_insensitive : Bool,
+) -> Array[Int]? {
+  // Verify all alternatives are fixed-width simple sequences
+  let alt_widths : Array[Int] = []
+  for alt in alternatives {
+    match sequence_fixed_width(alt) {
+      Some(w) => {
+        if w == 0 {
+          return None // Zero-width would loop forever
+        }
+        alt_widths.push(w)
+      }
+      None => return None
+    }
+  }
+  // All simple — run a greedy loop inline
+  let max_repeats = match quantifier {
+    Between(_, m) => m
+    Exactly(n) => n
+    _ => 2147483647
+  }
+  let all_positions : Array[Int] = [pos]
+  let mut current = pos
+  let mut count = 0
+  while count < max_repeats {
+    let mut matched = false
+    for i, alt in alternatives {
+      let width = alt_widths[i]
+      if current + width > input_chars.length() {
+        continue
+      }
+      match try_match_simple_sequence(alt, input_chars, current, case_insensitive) {
+        Some(end_pos) => {
+          current = end_pos
+          count = count + 1
+          all_positions.push(current)
+          matched = true
+          break
+        }
+        None => continue
+      }
+    }
+    if !matched {
+      break
+    }
+  }
+  // Filter by quantifier bounds
+  let (lo, hi) = match quantifier {
+    One => (1, 1)
+    ZeroOrMore => (0, count)
+    OneOrMore => (1, count)
+    ZeroOrOne => (0, if count > 0 { 1 } else { 0 })
+    Exactly(n) => (n, n)
+    AtLeast(n) => (n, count)
+    Between(n, m) => (n, if m < count { m } else { count })
+  }
+  let valid : Array[Int] = []
+  for i = lo; i <= hi; i = i + 1 {
+    if i < all_positions.length() {
+      valid.push(all_positions[i])
+    }
+  }
+  if !lazy_ {
+    valid.rev_in_place()
+  }
+  Some(valid)
+}
+
+///|
 /// Collects all valid end positions for a repeated match_once function.
 /// Returns positions ordered for backtracking (greedy: max→min, lazy: min→max).
 fn collect_repeat_positions(
@@ -1053,6 +1182,37 @@ fn match_group_positions(
   pos : Int,
   case_insensitive : Bool,
 ) -> Array[Int] {
+  // Fast path: group contains a single Alternation with quantifier One,
+  // and all alternatives are fixed-width simple sequences.
+  if elements.length() == 1 {
+    let qe = elements[0]
+    match (qe.element, qe.quantifier) {
+      (Alternation(alternatives), One) =>
+        match
+          try_collect_repeat_positions_fast(
+            alternatives, quantifier, lazy_, input_chars, pos, case_insensitive,
+          ) {
+          Some(positions) => return positions
+          None => ()
+        }
+      _ => ()
+    }
+  }
+  // Fast path: all elements form a fixed-width simple sequence.
+  match sequence_fixed_width(elements) {
+    Some(width) =>
+      if width > 0 {
+        match
+          try_collect_repeat_positions_fast(
+            [elements], quantifier, lazy_, input_chars, pos, case_insensitive,
+          ) {
+          Some(positions) => return positions
+          None => ()
+        }
+      }
+    None => ()
+  }
+  // Generic path: recursive backtracking.
   fn match_once(start_pos : Int) -> Int? {
     match_elements_backtrack(
       elements, 0, input_chars, start_pos, case_insensitive,
@@ -1166,6 +1326,15 @@ fn match_alternation_positions(
   pos : Int,
   case_insensitive : Bool,
 ) -> Array[Int] {
+  // Fast path: all alternatives are fixed-width simple sequences.
+  match
+    try_collect_repeat_positions_fast(
+      alternatives, quantifier, lazy_, input_chars, pos, case_insensitive,
+    ) {
+    Some(positions) => return positions
+    None => ()
+  }
+  // Generic path: recursive backtracking.
   fn match_once(start_pos : Int) -> Int? {
     for alt in alternatives {
       match
