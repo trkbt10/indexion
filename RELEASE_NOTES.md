@@ -1,3 +1,53 @@
+# v0.9.0
+
+## Highlights
+
+- **Skills Consolidation** — `indexion-doc`, `indexion-plan-docs`, `indexion-plan-readme`, `indexion-plan-reconcile` merged into a single `indexion-documentation` skill covering the full documentation lifecycle
+- **SDD Skill v3 Overhaul** — Complete rewrite of `indexion-sdd` skill for cc-sdd v3 skills mode with expanded workflow: per-task drift gates, stall detection/recovery, ISO/IEC standard support, and vocabulary alignment fix
+
+## Skills
+
+### `indexion-documentation` — Unified Documentation Skill
+
+Four documentation-related skills merged into one:
+
+| Previous Skill | Merged Into |
+|---------------|-------------|
+| `indexion-doc` (doc readme, doc graph) | `indexion-documentation` |
+| `indexion-plan-docs` (plan documentation) | `indexion-documentation` |
+| `indexion-plan-readme` (plan readme) | `indexion-documentation` |
+| `indexion-plan-reconcile` (plan reconcile) | `indexion-documentation` |
+
+### `indexion-sdd` — SDD Workflow v3
+
+Major update for cc-sdd v3 skills mode (`$kiro-spec-*` commands):
+
+- Migrate from `--codex`/`--claude` to `--codex-skills`/`--claude-skills`
+- Add ISO/IEC standard support (`.spec.txt` format, PDF text extraction)
+- Add Step 1.5: specification fidelity check with traceability chain
+- Add Step 2.5: per-task drift gate using `indexion spec align`
+- Add Step 2.6: stall detection and recovery for Codex processes
+- Add Step 2.7: drift gate proxy when Codex cannot run indexion
+- Add Step 3.5: vocabulary alignment fix with agent prompt generation
+- Add Step 4: `plan reconcile` for post-implementation documentation drift
+- Translate Japanese notes to English for international users
+- Remove embedded dogfooding lessons (now maintained in indexion docs)
+
+### Other Skill Updates
+
+- `indexion-explore`: add missing strategies and options
+- `indexion-kgf`: add missing subcommands documentation
+- `indexion-plan-refactor`: fix CLI option accuracy
+- `indexion-segment`: fix argument names and add missing options
+
+## Internal
+
+- Version: 0.8.0 → 0.9.0
+- Skills: 4 merged into 1 (`indexion-documentation`), net −3 skill files
+- `plugin.json` version synced from 0.1.0 → 0.8.0 → 0.9.0
+
+---
+
 # v0.8.0
 
 ## Highlights
