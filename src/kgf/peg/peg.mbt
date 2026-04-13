@@ -88,7 +88,7 @@ pub fn build_peg(spec : @types.KGFSpec) -> PEG raise {
   let token_ids : Map[String, Int] = Map::new()
   // Collect non-skip tokens and assign IDs
   let mut token_id_counter = 0
-  for token_def in spec.tokens {
+  for token_def in spec.get_tokens() {
     if !token_def.skip {
       tokens.add(token_def.name)
       token_ids.set(token_def.name, token_id_counter)
@@ -99,7 +99,7 @@ pub fn build_peg(spec : @types.KGFSpec) -> PEG raise {
   let compiled_nodes : Array[CompiledNode] = []
   let rule_node_ids : Map[String, Int] = Map::new()
   // Parse all rule expressions (original compiled nodes)
-  for name, rule_def in spec.rules {
+  for name, rule_def in spec.get_rules() {
     let node = parse_expr(rule_def.expr)
     ast.set(name, node)
     let node_id = compile_node(node, compiled_nodes)
@@ -110,12 +110,12 @@ pub fn build_peg(spec : @types.KGFSpec) -> PEG raise {
   let fast_rule_ids : Map[String, Int] = Map::new()
   let fast_rule_body_ids : Map[String, Int] = Map::new()
   // First pass: reserve IDs for rule body placeholders
-  for name, _ in spec.rules {
+  for name, _ in spec.get_rules() {
     fast_rule_ids.set(name, fast_nodes.length())
     fast_nodes.push(FEmpty) // placeholder
   }
   // Second pass: compile rule bodies using ASTs from Phase 1
-  for name, _ in spec.rules {
+  for name, _ in spec.get_rules() {
     let node = ast.get(name).unwrap()
     let body_node_id = compile_fast_node(
       node, fast_nodes, tokens, token_ids, fast_rule_ids,
@@ -129,7 +129,7 @@ pub fn build_peg(spec : @types.KGFSpec) -> PEG raise {
   {
     tokens,
     ast,
-    attrs: spec.attrs,
+    attrs: spec.get_attrs(),
     compiled_nodes,
     rule_node_ids,
     token_ids,

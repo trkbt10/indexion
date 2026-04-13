@@ -70,7 +70,7 @@ pub fn run_parse(
   tokens : Array[@types.Tok],
 ) -> EvalResult? {
   let active_rules : @hashset.HashSet[String] = @hashset.new()
-  for name, _ in spec.rules {
+  for name, _ in spec.get_rules() {
     active_rules.add(name)
   }
   run_parse_filtered(peg, spec, start_rule, tokens, active_rules)

@@ -111,14 +111,14 @@ test "parse typescript spec - full structure" {
   let s = spec.unwrap()
   assert_eq(s.language, "typescript")
   // Verify all sections are parsed
-  assert_true(s.tokens.length() >= 20)
-  assert_true(s.rules.length() >= 20)
-  assert_true(s.attrs.length() >= 10)
-  assert_true(s.semantics is Some(_))
-  let sem = s.semantics.unwrap()
+  assert_true(s.get_tokens().length() >= 20)
+  assert_true(s.get_rules().length() >= 20)
+  assert_true(s.get_attrs().length() >= 10)
+  assert_true(s.get_semantics() is Some(_))
+  let sem = s.get_semantics().unwrap()
   assert_eq(sem.length(), 4)
   // Verify resolver
-  let resolver = s.resolver
+  let resolver = s.get_resolver()
   assert_eq(resolver.get_sources().length(), 3)
   assert_eq(resolver.get_aliases().length(), 1)
   // Verify resolve chain
@@ -194,10 +194,10 @@ test "parse japanese law spec - complex semantics" {
   let s = spec.unwrap()
   assert_eq(s.language, "japanese-law")
   // Verify tokens
-  assert_eq(s.tokens.length(), 9)
+  assert_eq(s.get_tokens().length(), 9)
   // Verify semantics with when conditions
-  assert_true(s.semantics is Some(_))
-  let sem = s.semantics.unwrap()
+  assert_true(s.get_semantics() is Some(_))
+  let sem = s.get_semantics().unwrap()
   // Multiple on-blocks for same rules
   assert_true(sem.contains("Chapter"))
   let chapter_blocks = sem.get("Chapter").unwrap()
@@ -206,7 +206,7 @@ test "parse japanese law spec - complex semantics" {
   let article_blocks = sem.get("Article").unwrap()
   assert_eq(article_blocks.length(), 2)
   // Verify resolve chain
-  assert_true(s.resolver.has_resolve_chain())
+  assert_true(s.get_resolver().has_resolve_chain())
 }
 
 ///|
@@ -264,7 +264,7 @@ test "parse python spec - dot module path style" {
   let s = spec.unwrap()
   assert_eq(s.language, "python")
   // Verify dot module path style
-  let resolver = s.resolver
+  let resolver = s.get_resolver()
   assert_eq(resolver.get_module_path_style().as_string(), "dot")
   // Verify resolve chain
   assert_true(resolver.has_resolve_chain())
@@ -311,13 +311,13 @@ test "parse go spec - minimal without attrs and semantics" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "go")
-  assert_eq(s.tokens.length(), 10)
-  assert_eq(s.rules.length(), 3)
+  assert_eq(s.get_tokens().length(), 10)
+  assert_eq(s.get_rules().length(), 3)
   // No attrs or semantics
-  assert_eq(s.attrs.length(), 0)
-  assert_true(s.semantics is None)
+  assert_eq(s.get_attrs().length(), 0)
+  assert_true(s.get_semantics() is None)
   // Verify resolve chain
-  assert_true(s.resolver.has_resolve_chain())
+  assert_true(s.get_resolver().has_resolve_chain())
 }
 
 ///|
@@ -361,14 +361,14 @@ test "parse rust spec - macro token pattern" {
   let s = spec.unwrap()
   assert_eq(s.language, "rust")
   // Verify macro pattern is parsed correctly
-  let macro_token = s.tokens
+  let macro_token = s.get_tokens()
     .iter()
     .find_first(fn(t) { t.get_name() == "Macro" })
   assert_true(macro_token is Some(_))
   assert_eq(macro_token.unwrap().get_pattern(), "[a-zA-Z_][a-zA-Z0-9_]*!")
   // Verify resolve chain
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain().length(), 5)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain().length(), 5)
 }
 
 ///|
@@ -401,14 +401,14 @@ test "parse base64 spec - simple encoding format" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "base64")
-  assert_eq(s.tokens.length(), 3)
-  assert_eq(s.rules.length(), 5)
+  assert_eq(s.get_tokens().length(), 3)
+  assert_eq(s.get_rules().length(), 5)
   // Attrs section with only comment should be empty
-  assert_eq(s.attrs.length(), 0)
+  assert_eq(s.get_attrs().length(), 0)
   // Resolver should have multiple sources
-  assert_eq(s.resolver.get_sources().length(), 3)
+  assert_eq(s.get_resolver().get_sources().length(), 3)
   // Verify resolve chain
-  assert_true(s.resolver.has_resolve_chain())
+  assert_true(s.get_resolver().has_resolve_chain())
 }
 
 ///|
@@ -441,10 +441,10 @@ test "parse markdown spec - minimal structure" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "markdown")
-  assert_eq(s.tokens.length(), 8)
-  assert_eq(s.rules.length(), 2)
+  assert_eq(s.get_tokens().length(), 8)
+  assert_eq(s.get_rules().length(), 2)
   // Verify resolve chain
-  assert_true(s.resolver.has_resolve_chain())
+  assert_true(s.get_resolver().has_resolve_chain())
 }
 
 ///|
@@ -482,7 +482,7 @@ test "lexer integration: tokenize typescript with spec" {
   let s = spec.unwrap()
 
   // Create lexer from spec tokens
-  let lexer = @kgf_lexer.Lexer::new(s.tokens)
+  let lexer = @kgf_lexer.Lexer::new(s.get_tokens())
 
   // Tokenize sample TypeScript code
   let code = "import { foo, bar } from \"module\";"
@@ -530,7 +530,7 @@ test "lexer integration: complex alternation patterns do not overflow" {
   let s = spec.unwrap()
 
   // Create lexer from spec tokens
-  let lexer = @kgf_lexer.Lexer::new(s.tokens)
+  let lexer = @kgf_lexer.Lexer::new(s.get_tokens())
 
   // Tokenize simple code (tests that tokenization works without stack overflow)
   let code = "foo bar baz"
@@ -604,16 +604,16 @@ test "parse html spec - web document structure" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "html")
-  assert_eq(s.tokens.length(), 12)
+  assert_eq(s.get_tokens().length(), 12)
   // Verify resolve chain
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain().length(), 3)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain().length(), 3)
   assert_eq(
-    s.resolver.get_resolve_chain()[0].get_step_type().as_string(),
+    s.get_resolver().get_resolve_chain()[0].get_step_type().as_string(),
     "index",
   )
   assert_eq(
-    s.resolver.get_resolve_chain()[2].get_step_type().as_string(),
+    s.get_resolver().get_resolve_chain()[2].get_step_type().as_string(),
     "fallback",
   )
 }
@@ -679,10 +679,10 @@ test "parse javascript spec - esm module system" {
   let s = spec.unwrap()
   assert_eq(s.language, "javascript")
   // Verify resolve chain
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain().length(), 4)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain().length(), 4)
   assert_eq(
-    s.resolver.get_resolve_chain()[0].get_step_type().as_string(),
+    s.get_resolver().get_resolve_chain()[0].get_step_type().as_string(),
     "manifest",
   )
 }
@@ -725,8 +725,8 @@ test "parse css spec - stylesheet structure" {
   let s = spec.unwrap()
   assert_eq(s.language, "css")
   // Verify resolve chain
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain().length(), 2)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain().length(), 2)
 }
 
 ///|
@@ -798,15 +798,15 @@ test "parse c spec - system programming language" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "c")
-  assert_true(s.tokens.length() >= 15)
+  assert_true(s.get_tokens().length() >= 15)
   // Verify resolve chain
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain().length(), 2)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain().length(), 2)
   assert_eq(
-    s.resolver.get_resolve_chain()[0].get_step_type().as_string(),
+    s.get_resolver().get_resolve_chain()[0].get_step_type().as_string(),
     "ext",
   )
-  assert_eq(s.resolver.get_resolve_chain()[1].get_prefix(), "system:")
+  assert_eq(s.get_resolver().get_resolve_chain()[1].get_prefix(), "system:")
 }
 
 ///|
@@ -894,12 +894,12 @@ test "parse cpp spec - c++ with namespaces and templates" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "cpp")
-  assert_true(s.tokens.length() >= 18)
+  assert_true(s.get_tokens().length() >= 18)
   // Verify resolve chain
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain().length(), 2)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain().length(), 2)
   // Verify sources include common C++ extensions
-  assert_eq(s.resolver.get_sources().length(), 7)
+  assert_eq(s.get_resolver().get_sources().length(), 7)
 }
 
 ///|
@@ -986,13 +986,13 @@ test "parse csharp spec - .NET language with namespaces" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "csharp")
-  assert_true(s.tokens.length() >= 15)
+  assert_true(s.get_tokens().length() >= 15)
   // Verify module path style is dot (C# uses namespaces like System.Collections.Generic)
-  assert_eq(s.resolver.get_module_path_style().as_string(), "dot")
+  assert_eq(s.get_resolver().get_module_path_style().as_string(), "dot")
   // Verify resolve chain
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain().length(), 2)
-  assert_eq(s.resolver.get_resolve_chain()[1].get_prefix(), "nuget:")
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain().length(), 2)
+  assert_eq(s.get_resolver().get_resolve_chain()[1].get_prefix(), "nuget:")
 }
 
 ///|
@@ -1127,28 +1127,28 @@ test "parse moonbit spec - moon ecosystem with packages" {
   let s = spec.unwrap()
   assert_eq(s.language, "moonbit")
   // 17 TOKEN definitions in lex section
-  assert_true(s.tokens.length() >= 17)
+  assert_true(s.get_tokens().length() >= 17)
   // Verify attrs includes package reference handling
-  assert_true(s.attrs.length() >= 11)
+  assert_true(s.get_attrs().length() >= 11)
   // Verify resolver
-  assert_eq(s.resolver.get_sources().length(), 1)
-  assert_eq(s.resolver.get_sources()[0], ".mbt")
+  assert_eq(s.get_resolver().get_sources().length(), 1)
+  assert_eq(s.get_resolver().get_sources()[0], ".mbt")
   // Verify resolve chain - moonbit uses moon.pkg.json manifest
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain().length(), 4)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain().length(), 4)
   // First step: manifest for moon.pkg.json
   assert_eq(
-    s.resolver.get_resolve_chain()[0].get_step_type().as_string(),
+    s.get_resolver().get_resolve_chain()[0].get_step_type().as_string(),
     "manifest",
   )
-  assert_eq(s.resolver.get_resolve_chain()[0].get_file(), "moon.pkg.json")
+  assert_eq(s.get_resolver().get_resolve_chain()[0].get_file(), "moon.pkg.json")
   // Second step: marker for package detection
   assert_eq(
-    s.resolver.get_resolve_chain()[1].get_step_type().as_string(),
+    s.get_resolver().get_resolve_chain()[1].get_step_type().as_string(),
     "marker",
   )
   // Last step: fallback to moon registry
-  assert_eq(s.resolver.get_resolve_chain()[3].get_prefix(), "moon:")
+  assert_eq(s.get_resolver().get_resolve_chain()[3].get_prefix(), "moon:")
 }
 
 ///|
@@ -1240,10 +1240,10 @@ test "parse java spec - maven/gradle ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "java")
-  assert_true(s.tokens.length() >= 15)
-  assert_eq(s.resolver.get_module_path_style().as_string(), "dot")
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain()[1].get_prefix(), "maven:")
+  assert_true(s.get_tokens().length() >= 15)
+  assert_eq(s.get_resolver().get_module_path_style().as_string(), "dot")
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain()[1].get_prefix(), "maven:")
 }
 
 ///|
@@ -1324,9 +1324,9 @@ test "parse ruby spec - rubygems/bundler ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "ruby")
-  assert_true(s.tokens.length() >= 18)
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain()[2].get_prefix(), "gem:")
+  assert_true(s.get_tokens().length() >= 18)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain()[2].get_prefix(), "gem:")
 }
 
 ///|
@@ -1412,11 +1412,11 @@ test "parse php spec - composer/psr-4 ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "php")
-  assert_true(s.tokens.length() >= 16)
+  assert_true(s.get_tokens().length() >= 16)
   // PHP uses namespace prefix for PSR-4 autoloading
-  assert_eq(s.resolver.get_ns_segments(), 2)
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain()[1].get_prefix(), "composer:")
+  assert_eq(s.get_resolver().get_ns_segments(), 2)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain()[1].get_prefix(), "composer:")
 }
 
 ///|
@@ -1532,11 +1532,11 @@ test "parse swift spec - swift package manager ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "swift")
-  assert_true(s.tokens.length() >= 16)
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain().length(), 4)
-  assert_eq(s.resolver.get_resolve_chain()[0].get_file(), "Package.swift")
-  assert_eq(s.resolver.get_resolve_chain()[3].get_prefix(), "spm:")
+  assert_true(s.get_tokens().length() >= 16)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain().length(), 4)
+  assert_eq(s.get_resolver().get_resolve_chain()[0].get_file(), "Package.swift")
+  assert_eq(s.get_resolver().get_resolve_chain()[3].get_prefix(), "spm:")
 }
 
 ///|
@@ -1640,10 +1640,10 @@ test "parse kotlin spec - gradle/maven ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "kotlin")
-  assert_true(s.tokens.length() >= 16)
-  assert_eq(s.resolver.get_module_path_style().as_string(), "dot")
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain()[1].get_prefix(), "maven:")
+  assert_true(s.get_tokens().length() >= 16)
+  assert_eq(s.get_resolver().get_module_path_style().as_string(), "dot")
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain()[1].get_prefix(), "maven:")
 }
 
 ///|
@@ -1762,10 +1762,10 @@ test "parse dart spec - pub ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "dart")
-  assert_true(s.tokens.length() >= 14)
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain()[0].get_file(), "pubspec.yaml")
-  assert_eq(s.resolver.get_resolve_chain()[2].get_prefix(), "pub:")
+  assert_true(s.get_tokens().length() >= 14)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain()[0].get_file(), "pubspec.yaml")
+  assert_eq(s.get_resolver().get_resolve_chain()[2].get_prefix(), "pub:")
 }
 
 ///|
@@ -1881,10 +1881,10 @@ test "parse scala spec - sbt/maven ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "scala")
-  assert_true(s.tokens.length() >= 15)
-  assert_eq(s.resolver.get_module_path_style().as_string(), "dot")
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain()[1].get_prefix(), "maven:")
+  assert_true(s.get_tokens().length() >= 15)
+  assert_eq(s.get_resolver().get_module_path_style().as_string(), "dot")
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain()[1].get_prefix(), "maven:")
 }
 
 ///|
@@ -1982,10 +1982,10 @@ test "parse elixir spec - mix/hex ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "elixir")
-  assert_true(s.tokens.length() >= 14)
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain()[0].get_file(), "mix.exs")
-  assert_eq(s.resolver.get_resolve_chain()[3].get_prefix(), "hex:")
+  assert_true(s.get_tokens().length() >= 14)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain()[0].get_file(), "mix.exs")
+  assert_eq(s.get_resolver().get_resolve_chain()[3].get_prefix(), "hex:")
 }
 
 ///|
@@ -2088,10 +2088,10 @@ test "parse haskell spec - cabal/stack ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "haskell")
-  assert_true(s.tokens.length() >= 14)
-  assert_eq(s.resolver.get_module_path_style().as_string(), "dot")
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain()[3].get_prefix(), "hackage:")
+  assert_true(s.get_tokens().length() >= 14)
+  assert_eq(s.get_resolver().get_module_path_style().as_string(), "dot")
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain()[3].get_prefix(), "hackage:")
 }
 
 ///|
@@ -2193,9 +2193,9 @@ test "parse ocaml spec - opam/dune ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "ocaml")
-  assert_true(s.tokens.length() >= 14)
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain()[2].get_prefix(), "opam:")
+  assert_true(s.get_tokens().length() >= 14)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain()[2].get_prefix(), "opam:")
 }
 
 ///|
@@ -2296,10 +2296,10 @@ test "parse zig spec - zig package manager ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "zig")
-  assert_true(s.tokens.length() >= 14)
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain()[0].get_file(), "build.zig.zon")
-  assert_eq(s.resolver.get_resolve_chain()[3].get_prefix(), "zig:")
+  assert_true(s.get_tokens().length() >= 14)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain()[0].get_file(), "build.zig.zon")
+  assert_eq(s.get_resolver().get_resolve_chain()[3].get_prefix(), "zig:")
 }
 
 ///|
@@ -2406,10 +2406,10 @@ test "parse julia spec - pkg ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "julia")
-  assert_true(s.tokens.length() >= 15)
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain()[0].get_file(), "Project.toml")
-  assert_eq(s.resolver.get_resolve_chain()[3].get_prefix(), "pkg:")
+  assert_true(s.get_tokens().length() >= 15)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain()[0].get_file(), "Project.toml")
+  assert_eq(s.get_resolver().get_resolve_chain()[3].get_prefix(), "pkg:")
 }
 
 ///|
@@ -2501,9 +2501,9 @@ test "parse lua spec - luarocks ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "lua")
-  assert_true(s.tokens.length() >= 11)
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain()[3].get_prefix(), "luarocks:")
+  assert_true(s.get_tokens().length() >= 11)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain()[3].get_prefix(), "luarocks:")
 }
 
 ///|
@@ -2599,8 +2599,8 @@ test "parse clojure spec - deps.edn/leiningen ecosystem" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "clojure")
-  assert_true(s.tokens.length() >= 11)
-  assert_true(s.resolver.has_resolve_chain())
-  assert_eq(s.resolver.get_resolve_chain()[0].get_file(), "deps.edn")
-  assert_eq(s.resolver.get_resolve_chain()[3].get_prefix(), "clojars:")
+  assert_true(s.get_tokens().length() >= 11)
+  assert_true(s.get_resolver().has_resolve_chain())
+  assert_eq(s.get_resolver().get_resolve_chain()[0].get_file(), "deps.edn")
+  assert_eq(s.get_resolver().get_resolve_chain()[3].get_prefix(), "clojars:")
 }

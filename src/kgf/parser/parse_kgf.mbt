@@ -178,38 +178,52 @@ pub fn parse_kgf_header(text : String) -> KGFHeader {
 
 ///|
 /// Parses a full KGF document text into a structured spec.
+///
+/// Only header, features, resolver, and ignore are parsed eagerly.
+/// Heavy sections (lex, grammar, attrs, semantics, preprocess) are
+/// stored as raw text and parsed lazily on first access.
 pub fn parse_kgf(text : String) -> @types.KGFSpec? {
   let language = extract_language(text)
   let header_sources = extract_sources(text)
-  let lex_result = parse_lex(section(text, "lex"))
-  let tokens = lex_result.get_tokens()
-  let keyword_kinds = lex_result.get_keyword_kinds()
-  let rules = parse_rules(section(text, "grammar"))
-  let attrs = parse_attrs(section(text, "attrs"))
+  // Phase 1 — eager: lightweight metadata needed for registry mapping
   let features = parse_features(section(text, "features"))
   let resolver = parse_resolver_with_sources(
     section(text, "resolver"),
     header_sources,
   )
-  let semantics = parse_semantics(section(text, "semantics"))
-  let preprocess = parse_preprocess(section(text, "preprocess"))
-  let preprocess_fst = parse_preprocess_fst(section(text, "preprocess_fst"))
   let ignore = parse_ignore(section(text, "ignore"))
+  // Phase 2+ — deferred: raw section text stored for lazy parsing
   Some(
-    @types.KGFSpec::new(
+    @types.KGFSpec::new_lazy(
       language,
-      tokens~,
-      keyword_kinds~,
-      rules~,
-      attrs~,
-      resolver~,
-      features~,
-      semantics~,
-      preprocess~,
-      preprocess_fst~,
-      ignore~,
+      resolver,
+      features,
+      ignore,
+      section(text, "lex"),
+      section(text, "grammar"),
+      section(text, "attrs"),
+      section(text, "semantics"),
+      section(text, "preprocess"),
+      section(text, "preprocess_fst"),
     ),
   )
+}
+
+///|
+/// Register lazy parsing callbacks so KGFSpec can defer heavy work.
+/// Called at module init time.
+fn init {
+  @types.parse_lex_lazy.val = fn(source) {
+    let result = parse_lex(source)
+    (result.get_tokens(), result.get_keyword_kinds())
+  }
+  @types.parse_grammar_lazy.val = fn(source) { parse_rules(source) }
+  @types.parse_attrs_lazy.val = fn(source) { parse_attrs(source) }
+  @types.parse_semantics_lazy.val = fn(source) { parse_semantics(source) }
+  @types.parse_preprocess_lazy.val = fn(source) { parse_preprocess(source) }
+  @types.parse_preprocess_fst_lazy.val = fn(source) {
+    parse_preprocess_fst(source)
+  }
 }
 
 ///|

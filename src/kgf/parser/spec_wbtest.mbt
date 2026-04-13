@@ -425,13 +425,13 @@ test "parse_kgf with preprocess_fst" {
   let s = spec.unwrap()
   assert_eq(s.language, "test")
   // Check preprocess
-  assert_true(s.preprocess is Some(_))
-  let preprocess = s.preprocess.unwrap()
+  assert_true(s.get_preprocess() is Some(_))
+  let preprocess = s.get_preprocess().unwrap()
   assert_eq(preprocess.length(), 1)
   assert_eq(preprocess[0], "fst:base64_classify")
   // Check preprocess_fst
-  assert_true(s.preprocess_fst is Some(_))
-  let fst_specs = s.preprocess_fst.unwrap()
+  assert_true(s.get_preprocess_fst() is Some(_))
+  let fst_specs = s.get_preprocess_fst().unwrap()
   assert_eq(fst_specs.length(), 1)
   assert_eq(fst_specs[0].name, "base64_classify")
 }
@@ -454,7 +454,7 @@ test "parse_kgf handles kgf version header" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "typescript")
-  assert_eq(s.tokens.length(), 2)
+  assert_eq(s.get_tokens().length(), 2)
 }
 
 ///|
@@ -729,11 +729,11 @@ test "parse_kgf go spec style no attrs no semantics" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "go")
-  assert_eq(s.tokens.length(), 4)
-  assert_eq(s.rules.length(), 3)
+  assert_eq(s.get_tokens().length(), 4)
+  assert_eq(s.get_rules().length(), 3)
   // attrs and semantics should be empty/None
-  assert_eq(s.attrs.length(), 0)
-  assert_true(s.semantics is None)
+  assert_eq(s.get_attrs().length(), 0)
+  assert_true(s.get_semantics() is None)
 }
 
 ///|
@@ -763,11 +763,11 @@ test "parse_kgf base64 minimal spec" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "base64")
-  assert_eq(s.tokens.length(), 3)
-  assert_eq(s.rules.length(), 3)
+  assert_eq(s.get_tokens().length(), 3)
+  assert_eq(s.get_rules().length(), 3)
   // attrs section has only comment, should be empty
-  assert_eq(s.attrs.length(), 0)
-  let resolver = s.resolver
+  assert_eq(s.get_attrs().length(), 0)
+  let resolver = s.get_resolver()
   assert_eq(resolver.get_sources().length(), 3)
 }
 
@@ -969,10 +969,10 @@ test "parse_kgf rust spec style" {
   assert_true(spec is Some(_))
   let s = spec.unwrap()
   assert_eq(s.language, "rust")
-  assert_eq(s.tokens.length(), 5)
-  assert_eq(s.rules.length(), 3)
-  assert_eq(s.attrs.length(), 0)
-  assert_true(s.semantics is None)
+  assert_eq(s.get_tokens().length(), 5)
+  assert_eq(s.get_rules().length(), 3)
+  assert_eq(s.get_attrs().length(), 0)
+  assert_true(s.get_semantics() is None)
 }
 
 // ============================================================
