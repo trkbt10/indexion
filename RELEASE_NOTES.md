@@ -2,8 +2,93 @@
 
 ## Highlights
 
-- **Skills Consolidation** — `indexion-doc`, `indexion-plan-docs`, `indexion-plan-readme`, `indexion-plan-reconcile` merged into a single `indexion-documentation` skill covering the full documentation lifecycle
-- **SDD Skill v3 Overhaul** — Complete rewrite of `indexion-sdd` skill for cc-sdd v3 skills mode with expanded workflow: per-task drift gates, stall detection/recovery, ISO/IEC standard support, and vocabulary alignment fix
+- **VSCode Extension** — Full-featured VS Code plugin with search integration, wiki viewer, syntax highlighting, and Mermaid diagram rendering
+- **Regex Engine Extraction** — Pattern matcher extracted from `src/kgf/lexer` into standalone `src/regexp` module with responsibility-based file split and performance optimizations
+- **LanguageToolkit** — New `src/kgf/toolkit` module caches KGFSpec-derived runtime artifacts (compiled patterns, declaration extractors) to avoid redundant computation
+- **KGF Lazy Evaluation** — Heavy sections (grammar, semantics) parsed on demand, reducing startup cost for commands that only need lexer
+- **Plan Solid: Cross-Directory Matching** — `plan solid` gains cross-directory content matching and function-level duplicate detection
+- **Skills Consolidation** — 4 documentation skills merged into `indexion-documentation`; SDD skill rewritten for cc-sdd v3
+
+## New Packages
+
+### `packages/vscode-plugin/` — VS Code Extension
+
+Full VS Code extension for indexion with:
+
+- Unified search across search, grep, explore, and digest modes
+- Wiki viewer with navigation tree, i18n (English/Japanese), and dark/light theme support
+- Syntax highlighting via KGF tokenizer (`@indexion/syntax-highlight`)
+- Mermaid diagram rendering (`@indexion/mermaid-viewer`)
+- Plan results viewer with refactor checklists
+- Settings panel with index rebuild controls
+- API client for search/grep/spec-align endpoints
+- `useWebviewReducer` pattern for all webview state management
+- Custom ESLint rules for codebase consistency
+- Build integrity tests validating dist artifacts
+
+### `packages/syntax-highlight/` — KGF Syntax Highlighting
+
+Standalone React component library for KGF-based code syntax highlighting. Uses MoonBit-compiled KGF tokenizer (JS target) with highlight context management and `useKgfHighlight` hook.
+
+### `packages/mermaid-viewer/` — Mermaid Diagram Viewer
+
+Standalone React component for Mermaid diagram rendering with SVG viewBox fitting, vertical centering, zoom/pan, and full-screen support. Ref-based svg version tracking for stable re-renders.
+
+### `packages/kgf-tokenizer/` — KGF Tokenizer (JS)
+
+TypeScript wrapper for MoonBit-compiled KGF tokenizer ESM module.
+
+### `src/regexp/` — Standalone Regex Engine
+
+Pattern matcher extracted from `src/kgf/lexer/pattern_matcher.mbt` into a dedicated module with responsibility-based file split:
+
+- `types.mbt` — AST node types
+- `parser.mbt` — Regex pattern parser
+- `matcher.mbt` — Matching engine
+- `char_utils.mbt` — Character class utilities
+- `api.mbt` — Public API surface
+- Fast matching functions for simple elements and fixed-width sequences
+
+### `src/kgf/toolkit/` — LanguageToolkit
+
+Caches KGFSpec-derived runtime artifacts per language. Avoids recomputing compiled patterns, declaration extractors, and tokenizer configurations on each call.
+
+## Improvements
+
+### KGF Parser: Lazy Evaluation
+
+Heavy sections (grammar rules, semantic actions) are now parsed lazily. Commands that only need the lexer (e.g., `grep`, `search`) skip parsing grammar and semantics entirely.
+
+### Search/Grep: Digest Index as SoT
+
+Search and grep now consume the digest index as the Single Source of Truth for file discovery, with `root_dir` enforcement for consistent path resolution.
+
+### Plan Solid: Function-Level Duplicates
+
+`plan solid` detects cross-directory content matches and function-level duplicates, not just file-level similarity. Content matching uses token-level comparison for accuracy.
+
+### Declaration Extraction: Visibility Options
+
+`extract_pub_declarations` gains visibility filtering options for more accurate public API surface extraction. Function extraction now uses content and registry parameters directly.
+
+### Preprocess: `blankLineIfRegex`
+
+New KGF preprocess step that blanks lines matching a regex pattern, useful for stripping noise before tokenization.
+
+### Wiki Config SoT
+
+New `src/config/wiki_config.mbt` consolidates wiki configuration resolution.
+
+## Bug Fixes
+
+- Fix `discover_impl_files` to fall back to document files and extract section nodes
+- Fix `reconcile_store` to return `Result` instead of printing errors directly
+- Fix Linux installer to use `~/.local/share/indexion` with symlink from `~/.local/bin`
+- Fix code-block parsing breakage in generated `README.mbt.md`
+- Fix deprecated `f!(..)` syntax warnings via `moon fmt`
+- Fix Tailwind Typography prose variables mapped to VSCode theme variables
+- Fix ESLint/prettier violations across all frontend packages
+- Fix CI to build vscode-plugin before running build-integrity tests
 
 ## Skills
 
@@ -30,7 +115,6 @@ Major update for cc-sdd v3 skills mode (`$kiro-spec-*` commands):
 - Add Step 2.7: drift gate proxy when Codex cannot run indexion
 - Add Step 3.5: vocabulary alignment fix with agent prompt generation
 - Add Step 4: `plan reconcile` for post-implementation documentation drift
-- Translate Japanese notes to English for international users
 - Remove embedded dogfooding lessons (now maintained in indexion docs)
 
 ### Other Skill Updates
@@ -43,8 +127,11 @@ Major update for cc-sdd v3 skills mode (`$kiro-spec-*` commands):
 ## Internal
 
 - Version: 0.8.0 → 0.9.0
+- 451 files changed, +25,350 lines, −6,296 lines (net +19,054)
+- New packages: 5 (vscode-plugin, syntax-highlight, mermaid-viewer, kgf-tokenizer, regexp)
+- New modules: `src/kgf/toolkit`, `src/config/wiki_config`
 - Skills: 4 merged into 1 (`indexion-documentation`), net −3 skill files
-- `plugin.json` version synced from 0.1.0 → 0.8.0 → 0.9.0
+- CI: vscode-plugin build step added before test
 
 ---
 
