@@ -1,0 +1,30 @@
+/**
+ * @file Styles for the wiki page viewer panel (editor area).
+ */
+
+.root {
+  height: 100%;
+  overflow: auto;
+  background: var(--vscode-editor-background);
+}
+
+.centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.wikiLink {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--vscode-textLink-foreground);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: none;
+}
+
+.wikiLink:hover {
+  text-decoration: underline;
+}

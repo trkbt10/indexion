@@ -16,7 +16,10 @@
     "types": ["vite/client"],
     "paths": {
       "@indexion/api-client": ["../api-client/src/index.ts"],
-      "@indexion/api-client/react": ["../api-client/src/react.ts"]
+      "@indexion/api-client/react": ["../api-client/src/react.ts"],
+      "@indexion/kgf-tokenizer": ["../kgf-tokenizer/src/index.ts"],
+      "@indexion/mermaid-viewer": ["../mermaid-viewer/src/index.ts"],
+      "@indexion/syntax-highlight": ["../syntax-highlight/src/index.ts"]
     }
   },
   "include": ["src/client/**/*"],

@@ -1,18 +1,23 @@
 /**
  * @file Wiki page viewer — renders markdown content in the editor area.
  *
- * Uses `marked` to convert markdown to HTML. Styled to match VSCode's
- * built-in markdown preview (using the same CSS variables).
+ * Uses the shared WikiContent component from @indexion/wiki with a
+ * VSCode-specific environment that routes link clicks and file opens
+ * through the extension host via postMessage.
  */
 
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { marked } from "marked";
+import {
+  WikiContent,
+  WikiContentEnvProvider,
+  type WikiContentEnv,
+} from "@indexion/wiki/components";
 import type { WikiPage } from "@indexion/api-client";
 import type { WikiPageToWebview, WikiPageFromWebview } from "../../panels/wiki-page/messages.ts";
 import { usePostMessage, useWebviewReducer } from "../bridge/context.tsx";
-
-/** Configure marked for safe rendering (no raw HTML pass-through). */
-marked.setOptions({ async: false, gfm: true, breaks: false });
+import { StatusMsg } from "../components/status-msg.tsx";
+import { FileLink } from "../components/file-link.tsx";
+import styles from "./wiki-viewer.module.css";
 
 // ─── State & reducer ────────────────────────────────────
 
@@ -72,110 +77,61 @@ export const WikiViewerApp = (): React.JSX.Element => {
     [postMessage],
   );
 
-  const html = useMemo(() => {
-    if (!page) {
-      return "";
-    }
-    return marked.parse(page.content) as string;
-  }, [page]);
+  const env = useMemo(
+    (): WikiContentEnv => ({
+      renderWikiLink: (pageId, children) => (
+        <button
+          type="button"
+          className={styles.wikiLink}
+          onClick={() => handleNavigate(pageId)}
+        >
+          {children}
+        </button>
+      ),
+      renderSourceBadge: (source) => (
+        <FileLink
+          filePath={source.file}
+          label={
+            source.lines[1] > 0
+              ? `${source.file}:${source.lines[0]}-${source.lines[1]}`
+              : source.file
+          }
+          onClick={() => handleOpenFile(source.file, source.lines[0])}
+        />
+      ),
+      sourceFilesLabel: "Relevant source files",
+      relatedPagesLabel: "Related",
+    }),
+    [handleOpenFile, handleNavigate],
+  );
 
   if (loading) {
-    return <div style={s.placeholder}>Loading...</div>;
+    return (
+      <div className={styles.centered}>
+        <StatusMsg>Loading...</StatusMsg>
+      </div>
+    );
   }
   if (error) {
-    return <div style={{ ...s.placeholder, color: "var(--vscode-errorForeground)" }}>{error}</div>;
+    return (
+      <div className={styles.centered}>
+        <StatusMsg error>{error}</StatusMsg>
+      </div>
+    );
   }
   if (!page) {
-    return <div style={s.placeholder}>No page selected</div>;
+    return (
+      <div className={styles.centered}>
+        <StatusMsg>No page selected</StatusMsg>
+      </div>
+    );
   }
 
   return (
-    <div ref={scrollRef} style={s.root}>
-      <article className="markdown-body" style={s.article} dangerouslySetInnerHTML={{ __html: html }} />
-
-      {/* Footer: sources and related pages */}
-      {(page.sources.length > 0 || page.children.length > 0) && (
-        <footer style={s.footer}>
-          {page.sources.length > 0 && (
-            <div style={s.footerSection}>
-              <span style={s.footerLabel}>Sources</span>
-              {page.sources.map((src, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  style={s.footerLink}
-                  onClick={() => handleOpenFile(src.file, src.lines[0])}
-                >
-                  {src.file}:{src.lines[0]}-{src.lines[1]}
-                </button>
-              ))}
-            </div>
-          )}
-          {page.children.length > 0 && (
-            <div style={s.footerSection}>
-              <span style={s.footerLabel}>Related</span>
-              {page.children.map((childId) => (
-                <button key={childId} type="button" style={s.footerLink} onClick={() => handleNavigate(childId)}>
-                  {childId}
-                </button>
-              ))}
-            </div>
-          )}
-        </footer>
-      )}
+    <div ref={scrollRef} className={styles.root}>
+      <WikiContentEnvProvider value={env}>
+        <WikiContent page={page} />
+      </WikiContentEnvProvider>
     </div>
   );
-};
-
-const s: Record<string, React.CSSProperties> = {
-  root: {
-    height: "100%",
-    overflow: "auto",
-    background: "var(--vscode-editor-background)",
-  },
-  placeholder: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    height: "100%",
-    fontFamily: "var(--vscode-font-family)",
-    color: "var(--vscode-descriptionForeground)",
-    fontSize: "13px",
-  },
-  article: {
-    padding: "16px 24px",
-    fontFamily: "var(--vscode-markdown-font-family, var(--vscode-font-family))",
-    fontSize: "var(--vscode-markdown-font-size, 14px)",
-    lineHeight: 1.6,
-    color: "var(--vscode-foreground)",
-    maxWidth: "900px",
-  },
-  footer: {
-    borderTop: "1px solid var(--vscode-panel-border)",
-    padding: "12px 24px",
-    fontSize: "12px",
-  },
-  footerSection: {
-    display: "flex",
-    flexWrap: "wrap" as const,
-    alignItems: "center",
-    gap: "4px 12px",
-    marginBottom: "6px",
-  },
-  footerLabel: {
-    color: "var(--vscode-descriptionForeground)",
-    fontWeight: 600,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.3px",
-    fontSize: "11px",
-  },
-  footerLink: {
-    background: "none",
-    border: "none",
-    padding: 0,
-    color: "var(--vscode-textLink-foreground)",
-    cursor: "pointer",
-    fontFamily: "var(--vscode-editor-font-family, monospace)",
-    fontSize: "12px",
-  },
 };

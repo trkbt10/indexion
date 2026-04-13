@@ -1,0 +1,84 @@
+/**
+ * @file Tailwind CSS entry point for the wiki-viewer webview.
+ *
+ * Maps the shadcn/ui design tokens to VSCode CSS variables so the
+ * shared WikiContent component renders correctly inside VSCode.
+ *
+ * @source directives tell Tailwind to scan external packages for
+ * utility class usage — without these, classes used only in
+ * @indexion/wiki or @indexion/syntax-highlight would be tree-shaken.
+ */
+
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@source "../../../../wiki/src/client/pages/wiki/components/";
+@source "../../../../wiki/src/client/components/shared/";
+@source "../../../../mermaid-viewer/src/";
+
+@theme {
+  --color-background: oklch(0.145 0 0);
+  --color-foreground: oklch(0.985 0 0);
+  --color-muted: oklch(0.269 0 0);
+  --color-muted-foreground: oklch(0.708 0 0);
+  --color-accent: oklch(0.269 0 0);
+  --color-accent-foreground: oklch(0.985 0 0);
+  --color-border: oklch(0.269 0 0);
+  --color-destructive: oklch(0.396 0.141 25.723);
+  --color-destructive-foreground: oklch(0.985 0 0);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius: 0.625rem;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
+}
+
+/**
+ * Override Tailwind's static design tokens with VSCode theme variables
+ * at runtime. @theme provides build-time values so Tailwind can generate
+ * the utility classes; these :root overrides apply the live VSCode theme.
+ */
+:root {
+  --color-background: var(--vscode-editor-background);
+  --color-foreground: var(--vscode-foreground);
+  --color-muted: var(--vscode-textCodeBlock-background);
+  --color-muted-foreground: var(--vscode-descriptionForeground);
+  --color-accent: var(--vscode-list-hoverBackground);
+  --color-accent-foreground: var(--vscode-foreground);
+  --color-border: var(--vscode-panel-border);
+
+  --font-sans: var(--vscode-font-family);
+  --font-mono: var(--vscode-editor-font-family);
+}
+
+*,
+*::before,
+*::after {
+  border-color: var(--color-border);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  margin: 0;
+}
+
+code, pre {
+  font-family: var(--font-mono);
+}
+
+/* Ensure prose code blocks and tables don't overflow the viewport */
+.prose pre,
+.prose table {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* Override prose link color to match VSCode theme */
+.prose a {
+  color: var(--vscode-textLink-foreground, oklch(0.6 0.15 250));
+}

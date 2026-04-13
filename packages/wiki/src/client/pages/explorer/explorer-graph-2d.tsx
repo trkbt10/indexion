@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import type { CodeGraph, IndexedFunction } from "@indexion/api-client";
 import { buildTree } from "../graph/graph-data.ts";
 import type { GraphTree, FolderNode } from "../graph/graph-types.ts";
-import { MermaidDiagram } from "../../components/shared/mermaid-diagram.tsx";
+import { MermaidDiagram } from "@indexion/mermaid-viewer";
 import { ScrollArea } from "../../components/ui/scroll-area.tsx";
 
 type Props = {

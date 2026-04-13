@@ -2,14 +2,17 @@
  * @file Code block with KGF-based syntax highlighting.
  *
  * Extracts language from className (e.g. "language-typescript"),
- * fetches the matching KGF spec via API, and tokenizes + colors.
+ * resolves the KGF spec name via LANG_ALIASES, and tokenizes + colors.
+ *
+ * Requires a KgfSpecProvider ancestor to fetch specs. Without one,
+ * renders plain unhighlighted code.
  */
 
 import { useMemo } from "react";
-import { useKgfHighlight } from "../../lib/kgf/use-kgf-highlight.ts";
+import { useKgfHighlight } from "./use-kgf-highlight.ts";
 
 /** Map markdown language hints to KGF spec names. */
-const LANG_ALIASES: Record<string, string> = {
+export const LANG_ALIASES: Record<string, string> = {
   ts: "typescript",
   tsx: "typescript-jsx",
   js: "javascript",

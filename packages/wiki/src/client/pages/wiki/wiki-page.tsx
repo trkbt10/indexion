@@ -12,6 +12,7 @@ import { LoadingSpinner } from "../../components/shared/loading-spinner.tsx";
 import { ErrorPanel } from "../../components/shared/error-panel.tsx";
 import { WikiNav } from "./components/wiki-nav.tsx";
 import { WikiContent } from "./components/wiki-content.tsx";
+import { WikiContentWebEnv } from "./components/wiki-content-web-env.tsx";
 import { WikiToc } from "./components/wiki-toc.tsx";
 import { useWikiNav, useWikiPage } from "./lib/wiki-hooks.ts";
 import { cn } from "../../lib/utils.ts";
@@ -98,7 +99,11 @@ const WikiContentPane = ({ pageState }: PaneProps): React.JSX.Element => {
   if (pageState.status !== "success") {
     return <LoadingSpinner message={d.loading_page} />;
   }
-  return <WikiContent page={pageState.data} />;
+  return (
+    <WikiContentWebEnv>
+      <WikiContent page={pageState.data} />
+    </WikiContentWebEnv>
+  );
 };
 
 const WikiTocPane = ({ pageState }: PaneProps): React.JSX.Element | null => {
