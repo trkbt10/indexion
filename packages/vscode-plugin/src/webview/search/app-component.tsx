@@ -10,39 +10,60 @@ import "@vscode-elements/elements/dist/vscode-tree/index.js";
 import "@vscode-elements/elements/dist/vscode-tree-item/index.js";
 import "@vscode-elements/elements/dist/vscode-icon/index.js";
 import "@vscode-elements/elements/dist/vscode-badge/index.js";
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import type { SearchToWebview, SearchFromWebview, SearchResultItem } from "../../views/search/messages.ts";
-import { usePostMessage, useWebviewMessage } from "../bridge/context.tsx";
+import { usePostMessage, useWebviewReducer } from "../bridge/context.tsx";
+
+// ─── State & reducer ────────────────────────────────────
+
+type SearchState = {
+  readonly query: string;
+  readonly results: ReadonlyArray<SearchResultItem>;
+  readonly searched: boolean;
+  readonly searching: boolean;
+  readonly error: string | null;
+  readonly serverReady: boolean;
+};
+
+const initialState: SearchState = {
+  query: "",
+  results: [],
+  searched: false,
+  searching: false,
+  error: null,
+  serverReady: false,
+};
+
+type SearchAction =
+  | SearchToWebview
+  | { readonly type: "setQuery"; readonly value: string }
+  | { readonly type: "clearSearch" };
+
+const searchReducer = (state: SearchState, action: SearchAction): SearchState => {
+  switch (action.type) {
+    case "results":
+      return { ...state, results: action.items, searching: false, searched: true, error: null };
+    case "searching":
+      return { ...state, searching: true, error: null };
+    case "error":
+      return { ...state, error: action.message, searching: false, searched: true };
+    case "serverStatus":
+      return { ...state, serverReady: action.ready };
+    case "setQuery":
+      return { ...state, query: action.value };
+    case "clearSearch":
+      return { ...state, query: "", results: [], searched: false };
+    default:
+      return state;
+  }
+};
+
+// ─── Component ──────────────────────────────────────────
 
 export const SearchApp = (): React.JSX.Element => {
   const postMessage = usePostMessage<SearchFromWebview>();
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<ReadonlyArray<SearchResultItem>>([]);
-  const [searched, setSearched] = useState(false);
-  const [searching, setSearching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [serverReady, setServerReady] = useState(false);
-
-  useWebviewMessage<SearchToWebview>((message) => {
-    if (message.type === "results") {
-      setResults(message.items);
-      setSearching(false);
-      setSearched(true);
-      setError(null);
-    }
-    if (message.type === "searching") {
-      setSearching(true);
-      setError(null);
-    }
-    if (message.type === "error") {
-      setError(message.message);
-      setSearching(false);
-      setSearched(true);
-    }
-    if (message.type === "serverStatus") {
-      setServerReady(message.ready);
-    }
-  });
+  const [state, dispatch] = useWebviewReducer(searchReducer, initialState);
+  const { query, results, searched, searching, error, serverReady } = state;
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -53,17 +74,18 @@ export const SearchApp = (): React.JSX.Element => {
         }
       }
       if (e.key === "Escape") {
-        setQuery("");
-        setResults([]);
-        setSearched(false);
+        dispatch({ type: "clearSearch" });
       }
     },
-    [query, postMessage],
+    [query, postMessage, dispatch],
   );
 
-  const handleInput = useCallback((e: React.FormEvent) => {
-    setQuery((e.target as HTMLInputElement).value);
-  }, []);
+  const handleInput = useCallback(
+    (e: React.FormEvent) => {
+      dispatch({ type: "setQuery", value: (e.target as HTMLInputElement).value });
+    },
+    [dispatch],
+  );
 
   const handleResultClick = useCallback(
     (item: SearchResultItem) => {

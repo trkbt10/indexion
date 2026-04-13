@@ -9,10 +9,10 @@ import "@vscode-elements/elements/dist/vscode-textfield/index.js";
 import "@vscode-elements/elements/dist/vscode-tree/index.js";
 import "@vscode-elements/elements/dist/vscode-tree-item/index.js";
 import "@vscode-elements/elements/dist/vscode-icon/index.js";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import type { WikiNavItem } from "@indexion/api-client";
 import type { WikiToWebview, WikiFromWebview, WikiSearchHit } from "../../views/wiki/messages.ts";
-import { usePostMessage, useWebviewMessage } from "../bridge/context.tsx";
+import { usePostMessage, useWebviewReducer } from "../bridge/context.tsx";
 
 // ─── Nav tree item (recursive) ──────────────────────────
 
@@ -39,57 +39,82 @@ const NavTreeItem = ({
   );
 };
 
+// ─── State & reducer ────────────────────────────────────
+
+type WikiState = {
+  readonly nav: ReadonlyArray<WikiNavItem>;
+  readonly activePageId: string | null;
+  readonly searchQuery: string;
+  readonly searchResults: ReadonlyArray<WikiSearchHit> | null;
+  readonly navLoading: boolean;
+  readonly searchLoading: boolean;
+  readonly serverReady: boolean;
+  readonly error: string | null;
+};
+
+const initialState: WikiState = {
+  nav: [],
+  activePageId: null,
+  searchQuery: "",
+  searchResults: null,
+  navLoading: true,
+  searchLoading: false,
+  serverReady: false,
+  error: null,
+};
+
+type WikiAction =
+  | WikiToWebview
+  | { readonly type: "setActivePageId"; readonly pageId: string }
+  | { readonly type: "setSearchQuery"; readonly value: string }
+  | { readonly type: "clearSearch" };
+
+const wikiReducer = (state: WikiState, action: WikiAction): WikiState => {
+  switch (action.type) {
+    case "navLoaded":
+      return { ...state, nav: action.nav.pages, navLoading: false };
+    case "searchResults":
+      return { ...state, searchResults: action.results, searchLoading: false };
+    case "loading":
+      if (action.target === "nav") {
+        return { ...state, navLoading: true };
+      }
+      return { ...state, searchLoading: true };
+    case "error":
+      if (action.target === "nav") {
+        return { ...state, error: action.message, navLoading: false };
+      }
+      return { ...state, error: action.message, searchLoading: false };
+    case "serverStatus":
+      return { ...state, serverReady: action.ready };
+    case "setActivePageId":
+      return { ...state, activePageId: action.pageId };
+    case "setSearchQuery":
+      if (!action.value) {
+        return { ...state, searchQuery: "", searchResults: null };
+      }
+      return { ...state, searchQuery: action.value };
+    case "clearSearch":
+      return { ...state, searchQuery: "", searchResults: null };
+    default:
+      return state;
+  }
+};
+
 // ─── Main component ─────────────────────────────────────
 
 export const WikiPageApp = (): React.JSX.Element => {
   const postMessage = usePostMessage<WikiFromWebview>();
-  const [nav, setNav] = useState<ReadonlyArray<WikiNavItem>>([]);
-  const [activePageId, setActivePageId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<ReadonlyArray<WikiSearchHit> | null>(null);
-  const [navLoading, setNavLoading] = useState(true);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [serverReady, setServerReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useWebviewReducer(wikiReducer, initialState);
+  const { nav, activePageId, searchQuery, searchResults, navLoading, searchLoading, serverReady, error } = state;
   const treeRef = useRef<HTMLElement>(null);
-
-  useWebviewMessage<WikiToWebview>((msg) => {
-    if (msg.type === "navLoaded") {
-      setNav(msg.nav.pages);
-      setNavLoading(false);
-    }
-    if (msg.type === "searchResults") {
-      setSearchResults(msg.results);
-      setSearchLoading(false);
-    }
-    if (msg.type === "loading") {
-      if (msg.target === "nav") {
-        setNavLoading(true);
-      }
-      if (msg.target === "search") {
-        setSearchLoading(true);
-      }
-    }
-    if (msg.type === "error") {
-      setError(msg.message);
-      if (msg.target === "nav") {
-        setNavLoading(false);
-      }
-      if (msg.target === "search") {
-        setSearchLoading(false);
-      }
-    }
-    if (msg.type === "serverStatus") {
-      setServerReady(msg.ready);
-    }
-  });
 
   const handleNavigate = useCallback(
     (pageId: string) => {
-      setActivePageId(pageId);
+      dispatch({ type: "setActivePageId", pageId });
       postMessage({ type: "navigate", pageId });
     },
-    [postMessage],
+    [postMessage, dispatch],
   );
 
   // Listen for vsc-tree-select on the tree element via ref
@@ -122,25 +147,22 @@ export const WikiPageApp = (): React.JSX.Element => {
         }
       }
       if (e.key === "Escape") {
-        setSearchQuery("");
-        setSearchResults(null);
+        dispatch({ type: "clearSearch" });
       }
     },
-    [searchQuery, postMessage],
+    [searchQuery, postMessage, dispatch],
   );
 
-  const handleSearchInput = useCallback((e: React.FormEvent) => {
-    const val = (e.target as HTMLInputElement).value;
-    setSearchQuery(val);
-    if (!val) {
-      setSearchResults(null);
-    }
-  }, []);
+  const handleSearchInput = useCallback(
+    (e: React.FormEvent) => {
+      dispatch({ type: "setSearchQuery", value: (e.target as HTMLInputElement).value });
+    },
+    [dispatch],
+  );
 
   const handleClearSearch = useCallback(() => {
-    setSearchQuery("");
-    setSearchResults(null);
-  }, []);
+    dispatch({ type: "clearSearch" });
+  }, [dispatch]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>

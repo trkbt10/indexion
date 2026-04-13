@@ -2,8 +2,8 @@
  * @file KGF management section within the settings panel.
  */
 
-import React, { useEffect, useState } from "react";
-import { usePostMessage, useWebviewMessage } from "../../bridge/context.tsx";
+import React, { useCallback, useEffect } from "react";
+import { usePostMessage, useWebviewReducer } from "../../bridge/context.tsx";
 import styles from "./kgf-section.module.css";
 
 /** KGF spec entry received from the extension host. */
@@ -23,38 +23,81 @@ type KgfToWebview =
   | { readonly type: "kgfListLoaded"; readonly specs: ReadonlyArray<KgfSpec> }
   | { readonly type: "kgfActionDone"; readonly message: string };
 
+// ─── State & reducer ────────────────────────────────────
+
+type KgfState = {
+  readonly specs: ReadonlyArray<KgfSpec>;
+  readonly addInput: string;
+  readonly status: string;
+  /** Monotonic counter incremented on action done to trigger list reload + status auto-clear. */
+  readonly actionVersion: number;
+};
+
+const initialState: KgfState = {
+  specs: [],
+  addInput: "",
+  status: "",
+  actionVersion: 0,
+};
+
+type KgfAction =
+  | KgfToWebview
+  | { readonly type: "setAddInput"; readonly value: string }
+  | { readonly type: "clearAddInput" }
+  | { readonly type: "setUpdating" }
+  | { readonly type: "clearStatus" };
+
+const kgfReducer = (state: KgfState, action: KgfAction): KgfState => {
+  switch (action.type) {
+    case "kgfListLoaded":
+      return { ...state, specs: action.specs };
+    case "kgfActionDone":
+      return { ...state, status: action.message, actionVersion: state.actionVersion + 1 };
+    case "setAddInput":
+      return { ...state, addInput: action.value };
+    case "clearAddInput":
+      return { ...state, addInput: "" };
+    case "setUpdating":
+      return { ...state, status: "Updating..." };
+    case "clearStatus":
+      return { ...state, status: "" };
+    default:
+      return state;
+  }
+};
+
+// ─── Component ──────────────────────────────────────────
+
 export const KgfSection = (): React.JSX.Element => {
   const postMessage = usePostMessage<KgfFromWebview>();
-  const [specs, setSpecs] = useState<ReadonlyArray<KgfSpec>>([]);
-  const [addInput, setAddInput] = useState("");
-  const [status, setStatus] = useState("");
-
-  useWebviewMessage<KgfToWebview>((message) => {
-    if (message.type === "kgfListLoaded") {
-      setSpecs(message.specs);
-    }
-    if (message.type === "kgfActionDone") {
-      setStatus(message.message);
-      setTimeout(() => setStatus(""), 3000);
-      postMessage({ type: "kgfLoadList" });
-    }
-  });
+  const [state, dispatch] = useWebviewReducer(kgfReducer, initialState);
+  const { specs, addInput, status, actionVersion } = state;
 
   useEffect(() => {
     postMessage({ type: "kgfLoadList" });
   }, [postMessage]);
 
-  const handleAdd = (): void => {
+  // Reload list + auto-clear status after action completes
+  useEffect(() => {
+    if (actionVersion === 0) {
+      return;
+    }
+    postMessage({ type: "kgfLoadList" });
+    const timer = setTimeout(() => dispatch({ type: "clearStatus" }), 3000);
+    return () => clearTimeout(timer);
+  }, [actionVersion, postMessage, dispatch]);
+
+  const handleAdd = useCallback((): void => {
     if (addInput.trim()) {
       postMessage({ type: "kgfAdd", specName: addInput.trim() });
-      setAddInput("");
+      dispatch({ type: "clearAddInput" });
     }
-  };
+  }, [addInput, postMessage, dispatch]);
 
-  const handleUpdateAll = (): void => {
+  const handleUpdateAll = useCallback((): void => {
     postMessage({ type: "kgfUpdate" });
-    setStatus("Updating...");
-  };
+    dispatch({ type: "setUpdating" });
+  }, [postMessage, dispatch]);
 
   const grouped = new Map<string, Array<KgfSpec>>();
   for (const spec of specs) {
@@ -77,7 +120,7 @@ export const KgfSection = (): React.JSX.Element => {
             type="text"
             value={addInput}
             placeholder="spec name (e.g., python)"
-            onChange={(e) => setAddInput(e.target.value)}
+            onChange={(e) => dispatch({ type: "setAddInput", value: e.target.value })}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 handleAdd();

@@ -19,7 +19,7 @@
     "jsx": "react-jsx",
     "declaration": true,
     "outDir": "dist",
-    "types": ["node", "vitest/globals"]
+    "types": ["node", "vitest/globals", "vite/client", "./src/webview/vscode-elements.d.ts"]
   },
   "include": ["src/**/*", "spec/**/*"],
   "exclude": ["src/webview/**/*", "src/e2e/**/*"]

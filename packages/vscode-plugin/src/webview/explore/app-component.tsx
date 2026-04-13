@@ -14,50 +14,71 @@ import "@vscode-elements/elements/dist/vscode-tree-item/index.js";
 import "@vscode-elements/elements/dist/vscode-icon/index.js";
 import "@vscode-elements/elements/dist/vscode-badge/index.js";
 import "@vscode-elements/elements/dist/vscode-label/index.js";
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import type { SimilarityPair, ComparisonStrategy } from "@indexion/api-client";
 import type { ExploreToWebview, ExploreFromWebview } from "../../views/explore/messages.ts";
-import { usePostMessage, useWebviewMessage } from "../bridge/context.tsx";
+import { usePostMessage, useWebviewReducer } from "../bridge/context.tsx";
 
 const STRATEGIES: ReadonlyArray<ComparisonStrategy> = ["tfidf", "hybrid", "apted", "tsed", "ncd"];
 
+// ─── State & reducer ────────────────────────────────────
+
+type ExploreState = {
+  readonly threshold: number;
+  readonly strategy: ComparisonStrategy;
+  readonly targetDir: string;
+  readonly pairs: ReadonlyArray<SimilarityPair>;
+  readonly fileCount: number;
+  readonly searching: boolean;
+  readonly error: string | null;
+  readonly serverReady: boolean;
+};
+
+const initialState: ExploreState = {
+  threshold: 0.7,
+  strategy: "tfidf",
+  targetDir: "",
+  pairs: [],
+  fileCount: 0,
+  searching: false,
+  error: null,
+  serverReady: false,
+};
+
+type ExploreAction =
+  | ExploreToWebview
+  | { readonly type: "setThreshold"; readonly value: number }
+  | { readonly type: "setStrategy"; readonly value: ComparisonStrategy };
+
+const exploreReducer = (state: ExploreState, action: ExploreAction): ExploreState => {
+  switch (action.type) {
+    case "results":
+      return { ...state, pairs: action.pairs, fileCount: action.fileCount, searching: false, error: null };
+    case "searching":
+      return { ...state, searching: true, error: null };
+    case "error":
+      return { ...state, error: action.message, searching: false };
+    case "directoryPicked":
+      return { ...state, targetDir: action.path };
+    case "serverStatus":
+      return { ...state, serverReady: action.ready };
+    case "config":
+      return { ...state, threshold: action.threshold, strategy: action.strategy };
+    case "setThreshold":
+      return { ...state, threshold: action.value };
+    case "setStrategy":
+      return { ...state, strategy: action.value };
+    default:
+      return state;
+  }
+};
+
+// ─── Component ──────────────────────────────────────────
+
 export const ExploreApp = (): React.JSX.Element => {
   const postMessage = usePostMessage<ExploreFromWebview>();
-  const [threshold, setThreshold] = useState(0.7);
-  const [strategy, setStrategy] = useState<ComparisonStrategy>("tfidf");
-  const [targetDir, setTargetDir] = useState("");
-  const [pairs, setPairs] = useState<ReadonlyArray<SimilarityPair>>([]);
-  const [fileCount, setFileCount] = useState(0);
-  const [searching, setSearching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [serverReady, setServerReady] = useState(false);
-
-  useWebviewMessage<ExploreToWebview>((message) => {
-    if (message.type === "results") {
-      setPairs(message.pairs);
-      setFileCount(message.fileCount);
-      setSearching(false);
-      setError(null);
-    }
-    if (message.type === "searching") {
-      setSearching(true);
-      setError(null);
-    }
-    if (message.type === "error") {
-      setError(message.message);
-      setSearching(false);
-    }
-    if (message.type === "directoryPicked") {
-      setTargetDir(message.path);
-    }
-    if (message.type === "serverStatus") {
-      setServerReady(message.ready);
-    }
-    if (message.type === "config") {
-      setThreshold(message.threshold);
-      setStrategy(message.strategy);
-    }
-  });
+  const [state, dispatch] = useWebviewReducer(exploreReducer, initialState);
+  const { threshold, strategy, targetDir, pairs, fileCount, searching, error, serverReady } = state;
 
   const handleRun = useCallback(() => {
     if (!targetDir) {
@@ -110,14 +131,16 @@ export const ExploreApp = (): React.JSX.Element => {
             min={0}
             max={100}
             value={Math.round(threshold * 100)}
-            onChange={(e) => setThreshold(Number(e.target.value) / 100)}
+            onChange={(e) => dispatch({ type: "setThreshold", value: Number(e.target.value) / 100 })}
             style={{ flex: 1, accentColor: "var(--vscode-button-background)" }}
           />
         </div>
 
         <vscode-single-select
           value={strategy}
-          onChange={(e: React.FormEvent) => setStrategy((e.target as HTMLSelectElement).value as ComparisonStrategy)}
+          onChange={(e: React.FormEvent) =>
+            dispatch({ type: "setStrategy", value: (e.target as HTMLSelectElement).value as ComparisonStrategy })
+          }
         >
           {STRATEGIES.map((s) => (
             <vscode-option key={s} value={s}>

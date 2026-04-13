@@ -5,38 +5,58 @@
  * built-in markdown preview (using the same CSS variables).
  */
 
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { marked } from "marked";
 import type { WikiPage } from "@indexion/api-client";
 import type { WikiPageToWebview, WikiPageFromWebview } from "../../panels/wiki-page/messages.ts";
-import { usePostMessage, useWebviewMessage } from "../bridge/context.tsx";
+import { usePostMessage, useWebviewReducer } from "../bridge/context.tsx";
 
 /** Configure marked for safe rendering (no raw HTML pass-through). */
 marked.setOptions({ async: false, gfm: true, breaks: false });
 
+// ─── State & reducer ────────────────────────────────────
+
+type WikiViewerState = {
+  readonly page: WikiPage | null;
+  readonly loading: boolean;
+  readonly error: string | null;
+  /** Monotonic counter incremented on each page load to trigger scroll reset. */
+  readonly pageVersion: number;
+};
+
+const initialState: WikiViewerState = {
+  page: null,
+  loading: false,
+  error: null,
+  pageVersion: 0,
+};
+
+const wikiViewerReducer = (state: WikiViewerState, action: WikiPageToWebview): WikiViewerState => {
+  switch (action.type) {
+    case "pageLoaded":
+      return { ...state, page: action.page, loading: false, error: null, pageVersion: state.pageVersion + 1 };
+    case "loading":
+      return { ...state, loading: true, error: null };
+    case "error":
+      return { ...state, error: action.message, loading: false };
+    default:
+      return state;
+  }
+};
+
+// ─── Component ──────────────────────────────────────────
+
 export const WikiViewerApp = (): React.JSX.Element => {
   const postMessage = usePostMessage<WikiPageFromWebview>();
-  const [page, setPage] = useState<WikiPage | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state] = useWebviewReducer(wikiViewerReducer, initialState);
+  const { page, loading, error, pageVersion } = state;
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useWebviewMessage<WikiPageToWebview>((msg) => {
-    if (msg.type === "pageLoaded") {
-      setPage(msg.page);
-      setLoading(false);
-      setError(null);
+  useEffect(() => {
+    if (pageVersion > 0) {
       scrollRef.current?.scrollTo(0, 0);
     }
-    if (msg.type === "loading") {
-      setLoading(true);
-      setError(null);
-    }
-    if (msg.type === "error") {
-      setError(msg.message);
-      setLoading(false);
-    }
-  });
+  }, [pageVersion]);
 
   const handleOpenFile = useCallback(
     (filePath: string, line?: number) => {

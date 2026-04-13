@@ -19,7 +19,7 @@
  *   useWebviewMessage<MyToWebview>((msg) => { ... });
  */
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from "react";
 
 // ─── VSCode API acquisition ─────────────────────────────
 
@@ -126,4 +126,30 @@ export const useWebviewMessage = <TToWebview,>(handler: (msg: TToWebview) => voi
       handlerRef.current(msg as TToWebview);
     });
   }, [ctx]);
+};
+
+/**
+ * Combine useReducer with useWebviewMessage.
+ *
+ * Incoming messages from the extension host are dispatched as actions to the
+ * reducer automatically. The returned `dispatch` can also be called directly
+ * for local UI actions.
+ *
+ * @param reducer  A standard React reducer. `TAction` is typically a union of
+ *                 the incoming message type (`TToWebview`) and any local
+ *                 component actions.
+ * @param initialState  The initial state value.
+ * @returns `[state, dispatch]` — same shape as `useReducer`.
+ */
+export const useWebviewReducer = <TState, TAction>(
+  reducer: React.Reducer<TState, TAction>,
+  initialState: TState,
+): [TState, React.Dispatch<TAction>] => {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  useWebviewMessage<TAction>((msg) => {
+    dispatch(msg);
+  });
+
+  return [state, dispatch];
 };

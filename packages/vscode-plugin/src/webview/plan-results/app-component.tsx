@@ -2,26 +2,33 @@
  * @file Plan results app component, extracted for testability.
  */
 
-import React, { useState } from "react";
+import React from "react";
 import type { PlanResultsToWebview, PlanResultsFromWebview } from "../../panels/plan-results/messages.ts";
-import { usePostMessage, useWebviewMessage } from "../bridge/context.tsx";
+import { usePostMessage, useWebviewReducer } from "../bridge/context.tsx";
 import styles from "./app.module.css";
 
-type ResultState = {
+// ─── State & reducer ────────────────────────────────────
+
+type PlanResultsState = {
   readonly title: string;
   readonly content: string;
   readonly format: string;
+} | null;
+
+const planResultsReducer = (state: PlanResultsState, action: PlanResultsToWebview): PlanResultsState => {
+  switch (action.type) {
+    case "resultLoaded":
+      return { title: action.title, content: action.content, format: action.format };
+    default:
+      return state;
+  }
 };
+
+// ─── Component ──────────────────────────────────────────
 
 export const PlanResultsApp = (): React.JSX.Element => {
   const postMessage = usePostMessage<PlanResultsFromWebview>();
-  const [result, setResult] = useState<ResultState | null>(null);
-
-  useWebviewMessage<PlanResultsToWebview>((message) => {
-    if (message.type === "resultLoaded") {
-      setResult({ title: message.title, content: message.content, format: message.format });
-    }
-  });
+  const [result] = useWebviewReducer(planResultsReducer, null);
 
   if (!result) {
     return <div className={styles.loading}>Loading results...</div>;
