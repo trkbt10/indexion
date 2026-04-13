@@ -95,6 +95,7 @@
         "@indexion/syntax-highlight": "workspace:*",
         "@indexion/wiki": "workspace:*",
         "@vscode-elements/elements": "^2.5.1",
+        "@vscode/codicons": "^0.0.45",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
       },
