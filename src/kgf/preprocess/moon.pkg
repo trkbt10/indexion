@@ -1,4 +1,4 @@
 import {
-  "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
   "trkbt10/indexion/src/kgf/types",
+  "trkbt10/indexion/src/regexp",
 }

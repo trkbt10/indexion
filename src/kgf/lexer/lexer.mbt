@@ -8,7 +8,7 @@ pub struct Lexer {
 /// Compiled token matcher used by the lexer hot path.
 struct CompiledToken {
   token_def : @types.TokenDef
-  compiled_pattern : CompiledPattern?
+  compiled_pattern : @regexp.CompiledPattern?
 }
 
 ///|
@@ -18,7 +18,9 @@ pub fn Lexer::new(tokens : Array[@types.TokenDef]) -> Lexer {
   let compiled_tokens : Array[CompiledToken] = []
   for token_def in tokens {
     let case_insensitive = has_case_insensitive_flag(token_def.flags)
-    let compiled_pattern = compile_pattern(token_def.pattern, case_insensitive~)
+    let compiled_pattern = @regexp.compile_pattern(
+      token_def.pattern, case_insensitive~,
+    )
     compiled_tokens.push({ token_def, compiled_pattern })
   }
   { tokens: compiled_tokens }
@@ -29,7 +31,7 @@ pub fn Lexer::new(tokens : Array[@types.TokenDef]) -> Lexer {
 /// Skipped tokens (like whitespace) are not included in the result.
 pub fn Lexer::tokenize(self : Lexer, input : String) -> Array[@types.Tok] {
   let result : Array[@types.Tok] = []
-  let input_chars = build_input_chars(input)
+  let input_chars = @regexp.build_input_chars(input)
   let mut pos = 0
   while pos < input.length() {
     let match_result = self.try_match(input, input_chars, pos)
@@ -76,12 +78,12 @@ fn Lexer::try_match(
       None => continue
     }
     // Create capture state if pattern has capture groups
-    let captures = if compiled.capture_count > 0 {
-      Some(CaptureState::new(compiled.capture_count))
+    let captures = if compiled.get_capture_count() > 0 {
+      Some(@regexp.CaptureState::new(compiled.get_capture_count()))
     } else {
       None
     }
-    let end_pos = match_compiled_end_pos_with_chars(
+    let end_pos = @regexp.match_compiled_end_pos_with_chars(
       compiled,
       input_chars,
       pos,

@@ -550,15 +550,15 @@ test "pattern_matcher: nested alternation in group does not overflow" {
   // Test various complex patterns that previously caused stack overflow
 
   // Pattern with alternation inside group
-  let result1 = @kgf_lexer.match_pattern("([ab]|cd)+", "abcdab", 0)
+  let result1 = @regexp.match_pattern("([ab]|cd)+", "abcdab", 0)
   assert_eq(result1.matched, true)
 
   // Pattern with multiple nested structures
-  let result2 = @kgf_lexer.match_pattern("(a(bc|de)f)+", "abcfadef", 0)
+  let result2 = @regexp.match_pattern("(a(bc|de)f)+", "abcfadef", 0)
   assert_eq(result2.matched, true)
 
   // Pattern that looks like TypeScript string literal (simplified)
-  let result3 = @kgf_lexer.match_pattern("([xy]|z)+", "xyzxy", 0)
+  let result3 = @regexp.match_pattern("([xy]|z)+", "xyzxy", 0)
   assert_eq(result3.matched, true)
 }
 

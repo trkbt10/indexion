@@ -113,7 +113,7 @@ fn blank_line_if_trim_has_prefix(input : String, prefix : String) -> String {
 ///|
 fn blank_line_if_regex(input : String, pattern : String) -> String {
   blank_matching_lines(input, fn(_raw, trimmed) {
-    @kgf_lexer.matches_at(pattern, trimmed, 0)
+    @regexp.matches_at(pattern, trimmed, 0)
   })
 }
 

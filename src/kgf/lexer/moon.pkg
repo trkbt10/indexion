@@ -1,3 +1,4 @@
 import {
   "trkbt10/indexion/src/kgf/types",
+  "trkbt10/indexion/src/regexp",
 }

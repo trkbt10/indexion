@@ -69,7 +69,7 @@ priv enum PatternElement {
 
 ///|
 /// Mutable capture group state for tracking during matching.
-priv struct CaptureState {
+pub struct CaptureState {
   /// (start, end) positions for each capture group, indexed by group number (1-based).
   groups : Array[(Int, Int)]
   /// Total number of capture groups in the pattern.
@@ -77,13 +77,13 @@ priv struct CaptureState {
 }
 
 ///|
-fn CaptureState::new(count : Int) -> CaptureState {
+pub fn CaptureState::new(count : Int) -> CaptureState {
   let groups : Array[(Int, Int)] = Array::make(count + 1, (-1, -1))
   { groups, count }
 }
 
 ///|
-fn CaptureState::set(
+pub fn CaptureState::set(
   self : CaptureState,
   index : Int,
   start : Int,
@@ -95,7 +95,7 @@ fn CaptureState::set(
 }
 
 ///|
-fn CaptureState::reset(self : CaptureState, index : Int) -> Unit {
+pub fn CaptureState::reset(self : CaptureState, index : Int) -> Unit {
   if index >= 0 && index < self.groups.length() {
     self.groups[index] = (-1, -1)
   }
@@ -103,7 +103,7 @@ fn CaptureState::reset(self : CaptureState, index : Int) -> Unit {
 
 ///|
 /// Get captured text for group N from input chars.
-fn CaptureState::get_group_text(
+pub fn CaptureState::get_group_text(
   self : CaptureState,
   index : Int,
   input_chars : Array[Char],
@@ -146,13 +146,19 @@ priv struct QuantifiedElement {
 
 ///|
 /// CompiledPattern stores parsed regex elements for repeated matching.
-priv struct CompiledPattern {
-  alternatives : Array[Array[QuantifiedElement]]
-  case_insensitive : Bool
+pub(all) struct CompiledPattern {
+  priv alternatives : Array[Array[QuantifiedElement]]
+  priv case_insensitive : Bool
   /// Optional first char filter for quick rejection.
-  first_char_filter : FirstCharFilter
+  priv first_char_filter : FirstCharFilter
   /// Number of capture groups in the pattern.
-  capture_count : Int
+  priv capture_count : Int
+}
+
+///|
+/// Returns the number of capture groups in the pattern.
+pub fn CompiledPattern::get_capture_count(self : CompiledPattern) -> Int {
+  self.capture_count
 }
 
 ///|
@@ -230,7 +236,7 @@ fn get_char_at(s : String, index : Int) -> Char? {
 
 ///|
 /// Builds a char array once for repeated indexed access during matching.
-fn build_input_chars(input : String) -> Array[Char] {
+pub fn build_input_chars(input : String) -> Array[Char] {
   let chars : Array[Char] = []
   let len = input.length()
   for i = 0; i < len; i = i + 1 {
@@ -1372,7 +1378,7 @@ fn match_alternation(
 
 ///|
 /// Compiles a pattern once for repeated matching.
-fn compile_pattern(
+pub fn compile_pattern(
   pattern : String,
   case_insensitive? : Bool = false,
 ) -> CompiledPattern? {
@@ -1651,7 +1657,7 @@ fn match_elements_backtrack(
 
 ///|
 /// Matches a compiled pattern against the input at the given position.
-fn match_compiled_end_pos_with_chars(
+pub fn match_compiled_end_pos_with_chars(
   compiled : CompiledPattern,
   input_chars : Array[Char],
   pos : Int,

@@ -354,7 +354,7 @@ fn eval_func_regex_captures(args : Array[Json]) -> Json {
     return Json::array([])
   }
   let values : Array[String] = []
-  for matched in @lexer.find_pattern_captures(pattern, text, case_insensitive~) {
+  for matched in @regexp.find_pattern_captures(pattern, text, case_insensitive~) {
     let value = if group <= 0 {
       matched.text
     } else if group <= matched.captures.length() {
@@ -385,7 +385,7 @@ fn eval_func_regex_pairs(args : Array[Json]) -> Json {
   }
   let seen : Map[String, Bool] = {}
   let values : Array[Json] = []
-  for matched in @lexer.find_pattern_captures(pattern, text, case_insensitive~) {
+  for matched in @regexp.find_pattern_captures(pattern, text, case_insensitive~) {
     if key_group <= 0 ||
       value_group <= 0 ||
       key_group > matched.captures.length() ||
