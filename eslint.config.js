@@ -41,6 +41,7 @@ export default tseslint.config(
       "**/vitest.config.*",
       "**/vite.*.config.*",
       "**/.vscode-test/**",
+      "**/*.d.ts",
     ],
   },
 
@@ -82,14 +83,6 @@ export default tseslint.config(
       ],
       "max-params": ["warn", { max: 3 }],
       "no-nested-ternary": "error",
-    },
-  },
-
-  // ── .d.ts overrides ───────────────────────────────────────
-  {
-    files: ["**/*.d.ts"],
-    rules: {
-      "@typescript-eslint/consistent-type-definitions": "off",
     },
   },
 
