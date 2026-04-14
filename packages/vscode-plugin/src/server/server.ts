@@ -144,6 +144,7 @@ export type ServerManager = {
   readonly getBaseUrl: () => string | undefined;
   readonly isReady: () => boolean;
   readonly onReady: vscode.Event<void>;
+  readonly onDown: vscode.Event<void>;
 };
 
 /** Mutable lifecycle state for the server process. */
@@ -168,6 +169,7 @@ export const createServerManager = (config: ServerConfig, log: vscode.OutputChan
     stopped: false,
   };
   const readyEmitter = new vscode.EventEmitter<void>();
+  const downEmitter = new vscode.EventEmitter<void>();
 
   const start = async (): Promise<void> => {
     if (s.starting) {
@@ -222,6 +224,9 @@ export const createServerManager = (config: ServerConfig, log: vscode.OutputChan
         s.baseUrl = undefined;
         s.proc = undefined;
         s.starting = false;
+        if (wasReady) {
+          downEmitter.fire();
+        }
         if (!s.stopped && wasReady) {
           log.appendLine("[server] unexpected exit, restarting in 2s...");
           setTimeout(() => {
@@ -276,5 +281,6 @@ export const createServerManager = (config: ServerConfig, log: vscode.OutputChan
     getBaseUrl: () => s.baseUrl,
     isReady: () => s.ready,
     onReady: readyEmitter.event,
+    onDown: downEmitter.event,
   };
 };

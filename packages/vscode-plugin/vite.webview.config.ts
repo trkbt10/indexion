@@ -37,6 +37,7 @@ export default defineConfig({
         settings: "src/webview/settings/app.tsx",
         "plan-results": "src/webview/plan-results/app.tsx",
         search: "src/webview/search/app.tsx",
+        explore: "src/webview/explore/app.tsx",
         "wiki-viewer": "src/webview/wiki-viewer/app.tsx",
       },
       output: {

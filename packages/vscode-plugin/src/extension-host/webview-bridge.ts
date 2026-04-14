@@ -37,8 +37,8 @@ export type WebviewReadyMessage = { readonly type: "ready" };
 export type WebviewBridge<TToWebview> = {
   /** Attach to a webview view. Call this in resolveWebviewView. */
   readonly attach: (view: vscode.WebviewView, onReady: () => void) => void;
-  /** Send a message to the webview. Safe to call at any time. */
-  readonly post: (msg: TToWebview) => void;
+  /** Send a message to the webview. Returns the postMessage promise if sent, undefined otherwise. */
+  readonly post: (msg: TToWebview) => Thenable<boolean> | undefined;
   /** Whether the webview has sent "ready". */
   readonly isReady: () => boolean;
   /** Whether a webview is attached. */
@@ -50,11 +50,14 @@ type BridgeState<T> = {
   view: vscode.WebviewView | undefined;
   ready: boolean;
   readonly pending: Array<T>;
+  readonly log?: { readonly appendLine: (msg: string) => void };
 };
 
 /** Create a WebviewBridge for typed message delivery. */
-export const createWebviewBridge = <TToWebview>(): WebviewBridge<TToWebview> => {
-  const s: BridgeState<TToWebview> = { view: undefined, ready: false, pending: [] };
+export const createWebviewBridge = <TToWebview>(log?: {
+  readonly appendLine: (msg: string) => void;
+}): WebviewBridge<TToWebview> => {
+  const s: BridgeState<TToWebview> = { view: undefined, ready: false, pending: [], log };
 
   const flush = (): void => {
     if (!s.view) {
@@ -72,7 +75,11 @@ export const createWebviewBridge = <TToWebview>(): WebviewBridge<TToWebview> => 
       s.ready = false;
       s.pending.length = 0;
 
-      s.view.webview.onDidReceiveMessage((msg: { type: string }) => {
+      s.view.webview.onDidReceiveMessage((msg: { type: string; received?: string }) => {
+        if (msg.type === "__ack" && s.log) {
+          s.log.appendLine(`[bridge] webview received: ${msg.received}`);
+          return;
+        }
         if (msg.type === "ready" && !s.ready) {
           s.ready = true;
           onReady();
@@ -83,13 +90,13 @@ export const createWebviewBridge = <TToWebview>(): WebviewBridge<TToWebview> => 
 
     post: (msg) => {
       if (!s.view) {
-        return;
+        return undefined;
       }
       if (s.ready) {
-        s.view.webview.postMessage(msg);
-      } else {
-        s.pending.push(msg);
+        return s.view.webview.postMessage(msg);
       }
+      s.pending.push(msg);
+      return undefined;
     },
 
     isReady: () => s.ready,

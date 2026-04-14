@@ -3,6 +3,7 @@
  */
 
 import * as vscode from "vscode";
+import { resolveFileUri } from "../extension-host/resolve-file-uri.ts";
 import { runExplore } from "@indexion/api-client";
 import { runWithProgress } from "./progress.ts";
 import { requireConfig } from "./plan-common.ts";
@@ -85,8 +86,8 @@ export const executeExplore = async (): Promise<void> => {
   if (selected) {
     await vscode.commands.executeCommand(
       "vscode.diff",
-      vscode.Uri.file(selected.pair.file1),
-      vscode.Uri.file(selected.pair.file2),
+      resolveFileUri(selected.pair.file1),
+      resolveFileUri(selected.pair.file2),
       `${selected.pair.file1} ↔ ${selected.pair.file2}`,
     );
   }

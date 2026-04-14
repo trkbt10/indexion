@@ -2,7 +2,8 @@
  * @file Tests for search view message types and converters.
  */
 
-import { digestMatchToItem, searchHitToItem, grepMatchToItem, similarityPairToItem } from "./messages.ts";
+import { digestMatchToItem, searchHitToItem, grepMatchToItem } from "./messages.ts";
+import { similarityPairToItem } from "../explore/messages.ts";
 
 describe("digestMatchToItem", () => {
   it("converts a DigestMatch to SearchResultItem", () => {

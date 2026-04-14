@@ -25,6 +25,12 @@
         "icon": "$(search)"
       },
       {
+        "command": "indexion.exploreSimilar",
+        "title": "Find Similar Files",
+        "category": "indexion",
+        "icon": "$(files)"
+      },
+      {
         "command": "indexion.planRefactor",
         "title": "Plan: Refactor",
         "category": "indexion"
@@ -222,6 +228,18 @@
           "when": "view == indexion.plans && viewItem == planType",
           "group": "inline"
         }
+      ],
+      "explorer/context": [
+        {
+          "command": "indexion.exploreSimilar",
+          "group": "indexion@1"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "indexion.exploreSimilar",
+          "group": "indexion@1"
+        }
       ]
     },
     "viewsWelcome": [
@@ -317,6 +335,8 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/vite": "^4.2.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/mocha": "^10.0.10",
@@ -327,8 +347,6 @@
     "@vitest/coverage-v8": "^4.1.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
-    "@tailwindcss/typography": "^0.5.19",
-    "@tailwindcss/vite": "^4.2.2",
     "ajv": "^8.18.0",
     "happy-dom": "^20.8.8",
     "prettier": "^3.8.1",

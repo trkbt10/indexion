@@ -5,6 +5,7 @@
 import * as vscode from "vscode";
 import type { PlanResultsToWebview, PlanResultsFromWebview } from "./messages.ts";
 import { buildWebviewHtml } from "../../extension-host/webview-html.ts";
+import { resolveFileUri } from "../../extension-host/resolve-file-uri.ts";
 
 /** Options for opening the plan results panel. */
 type PlanResultsPanelOptions = {
@@ -46,7 +47,7 @@ export const openPlanResultsPanel = (options: PlanResultsPanelOptions): void => 
   panel.webview.onDidReceiveMessage(
     (msg: PlanResultsFromWebview) => {
       if (msg.type === "openFile") {
-        const uri = vscode.Uri.file(msg.filePath);
+        const uri = resolveFileUri(msg.filePath);
         vscode.workspace.openTextDocument(uri).then((doc) => vscode.window.showTextDocument(doc));
       }
       if (msg.type === "copyContent") {

@@ -1,0 +1,115 @@
+/**
+ * @file Explore results panel styles.
+ */
+
+/* ── Root container ── */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 8px;
+}
+
+/* ── Header with target path ── */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  background: var(--vscode-editor-background);
+}
+
+.targetPath {
+  font-weight: 600;
+  font-size: var(--vscode-font-size, 13px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.targetDir {
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+/* ── Controls section ── */
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  margin-bottom: 4px;
+}
+
+.controlRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.controlLabel {
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.thresholdSlider {
+  flex: 1;
+  accent-color: var(--vscode-button-background);
+}
+
+.strategySelect {
+  flex: 1;
+}
+
+/* ── Progress indicator ── */
+
+.progressBar {
+  margin: 0;
+}
+
+.progressDetail {
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+}
+
+/* ── Result summary ── */
+
+.resultSummary {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.clearButton {
+  background: none;
+  border: none;
+  color: var(--vscode-textLink-foreground);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+}
+
+.clearButton:hover {
+  color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground));
+}
+
+/* ── Result tree ── */
+
+.resultTree {
+  flex: 1;
+  overflow: auto;
+}

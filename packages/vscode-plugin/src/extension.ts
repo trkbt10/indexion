@@ -12,6 +12,7 @@ import { createPlansProvider } from "./views/plans/provider.ts";
 import { createWikiTreeProvider } from "./views/wiki/provider.ts";
 import { createWikiPagePanelManager } from "./panels/wiki-page/panel.ts";
 import { openSettingsPanel } from "./panels/settings/panel.ts";
+import { createExplorePanelManager } from "./views/explore/panel.ts";
 import { createServerManager, type ServerManager } from "./server/server.ts";
 import { setClientGetter } from "./server/client-accessor.ts";
 import { addHistoryEntry, clearHistory } from "./views/plans/history.ts";
@@ -62,10 +63,24 @@ export const activate = (context: vscode.ExtensionContext): ExtensionApi => {
   registerProviders(context, getClient);
 
   // --- Search WebviewView ---
-  const searchProvider = createSearchViewProvider(context.extensionUri, getBaseUrl);
+  const searchProvider = createSearchViewProvider(context.extensionUri, getBaseUrl, log);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider("indexion.search", searchProvider, {
       webviewOptions: { retainContextWhenHidden: true },
+    }),
+  );
+
+  // --- Explore Panel (editor area, opened from context menu) ---
+  const explorePanelManager = createExplorePanelManager(context, getBaseUrl);
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("indexion.exploreSimilar", (uri?: vscode.Uri) => {
+      const targetPath = uri?.fsPath ?? vscode.window.activeTextEditor?.document.uri.fsPath;
+      if (!targetPath) {
+        vscode.window.showWarningMessage("No file or directory selected.");
+        return;
+      }
+      explorePanelManager.explorePath(targetPath);
     }),
   );
 
@@ -91,16 +106,25 @@ export const activate = (context: vscode.ExtensionContext): ExtensionApi => {
       kgfListProvider.refresh();
       wikiTreeProvider.refresh();
       searchProvider.notifyServerStatus(true);
+      explorePanelManager.notifyServerStatus(true);
     };
+
+    // Listen persistently — server may crash and restart, firing onReady again.
+    const disposable = state.server.onReady(() => {
+      onReady();
+    });
+    context.subscriptions.push(disposable);
+
+    context.subscriptions.push(
+      state.server.onDown(() => {
+        log.appendLine("[activate] server went down, notifying views");
+        searchProvider.notifyServerStatus(false);
+        explorePanelManager.notifyServerStatus(false);
+      }),
+    );
 
     if (state.server.isReady()) {
       onReady();
-    } else {
-      const disposable = state.server.onReady(() => {
-        onReady();
-        disposable.dispose();
-      });
-      context.subscriptions.push(disposable);
     }
   }
 

@@ -1,9 +1,8 @@
 /**
  * @file Unified search WebviewViewProvider with SSE streaming.
  *
- * A single sidebar panel that supports 4 search modes:
+ * A single sidebar panel that supports 3 search modes:
  * - search:  full-text/semantic search via /search/stream
- * - explore: code similarity analysis via /explore/stream
  * - grep:    KGF token pattern search via /grep/stream
  * - digest:  function search by purpose via /digest/query/stream
  *
@@ -14,13 +13,13 @@
 
 import * as vscode from "vscode";
 import { postStream, type SseEvent } from "@indexion/api-client";
-import type { SearchFromWebview, SearchToWebview, SearchResultItem, ExplorePairItem } from "./messages.ts";
-import { searchHitToItem, digestMatchToItem, grepMatchToItem, similarityPairToItem } from "./messages.ts";
-import type { SearchHit, DigestMatch, GrepMatch, SimilarityPair, ExploreResult } from "@indexion/api-client";
+import type { SearchFromWebview, SearchToWebview, SearchResultItem } from "./messages.ts";
+import { searchHitToItem, digestMatchToItem, grepMatchToItem } from "./messages.ts";
+import type { SearchHit, DigestMatch, GrepMatch } from "@indexion/api-client";
 import { buildWebviewHtml } from "../../extension-host/webview-html.ts";
 import { createWebviewBridge } from "../../extension-host/webview-bridge.ts";
 import { resolveCodiconsUri } from "../../extension-host/codicons.ts";
-import { resolveConfig } from "../../config/index.ts";
+import { resolveFileUri } from "../../extension-host/resolve-file-uri.ts";
 
 /** Maps SSE item data to SearchResultItem based on search mode. */
 const mapSseItem = (data: unknown, mode: "search" | "grep" | "digest"): SearchResultItem => {
@@ -38,8 +37,9 @@ const mapSseItem = (data: unknown, mode: "search" | "grep" | "digest"): SearchRe
 export const createSearchViewProvider = (
   extensionUri: vscode.Uri,
   getBaseUrl: () => string | undefined,
+  log?: { readonly appendLine: (msg: string) => void },
 ): vscode.WebviewViewProvider & { readonly notifyServerStatus: (ready: boolean) => void } => {
-  const bridge = createWebviewBridge<SearchToWebview>();
+  const bridge = createWebviewBridge<SearchToWebview>(log);
 
   /** Shared streaming handler for search/grep/digest modes. */
   const handleStream = (path: string, body: unknown, mode: "search" | "grep" | "digest"): void => {
@@ -51,79 +51,81 @@ export const createSearchViewProvider = (
 
     bridge.post({ type: "searching" });
 
+    // Batch incoming items to avoid flooding the webview with postMessage calls.
+    // Items are accumulated and flushed every 100ms or when a non-item event arrives.
+    const BATCH_INTERVAL_MS = 100;
+    const pendingItems: Array<SearchResultItem> = [];
+    // eslint-disable-next-line no-restricted-syntax -- mutable timer handle for batching
+    let batchTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const flushItems = (): void => {
+      if (pendingItems.length > 0) {
+        bridge.post({ type: "appendItems", items: [...pendingItems] });
+        pendingItems.length = 0;
+      }
+      if (batchTimer !== undefined) {
+        clearTimeout(batchTimer);
+        batchTimer = undefined;
+      }
+    };
+
+    const enqueueItem = (item: SearchResultItem): void => {
+      pendingItems.push(item);
+      if (batchTimer === undefined) {
+        batchTimer = setTimeout(flushItems, BATCH_INTERVAL_MS);
+      }
+    };
+
     postStream(baseUrl, path, {
       body,
       onEvent: (event: SseEvent) => {
         switch (event.type) {
           case "progress":
+            flushItems();
             bridge.post({ type: "progress", phase: event.phase, detail: event.detail });
             break;
           case "item":
-            bridge.post({ type: "appendItems", items: [mapSseItem(event.data, mode)] });
+            enqueueItem(mapSseItem(event.data, mode));
             break;
           case "items":
-            bridge.post({
-              type: "appendItems",
-              items: (event.data as ReadonlyArray<unknown>).map((d) => mapSseItem(d, mode)),
-            });
+            for (const d of event.data as ReadonlyArray<unknown>) {
+              enqueueItem(mapSseItem(d, mode));
+            }
             break;
           case "done":
+            flushItems();
             bridge.post({ type: "done", total: event.total });
             break;
           case "error":
+            flushItems();
             bridge.post({ type: "error", message: event.message });
             break;
         }
       },
     }).catch((err) => {
-      bridge.post({ type: "error", message: err instanceof Error ? err.message : String(err) });
-    });
-  };
-
-  /** Streaming handler for explore mode (different result shape). */
-  const handleExploreStream = (threshold: number, strategy: string, targetDir: string): void => {
-    const baseUrl = getBaseUrl();
-    if (!baseUrl) {
-      bridge.post({ type: "error", message: "Server not ready" });
-      return;
-    }
-
-    bridge.post({ type: "searching" });
-
-    postStream(baseUrl, "/explore/stream", {
-      body: { targetDirs: [targetDir], threshold, strategy },
-      onEvent: (event: SseEvent) => {
-        switch (event.type) {
-          case "progress":
-            bridge.post({ type: "progress", phase: event.phase, detail: event.detail });
-            break;
-          case "result": {
-            const exploreResult = event.data as ExploreResult;
-            const pairs: ReadonlyArray<ExplorePairItem> = exploreResult.pairs.map((p: SimilarityPair) =>
-              similarityPairToItem(p),
-            );
-            bridge.post({ type: "exploreResults", pairs, fileCount: exploreResult.files.length });
-            break;
-          }
-          case "done":
-            bridge.post({ type: "done", total: event.total });
-            break;
-          case "error":
-            bridge.post({ type: "error", message: event.message });
-            break;
-        }
-      },
-    }).catch((err) => {
+      flushItems();
       bridge.post({ type: "error", message: err instanceof Error ? err.message : String(err) });
     });
   };
 
   return {
     notifyServerStatus: (ready: boolean) => {
-      bridge.post({ type: "serverStatus", ready });
+      log?.appendLine(
+        `[search] notifyServerStatus(${ready}) attached=${bridge.isAttached()} ready=${bridge.isReady()}`,
+      );
+      const result = bridge.post({ type: "serverStatus", ready });
+      if (result) {
+        result.then(
+          (ok) => log?.appendLine(`[search] postMessage delivered=${ok}`),
+          (err) => log?.appendLine(`[search] postMessage error: ${err}`),
+        );
+      } else {
+        log?.appendLine("[search] postMessage not sent (queued or no view)");
+      }
     },
 
     resolveWebviewView: (view: vscode.WebviewView) => {
+      log?.appendLine("[search] resolveWebviewView");
       view.webview.options = {
         enableScripts: true,
         localResourceRoots: [
@@ -146,14 +148,22 @@ export const createSearchViewProvider = (
       });
 
       bridge.attach(view, () => {
-        const config = resolveConfig();
-        if (config) {
-          bridge.post({ type: "config", threshold: config.threshold, strategy: config.strategy });
+        const ready = getBaseUrl() !== undefined;
+        log?.appendLine(`[search] webview ready, serverReady=${ready}`);
+        bridge.post({ type: "serverStatus", ready });
+      });
+
+      // Re-send server status when sidebar becomes visible again.
+      // postMessage can be dropped while the webview is hidden.
+      view.onDidChangeVisibility(() => {
+        log?.appendLine(`[search] visibility changed: visible=${view.visible}`);
+        if (view.visible && bridge.isReady()) {
+          bridge.post({ type: "serverStatus", ready: getBaseUrl() !== undefined });
         }
-        bridge.post({ type: "serverStatus", ready: getBaseUrl() !== undefined });
       });
 
       view.webview.onDidReceiveMessage((msg: SearchFromWebview) => {
+        log?.appendLine(`[search] received: ${msg.type}`);
         switch (msg.type) {
           case "search":
             handleStream("/search/stream", { query: msg.query, topK: 30 }, "search");
@@ -164,45 +174,23 @@ export const createSearchViewProvider = (
           case "grep":
             handleStream("/grep/stream", { pattern: msg.pattern }, "grep");
             break;
-          case "explore":
-            handleExploreStream(msg.threshold, msg.strategy, msg.targetDir);
-            break;
           case "openFile": {
-            const uri = vscode.Uri.file(msg.filePath);
-            vscode.workspace.openTextDocument(uri).then((doc) => {
-              const options: vscode.TextDocumentShowOptions = {};
-              if (msg.line !== undefined) {
-                const pos = new vscode.Position(Math.max(0, msg.line - 1), 0);
-                options.selection = new vscode.Range(pos, pos);
-              }
-              vscode.window.showTextDocument(doc, options);
-            });
-            break;
-          }
-          case "openDiff":
-            vscode.commands.executeCommand(
-              "vscode.diff",
-              vscode.Uri.file(msg.file1),
-              vscode.Uri.file(msg.file2),
-              `${msg.file1} ↔ ${msg.file2}`,
-            );
-            break;
-          case "pickDirectory": {
-            const config = resolveConfig();
-            const defaultUri = config ? vscode.Uri.file(config.workspaceDir) : undefined;
-            vscode.window
-              .showOpenDialog({
-                canSelectFolders: true,
-                canSelectFiles: false,
-                canSelectMany: false,
-                defaultUri,
-                openLabel: "Select directory",
-              })
-              .then((folders) => {
-                if (folders && folders.length > 0) {
-                  bridge.post({ type: "directoryPicked", path: folders[0].fsPath });
+            const uri = resolveFileUri(msg.filePath);
+            log?.appendLine(`[search] openFile: ${msg.filePath} → ${uri.fsPath}`);
+            vscode.workspace.openTextDocument(uri).then(
+              (doc) => {
+                log?.appendLine(`[search] opened: ${doc.uri.fsPath}`);
+                const options: vscode.TextDocumentShowOptions = {};
+                if (msg.line !== undefined && msg.line > 0) {
+                  const pos = new vscode.Position(msg.line - 1, 0);
+                  options.selection = new vscode.Range(pos, pos);
                 }
-              });
+                vscode.window.showTextDocument(doc, options);
+              },
+              (err) => {
+                log?.appendLine(`[search] openFile error: ${err instanceof Error ? err.message : String(err)}`);
+              },
+            );
             break;
           }
         }

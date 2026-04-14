@@ -81,6 +81,11 @@ export const WebviewProvider = ({ children }: WebviewProviderProps): React.JSX.E
   // Listen for messages from the extension host
   useEffect(() => {
     const listener = (event: MessageEvent<unknown>): void => {
+      const data = event.data as { type?: string } | undefined;
+      // Echo receipt back to extension host for diagnostics
+      if (data?.type && data.type !== "__ack") {
+        apiRef.current?.postMessage({ type: "__ack", received: data.type });
+      }
       for (const handler of listenersRef.current) {
         handler(event.data);
       }

@@ -84,26 +84,6 @@
   color: var(--vscode-inputOption-activeForeground, var(--vscode-foreground));
 }
 
-/* ── Explore-specific controls ── */
-
-.thresholdLabel {
-  font-size: 11px;
-  flex-shrink: 0;
-}
-
-.thresholdSlider {
-  flex: 1;
-  accent-color: var(--vscode-button-background);
-}
-
-.dirInput {
-  flex: 1;
-}
-
-.dirPickButton {
-  flex-shrink: 0;
-}
-
 /* ── Progress indicator ── */
 
 .progressBar {

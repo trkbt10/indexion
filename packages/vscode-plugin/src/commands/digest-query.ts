@@ -3,6 +3,7 @@
  */
 
 import * as vscode from "vscode";
+import { resolveFileUri } from "../extension-host/resolve-file-uri.ts";
 import { queryDigest } from "@indexion/api-client";
 import { runWithProgress } from "./progress.ts";
 import { requireConfig } from "./plan-common.ts";
@@ -52,7 +53,7 @@ export const executeDigestQuery = async (): Promise<void> => {
   });
 
   if (selected) {
-    const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(selected.match.file));
+    const doc = await vscode.workspace.openTextDocument(resolveFileUri(selected.match.file));
     await vscode.window.showTextDocument(doc);
   }
 };

@@ -52,23 +52,20 @@ suite("Extension E2E", () => {
     assert.ok(typeof ext.exports?.getClient === "function", "should export getClient()");
   });
 
-  test("all commands are registered", async () => {
-    await activateExtension();
+  test("all commands from package.json are registered", async () => {
+    const ext = await activateExtension();
+    assert.ok(ext);
     const commands = await vscode.commands.getCommands(true);
-    const expected = [
-      "indexion.explore",
-      "indexion.kgfList",
-      "indexion.planRefactor",
-      "indexion.planDocumentation",
-      "indexion.planReconcile",
-      "indexion.openSettings",
-      "indexion.wikiOpen",
-      "indexion.planRun",
-      "indexion.planClearHistory",
-    ];
-    for (const cmd of expected) {
+
+    // Read expected commands directly from package.json — single source of truth.
+    const declared: ReadonlyArray<string> = ext.packageJSON.contributes.commands.map(
+      (c: { command: string }) => c.command,
+    );
+    assert.ok(declared.length > 0, "package.json should declare at least one command");
+    for (const cmd of declared) {
       assert.ok(commands.includes(cmd), `command ${cmd} should be registered`);
     }
+    console.log(`[e2e] all ${declared.length} commands registered`);
   });
 
   test("server starts within 60 seconds", async function () {
@@ -146,5 +143,27 @@ suite("Extension E2E", () => {
     assert.ok(names.has("typescript"), `should have typescript spec`);
     assert.ok(names.has("moonbit"), `should have moonbit spec`);
     console.log(`[e2e] KGF list verified: ${result.data.length} specs, ${categories.size} categories`);
+  });
+
+  test("exploreSimilar command opens explore panel without error", async function () {
+    this.timeout(90_000);
+    const ext = await activateExtension();
+
+    for (let i = 0; i < 60; i++) {
+      if (ext.exports?.isServerReady?.()) {
+        break;
+      }
+      await sleep(1000);
+    }
+    assert.ok(ext.exports?.isServerReady?.(), "server should be ready");
+
+    const folders = vscode.workspace.workspaceFolders;
+    assert.ok(folders);
+    const targetUri = vscode.Uri.joinPath(folders[0]!.uri, "packages", "vscode-plugin", "src", "views", "search");
+
+    await vscode.commands.executeCommand("indexion.exploreSimilar", targetUri);
+    await sleep(2000);
+
+    console.log("[e2e] exploreSimilar command executed without error");
   });
 });

@@ -3,6 +3,7 @@
  */
 
 import * as vscode from "vscode";
+import { resolveFileUri } from "../extension-host/resolve-file-uri.ts";
 import { runGrep } from "@indexion/api-client";
 import { runWithProgress } from "./progress.ts";
 import { requireConfig } from "./plan-common.ts";
@@ -54,7 +55,7 @@ export const executeGrep = async (): Promise<void> => {
   });
 
   if (selected) {
-    const uri = vscode.Uri.file(selected.match.file);
+    const uri = resolveFileUri(selected.match.file);
     const doc = await vscode.workspace.openTextDocument(uri);
     const line = Math.max(0, selected.match.line - 1);
     await vscode.window.showTextDocument(doc, {

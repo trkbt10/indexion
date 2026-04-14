@@ -10,6 +10,7 @@ import { fetchWikiPage, type HttpClient } from "@indexion/api-client";
 import type { WikiPageToWebview, WikiPageFromWebview } from "./messages.ts";
 import { buildWebviewHtml } from "../../extension-host/webview-html.ts";
 import { resolveCodiconsUri } from "../../extension-host/codicons.ts";
+import { resolveFileUri } from "../../extension-host/resolve-file-uri.ts";
 
 /** Manages a single wiki page panel. Reused across navigations. */
 export type WikiPagePanelManager = {
@@ -121,7 +122,7 @@ export const createWikiPagePanelManager = (
           return;
         }
         if (msg.type === "openFile") {
-          const uri = vscode.Uri.file(msg.filePath);
+          const uri = resolveFileUri(msg.filePath);
           vscode.workspace.openTextDocument(uri).then((doc) => {
             const options: vscode.TextDocumentShowOptions = {};
             if (msg.line !== undefined) {
