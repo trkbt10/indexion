@@ -71,7 +71,7 @@ fn programming_langs_from_kgfs() -> Map[String, Bool] {
 test "declares: semantics coverage includes every programming kgf" {
   let covered = [
     "c", "clojure", "cpp", "csharp", "dart", "elixir", "go", "haskell", "java", "javascript",
-    "javascript-jsx", "julia", "kotlin", "lua", "moonbit", "ocaml", "php", "python",
+    "javascript-jsx", "julia", "kotlin", "lua", "moonbit", "ocaml", "php", "protobuf", "python",
     "ruby", "rust", "scala", "swift", "typescript", "typescript-jsx", "zig",
   ]
   let langs = programming_langs_from_kgfs()
@@ -626,6 +626,89 @@ test "declares: ocaml task store fixture values and types" {
     #|type status = Pending | Done
   let (_, _, names) = count_declares(registry, "ocaml", source, "task_store.ml")
   assert_true(names.get("status") == Some("type"))
+}
+
+// ─── Protobuf ──────────────────────────────────────────────
+
+///|
+test "declares: protobuf message, enum, service, rpc" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let source =
+    #|syntax = "proto3";
+    #|
+    #|package example.api;
+    #|
+    #|import "google/protobuf/timestamp.proto";
+    #|
+    #|// User account service.
+    #|service UserService {
+    #|  // Create a new user.
+    #|  rpc CreateUser (CreateUserRequest) returns (UserResponse);
+    #|
+    #|  // Get user by ID.
+    #|  rpc GetUser (GetUserRequest) returns (UserResponse);
+    #|}
+    #|
+    #|// Request to create a user.
+    #|message CreateUserRequest {
+    #|  string name = 1;
+    #|  string email = 2;
+    #|  Role role = 3;
+    #|}
+    #|
+    #|message GetUserRequest {
+    #|  string user_id = 1;
+    #|}
+    #|
+    #|// User information.
+    #|message UserResponse {
+    #|  string id = 1;
+    #|  string name = 2;
+    #|  string email = 3;
+    #|  Role role = 4;
+    #|  google.protobuf.Timestamp created_at = 5;
+    #|}
+    #|
+    #|// User role.
+    #|enum Role {
+    #|  ROLE_UNSPECIFIED = 0;
+    #|  ROLE_ADMIN = 1;
+    #|  ROLE_USER = 2;
+    #|}
+  let (fn_count, type_count, names) = count_declares(
+    registry, "protobuf", source, "user.proto",
+  )
+  // rpc edges have kind="Rpc", function_kinds=["Method"] so they count as types here
+  assert_eq(fn_count, 0)
+  // messages (3) + enum (1) + service (1) + rpc (2) = 7
+  assert_eq(type_count, 7)
+  assert_true(names.get("UserService") == Some("service"))
+  assert_true(names.get("CreateUser") == Some("rpc"))
+  assert_true(names.get("GetUser") == Some("rpc"))
+  assert_true(names.get("CreateUserRequest") == Some("message"))
+  assert_true(names.get("GetUserRequest") == Some("message"))
+  assert_true(names.get("UserResponse") == Some("message"))
+  assert_true(names.get("Role") == Some("enum"))
+}
+
+///|
+test "declares: protobuf keyword as field name" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let source =
+    #|syntax = "proto3";
+    #|
+    #|// Event with keyword field names.
+    #|message Event {
+    #|  string message = 1;
+    #|  string service = 2;
+    #|  int32 enum = 3;
+    #|  bool optional = 4;
+    #|}
+  let (_fn_count, type_count, names) = count_declares(
+    registry, "protobuf", source, "event.proto",
+  )
+  assert_eq(type_count, 1)
+  assert_true(names.get("Event") == Some("message"))
 }
 
 // ─── Julia ──────────────────────────────────────────────────

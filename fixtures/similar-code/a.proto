@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package shop.inventory;
+
+import "google/protobuf/timestamp.proto";
+
+// Product catalog service.
+// Manages product listings and inventory.
+service ProductCatalog {
+  // Retrieve a product by its ID.
+  rpc GetProduct (GetProductRequest) returns (ProductResponse);
+
+  // List products with filtering and pagination.
+  rpc ListProducts (ListProductsRequest) returns (ListProductsResponse);
+
+  // Update stock quantity for a product.
+  rpc UpdateStock (UpdateStockRequest) returns (UpdateStockResponse);
+}
+
+// Request to retrieve a single product.
+message GetProductRequest {
+  // Unique product identifier.
+  string product_id = 1;
+}
+
+// Detailed product information.
+message ProductResponse {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int32 price_cents = 4;
+  int32 stock_quantity = 5;
+  repeated string tags = 6;
+  google.protobuf.Timestamp created_at = 7;
+
+  // Product category classification.
+  Category category = 8;
+
+  // Product dimensions for shipping.
+  message Dimensions {
+    int32 width_mm = 1;
+    int32 height_mm = 2;
+    int32 depth_mm = 3;
+    int32 weight_grams = 4;
+  }
+
+  Dimensions dimensions = 9;
+}
+
+// Product category enumeration.
+enum Category {
+  CATEGORY_UNSPECIFIED = 0;
+  CATEGORY_ELECTRONICS = 1;
+  CATEGORY_CLOTHING = 2;
+  CATEGORY_FOOD = 3;
+  CATEGORY_BOOKS = 4;
+}
+
+// Request to list products.
+message ListProductsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  optional Category filter_category = 3;
+  optional string search_query = 4;
+}
+
+// Paginated list of products.
+message ListProductsResponse {
+  repeated ProductResponse products = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+// Request to update stock.
+message UpdateStockRequest {
+  string product_id = 1;
+  int32 quantity_change = 2;
+  string reason = 3;
+}
+
+// Response after stock update.
+message UpdateStockResponse {
+  string product_id = 1;
+  int32 new_quantity = 2;
+  google.protobuf.Timestamp updated_at = 3;
+}

@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package store.catalog;
+
+import "google/protobuf/timestamp.proto";
+
+// Item management service.
+// Handles item records and availability.
+service ItemManager {
+  // Fetch an item by its identifier.
+  rpc FetchItem (FetchItemRequest) returns (ItemDetail);
+
+  // Browse items with search and pagination support.
+  rpc BrowseItems (BrowseItemsRequest) returns (BrowseItemsResponse);
+
+  // Adjust available quantity for an item.
+  rpc AdjustQuantity (AdjustQuantityRequest) returns (AdjustQuantityResponse);
+}
+
+// Request to fetch a single item.
+message FetchItemRequest {
+  // Unique item identifier.
+  string item_id = 1;
+}
+
+// Comprehensive item information.
+message ItemDetail {
+  string id = 1;
+  string title = 2;
+  string summary = 3;
+  int32 unit_price_cents = 4;
+  int32 available_count = 5;
+  repeated string labels = 6;
+  google.protobuf.Timestamp added_at = 7;
+
+  // Item type classification.
+  ItemType item_type = 8;
+
+  // Item measurements for logistics.
+  message Measurements {
+    int32 width_mm = 1;
+    int32 height_mm = 2;
+    int32 depth_mm = 3;
+    int32 mass_grams = 4;
+  }
+
+  Measurements measurements = 9;
+}
+
+// Item type enumeration.
+enum ItemType {
+  ITEM_TYPE_UNSPECIFIED = 0;
+  ITEM_TYPE_ELECTRONICS = 1;
+  ITEM_TYPE_APPAREL = 2;
+  ITEM_TYPE_GROCERY = 3;
+  ITEM_TYPE_LITERATURE = 4;
+}
+
+// Request to browse items.
+message BrowseItemsRequest {
+  int32 limit = 1;
+  string cursor = 2;
+  optional ItemType filter_type = 3;
+  optional string keyword = 4;
+}
+
+// Paginated list of items.
+message BrowseItemsResponse {
+  repeated ItemDetail items = 1;
+  string next_cursor = 2;
+  int32 total_results = 3;
+}
+
+// Request to adjust quantity.
+message AdjustQuantityRequest {
+  string item_id = 1;
+  int32 delta = 2;
+  string note = 3;
+}
+
+// Response after quantity adjustment.
+message AdjustQuantityResponse {
+  string item_id = 1;
+  int32 current_quantity = 2;
+  google.protobuf.Timestamp modified_at = 3;
+}
