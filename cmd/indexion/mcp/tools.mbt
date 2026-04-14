@@ -109,8 +109,8 @@ fn register_explore(server : @mcp_server.McpServer, config : McpConfig) -> Unit 
           ),
           "strategy": @mcp_types.enum_prop(
             "Comparison strategy",
-            ["hybrid", "tfidf", "apted", "tsed"],
-            default="tfidf",
+            ["hybrid", "tfidf", "bm25", "jsd", "ncd", "apted", "tsed"],
+            default="hybrid",
           ),
           "threshold": @mcp_types.number_prop(
             "Similarity threshold (0.0-1.0)",
@@ -291,7 +291,7 @@ fn register_plan_refactor(
           ),
           "strategy": @mcp_types.enum_prop(
             "Comparison strategy",
-            ["hybrid", "tfidf", "apted", "tsed"],
+            ["hybrid", "tfidf", "bm25", "jsd", "ncd", "apted", "tsed"],
             default="hybrid",
           ),
           "includes": @mcp_types.string_array_prop("Include file glob patterns"),
@@ -637,8 +637,8 @@ fn register_plan_solid(
           ),
           "strategy": @mcp_types.enum_prop(
             "Comparison strategy",
-            ["tfidf", "hybrid", "apted"],
-            default="tfidf",
+            ["hybrid", "tfidf", "bm25", "jsd", "ncd", "apted", "tsed"],
+            default="hybrid",
           ),
           "includes": @mcp_types.string_array_prop("Include file glob patterns"),
           "excludes": @mcp_types.string_array_prop("Exclude file glob patterns"),

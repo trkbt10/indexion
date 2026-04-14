@@ -6,8 +6,8 @@
 /// ## Overview
 ///
 /// Analyzes files in a directory, identifies similar code patterns using
-/// TF-IDF or NCD algorithms, and generates a Markdown checklist for
-/// refactoring candidates.
+/// hybrid multi-signal evidence fusion (BM25 + JSD + TSED), and generates
+/// a Markdown checklist for refactoring candidates.
 ///
 /// ## Usage
 ///
@@ -20,7 +20,7 @@
 /// | Option | Description | Default |
 /// |--------|-------------|---------|
 /// | `--threshold=FLOAT` | Similarity threshold (0.0-1.0) | 0.7 |
-/// | `--strategy=NAME` | Algorithm: `tfidf`, `ncd`, `hybrid` | tfidf |
+/// | `--strategy=NAME` | Algorithm: `hybrid`, `tfidf`, `bm25`, `jsd`, `ncd`, `apted`, `tsed` | hybrid |
 /// | `--include=PATTERN` | Include files matching glob pattern | * |
 /// | `--exclude=PATTERN` | Exclude files matching glob pattern | - |
 /// | `--output=FILE`, `-o=` | Output file path | stdout |
@@ -52,7 +52,7 @@ pub(all) struct RefactorPlanConfig {
   target_dir : String
   threshold : Double // similarity threshold (default: 0.7 = 70%)
   fdr : Double // FDR correction level (0 = disabled, 0.05 = 5% FDR)
-  strategy : String // "hybrid", "ncd", "tfidf", "bm25", "jsd"
+  strategy : String // "hybrid" (default), "tfidf", "bm25", "jsd", "ncd", "apted", "tsed"
   includes : Array[String] // glob patterns to include
   excludes : Array[String] // glob patterns to exclude
   output : String // output file path (empty = stdout)
@@ -181,7 +181,7 @@ pub fn command() -> @argparse.Command {
       ]),
       @argparse.OptionArg(
         "strategy",
-        about="Algorithm: hybrid, tfidf, bm25, jsd, ncd",
+        about="Similarity strategy: hybrid (default), tfidf, bm25, jsd, ncd, apted, tsed",
         default_values=["hybrid"],
       ),
       @argparse.OptionArg(
@@ -541,10 +541,9 @@ fn collect_similar_pairs(
         @batch.BatchConfig::create(config.threshold, config.strategy),
       )
     _ => {
-      // Custom strategy: NCD or hybrid with prefilter
-      let score_fn : (String, String) -> Double = match config.strategy {
-        "ncd" => fn(t1, t2) { @ncd.NCDStrategy::new().similarity(t1, t2) }
-        _ => fn(t1, t2) { @hybrid.HybridStrategy::new().similarity(t1, t2) }
+      // Only NCD reaches this path; all other strategies route through @batch.compare.
+      let score_fn : (String, String) -> Double = fn(t1, t2) {
+        @ncd.NCDStrategy::new().similarity(t1, t2)
       }
       @batch.compare_with_prefilter(entries, config.threshold, score_fn)
     }

@@ -180,13 +180,13 @@
         },
         "indexion.defaultStrategy": {
           "type": "string",
-          "default": "tfidf",
+          "default": "hybrid",
           "enum": [
+            "hybrid",
             "tfidf",
             "bm25",
             "jsd",
             "ncd",
-            "hybrid",
             "apted",
             "tsed"
           ],

@@ -161,7 +161,7 @@ pub fn command() -> @argparse.Command {
       @argparse.OptionArg(
         "strategy",
         about="Similarity strategy: hybrid (default), tfidf, bm25, jsd, ncd, apted, tsed",
-        default_values=["tfidf"],
+        default_values=["hybrid"],
       ),
       @argparse.OptionArg(
         "threshold",
@@ -231,40 +231,18 @@ fn pair_threshold_for_format(format : String, threshold : Double) -> Double {
 // elapsed_ms: use @common (SoT)
 
 ///|
-fn calculate_tfidf_pairs(
-  batch : @tfidf.TfidfBatch,
-  files : Array[(String, String)],
-  min_similarity : Double,
-) -> (Array[FilePair], @tfidf.TfidfPairSearchStats) {
-  let pairs : Array[FilePair] = []
-  let (results, search_stats) = batch.all_pairs_above_threshold_with_stats(
-    min_similarity,
-  )
-  for result in results {
-    let (i, j, sim) = result
-    pairs.push({
-      file1: files[i].0,
-      file2: files[j].0,
-      similarity: sim,
-      _distance: 1.0 - sim,
-    })
-  }
-  (pairs, search_stats)
-}
-
-///|
 fn calculate_pairs(
   files : Array[(String, String)],
-  strategy : String,
+  _strategy : String,
   min_similarity : Double,
 ) -> Array[FilePair] {
   let entries : Array[@batch.FileEntry] = []
   for f in files {
     entries.push(@batch.FileEntry::new(f.0, f.1))
   }
-  let score_fn : (String, String) -> Double = match strategy {
-    "ncd" => fn(t1, t2) { @ncd.NCDStrategy::new().similarity(t1, t2) }
-    _ => fn(t1, t2) { @hybrid.HybridStrategy::new().similarity(t1, t2) }
+  // Only NCD reaches this path; all other strategies route through @batch.compare.
+  let score_fn : (String, String) -> Double = fn(t1, t2) {
+    @ncd.NCDStrategy::new().similarity(t1, t2)
   }
   let result = @batch.compare_with_prefilter(entries, min_similarity, score_fn)
   let pairs : Array[FilePair] = []
@@ -478,12 +456,10 @@ fn run_core(
   let is_tree_strategy = config.strategy == "apted" || config.strategy == "tsed"
   let pairs = if is_tree_strategy {
     calculate_function_pairs(files, config.strategy, min_similarity, registry)
-  } else if config.strategy == "tfidf" {
-    let (tokenized, _) = @kgf_features.tokenize_files_with_kgf(files, registry)
-    let batch = @tfidf.TfidfBatch::from_tokens(tokenized)
-    let (pairs, _) = calculate_tfidf_pairs(batch, files, min_similarity)
-    pairs
-  } else if config.strategy == "bm25" || config.strategy == "jsd" {
+  } else if config.strategy == "tfidf" ||
+    config.strategy == "bm25" ||
+    config.strategy == "jsd" ||
+    config.strategy == "hybrid" {
     calculate_batch_pairs(files, config.strategy, min_similarity)
   } else {
     calculate_pairs(files, config.strategy, min_similarity)

@@ -3,8 +3,6 @@ import {
   "trkbt10/indexion/cmd/indexion/help" @help,
   "trkbt10/indexion/src/similarity/apted" @apted,
   "trkbt10/indexion/src/similarity/ncd" @ncd,
-  "trkbt10/indexion/src/similarity/hybrid" @hybrid,
-  "trkbt10/indexion/src/text/tfidf" @tfidf,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
   "trkbt10/indexion/src/kgf/registry" @registry,

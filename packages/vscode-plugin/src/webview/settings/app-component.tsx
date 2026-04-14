@@ -12,7 +12,7 @@ const DEFAULT_CONFIG: SettingsConfig = {
   binaryPath: "",
   specsDir: "kgfs",
   defaultThreshold: 0.7,
-  defaultStrategy: "tfidf",
+  defaultStrategy: "hybrid",
   includes: [],
   excludes: [],
 };

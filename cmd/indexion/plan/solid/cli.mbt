@@ -19,7 +19,7 @@ pub(all) struct SolidConfig {
   rules_file : String // path to rules file (.solidrc)
   inline_rules : Array[String] // inline rules (--rule=...)
   threshold : Double // similarity threshold (default: 0.9)
-  strategy : String // similarity strategy: tfidf, apted, tsed
+  strategy : String // similarity strategy: hybrid (default), tfidf, bm25, jsd, ncd, apted, tsed
   includes : Array[String] // glob patterns to include
   excludes : Array[String] // glob patterns to exclude
   output : String // output file path (empty = stdout)
@@ -36,7 +36,7 @@ pub fn SolidConfig::default() -> SolidConfig {
     rules_file: "",
     inline_rules: [],
     threshold: 0.9,
-    strategy: "tfidf",
+    strategy: "hybrid",
     includes: [],
     excludes: [],
     output: "",
@@ -154,8 +154,8 @@ pub fn SolidConfig::from_matches(matches : @argparse.Matches) -> SolidConfig {
     _ => 0.9
   }
   let strategy = match matches.values.get("strategy") {
-    Some(arr) => if arr.length() > 0 { arr[0] } else { "tfidf" }
-    _ => "tfidf"
+    Some(arr) => if arr.length() > 0 { arr[0] } else { "hybrid" }
+    _ => "hybrid"
   }
   let includes = match matches.values.get("include") {
     Some(arr) => arr
@@ -216,8 +216,8 @@ pub fn command() -> @argparse.Command {
       ]),
       @argparse.OptionArg(
         "strategy",
-        about="Similarity strategy: tfidf, apted, tsed",
-        default_values=["tfidf"],
+        about="Similarity strategy: hybrid (default), tfidf, bm25, jsd, ncd, apted, tsed",
+        default_values=["hybrid"],
       ),
       @argparse.OptionArg("include", action=Append, about=@help.include_pattern),
       @argparse.OptionArg("exclude", action=Append, about=@help.exclude_pattern),

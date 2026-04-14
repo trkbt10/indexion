@@ -24,7 +24,7 @@ export const getExtensionSettings = (): ExtensionSettings => {
     binaryPath: config.get<string>("binaryPath", ""),
     specsDir: config.get<string>("specsDir", "kgfs"),
     defaultThreshold: config.get<number>("defaultThreshold", 0.7),
-    defaultStrategy: config.get<string>("defaultStrategy", "tfidf") as ComparisonStrategy,
+    defaultStrategy: config.get<string>("defaultStrategy", "hybrid") as ComparisonStrategy,
   };
 };
 
