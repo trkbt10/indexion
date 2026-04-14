@@ -21,7 +21,7 @@ graph TD
 
 ## Key Types
 
-This package has no public types. It exposes three functions only.
+This package has no public types. It exposes four functions only.
 
 ## Public API
 
@@ -29,6 +29,7 @@ This package has no public types. It exposes three functions only.
 |----------|-------------|
 | `available()` | Returns `true` if fork-based parallelism is available (native target only) |
 | `cpu_count()` | Returns the number of available CPU cores |
+| `exit(code)` | Terminate the process with the given exit code |
 | `run_parallel(tasks)` | Run an array of `() -> String` tasks in parallel, returns results in order |
 
 ### Platform-Specific Implementation

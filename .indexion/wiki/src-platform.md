@@ -19,17 +19,17 @@ graph TD
 
 ## Key Types
 
-| Type | Description |
-|------|-------------|
-| `Platform` | Enum: `MacOS`, `Linux`, `Windows`, `Unknown` |
-| `Arch` | Enum: `X64`, `Arm64`, `UnknownArch` |
+| Type | Visibility | Description |
+|------|------------|-------------|
+| `Platform` | `pub(all)` | Enum: `MacOS`, `Linux`, `Windows`, `Unknown` |
+| `Arch` | `pub(all)` | Enum: `X64`, `Arm64`, `UnknownArch` |
 
 ## Public API
 
 | Function | Async | Description |
 |----------|-------|-------------|
 | `detect_platform()` | No | Detect current OS (`MacOS`/`Linux`/`Windows`/`Unknown`) |
-| `detect_arch()` | No | Detect CPU architecture (`X64`/`Arm64`/`UnknownArch`) |
+| `detect_arch()` | No | Detect CPU architecture via env vars (`PROCESSOR_ARCHITECTURE`, `HOSTTYPE`), filesystem probes, and macOS Rosetta detection |
 | `get_home_dir()` | No | Get user home directory path (returns `String?`) |
 | `create_temp_dir(prefix)` | Yes | Create a temporary directory with given prefix |
 | `copy_file(src, dst)` | Yes | Copy a single file |

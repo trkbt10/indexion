@@ -20,8 +20,7 @@ graph LR
 | Type | Description |
 |------|-------------|
 | `UpdateCheckResult` | Result of a version check. Contains latest version string and whether an update is available |
-| `UpdateError` | Suberror type with variants: `PlatformNotSupported`, `NetworkError(String)`, `ChecksumMismatch`, `InstallError(String)` |
-| `Semver` | Parsed semver components (major, minor, patch) |
+| `UpdateError` | Suberror type with variants: `PlatformNotSupported`, `NetworkError(String)`, `ChecksumMismatch`, `InstallError(String)`. Implements `to_string()` |
 
 ## Public API
 
@@ -29,10 +28,8 @@ graph LR
 
 | Function | Description |
 |----------|-------------|
-| `current_version` | String constant with the current indexion version |
+| `current_version` | Let-binding with the current indexion version string (e.g. `"0.9.0"`) |
 | `compare_versions(a, b)` | Compare two semver strings: positive if a > b, negative if a < b, 0 if equal |
-| `parse_semver(s)` | Parse a version string like "0.1.0" or "v0.1.0" into `Semver` |
-| `extract_tag_name(json)` | Extract `tag_name` from GitHub API JSON response |
 
 ### Update Check (async)
 

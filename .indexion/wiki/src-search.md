@@ -40,17 +40,45 @@ A search result with a relevance score (0.0--1.0).
 
 The sole owner of a vcdb instance. Manages document storage, embedding, and querying.
 
-## Key Functions
+## Public API
+
+### SearchEngine Core
 
 | Function | Description |
 |----------|-------------|
-| `SearchEngine::create()` | Creates a new vcdb-backed engine (SoT for vcdb construction) |
-| `SearchEngine::build()` | Convenience: builds engine from documents with specified embedding |
-| `SearchEngine::search()` | Natural language search (OpenAI if configured, TF-IDF fallback) |
-| `SearchEngine::search_vector()` | Raw vector search with optional attribute filter |
-| `SearchEngine::add()` | Adds document with pre-computed vector |
-| `SearchEngine::serialize()` / `from_bytes()` | Persistence |
-| `inline_search()` | One-shot lightweight search without persistent index |
+| `SearchEngine::create(dim?, strategy?)` | Create a new vcdb-backed engine with optional dimension and strategy |
+| `SearchEngine::from_bytes(data)` | Deserialize engine from bytes |
+| `SearchEngine::with_tfidf(provider)` | Attach a TF-IDF vocabulary for serialization by consumers |
+| `SearchEngine::tfidf_provider()` | Return the attached TF-IDF vocabulary, if any |
+| `SearchEngine::with_id_map(id_map)` | Set the vector ID to document ID mapping for a loaded engine |
+| `SearchEngine::with_documents(documents)` | Set the documents map for a loaded engine |
+| `SearchEngine::with_openai(config)` | Attach OpenAI embedding API config |
+| `SearchEngine::add(doc, vector, vid)` | Add a document with a pre-computed vector |
+| `SearchEngine::add_raw(vid, vector, attrs)` | Add a vector with raw vcdb attrs (digest, wiki callers manage attrs) |
+| `SearchEngine::remove(vid)` | Remove a vector by vcdb vector ID |
+| `SearchEngine::size()` | Get the vcdb database size |
+| `SearchEngine::dim()` | Get the vcdb embedding dimension |
+| `SearchEngine::serialize()` | Serialize the vcdb database to bytes |
+| `SearchEngine::search_vector(vector, top_k, filter?)` | Search by raw vector with optional filter expression |
+| `SearchEngine::resolve_hits(raw_hits, min_score)` | Resolve raw vcdb hits to SearchHits with score filtering |
+| `SearchEngine::build(documents, provider?)` | Async: build engine from documents with specified embedding provider |
+| `SearchEngine::search(query, top_k?, min_score?, filter?)` | Async: natural language search (OpenAI if configured, TF-IDF fallback) |
+
+### Embedding Utilities
+
+| Function | Description |
+|----------|-------------|
+| `embed_texts(provider, texts, tfidf)` | Async: embed a batch of texts using the given provider (TF-IDF or OpenAI) |
+| `provider_dim(provider)` | Extract the embedding dimension from a provider enum |
+| `empty_attrs()` | Create empty vcdb attrs |
+
+### Convenience
+
+| Function | Description |
+|----------|-------------|
+| `build_index(documents, provider)` | Async: build a SearchEngine from documents with a provider |
+| `search_index(engine, query, provider, top_k, min_score, filter?)` | Async: search a pre-built index with natural language query |
+| `inline_search(documents, query, top_k, dim?)` | One-shot lightweight TF-IDF search without persistent index |
 
 ## Embedding Strategies
 

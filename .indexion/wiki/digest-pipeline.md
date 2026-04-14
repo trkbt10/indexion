@@ -100,7 +100,7 @@ Remote embeddings capture deeper semantic similarity. "Parse a configuration fil
 
 When `EmbeddingSource::Impression` is selected and an LLM config is provided, indexion first generates a one-line purpose summary and keywords for each function using an LLM (default: `gpt-4o-mini`). These impressions are then embedded instead of raw function metadata, producing the highest-quality search results.
 
-> Source: `src/digest/index/index.mbt`, `src/digest/config/config.mbt`, `src/digest/embed/`
+> Source: `src/digest/index/index.mbt`, `src/embedding/config/config.mbt`, `src/digest/embed/`
 
 ## Stage 3: Index
 

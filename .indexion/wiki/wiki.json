@@ -92,7 +92,9 @@
         "src/kgf/semantics/",
         "kgfs/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "codegraph",
@@ -113,7 +115,9 @@
         "src/digest/",
         "cmd/indexion/digest/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "analysis-tools",
@@ -124,7 +128,9 @@
         "src/similarity/",
         "src/pipeline/comparison/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "cli-commands",
@@ -289,7 +295,9 @@
       "sources": [
         "src/pipeline/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-kgf",
@@ -298,7 +306,9 @@
       "sources": [
         "src/kgf/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-parallel",
@@ -307,7 +317,9 @@
       "sources": [
         "src/parallel/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-core",
@@ -325,7 +337,9 @@
       "sources": [
         "src/update/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-config",
@@ -334,7 +348,9 @@
       "sources": [
         "src/config/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-segmentation",
@@ -343,7 +359,9 @@
       "sources": [
         "src/segmentation/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-plan",
@@ -352,7 +370,9 @@
       "sources": [
         "src/plan/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-digest",
@@ -361,7 +381,9 @@
       "sources": [
         "src/digest/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-platform",
@@ -370,7 +392,9 @@
       "sources": [
         "src/platform/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-similarity",
@@ -397,7 +421,9 @@
       "sources": [
         "src/scope/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-vcs",
@@ -406,7 +432,9 @@
       "sources": [
         "src/vcs/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-http",
@@ -444,7 +472,9 @@
       "sources": [
         "src/text/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-filter",
@@ -453,7 +483,9 @@
       "sources": [
         "src/filter/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     },
     {
       "id": "src-mcp",
@@ -471,7 +503,9 @@
       "sources": [
         "src/search/"
       ],
-      "children": []
+      "children": [],
+      "provenance": "synthesized",
+      "last_actor": "agent:claude"
     }
   ]
 }

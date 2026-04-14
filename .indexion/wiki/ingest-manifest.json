@@ -4,8 +4,8 @@
     "overview": {
       "page_hash": "9a6045bb65f305db9b09f0a0d9f62c7b",
       "source_hashes": {
-        "README.md": "3fd31109f3aa7ca18dddbe49f8bd9a52",
-        "moon.mod.json": "7f4bf182eb99ccca6ba4b5e26be059e5",
+        "README.md": "0dfecfb687a6158743b5820396445b94",
+        "moon.mod.json": "8356471496c5aec83cdd91cd888c5e05",
         "cmd/indexion/main.mbt": "e0f804d058a6a737adf5eb805b96c6ba",
         "cmd/indexion/wiki/cli.mbt": "03003302e6a4ad691ef15c6071bcd82b",
         "cmd/indexion/spec/cli.mbt": "678497b112dc0ea01c9e8ed27f259a0e"
@@ -14,7 +14,7 @@
     "getting-started": {
       "page_hash": "61e63c658ece0f8ce242ad4f69bccd49",
       "source_hashes": {
-        "README.md": "3fd31109f3aa7ca18dddbe49f8bd9a52",
+        "README.md": "0dfecfb687a6158743b5820396445b94",
         "cmd/indexion/main.mbt": "e0f804d058a6a737adf5eb805b96c6ba"
       }
     },
@@ -27,7 +27,7 @@
       "source_hashes": {}
     },
     "kgf-system": {
-      "page_hash": "221daad63ba800442e7d1fc1bb9635bf",
+      "page_hash": "596c47416ac4b2b066acd6eaa6763d42",
       "source_hashes": {}
     },
     "codegraph": {
@@ -38,11 +38,11 @@
       }
     },
     "digest-pipeline": {
-      "page_hash": "ee025a974431faf147026692df0e8bb5",
+      "page_hash": "1fd6cc946ef5a2904652a84064194170",
       "source_hashes": {}
     },
     "analysis-tools": {
-      "page_hash": "bada170c9a90a45d898755ad8be2f45a",
+      "page_hash": "3515f6087fbd6f4d4ff677f5a66bf479",
       "source_hashes": {}
     },
     "cli-commands": {
@@ -67,7 +67,7 @@
       "source_hashes": {}
     },
     "cmd-indexion": {
-      "page_hash": "b00a9c1d3c95e6bc534b7c7472a06a6a",
+      "page_hash": "0669c0057621d33f191fe2535bc349d3",
       "source_hashes": {
         "cmd/indexion/main.mbt": "e0f804d058a6a737adf5eb805b96c6ba",
         "cmd/indexion/wiki/cli.mbt": "03003302e6a4ad691ef15c6071bcd82b",
@@ -113,23 +113,23 @@
       "source_hashes": {}
     },
     "skills": {
-      "page_hash": "092dd3379763141c01ba1c0491defb7a",
+      "page_hash": "3fe6a2746b3e856915a96b27a74c258a",
       "source_hashes": {}
     },
     "skills-skills": {
-      "page_hash": "8d0ff2259a7269828b7ed12fc218e48f",
+      "page_hash": "f086f2885d3159e93230c5e547c4c9d3",
       "source_hashes": {}
     },
     "src-pipeline": {
-      "page_hash": "a2ecdefe26527b9b628ba2285429501d",
+      "page_hash": "8743f5948f409d61b23e3b4149e774b2",
       "source_hashes": {}
     },
     "src-kgf": {
-      "page_hash": "2014fcba99a44d464bfc0d5c451dc348",
+      "page_hash": "8e807e508e08f1f9f69677c054147389",
       "source_hashes": {}
     },
     "src-parallel": {
-      "page_hash": "52c6edbc055c72a5d79593fbc5815f42",
+      "page_hash": "ced392e580220ef4cd6df595a29eb127",
       "source_hashes": {}
     },
     "src-core": {
@@ -137,27 +137,27 @@
       "source_hashes": {}
     },
     "src-update": {
-      "page_hash": "a7812ae62142bc86a0bd79bb8391099c",
+      "page_hash": "c99f42e7a7f469bfb1b87e4b62b0cb93",
       "source_hashes": {}
     },
     "src-config": {
-      "page_hash": "2e7b22e9a03b6432546000cebec34d70",
+      "page_hash": "63672263874f4d009476e347fbccd9c9",
       "source_hashes": {}
     },
     "src-segmentation": {
-      "page_hash": "9fce32fdadac766d9b09df3fdcf2fee7",
+      "page_hash": "61590ec612de138073f19119cf77e310",
       "source_hashes": {}
     },
     "src-plan": {
-      "page_hash": "a82b7dbae0452f5dc0f626c04694ad20",
+      "page_hash": "c93b0c873be8447252686775e77bef7c",
       "source_hashes": {}
     },
     "src-digest": {
-      "page_hash": "dee3f3959feec0f2e7626ffec0fff156",
+      "page_hash": "f7a0ddc041e83941e7558adbe3a4bdd2",
       "source_hashes": {}
     },
     "src-platform": {
-      "page_hash": "a0b8c650fd75b48351343cf9263fbb88",
+      "page_hash": "8d66d9119a486cf13783a70858ae54b6",
       "source_hashes": {}
     },
     "src-similarity": {
@@ -169,11 +169,11 @@
       "source_hashes": {}
     },
     "src-scope": {
-      "page_hash": "e0cdafda33b4091711f321dd5d9555d5",
+      "page_hash": "9e03eeca88abde97b7b658979eb630e6",
       "source_hashes": {}
     },
     "src-vcs": {
-      "page_hash": "3717da193893f8eaaa75ec9d7ba54373",
+      "page_hash": "ca8bb8bd877c6468ba38b32763e30e2d",
       "source_hashes": {}
     },
     "src-http": {
@@ -181,7 +181,7 @@
       "source_hashes": {}
     },
     "src-docgen": {
-      "page_hash": "97e11b41c444c901c6c691c24311d8f9",
+      "page_hash": "fe767f0c55aaab7cd08373cede4a75f4",
       "source_hashes": {}
     },
     "src-glob": {
@@ -189,11 +189,11 @@
       "source_hashes": {}
     },
     "src-text": {
-      "page_hash": "747ea76d946edd73f3a7e539d696ae5e",
+      "page_hash": "2afbeca491854125b9fb7fbb9b8245bc",
       "source_hashes": {}
     },
     "src-filter": {
-      "page_hash": "cf0b58f6875b7a7e4dcb6d5e4dc3dfba",
+      "page_hash": "7c61cfe02aae78807542ba79f1f2e349",
       "source_hashes": {}
     },
     "src-mcp": {
@@ -201,7 +201,7 @@
       "source_hashes": {}
     },
     "src-search": {
-      "page_hash": "e7906bfcf66b3859c1f37338b6d3d3ce",
+      "page_hash": "1063c55eebffade1535a32399c1600ed",
       "source_hashes": {}
     }
   }

@@ -133,7 +133,100 @@ indexion plan reconcile .
 
 Reconcile uses content hashing and git timestamps to determine staleness. It builds a mapping between document fragments and code units, then flags pairs where the code has been modified more recently than the documentation.
 
-> Source: `cmd/indexion/plan/reconcile/cli.mbt`, `cmd/indexion/plan/reconcile/mapping.mbt`
+### Reconcile Engine (`src/reconcile/plan/`)
+
+The reconcile engine lives in `src/reconcile/plan/` and provides the core analysis pipeline:
+
+#### Key Types
+
+| Type | Description |
+|------|-------------|
+| `ReconcileConfig` | Full configuration: target dir, format, document scope, index dir, thresholds, git/mtime preferences, logical review mode |
+| `ReconcileReport` | Complete output: config, summary, aggregate suggestions, candidates, logical reviews, vocabulary divergences, cache state |
+| `ReconcileCandidate` | A code symbol that may need documentation updates: status, time relation, mapping confidence, recommended action, evidence |
+| `ReconcileSummary` | Aggregate statistics: total symbols, doc coverage, stale/missing counts, review counts, vocabulary divergence |
+| `ReconcileAggregateSuggestion` | Grouped suggestion at module or project scope with candidate counts |
+| `VocabularyDivergence` | TF-IDF vocabulary comparison between source module and documentation |
+| `CodeUnit` | Extracted code symbol for reconciliation: name, kind, ns, module path, inline doc, code hash |
+| `DocFragment` | Documentation fragment: path, spec, kind, title, content, preview, hash |
+| `CodeAnchor` / `DocAnchor` | Anchor references within reconcile candidates |
+| `MappingEvidence` | Evidence for code-to-doc mapping: matched terms, match kind, reason, timestamps |
+| `LogicalReviewTask` | Queued task for human review of a candidate |
+| `ReconcileManifest` | Persistent manifest tracking indexed records, reviews, and fingerprints |
+| `IndexedRecordEntry` | Index database entry: record key, kind, digest, vector ID |
+| `LogicalReviewEntry` | Persisted review decision in the manifest |
+| `ReviewDecisionInput` | User-supplied review decision |
+| `CacheState` | Cache hit/miss state with fingerprint info for incremental runs |
+
+#### Core API
+
+| Function | Description |
+|----------|-------------|
+| `report(config)` | Generate a `ReconcileReport?` from configuration (async) |
+| `persisted_report(config)` | Generate and persist report to index directory (async) |
+| `collect_document_fragments(files, config, registry)` | Extract document fragments from discovered files (async) |
+| `build_code_units_fast(...)` | Build code units from CodeGraph for reconciliation |
+| `build_candidates(...)` | Build reconcile candidates from code units and doc fragments (async) |
+| `build_candidates_concurrent(...)` | Concurrent variant using parallel fork (async) |
+| `build_summary(...)` | Compute aggregate statistics for a reconcile report |
+| `build_aggregate_suggestions(...)` | Group candidates into module/project-level suggestions |
+| `collapse_aggregate_only_candidates(...)` | Remove candidates already covered by aggregate suggestions |
+| `classify_match_result(...)` | Classify a code-doc pair into status/action/reason |
+| `compute_vocabulary_divergences(...)` | Compute TF-IDF vocabulary divergences between code and docs |
+| `apply_review_decisions(...)` | Apply user review decisions to manifest |
+| `sync_candidates_with_index(...)` | Synchronize candidates with the vector index database |
+| `discovery_roots(target_dir)` | Resolve discovery roots for a target directory |
+| `cleanup_stale_index(index_dir)` | Remove stale entries from the reconcile index |
+
+#### Internal Types
+
+| Type | Visibility | Description |
+|------|-----------|-------------|
+| `CandidateBuildResult` | `pub(all)` | Result of candidate construction: candidates array + aggregate suggestions |
+| `FragmentMatchSignals` | `pub(all)` | Pre-computed matching signals per doc fragment: matched terms, title match, module overlap |
+| `IndexSyncResult` | `pub(all)` | Result of syncing candidates with vector index: reused/new/removed counts |
+
+#### Document Handling
+
+| Function | Description |
+|----------|-------------|
+| `is_document_path(path, config, registry)` | Check if a path is a document candidate |
+| `is_document_candidate(path, content_type, config, registry)` | Check path + content type |
+| `select_document_spec(config)` | Select the document KGF spec from config |
+| `extract_document_fragments(content, path, spec)` | Extract fragments using KGF spec |
+| `extract_markdown_fragments(content, path)` | Extract fragments from Markdown |
+| `extract_toml_fragments(content, path)` | Extract fragments from TOML |
+| `make_fragment(path, spec, kind, title, content)` | Construct a `DocFragment` with computed hash and preview |
+
+#### Utility Functions (`utils.mbt`)
+
+| Function | Description |
+|----------|-------------|
+| `make_hash(parts)` | Compute a deterministic hash from string parts |
+| `lower_string(s)` | Lowercase a string |
+| `normalize_spaces(text)` | Collapse whitespace runs to single spaces |
+| `contains_string(values, target)` | Check if an array contains a string |
+
+### File Tracking (`src/reconcile/tracking/`)
+
+The tracking subpackage handles timestamp resolution and file state for change detection:
+
+| Type | Description |
+|------|-------------|
+| `TimestampInfo` | Timestamp metadata: epoch seconds, source (git/mtime/unknown), dirty flag |
+| `FileState` | Tracked file state: path, kind, spec, content hash, git time, mtime, dirty flag |
+| `FileTrackingConfig` | Tracking preferences: git preferred, mtime fallback |
+
+| Function | Description |
+|----------|-------------|
+| `TimestampInfo::unknown(source?)` | Create unknown timestamp |
+| `TimestampInfo::new(epoch_seconds, source, is_dirty)` | Create with explicit values |
+| `FileState::new(...)` | Create a file state record |
+| `FileTrackingConfig::default()` | Default config: git not preferred, mtime fallback enabled |
+| `timestamp_for_path(root, path, config)` | Resolve timestamp for a file path with caching (async) |
+| `build_source_fingerprint(config_hash, file_states)` | Compute deterministic fingerprint from file states |
+
+> Source: `cmd/indexion/plan/reconcile/cli.mbt`, `cmd/indexion/plan/reconcile/mapping.mbt`, `src/reconcile/plan/`, `src/reconcile/tracking/`
 
 ## plan readme
 

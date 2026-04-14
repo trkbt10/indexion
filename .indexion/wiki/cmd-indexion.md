@@ -142,15 +142,155 @@ The `spec` package (`cmd/indexion/spec/cli.mbt`) provides specification-driven a
 
 The underlying library modules live in `src/spec/align/` (alignment analysis, caching, history) and `src/spec/draft/` (SDD draft generation). The `align` subcommand supports incremental mode via `--incremental` and `--git-base`, and caches results for efficient re-analysis.
 
+#### `src/spec/align/` Library Types
+
+The alignment engine defines a rich type system for traceability analysis:
+
+| Type | Description |
+|------|-------------|
+| `SpecAlignConfig` | Full configuration: paths, format, algorithm, threshold, direction, agent, fail-on, incremental/watch settings |
+| `AlignSnapshot` | Complete alignment result: requirements, scenarios, implementations, trace edges, diff items, summary, file hashes, cache state, history |
+| `AlignDiffReport` | Focused diff output: summary + diff items for a single run |
+| `AlignTraceReport` | Traceability matrix output: requirements, implementations, edges, history |
+| `AlignSuggestReport` | Reconciliation suggestions: summary + suggestion items |
+| `AlignStatusReport` | CI status output: summary, status string, should_fail flag |
+| `RequirementNode` | A spec requirement: id, title, description, normative level, criteria, section refs, literals, table pairs |
+| `ScenarioNode` | A BDD-style scenario: given/when/then arrays, parent requirement, section refs |
+| `ImplementationNode` | An implementation symbol: name, kind, file, line range, signature, declaration text, doc comment |
+| `TraceEdge` | Requirement-to-implementation mapping: confidence, algorithm, status, rank |
+| `AlignDiffItem` | A single diff entry: category (MATCHED/DRIFTED/SPEC_ONLY/IMPL_ONLY/CONFLICT), confidence, reasons, excerpts |
+| `AlignSummary` | Aggregate counts: matched, drifted, spec_only, impl_only, conflict, totals |
+| `AlignSuggestion` | A reconciliation suggestion: category, direction, title, summary, patch, task, reasons |
+| `AlignCommitInfo` | Git commit metadata: repo root, HEAD, short HEAD, timestamp, dirty flag |
+| `AlignHistoryEntry` | Historical alignment entry: timestamp, fingerprint, summary, commit info |
+| `AlignCacheManifest` | Cache metadata for incremental runs: config, summary, file hashes, fingerprint |
+| `AlignTraceStore` | Persisted trace data: requirements, scenarios, implementations, edges |
+| `AlignDiffStore` | Persisted diff items |
+| `AlignHistoryStore` | Persisted history entries |
+
+#### `src/spec/draft/` Library Types and API
+
+The draft engine generates SDD (Spec-Driven Development) requirements from documents:
+
+| Type | Description |
+|------|-------------|
+| `DraftConfig` | Configuration: source path, specs dir, output, format, profile, max requirements |
+| `DraftRequirement` | A generated requirement: id, title, description, criteria, source file/line, level |
+| `DraftReport` | Complete draft output: version, timestamp, config, source files, requirements array |
+
+| Function | Description |
+|----------|-------------|
+| `DraftConfig::default()` | Create default config with `sdd-numbered-requirement` profile and 64 max requirements |
+| `report(config)` | Generate a `DraftReport?` from the given config |
+| `render_report(report, format)` | Render a draft report to string in the given format (markdown, json) |
+| `run_to_string(config)` | Combined: generate report and render to string |
+
 The underlying library modules live in `src/docgen/wiki/`: `types` (data model), `reader` (page loading), `lint` (structural checks), `ingest` (change detection), `index` (index generation), `log` (audit trail), `search` (semantic search), and `interop` (format conversion).
 
 ### `common/` -- Shared CLI Utilities
 
-The `common` package (`cmd/indexion/common/args.mbt`) is the Single Source of Truth for CLI utilities. It provides string parsing (`parse_int`, `parse_double`), file collection (`collect_files`), path manipulation (`split_by_slash`, `make_relative_path`), JSON helpers (`extract_json_string`, `extract_json_array`), and display formatting (`format_percent`, `truncate`).
+The `common` package (`cmd/indexion/common/args.mbt`) is the Single Source of Truth for CLI utilities. All new CLI helpers must be added here rather than duplicated in subcommand packages.
+
+#### Parsing
+
+| Function | Description |
+|----------|-------------|
+| `parse_double(s)` | Parse a string to `Double`, returning `0.0` on failure |
+| `parse_int(s)` | Parse a string to `Int`, returning `0` on failure |
+| `parse_comma_list(s)` | Split a comma-separated string into a trimmed `Array[String]` |
+
+#### File & Path Operations
+
+| Function | Description |
+|----------|-------------|
+| `collect_files(dirs, includes~, excludes~, extensions~)` | Recursively collect files from directories with include/exclude glob filtering, returning `Array[(String, String)]` of (path, content) pairs |
+| `split_by_slash(path)` | Split a file path by `/` separator |
+| `split_by_char(s, delim)` | Split a string by an arbitrary delimiter character |
+| `make_relative_path(path, base)` | Make a path relative to a base directory |
+| `normalize_path(path)` | Remove trailing slash from a path |
+| `parent_dir(path)` | Get the parent directory of a path |
+| `ancestor_dirs(dir)` | Walk up from a directory, collecting all ancestor paths |
+| `extract_dirname(path)` | Extract the directory name from a file path |
+| `extract_unique_dir_names(dirs)` | Deduplicate and normalize directory names |
+| `is_directory(path)` | Check if a path is a directory (via `@fs`) |
+| `resolve_wiki_dir(wiki_dir, base_dir?)` | Resolve a wiki directory path, returning `None` if it doesn't exist |
+
+#### Display Name Parsing
+
+| Function | Description |
+|----------|-------------|
+| `split_display_name(name)` | Split `"prefix:path"` into `("prefix", "path")` tuple |
+| `get_dirname_prefix(name)` | Get the part before `:` in a display name |
+| `get_relative_part(name)` | Get the part after `:` in a display name |
+
+#### String Operations
+
+| Function | Description |
+|----------|-------------|
+| `split_lines(text)` | Split text by newlines into `Array[String]` |
+| `join_lines(lines)` | Join lines with `\n` separator |
+| `trim_ascii_spaces(s)` | Trim leading and trailing ASCII whitespace |
+| `truncate(s, max_len)` | Truncate a string to `max_len` characters, appending `...` if truncated |
+| `substring(s, start, end)` | Extract a substring by character index range |
+| `slugify(text)` | Convert text to a URL-friendly slug (lowercase, spaces to hyphens) |
+| `make_anchor(text)` | Convert heading text to a Markdown anchor |
+| `capitalize(text)` | Capitalize the first character of a string |
+| `first_sentence(text)` | Extract the first sentence from text (up to `.` or newline) |
+| `count_lines(text)` | Count the number of lines in a string |
+| `render_inline_code_list(items)` | Render an array of strings as inline code backtick list |
+
+#### Formatting & Output
+
+| Function | Description |
+|----------|-------------|
+| `format_percent(d)` | Format a `0.0`-`1.0` double as a percentage string (e.g. `"75%"`) |
+| `elapsed_ms(start_ms)` | Compute elapsed milliseconds from a start timestamp |
+| `write_output(content, path)` | Write content to a file path, or stdout if path is `""` or `"-"` |
+
+#### JSON Helpers
+
+| Function | Description |
+|----------|-------------|
+| `extract_json_string(json, key)` | Extract a string value from a JSON string by key (lightweight parser) |
+| `extract_json_array(json, key)` | Extract a string array from a JSON string by key |
+
+#### Argparse Helpers
+
+| Function | Description |
+|----------|-------------|
+| `get_option(matches, key)` | Get an optional string value from `@argparse.Matches` |
+| `get_flag(matches, key)` | Get a boolean flag from `@argparse.Matches` |
 
 ### `serve` -- HTTP Server
 
-The `serve` subcommand starts an HTTP server (default port 3741) that exposes the full indexion feature set as a REST API. It manages a `ServerState` containing the code graph, digest index, wiki data, and embedding provider. Key design points:
+The `serve` subcommand starts an HTTP server (default port 3741) that exposes the full indexion feature set as a REST API. It manages an internal (private) `ServerState` containing the code graph, digest index, wiki data, wiki search index, and embedding provider.
+
+#### ServeConfig
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `port` | `Int` | `3741` | HTTP server port |
+| `host` | `String` | `"127.0.0.1"` | Bind address |
+| `index_dir` | `String` | `.indexion/digest` | Digest index directory |
+| `static_dir` | `String` | `""` | Static file directory for wiki SPA |
+| `workspace_dir` | `String` | `"."` | Workspace root |
+| `provider` | `String` | `"auto"` | Embedding provider selection |
+| `dim` | `Int` | `256` | TF-IDF embedding dimension |
+| `strategy` | `String` | `"hnsw"` | vcdb indexing strategy |
+| `specs_dir` | `String` | `"kgfs"` | KGF specs directory |
+| `cors` | `Bool` | `false` | Enable CORS headers |
+| `api_key_env` | `String` | (from embed_config) | Environment variable for API key |
+| `api_base_url` | `String` | (from embed_config) | API base URL |
+| `model` | `String` | (from embed_config) | Embedding model name |
+| `watch_stdin` | `Bool` | `false` | Watch stdin for shutdown signal |
+| `wiki_config` | `WikiFileConfig` | empty | Wiki file configuration |
+
+| Function | Description |
+|----------|-------------|
+| `ServeConfig::default()` | Create default configuration |
+| `ServeConfig::from_matches(matches)` | Parse from `@argparse.Matches` |
+
+Key design points:
 
 - GET routes are built into a `Map[String, String]` lookup table via `build_get_routes()` (SoT for API paths)
 - POST routes handle dynamic operations (digest query, rebuild, explore, plan, doc graph, KGF tokenize/edges, wiki search)

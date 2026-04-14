@@ -17,8 +17,8 @@ graph TD
 
 | Type | Description |
 |------|-------------|
-| `PathScope` | Include/exclude pattern lists. A path is included if it matches any include pattern (or includes is empty) AND does not match any exclude pattern. |
-| `PathSubject` | Wraps one or more candidate path representations for a single file, allowing patterns to match against any of them. |
+| `PathScope` | Include/exclude pattern lists. A path is included if it matches any include pattern (or includes is empty) AND does not match any exclude pattern. Fields: `includes`, `excludes` (both `Array[String]`, private). |
+| `PathSubject` | Wraps one or more candidate path representations for a single file, allowing patterns to match against any of them. Field: `candidate_paths` (`Array[String]`, private). |
 
 ## Public API
 

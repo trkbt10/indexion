@@ -484,10 +484,365 @@
     "affected_pages": []
   },
   {
-    "timestamp": "1775904523481",
+    "timestamp": "0",
     "operation": "lint",
     "actor": "indexion",
     "summary": "0 issues found across 44 pages",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: analysis-tools",
+    "details": {},
+    "affected_pages": [
+      "analysis-tools"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: cmd-indexion",
+    "details": {},
+    "affected_pages": [
+      "cmd-indexion"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: digest-pipeline",
+    "details": {},
+    "affected_pages": [
+      "digest-pipeline"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: kgf-system",
+    "details": {},
+    "affected_pages": [
+      "kgf-system"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-config",
+    "details": {},
+    "affected_pages": [
+      "src-config"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-digest",
+    "details": {},
+    "affected_pages": [
+      "src-digest"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-docgen",
+    "details": {},
+    "affected_pages": [
+      "src-docgen"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-filter",
+    "details": {},
+    "affected_pages": [
+      "src-filter"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-kgf",
+    "details": {},
+    "affected_pages": [
+      "src-kgf"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-parallel",
+    "details": {},
+    "affected_pages": [
+      "src-parallel"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-pipeline",
+    "details": {},
+    "affected_pages": [
+      "src-pipeline"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-plan",
+    "details": {},
+    "affected_pages": [
+      "src-plan"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-platform",
+    "details": {},
+    "affected_pages": [
+      "src-platform"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "ingest",
+    "actor": "indexion",
+    "summary": "2 pages need attention",
+    "details": {},
+    "affected_pages": [
+      "overview",
+      "getting-started"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: analysis-tools",
+    "details": {},
+    "affected_pages": [
+      "analysis-tools"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: cmd-indexion",
+    "details": {},
+    "affected_pages": [
+      "cmd-indexion"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: digest-pipeline",
+    "details": {},
+    "affected_pages": [
+      "digest-pipeline"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: kgf-system",
+    "details": {},
+    "affected_pages": [
+      "kgf-system"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-config",
+    "details": {},
+    "affected_pages": [
+      "src-config"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-digest",
+    "details": {},
+    "affected_pages": [
+      "src-digest"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-docgen",
+    "details": {},
+    "affected_pages": [
+      "src-docgen"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-filter",
+    "details": {},
+    "affected_pages": [
+      "src-filter"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-kgf",
+    "details": {},
+    "affected_pages": [
+      "src-kgf"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-parallel",
+    "details": {},
+    "affected_pages": [
+      "src-parallel"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-pipeline",
+    "details": {},
+    "affected_pages": [
+      "src-pipeline"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-plan",
+    "details": {},
+    "affected_pages": [
+      "src-plan"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-platform",
+    "details": {},
+    "affected_pages": [
+      "src-platform"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-scope",
+    "details": {},
+    "affected_pages": [
+      "src-scope"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-search",
+    "details": {},
+    "affected_pages": [
+      "src-search"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-segmentation",
+    "details": {},
+    "affected_pages": [
+      "src-segmentation"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-text",
+    "details": {},
+    "affected_pages": [
+      "src-text"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-update",
+    "details": {},
+    "affected_pages": [
+      "src-update"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "pages update",
+    "actor": "agent:claude",
+    "summary": "Updated page: src-vcs",
+    "details": {},
+    "affected_pages": [
+      "src-vcs"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "lint",
+    "actor": "indexion",
+    "summary": "0 issues found across 44 pages",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "index build",
+    "actor": "indexion",
+    "summary": "Built index: 8 categories, 9 hub pages",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "1776159943276",
+    "operation": "ingest",
+    "actor": "indexion",
+    "summary": "0 pages need attention (dry-run)",
     "details": {},
     "affected_pages": []
   }

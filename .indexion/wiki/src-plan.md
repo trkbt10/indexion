@@ -50,7 +50,7 @@ graph TD
 | `TableData` | Table with headers, rows, and column alignments |
 | `TableAlign` | Enum: `Left`, `Center`, `Right` |
 | `ChecklistItem` | Checklist item with label, optional priority and description |
-| `ConvertContext` | Conversion context with project name for output generation |
+| `ConvertContext` | Conversion context with project name and version for output generation |
 
 ### Renderers (`render/`)
 
@@ -83,7 +83,6 @@ graph TD
 | `PlanDocument::add_section(heading, content)` | Add a section |
 | `PlanDocument::set_meta(key, value)` | Set metadata key-value pair |
 | `PlanDocument::set_description(desc)` | Set document description |
-| `PlanDocument::to_json()` | Serialize to JSON |
 | `PlanSection::new(heading, level, content)` | Create a section with explicit level |
 | `SectionContent::text(s)` | Create text content |
 | `SectionContent::list(items)` | Create list content |
@@ -96,9 +95,13 @@ graph TD
 | `ListItem::with_desc(text, description)` | Create list item with description |
 | `TableData::new(headers)` | Create table with headers |
 | `TableData::add_row(row)` | Add a row to the table |
+| `TableAlign::default_left()` | Create a left-aligned column alignment |
 | `ChecklistItem::new(label)` | Create checklist item |
 | `ChecklistItem::with_priority(label, priority)` | Create with priority level |
-| `ChecklistItem::with_desc(label, priority, desc)` | Create with priority and description |
+| `ChecklistItem::with_desc(label, desc)` | Create with label and description |
+| `PlanDocument::to_json()` | Serialize document to JSON |
+| `PlanSection::to_json()` | Serialize section to JSON |
+| `SectionContent::to_json()` | Serialize content to JSON |
 
 ### Rendering
 
@@ -125,8 +128,8 @@ graph TD
 
 | Function | Description |
 |----------|-------------|
-| `ConvertContext::new()` | Create empty context |
-| `ConvertContext::with_project(name)` | Create context with project name |
+| `ConvertContext::new()` | Create empty context (empty project_name and project_version) |
+| `ConvertContext::with_project(name, version)` | Create context with project name and version |
 
 ## Dependencies
 

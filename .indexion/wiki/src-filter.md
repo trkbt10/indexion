@@ -21,7 +21,7 @@ graph TD
 | Type | Description |
 |------|-------------|
 | `FilterConfig` | Aggregates all filter layers: default excludes, gitignore patterns, indexionignore patterns, KGF ignore patterns, user includes/excludes, and the `respect_gitignore` flag |
-| `FilterResult` | Enum: `Include` or `Exclude(reason)` where reason explains why a file was excluded |
+| `FilterResult` | Enum: `Include` or `Exclude(reason)` where reason explains why a file was excluded. Has `is_included()` convenience method |
 
 ## Public API
 
@@ -38,6 +38,7 @@ graph TD
 | `FilterConfig::with_kgf_ignore(patterns, root)` | Add KGF-defined ignore patterns |
 | `FilterConfig::should_include(path, is_dir)` | Evaluate all layers and return `Include` or `Exclude(reason)` |
 | `FilterConfig::should_skip_dir(dir)` | Quick check: should a directory be skipped entirely during traversal |
+| `FilterResult::is_included()` | Returns true if the result is `Include` |
 | `filter_paths(config, paths, is_dir_fn)` | Filter an array of paths, returning only included ones |
 | `pattern_matches(pattern, path, is_dir)` | Check if a single `IgnorePattern` matches a path |
 | `default_exclude_patterns()` | Get the built-in default exclude patterns |

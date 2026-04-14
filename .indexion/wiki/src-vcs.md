@@ -68,7 +68,7 @@ Detection walks ancestor directories using a lookup table (`vcs_root_markers`), 
 
 | Dependency | Purpose |
 |-----------|---------|
-| `@config` | Path utilities (`config_paths`, `find_project_root`) |
+| `@config_paths` (`src/config`) | Path utilities (`normalize_path`, `dirname`, `join_path`) |
 | `@ignorefile` | Parsing `.gitignore` content |
 | `@platform` | Platform detection for path handling |
 | `moonbitlang/x/fs` | Sync filesystem checks |

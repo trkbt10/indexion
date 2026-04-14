@@ -94,16 +94,24 @@ Most-linked pages that serve as knowledge hubs:
 
 ## Recent Changes
 
-- pages update: architecture
+- pages update: src-vcs
+- pages update: src-update
+- pages update: src-text
+- pages update: src-segmentation
+- pages update: src-search
+- pages update: src-scope
+- pages update: src-platform
+- pages update: src-plan
+- pages update: src-pipeline
+- pages update: src-parallel
+- pages update: src-kgf
+- pages update: src-filter
+- pages update: src-docgen
+- pages update: src-digest
+- pages update: src-config
+- pages update: kgf-system
+- pages update: digest-pipeline
+- pages update: cmd-indexion
+- pages update: analysis-tools
 - ingest: overview
-- ingest: cli-commands
-- ingest: cmd-indexion
-- lint: core-concepts
-- lint: digest-pipeline
-- lint: kgf-system
-- lint: analysis-tools
-- lint: vscode-extension
-- lint: deepwiki-frontend
-- lint: getting-started
-- lint: src-docgen
 

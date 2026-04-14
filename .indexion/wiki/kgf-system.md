@@ -56,7 +56,7 @@ TOKEN String      /"([^"\\]|\\.)*"/
 TOKEN LBRACE      /\{/
 ```
 
-Patterns use JavaScript-compatible regular expression syntax with support for character classes, quantifiers, groups, and lookahead. The lexer compiles each pattern once at construction time into a `CompiledPattern` for efficient matching `[src/kgf/lexer/lexer.mbt:3-11]`. Capture groups in patterns can extract sub-matches -- for example, a doc comment pattern `/(\/\/\/(.*))/` captures just the content after the `///` prefix. The special `skip_value` flag on a token makes it act as a marker without carrying text content.
+Patterns use JavaScript-compatible regular expression syntax with support for character classes, quantifiers, groups, and lookahead. The lexer compiles each pattern once at construction time into a `CompiledPattern` for efficient matching `[src/kgf/lexer/lexer.mbt:3-27]`. Capture groups in patterns can extract sub-matches -- for example, a doc comment pattern `/(\/\/\/(.*))/` captures just the content after the `///` prefix. The special `skip_value` flag on a token makes it act as a marker without carrying text content.
 
 ### === grammar (PEG Parsing)
 
@@ -191,7 +191,7 @@ graph LR
     S --> D
 ```
 
-1. **Lexing**: The `Lexer` struct takes token definitions from the `=== lex` section and transforms source text into a flat array of `Tok` values. Each token carries its kind (e.g., `KW_fn`, `Ident`), matched text, position, and optionally an extracted value. Skip tokens are consumed but not emitted `[src/kgf/lexer/lexer.mbt:30-60]`.
+1. **Lexing**: The `Lexer` struct takes token definitions from the `=== lex` section and transforms source text into a flat array of `Tok` values. Each token carries its kind (e.g., `KW_fn`, `Ident`), matched text, position, and optionally an extracted value. Skip tokens are consumed but not emitted `[src/kgf/lexer/lexer.mbt:32-63]`.
 
 2. **Parsing**: The `PEG` engine takes grammar rules from `=== grammar` and matches them against the token stream. PEG parsing is deterministic -- ordered choice means the first matching alternative wins. When a rule matches, its labeled captures (like `fn_id:Ident`) are collected into a `labels` map. The parser emits events for each successfully matched rule.
 
@@ -299,6 +299,7 @@ The KGF system achieves language-agnostic code analysis through a clean separati
 - `src/kgf/semantics/` -- graph construction from parse results
 - `src/kgf/resolver/` -- module path resolution
 - `src/kgf/registry/` -- spec loading and language detection
+- `src/kgf/toolkit/` -- caching layer (`LanguageToolkit`, `ToolkitRegistry`) that eagerly builds lexers and feature sets per language
 - `src/kgf/features/` -- KGF-based feature extraction for downstream consumers
 
 This architecture means that the engine code changes only when new *capabilities* are needed (a new statement type, a new resolution strategy). Adding or improving language support is entirely a matter of editing `.kgf` files.
