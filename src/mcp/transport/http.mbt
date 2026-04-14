@@ -19,7 +19,7 @@ pub async fn run_http(
   host? : String = "127.0.0.1",
   port? : Int = 3741,
 ) -> Unit {
-  let http_server = @mhttp.Server::new(host~, port~) catch {
+  let http_server = @mhttp.Server::new(host~, port~, reuse_addr=true) catch {
     err => {
       println("MCP HTTP server init failed: " + err.to_string())
       return
