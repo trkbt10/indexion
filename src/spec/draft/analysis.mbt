@@ -96,7 +96,7 @@ fn push_requirement(
 
 ///|
 /// Extract criteria for a section from KGF `document_requirement_criteria` facts.
-/// The KGF spec (e.g. sdd-numbered-requirement) uses `collectLinesAfterPrefixes`
+/// The KGF spec (e.g. sdd-requirement) uses `collectLinesAfterPrefixes`
 /// to extract list items — no hardcoded list patterns here.
 fn criteria_for_section(
   facts : Array[@doc_structure.DocumentFact],
@@ -227,7 +227,7 @@ fn collect_requirements_from_file(
 }
 
 ///|
-/// Load KGF facts using the draft profile's spec (e.g. sdd-numbered-requirement).
+/// Load KGF facts using the draft profile's spec (e.g. sdd-requirement).
 /// Falls back to an empty fact list if the profile spec is not available.
 fn load_profile_facts(
   path : String,

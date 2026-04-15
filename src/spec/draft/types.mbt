@@ -15,7 +15,7 @@ pub fn DraftConfig::default() -> DraftConfig {
     specs_dir: "",
     output: "",
     format: "markdown",
-    profile: "sdd-numbered-requirement",
+    profile: "sdd-requirement",
     max_requirements: 64,
   }
 }

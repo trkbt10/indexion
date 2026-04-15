@@ -23,9 +23,9 @@ test "markdown heading level comes from kgf semantics" {
 ///|
 test "sdd numbered requirement emits requirement and scenario facts" {
   let registry = test_registry()
-  let spec = match registry.get_spec("sdd-numbered-requirement") {
+  let spec = match registry.get_spec("sdd-requirement") {
     Some(value) => value
-    None => fail("missing sdd-numbered-requirement")
+    None => fail("missing sdd-requirement")
   }
   let content =
     #|## Requirement 1: Session Timeout

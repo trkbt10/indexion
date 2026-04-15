@@ -4,7 +4,7 @@ fn common_options() -> Array[@argparse.OptionArg] {
     @argparse.OptionArg("output", short='o', about=@help.output),
     @argparse.OptionArg(
       "spec-format",
-      about="SDD KGF spec language or auto (for example: sdd-numbered-requirement)",
+      about="SDD KGF spec language or auto (for example: sdd-requirement)",
       default_values=["auto"],
     ),
     @argparse.OptionArg(

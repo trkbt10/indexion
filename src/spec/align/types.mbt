@@ -98,6 +98,7 @@ pub struct ImplementationNode {
   id : String
   name : String
   kind : String
+  category : String
   file : String
   start_line : Int
   end_line : Int
@@ -141,6 +142,7 @@ pub struct AlignSummary {
   spec_only : Int
   impl_only : Int
   conflict : Int
+  shallow : Int
   total_requirements : Int
   total_implementations : Int
   total_edges : Int

@@ -230,6 +230,7 @@ fn append_implementation_node(
   content : String,
   path : String,
   kind : String,
+  category : String,
   name : String,
   line : Int,
   start_pos : Int,
@@ -262,6 +263,7 @@ fn append_implementation_node(
     id: path + "::" + name,
     name,
     kind,
+    category,
     file: path,
     start_line: declaration_line,
     end_line: if end_line >= declaration_line {
@@ -348,6 +350,7 @@ async fn collect_impl_data(
           content,
           path,
           declaration.kind,
+          declaration.category,
           declaration.name,
           declaration.line,
           declaration.start_pos,
@@ -374,6 +377,7 @@ async fn collect_impl_data(
           id,
           name: title,
           kind: "section",
+          category: "section",
           file: path,
           start_line: section.line,
           end_line: section.end_line,
@@ -1399,6 +1403,27 @@ fn find_previous_edge(
 }
 
 ///|
+/// Count the number of non-trivial function implementations in the same file.
+/// A function is considered non-trivial if its body spans more than
+/// a minimal threshold of lines (beyond just a signature + single return).
+/// Trivial functions include constructors, accessors, and simple wrappers.
+fn nontrivial_function_count_in_file(
+  implementations : Array[ImplementationNode],
+  file : String,
+) -> Int {
+  let min_body_lines = 4
+  let mut count = 0
+  for impl_ in implementations {
+    if impl_.file == file &&
+      impl_.category == "function" &&
+      impl_.end_line - impl_.start_line >= min_body_lines {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
 fn file_hash_changed(
   previous : AlignSnapshot?,
   path : String,
@@ -1494,6 +1519,22 @@ fn diff_item_for_requirement(
         )
       } else {
         reasons.push("Best implementation match remains above threshold.")
+      }
+      // Shallow detection: requirement matched to a type declaration in a
+      // file that has no non-trivial function implementations. Trivial
+      // functions (constructors, accessors, single-return wrappers) are
+      // excluded from the count because they don't represent the processing
+      // logic that a normative requirement demands.
+      if category == "MATCHED" &&
+        implementation_node.category == "type" &&
+        nontrivial_function_count_in_file(
+          implementations, implementation_node.file,
+        ) ==
+        0 {
+        category = "SHALLOW"
+        reasons.push(
+          "Matched implementation is type-only with no non-trivial function implementations in the same file.",
+        )
       }
       if category == "DRIFTED" &&
         file_hash_changed(
@@ -1663,6 +1704,7 @@ fn build_summary(
   let mut spec_only = 0
   let mut impl_only = 0
   let mut conflict = 0
+  let mut shallow = 0
   for item in items {
     match item.category {
       "MATCHED" => matched += 1
@@ -1670,6 +1712,7 @@ fn build_summary(
       "SPEC_ONLY" => spec_only += 1
       "IMPL_ONLY" => impl_only += 1
       "CONFLICT" => conflict += 1
+      "SHALLOW" => shallow += 1
       _ => ()
     }
   }
@@ -1679,6 +1722,7 @@ fn build_summary(
     spec_only,
     impl_only,
     conflict,
+    shallow,
     total_requirements: requirements.length(),
     total_implementations: implementations.length(),
     total_edges: edges.length(),
@@ -2022,11 +2066,13 @@ fn should_fail(summary : AlignSummary, fail_on : String) -> Bool {
   match fail_on {
     "drifted" => summary.drifted > 0 || summary.conflict > 0
     "spec-only" => summary.spec_only > 0
+    "shallow" => summary.shallow > 0
     "any" =>
       summary.drifted > 0 ||
       summary.spec_only > 0 ||
       summary.impl_only > 0 ||
-      summary.conflict > 0
+      summary.conflict > 0 ||
+      summary.shallow > 0
     _ => false
   }
 }
@@ -2240,6 +2286,7 @@ fn filter_snapshot_for_incremental(
       spec_only: 0,
       impl_only: 0,
       conflict: 0,
+      shallow: 0,
       total_requirements: 0,
       total_implementations: 0,
       total_edges: 0,

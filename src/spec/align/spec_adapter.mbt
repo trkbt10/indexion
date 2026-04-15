@@ -1,70 +1,12 @@
 ///|
-/// Normative vocabulary indicators with log-likelihood weights.
-/// Positive = normative/requirement indicator.
-/// Modeled after the Naive Bayes boilerplate lexicon in
-/// html-page-to-markdown's classification strategy.
-fn normative_vocab_score(word : String) -> Double {
-  // Strong normative indicators (ISO/RFC language)
-  if word == "shall" { return 4.0 }
-  if word == "must" { return 3.5 }
-  if word == "required" { return 3.0 }
-  if word == "conform" { return 2.5 }
-  if word == "conforming" { return 2.5 }
-  if word == "mandatory" { return 3.0 }
-  if word == "prohibited" { return 2.5 }
-  // Moderate normative indicators
-  if word == "should" { return 2.0 }
-  if word == "specify" { return 1.5 }
-  if word == "specified" { return 1.5 }
-  if word == "define" { return 1.5 }
-  if word == "defined" { return 1.5 }
-  if word == "valid" { return 1.0 }
-  if word == "invalid" { return 1.0 }
-  if word == "support" { return 1.0 }
-  if word == "supported" { return 1.0 }
-  if word == "interpret" { return 1.5 }
-  if word == "interpreted" { return 1.5 }
-  if word == "determine" { return 1.0 }
-  if word == "represent" { return 1.0 }
-  if word == "contains" { return 0.5 }
-  if word == "entry" { return 0.5 }
-  if word == "value" { return 0.5 }
-  if word == "parameter" { return 1.0 }
-  if word == "operator" { return 1.0 }
-  0.0
-}
-
-///|
-/// Non-requirement section title indicators.
-/// Sections with these titles are typically meta/reference/example content.
-fn non_requirement_title_score(title_lower : String) -> Double {
-  // Document-level metadata headers (from spec draft output)
-  if title_lower == "sdd draft" || title_lower == "requirements" {
-    return 10.0
-  }
-  if title_lower.contains("introduction") { return 3.0 }
-  if title_lower.contains("scope") { return 2.5 }
-  if title_lower.contains("normative reference") { return 4.0 }
-  if title_lower.contains("terms and definition") { return 3.0 }
-  if title_lower.contains("bibliography") { return 4.0 }
-  if title_lower.contains("foreword") { return 4.0 }
-  if title_lower.contains("notation") { return 2.0 }
-  if title_lower.contains("conformance") { return 2.0 }
-  if title_lower.contains("version designation") { return 3.0 }
-  if title_lower.contains("general") {
-    // "General" sections are overview/intro — low requirement density
-    return 1.5
-  }
-  0.0
-}
-
-///|
-/// Tokenize text into lowercase words for vocabulary scoring.
+/// Tokenize text into lowercase words for classification scoring.
 fn tokenize_for_scoring(text : String) -> Array[String] {
   let words : Array[String] = []
   let mut buf = StringBuilder::new()
   for c in text {
-    if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') {
+    if (c >= 'a' && c <= 'z') ||
+      (c >= 'A' && c <= 'Z') ||
+      (c >= '0' && c <= '9') {
       let lower_c : Char = if c >= 'A' && c <= 'Z' {
         Char::from_int(c.to_int() + 32)
       } else {
@@ -85,25 +27,10 @@ fn tokenize_for_scoring(text : String) -> Array[String] {
 }
 
 ///|
-/// Compute normative vocabulary density for a section body.
-/// Returns a normalized score (token score / sqrt(token count)).
-fn compute_normative_score(body : String) -> Double {
-  let tokens = tokenize_for_scoring(body)
-  if tokens.length() == 0 {
-    return 0.0
-  }
-  let mut score = 0.0
-  for token in tokens {
-    score += normative_vocab_score(token)
-  }
-  // Normalize by sqrt(token count), similar to Naive Bayes normalization
-  let sqrt_len = @tfidf.sqrt(tokens.length().to_double())
-  score / sqrt_len
-}
-
-///|
 /// Classify the normative strength of a section body.
 /// Returns "SHALL", "MUST", "SHOULD", or None.
+/// This detects explicit normative keywords in the body text,
+/// independent of any trained classification model.
 fn classify_normative_strength(body : String) -> String? {
   let upper = body.to_upper()
   if upper.contains("SHALL") {
@@ -119,23 +46,80 @@ fn classify_normative_strength(body : String) -> String? {
 }
 
 ///|
-/// Determine if a section is non-requirement (meta, reference, example).
-/// Uses both title-based and body vocabulary-based classification.
-fn is_non_requirement_section(title : String, body : String) -> Bool {
-  let title_lower = title.to_lower()
-  let title_penalty = non_requirement_title_score(title_lower)
-  let normative_score = compute_normative_score(body)
-  // A section is non-requirement if its title strongly indicates meta content
-  // AND its body has low normative vocabulary density.
-  // High normative density overrides title-based classification.
-  if title_penalty >= 3.0 && normative_score < 1.0 {
-    return true
+/// Extract section roles from interpreted document facts.
+/// Returns a map from line number to role string.
+fn section_roles_from_facts(
+  interpreted : @doc_structure.InterpretedDocument,
+) -> Map[Int, String] {
+  let roles : Map[Int, String] = {}
+  for fact in interpreted.facts {
+    if fact.kind != "document_section_role" {
+      continue
+    }
+    let line = json_int_field(fact.payload, "line")
+    let role = json_string_field(fact.payload, "role").unwrap_or("")
+    if line > 0 && role.length() > 0 {
+      roles.set(line, role)
+    }
   }
-  // Very short sections with no normative language are likely non-requirement
-  if body.length() < 50 && normative_score < 0.5 {
-    return true
+  roles
+}
+
+///|
+/// Determine whether a section should be included as a requirement candidate.
+///
+/// Uses a three-tier classification strategy:
+///
+/// 1. **KGF document_section_role** (from semantics): If the spec emits
+///    explicit role annotations, use them. Roles "meta", "reference",
+///    "example", "appendix_code", "index" are excluded.
+///
+/// 2. **KGF classify model** (from `=== classify` section): If the spec
+///    has a trained classification model, use it to predict the section class.
+///    The predicted class determines inclusion/exclusion.
+///
+/// 3. **No classification data**: If neither role nor model is available,
+///    include the section (no filtering).
+fn should_include_section(
+  role : String,
+  body : String,
+  model : @kgf_types.ClassifyModel?,
+) -> Bool {
+  // Tier 1: Explicit role from KGF semantics
+  if role.length() > 0 {
+    return should_include_role(role)
   }
-  false
+  // Tier 2: Trained classify model
+  match model {
+    Some(m) => {
+      if !m.is_empty() {
+        let tokens = tokenize_for_scoring(body)
+        match m.predict(tokens) {
+          Some(predicted_class) => return should_include_role(predicted_class)
+          None => ()
+        }
+      }
+    }
+    None => ()
+  }
+  // Tier 3: No classification data — include by default
+  true
+}
+
+///|
+/// Determines whether a given role/class label indicates a requirement
+/// section that should be included.
+///
+/// This is a blacklist: known non-requirement roles are excluded.
+/// Unknown roles and empty strings are included.
+/// This logic is shared between document_section_role (from semantics)
+/// and classify model predictions (from `=== classify`), unifying the
+/// two classification paths under the same inclusion semantics.
+fn should_include_role(role : String) -> Bool {
+  match role {
+    "meta" | "reference" | "example" | "appendix_code" | "index" => false
+    _ => true
+  }
 }
 
 ///|
@@ -409,14 +393,18 @@ fn load_spec_nodes(
       return (finalized, scenarios, source_format)
     }
     // Fallback: no document_requirement facts found, but DocumentSections
-    // were parsed successfully. Classify sections by normative vocabulary
-    // density to determine which are requirement-like.
+    // were parsed successfully. Classify sections using:
+    //   1. document_section_role from KGF semantics
+    //   2. trained classify model from KGF === classify section
+    //   3. no filtering (include all sections)
     let sections = @doc_structure.load_document_sections(
       content,
       path,
       Some(registry),
     )
     if sections.length() > 0 {
+      let roles = section_roles_from_facts(interpreted)
+      let classify_model = spec.get_classify()
       let fallback : Array[RequirementNode] = []
       for section in sections {
         let title = section.title.trim().to_string()
@@ -424,12 +412,12 @@ fn load_spec_nodes(
           continue
         }
         let body = section.content
-        let normative = classify_normative_strength(body)
-        // Skip sections classified as non-requirement (meta, reference, example)
-        if is_non_requirement_section(title, body) {
+        let line = section.line
+        let role = roles.get(line).unwrap_or("")
+        if !should_include_section(role, body, classify_model) {
           continue
         }
-        let line = section.line
+        let normative = classify_normative_strength(body)
         let id = "SEC-" + line.to_string()
         fallback.push({
           id,

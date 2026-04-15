@@ -11,8 +11,8 @@ pub fn command() -> @argparse.Command {
       @argparse.OptionArg("specs-dir", about=@help.specs_dir),
       @argparse.OptionArg(
         "profile",
-        about="Draft profile: sdd-numbered-requirement",
-        default_values=["sdd-numbered-requirement"],
+        about="Draft profile: sdd-requirement",
+        default_values=["sdd-requirement"],
       ),
       @argparse.OptionArg(
         "max-requirements",
