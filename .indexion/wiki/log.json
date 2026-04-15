@@ -839,10 +839,46 @@
     "affected_pages": []
   },
   {
-    "timestamp": "1776159943276",
+    "timestamp": "0",
     "operation": "ingest",
     "actor": "indexion",
     "summary": "0 pages need attention (dry-run)",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "0",
+    "operation": "ingest",
+    "actor": "indexion",
+    "summary": "1 pages need attention (dry-run)",
+    "details": {},
+    "affected_pages": [
+      "cli-commands"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "ingest",
+    "actor": "indexion",
+    "summary": "1 pages need attention",
+    "details": {},
+    "affected_pages": [
+      "cli-commands"
+    ]
+  },
+  {
+    "timestamp": "0",
+    "operation": "index build",
+    "actor": "indexion",
+    "summary": "Built index: 8 categories, 9 hub pages + vectors",
+    "details": {},
+    "affected_pages": []
+  },
+  {
+    "timestamp": "1776236233666",
+    "operation": "lint",
+    "actor": "indexion",
+    "summary": "0 issues found across 44 pages",
     "details": {},
     "affected_pages": []
   }

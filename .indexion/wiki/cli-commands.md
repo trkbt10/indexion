@@ -550,12 +550,29 @@ indexion kgf <subcommand> [options] <file>
 | `tokens` | Tokenization only |
 | `events` | Parse events only |
 | `edges` | Generated edges only |
+| `classify train` | Train a Naive Bayes section classifier from labeled documents |
 
 | Option | Description |
 |--------|-------------|
 | `--spec=NAME` | Force a specific spec (default: auto-detect) |
 
-**When to use:** Developing or debugging a KGF spec. Verify that a file is tokenized and parsed correctly.
+### classify train
+
+Train a Naive Bayes classification model from document sections. Uses KGF `document_section_role` semantics as training labels and outputs a `=== classify` section for the KGF spec.
+
+```bash
+indexion kgf classify train --spec=rfc-plaintext --min-weight=3.5 /path/to/rfc-corpus/
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--spec=NAME` | KGF spec to use for document interpretation | auto-detect |
+| `--default-class=NAME` | Class label for unlabeled sections | `normative` |
+| `--min-weight=FLOAT` | Minimum term weight to include (reduces model size) | `0.5` |
+| `--include=PATTERN` | Include file glob pattern | all |
+| `--exclude=PATTERN` | Exclude file glob pattern | none |
+
+**When to use:** Developing or debugging a KGF spec. Verify that a file is tokenized and parsed correctly. Training a section classifier for a new document type.
 
 ---
 
@@ -800,7 +817,7 @@ indexion spec draft [options] <source-path>
 |--------|-------------|---------|
 | `-o=FILE` | Output to file | stdout |
 | `--format=FORMAT` | `markdown`, `json` | `markdown` |
-| `--profile=NAME` | Draft profile | `sdd-numbered-requirement` |
+| `--profile=NAME` | Draft profile | `sdd-requirement` |
 | `--max-requirements=INT` | Maximum drafted requirements | `64` |
 | `--specs-dir=DIR` | KGF specs directory | `kgfs` |
 

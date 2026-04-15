@@ -26,6 +26,7 @@ indexion kgf [options] <command>
 | `tokens` | Show tokenization only |
 | `events` | Show parse events only |
 | `edges` | Show generated edges only |
+| `classify train` | Train a Naive Bayes section classifier from labeled documents |
 
 ## Examples
 
@@ -41,4 +42,10 @@ indexion kgf tokens --spec=moonbit src/config/app.mbt
 
 # Show dependency edges
 indexion kgf edges src/config/app.mbt
+
+# Train a section classifier from RFC corpus
+indexion kgf classify train --spec=rfc-plaintext --min-weight=3.5 /path/to/rfc-corpus/
+
+# Train from ISO document corpus
+indexion kgf classify train --spec=technical-document --min-weight=3.5 /path/to/iso-specs/
 ```

@@ -8,7 +8,7 @@ indexion spec draft --specs-dir=kgfs cmd/indexion/spec/align/README.md
 ```
 
 The command is KGF-backed for document discovery and section extraction. It
-uses heading sections and feature bullets to emit `sdd-numbered-requirement`
+uses heading sections and feature bullets to emit `sdd-requirement`
 drafts that can be fed back into `indexion spec align`.
 
 For an end-to-end dogfooding loop, run:

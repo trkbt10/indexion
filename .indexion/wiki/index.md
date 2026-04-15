@@ -94,6 +94,7 @@ Most-linked pages that serve as knowledge hubs:
 
 ## Recent Changes
 
+- ingest: cli-commands
 - pages update: src-vcs
 - pages update: src-update
 - pages update: src-text
@@ -113,5 +114,4 @@ Most-linked pages that serve as knowledge hubs:
 - pages update: digest-pipeline
 - pages update: cmd-indexion
 - pages update: analysis-tools
-- ingest: overview
 

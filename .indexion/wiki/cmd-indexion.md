@@ -180,7 +180,7 @@ The draft engine generates SDD (Spec-Driven Development) requirements from docum
 
 | Function | Description |
 |----------|-------------|
-| `DraftConfig::default()` | Create default config with `sdd-numbered-requirement` profile and 64 max requirements |
+| `DraftConfig::default()` | Create default config with `sdd-requirement` profile and 64 max requirements |
 | `report(config)` | Generate a `DraftReport?` from the given config |
 | `render_report(report, format)` | Render a draft report to string in the given format (markdown, json) |
 | `run_to_string(config)` | Combined: generate report and render to string |

@@ -46,15 +46,15 @@
       "source_hashes": {}
     },
     "cli-commands": {
-      "page_hash": "9b775ee72e842ae1e4948d7df3600772",
+      "page_hash": "809ae1117ff366f91c995d4b37bb2962",
       "source_hashes": {
         "cmd/indexion/main.mbt": "e0f804d058a6a737adf5eb805b96c6ba",
         "cmd/indexion/wiki/cli.mbt": "03003302e6a4ad691ef15c6071bcd82b",
         "cmd/indexion/plan/cli.mbt": "2877da72449681a6bb32d46785afdfbc",
         "cmd/indexion/doc/cli.mbt": "d67c5d9b3b2dd035d02417d1b02591d4",
         "cmd/indexion/spec/cli.mbt": "678497b112dc0ea01c9e8ed27f259a0e",
-        "cmd/indexion/spec/align/cli.mbt": "5fb51836f5fd26b8c51ba847da8fb6e0",
-        "cmd/indexion/spec/draft/cli.mbt": "506e46dbe09ed214f7a3ddd3f1890e78",
+        "cmd/indexion/spec/align/cli.mbt": "11e29d0b638e8ceab260b54c84fc1a88",
+        "cmd/indexion/spec/draft/cli.mbt": "70ab54bf10e89aaaca36411f2df9b6e8",
         "cmd/indexion/spec/verify/cli.mbt": "76bf947bfb8dc0c056f89019cd6baef0"
       }
     },
@@ -67,7 +67,7 @@
       "source_hashes": {}
     },
     "cmd-indexion": {
-      "page_hash": "0669c0057621d33f191fe2535bc349d3",
+      "page_hash": "483dc864e18015bbb2c72d116c9e20d2",
       "source_hashes": {
         "cmd/indexion/main.mbt": "e0f804d058a6a737adf5eb805b96c6ba",
         "cmd/indexion/wiki/cli.mbt": "03003302e6a4ad691ef15c6071bcd82b",
