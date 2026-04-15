@@ -7,7 +7,7 @@ pub struct TreeNode {
   label : String
   /// Child nodes (ordered).
   children : Array[TreeNode]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a leaf node with no children.
@@ -79,7 +79,7 @@ pub struct NodeInfo {
   left_most_leaf : Int
   /// Size of subtree rooted at this node.
   subtree_size : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new NodeInfo.
@@ -132,7 +132,12 @@ pub struct CostConfig {
   delete_cost : Double
   /// Cost to rename a node (when labels differ).
   rename_cost : Double
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for CostConfig with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 /// Create default cost config (all operations cost 1.0).
@@ -189,7 +194,7 @@ pub struct TSEDConfig {
   cost_config : CostConfig
   /// Append child count to non-leaf labels (e.g., "Seq" → "Seq_3").
   finalize_labels : Bool
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create default TSED configuration.

@@ -15,7 +15,12 @@ pub struct PunctuationConfig {
   /// Hard limit - will split even mid-sentence if exceeded.
   /// Default: 2000
   max_chunk_size : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for PunctuationConfig with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 /// Default target chunk size.
@@ -75,7 +80,7 @@ pub fn PunctuationConfig::get_max_chunk_size(self : PunctuationConfig) -> Int {
 pub struct PunctuationStrategy {
   /// Configuration for the strategy.
   config : PunctuationConfig
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new PunctuationStrategy with default configuration.

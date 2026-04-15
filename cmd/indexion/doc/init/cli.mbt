@@ -118,14 +118,18 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     let doc_config_rel = @config.readme_doc_config_relative()
     println("")
     println("Next steps:")
-    println("  1. Edit " + doc_config_rel + " to configure sections and packages")
+    println(
+      "  1. Edit " + doc_config_rel + " to configure sections and packages",
+    )
     println("")
     println("  2. indexion plan readme --template=" + template_rel)
     println("     Generate writing plans for each section")
     println("")
     println("  3. Write docs/ files based on the plans")
     println("")
-    println("  4. indexion doc readme --template=" + template_rel + " -o=README.md")
+    println(
+      "  4. indexion doc readme --template=" + template_rel + " -o=README.md",
+    )
     println("     Assemble README.md from docs/")
   } else {
     println("No files created. Use --force to overwrite existing files.")

@@ -7,7 +7,7 @@
 /// Uses compression-based distance to measure semantic similarity.
 pub struct NCDStrategy {
   priv _unused : Unit
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new NCDStrategy.

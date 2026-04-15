@@ -1,5 +1,6 @@
 import {
   "moonbitlang/core/argparse" @argparse,
+  "moonbitlang/core/debug" @debug,
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/cmd/indexion/common" @common,
   "trkbt10/indexion/src/segmentation" @seg,

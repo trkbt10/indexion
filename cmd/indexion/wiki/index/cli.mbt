@@ -132,7 +132,7 @@ async fn run_build(matches : @argparse.Matches) -> Unit {
     let index_path = wiki_dir_resolved + "/index.md"
     @fs.write_string_to_file(index_path, content) catch {
       e => {
-        println("Error writing index.md: " + e.to_string())
+        println("Error writing index.md: " + @debug.to_string(e))
         return
       }
     }

@@ -18,7 +18,12 @@ pub struct TfidfConfig {
   /// Number of sentences to combine per window.
   /// Default: 3
   window_size : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for TfidfConfig with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 /// Default target chunk size.
@@ -106,7 +111,7 @@ pub fn TfidfConfig::get_window_size(self : TfidfConfig) -> Int {
 pub struct TfidfStrategy {
   /// Configuration for the strategy.
   config : TfidfConfig
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new TfidfStrategy with default configuration.

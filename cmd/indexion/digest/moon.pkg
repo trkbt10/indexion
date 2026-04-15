@@ -1,5 +1,6 @@
 import {
   "moonbitlang/core/argparse" @argparse,
+  "moonbitlang/core/debug" @debug,
   "trkbt10/indexion/cmd/indexion/help" @help,
   "moonbitlang/x/fs" @fs,
   "mizchi/x/sys" @sys,
@@ -14,7 +15,6 @@ import {
   "trkbt10/indexion/src/digest/config" @dconfig,
   "trkbt10/indexion/src/digest/query" @query,
   "trkbt10/indexion/src/digest/manifest" @manifest,
-  "trkbt10/indexion/src/digest/embed" @embed,
   "trkbt10/indexion/src/pipeline" @pipeline,
   "trkbt10/indexion/src/docgen/build" @build,
   "trkbt10/indexion/src/config" @config,

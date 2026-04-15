@@ -378,42 +378,60 @@ fn KGFSpec::ensure_classify_parsed(self : KGFSpec) -> Unit {
 ///|
 /// Callback: parse lex section text → (tokens, keyword_kinds).
 /// Set by the parser package at init time.
-pub let parse_lex_lazy : Ref[(String) -> (Array[TokenDef], Map[String, Bool])] = Ref::new(
-  fn(_s) { ([], {}) },
+pub let parse_lex_lazy : Ref[(String) -> (Array[TokenDef], Map[String, Bool])] = Ref::new(fn(
+    _s,
+  ) {
+    ([], {})
+  },
 )
 
 ///|
 /// Callback: parse grammar section text → rules.
-pub let parse_grammar_lazy : Ref[(String) -> Map[String, RuleDef]] = Ref::new(
-  fn(_s) { Map::new() },
-)
+pub let parse_grammar_lazy : Ref[(String) -> Map[String, RuleDef]] = Ref::new(fn(
+  _s,
+) {
+  Map::new()
+})
 
 ///|
 /// Callback: parse attrs section text → attrs.
-pub let parse_attrs_lazy : Ref[(String) -> Map[String, Array[AttrAction]]] = Ref::new(
-  fn(_s) { Map::new() },
+pub let parse_attrs_lazy : Ref[(String) -> Map[String, Array[AttrAction]]] = Ref::new(fn(
+    _s,
+  ) {
+    Map::new()
+  },
 )
 
 ///|
 /// Callback: parse semantics section text → semantics.
-pub let parse_semantics_lazy : Ref[(String) -> Map[String, Array[SemOnBlock]]?] = Ref::new(
-  fn(_s) { None },
+pub let parse_semantics_lazy : Ref[(String) -> Map[String, Array[SemOnBlock]]?] = Ref::new(fn(
+    _s,
+  ) {
+    None
+  },
 )
 
 ///|
 /// Callback: parse preprocess section text → preprocess directives.
-pub let parse_preprocess_lazy : Ref[(String) -> Array[String]?] = Ref::new(
-  fn(_s) { None },
-)
+pub let parse_preprocess_lazy : Ref[(String) -> Array[String]?] = Ref::new(fn(
+  _s,
+) {
+  None
+})
 
 ///|
 /// Callback: parse preprocess_fst section text → FST specs.
-pub let parse_preprocess_fst_lazy : Ref[(String) -> Array[PreprocessFstSpec]?] = Ref::new(
-  fn(_s) { None },
+pub let parse_preprocess_fst_lazy : Ref[(String) -> Array[PreprocessFstSpec]?] = Ref::new(fn(
+    _s,
+  ) {
+    None
+  },
 )
 
 ///|
 /// Callback: parse classify section text → trained classify model.
-pub let parse_classify_lazy : Ref[(String) -> ClassifyModel?] = Ref::new(
-  fn(_s) { None },
-)
+pub let parse_classify_lazy : Ref[(String) -> ClassifyModel?] = Ref::new(fn(
+  _s,
+) {
+  None
+})

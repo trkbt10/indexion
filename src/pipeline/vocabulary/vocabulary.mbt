@@ -20,7 +20,7 @@ pub(all) struct GapTerm {
   weight : Double
   /// Extracted kind part
   kind : String
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Configuration for gap term extraction.
@@ -29,7 +29,7 @@ pub(all) struct GapConfig {
   min_value_length : Int
   /// Maximum number of gap terms to return (0 = no limit beyond threshold)
   max_terms : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn GapConfig::default() -> GapConfig {
@@ -44,7 +44,7 @@ pub(all) struct DivergenceResult {
   /// Gap terms: source terms absent from target, sorted by weight descending,
   /// thresholded by Kneedle to separate signal from noise.
   gap_terms : Array[GapTerm]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Measure vocabulary divergence between two sets of per-file token arrays.

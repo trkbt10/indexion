@@ -534,12 +534,7 @@ async fn handle_search(
   let top_k = json_double(json, "topK", 20.0).to_int()
   let min_score = json_double(json, "minScore", 0.05)
   // Query the pre-built digest index directly.
-  let hits = serve_query_cascade(
-    state.index,
-    state.digest_config,
-    query,
-    top_k,
-  )
+  let hits = serve_query_cascade(state.index, state.digest_config, query, top_k)
   let arr : Array[Json] = []
   for hit in hits {
     if hit.score >= min_score {
@@ -589,7 +584,8 @@ async fn handle_grep(
   }
   match @grep_cli.run_to_json(grep_config) {
     Some(result) => send_json_ok(conn, result, cors)
-    None => send_json_error(conn, 400, "Pattern or semantic query required", cors)
+    None =>
+      send_json_error(conn, 400, "Pattern or semantic query required", cors)
   }
 }
 

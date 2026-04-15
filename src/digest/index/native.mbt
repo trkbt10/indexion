@@ -11,7 +11,7 @@ pub async fn DigestIndex::build_with_config(
   graph : @graph.CodeGraph,
   digest_config : @config.DigestConfig,
   file_hashes? : Map[String, @cas_types.ContentHash]? = None,
-) -> BuildResult raise @embed.EmbedError {
+) -> BuildResult {
   let result = BuildResult::new()
   // --- Phase 1: Determine which files have changed ---
   let changed_files : Map[String, Bool] = {}
@@ -189,14 +189,7 @@ pub async fn DigestIndex::build_with_config(
         // Remote provider
         match provider.api_config {
           Some(api_config) =>
-            Some(embed_with_openai_config(api_config, stale_texts)) catch {
-              _ => {
-                result.errors.push(
-                  "Embedding failed for provider '" + key + "'; skipping",
-                )
-                None
-              }
-            }
+            Some(embed_with_openai_config(api_config, stale_texts))
           None => None
         }
     }
@@ -319,7 +312,7 @@ async fn embed_batch(
 async fn embed_with_openai_config(
   api_config : @config.EmbeddingApiConfig,
   texts : Array[String],
-) -> Array[Array[Double]] raise @embed.EmbedError {
+) -> Array[Array[Double]] {
   let config : @embed.OpenAIConfig = {
     api_key: api_config.api_key,
     model: api_config.model,
@@ -630,14 +623,15 @@ pub fn DigestIndex::save_to_dir(
   let (manifest_json, db_map) = self.serialize()
   // Write manifest
   @fs.write_string_to_file(@config.manifest_path(index_dir), manifest_json) catch {
-    e => errors.push("Saving manifest: " + e.to_string())
+    e => errors.push("Saving manifest: " + @debug.to_string(e))
   }
   // Write vector databases per provider
   for entry in db_map {
     let key = entry.0
     let bytes = entry.1
     @fs.write_bytes_to_file(@config.vectors_db_path(index_dir, key), bytes) catch {
-      e => errors.push("Saving vectors for '" + key + "': " + e.to_string())
+      e =>
+        errors.push("Saving vectors for '" + key + "': " + @debug.to_string(e))
     }
   }
   // Write TF-IDF vocabularies
@@ -651,14 +645,16 @@ pub fn DigestIndex::save_to_dir(
         vocab_json,
       ) catch {
         e =>
-          errors.push("Saving vocabulary for '" + key + "': " + e.to_string())
+          errors.push(
+            "Saving vocabulary for '" + key + "': " + @debug.to_string(e),
+          )
       }
     }
   }
   // Write graph
   let graph_json = graph.to_json_string()
   @fs.write_string_to_file(@config.graph_path(index_dir), graph_json) catch {
-    e => errors.push("Saving graph: " + e.to_string())
+    e => errors.push("Saving graph: " + @debug.to_string(e))
   }
   errors
 }

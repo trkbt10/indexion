@@ -3,7 +3,7 @@ pub(all) struct TimestampInfo {
   epoch_seconds : Int?
   source : String
   is_dirty : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub fn TimestampInfo::unknown(source? : String = "unknown") -> TimestampInfo {
@@ -28,7 +28,7 @@ pub(all) struct FileState {
   git_time : Int?
   mtime : Int?
   git_dirty : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub fn FileState::new(
@@ -47,7 +47,7 @@ pub fn FileState::new(
 pub(all) struct FileTrackingConfig {
   git_preferred : Bool
   mtime_fallback : Bool
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn FileTrackingConfig::new(

@@ -8,7 +8,7 @@
 /// For efficient batch processing, use TfidfBatch::from_tokens instead.
 pub struct TfidfStrategy {
   priv _unused : Unit
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new TfidfStrategy.

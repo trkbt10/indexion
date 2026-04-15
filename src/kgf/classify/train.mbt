@@ -36,7 +36,7 @@ pub fn train(
   spec : @kgf_types.KGFSpec,
   registry : @registry.KGFRegistry,
   default_class : String,
-  min_weight~ : Double = 0.0,
+  min_weight? : Double = 0.0,
 ) -> @kgf_types.ClassifyModel? {
   let samples = collect_samples(files, spec, registry, default_class)
   if samples.length() == 0 {
@@ -136,7 +136,7 @@ fn fit_naive_bayes(
       global_vocab.set(term_entry.0, true)
     }
   }
-  let vocab_size = global_vocab.size()
+  let vocab_size = global_vocab.length()
   // Compute model parameters
   let classes : Map[String, @kgf_types.ClassifyClass] = {}
   for entry in class_counts {
@@ -249,7 +249,7 @@ fn tokenize_for_training(text : String) -> Array[String] {
       (c >= 'A' && c <= 'Z') ||
       (c >= '0' && c <= '9') {
       let lower : Char = if c >= 'A' && c <= 'Z' {
-        Char::from_int(c.to_int() + 32)
+        (c.to_int() + 32).unsafe_to_char()
       } else {
         c
       }

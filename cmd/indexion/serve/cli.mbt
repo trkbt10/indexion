@@ -346,9 +346,13 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
   // Build GET route table (SoT for API paths)
   let get_routes = build_get_routes(state, config)
   // Start HTTP server
-  let server = @mhttp.Server::new(host=config.host, port=config.port, reuse_addr=true) catch {
+  let server = @mhttp.Server::new(
+    host=config.host,
+    port=config.port,
+    reuse_addr=true,
+  ) catch {
     err => {
-      @digest_cli.log_error("Server init failed: " + err.to_string())
+      @digest_cli.log_error("Server init failed: " + @debug.to_string(err))
       return
     }
   }
@@ -547,14 +551,17 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         return
       }
       // Wiki assets — serve files from .indexion/wiki/assets/
-      if req.meth == @mhttp.Get &&
-        path.has_prefix("/api/wiki/assets/") {
+      if req.meth == @mhttp.Get && path.has_prefix("/api/wiki/assets/") {
         conn.skip_request_body()
-        let asset_path = @config.substring_from(path, "/api/wiki/assets/".length())
-        let wiki_assets_dir = match @config.resolve_project_indexion_dir(
-          config.workspace_dir,
-          "wiki/assets",
-        ) {
+        let asset_path = @config.substring_from(
+          path,
+          "/api/wiki/assets/".length(),
+        )
+        let wiki_assets_dir = match
+          @config.resolve_project_indexion_dir(
+            config.workspace_dir,
+            "wiki/assets",
+          ) {
           Some(dir) => dir
           None => {
             send_json_error(conn, 404, "Not Found", cors_enabled)
@@ -591,7 +598,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
     },
     allow_failure=true,
   ) catch {
-    err => @digest_cli.log_error("Server failed: " + err.to_string())
+    err => @digest_cli.log_error("Server failed: " + @debug.to_string(err))
   }
 }
 
@@ -694,22 +701,7 @@ async fn do_build(
     digest_config,
   )
   // Build — this is incremental: file hashes detect unchanged files
-  let result = index.build_with_config(graph, digest_config, file_hashes~) catch {
-    @embed.ParseError(msg) => {
-      @digest_cli.log_error("Build error: " + msg)
-      return None
-    }
-    @embed.ApiError(code, msg) => {
-      @digest_cli.log_error(
-        "Build API error (" + code.to_string() + "): " + msg,
-      )
-      return None
-    }
-    @embed.NoResult => {
-      @digest_cli.log_error("Build: no embedding result")
-      return None
-    }
-  }
+  let result = index.build_with_config(graph, digest_config, file_hashes~)
   @digest_cli.log_progress(
     "Indexed: " +
     result.indexed_count.to_string() +

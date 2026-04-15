@@ -9,11 +9,9 @@ pub fn command() -> @argparse.Command {
         "markdown",
       ]),
       @argparse.OptionArg("specs-dir", about=@help.specs_dir),
-      @argparse.OptionArg(
-        "profile",
-        about="Draft profile: sdd-requirement",
-        default_values=["sdd-requirement"],
-      ),
+      @argparse.OptionArg("profile", about="Draft profile: sdd-requirement", default_values=[
+        "sdd-requirement",
+      ]),
       @argparse.OptionArg(
         "max-requirements",
         about="Maximum drafted requirements",

@@ -6,7 +6,7 @@
 /// Used for change detection at function level.
 pub struct FunctionHash {
   value : String
-} derive(Eq, Show, ToJson, @json.FromJson, Hash)
+} derive(Eq, Debug, ToJson, @json.FromJson, Hash)
 
 ///|
 /// Create a FunctionHash from a string value.
@@ -30,7 +30,7 @@ pub struct Impression {
   keywords : Array[String]
   /// Optional expanded context for richer understanding.
   context : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Create a new Impression.
@@ -82,7 +82,7 @@ pub struct FunctionUnit {
   impression : Impression?
   /// Depth in call graph (0 = leaf function with no callees).
   depth : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Create a new FunctionUnit.
@@ -143,7 +143,7 @@ pub struct FunctionEmbedding {
   vector : Array[Double]
   /// Source of embedding ("tfidf", "remote", etc.).
   source : String
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new FunctionEmbedding.
@@ -164,7 +164,7 @@ pub struct QueryHit {
   score : Double
   /// Keywords that contributed to the match.
   matched_keywords : Array[String]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new QueryHit.
@@ -187,7 +187,7 @@ pub struct QueryOptions {
   filter_module : String?
   /// Filter by symbol kind (optional).
   filter_kind : String?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create default QueryOptions.

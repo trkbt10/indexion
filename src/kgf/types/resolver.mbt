@@ -4,7 +4,12 @@ pub enum ModulePathStyle {
   Slash // "slash" - path/to/module
   Dot // "dot" - path.to.module
   ColonColon // "coloncol" - path::to::module
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for ModulePathStyle with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 /// Converts a string to ModulePathStyle.
@@ -46,7 +51,7 @@ pub(all) enum ResolveStepType {
   Ancestors
   /// Apply fallback prefix for unresolved modules (npm:, pip:)
   Fallback
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Converts a string to ResolveStepType.
@@ -385,7 +390,7 @@ pub struct ResolutionStats {
   mut file_checks : Int
   /// Number of circular references detected
   mut circular_detected : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Creates a new ResolutionStats with zero counts.

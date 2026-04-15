@@ -78,7 +78,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   }
   let content = @fs.read_file_to_string(content_path) catch {
     e => {
-      println("Error reading content file: " + e.to_string())
+      println("Error reading content file: " + @debug.to_string(e))
       return
     }
   }

@@ -19,10 +19,9 @@ pub fn compile_pattern(
   let capture_count = ctx.next_capture - 1
   // Check if all alternatives start with \b
   let requires_word_boundary_start = compiled_alts.length() > 0 &&
-    compiled_alts.iter().all(fn(alt) {
-      alt.length() > 0 &&
-        alt[0].element is WordBoundary
-    })
+    compiled_alts
+    .iter()
+    .all(fn(alt) { alt.length() > 0 && alt[0].element is WordBoundary })
   Some({
     alternatives: compiled_alts,
     case_insensitive,

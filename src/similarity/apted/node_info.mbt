@@ -17,7 +17,7 @@ pub struct IndexedTree {
   keyroots : Array[Int]
   /// Children count for each node (used for tree reconstruction).
   children_count : Array[Int]
-} derive(Show)
+} derive(Debug)
 
 ///|
 /// Create an IndexedTree from a TreeNode.

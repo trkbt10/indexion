@@ -12,7 +12,12 @@ pub enum Node {
   Label(String, Node)
   And(Node) // &e - positive lookahead (PEG predicate)
   Not(Node) // !e - negative lookahead (PEG predicate)
-} derive(Show, Eq, Hash)
+} derive(Debug, Eq, Hash)
+
+///|
+pub impl Show for Node with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 /// CompiledNode is an ID-based representation for evaluation hot paths.

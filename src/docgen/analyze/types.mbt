@@ -16,7 +16,7 @@ pub(all) enum DetectedLang {
   Json
   Yaml
   Unknown
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Convert the detected language to its lowercase string identifier.
@@ -67,7 +67,7 @@ pub(all) struct FileInfo {
   ext : String
   /// KGF spec name to use.
   spec_name : String
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new FileInfo with the given path, language, extension, and spec name.
@@ -121,7 +121,7 @@ pub(all) struct DocSymbol {
   file : String
   /// Child symbols.
   children : Array[DocSymbol]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new DocSymbol without documentation.
@@ -211,7 +211,7 @@ pub struct AnalysisResult {
   symbols : Array[DocSymbol]
   /// Module-level documentation.
   module_docs : Map[String, String]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create an empty analysis result.

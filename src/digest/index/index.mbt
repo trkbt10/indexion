@@ -15,7 +15,7 @@ pub struct BuildResult {
   mut removed_count : Int
   /// Errors encountered.
   errors : Array[String]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create an empty BuildResult.

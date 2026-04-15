@@ -152,7 +152,7 @@ pub(all) struct LlmConfig {
   base_url : String
   /// Temperature for generation (0.0-1.0).
   temperature : Double
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn LlmConfig::openai(api_key : String) -> LlmConfig {
@@ -195,7 +195,7 @@ pub(all) struct DigestConfig {
   index_dir : String
   /// LLM config for impression generation (optional).
   llm_config : LlmConfig?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn DigestConfig::default() -> DigestConfig {

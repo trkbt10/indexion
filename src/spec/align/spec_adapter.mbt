@@ -8,7 +8,7 @@ fn tokenize_for_scoring(text : String) -> Array[String] {
       (c >= 'A' && c <= 'Z') ||
       (c >= '0' && c <= '9') {
       let lower_c : Char = if c >= 'A' && c <= 'Z' {
-        Char::from_int(c.to_int() + 32)
+        (c.to_int() + 32).unsafe_to_char()
       } else {
         c
       }
@@ -91,7 +91,7 @@ fn should_include_section(
   }
   // Tier 2: Trained classify model
   match model {
-    Some(m) => {
+    Some(m) =>
       if !m.is_empty() {
         let tokens = tokenize_for_scoring(body)
         match m.predict(tokens) {
@@ -99,7 +99,6 @@ fn should_include_section(
           None => ()
         }
       }
-    }
     None => ()
   }
   // Tier 3: No classification data — include by default
@@ -142,7 +141,9 @@ fn spec_defines_requirement_extraction(spec : @kgf_types.KGFSpec) -> Bool {
   match spec.get_semantic("DocumentSection") {
     None => false
     Some(blocks) =>
-      blocks.iter().any(fn(block) {
+      blocks
+      .iter()
+      .any(fn(block) {
         if stmt_list_emits_requirement(block.get_then_stmts()) {
           return true
         }
@@ -159,7 +160,9 @@ fn spec_defines_requirement_extraction(spec : @kgf_types.KGFSpec) -> Bool {
 /// Recursively checks whether a list of semantic statements contains a
 /// `note document_requirement` emission.
 fn stmt_list_emits_requirement(stmts : Array[@kgf_types.SemStmt]) -> Bool {
-  stmts.iter().any(fn(stmt) {
+  stmts
+  .iter()
+  .any(fn(stmt) {
     match stmt {
       @kgf_types.Note(note_type~, ..) => note_type == "document_requirement"
       @kgf_types.For(body~, ..) => stmt_list_emits_requirement(body)
@@ -167,7 +170,6 @@ fn stmt_list_emits_requirement(stmts : Array[@kgf_types.SemStmt]) -> Bool {
     }
   })
 }
-
 
 ///|
 fn is_overlay_document_spec(spec : @kgf_types.KGFSpec) -> Bool {
@@ -474,7 +476,7 @@ fn load_spec_nodes(
           title,
           description: body,
           normative,
-          source_format: source_format,
+          source_format,
           source_file: path,
           source_start_line: line,
           source_end_line: section.end_line,

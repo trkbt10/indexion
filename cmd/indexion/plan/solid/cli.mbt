@@ -59,7 +59,7 @@ priv struct FileMatch {
   source2 : String // file from second source (dirname:path)
   similarity : Double
   relative_path : String // common relative path (or best-fit path for content matches)
-  matched_rule : SolidRule? // rule that matched, if any
+  _matched_rule : SolidRule? // rule that matched, if any
   match_kind : MatchKind // how the match was found
 }
 
@@ -247,7 +247,11 @@ pub fn run_to_string(config : SolidConfig) -> String? {
   let categorized = categorize_matches(matches, rules, config.to_dir)
   // Phase 2: Function-level cross-directory duplicates
   let func_matches = find_cross_function_matches(config, sources)
-  let extraction_tasks = build_extraction_tasks(func_matches, rules, config.to_dir)
+  let extraction_tasks = build_extraction_tasks(
+    func_matches,
+    rules,
+    config.to_dir,
+  )
   let plan_json = build_plan_json(
     categorized, config, rules, func_matches, extraction_tasks,
   )
@@ -549,7 +553,7 @@ fn find_cross_matches(
           source2: file2,
           similarity: m.similarity,
           relative_path: rel1,
-          matched_rule: None,
+          _matched_rule: None,
           match_kind: PathMatch,
         })
         // Mark this pair so we don't duplicate it in phase 2
@@ -582,7 +586,7 @@ fn find_cross_matches(
         source2: file2,
         similarity: m.similarity,
         relative_path: representative,
-        matched_rule: None,
+        _matched_rule: None,
         match_kind: ContentMatch,
       })
     }
@@ -620,15 +624,25 @@ fn find_cross_function_matches(
     // PubDeclaration with Shortest span preference gives accurate
     // function boundaries for all languages.
     let (declarations, _) = @kgf_declarations.extract_declarations(
-      content, rel_path, registry, visibility=All,
+      content,
+      rel_path,
+      registry,
+      visibility=All,
     )
     for decl in declarations {
       if decl.category != "function" {
         continue
       }
       add_function_body(
-        lines, decl.line, decl.end_line, decl.name, path,
-        func_names, func_bodies, func_files, func_lines,
+        lines,
+        decl.line,
+        decl.end_line,
+        decl.name,
+        path,
+        func_names,
+        func_bodies,
+        func_files,
+        func_lines,
       )
     }
   }
@@ -758,7 +772,7 @@ fn categorize_matches(
       if @scope.path_matches_pattern(m.relative_path, rule.pattern) {
         // Resolve target path
         let target = resolve_target(rule.target, to_dir)
-        let updated_match = { ..m, matched_rule: Some(rule) }
+        let updated_match = { ..m, _matched_rule: Some(rule) }
         match by_target.get(target) {
           Some(arr) => arr.push(updated_match)
           None => by_target.set(target, [updated_match])
@@ -851,12 +865,7 @@ fn build_extraction_tasks(
           start_line: 0, // populated later if needed
           end_line: 0,
         },
-        {
-          file: m.file2,
-          dir: m.dir2,
-          start_line: 0,
-          end_line: 0,
-        },
+        { file: m.file2, dir: m.dir2, start_line: 0, end_line: 0 },
       ]
       functions.push({
         name: m.func_name1,
@@ -866,7 +875,11 @@ fn build_extraction_tasks(
         line_count: m.line_count,
       })
     }
-    let merge_strategy = if min_similarity >= 0.99 { "copy" } else { "reconcile" }
+    let merge_strategy = if min_similarity >= 0.99 {
+      "copy"
+    } else {
+      "reconcile"
+    }
     tasks.push({
       task_id,
       target_path,

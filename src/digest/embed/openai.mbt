@@ -14,7 +14,7 @@ pub(all) struct OpenAIConfig {
   api_key : String
   model : String
   base_url : String
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Default config for text-embedding-3-small (1536 dims)
@@ -76,7 +76,7 @@ pub async fn get_embeddings(
   headers.set("Content-Type", "application/json")
   let body = build_request_body(texts, config.model)
   let (status, response_body) = @http.post_json(config.base_url, body, headers) catch {
-    err => raise ApiError(0, err.to_string())
+    err => raise ApiError(0, @debug.to_string(err))
   }
   if status != 200 {
     raise ApiError(status, response_body)

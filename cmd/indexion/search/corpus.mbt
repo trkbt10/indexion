@@ -364,7 +364,6 @@ fn push_whole_file_document(
   })
 }
 
-
 ///|
 fn extract_code_file_documents(
   code_files : Array[(String, String)],

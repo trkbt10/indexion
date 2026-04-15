@@ -12,7 +12,7 @@ pub struct AssemblyResult {
   missing_chunks : Array[String]
   /// Unresolved references.
   unresolved_refs : Array[String]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Assemble a complete CodeGraph from cached chunks.

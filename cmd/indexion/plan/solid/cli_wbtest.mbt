@@ -14,7 +14,7 @@ test "solid: categorize_matches uses shared path scope matching" {
       source2: "admin:src/http/api.ts",
       similarity: 1.0,
       relative_path: "src/http/api.ts",
-      matched_rule: None,
+      _matched_rule: None,
       match_kind: PathMatch,
     },
   ]
@@ -34,7 +34,7 @@ test "solid: content matches are categorized correctly" {
       source2: "admin:src/auth/signin.ts",
       similarity: 0.85,
       relative_path: "src/auth/login.ts",
-      matched_rule: None,
+      _matched_rule: None,
       match_kind: ContentMatch,
     },
   ]

@@ -5,7 +5,12 @@ pub struct DigestFileConfig {
   // Currently empty — all provider settings moved to EmbeddingFileConfig.
   // Future digest-specific fields (e.g., exclude_kinds, index_dir) go here.
   placeholder_ : Bool // MoonBit requires at least one field
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for DigestFileConfig with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 pub fn DigestFileConfig::empty() -> DigestFileConfig {
@@ -43,7 +48,7 @@ pub(all) struct ProviderFileEntry {
   api_key_env : String?
   api_base_url : String?
   model : String?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn ProviderFileEntry::empty() -> ProviderFileEntry {
@@ -72,7 +77,7 @@ pub struct EmbeddingFileConfig {
   model : String?
   /// N-provider configuration.
   providers : Array[ProviderFileEntry]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn EmbeddingFileConfig::empty() -> EmbeddingFileConfig {

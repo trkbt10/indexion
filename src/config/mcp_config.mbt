@@ -6,7 +6,7 @@ pub struct McpFileConfig {
   port : Int?
   host : String?
   specs_dir : String?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create an empty MCP file config with all fields set to None.

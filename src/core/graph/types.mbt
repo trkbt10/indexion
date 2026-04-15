@@ -8,7 +8,12 @@ pub struct ModuleNode {
   id : String
   /// Optional file path associated with this module.
   file : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
+
+///|
+pub impl Show for ModuleNode with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 /// Symbol node representing a named entity (function, type, variable, etc.).
@@ -25,7 +30,12 @@ pub(all) struct SymbolNode {
   module_id : String
   /// Documentation comment for the symbol (optional).
   doc : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
+
+///|
+pub impl Show for SymbolNode with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 /// Edge kinds representing relationships between nodes.
@@ -48,7 +58,12 @@ pub enum EdgeKind {
   CircularDependency
   /// Custom edge kind for extensibility.
   Custom(String)
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
+
+///|
+pub impl Show for EdgeKind with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 /// Edge representing a directed relationship between two nodes.
@@ -61,7 +76,7 @@ pub struct Edge {
   to : String
   /// Optional attributes for additional metadata.
   attrs : Map[String, String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Note attached to a module (e.g., module_doc).
@@ -72,7 +87,7 @@ pub struct ModuleNote {
   content : String
   /// Module ID this note is attached to.
   module_id : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// The main code graph structure containing modules, symbols, and edges.
@@ -85,4 +100,4 @@ pub struct CodeGraph {
   edges : Array[Edge]
   /// Notes attached to modules (e.g., module-level documentation).
   notes : Array[ModuleNote]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)

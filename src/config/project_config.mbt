@@ -12,7 +12,7 @@ pub struct ProjectFileConfig {
   mcp : McpFileConfig
   doc : DocFileConfig
   wiki : WikiFileConfig
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Effective reconcile config with merged values and provenance.
@@ -21,7 +21,7 @@ pub struct EffectiveReconcileConfig {
   global : GlobalConfig
   merged : ReconcileFileConfig
   global_config_path : String?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create default project config with inherit_globalance enabled.

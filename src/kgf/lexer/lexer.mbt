@@ -19,7 +19,8 @@ pub fn Lexer::new(tokens : Array[@types.TokenDef]) -> Lexer {
   for token_def in tokens {
     let case_insensitive = has_case_insensitive_flag(token_def.flags)
     let compiled_pattern = @regexp.compile_pattern(
-      token_def.pattern, case_insensitive~,
+      token_def.pattern,
+      case_insensitive~,
     )
     compiled_tokens.push({ token_def, compiled_pattern })
   }

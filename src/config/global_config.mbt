@@ -12,7 +12,12 @@ pub struct GlobalConfig {
   mcp : McpFileConfig
   doc : DocFileConfig
   wiki : WikiFileConfig
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for GlobalConfig with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 /// Create empty global config.

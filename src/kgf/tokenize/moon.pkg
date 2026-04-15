@@ -1,6 +1,5 @@
 import {
   "trkbt10/indexion/src/kgf/features" @features,
-  "trkbt10/indexion/src/kgf/lexer" @lexer,
   "trkbt10/indexion/src/kgf/registry" @registry,
   "trkbt10/indexion/src/kgf/toolkit" @toolkit,
   "trkbt10/indexion/src/kgf/types" @types,

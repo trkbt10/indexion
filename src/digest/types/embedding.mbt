@@ -24,7 +24,7 @@ pub struct EmbeddingConfig {
   endpoint : String?
   /// API key (for remote providers).
   api_key : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Create a TF-IDF embedding config.

@@ -193,7 +193,7 @@ fn run_with_config(config : SegmentConfig) -> Unit {
   // Read input file
   let text = @fs.read_file_to_string(config.input_file) catch {
     e => {
-      println("Error reading file: " + e.to_string())
+      println("Error reading file: " + @debug.to_string(e))
       return
     }
   }
@@ -293,7 +293,7 @@ fn run_with_config(config : SegmentConfig) -> Unit {
         " chars)",
       )
     } catch {
-      e => println("Error writing " + filename + ": " + e.to_string())
+      e => println("Error writing " + filename + ": " + @debug.to_string(e))
     }
   }
 

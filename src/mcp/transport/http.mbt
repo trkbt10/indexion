@@ -21,7 +21,7 @@ pub async fn run_http(
 ) -> Unit {
   let http_server = @mhttp.Server::new(host~, port~, reuse_addr=true) catch {
     err => {
-      println("MCP HTTP server init failed: " + err.to_string())
+      println("MCP HTTP server init failed: " + @debug.to_string(err))
       return
     }
   }
@@ -77,7 +77,7 @@ pub async fn run_http(
     },
     allow_failure=true,
   ) catch {
-    err => eprintln("MCP HTTP server failed: " + err.to_string())
+    err => eprintln("MCP HTTP server failed: " + @debug.to_string(err))
   }
 }
 

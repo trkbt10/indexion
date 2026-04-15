@@ -361,7 +361,8 @@ test "parse rust spec - macro token pattern" {
   let s = spec.unwrap()
   assert_eq(s.language, "rust")
   // Verify macro pattern is parsed correctly
-  let macro_token = s.get_tokens()
+  let macro_token = s
+    .get_tokens()
     .iter()
     .find_first(fn(t) { t.get_name() == "Macro" })
   assert_true(macro_token is Some(_))

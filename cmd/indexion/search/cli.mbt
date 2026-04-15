@@ -140,10 +140,8 @@ pub fn command() -> @argparse.Command {
 /// Load the digest index from the project's .indexion/digest/ directory.
 /// Returns None if no index exists.
 fn load_digest_index(workspace_dir : String) -> @index.DigestIndex? {
-  let index_dir = match @config.resolve_project_indexion_dir(
-    workspace_dir,
-    "digest",
-  ) {
+  let index_dir = match
+    @config.resolve_project_indexion_dir(workspace_dir, "digest") {
     Some(dir) => dir
     None => return None
   }
@@ -324,9 +322,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         format_text(hits, config.files_only)
       }
     }
-    None => {
-      println(@digest_cli.build_hint())
-    }
+    None => println(@digest_cli.build_hint())
   }
 }
 

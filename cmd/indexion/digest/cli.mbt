@@ -372,6 +372,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
 
 ///|
 /// Write progress message (TODO: use stderr when available).
+
 ///|
 /// Hint message for when a digest index is required but not found.
 /// SoT for the build command suggestion across all consumers (search, serve, etc.).
@@ -379,6 +380,7 @@ pub fn build_hint() -> String {
   "No digest index found. Build it with:\n\n  indexion digest build .\n"
 }
 
+///|
 pub fn log_progress(msg : String) -> Unit {
   println(msg)
 }
@@ -667,7 +669,7 @@ pub fn build_graph_from_source(
 pub fn load_graph_from_file(path : String) -> @graph.CodeGraph? {
   let content = @fs.read_file_to_string(path) catch {
     e => {
-      log_error("Reading file: " + e.to_string())
+      log_error("Reading file: " + @debug.to_string(e))
       return None
     }
   }
@@ -776,20 +778,7 @@ async fn run_build_inner(config : CliConfig) -> Unit {
     digest_config,
   )
   // Build with file-level change detection when file hashes are available
-  let result = index.build_with_config(graph, digest_config, file_hashes~) catch {
-    @embed.ParseError(msg) => {
-      log_error("Parse error: " + msg)
-      return
-    }
-    @embed.ApiError(code, msg) => {
-      log_error("API error (" + code.to_string() + "): " + msg)
-      return
-    }
-    @embed.NoResult => {
-      log_error("No embedding result")
-      return
-    }
-  }
+  let result = index.build_with_config(graph, digest_config, file_hashes~)
   println("")
   println("Build complete:")
   println("  Indexed: " + result.indexed_count.to_string())
@@ -852,9 +841,7 @@ async fn run_query_async(config : CliConfig) -> Unit {
             build_result.graph,
             digest_config,
             file_hashes~,
-          ) catch {
-            _ => @index.BuildResult::new()
-          }
+          )
           if result.indexed_count > 0 || result.removed_count > 0 {
             log_progress(
               "Auto-update: " +
@@ -884,7 +871,7 @@ async fn run_query_async(config : CliConfig) -> Unit {
   let graph_path = @dconfig.graph_path(config.index_dir)
   let graph_content = @fs.read_file_to_string(graph_path) catch {
     e => {
-      log_error("Reading graph: " + e.to_string())
+      log_error("Reading graph: " + @debug.to_string(e))
       return
     }
   }
@@ -922,7 +909,7 @@ fn run_stats(config : CliConfig) -> Unit {
   // Load manifest
   let manifest_content = @fs.read_file_to_string(mp) catch {
     e => {
-      log_error("Reading manifest: " + e.to_string())
+      log_error("Reading manifest: " + @debug.to_string(e))
       return
     }
   }
@@ -937,7 +924,7 @@ fn run_stats(config : CliConfig) -> Unit {
   let graph_path = @dconfig.graph_path(config.index_dir)
   let graph_content = @fs.read_file_to_string(graph_path) catch {
     e => {
-      log_error("Reading graph: " + e.to_string())
+      log_error("Reading graph: " + @debug.to_string(e))
       return
     }
   }
@@ -969,7 +956,7 @@ fn run_status(config : CliConfig) -> Unit {
   }
   let manifest_content = @fs.read_file_to_string(mp) catch {
     e => {
-      log_error("Reading manifest: " + e.to_string())
+      log_error("Reading manifest: " + @debug.to_string(e))
       return
     }
   }

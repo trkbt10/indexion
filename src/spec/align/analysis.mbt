@@ -40,7 +40,7 @@ fn path_is_dir(path : String) -> Bool {
   @fs.is_dir(path) catch {
     err => {
       println(
-        "Error: failed to inspect path `" + path + "`: " + err.to_string(),
+        "Error: failed to inspect path `" + path + "`: " + @debug.to_string(err),
       )
       false
     }
@@ -177,7 +177,10 @@ async fn collect_spec_data(
     let content = @fs.read_file_to_string(path) catch {
       err => {
         println(
-          "Error: failed to read spec file `" + path + "`: " + err.to_string(),
+          "Error: failed to read spec file `" +
+          path +
+          "`: " +
+          @debug.to_string(err),
         )
         return ([], [], [], {}, [])
       }
@@ -303,7 +306,7 @@ async fn collect_impl_data(
           "Error: failed to read implementation file `" +
           path +
           "`: " +
-          err.to_string(),
+          @debug.to_string(err),
         )
         return ([], [], {}, {}, [])
       }
@@ -1525,9 +1528,7 @@ fn diff_item_for_requirement(
       // logic that a normative requirement demands.
       if category == "MATCHED" &&
         implementation_node.category == "type" &&
-        !has_function_in_same_file(
-          implementations, implementation_node.file,
-        ) {
+        !has_function_in_same_file(implementations, implementation_node.file) {
         category = "SHALLOW"
         reasons.push(
           "Matched implementation is type-only with no function declarations in the same file.",

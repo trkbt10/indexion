@@ -13,7 +13,7 @@ test "ManifestPage from_json: full fields" {
     "provenance": "synthesized",
     "last_actor": "agent:claude",
   }
-  let page : ManifestPage = @json.from_json(json) catch { e => panic() }
+  let page : ManifestPage = @json.from_json(json) catch { _ => panic() }
   assert_eq(page.id, "foo")
   assert_eq(page.title, "Foo Page")
   assert_eq(page.file, "foo.md")
@@ -33,7 +33,7 @@ test "ManifestPage from_json: optional fields absent" {
     "sources": [],
     "children": [],
   }
-  let page : ManifestPage = @json.from_json(json) catch { e => panic() }
+  let page : ManifestPage = @json.from_json(json) catch { _ => panic() }
   assert_eq(page.id, "bar")
   assert_eq(page.provenance, None)
   assert_eq(page.last_actor, None)
@@ -50,7 +50,7 @@ test "ManifestPage from_json: optional fields null" {
     "provenance": Json::null(),
     "last_actor": Json::null(),
   }
-  let page : ManifestPage = @json.from_json(json) catch { e => panic() }
+  let page : ManifestPage = @json.from_json(json) catch { _ => panic() }
   assert_eq(page.provenance, None)
   assert_eq(page.last_actor, None)
 }
@@ -59,7 +59,7 @@ test "ManifestPage from_json: optional fields null" {
 test "ManifestPage from_json: sources and children absent" {
   // sources and children absent — must default to empty array.
   let json : Json = { "id": "qux", "title": "Qux", "file": "qux.md" }
-  let page : ManifestPage = @json.from_json(json) catch { e => panic() }
+  let page : ManifestPage = @json.from_json(json) catch { _ => panic() }
   assert_eq(page.sources, [])
   assert_eq(page.children, [])
 }
@@ -76,7 +76,7 @@ test "ManifestPage ToJson / FromJson round-trip" {
     last_actor=Some("user"),
   )
   let json = original.to_json()
-  let decoded : ManifestPage = @json.from_json(json) catch { e => panic() }
+  let decoded : ManifestPage = @json.from_json(json) catch { _ => panic() }
   assert_eq(decoded, original)
 }
 
@@ -103,7 +103,7 @@ test "WikiManifest from_json: full" {
       },
     ],
   }
-  let manifest : WikiManifest = @json.from_json(json) catch { e => panic() }
+  let manifest : WikiManifest = @json.from_json(json) catch { _ => panic() }
   assert_eq(manifest.title, "My Wiki")
   assert_eq(manifest.pages.length(), 2)
   assert_eq(manifest.pages[0].id, "overview")
@@ -125,6 +125,6 @@ test "WikiManifest ToJson / FromJson round-trip" {
     ManifestPage::new(id="p2", title="Page 2", file="p2.md"),
   ])
   let json = original.to_json()
-  let decoded : WikiManifest = @json.from_json(json) catch { e => panic() }
+  let decoded : WikiManifest = @json.from_json(json) catch { _ => panic() }
   assert_eq(decoded, original)
 }

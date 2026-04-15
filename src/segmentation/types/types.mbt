@@ -9,7 +9,7 @@ pub struct Sentence {
   start : Int
   /// End position (byte offset) in the original text (exclusive).
   end : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new Sentence.
@@ -50,7 +50,12 @@ pub(all) enum SegmentType {
   Section
   /// A heading segment.
   Heading
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for SegmentType with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 /// A lightweight segment point without text content.
@@ -62,7 +67,7 @@ pub struct SegmentPoint {
   end : Int
   /// The type of segment.
   segment_type : SegmentType
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new SegmentPoint.
@@ -111,7 +116,7 @@ pub struct TextSegment {
   segment_type : SegmentType
   /// Optional heading text if this is a section under a heading.
   heading_text : String?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new TextSegment.
@@ -222,7 +227,7 @@ pub struct WindowDivergence {
   divergence_values : Array[Double]
   /// Array of window end positions corresponding to each divergence value.
   window_end_positions : Array[Int]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new WindowDivergence.

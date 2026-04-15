@@ -26,7 +26,9 @@ pub fn save(index : WikiSearchIndex, wiki_dir : String) -> Unit {
   let vectors_path = @config.join_path(wiki_dir, VECTORS_FILE)
   @fs.write_bytes_to_file(vectors_path, index.engine.serialize()) catch {
     e =>
-      println("Warning: failed to write " + VECTORS_FILE + ": " + e.to_string())
+      println(
+        "Warning: failed to write " + VECTORS_FILE + ": " + @debug.to_string(e),
+      )
   }
   // search-sections.json: provider + next_vid + entries
   let entries : Array[Json] = []
@@ -44,7 +46,7 @@ pub fn save(index : WikiSearchIndex, wiki_dir : String) -> Unit {
   @fs.write_string_to_file(sections_path, sections_json.stringify(indent=2)) catch {
     e =>
       println(
-        "Warning: failed to write " + SECTIONS_FILE + ": " + e.to_string(),
+        "Warning: failed to write " + SECTIONS_FILE + ": " + @debug.to_string(e),
       )
   }
   // tfidf-vocabulary.json
@@ -54,7 +56,10 @@ pub fn save(index : WikiSearchIndex, wiki_dir : String) -> Unit {
       @fs.write_string_to_file(vocab_path, prov.to_json_string()) catch {
         e =>
           println(
-            "Warning: failed to write " + VOCABULARY_FILE + ": " + e.to_string(),
+            "Warning: failed to write " +
+            VOCABULARY_FILE +
+            ": " +
+            @debug.to_string(e),
           )
       }
     }

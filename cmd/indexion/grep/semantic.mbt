@@ -87,7 +87,8 @@ pub fn run_semantic_query_on_file(
               query_by_length(tokens, path, content, registry, max_lines=n)
             Long(n) =>
               query_by_length(tokens, path, content, registry, min_lines=n)
-            ParamsGte(n) => query_by_params(tokens, path, content, registry, min_params=n)
+            ParamsGte(n) =>
+              query_by_params(tokens, path, content, registry, min_params=n)
             NameContains(substr) =>
               query_name_contains(tokens, path, content, registry, substr)
             _ => []
@@ -105,7 +106,12 @@ fn query_proxy(
   registry : @kgf_registry.KGFRegistry?,
   spec~ : @kgf_types.KGFSpec,
 ) -> Array[SemanticMatch] {
-  let proxies = @kgf_features.detect_proxy_functions(content, path, registry, spec~)
+  let proxies = @kgf_features.detect_proxy_functions(
+    content,
+    path,
+    registry,
+    spec~,
+  )
   let results : Array[SemanticMatch] = []
   for p in proxies {
     results.push({

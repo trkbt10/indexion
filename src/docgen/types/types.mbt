@@ -13,7 +13,7 @@ pub struct ComponentDoc {
   description : String?
   /// Example code from @example comment (optional).
   example : String?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new ComponentDoc with required name.
@@ -67,7 +67,7 @@ pub struct TokenInfo {
   description : String
   /// Default value if any.
   default_value : String?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new TokenInfo.
@@ -123,7 +123,7 @@ pub struct TokenGroup {
   description : String
   /// Tokens in this group.
   tokens : Array[TokenInfo]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new TokenGroup.

@@ -13,7 +13,7 @@ pub struct FindBoundariesOptions {
   /// Maximum protected quote length.
   /// Default: 240
   quote_safe_max_length : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create new FindBoundariesOptions with default values.
@@ -66,7 +66,7 @@ pub struct QuoteStackEntry {
   open : Char
   /// The position where the quote started.
   start : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new QuoteStackEntry.

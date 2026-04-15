@@ -8,7 +8,7 @@ pub struct SimilarityResult {
   distance : Double
   /// Normalized similarity in [0, 1] where 1 = identical (1 - distance).
   similarity : Double
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a SimilarityResult from distance.
@@ -59,7 +59,7 @@ pub struct HybridConfig {
   ncd_weight : Double
   /// Weight for TF-IDF component (normalized to sum to 1.0 with ncd_weight).
   tfidf_weight : Double
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a default HybridConfig with equal weights (0.5, 0.5).

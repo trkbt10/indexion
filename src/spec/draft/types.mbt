@@ -6,7 +6,7 @@ pub(all) struct DraftConfig {
   format : String
   profile : String
   max_requirements : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub fn DraftConfig::default() -> DraftConfig {
@@ -29,7 +29,7 @@ pub struct DraftRequirement {
   source_file : String
   source_line : Int
   level : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub struct DraftReport {
@@ -38,4 +38,4 @@ pub struct DraftReport {
   config : DraftConfig
   source_files : Array[String]
   requirements : Array[DraftRequirement]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)

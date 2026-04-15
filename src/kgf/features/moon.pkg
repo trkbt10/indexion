@@ -1,8 +1,6 @@
 import {
   "trkbt10/indexion/src/config" @config,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
-  "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
-  "trkbt10/indexion/src/kgf/preprocess" @kgf_preprocess,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/kgf/toolkit" @kgf_toolkit,
   "trkbt10/indexion/src/kgf/declarations" @kgf_declarations,

@@ -6,7 +6,12 @@
 /// Used as content-addressed identifier for chunks.
 pub struct ContentHash {
   value : String
-} derive(Eq, Show, ToJson, @json.FromJson, Hash)
+} derive(Eq, Debug, ToJson, @json.FromJson, Hash)
+
+///|
+pub impl Show for ContentHash with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 /// A symbolic reference to an external module (not yet resolved).
@@ -21,7 +26,7 @@ pub struct SymbolicRef {
   edge_kind : String
   /// Original import specifier from source code.
   via : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// A chunk represents a single module's contribution to the graph.
@@ -47,7 +52,7 @@ pub struct ModuleChunk {
   spec_hash : ContentHash
   /// Symbolic references to external modules.
   external_refs : Array[SymbolicRef]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Root manifest for a KGF CAS store.
@@ -61,7 +66,7 @@ pub struct CASManifest {
   spec_hash : ContentHash
   /// Map of module ID to chunk hash.
   modules : Map[String, ContentHash]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Create a new SymbolicRef.

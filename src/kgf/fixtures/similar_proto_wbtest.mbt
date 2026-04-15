@@ -50,9 +50,7 @@ test "similar-code: protobuf vs typescript not similar" {
 test "similar-code: protobuf tokenization produces expected token kinds" {
   let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
   let fixtures = get_fixtures_dir()
-  let source = @fs.read_file_to_string(
-    fixtures + "/similar-code/a.proto",
-  ) catch {
+  let source = @fs.read_file_to_string(fixtures + "/similar-code/a.proto") catch {
     _ => ""
   }
   if source.length() == 0 {
@@ -79,14 +77,10 @@ test "similar-code: protobuf tokenization produces expected token kinds" {
 test "similar-code: protobuf pair declares same structure" {
   let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
   let fixtures = get_fixtures_dir()
-  let a_source = @fs.read_file_to_string(
-    fixtures + "/similar-code/a.proto",
-  ) catch {
+  let a_source = @fs.read_file_to_string(fixtures + "/similar-code/a.proto") catch {
     _ => ""
   }
-  let b_source = @fs.read_file_to_string(
-    fixtures + "/similar-code/b.proto",
-  ) catch {
+  let b_source = @fs.read_file_to_string(fixtures + "/similar-code/b.proto") catch {
     _ => ""
   }
   if a_source.length() == 0 || b_source.length() == 0 {
@@ -107,7 +101,12 @@ test "similar-code: protobuf pair declares same structure" {
     let graph = @graph.CodeGraph::new()
     let _ = graph.get_or_add_module("test.proto", file=Some("test.proto"))
     let ctx = @semantics.SemEvalCtx::new(
-      spec, graph, "test.proto", "", "protobuf", fn(_) { false },
+      spec,
+      graph,
+      "test.proto",
+      "",
+      "protobuf",
+      fn(_) { false },
     )
     for event in parse_result.get_events() {
       @semantics.eval_rule_semantics(event.0, event.1, ctx)

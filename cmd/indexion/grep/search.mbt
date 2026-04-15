@@ -220,10 +220,18 @@ pub fn prepare_pattern_search(
   if matchers.length() == 0 {
     return None
   }
-  let files = collect_search_files(paths, config, match registry {
-    Some(r) => r
-    None => @kgf_features.load_registry_or_empty(specs_dir=config.specs_dir, target_dirs=paths)
-  })
+  let files = collect_search_files(
+    paths,
+    config,
+    match registry {
+      Some(r) => r
+      None =>
+        @kgf_features.load_registry_or_empty(
+          specs_dir=config.specs_dir,
+          target_dirs=paths,
+        )
+    },
+  )
   Some((registry, files, matchers))
 }
 

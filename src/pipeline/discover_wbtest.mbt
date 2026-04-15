@@ -61,7 +61,9 @@ fn write_test_file(path : String, content : String) -> Unit {
     let parent = String::from_array(chars[:last_sep])
     @config.ensure_dir_recursive(parent)
   }
-  @fs.write_string_to_file(path, content) catch { _ => panic() }
+  @fs.write_string_to_file(path, content) catch {
+    _ => panic()
+  }
 }
 
 ///|
@@ -84,7 +86,10 @@ test "discover_files: respects .indexionignore" {
   write_test_file(root + "/node_modules/dep.mbt", "fn dep() {}")
   write_test_file(root + "/fixtures/big.mbt", "fn big() {}")
   // Create .indexionignore
-  write_test_file(root + "/.indexionignore", "_build/\nnode_modules/\nfixtures/\n")
+  write_test_file(
+    root + "/.indexionignore",
+    "_build/\nnode_modules/\nfixtures/\n",
+  )
   // Discover with root_dir set
   let opts = DiscoverOptions::new(root_dir=root)
   let paths = discover_files([root], opts)

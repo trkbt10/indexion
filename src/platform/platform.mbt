@@ -9,7 +9,7 @@ pub(all) enum Platform {
   Linux
   Windows
   Unknown
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Detect the current operating system platform.
@@ -41,7 +41,7 @@ pub(all) enum Arch {
   X64
   Arm64
   UnknownArch
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Detect the CPU architecture.

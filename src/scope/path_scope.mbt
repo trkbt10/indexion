@@ -2,7 +2,7 @@
 /// A path matching subject with canonical and alternate path spellings.
 pub struct PathSubject {
   candidate_paths : Array[String]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a PathSubject from a primary path and optional alternates.
@@ -31,7 +31,7 @@ pub fn PathSubject::new(
 pub struct PathScope {
   includes : Array[String]
   excludes : Array[String]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a PathScope with optional include and exclude glob patterns.

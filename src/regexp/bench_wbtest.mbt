@@ -26,7 +26,9 @@ fn large_input() -> String {
   for i = 0; i < 1000; i = i + 1 {
     buf.write_string("pub fn process_item_")
     buf.write_string(i.to_string())
-    buf.write_string("(input : String, count : Int) -> Result[String, Error] {\n")
+    buf.write_string(
+      "(input : String, count : Int) -> Result[String, Error] {\n",
+    )
     buf.write_string("  let result = input.to_string()\n")
     buf.write_string("  if count > 0 { Ok(result) } else { Err(Error) }\n")
     buf.write_string("}\n\n")
@@ -40,7 +42,9 @@ fn block_comment_input() -> String {
   for i = 0; i < 50; i = i + 1 {
     buf.write_string("/** Documentation for function_")
     buf.write_string(i.to_string())
-    buf.write_string(".\n * @param x the input value\n * @returns the result\n */\n")
+    buf.write_string(
+      ".\n * @param x the input value\n * @returns the result\n */\n",
+    )
     buf.write_string("fn function_")
     buf.write_string(i.to_string())
     buf.write_string("(x : Int) -> Int { x + 1 }\n\n")

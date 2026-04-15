@@ -71,7 +71,11 @@ fn check_lex(
     let pattern = token_def.get_pattern()
     if pattern.length() == 0 {
       diagnostics.push(
-        Diagnostic::new("lex", "error", "Token '" + name + "' has empty pattern"),
+        Diagnostic::new(
+          "lex",
+          "error",
+          "Token '" + name + "' has empty pattern",
+        ),
       )
       continue
     }
@@ -120,11 +124,7 @@ fn check_grammar(
           Diagnostic::new(
             "grammar",
             "error",
-            "Rule '" +
-            rule_name +
-            "' references undefined symbol '" +
-            sym +
-            "'",
+            "Rule '" + rule_name + "' references undefined symbol '" + sym + "'",
           ),
         )
       }
@@ -184,8 +184,7 @@ fn check_semantics(
     for block in blocks {
       // Check when condition
       match block.get_when_cond() {
-        Some(expr) =>
-          check_sem_expr(expr, sem_rule, all_symbols, diagnostics)
+        Some(expr) => check_sem_expr(expr, sem_rule, all_symbols, diagnostics)
         None => ()
       }
       // Check then statements
@@ -213,9 +212,8 @@ fn check_features(
   diagnostics : Array[Diagnostic],
 ) -> Unit {
   let token_referencing_features = [
-    "section_token", "heading_text_tokens", "reference_token_kinds",
-    "coverage_token_kinds", "vocabulary_token_kinds", "identifier_kinds",
-    "embedded_code_fence", "embedded_content_token",
+    "section_token", "heading_text_tokens", "reference_token_kinds", "coverage_token_kinds",
+    "vocabulary_token_kinds", "identifier_kinds", "embedded_code_fence", "embedded_content_token",
   ]
   for feature_name in token_referencing_features {
     match spec.get_feature(feature_name) {
@@ -253,9 +251,7 @@ fn check_classify(
   if model.is_empty() && model.get_metadata().is_empty() {
     diagnostics.push(
       Diagnostic::new(
-        "classify",
-        "warning",
-        "Classify section is present but empty",
+        "classify", "warning", "Classify section is present but empty",
       ),
     )
     return
@@ -380,11 +376,7 @@ fn check_sem_expr(
           Diagnostic::new(
             "semantics",
             "warning",
-            "In rule '" +
-            context_rule +
-            "': unknown function '" +
-            name +
-            "()'",
+            "In rule '" + context_rule + "': unknown function '" + name + "()'",
           ),
         )
       }

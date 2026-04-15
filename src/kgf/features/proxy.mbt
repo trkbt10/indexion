@@ -57,14 +57,14 @@ pub fn UnwrapEdit::new(
 ///|
 /// Build set of keywords that are allowed in proxy function bodies.
 /// Delegates to LanguageToolkit::get_allowed_keywords for the cached result.
-fn build_allowed_keywords(spec : @kgf_types.KGFSpec) -> Map[String, Bool] {
+fn _build_allowed_keywords(spec : @kgf_types.KGFSpec) -> Map[String, Bool] {
   @kgf_toolkit.LanguageToolkit::from_spec(spec).get_allowed_keywords()
 }
 
 ///|
 /// Build set of qualifier separator token kinds from KGF spec's
 /// `qualifier_separators` feature (e.g. DOT, DCOLON, OBJOP, SCOPE, ARROW).
-fn build_qualifier_separator_set(
+fn _build_qualifier_separator_set(
   spec : @kgf_types.KGFSpec,
 ) -> Map[String, Bool] {
   @kgf_toolkit.LanguageToolkit::from_spec(spec).get_qualifier_separators()
@@ -72,7 +72,7 @@ fn build_qualifier_separator_set(
 
 ///|
 /// Build set of self-keyword token kinds from KGF spec's `self_keyword` feature.
-fn build_self_keyword_set(spec : @kgf_types.KGFSpec) -> Map[String, Bool] {
+fn _build_self_keyword_set(spec : @kgf_types.KGFSpec) -> Map[String, Bool] {
   @kgf_toolkit.LanguageToolkit::from_spec(spec).get_self_keywords()
 }
 
@@ -146,7 +146,10 @@ pub fn detect_proxy_functions(
 ) -> Array[ProxyFunction] {
   // Get all declarations from parse events (visibility-independent)
   let (all_decls, _) = @kgf_declarations.extract_declarations(
-    content, file, registry, visibility=All,
+    content,
+    file,
+    registry,
+    visibility=All,
   )
   // Filter to function declarations
   let functions : Array[ExtractedFunction] = []

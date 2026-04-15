@@ -49,9 +49,7 @@ test "parser: non-capturing group (?:...)" {
   let result4 = match_pattern("(?:0|[1-9][0-9]*)", "123", 0)
   assert_eq(result4.matched, true)
   assert_eq(result4.text, "123")
-  let result5 = match_pattern(
-    "(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?", "123.456", 0,
-  )
+  let result5 = match_pattern("(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?", "123.456", 0)
   assert_eq(result5.matched, true)
   assert_eq(result5.text, "123.456")
   let result6 = match_pattern("(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?", "42", 0)

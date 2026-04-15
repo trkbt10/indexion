@@ -1,1 +1,3 @@
-
+import {
+  "moonbitlang/core/bench" @bench,
+} for "wbtest"

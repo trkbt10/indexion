@@ -94,7 +94,9 @@ pub fn solid_to_plan_document(plan : SolidPlanJSON) -> @plan_types.PlanDocument 
   }
   // Unmatched section
   if plan.unmatched.length() > 0 {
-    doc.add_section(build_unmatched_section(plan.unmatched, plan.config.from_dirs))
+    doc.add_section(
+      build_unmatched_section(plan.unmatched, plan.config.from_dirs),
+    )
   }
   doc
 }
@@ -124,7 +126,9 @@ fn build_summary_section(plan : SolidPlanJSON) -> @plan_types.PlanSection {
   pairs.push(
     ("Extraction Tasks", plan.summary.extraction_task_count.to_string()),
   )
-  pairs.push(("Files Matched (by rules)", plan.summary.matched_by_rules.to_string()))
+  pairs.push(
+    ("Files Matched (by rules)", plan.summary.matched_by_rules.to_string()),
+  )
   pairs.push(("Files Unmatched", plan.summary.unmatched_count.to_string()))
   @plan_types.PlanSection::new(
     "summary",
@@ -211,17 +215,9 @@ fn build_extraction_task_section(
 ) -> @plan_types.PlanSection {
   let items : Array[@plan_types.ListItem] = []
   items.push(
-    @plan_types.ListItem::with_desc(
-      "Target",
-      "`" + task.target_path + "`",
-    ),
+    @plan_types.ListItem::with_desc("Target", "`" + task.target_path + "`"),
   )
-  items.push(
-    @plan_types.ListItem::with_desc(
-      "Strategy",
-      task.merge_strategy,
-    ),
-  )
+  items.push(@plan_types.ListItem::with_desc("Strategy", task.merge_strategy))
   items.push(
     @plan_types.ListItem::with_desc(
       "Confidence",
@@ -243,7 +239,9 @@ fn build_extraction_task_section(
       })
     items.push(
       @plan_types.ListItem::with_desc(
-        "`" + func.name + "` (" +
+        "`" +
+        func.name +
+        "` (" +
         @common.format_percent(func.similarity) +
         ", " +
         func.line_count.to_string() +
@@ -272,9 +270,7 @@ fn build_extraction_task_section(
         acc + ", `" + full + "`"
       }
     })
-  items.push(
-    @plan_types.ListItem::with_desc("Affected files", affected),
-  )
+  items.push(@plan_types.ListItem::with_desc("Affected files", affected))
   @plan_types.PlanSection::new(
     "task-" + task.task_id.to_string(),
     "Extraction Task #" + task.task_id.to_string(),

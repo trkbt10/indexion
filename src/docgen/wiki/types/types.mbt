@@ -158,7 +158,12 @@ pub struct ManifestPage {
   /// Who last modified: "indexion" | "agent:<name>" | "user".
   /// None if not yet tracked.
   last_actor : String?
-} derive(Eq, Show, ToJson)
+} derive(Eq, Debug, ToJson)
+
+///|
+pub impl Show for ManifestPage with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 pub impl @json.FromJson for ManifestPage with from_json(json, path) {
@@ -270,7 +275,12 @@ pub fn ManifestPage::with_updates(
 pub struct WikiManifest {
   title : String
   pages : Array[ManifestPage]
-} derive(Eq, Show, ToJson)
+} derive(Eq, Debug, ToJson)
+
+///|
+pub impl Show for WikiManifest with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 pub impl @json.FromJson for WikiManifest with from_json(json, path) {

@@ -845,13 +845,35 @@ pub fn is_known_call(name : String) -> Bool {
 /// SoT: the match arms in eval_func above.
 pub fn is_known_func(name : String) -> Bool {
   match name {
-    "concat" | "obj" | "coalesce" | "not" | "eq" | "add" | "sub" | "mul" |
-    "div" | "floor" | "hexToInt" | "slice" | "stripQuotes" | "first" |
-    "last" | "toUpper" | "toLower" | "trim" | "containsStr" | "startsWith" |
-    "beforeFirst" | "afterFirst" | "digits" | "countOccurrences" |
-    "collectLinesAfterPrefixes" | "regexCaptures" | "regexPairs" | "cond" |
-    "children" =>
-      true
+    "concat"
+    | "obj"
+    | "coalesce"
+    | "not"
+    | "eq"
+    | "add"
+    | "sub"
+    | "mul"
+    | "div"
+    | "floor"
+    | "hexToInt"
+    | "slice"
+    | "stripQuotes"
+    | "first"
+    | "last"
+    | "toUpper"
+    | "toLower"
+    | "trim"
+    | "containsStr"
+    | "startsWith"
+    | "beforeFirst"
+    | "afterFirst"
+    | "digits"
+    | "countOccurrences"
+    | "collectLinesAfterPrefixes"
+    | "regexCaptures"
+    | "regexPairs"
+    | "cond"
+    | "children" => true
     _ => false
   }
 }

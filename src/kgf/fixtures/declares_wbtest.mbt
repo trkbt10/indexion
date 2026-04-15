@@ -71,8 +71,8 @@ fn programming_langs_from_kgfs() -> Map[String, Bool] {
 test "declares: semantics coverage includes every programming kgf" {
   let covered = [
     "c", "clojure", "cpp", "csharp", "dart", "elixir", "go", "haskell", "java", "javascript",
-    "javascript-jsx", "julia", "kotlin", "lua", "moonbit", "ocaml", "php", "protobuf", "python",
-    "ruby", "rust", "scala", "swift", "typescript", "typescript-jsx", "zig",
+    "javascript-jsx", "julia", "kotlin", "lua", "moonbit", "ocaml", "php", "protobuf",
+    "python", "ruby", "rust", "scala", "swift", "typescript", "typescript-jsx", "zig",
   ]
   let langs = programming_langs_from_kgfs()
   assert_eq(langs.length(), covered.length())

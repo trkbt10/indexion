@@ -26,7 +26,12 @@ pub struct DocumentFact {
 pub struct DocumentTablePair {
   label : String
   literal : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
+
+///|
+pub impl Show for DocumentTablePair with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 pub struct InterpretedDocument {

@@ -167,7 +167,12 @@ pub fn FilterConfig::with_indexionignore_from_dir(
 pub enum FilterResult {
   Include
   Exclude(String) // Reason for exclusion
-} derive(Eq, Show)
+} derive(Eq, Debug)
+
+///|
+pub impl Show for FilterResult with output(self, logger) {
+  to_repr(self).output(logger)
+}
 
 ///|
 /// Check if the result indicates the path should be included.

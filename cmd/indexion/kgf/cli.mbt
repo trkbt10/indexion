@@ -202,16 +202,12 @@ pub fn command() -> @argparse.Command {
                 about="Class label for unlabeled sections (default: normative)",
                 default_values=["normative"],
               ),
-              @argparse.OptionArg(
-                "include",
-                about=@help.include_pattern,
-                default_values=[""],
-              ),
-              @argparse.OptionArg(
-                "exclude",
-                about=@help.exclude_pattern,
-                default_values=[""],
-              ),
+              @argparse.OptionArg("include", about=@help.include_pattern, default_values=[
+                "",
+              ]),
+              @argparse.OptionArg("exclude", about=@help.exclude_pattern, default_values=[
+                "",
+              ]),
               @argparse.OptionArg(
                 "min-weight",
                 about="Minimum term weight to include in model (reduces model size)",
@@ -256,23 +252,25 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         _ => ()
       }
     }
-    "check" => {
+    "check" =>
       match matches.subcommand {
         Some((_, check_matches)) => run_check(config.kgf_dir, check_matches)
         _ => println(command().render_help())
       }
-    }
-    "classify" => {
+    "classify" =>
       match matches.subcommand {
         Some((_, classify_matches)) =>
           match classify_matches.subcommand {
             Some(("train", train_matches)) =>
-              run_classify_train(config.kgf_dir, config.spec_name, train_matches)
+              run_classify_train(
+                config.kgf_dir,
+                config.spec_name,
+                train_matches,
+              )
             _ => println(command().render_help())
           }
         _ => println(command().render_help())
       }
-    }
     _ => {
       println("Unknown subcommand: \{config.subcommand}")
       println(command().render_help())
@@ -801,28 +799,46 @@ fn run_classify_train(
     None => "normative"
   }
   let include_pattern = match matches.values.get("include") {
-    Some(vals) => if vals.length() > 0 && vals[0].length() > 0 { vals[0] } else { "" }
+    Some(vals) =>
+      if vals.length() > 0 && vals[0].length() > 0 {
+        vals[0]
+      } else {
+        ""
+      }
     None => ""
   }
   let exclude_pattern = match matches.values.get("exclude") {
-    Some(vals) => if vals.length() > 0 && vals[0].length() > 0 { vals[0] } else { "" }
+    Some(vals) =>
+      if vals.length() > 0 && vals[0].length() > 0 {
+        vals[0]
+      } else {
+        ""
+      }
     None => ""
   }
   let min_weight = match matches.values.get("min-weight") {
     Some(vals) =>
-      if vals.length() > 0 { @common.parse_double(vals[0]) } else { 0.5 }
+      if vals.length() > 0 {
+        @common.parse_double(vals[0])
+      } else {
+        0.5
+      }
     None => 0.5
   }
   // Load registry and resolve spec
   let registry = @registry.KGFRegistry::load_from_dir(kgf_dir)
   // Collect training files
-  let includes = if include_pattern.length() > 0 { [include_pattern] } else { [] }
-  let excludes = if exclude_pattern.length() > 0 { [exclude_pattern] } else { [] }
-  let file_entries = @common.collect_files(
-    directories,
-    includes~,
-    excludes~,
-  )
+  let includes = if include_pattern.length() > 0 {
+    [include_pattern]
+  } else {
+    []
+  }
+  let excludes = if exclude_pattern.length() > 0 {
+    [exclude_pattern]
+  } else {
+    []
+  }
+  let file_entries = @common.collect_files(directories, includes~, excludes~)
   if file_entries.length() == 0 {
     println("Error: No files found in the specified directories")
     return
@@ -883,7 +899,7 @@ fn run_classify_train(
       for name in class_names {
         match model.get_class(name) {
           Some(cls) => {
-            let term_count = cls.get_vocab().size().to_string()
+            let term_count = cls.get_vocab().length().to_string()
             let prior = cls.get_prior().to_string()
             println("  @" + name + ": " + term_count + " terms, prior=" + prior)
           }
@@ -919,7 +935,11 @@ fn run_check(kgf_dir : String, matches : @argparse.Matches) -> Unit {
         // Try reading as .kgf file
         let content = @fs.read_file_to_string(target) catch {
           _ => {
-            println("Error: '" + target + "' is not a known spec name or readable file")
+            println(
+              "Error: '" +
+              target +
+              "' is not a known spec name or readable file",
+            )
             continue
           }
         }
@@ -947,7 +967,14 @@ fn run_check(kgf_dir : String, matches : @argparse.Matches) -> Unit {
     if diagnostics.length() == 0 {
       println(name + ": ok")
     } else {
-      println(name + ": " + errors.to_string() + " error(s), " + warnings.to_string() + " warning(s)")
+      println(
+        name +
+        ": " +
+        errors.to_string() +
+        " error(s), " +
+        warnings.to_string() +
+        " warning(s)",
+      )
       for d in diagnostics {
         let severity = d.get_severity()
         let prefix = if severity == "error" { "  ERROR" } else { "  WARN " }
@@ -960,7 +987,11 @@ fn run_check(kgf_dir : String, matches : @argparse.Matches) -> Unit {
     println("All checks passed.")
   } else {
     println(
-      "Total: " + total_errors.to_string() + " error(s), " + total_warnings.to_string() + " warning(s)",
+      "Total: " +
+      total_errors.to_string() +
+      " error(s), " +
+      total_warnings.to_string() +
+      " warning(s)",
     )
   }
 }

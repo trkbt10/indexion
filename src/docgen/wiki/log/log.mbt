@@ -43,7 +43,7 @@ impl @json.FromJson for WikiLogEntry with from_json(json, path) {
     )
   }
   let timestamp : UInt64 = match obj.get("timestamp") {
-    Some(Number(n)) => n.to_uint64()
+    Some(Number(n, ..)) => n.to_uint64()
     _ => 0UL
   }
   let operation = match obj.get("operation") {

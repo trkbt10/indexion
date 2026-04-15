@@ -192,11 +192,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   let config = ReadmeConfig::from_matches(matches)
   // If --config is specified, use doc.json-based generation.
   // Otherwise, check .indexion.toml for [doc].config_path and per_package.
-  let target_dir = if config.paths.length() > 0 {
-    config.paths[0]
-  } else {
-    "."
-  }
+  let target_dir = if config.paths.length() > 0 { config.paths[0] } else { "." }
   let toml_path = @doc_config.find_indexion_config_path(target_dir)
   let doc_file_config = @doc_config.load_effective_doc_config(toml_path)
   let effective_config_path : String? = match config.config_path {

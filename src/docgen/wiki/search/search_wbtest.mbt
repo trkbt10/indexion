@@ -34,7 +34,7 @@ async test "build_search_index: sections extracted and searchable" {
   ])
   let provider = @embed_config.TfIdf(@embed_config.DEFAULT_TFIDF_DIM)
   let idx = build_search_index(pages, provider) catch { _ => panic() }
-  assert_true(idx.sections.size() > 0)
+  assert_true(idx.sections.length() > 0)
   assert_true(idx.engine.size() > 0)
   assert_true(idx.next_vid > 1L)
 }
@@ -73,7 +73,7 @@ async test "WikiSearchIndex save/load: round-trip preserves sections and provide
     Some(idx) => idx
     None => panic()
   }
-  assert_eq(loaded.sections.size(), original.sections.size())
+  assert_eq(loaded.sections.length(), original.sections.length())
   assert_eq(loaded.next_vid, original.next_vid)
   // Provider round-trips correctly
   match (loaded.provider, original.provider) {
@@ -116,13 +116,13 @@ async test "update_page: old sections removed, new sections added" {
   ])
   let provider = @embed_config.TfIdf(@embed_config.DEFAULT_TFIDF_DIM)
   let idx = build_search_index(pages, provider) catch { _ => panic() }
-  let sections_before = idx.sections.size()
+  let sections_before = idx.sections.length()
   let engine_size_before = idx.engine.size()
   // Count target page sections before update
-  let mut target_sections_before = 0
+  let mut _target_sections_before = 0
   for entry in idx.sections {
     if entry.1.page_id == "target" {
-      target_sections_before += 1
+      _target_sections_before += 1
     }
   }
   // Update with entirely new content
@@ -132,7 +132,7 @@ async test "update_page: old sections removed, new sections added" {
     _ => panic()
   }
   // Section count must stay the same (removed old, added new for same page)
-  assert_eq(idx.sections.size(), sections_before)
+  assert_eq(idx.sections.length(), sections_before)
   // Engine size must stay the same
   assert_eq(idx.engine.size(), engine_size_before)
   // Old content gone, new content present

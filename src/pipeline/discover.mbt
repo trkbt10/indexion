@@ -59,7 +59,11 @@ pub fn DiscoverOptions::new(
 /// SoT for root_dir derivation — all callers that have paths but not
 /// an explicit root_dir should use this instead of inline logic.
 pub fn root_dir_from_paths(paths : Array[String]) -> String {
-  if paths.length() > 0 { paths[0] } else { "." }
+  if paths.length() > 0 {
+    paths[0]
+  } else {
+    "."
+  }
 }
 
 ///|
@@ -252,8 +256,8 @@ fn has_hidden_segment(path : String) -> Bool {
 /// loaded incrementally during directory traversal in collect_files_impl.
 pub fn build_filter_from_root(root_dir : String) -> @filter.FilterConfig {
   @filter.FilterConfig::new()
-    .with_gitignore_from_dir(root_dir, @vcs_git.GITIGNORE_FILENAME)
-    .with_indexionignore_from_dir(root_dir, @config.INDEXIONIGNORE_FILENAME)
+  .with_gitignore_from_dir(root_dir, @vcs_git.GITIGNORE_FILENAME)
+  .with_indexionignore_from_dir(root_dir, @config.INDEXIONIGNORE_FILENAME)
 }
 
 ///|

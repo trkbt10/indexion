@@ -14,7 +14,7 @@ pub struct SegmentConfig {
   threshold : Double
   /// Number of sentences per window.
   window_size : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new SegmentConfig.
@@ -74,7 +74,7 @@ pub struct AdaptiveConfig {
   max_chunk_size : Int
   /// Number of sentences per window.
   window_size : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new AdaptiveConfig.
@@ -138,7 +138,7 @@ pub fn AdaptiveConfig::get_window_size(self : AdaptiveConfig) -> Int {
 pub struct WindowStrategy {
   /// Configuration for the strategy.
   config : SegmentConfig
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new WindowStrategy with default configuration.
@@ -196,7 +196,7 @@ pub struct HybridAdaptiveConfig {
   ncd_weight : Double
   /// Weight for TF-IDF component (default: 0.5).
   tfidf_weight : Double
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new HybridAdaptiveConfig.

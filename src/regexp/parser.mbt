@@ -480,8 +480,13 @@ fn find_first_consuming_element(
 ) -> QuantifiedElement? {
   for qe in elements {
     match qe.element {
-      WordBoundary | NonWordBoundary | StartAnchor | EndAnchor | StringStart |
-      StringEnd | Lookahead(_) => continue
+      WordBoundary
+      | NonWordBoundary
+      | StartAnchor
+      | EndAnchor
+      | StringStart
+      | StringEnd
+      | Lookahead(_) => continue
       _ => return Some(qe)
     }
   }
@@ -533,10 +538,8 @@ fn extract_first_char_ranges(
         'r' => Some([('\r', '\r')])
         't' => Some([('\t', '\t')])
         'd' => Some([('0', '9')])
-        'w' =>
-          Some([('A', 'Z'), ('a', 'z'), ('0', '9'), ('_', '_')])
-        's' =>
-          Some([(' ', ' '), ('\t', '\t'), ('\n', '\n'), ('\r', '\r')])
+        'w' => Some([('A', 'Z'), ('a', 'z'), ('0', '9'), ('_', '_')])
+        's' => Some([(' ', ' '), ('\t', '\t'), ('\n', '\n'), ('\r', '\r')])
         'S' | 'D' | 'W' => None // Negated classes span too many ranges
         _ => Some([(escape_char, escape_char)])
       }

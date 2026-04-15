@@ -8,7 +8,7 @@
 /// Uses weighted average of both metrics for robust similarity measurement.
 pub struct HybridStrategy {
   config : @types.HybridConfig
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new HybridStrategy with default config (50/50 weights).

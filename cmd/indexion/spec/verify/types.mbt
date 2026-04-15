@@ -11,7 +11,7 @@ pub(all) struct VerifyConfig {
   focus : String
   max_candidates : Int
   output : String
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a default verify configuration with sensible defaults.
@@ -37,7 +37,7 @@ pub(all) struct SpecSymbol {
   context : String
   source_path : String
   source_line : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Evidence for the gap term finding.
@@ -45,7 +45,7 @@ pub(all) struct ImplEvidence {
   found_in : Array[String]
   match_kind : String
   note : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// A single verify result item.
@@ -53,7 +53,7 @@ pub(all) struct VerifyItem {
   status : String
   spec_symbol : SpecSymbol
   evidence : ImplEvidence
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Summary statistics for the verify report.
@@ -67,7 +67,7 @@ pub(all) struct VerifySummary {
   missing : Int
   dead : Int
   drift : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Snapshot of configuration stored within the verify report.
@@ -76,7 +76,7 @@ pub(all) struct VerifyReportConfig {
   target_dir : String
   focus : String
   max_candidates : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Full verify report output.
@@ -87,4 +87,4 @@ pub(all) struct VerifyReport {
   summary : VerifySummary
   items : Array[VerifyItem]
   used_specs : Array[String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)

@@ -15,7 +15,7 @@ pub struct ReconcileFileConfig {
   mtime_fallback : Bool?
   logical_review_mode : String?
   vocabulary_divergence_threshold : Double?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Resolved document selection for reconcile.
@@ -24,7 +24,7 @@ pub struct ReconcileDocumentScope {
   doc_paths : Array[String]
   doc_specs : Array[String]
   path_scope : @scope.PathScope
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create an empty file config with all fields set to None.

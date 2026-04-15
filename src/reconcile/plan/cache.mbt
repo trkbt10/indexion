@@ -52,14 +52,20 @@ fn load_manifest(index_dir : String) -> ReconcileManifest {
 ///|
 fn save_manifest(index_dir : String, manifest : ReconcileManifest) -> Unit {
   let path = manifest_path(index_dir)
-  match @reconcile_store.ensure_cache_dir(index_dir, "reconcile cache directory") {
+  match
+    @reconcile_store.ensure_cache_dir(index_dir, "reconcile cache directory") {
     Err(msg) => {
       println(msg)
       return
     }
     Ok(_) => ()
   }
-  match @reconcile_store.write_json_file(path, manifest.to_json(), "reconcile manifest") {
+  match
+    @reconcile_store.write_json_file(
+      path,
+      manifest.to_json(),
+      "reconcile manifest",
+    ) {
     Err(msg) => println(msg)
     Ok(_) => ()
   }
@@ -83,14 +89,16 @@ fn load_cached_report(index_dir : String) -> ReconcileReport? {
 ///|
 fn save_cached_report(index_dir : String, report : ReconcileReport) -> Unit {
   let path = report_cache_path(index_dir)
-  match @reconcile_store.ensure_cache_dir(index_dir, "reconcile cache directory") {
+  match
+    @reconcile_store.ensure_cache_dir(index_dir, "reconcile cache directory") {
     Err(msg) => {
       println(msg)
       return
     }
     Ok(_) => ()
   }
-  match @reconcile_store.write_json_file(path, report.to_json(), "reconcile report") {
+  match
+    @reconcile_store.write_json_file(path, report.to_json(), "reconcile report") {
     Err(msg) => println(msg)
     Ok(_) => ()
   }

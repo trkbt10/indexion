@@ -547,7 +547,7 @@ fn write_fixture_to_file(
 ///|
 /// Ensure a directory exists, creating it recursively if needed.
 fn ensure_dir(path : String) -> Unit raise Error {
-  if not(@fs.path_exists(path)) {
+  if !@fs.path_exists(path) {
     @fs.create_dir(path)
   }
 }

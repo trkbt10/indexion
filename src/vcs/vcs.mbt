@@ -10,7 +10,7 @@
 pub(all) enum VCS {
   Git
   Jujutsu
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Filesystem markers that identify a VCS repository root.

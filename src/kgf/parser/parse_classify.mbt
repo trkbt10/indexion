@@ -161,7 +161,9 @@ fn parse_term_weight(text : String) -> (String, Double)? {
   }
   let weight = parse_double(weight_str)
   // Verify it actually parsed (0.0 is valid for "0" or "0.0")
-  if weight == 0.0 && weight_str != "0" && weight_str != "0.0" &&
+  if weight == 0.0 &&
+    weight_str != "0" &&
+    weight_str != "0.0" &&
     weight_str != "0.00" {
     return None
   }
@@ -199,7 +201,8 @@ fn parse_double(text : String) -> Double {
   let mut integer_part = 0.0
   let mut i = start
   while i < arr.length() && arr[i] >= '0' && arr[i] <= '9' {
-    integer_part = integer_part * 10.0 + (arr[i].to_int() - '0'.to_int()).to_double()
+    integer_part = integer_part * 10.0 +
+      (arr[i].to_int() - '0'.to_int()).to_double()
     i += 1
   }
   let mut decimal_part = 0.0

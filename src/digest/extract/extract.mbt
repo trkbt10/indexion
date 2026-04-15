@@ -11,7 +11,7 @@ pub(all) struct ExtractConfig {
   /// Symbol kinds to exclude (e.g., ["param", "field"]).
   /// Empty means include all symbols.
   exclude_kinds : Array[String]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create default extraction config.

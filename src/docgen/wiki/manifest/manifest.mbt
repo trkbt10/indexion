@@ -16,7 +16,7 @@ pub fn load_manifest(wiki_dir : String) -> @wiki_types.WikiManifest? {
     let json_str = empty_manifest.to_json().stringify(indent=2)
     @fs.write_string_to_file(manifest_path, json_str) catch {
       e => {
-        println("Error creating manifest: " + e.to_string())
+        println("Error creating manifest: " + @debug.to_string(e))
         return None
       }
     }
@@ -24,7 +24,7 @@ pub fn load_manifest(wiki_dir : String) -> @wiki_types.WikiManifest? {
   }
   let manifest_content = @fs.read_file_to_string(manifest_path) catch {
     e => {
-      println("Error reading manifest: " + e.to_string())
+      println("Error reading manifest: " + @debug.to_string(e))
       return None
     }
   }
@@ -56,14 +56,14 @@ pub fn write_page(
   let manifest_json = manifest.to_json().stringify(indent=2)
   @fs.write_string_to_file(manifest_path, manifest_json) catch {
     e => {
-      println("Error writing manifest: " + e.to_string())
+      println("Error writing manifest: " + @debug.to_string(e))
       return false
     }
   }
   let page_path = wiki_dir + "/" + page_id + ".md"
   @fs.write_string_to_file(page_path, content) catch {
     e => {
-      println("Error writing page file: " + e.to_string())
+      println("Error writing page file: " + @debug.to_string(e))
       return false
     }
   }

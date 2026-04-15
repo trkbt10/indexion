@@ -43,7 +43,9 @@ pub fn LanguageToolkit::from_spec(spec : @types.KGFSpec) -> LanguageToolkit {
     }
     set
   }
-  let qualifier_separators = build_set_from_feature(spec, "qualifier_separators")
+  let qualifier_separators = build_set_from_feature(
+    spec, "qualifier_separators",
+  )
   let self_keywords = build_set_from_feature(spec, "self_keyword")
   {
     spec,

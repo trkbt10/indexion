@@ -668,7 +668,7 @@ pub fn write_output(
   @config_paths.ensure_parent_dir(output)
   @fs.write_string_to_file(output, content) catch {
     e => {
-      println("Error writing file: " + e.to_string())
+      println("Error writing file: " + @debug.to_string(e))
       return
     }
   }

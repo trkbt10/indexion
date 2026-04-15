@@ -58,7 +58,7 @@ fn compute_config_base_dir(config_path : String) -> String {
 /// The base_dir is used to resolve relative paths in the config.
 fn build_root_document(
   config : @doc_config.DocConfig,
-  project_root : String,
+  _project_root : String,
   config_dir : String,
 ) -> @plan_types.PlanDocument {
   // First pass: extract title from first static file's # heading
@@ -223,7 +223,7 @@ fn get_section_text(content : @plan_types.SectionContent) -> String {
 ///|
 /// Build a PlanSection for a package entry from its README.md.
 /// Returns None if the README cannot be read.
-fn build_package_section(
+fn _build_package_section(
   entry : @doc_config.DocPackageEntry,
   base_dir : String,
 ) -> @plan_types.PlanSection? {

@@ -8,7 +8,7 @@ pub struct RemoteEmbeddingConfig {
   embeddings_file : String
   /// Embedding dimension (1536 for text-embedding-3-small).
   dim : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create default remote config for OpenAI text-embedding-3-small.
@@ -27,7 +27,7 @@ pub struct RemoteEmbeddingProvider {
   config : RemoteEmbeddingConfig
   /// Cached embeddings: id -> vector.
   cache : Map[String, Array[Double]]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a new RemoteEmbeddingProvider.

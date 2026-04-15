@@ -10,7 +10,7 @@ pub struct FileEntry {
   display_name : String
   /// File content
   content : String
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a FileEntry.
@@ -31,7 +31,7 @@ pub struct SimilarityMatch {
   file2 : String
   /// Similarity score in [0, 1] where 1 = identical
   similarity : Double
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a SimilarityMatch.
@@ -52,7 +52,7 @@ pub struct BatchConfig {
   threshold : Double
   /// Strategy to use: "hybrid", "tfidf", "apted", or "tsed"
   strategy : String
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a BatchConfig with defaults (hybrid, 0.8 threshold).
@@ -78,7 +78,7 @@ pub struct BatchResult {
   file_count : Int
   /// Total pairs compared (before filtering)
   pairs_compared : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Get matches from result.

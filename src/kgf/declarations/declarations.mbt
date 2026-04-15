@@ -187,7 +187,13 @@ fn parse_source(
     None => return None
   }
   let line_offsets = build_line_offsets(prepared)
-  Some({ spec, tokens, events: parse_result.get_events(), prepared, line_offsets })
+  Some({
+    spec,
+    tokens,
+    events: parse_result.get_events(),
+    prepared,
+    line_offsets,
+  })
 }
 
 ///|
@@ -202,7 +208,7 @@ pub fn extract_declarations(
   content : String,
   path : String,
   registry : @kgf_registry.KGFRegistry?,
-  visibility~ : DeclarationVisibility = PublicOnly,
+  visibility? : DeclarationVisibility = PublicOnly,
 ) -> (Array[PubDeclaration], Map[Int, String]) {
   match visibility {
     All => (extract_all_declarations_from_events(content, path, registry), {})
@@ -273,7 +279,9 @@ fn extract_pub_declarations_via_semantics(
       "type"
     }
     let approx_line = estimate_declaration_line(
-      parsed.prepared, name, parsed.line_offsets,
+      parsed.prepared,
+      name,
+      parsed.line_offsets,
     )
     let pref : SpanPreference = if category == "function" {
       Shortest
@@ -281,7 +289,11 @@ fn extract_pub_declarations_via_semantics(
       Longest
     }
     let span = best_declaration_span(
-      declaration_spans, parsed.prepared, name, approx_line, preference=pref,
+      declaration_spans,
+      parsed.prepared,
+      name,
+      approx_line,
+      preference=pref,
     )
     let line = match span {
       Some(value) => value.line
@@ -541,7 +553,7 @@ fn best_declaration_span(
   content : String,
   name : String,
   approx_line : Int,
-  preference~ : SpanPreference = Longest,
+  preference? : SpanPreference = Longest,
 ) -> DeclarationSpan? {
   let mut best : DeclarationSpan? = None
   let mut best_distance = 1 << 30

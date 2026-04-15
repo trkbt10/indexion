@@ -83,7 +83,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     @config.ensure_parent_dir(path)
     @fs.write_string_to_file(path, content) catch {
       e => {
-        println("Error writing " + filename + ": " + e.to_string())
+        println("Error writing " + filename + ": " + @debug.to_string(e))
         continue
       }
     }

@@ -12,16 +12,15 @@ pub fn ensure_cache_dir(
 ) -> Result[Unit, String] {
   if @fs.path_exists(cache_dir) {
     let is_dir = @fs.is_dir(cache_dir) catch {
-      err => {
+      err =>
         return Err(
           "Error: failed to inspect " +
           label +
           " `" +
           cache_dir +
           "`: " +
-          err.to_string(),
+          @debug.to_string(err),
         )
-      }
     }
     if !is_dir {
       return Err(
@@ -46,16 +45,15 @@ pub fn write_json_file(
   label : String,
 ) -> Result[Unit, String] {
   @fs.write_string_to_file(path, json.stringify(indent=2)) catch {
-    err => {
+    err =>
       return Err(
         "Error: failed to write " +
         label +
         " `" +
         path +
         "`: " +
-        err.to_string(),
+        @debug.to_string(err),
       )
-    }
   }
   Ok(())
 }
@@ -63,24 +61,20 @@ pub fn write_json_file(
 ///|
 /// Reads and parses a JSON file at `path`. Returns `Ok(json)` on success,
 /// or `Err(message)` describing the failure.
-pub fn read_json_file(
-  path : String,
-  label : String,
-) -> Result[Json, String] {
+pub fn read_json_file(path : String, label : String) -> Result[Json, String] {
   let text = @fs.read_file_to_string(path) catch {
-    err => {
+    err =>
       return Err(
         "Error: failed to read " +
         label +
         " `" +
         path +
         "`: " +
-        err.to_string(),
+        @debug.to_string(err),
       )
-    }
   }
   let json : Json = @json.parse(text) catch {
-    err => {
+    err =>
       return Err(
         "Error: failed to parse " +
         label +
@@ -89,7 +83,6 @@ pub fn read_json_file(
         "`: " +
         err.to_string(),
       )
-    }
   }
   Ok(json)
 }

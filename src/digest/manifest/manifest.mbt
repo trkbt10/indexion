@@ -13,7 +13,7 @@ pub struct FileEntry {
   source_hash : @cas_types.ContentHash
   /// Function IDs declared in this file.
   functions : Array[String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Entry for a single function in the manifest.
@@ -28,7 +28,7 @@ pub struct FunctionEntry {
   vector_ids : Map[String, Int64]
   /// Hash of impression (None if no impression).
   impression_hash : @types.FunctionHash?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Per-provider metadata stored in the manifest.
@@ -43,7 +43,7 @@ pub(all) struct ProviderMeta {
   base_url : String?
   /// Monotonic counter for vector IDs in this provider's space.
   vector_id_counter : Int64
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Current manifest schema version. Increment when making incompatible changes.
@@ -67,7 +67,7 @@ pub struct DigestManifest {
   files : Map[String, FileEntry]
   /// Function entries (function_id -> FunctionEntry).
   functions : Map[String, FunctionEntry]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Create a new DigestManifest with the given provider registry.

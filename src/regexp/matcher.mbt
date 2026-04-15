@@ -379,7 +379,8 @@ fn try_collect_repeat_positions_fast(
       if current + width > input_chars.length() {
         continue
       }
-      match try_match_simple_sequence(alt, input_chars, current, case_insensitive) {
+      match
+        try_match_simple_sequence(alt, input_chars, current, case_insensitive) {
         Some(end_pos) => {
           current = end_pos
           count = count + 1
@@ -502,7 +503,12 @@ fn match_group_positions(
       if width > 0 {
         match
           try_collect_repeat_positions_fast(
-            [elements], quantifier, lazy_, input_chars, pos, case_insensitive,
+            [elements],
+            quantifier,
+            lazy_,
+            input_chars,
+            pos,
+            case_insensitive,
           ) {
           Some(positions) => return positions
           None => ()
@@ -839,7 +845,11 @@ fn match_elements_backtrack(
           Some(target_char) => {
             // Skip ahead: only try positions where target_char occurs
             let ci = case_insensitive
-            let target_lower = if ci { to_lower(target_char) } else { target_char }
+            let target_lower = if ci {
+              to_lower(target_char)
+            } else {
+              target_char
+            }
             let input_len = input_chars.length()
             let mut count = lo
             while count <= hi {
@@ -911,7 +921,11 @@ fn match_elements_backtrack(
           Some(target_char) => {
             // Only try positions where target_char occurs
             let ci = case_insensitive
-            let target_lower = if ci { to_lower(target_char) } else { target_char }
+            let target_lower = if ci {
+              to_lower(target_char)
+            } else {
+              target_char
+            }
             let input_len = input_chars.length()
             let mut count = hi
             while count >= lo {

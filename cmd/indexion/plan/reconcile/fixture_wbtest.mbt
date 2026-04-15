@@ -32,7 +32,10 @@ fn build_code_graph(
   // root_dir is intentionally empty: fixture directories live inside
   // the project tree, so hoisting the project's .indexionignore
   // (which excludes fixtures/) would filter out the test target itself.
-  let discover_opts = @pipeline.DiscoverOptions::new(root_dir=target_dir, kgf_ignore~)
+  let discover_opts = @pipeline.DiscoverOptions::new(
+    root_dir=target_dir,
+    kgf_ignore~,
+  )
   let discovered_paths = @pipeline.discover_files(
     @reconcile_plan.discovery_roots(target_dir),
     discover_opts,

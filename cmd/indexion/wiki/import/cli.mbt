@@ -88,7 +88,10 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   @fs.write_string_to_file(wiki_mp, manifest) catch {
     e => {
       println(
-        "Error writing " + @wiki_types.WIKI_MANIFEST_FILE + ": " + e.to_string(),
+        "Error writing " +
+        @wiki_types.WIKI_MANIFEST_FILE +
+        ": " +
+        @debug.to_string(e),
       )
       return
     }
@@ -100,7 +103,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     @config.ensure_parent_dir(path)
     @fs.write_string_to_file(path, page.content) catch {
       e => {
-        println("Error writing " + id + ".md: " + e.to_string())
+        println("Error writing " + id + ".md: " + @debug.to_string(e))
         continue
       }
     }

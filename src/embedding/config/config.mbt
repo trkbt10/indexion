@@ -41,7 +41,7 @@ pub(all) struct EmbeddingApiConfig {
   model : String
   /// Embedding vector dimension.
   dim : Int
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create EmbeddingApiConfig with defaults for OpenAI.
@@ -65,7 +65,7 @@ pub(all) enum EmbeddingProvider {
   OpenAI(EmbeddingApiConfig)
   /// Pre-computed embeddings from file.
   Precomputed(String) // file_path
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Serialize EmbeddingProvider to JSON.
@@ -171,7 +171,7 @@ pub(all) enum VcdbStrategy {
   Hnsw
   /// IVF (approximate, good for very large datasets).
   Ivf
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Embedding source for function indexing.
@@ -182,7 +182,7 @@ pub(all) enum EmbeddingSource {
   Impression
   /// Use raw with callees context appended.
   RawWithContext
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Per-provider configuration.
@@ -196,7 +196,7 @@ pub(all) struct ProviderConfig {
   dim : Int
   /// API configuration (required for kind="remote", None for kind="tfidf").
   api_config : EmbeddingApiConfig?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a default TF-IDF provider config.

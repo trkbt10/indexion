@@ -9,7 +9,7 @@ pub struct DocConfig {
   output : DocOutputConfig
   packages : Array[DocPackageEntry]
   root : DocRootConfig
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub impl ToJson for DocConfig with to_json(self) {
@@ -25,7 +25,7 @@ pub impl ToJson for DocConfig with to_json(self) {
 pub struct DocOutputConfig {
   format : String
   filename : String
-} derive(Eq, Show, ToJson)
+} derive(Eq, Debug, ToJson)
 
 ///|
 /// Package entry for documentation.
@@ -35,7 +35,7 @@ pub struct DocPackageEntry {
   description : String
   include_in_root : Bool
   sections : Array[String]
-} derive(Eq, Show, ToJson)
+} derive(Eq, Debug, ToJson)
 
 ///|
 /// Root README configuration.
@@ -43,7 +43,7 @@ pub struct DocRootConfig {
   template : String
   output : String
   sections : Array[DocRootSection]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub impl ToJson for DocRootConfig with to_json(self) {
@@ -62,7 +62,7 @@ pub enum DocRootSection {
   Static(String)
   Toc(String)
   Packages(String)
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub impl ToJson for DocRootSection with to_json(self) {
@@ -293,7 +293,7 @@ fn parse_doc_root_section(value : Json) -> DocRootSection? {
 pub struct DocFileConfig {
   config_path : String?
   per_package : Bool?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create an empty doc file config with all fields set to None.
@@ -332,7 +332,10 @@ pub fn load_doc_from_json_root(root : Map[String, Json]) -> DocFileConfig {
   match doc_obj.get("config_path") {
     Some(value) =>
       match parse_doc_json_string(value) {
-        Some(v) => if v.length() > 0 { config = { ..config, config_path: Some(v) } }
+        Some(v) =>
+          if v.length() > 0 {
+            config = { ..config, config_path: Some(v) }
+          }
         None => ()
       }
     None => ()

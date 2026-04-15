@@ -112,11 +112,7 @@ fn HybridParams::default() -> HybridParams {
 /// - Both high and close together → strong evidence, slight bonus
 /// - One high and one low → weaker evidence, discounted
 /// - Both low → low score (correctly reflects low similarity)
-fn fuse_lexical(
-  bm25 : Double,
-  jsd : Double,
-  params : HybridParams,
-) -> Double {
+fn fuse_lexical(bm25 : Double, jsd : Double, params : HybridParams) -> Double {
   let higher = if bm25 > jsd { bm25 } else { jsd }
   let lower = if bm25 > jsd { jsd } else { bm25 }
   let gap = higher - lower
@@ -126,7 +122,11 @@ fn fuse_lexical(
     let avg = (bm25 + jsd) / 2.0
     let boosted = avg * params.concordance_bonus
     // Cap at 1.0
-    if boosted > 1.0 { 1.0 } else { boosted }
+    if boosted > 1.0 {
+      1.0
+    } else {
+      boosted
+    }
   } else {
     // Signals disagree: the high signal might be a false positive.
     // Use a weighted combination that favors the higher signal
@@ -159,7 +159,7 @@ fn fuse_final(
   threshold : Double,
   params : HybridParams,
 ) -> Double {
-  if not(has_structural) {
+  if !has_structural {
     // No structural evidence: lexical score stands alone.
     // Not boosted (no corroboration) but not penalized either
     // (absence of evidence is not evidence of absence).
@@ -172,7 +172,11 @@ fn fuse_final(
     // Take the higher signal as base and apply a modest boost.
     let base = if lexical > structural { lexical } else { structural }
     let boosted = base * params.cross_signal_boost
-    if boosted > 1.0 { 1.0 } else { boosted }
+    if boosted > 1.0 {
+      1.0
+    } else {
+      boosted
+    }
   } else if structural < lexical * params.structural_contradiction_ratio {
     // Structural evidence contradicts: structure is very different
     // despite lexical similarity. This is a strong signal against
@@ -217,7 +221,9 @@ pub fn compare_hybrid(
   // Candidate generation via BM25 inverted index (fast).
   // Relaxed threshold: we need candidates that JSD or structural might elevate.
   let candidate_threshold = threshold * params.candidate_relaxation
-  let bm25_candidates = bm25_batch.all_pairs_above_threshold(candidate_threshold)
+  let bm25_candidates = bm25_batch.all_pairs_above_threshold(
+    candidate_threshold,
+  )
   // Compute lexical evidence for all candidates
   let pair_lexical : Map[String, Double] = {}
   let pair_indices : Array[(Int, Int)] = []
@@ -241,9 +247,7 @@ pub fn compare_hybrid(
   let mut total_tree_nodes = 0
   let mut total_trees = 0
   for file in files {
-    let trees = @tree_extract.extract(
-      file.display_name, file.content, registry,
-    )
+    let trees = @tree_extract.extract(file.display_name, file.content, registry)
     for tree in trees {
       total_tree_nodes += tree.size()
       total_trees += 1
@@ -325,7 +329,11 @@ pub fn compare_hybrid(
     if combined >= threshold {
       matches.push(
         SimilarityMatch::new(
-          i, j, files[i].display_name, files[j].display_name, combined,
+          i,
+          j,
+          files[i].display_name,
+          files[j].display_name,
+          combined,
         ),
       )
     }
@@ -410,14 +418,14 @@ fn emit_lexical_only(
     if score >= threshold {
       matches.push(
         SimilarityMatch::new(
-          i, j, files[i].display_name, files[j].display_name, score,
+          i,
+          j,
+          files[i].display_name,
+          files[j].display_name,
+          score,
         ),
       )
     }
   }
-  {
-    matches,
-    file_count,
-    pairs_compared: file_count * (file_count - 1) / 2,
-  }
+  { matches, file_count, pairs_compared: file_count * (file_count - 1) / 2 }
 }

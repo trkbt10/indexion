@@ -228,7 +228,7 @@ async fn git_ok(cwd : String, args : ArrayView[String]) -> Unit {
 }
 
 ///|
-fn has_impl_only_item(
+fn _has_impl_only_item(
   report : AlignDiffReport,
   implementation_name : String,
 ) -> Bool {

@@ -17,7 +17,7 @@ pub(all) struct ReconcileConfig {
   logical_review_mode : String
   parallel : Bool
   vocabulary_divergence_threshold : Double
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create a default reconcile configuration with sensible defaults.
@@ -61,7 +61,7 @@ pub(all) struct CodeUnit {
   module_path : String
   inline_doc : String?
   code_hash : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// A fragment of documentation extracted from a document file.
@@ -74,7 +74,7 @@ pub(all) struct DocFragment {
   content : String
   preview : String
   fragment_hash : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Anchor referencing a code symbol within a reconcile candidate.
@@ -85,7 +85,7 @@ pub(all) struct CodeAnchor {
   ns : String
   module_path : String
   inline_doc : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Anchor referencing a documentation fragment within a reconcile candidate.
@@ -96,7 +96,7 @@ pub(all) struct DocAnchor {
   kind : String
   title : String
   preview : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Evidence supporting the code-to-doc mapping for a candidate.
@@ -106,7 +106,7 @@ pub(all) struct MappingEvidence {
   reason : String
   code_time : TimestampInfo
   doc_time : TimestampInfo
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// A candidate representing a code symbol that may need documentation updates.
@@ -125,7 +125,7 @@ pub(all) struct ReconcileCandidate {
   logical_review_status : String
   logical_review_reused : Bool
   needs_logical_review : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// A queued task for human logical review of a reconcile candidate.
@@ -139,7 +139,7 @@ pub(all) struct LogicalReviewTask {
   doc_anchor : DocAnchor?
   evidence : MappingEvidence
   recommended_action : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Aggregate statistics summarizing the reconcile report.
@@ -162,7 +162,7 @@ pub(all) struct ReconcileSummary {
   completed_logical_reviews : Int
   vocabulary_divergence_count : Int
   max_vocabulary_divergence : Double
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Cache hit/miss state and fingerprint info for incremental runs.
@@ -172,7 +172,7 @@ pub(all) struct CacheState {
   review_state_hash : String
   reused_candidates : Int
   reused_logical_reviews : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Snapshot of configuration settings stored within the reconcile report.
@@ -190,7 +190,7 @@ pub(all) struct ReconcileReportConfig {
   git_preferred : Bool
   mtime_fallback : Bool
   logical_review_mode : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Grouped suggestion aggregating multiple candidates at module or project scope.
@@ -205,7 +205,7 @@ pub(all) struct ReconcileAggregateSuggestion {
   symbol_ids : Array[String]
   symbol_names : Array[String]
   doc_paths : Array[String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Vocabulary-level divergence between a source module and its documentation.
@@ -218,7 +218,7 @@ pub(all) struct VocabularyDivergence {
   gap_terms : Array[String]
   source_term_count : Int
   doc_term_count : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Full reconcile report output including candidates, reviews, and summary.
@@ -234,7 +234,7 @@ pub(all) struct ReconcileReport {
   skipped : Array[String]
   used_specs : Array[String]
   cache_state : CacheState
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// An entry in the index database tracking a record's digest and vector ID.
@@ -243,7 +243,7 @@ pub(all) struct IndexedRecordEntry {
   record_kind : String
   digest : String
   vector_id : Int64
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Persisted state of a logical review decision in the manifest.
@@ -255,7 +255,7 @@ pub(all) struct LogicalReviewEntry {
   verdict : String?
   updated_at : Int
   vector_id : Int64
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// User-supplied review decision for a logical review task.
@@ -263,7 +263,7 @@ pub(all) struct ReviewDecisionInput {
   review_key : String
   status : String
   verdict : String?
-} derive(Eq, Show, @json.FromJson)
+} derive(Eq, Debug, @json.FromJson)
 
 ///|
 /// Persistent manifest tracking indexed records, reviews, and fingerprints.
@@ -278,7 +278,7 @@ pub(all) struct ReconcileManifest {
   files : Map[String, FileState]
   records : Map[String, IndexedRecordEntry]
   logical_reviews : Map[String, LogicalReviewEntry]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// Create an empty manifest with default version and zero counters.

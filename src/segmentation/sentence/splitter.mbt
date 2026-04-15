@@ -20,7 +20,7 @@ pub struct SplitOptions {
   /// When true, closing brackets are also considered sentence terminators.
   /// Default: false
   include_closing_brackets : Bool
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create default SplitOptions.

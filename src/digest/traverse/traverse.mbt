@@ -10,7 +10,7 @@ pub struct TraversalResult {
   depths : Map[String, Int]
   /// Detected cycles as (from, to) pairs.
   cycles : Array[(String, String)]
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 /// Create an empty TraversalResult.

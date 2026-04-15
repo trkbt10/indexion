@@ -28,10 +28,7 @@ fn sse_headers(cors : Bool) -> Map[String, String] {
 }
 
 ///|
-async fn sse_start(
-  conn : @mhttp.ServerConnection,
-  cors : Bool,
-) -> Unit {
+async fn sse_start(conn : @mhttp.ServerConnection, cors : Bool) -> Unit {
   conn.send_response(200, "OK", extra_headers=sse_headers(cors)) catch {
     _ => return
   }
@@ -40,7 +37,9 @@ async fn sse_start(
 ///|
 async fn sse_event(conn : @mhttp.ServerConnection, data : String) -> Unit {
   conn.write("data: " + data + "\n\n")
-  conn.flush() catch { _ => () }
+  conn.flush() catch {
+    _ => ()
+  }
 }
 
 ///|
@@ -65,7 +64,7 @@ async fn sse_item(conn : @mhttp.ServerConnection, item : Json) -> Unit {
 }
 
 ///|
-async fn sse_items(conn : @mhttp.ServerConnection, items : Json) -> Unit {
+async fn _sse_items(conn : @mhttp.ServerConnection, items : Json) -> Unit {
   let obj : Map[String, Json] = {}
   obj["type"] = "items".to_json()
   obj["data"] = items
@@ -86,7 +85,9 @@ async fn sse_done(conn : @mhttp.ServerConnection, total : Int) -> Unit {
   obj["type"] = "done".to_json()
   obj["total"] = total.to_json()
   sse_event(conn, Json::object(obj).stringify())
-  conn.end_response() catch { _ => () }
+  conn.end_response() catch {
+    _ => ()
+  }
 }
 
 ///|
@@ -95,7 +96,9 @@ async fn sse_error(conn : @mhttp.ServerConnection, message : String) -> Unit {
   obj["type"] = "error".to_json()
   obj["message"] = message.to_json()
   sse_event(conn, Json::object(obj).stringify())
-  conn.end_response() catch { _ => () }
+  conn.end_response() catch {
+    _ => ()
+  }
 }
 
 // ─── Streaming Grep ────────────────────────────────────
@@ -159,7 +162,9 @@ async fn handle_grep_stream(
       let mut total = 0
       for i, file in files {
         let (path, content) = file
-        let items = @grep_cli.grep_single_file(path, content, matchers, registry)
+        let items = @grep_cli.grep_single_file(
+          path, content, matchers, registry,
+        )
         for item in items {
           sse_item(conn, item)
           total = total + 1
@@ -201,12 +206,7 @@ async fn handle_search_stream(
   sse_progress(conn, "searching", "Querying digest index...")
   @async.sleep(0)
   // Query the pre-built digest index directly — no corpus rebuild.
-  let hits = serve_query_cascade(
-    state.index,
-    state.digest_config,
-    query,
-    top_k,
-  )
+  let hits = serve_query_cascade(state.index, state.digest_config, query, top_k)
   let mut total = 0
   for i, hit in hits {
     if hit.score >= min_score {
@@ -361,7 +361,7 @@ fn query_hit_to_search_json(hit : @types.QueryHit) -> Json {
 ///|
 /// Convert a SearchHit to the JSON format expected by the frontend.
 /// Matches the structure produced by @search_cli.hits_to_json (per-item).
-fn search_hit_to_json(hit : @search_engine.SearchHit) -> Json {
+fn _search_hit_to_json(hit : @search_engine.SearchHit) -> Json {
   let doc = hit.document
   let m : Map[String, Json] = {}
   m["id"] = doc.id.to_json()

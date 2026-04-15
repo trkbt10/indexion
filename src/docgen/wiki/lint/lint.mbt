@@ -261,7 +261,8 @@ fn check_stale_sources(
   report : LintReport,
 ) -> Unit {
   // Derive project root from wiki_dir (.indexion/wiki → project root)
-  let project_root = match @config.find_project_root_from(@config.dirname(wiki_dir)) {
+  let project_root = match
+    @config.find_project_root_from(@config.dirname(wiki_dir)) {
     Some(root) => root
     None => @config.dirname(wiki_dir)
   }

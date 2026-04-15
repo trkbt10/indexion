@@ -51,18 +51,13 @@ pub fn ClassifyModel::new(
 }
 
 ///|
-pub fn ClassifyModel::get_metadata(
-  self : ClassifyModel,
-) -> Map[String, String] {
+pub fn ClassifyModel::get_metadata(self : ClassifyModel) -> Map[String, String] {
   self.metadata
 }
 
 ///|
 /// Returns a metadata value by key, or None.
-pub fn ClassifyModel::get_meta(
-  self : ClassifyModel,
-  key : String,
-) -> String? {
+pub fn ClassifyModel::get_meta(self : ClassifyModel, key : String) -> String? {
   self.metadata.get(key)
 }
 
@@ -160,6 +155,9 @@ pub fn ClassifyClass::get_vocab(self : ClassifyClass) -> Map[String, Double] {
 ///|
 /// Returns the conditional log-probability of a term in this class.
 /// Returns 0.0 for unknown terms (smoothed default).
-pub fn ClassifyClass::term_weight(self : ClassifyClass, term : String) -> Double {
+pub fn ClassifyClass::term_weight(
+  self : ClassifyClass,
+  term : String,
+) -> Double {
   self.vocab.get(term).unwrap_or(0.0)
 }

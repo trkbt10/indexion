@@ -139,7 +139,8 @@ pub fn analyze(wiki : @wiki_types.WikiData, wiki_dir : String) -> IngestResult {
   let tasks : Array[IngestTask] = []
   let new_states : Map[String, PageSourceState] = {}
   // Derive project root from wiki_dir so source paths resolve correctly
-  let project_root = match @config.find_project_root_from(@config.dirname(wiki_dir)) {
+  let project_root = match
+    @config.find_project_root_from(@config.dirname(wiki_dir)) {
     Some(root) => root
     None => @config.dirname(wiki_dir)
   }

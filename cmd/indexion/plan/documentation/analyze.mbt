@@ -230,24 +230,20 @@ fn analyze_source_file(
   items : Array[PubItem],
   registry : @kgf_registry.KGFRegistry?,
 ) -> Unit {
-  try {
-    // Extract both declarations and doc map in a single tokenization pass
-    let (declarations, doc_map) = @kgf_declarations.extract_pub_declarations_and_doc_map(
-      content, path, registry,
-    )
-    if declarations.length() == 0 {
-      return
+  // Extract both declarations and doc map in a single tokenization pass
+  let (declarations, doc_map) = @kgf_declarations.extract_pub_declarations_and_doc_map(
+    content, path, registry,
+  )
+  if declarations.length() == 0 {
+    return
+  }
+  // Associate declarations with their doc comments
+  for decl in declarations {
+    let doc_lines = match doc_map.get(decl.line) {
+      Some(doc) => @common.split_lines(doc)
+      None => []
     }
-    // Associate declarations with their doc comments
-    for decl in declarations {
-      let doc_lines = match doc_map.get(decl.line) {
-        Some(doc) => @common.split_lines(doc)
-        None => []
-      }
-      items.push(make_pub_item(decl, rel_path, doc_lines))
-    }
-  } catch {
-    _ => ()
+    items.push(make_pub_item(decl, rel_path, doc_lines))
   }
 }
 

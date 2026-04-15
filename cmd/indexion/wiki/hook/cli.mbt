@@ -125,7 +125,7 @@ async fn run_install(matches : @argparse.Matches) -> Unit {
     None => return
   }
   @config.ensure_dir_recursive(hooks_dir)
-  println("VCS: " + vcs.to_string())
+  println("VCS: " + @debug.to_string(vcs))
   for entry in managed_hooks {
     let (hook_name, build_section) = entry
     let result = install_hook(hooks_dir, hook_name, build_section())
@@ -139,7 +139,7 @@ fn run_uninstall(matches : @argparse.Matches) -> Unit {
     Some(pair) => pair
     None => return
   }
-  println("VCS: " + vcs.to_string())
+  println("VCS: " + @debug.to_string(vcs))
   for entry in managed_hooks {
     let (hook_name, _) = entry
     let result = uninstall_hook(hooks_dir, hook_name)
@@ -153,7 +153,7 @@ fn run_status(matches : @argparse.Matches) -> Unit {
     Some(pair) => pair
     None => return
   }
-  println("VCS: " + vcs.to_string())
+  println("VCS: " + @debug.to_string(vcs))
   for entry in managed_hooks {
     let (hook_name, _) = entry
     let status = hook_status(hooks_dir, hook_name)
@@ -201,19 +201,19 @@ async fn install_hook(
   let hook_path = hooks_dir + "/" + hook_name
   if @fs.path_exists(hook_path) {
     let existing = @fs.read_file_to_string(hook_path) catch {
-      e => return "error reading hook: " + e.to_string()
+      e => return "error reading hook: " + @debug.to_string(e)
     }
     if section_installed(existing) {
       return "already installed"
     }
     let sep = if existing.has_suffix("\n") { "" } else { "\n" }
     @fs.write_string_to_file(hook_path, existing + sep + section) catch {
-      e => return "error writing hook: " + e.to_string()
+      e => return "error writing hook: " + @debug.to_string(e)
     }
     return "installed (appended to existing hook)"
   }
   @fs.write_string_to_file(hook_path, "#!/bin/sh\n" + section) catch {
-    e => return "error writing hook: " + e.to_string()
+    e => return "error writing hook: " + @debug.to_string(e)
   }
   @platform.make_executable(hook_path)
   "installed"
@@ -228,7 +228,7 @@ fn uninstall_hook(hooks_dir : String, hook_name : String) -> String {
     return "not installed"
   }
   let existing = @fs.read_file_to_string(hook_path) catch {
-    e => return "error reading hook: " + e.to_string()
+    e => return "error reading hook: " + @debug.to_string(e)
   }
   if !section_installed(existing) {
     return "not installed"
@@ -236,12 +236,12 @@ fn uninstall_hook(hooks_dir : String, hook_name : String) -> String {
   let stripped = remove_hook_section(existing)
   if is_shebang_only(stripped) {
     @fs.remove_file(hook_path) catch {
-      e => return "error removing hook file: " + e.to_string()
+      e => return "error removing hook file: " + @debug.to_string(e)
     }
     return "uninstalled (hook file removed)"
   }
   @fs.write_string_to_file(hook_path, stripped) catch {
-    e => return "error writing hook: " + e.to_string()
+    e => return "error writing hook: " + @debug.to_string(e)
   }
   "uninstalled"
 }

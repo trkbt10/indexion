@@ -12,7 +12,7 @@ pub struct WikiColorConfig {
   foreground : String?
   primary : String?
   accent : String?
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn WikiColorConfig::empty() -> WikiColorConfig {
@@ -98,7 +98,7 @@ pub struct WikiFileConfig {
   locale : String?
   colors_dark : WikiColorConfig
   colors_light : WikiColorConfig
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn WikiFileConfig::empty() -> WikiFileConfig {
@@ -275,10 +275,7 @@ pub fn load_wiki_from_json_root(root : Map[String, Json]) -> WikiFileConfig {
   match wiki_obj.get("locale") {
     Some(value) =>
       match parse_json_string(value) {
-        Some(v) =>
-          if v.length() > 0 {
-            config = { ..config, locale: Some(v) }
-          }
+        Some(v) => if v.length() > 0 { config = { ..config, locale: Some(v) } }
         None => ()
       }
     None => ()
@@ -343,10 +340,7 @@ fn load_wiki_color_from_json(value : Json) -> WikiColorConfig {
   match obj.get("primary") {
     Some(v) =>
       match parse_json_string(v) {
-        Some(s) =>
-          if s.length() > 0 {
-            config = { ..config, primary: Some(s) }
-          }
+        Some(s) => if s.length() > 0 { config = { ..config, primary: Some(s) } }
         None => ()
       }
     None => ()
@@ -354,10 +348,7 @@ fn load_wiki_color_from_json(value : Json) -> WikiColorConfig {
   match obj.get("accent") {
     Some(v) =>
       match parse_json_string(v) {
-        Some(s) =>
-          if s.length() > 0 {
-            config = { ..config, accent: Some(s) }
-          }
+        Some(s) => if s.length() > 0 { config = { ..config, accent: Some(s) } }
         None => ()
       }
     None => ()
