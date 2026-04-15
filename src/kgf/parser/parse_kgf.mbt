@@ -17,7 +17,7 @@
 /// Section      ::= "===" SectionName NL SectionBody
 /// SectionName  ::= "lex" | "grammar" | "attrs" | "features"
 ///                | "semantics" | "resolver" | "preprocess"
-///                | "preprocess_fst" | "ignore"
+///                | "preprocess_fst" | "ignore" | "classify"
 /// ```
 ///
 /// ## Header Fields
@@ -40,6 +40,7 @@
 /// | `preprocess` | Preprocessor names | Line-based list |
 /// | `preprocess_fst` | FST definitions | JSON format |
 /// | `ignore` | Ignore patterns | One pattern per line |
+/// | `classify` | Classification lexicons | `category: word=weight, ...` |
 ///
 /// ## Example
 ///
@@ -205,6 +206,7 @@ pub fn parse_kgf(text : String) -> @types.KGFSpec? {
       section(text, "semantics"),
       section(text, "preprocess"),
       section(text, "preprocess_fst"),
+      section(text, "classify"),
     ),
   )
 }
@@ -224,6 +226,7 @@ fn init {
   @types.parse_preprocess_fst_lazy.val = fn(source) {
     parse_preprocess_fst(source)
   }
+  @types.parse_classify_lazy.val = fn(source) { parse_classify(source) }
 }
 
 ///|

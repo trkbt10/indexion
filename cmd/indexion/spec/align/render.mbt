@@ -13,6 +13,8 @@ fn render_summary_block(
   buf.write_string(summary.impl_only.to_string())
   buf.write_string("\n- Conflict: ")
   buf.write_string(summary.conflict.to_string())
+  buf.write_string("\n- Shallow: ")
+  buf.write_string(summary.shallow.to_string())
   buf.write_string("\n")
 }
 

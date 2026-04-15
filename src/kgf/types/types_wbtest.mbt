@@ -347,6 +347,77 @@ test "PreprocessFstSpec creation and getters" {
 }
 
 ///|
+test "ClassifyModel: empty model" {
+  let model = ClassifyModel::new({}, {})
+  assert_true(model.is_empty())
+  assert_eq(model.get_class_names().length(), 0)
+  assert_true(model.get_class("x") is None)
+  assert_true(model.predict([]) is None)
+}
+
+///|
+test "ClassifyModel: predict with trained model" {
+  // Positive weights = evidence for this class
+  // Model: normative class has evidence words "shall", "must"
+  //        meta class has evidence words "introduction", "scope"
+  let norm_vocab : Map[String, Double] = {}
+  norm_vocab.set("shall", 2.0)
+  norm_vocab.set("must", 1.5)
+  let meta_vocab : Map[String, Double] = {}
+  meta_vocab.set("introduction", 2.0)
+  meta_vocab.set("scope", 1.5)
+  let classes : Map[String, ClassifyClass] = {}
+  classes.set("normative", ClassifyClass::new(0.0, norm_vocab))
+  classes.set("meta", ClassifyClass::new(0.0, meta_vocab))
+  let model = ClassifyModel::new({}, classes)
+  assert_false(model.is_empty())
+  assert_eq(model.get_class_names().length(), 2)
+  // "shall must" → normative: 0 + 2.0 + 1.5 = 3.5, meta: 0 + 0 + 0 = 0
+  let result = model.predict(["shall", "must"])
+  assert_eq(result, Some("normative"))
+  // "introduction scope" → normative: 0, meta: 0 + 2.0 + 1.5 = 3.5
+  let result2 = model.predict(["introduction", "scope"])
+  assert_eq(result2, Some("meta"))
+}
+
+///|
+test "ClassifyModel: classify returns sorted scores" {
+  let vocab_a : Map[String, Double] = {}
+  vocab_a.set("x", -1.0)
+  let vocab_b : Map[String, Double] = {}
+  vocab_b.set("x", -0.1)
+  let classes : Map[String, ClassifyClass] = {}
+  classes.set("a", ClassifyClass::new(0.0, vocab_a))
+  classes.set("b", ClassifyClass::new(0.0, vocab_b))
+  let model = ClassifyModel::new({}, classes)
+  let scores = model.classify(["x"])
+  // b has higher score (-0.1 > -1.0), so b should be first
+  assert_eq(scores[0].0, "b")
+  assert_eq(scores[1].0, "a")
+}
+
+///|
+test "ClassifyClass: term_weight" {
+  let vocab : Map[String, Double] = {}
+  vocab.set("shall", -0.105)
+  let class_def = ClassifyClass::new(-0.693, vocab)
+  assert_eq(class_def.get_prior(), -0.693)
+  assert_eq(class_def.term_weight("shall"), -0.105)
+  assert_eq(class_def.term_weight("unknown"), 0.0)
+}
+
+///|
+test "ClassifyModel: metadata access" {
+  let meta : Map[String, String] = {}
+  meta.set("model_type", "naive_bayes")
+  meta.set("corpus_size", "150")
+  let model = ClassifyModel::new(meta, {})
+  assert_eq(model.get_meta("model_type"), Some("naive_bayes"))
+  assert_eq(model.get_meta("corpus_size"), Some("150"))
+  assert_eq(model.get_meta("missing"), None)
+}
+
+///|
 test "KGFSpec with preprocess_fst" {
   let classes : Map[String, String] = {}
   classes.set("any", "[.]")

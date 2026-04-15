@@ -122,7 +122,7 @@ fn status_command() -> @argparse.Command {
         ),
         @argparse.OptionArg(
           "fail-on",
-          about="Failure condition: none, drifted, spec-only, any",
+          about="Failure condition: none, drifted, spec-only, shallow, any",
           default_values=["none"],
         ),
       ],

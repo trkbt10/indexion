@@ -170,6 +170,46 @@ pub fn command() -> @argparse.Command {
         about="Show generated edges only",
         positionals=file_positional[:],
       ),
+      @argparse.Command(
+        "classify",
+        about="Classification model tools",
+        subcommand_required=true,
+        subcommands=[
+          @argparse.Command(
+            "train",
+            about="Train a Naive Bayes section classifier from labeled documents",
+            positionals=[
+              @argparse.PositionArg(
+                "directory",
+                about="Directory containing training documents",
+                num_args=@argparse.ValueRange(lower=1),
+              ),
+            ],
+            options=[
+              @argparse.OptionArg(
+                "default-class",
+                about="Class label for unlabeled sections (default: normative)",
+                default_values=["normative"],
+              ),
+              @argparse.OptionArg(
+                "include",
+                about=@help.include_pattern,
+                default_values=[""],
+              ),
+              @argparse.OptionArg(
+                "exclude",
+                about=@help.exclude_pattern,
+                default_values=[""],
+              ),
+              @argparse.OptionArg(
+                "min-weight",
+                about="Minimum term weight to include in model (reduces model size)",
+                default_values=["0.5"],
+              ),
+            ],
+          ),
+        ],
+      ),
     ],
   )
 }
@@ -203,6 +243,17 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         "events" => run_events(config)
         "edges" => run_edges(config)
         _ => ()
+      }
+    }
+    "classify" => {
+      match matches.subcommand {
+        Some((_, classify_matches)) =>
+          match classify_matches.subcommand {
+            Some(("train", train_matches)) =>
+              run_classify_train(config.kgf_dir, config.spec_name, train_matches)
+            _ => println(command().render_help())
+          }
+        _ => println(command().render_help())
       }
     }
     _ => {
@@ -713,4 +764,121 @@ fn pos_to_line_col(line_starts : Array[Int], pos : Int) -> (Int, Int) {
     }
   }
   (lo + 1, pos - line_starts[lo] + 1)
+}
+
+///|
+/// Run the `kgf classify train` subcommand.
+fn run_classify_train(
+  kgf_dir : String,
+  spec_name : String,
+  matches : @argparse.Matches,
+) -> Unit {
+  // Parse arguments
+  let directories = matches.values.get("directory").unwrap_or([])
+  if directories.length() == 0 {
+    println("Error: No training directory specified")
+    return
+  }
+  let default_class = match matches.values.get("default-class") {
+    Some(vals) => if vals.length() > 0 { vals[0] } else { "normative" }
+    None => "normative"
+  }
+  let include_pattern = match matches.values.get("include") {
+    Some(vals) => if vals.length() > 0 && vals[0].length() > 0 { vals[0] } else { "" }
+    None => ""
+  }
+  let exclude_pattern = match matches.values.get("exclude") {
+    Some(vals) => if vals.length() > 0 && vals[0].length() > 0 { vals[0] } else { "" }
+    None => ""
+  }
+  let min_weight = match matches.values.get("min-weight") {
+    Some(vals) =>
+      if vals.length() > 0 { @common.parse_double(vals[0]) } else { 0.5 }
+    None => 0.5
+  }
+  // Load registry and resolve spec
+  let registry = @registry.KGFRegistry::load_from_dir(kgf_dir)
+  // Collect training files
+  let includes = if include_pattern.length() > 0 { [include_pattern] } else { [] }
+  let excludes = if exclude_pattern.length() > 0 { [exclude_pattern] } else { [] }
+  let file_entries = @common.collect_files(
+    directories,
+    includes~,
+    excludes~,
+  )
+  if file_entries.length() == 0 {
+    println("Error: No files found in the specified directories")
+    return
+  }
+  // Resolve which spec to use — need a document spec with DocumentSection semantics
+  let spec = if spec_name.length() > 0 {
+    match registry.get_spec(spec_name) {
+      Some(s) => s
+      None => {
+        println("Error: Spec '\{spec_name}' not found")
+        return
+      }
+    }
+  } else {
+    // Auto-detect from first file
+    let first_path = file_entries[0].0
+    let detected = match registry.detect_from_path(first_path) {
+      Some(lang) =>
+        match registry.get_spec(lang) {
+          Some(s) => s
+          None => {
+            println("Error: Detected spec '\{lang}' not found")
+            return
+          }
+        }
+      None => {
+        println("Error: Cannot detect language from '\{first_path}'")
+        println("Use --spec=<name> to specify explicitly")
+        return
+      }
+    }
+    detected
+  }
+  // Convert file entries to (path, content) pairs
+  let files : Array[(String, String)] = []
+  for entry in file_entries {
+    files.push((entry.0, entry.1))
+  }
+  println("=== indexion kgf classify train ===")
+  println("Spec: \{spec.get_language()}")
+  println("Files: \{files.length()}")
+  println("Default class: \{default_class}")
+  println("")
+  // Train
+  match @kgf_classify.train(files, spec, registry, default_class, min_weight~) {
+    Some(model) => {
+      // Report statistics
+      let sections_count = model.get_meta("corpus_sections").unwrap_or("?")
+      let vocab_count = model.get_meta("vocabulary_size").unwrap_or("?")
+      println(
+        "Training complete: " +
+        sections_count +
+        " sections, " +
+        vocab_count +
+        " vocabulary terms",
+      )
+      let class_names = model.get_class_names()
+      for name in class_names {
+        match model.get_class(name) {
+          Some(cls) => {
+            let term_count = cls.get_vocab().size().to_string()
+            let prior = cls.get_prior().to_string()
+            println("  @" + name + ": " + term_count + " terms, prior=" + prior)
+          }
+          None => ()
+        }
+      }
+      println("")
+      println("=== classify section ===")
+      println("")
+      // Output the serialized section
+      println(@kgf_classify.serialize_classify_section(model))
+    }
+    None => println("Error: No training data found (no sections extracted)")
+  }
 }

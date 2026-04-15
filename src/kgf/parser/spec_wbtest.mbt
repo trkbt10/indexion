@@ -1112,3 +1112,110 @@ test "parse_resolver with resolve chain - mixed with comments" {
   assert_eq(chain[0].get_step_type().as_string(), "index")
   assert_eq(chain[2].get_prefix(), "url:")
 }
+
+///|
+test "parse_classify: empty input" {
+  let result = parse_classify("")
+  assert_true(result is None)
+}
+
+///|
+test "parse_classify: comments and blank lines only" {
+  let text =
+    #|# This is a comment
+    #|
+    #|# Another comment
+  let result = parse_classify(text)
+  assert_true(result is None)
+}
+
+///|
+test "parse_classify: single class with vocab" {
+  let text =
+    #|model_type = naive_bayes
+    #|
+    #|@normative prior=-0.693
+    #|  shall=-0.105
+    #|  must=-0.223
+    #|  required=-0.511
+  let model = parse_classify(text).unwrap()
+  assert_eq(model.get_meta("model_type"), Some("naive_bayes"))
+  let norm = model.get_class("normative").unwrap()
+  assert_true((norm.get_prior() - -0.693).abs() < 0.001)
+  assert_true((norm.term_weight("shall") - -0.105).abs() < 0.001)
+  assert_true((norm.term_weight("must") - -0.223).abs() < 0.001)
+  assert_true((norm.term_weight("required") - -0.511).abs() < 0.001)
+  assert_eq(norm.term_weight("unknown"), 0.0)
+}
+
+///|
+test "parse_classify: multiple classes" {
+  let text =
+    #|@normative prior=-0.5
+    #|  shall=-0.1
+    #|  must=-0.2
+    #|
+    #|@meta prior=-1.2
+    #|  introduction=-0.7
+    #|  scope=-1.1
+  let model = parse_classify(text).unwrap()
+  let names = model.get_class_names()
+  assert_eq(names.length(), 2)
+  let norm = model.get_class("normative").unwrap()
+  assert_true((norm.get_prior() - -0.5).abs() < 0.001)
+  assert_true((norm.term_weight("shall") - -0.1).abs() < 0.001)
+  let meta = model.get_class("meta").unwrap()
+  assert_true((meta.get_prior() - -1.2).abs() < 0.001)
+  assert_true((meta.term_weight("introduction") - -0.7).abs() < 0.001)
+}
+
+///|
+test "parse_classify: metadata only" {
+  let text =
+    #|model_type = naive_bayes
+    #|corpus_size = 150
+    #|smoothing = laplace
+  let model = parse_classify(text).unwrap()
+  assert_eq(model.get_meta("model_type"), Some("naive_bayes"))
+  assert_eq(model.get_meta("corpus_size"), Some("150"))
+  assert_eq(model.get_meta("smoothing"), Some("laplace"))
+  assert_true(model.is_empty()) // no classes
+}
+
+///|
+test "parse_classify: class with no prior" {
+  let text =
+    #|@simple
+    #|  word=-0.5
+  let model = parse_classify(text).unwrap()
+  let cls = model.get_class("simple").unwrap()
+  assert_true(cls.get_prior().abs() < 0.001)
+  assert_true((cls.term_weight("word") - -0.5).abs() < 0.001)
+}
+
+///|
+test "parse_classify: end-to-end with KGFSpec" {
+  let kgf_text =
+    #|kgf 0.6
+    #|language: test-doc
+    #|sources: .md
+    #|
+    #|=== classify
+    #|model_type = naive_bayes
+    #|
+    #|@normative prior=-0.5
+    #|  shall=-0.1
+    #|
+    #|@meta prior=-0.8
+    #|  introduction=-0.3
+  let spec = parse_kgf(kgf_text).unwrap()
+  assert_eq(spec.get_language(), "test-doc")
+  let model = spec.get_classify().unwrap()
+  assert_eq(model.get_meta("model_type"), Some("naive_bayes"))
+  let norm = model.get_class("normative").unwrap()
+  assert_true((norm.term_weight("shall") - -0.1).abs() < 0.001)
+  let result = model.predict(["shall", "shall", "must"])
+  // "normative" has prior=-0.5 + shall(-0.1)*2 = -0.7
+  // "meta" has prior=-0.8 + 0 (no terms match) = -0.8
+  assert_eq(result, Some("normative"))
+}

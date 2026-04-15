@@ -27,6 +27,7 @@ pub struct KGFSpec {
   mut semantics_source : String?
   mut preprocess_source : String?
   mut preprocess_fst_source : String?
+  mut classify_source : String?
   // ── Memoized caches ─────────────────────────────
   mut tokens_cache : Array[TokenDef]?
   mut keyword_kinds_cache : Map[String, Bool]?
@@ -35,6 +36,7 @@ pub struct KGFSpec {
   mut semantics_cache : Map[String, Array[SemOnBlock]]??
   mut preprocess_cache : Array[String]??
   mut preprocess_fst_cache : Array[PreprocessFstSpec]??
+  mut classify_cache : ClassifyModel??
 }
 
 ///|
@@ -52,6 +54,7 @@ pub fn KGFSpec::new(
   preprocess? : Array[String]? = None,
   preprocess_fst? : Array[PreprocessFstSpec]? = None,
   ignore? : Array[String]? = None,
+  classify? : ClassifyModel? = None,
 ) -> KGFSpec {
   {
     language,
@@ -65,6 +68,7 @@ pub fn KGFSpec::new(
     semantics_source: None,
     preprocess_source: None,
     preprocess_fst_source: None,
+    classify_source: None,
     tokens_cache: Some(tokens),
     keyword_kinds_cache: Some(keyword_kinds),
     rules_cache: Some(rules),
@@ -72,6 +76,7 @@ pub fn KGFSpec::new(
     semantics_cache: Some(semantics),
     preprocess_cache: Some(preprocess),
     preprocess_fst_cache: Some(preprocess_fst),
+    classify_cache: Some(classify),
   }
 }
 
@@ -90,6 +95,7 @@ pub fn KGFSpec::new_lazy(
   semantics_source : String,
   preprocess_source : String,
   preprocess_fst_source : String,
+  classify_source : String,
 ) -> KGFSpec {
   {
     language,
@@ -102,6 +108,7 @@ pub fn KGFSpec::new_lazy(
     semantics_source: Some(semantics_source),
     preprocess_source: Some(preprocess_source),
     preprocess_fst_source: Some(preprocess_fst_source),
+    classify_source: Some(classify_source),
     tokens_cache: None,
     keyword_kinds_cache: None,
     rules_cache: None,
@@ -109,6 +116,7 @@ pub fn KGFSpec::new_lazy(
     semantics_cache: None,
     preprocess_cache: None,
     preprocess_fst_cache: None,
+    classify_cache: None,
   }
 }
 
@@ -218,6 +226,15 @@ pub fn KGFSpec::get_preprocess(self : KGFSpec) -> Array[String]? {
 pub fn KGFSpec::get_preprocess_fst(self : KGFSpec) -> Array[PreprocessFstSpec]? {
   self.ensure_preprocess_fst_parsed()
   self.preprocess_fst_cache.unwrap_or(None)
+}
+
+///|
+/// Returns the classify model (lazy: parses classify section on first call).
+/// The model contains trained weights computed from a document corpus,
+/// not hand-authored vocabulary lists.
+pub fn KGFSpec::get_classify(self : KGFSpec) -> ClassifyModel? {
+  self.ensure_classify_parsed()
+  self.classify_cache.unwrap_or(None)
 }
 
 ///|
@@ -341,6 +358,21 @@ fn KGFSpec::ensure_preprocess_fst_parsed(self : KGFSpec) -> Unit {
   }
 }
 
+///|
+/// Parse the classify section if not yet parsed.
+fn KGFSpec::ensure_classify_parsed(self : KGFSpec) -> Unit {
+  if self.classify_cache is Some(_) {
+    return
+  }
+  match self.classify_source {
+    Some(source) => {
+      self.classify_cache = Some((parse_classify_lazy.val)(source))
+      self.classify_source = None
+    }
+    None => self.classify_cache = Some(None)
+  }
+}
+
 // ── Parser callbacks (set by the parser package to avoid circular deps) ──
 
 ///|
@@ -377,5 +409,11 @@ pub let parse_preprocess_lazy : Ref[(String) -> Array[String]?] = Ref::new(
 ///|
 /// Callback: parse preprocess_fst section text → FST specs.
 pub let parse_preprocess_fst_lazy : Ref[(String) -> Array[PreprocessFstSpec]?] = Ref::new(
+  fn(_s) { None },
+)
+
+///|
+/// Callback: parse classify section text → trained classify model.
+pub let parse_classify_lazy : Ref[(String) -> ClassifyModel?] = Ref::new(
   fn(_s) { None },
 )
