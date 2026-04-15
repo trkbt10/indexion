@@ -138,6 +138,11 @@ pub fn analyze(wiki : @wiki_types.WikiData, wiki_dir : String) -> IngestResult {
   let prev = load_manifest(wiki_dir)
   let tasks : Array[IngestTask] = []
   let new_states : Map[String, PageSourceState] = {}
+  // Derive project root from wiki_dir so source paths resolve correctly
+  let project_root = match @config.find_project_root_from(@config.dirname(wiki_dir)) {
+    Some(root) => root
+    None => @config.dirname(wiki_dir)
+  }
   for entry in wiki.pages {
     let (page_id, page) = (entry.0, entry.1)
     // Compute current page hash
@@ -146,7 +151,8 @@ pub fn analyze(wiki : @wiki_types.WikiData, wiki_dir : String) -> IngestResult {
     let current_hashes : Map[String, String] = {}
     for src in page.sources {
       if src.file.length() > 0 {
-        let content = @fs.read_file_to_string(src.file) catch { _ => "" }
+        let resolved = @config.resolve_path(project_root, src.file)
+        let content = @fs.read_file_to_string(resolved) catch { _ => "" }
         if content.length() > 0 {
           current_hashes[src.file] = @cas_hash.compute_hash(content).value
         }

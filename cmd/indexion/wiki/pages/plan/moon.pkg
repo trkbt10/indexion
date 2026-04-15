@@ -4,6 +4,7 @@ import {
   "trkbt10/indexion/cmd/indexion/common" @common,
   "trkbt10/indexion/cmd/indexion/help" @help,
   "trkbt10/indexion/cmd/indexion/digest" @digest_cli,
+  "trkbt10/indexion/src/config" @config_paths,
   "trkbt10/indexion/src/core/graph" @graph,
   "trkbt10/indexion/src/docgen/query" @query,
   "trkbt10/indexion/src/docgen/wiki/types" @wiki_types,

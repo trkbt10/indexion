@@ -91,7 +91,7 @@ pub fn lint(wiki : @wiki_types.WikiData, wiki_dir~ : String) -> LintReport {
   check_broken_links(wiki, report)
   check_orphan_pages(wiki, report)
   check_missing_cross_references(wiki, report)
-  check_stale_sources(wiki, report)
+  check_stale_sources(wiki, wiki_dir, report)
   check_empty_pages(wiki, report)
   check_manifest_file_mismatch(wiki, wiki_dir, report)
   report
@@ -254,21 +254,31 @@ fn check_missing_cross_references(
 ///|
 /// Check 4: Stale source references.
 /// Pages whose sources point to files that no longer exist on disk.
+/// Source paths are resolved relative to the project root derived from wiki_dir.
 fn check_stale_sources(
   wiki : @wiki_types.WikiData,
+  wiki_dir : String,
   report : LintReport,
 ) -> Unit {
+  // Derive project root from wiki_dir (.indexion/wiki → project root)
+  let project_root = match @config.find_project_root_from(@config.dirname(wiki_dir)) {
+    Some(root) => root
+    None => @config.dirname(wiki_dir)
+  }
   for entry in wiki.pages {
     let (page_id, page) = (entry.0, entry.1)
     for src in page.sources {
-      if src.file.length() > 0 && !@fs.path_exists(src.file) {
-        report.add({
-          severity: Warning,
-          check: "stale-source",
-          page_id,
-          message: "Source file not found: " + src.file,
-          suggestion: "Update or remove the source reference",
-        })
+      if src.file.length() > 0 {
+        let resolved = @config.resolve_path(project_root, src.file)
+        if !@fs.path_exists(resolved) {
+          report.add({
+            severity: Warning,
+            check: "stale-source",
+            page_id,
+            message: "Source file not found: " + src.file,
+            suggestion: "Update or remove the source reference",
+          })
+        }
       }
     }
   }

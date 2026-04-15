@@ -10,8 +10,17 @@
 pub fn load_manifest(wiki_dir : String) -> @wiki_types.WikiManifest? {
   let manifest_path = @wiki_types.wiki_manifest_path(wiki_dir)
   if !@fs.path_exists(manifest_path) {
-    println("Error: No wiki manifest found at " + manifest_path)
-    return None
+    // Auto-initialize: create directory and empty manifest
+    @config.ensure_dir_recursive(wiki_dir)
+    let empty_manifest = @wiki_types.WikiManifest::new(title="Wiki", pages=[])
+    let json_str = empty_manifest.to_json().stringify(indent=2)
+    @fs.write_string_to_file(manifest_path, json_str) catch {
+      e => {
+        println("Error creating manifest: " + e.to_string())
+        return None
+      }
+    }
+    return Some(empty_manifest)
   }
   let manifest_content = @fs.read_file_to_string(manifest_path) catch {
     e => {

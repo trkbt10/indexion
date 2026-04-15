@@ -151,6 +151,13 @@ let project_root_markers : Array[String] = [
 ]
 
 ///|
+/// Find the project root by walking up from start_dir, using the standard markers.
+/// Returns None if no marker is found.
+pub fn find_project_root_from(start_dir : String) -> String? {
+  find_project_root(start_dir, project_root_markers)
+}
+
+///|
 /// Resolve the .indexion tool directory under the project root.
 /// Walks up from target_dir to find a project root marker (.git, .indexion, etc.),
 /// then returns project_root/.indexion/{tool_subdir}.
@@ -159,7 +166,7 @@ pub fn resolve_project_indexion_dir(
   target_dir : String,
   tool_subdir : String,
 ) -> String? {
-  match find_project_root(target_dir, project_root_markers) {
+  match find_project_root_from(target_dir) {
     Some(root) => Some(join_path(root, ".indexion/" + tool_subdir))
     None => None
   }

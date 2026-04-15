@@ -12,11 +12,20 @@ pub struct DocConfig {
 } derive(Eq, Show)
 
 ///|
+pub impl ToJson for DocConfig with to_json(self) {
+  let m : Map[String, Json] = {}
+  m["root"] = self.root.to_json()
+  let pkg_arr : Array[Json] = self.packages.map(fn(p) { p.to_json() })
+  m["packages"] = pkg_arr.to_json()
+  Json::object(m)
+}
+
+///|
 /// Output format configuration.
 pub struct DocOutputConfig {
   format : String
   filename : String
-} derive(Eq, Show)
+} derive(Eq, Show, ToJson)
 
 ///|
 /// Package entry for documentation.
@@ -26,7 +35,7 @@ pub struct DocPackageEntry {
   description : String
   include_in_root : Bool
   sections : Array[String]
-} derive(Eq, Show)
+} derive(Eq, Show, ToJson)
 
 ///|
 /// Root README configuration.
@@ -37,12 +46,43 @@ pub struct DocRootConfig {
 } derive(Eq, Show)
 
 ///|
+pub impl ToJson for DocRootConfig with to_json(self) {
+  let m : Map[String, Json] = {}
+  if self.template.length() > 0 {
+    m["template"] = self.template.to_json()
+  }
+  m["output"] = self.output.to_json()
+  m["sections"] = self.sections.map(fn(s) { s.to_json() }).to_json()
+  Json::object(m)
+}
+
+///|
 /// Section types for root README.
 pub enum DocRootSection {
   Static(String)
   Toc(String)
   Packages(String)
 } derive(Eq, Show)
+
+///|
+pub impl ToJson for DocRootSection with to_json(self) {
+  let m : Map[String, Json] = {}
+  match self {
+    Static(file) => {
+      m["type"] = "static".to_json()
+      m["file"] = file.to_json()
+    }
+    Toc(title) => {
+      m["type"] = "toc".to_json()
+      m["title"] = title.to_json()
+    }
+    Packages(filter) => {
+      m["type"] = "packages".to_json()
+      m["filter"] = filter.to_json()
+    }
+  }
+  Json::object(m)
+}
 
 ///|
 /// Create an empty doc config with default values.
@@ -53,6 +93,27 @@ pub fn DocConfig::empty() -> DocConfig {
     output: { format: "markdown", filename: "README.md" },
     packages: [],
     root: { template: "", output: "README.md", sections: [] },
+  }
+}
+
+///|
+/// Create a doc config suitable for `doc init` with standard defaults.
+/// The template path uses the SoT from readme_paths.
+pub fn DocConfig::for_init() -> DocConfig {
+  {
+    version: "1.0",
+    spec: "",
+    output: { format: "markdown", filename: "README.md" },
+    packages: [],
+    root: {
+      template: readme_template_relative(),
+      output: "README.md",
+      sections: [
+        DocRootSection::Static(README_DOCS_SUBDIR + "/intro.md"),
+        DocRootSection::Toc("Packages"),
+        DocRootSection::Packages("src/**"),
+      ],
+    },
   }
 }
 

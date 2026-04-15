@@ -11,11 +11,9 @@
 ///
 /// ## Generated Structure
 ///
-/// ```
-/// .indexion/
-///   templates/
-///     readme.md           # README template with {{include:...}} placeholders
-/// ```
+/// Directory and file names are derived from SoT constants in
+/// `src/config/readme_paths.mbt`. The doc.json content uses
+/// `DocConfig::for_init().to_json()` for structural correctness.
 ///
 /// ## Usage
 ///
@@ -94,23 +92,21 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   }
   // Create .indexion/ directory structure (isolated from user's docs/)
   let indexion_dir = target_dir + "/.indexion"
-  let state_dir = indexion_dir + "/state"
-  let templates_dir = state_dir + "/templates"
-  // Create directories
-  @fs.create_dir(indexion_dir) catch {
-    _ => () // Directory may already exist
-  }
-  @fs.create_dir(state_dir) catch {
-    _ => ()
-  }
-  @fs.create_dir(templates_dir) catch {
-    _ => ()
-  }
-  // Generate only the template file (no placeholder files)
+  let the_readme_dir = @config.readme_dir(indexion_dir)
+  let the_docs_dir = @config.readme_docs_dir(indexion_dir)
+  @config.ensure_dir_recursive(the_readme_dir)
+  @config.ensure_dir_recursive(the_docs_dir)
+  // Generate template and doc.json using SoT paths
   let files_created : Array[String] = []
-  let template_path = templates_dir + "/readme.md"
+  let template_path = @config.readme_template_path(indexion_dir)
   if write_file_if_ok(template_path, generate_template(info), config.force) {
     files_created.push(template_path)
+  }
+  let doc_json_path = @config.readme_doc_config_path(indexion_dir)
+  let doc_config = @config.DocConfig::for_init()
+  let doc_json_content = doc_config.to_json().stringify(indent=2)
+  if write_file_if_ok(doc_json_path, doc_json_content, config.force) {
+    files_created.push(doc_json_path)
   }
   // Summary
   if files_created.length() > 0 {
@@ -118,18 +114,18 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     for path in files_created {
       println("  " + path)
     }
+    let template_rel = @config.readme_template_relative()
+    let doc_config_rel = @config.readme_doc_config_relative()
     println("")
     println("Next steps:")
-    println(
-      "  1. indexion plan readme --template=.indexion/state/templates/readme.md",
-    )
+    println("  1. Edit " + doc_config_rel + " to configure sections and packages")
+    println("")
+    println("  2. indexion plan readme --template=" + template_rel)
     println("     Generate writing plans for each section")
     println("")
-    println("  2. Write docs/ files based on the plans")
+    println("  3. Write docs/ files based on the plans")
     println("")
-    println(
-      "  3. indexion doc readme --template=.indexion/state/templates/readme.md -o=README.md",
-    )
+    println("  4. indexion doc readme --template=" + template_rel + " -o=README.md")
     println("     Assemble README.md from docs/")
   } else {
     println("No files created. Use --force to overwrite existing files.")
@@ -223,14 +219,16 @@ fn parse_json_config(content : String) -> ProjectInfo {
 // Template generation
 
 ///|
-/// Generate .indexion/state/templates/readme.md content.
+/// Generate README template content with {{include:...}} placeholders.
+/// Include paths are relative to the readme directory (.indexion/readme/).
 fn generate_template(info : ProjectInfo) -> String {
+  let docs = @config.readme_docs_relative()
   let buf = StringBuilder::new()
-  buf.write_string("{{include:docs/intro.md}}\n\n")
-  buf.write_string("{{include:docs/overview.md}}\n\n")
-  buf.write_string("{{include:docs/getting-started.md}}\n\n")
-  buf.write_string("{{include:docs/usage.md}}\n\n")
-  buf.write_string("{{include:docs/installation.md}}\n\n")
+  buf.write_string("{{include:" + docs + "/intro.md}}\n\n")
+  buf.write_string("{{include:" + docs + "/overview.md}}\n\n")
+  buf.write_string("{{include:" + docs + "/getting-started.md}}\n\n")
+  buf.write_string("{{include:" + docs + "/usage.md}}\n\n")
+  buf.write_string("{{include:" + docs + "/installation.md}}\n\n")
   buf.write_string("## License\n\n")
   if info.license.length() > 0 {
     buf.write_string(info.license)
@@ -242,3 +240,4 @@ fn generate_template(info : ProjectInfo) -> String {
 }
 
 // use @common (SoT) — normalize_path
+// use @config (SoT) — readme paths, DocConfig::for_init, ensure_dir_recursive

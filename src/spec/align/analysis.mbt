@@ -1403,24 +1403,22 @@ fn find_previous_edge(
 }
 
 ///|
-/// Count the number of non-trivial function implementations in the same file.
-/// A function is considered non-trivial if its body spans more than
-/// a minimal threshold of lines (beyond just a signature + single return).
-/// Trivial functions include constructors, accessors, and simple wrappers.
-fn nontrivial_function_count_in_file(
+/// Check whether any function declaration exists in the same file.
+/// Used to distinguish type-only stub files from files that also contain
+/// function implementations. Note: KGF uses SpanPreference::Shortest for
+/// functions, so end_line == start_line — we cannot check body length here.
+/// The presence of any function declaration is sufficient evidence that the
+/// file is not type-only.
+fn has_function_in_same_file(
   implementations : Array[ImplementationNode],
   file : String,
-) -> Int {
-  let min_body_lines = 4
-  let mut count = 0
+) -> Bool {
   for impl_ in implementations {
-    if impl_.file == file &&
-      impl_.category == "function" &&
-      impl_.end_line - impl_.start_line >= min_body_lines {
-      count += 1
+    if impl_.file == file && impl_.category == "function" {
+      return true
     }
   }
-  count
+  false
 }
 
 ///|
@@ -1527,13 +1525,12 @@ fn diff_item_for_requirement(
       // logic that a normative requirement demands.
       if category == "MATCHED" &&
         implementation_node.category == "type" &&
-        nontrivial_function_count_in_file(
+        !has_function_in_same_file(
           implementations, implementation_node.file,
-        ) ==
-        0 {
+        ) {
         category = "SHALLOW"
         reasons.push(
-          "Matched implementation is type-only with no non-trivial function implementations in the same file.",
+          "Matched implementation is type-only with no function declarations in the same file.",
         )
       }
       if category == "DRIFTED" &&

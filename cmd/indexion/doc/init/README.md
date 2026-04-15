@@ -17,4 +17,8 @@ indexion doc init [options] [directory]
 
 ## What It Creates
 
-Creates `.indexion/state/templates/readme.md` with `{{include:...}}` placeholder directives for use with `indexion doc readme --template=...` and `indexion plan readme --template=...`.
+Creates `.indexion/readme/` directory with:
+- `template.md` — README template with `{{include:...}}` placeholders
+- `doc.json` — Documentation config (sections, packages, output path)
+
+Use with `indexion doc readme --template=.indexion/readme/template.md` or `indexion doc readme --config=.indexion/readme/doc.json`.

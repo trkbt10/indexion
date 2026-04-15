@@ -26,7 +26,7 @@ indexion plan readme [options] [directory...]
 
 ```bash
 # Generate writing plan
-indexion plan readme --template=.indexion/state/templates/readme.md .
+indexion plan readme --template=.indexion/readme/template.md .
 
 # Output plans to directory
 indexion plan readme --template=readme.md --plans-dir=.indexion/plans .

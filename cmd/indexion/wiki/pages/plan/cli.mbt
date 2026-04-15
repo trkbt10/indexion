@@ -110,19 +110,20 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
 fn analyze_and_plan(
   graph : @graph.CodeGraph,
   existing : @wiki_types.WikiData?,
-  _config : WikiPlanConfig,
+  config : WikiPlanConfig,
 ) -> @plan_types.PlanDocument {
   let doc = @plan_types.PlanDocument::new("Wiki Documentation Plan")
   doc.set_description(
     "Concept-based wiki page structure and writing tasks for the project.",
   )
   doc.set_meta("labels", "documentation,wiki")
+  let base_dir = @common.normalize_path(config.target_dir)
   // 1. Project summary
-  doc.add_section(build_summary_section(graph))
+  doc.add_section(build_summary_section(graph, base_dir))
   // 2. Proposed page structure
-  doc.add_section(propose_page_structure(graph))
+  doc.add_section(propose_page_structure(graph, base_dir))
   // 3. Writing tasks
-  doc.add_section(build_writing_tasks(graph, existing))
+  doc.add_section(build_writing_tasks(graph, existing, base_dir))
   // 4. Update tasks (if wiki exists)
   match existing {
     Some(wiki) => {
@@ -143,7 +144,10 @@ fn analyze_and_plan(
 // --- Sections ---
 
 ///|
-fn build_summary_section(graph : @graph.CodeGraph) -> @plan_types.PlanSection {
+fn build_summary_section(
+  graph : @graph.CodeGraph,
+  base_dir : String,
+) -> @plan_types.PlanSection {
   let items : Array[@plan_types.ListItem] = []
   items.push(
     @plan_types.ListItem::simple("Modules: " + graph.module_count().to_string()),
@@ -160,7 +164,8 @@ fn build_summary_section(graph : @graph.CodeGraph) -> @plan_types.PlanSection {
     match entry.1.file {
       Some(_) => {
         internal = internal + 1
-        let dir = @common.parent_dir(entry.0)
+        let rel = @config_paths.relative_to(base_dir, entry.0)
+        let dir = @common.parent_dir(rel)
         if dir.length() > 0 && dir != "." {
           let parts = @common.split_by_slash(dir)
           if parts.length() > 0 {
@@ -191,7 +196,10 @@ fn build_summary_section(graph : @graph.CodeGraph) -> @plan_types.PlanSection {
 }
 
 ///|
-fn propose_page_structure(graph : @graph.CodeGraph) -> @plan_types.PlanSection {
+fn propose_page_structure(
+  graph : @graph.CodeGraph,
+  base_dir : String,
+) -> @plan_types.PlanSection {
   let items : Array[@plan_types.ListItem] = []
   items.push(
     @plan_types.ListItem::with_desc(
@@ -214,11 +222,11 @@ fn propose_page_structure(graph : @graph.CodeGraph) -> @plan_types.PlanSection {
     ),
   )
   // Cluster-specific pages from module structure
-  let clusters = collect_clusters(graph)
+  let clusters = collect_clusters(graph, base_dir)
   for entry in clusters {
     let cluster = entry.0
     let module_count = entry.1
-    let decl_count = count_cluster_declarations(graph, cluster)
+    let decl_count = count_cluster_declarations(graph, cluster, base_dir)
     items.push(
       @plan_types.ListItem::with_desc(
         cluster,
@@ -240,6 +248,7 @@ fn propose_page_structure(graph : @graph.CodeGraph) -> @plan_types.PlanSection {
 fn build_writing_tasks(
   graph : @graph.CodeGraph,
   existing : @wiki_types.WikiData?,
+  base_dir : String,
 ) -> @plan_types.PlanSection {
   let items : Array[@plan_types.ChecklistItem] = []
   let existing_pages : Map[String, Bool] = {}
@@ -276,7 +285,7 @@ fn build_writing_tasks(
     }
   }
   // Cluster pages
-  let clusters = collect_clusters(graph)
+  let clusters = collect_clusters(graph, base_dir)
   for entry in clusters {
     let cluster = entry.0
     let module_count = entry.1
@@ -333,14 +342,18 @@ fn detect_update_needs(wiki : @wiki_types.WikiData) -> @plan_types.PlanSection {
 // --- Helpers ---
 
 ///|
-fn collect_clusters(graph : @graph.CodeGraph) -> Map[String, Int] {
+fn collect_clusters(
+  graph : @graph.CodeGraph,
+  base_dir : String,
+) -> Map[String, Int] {
   let clusters : Map[String, Int] = {}
   for entry in graph.get_modules() {
     match entry.1.file {
       None => continue
       Some(_) => ()
     }
-    let dir = @common.parent_dir(entry.0)
+    let rel = @config_paths.relative_to(base_dir, entry.0)
+    let dir = @common.parent_dir(rel)
     if dir.length() == 0 || dir == "." {
       continue
     }
@@ -363,6 +376,7 @@ fn collect_clusters(graph : @graph.CodeGraph) -> Map[String, Int] {
 fn count_cluster_declarations(
   graph : @graph.CodeGraph,
   cluster_key : String,
+  base_dir : String,
 ) -> Int {
   let mut count = 0
   for entry in graph.get_modules() {
@@ -370,7 +384,8 @@ fn count_cluster_declarations(
       None => continue
       Some(_) => ()
     }
-    let dir = @common.parent_dir(entry.0)
+    let rel = @config_paths.relative_to(base_dir, entry.0)
+    let dir = @common.parent_dir(rel)
     if dir.length() == 0 || dir == "." {
       continue
     }
