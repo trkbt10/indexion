@@ -96,6 +96,7 @@ fn fixture_config(impl_subdir : String, root : String) -> SpecAlignConfig {
     specs_dir: fixture_specs_dir(),
     cache_dir: root + "/cache",
     threshold: 0.35,
+    spec_format: "sdd-requirement",
   }
 }
 
@@ -201,6 +202,7 @@ fn incremental_config(root : String) -> SpecAlignConfig {
     threshold: 0.35,
     incremental: true,
     git_base: "HEAD",
+    spec_format: "sdd-requirement",
   }
 }
 

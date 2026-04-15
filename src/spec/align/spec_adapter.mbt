@@ -128,6 +128,48 @@ fn supports_document_interpretation(spec : @kgf_types.KGFSpec) -> Bool {
 }
 
 ///|
+/// Returns true if the spec defines explicit requirement extraction rules
+/// (i.e., has semantic blocks that emit `document_requirement` notes).
+///
+/// When such a spec finds 0 requirements in the primary path for a given
+/// file, the fallback section-scanning path is skipped — the spec defines
+/// what a requirement looks like, and none were found in this file.
+///
+/// Specs like rfc-plaintext or technical-document do NOT define requirement
+/// extraction, so they rely entirely on the fallback. This function
+/// distinguishes the two cases by inspecting the spec's semantic definitions.
+fn spec_defines_requirement_extraction(spec : @kgf_types.KGFSpec) -> Bool {
+  match spec.get_semantic("DocumentSection") {
+    None => false
+    Some(blocks) =>
+      blocks.iter().any(fn(block) {
+        if stmt_list_emits_requirement(block.get_then_stmts()) {
+          return true
+        }
+        let else_stmts = block.get_else_stmts()
+        match else_stmts {
+          Some(stmts) => stmt_list_emits_requirement(stmts)
+          None => false
+        }
+      })
+  }
+}
+
+///|
+/// Recursively checks whether a list of semantic statements contains a
+/// `note document_requirement` emission.
+fn stmt_list_emits_requirement(stmts : Array[@kgf_types.SemStmt]) -> Bool {
+  stmts.iter().any(fn(stmt) {
+    match stmt {
+      @kgf_types.Note(note_type~, ..) => note_type == "document_requirement"
+      @kgf_types.For(body~, ..) => stmt_list_emits_requirement(body)
+      _ => false
+    }
+  })
+}
+
+
+///|
 fn is_overlay_document_spec(spec : @kgf_types.KGFSpec) -> Bool {
   match spec.get_feature("detection_scope") {
     Some(values) => values.length() > 0 && values[0] == "overlay"
@@ -392,8 +434,16 @@ fn load_spec_nodes(
       }
       return (finalized, scenarios, source_format)
     }
-    // Fallback: no document_requirement facts found, but DocumentSections
-    // were parsed successfully. Classify sections using:
+    // If this spec explicitly defines requirement extraction rules
+    // (e.g., sdd-requirement with "Requirement N:" patterns), and the
+    // primary path found 0 requirements, this file simply does not
+    // contain requirements in the format this spec understands.
+    // Skip the fallback — don't promote arbitrary sections to requirements.
+    if spec_defines_requirement_extraction(spec) {
+      continue
+    }
+    // Fallback: the spec does NOT define requirement extraction rules
+    // (e.g., rfc-plaintext, technical-document). Classify sections using:
     //   1. document_section_role from KGF semantics
     //   2. trained classify model from KGF === classify section
     //   3. no filtering (include all sections)
