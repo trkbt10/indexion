@@ -1,3 +1,101 @@
+# v0.10.0
+
+## Highlights
+
+- **Naive Bayes Classification** — KGF specs gain a `=== classify` section with trained Naive Bayes models for token-level language classification
+- **`kgf check` Command** — Structural validation for KGF specs: catches invalid regex, undefined symbol references, unknown built-in functions, and semantic rule errors
+- **Protobuf KGF** — New `protobuf.kgf` spec for Protocol Buffers service/message definitions
+- **Spec Align Fallback** — `spec align` falls back to DocumentSection-based extraction with normative vocabulary scoring when no explicit requirement headings exist
+- **Hybrid Similarity Strategy** — `explore`/`plan refactor` gain a hybrid strategy combining TF-IDF pre-filtering with APTED structural comparison
+- **Zero Warnings Release** — All MoonBit compiler warnings eliminated; `moon fmt`, `moon check`, ESLint, and TypeScript typecheck pass cleanly across the entire monorepo
+
+## New Features
+
+### `indexion kgf check` — KGF Spec Validation
+
+Structural validation that detects errors silently swallowed at runtime:
+
+- Invalid regex patterns in lex section
+- Undefined symbol references in grammar rules
+- Semantic blocks referencing undefined grammar rules
+- Unknown built-in functions in semantic expressions
+- Feature values referencing undefined token kinds
+- Classify section structural problems
+
+Built-in function/variable registries are SoT-sourced from `eval_expr.mbt` — no duplicate lists.
+
+```bash
+indexion kgf check typescript moonbit protobuf
+```
+
+### Naive Bayes Classification Model
+
+New `=== classify` section in KGF specs enables token-level classification:
+
+- `ClassifyModel` / `ClassifyClass` structures for trained models
+- Training from labeled samples with Naive Bayes fitting
+- Lazy parsing of classify section (same pattern as grammar/semantics)
+- Used by `spec align` for normative vocabulary scoring
+
+### Protobuf KGF Spec
+
+`kgfs/programming/protobuf.kgf` — tokenization and declaration extraction for `.proto` files including service definitions, message types, and field declarations.
+
+## Improvements
+
+### Spec Align: DocumentSection Fallback
+
+When no `document_requirement` KGF facts are found (e.g. ISO spec documents or plain markdown without "Requirement N:" headings), spec align now falls back to DocumentSection-based requirement extraction with normative vocabulary classification (shall, must, conform, etc.).
+
+### README Generation
+
+Enhanced `doc readme` and `doc init` with new template paths, documentation structure configuration, and per-package README generation.
+
+### Wiki Content: Color Scheme Support
+
+`KgfCodeBlock` and wiki content rendering gain color scheme awareness for consistent theme integration.
+
+### HTTP Server
+
+- Address reuse enabled for server initialization, preventing binding failures on rapid restart
+- SSE handlers yield every 5 files during grep, reducing health check latency from 1123ms to 144ms
+
+## Bug Fixes
+
+- Fix similarity strategy CLI options and default value
+- Fix `spec align` to use `sdd-requirement` (renamed from `sdd-numbered-requirement`)
+- Remove unused graph generation scripts and fixture files
+- Fix ESLint/Prettier violations in `@indexion/api-client` SSE module
+
+## Code Health
+
+### MoonBit Compiler Warnings: Zero
+
+All 88 warnings across 9 categories eliminated:
+
+| Category | Count | Fix |
+|----------|-------|-----|
+| `derive(Show)` deprecated | 133 | → `derive(Debug)` + manual `Show` impl via `to_repr` |
+| Unused package imports | 29 | Removed from `moon.pkg` or moved to `wbtest-import` |
+| Core package not imported | 27 | Added `@bench` to `wbtest-import` |
+| Deprecated API | 11 | `.size()` → `.length()`, `Char::from_int` → `.unsafe_to_char()`, `not()` → `!` |
+| Unused variables/functions | 16 | Prefixed with `_` or removed |
+| Other | 5 | `unused_try`, `missing_pattern_arguments`, `unused_error_type`, `unused_field` |
+
+### TypeScript / ESLint: Zero
+
+All packages pass `bun run typecheck` and `bun run lint` with zero errors.
+
+## Internal
+
+- Version: 0.9.0 → 0.10.0
+- 272 files changed, +8,990 lines, −24,014 lines
+- Tests: 1428/1428 passing
+- New KGF spec: `protobuf.kgf`
+- New module: `src/kgf/classify`
+
+---
+
 # v0.9.0
 
 ## Highlights
