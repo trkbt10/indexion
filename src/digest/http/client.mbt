@@ -1,6 +1,17 @@
 // HTTP client wrapper using mizchi/x/http
 
 ///|
+/// Extract a human-readable message from an HttpError.
+pub fn http_error_message(err : @mhttp.HttpError) -> String {
+  match err {
+    NetworkError(msg) => msg
+    InvalidUrl(msg) => msg
+    TimeoutError => "timeout"
+    NotSupported => "not supported"
+  }
+}
+
+///|
 /// POST JSON request (async)
 /// Returns (status_code, response_body_string)
 pub async fn post_json(

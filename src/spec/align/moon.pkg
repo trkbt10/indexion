@@ -1,5 +1,4 @@
 import {
-  "moonbitlang/core/debug" @debug,
   "moonbitlang/core/env" @env,
   "moonbitlang/core/json" @json,
   "moonbitlang/x/fs" @fs,

@@ -17,10 +17,8 @@ fn write_file(path : String, content : String) -> Bool {
   let parent = @common.parent_dir(path)
   @config.ensure_dir_recursive(parent)
   @fs.write_string_to_file(path, content) catch {
-    e => {
-      @digest_cli.log_error(
-        "Failed to write " + path + ": " + @debug.to_string(e),
-      )
+    @fs.IOError(msg) => {
+      @digest_cli.log_error("Failed to write " + path + ": " + msg)
       return false
     }
   }
@@ -33,18 +31,14 @@ fn copy_file(src : String, dst : String) -> Bool {
   let parent = @common.parent_dir(dst)
   @config.ensure_dir_recursive(parent)
   let content = @fs.read_file_to_bytes(src) catch {
-    e => {
-      @digest_cli.log_error(
-        "Failed to read " + src + ": " + @debug.to_string(e),
-      )
+    @fs.IOError(msg) => {
+      @digest_cli.log_error("Failed to read " + src + ": " + msg)
       return false
     }
   }
   @fs.write_bytes_to_file(dst, content) catch {
-    e => {
-      @digest_cli.log_error(
-        "Failed to write " + dst + ": " + @debug.to_string(e),
-      )
+    @fs.IOError(msg) => {
+      @digest_cli.log_error("Failed to write " + dst + ": " + msg)
       return false
     }
   }

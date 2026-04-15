@@ -1,5 +1,4 @@
 import {
-  "moonbitlang/core/debug" @debug,
   "moonbitlang/core/json" @json,
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/config" @config,

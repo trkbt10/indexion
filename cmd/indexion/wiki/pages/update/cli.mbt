@@ -75,8 +75,8 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
     _ => "user"
   }
   let content = @fs.read_file_to_string(content_path) catch {
-    e => {
-      println("Error reading content file: " + @debug.to_string(e))
+    @fs.IOError(msg) => {
+      println("Error reading content file: " + msg)
       return
     }
   }

@@ -76,7 +76,7 @@ pub async fn get_embeddings(
   headers.set("Content-Type", "application/json")
   let body = build_request_body(texts, config.model)
   let (status, response_body) = @http.post_json(config.base_url, body, headers) catch {
-    err => raise ApiError(0, @debug.to_string(err))
+    err => raise ApiError(0, @http.http_error_message(err))
   }
   if status != 200 {
     raise ApiError(status, response_body)

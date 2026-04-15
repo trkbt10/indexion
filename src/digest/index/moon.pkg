@@ -1,5 +1,4 @@
 import {
-  "moonbitlang/core/debug" @debug,
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/core/graph" @graph,
   "trkbt10/indexion/src/digest/types" @types,

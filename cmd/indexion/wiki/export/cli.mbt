@@ -82,8 +82,8 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     // Ensure parent directory exists (for nested GitLab pages)
     @config.ensure_parent_dir(path)
     @fs.write_string_to_file(path, content) catch {
-      e => {
-        println("Error writing " + filename + ": " + @debug.to_string(e))
+      @fs.IOError(msg) => {
+        println("Error writing " + filename + ": " + msg)
         continue
       }
     }

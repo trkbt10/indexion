@@ -6,6 +6,17 @@
 /// Supports live rebuild via POST /api/digest/rebuild.
 
 ///|
+/// Extract a human-readable message from an HttpError.
+fn http_error_message(err : @mhttp.HttpError) -> String {
+  match err {
+    NetworkError(msg) => msg
+    InvalidUrl(msg) => msg
+    TimeoutError => "timeout"
+    NotSupported => "not supported"
+  }
+}
+
+///|
 pub struct ServeConfig {
   port : Int
   host : String
@@ -352,7 +363,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
     reuse_addr=true,
   ) catch {
     err => {
-      @digest_cli.log_error("Server init failed: " + @debug.to_string(err))
+      @digest_cli.log_error("Server init failed: " + http_error_message(err))
       return
     }
   }
@@ -598,7 +609,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
     },
     allow_failure=true,
   ) catch {
-    err => @digest_cli.log_error("Server failed: " + @debug.to_string(err))
+    err => @digest_cli.log_error("Server failed: " + http_error_message(err))
   }
 }
 

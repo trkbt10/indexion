@@ -1,5 +1,4 @@
 import {
-  "moonbitlang/core/debug" @debug,
   "moonbitlang/async/io" @io,
   "mizchi/x/http" @mhttp,
   "trkbt10/indexion/src/mcp/server" @server,

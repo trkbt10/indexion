@@ -13,6 +13,15 @@ pub(all) enum VCS {
 } derive(Eq, Debug)
 
 ///|
+/// Display a VCS variant as a human-readable string.
+pub impl Show for VCS with output(self, logger) {
+  match self {
+    Git => logger.write_string("Git")
+    Jujutsu => logger.write_string("Jujutsu")
+  }
+}
+
+///|
 /// Filesystem markers that identify a VCS repository root.
 /// Order within each entry does not matter; the first matching entry wins
 /// when scanning ancestor directories.

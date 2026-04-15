@@ -1,4 +1,15 @@
 ///|
+/// Extract a human-readable message from an HttpError.
+fn http_error_message(err : @mhttp.HttpError) -> String {
+  match err {
+    NetworkError(msg) => msg
+    InvalidUrl(msg) => msg
+    TimeoutError => "timeout"
+    NotSupported => "not supported"
+  }
+}
+
+///|
 /// Maximum number of HTTP redirects to follow.
 let max_redirects : Int = 5
 
@@ -19,7 +30,7 @@ async fn resolve_redirect_url(
   for i = 0; i < max_redirects; i = i + 1 {
     let req_headers = copy_headers(headers)
     let (response, _) = @mhttp.get(current_url, headers=req_headers) catch {
-      err => raise FetchError(@debug.to_string(err))
+      err => raise FetchError(http_error_message(err))
     }
     if response.code >= 200 && response.code < 300 {
       return current_url
@@ -46,7 +57,7 @@ pub async fn fetch_bytes(
   let final_url = resolve_redirect_url(url, headers)
   let req_headers = copy_headers(headers)
   let (_, body_data) = @mhttp.get(final_url, headers=req_headers) catch {
-    err => raise FetchError(@debug.to_string(err))
+    err => raise FetchError(http_error_message(err))
   }
   body_data.binary()
 }
@@ -60,7 +71,7 @@ pub async fn fetch_text(
   let final_url = resolve_redirect_url(url, headers)
   let req_headers = copy_headers(headers)
   let (_, body_data) = @mhttp.get(final_url, headers=req_headers) catch {
-    err => raise FetchError(@debug.to_string(err))
+    err => raise FetchError(http_error_message(err))
   }
   body_data.text() catch {
     _ => raise FetchError("Failed to decode response as text")

@@ -1,5 +1,4 @@
 import {
-  "moonbitlang/core/debug" @debug,
   "trkbt10/indexion/src/digest/http" @http,
   "trkbt10/indexion/src/digest/types" @types,
   "trkbt10/indexion/src/digest/config" @config,

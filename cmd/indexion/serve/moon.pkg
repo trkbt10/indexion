@@ -1,7 +1,6 @@
 import {
   "moonbitlang/async" @async,
   "moonbitlang/core/argparse" @argparse,
-  "moonbitlang/core/debug" @debug,
   "moonbitlang/core/json" @json,
   "moonbitlang/x/fs" @fs,
   "mizchi/x/http" @mhttp,

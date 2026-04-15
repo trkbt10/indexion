@@ -91,8 +91,7 @@ pub fn write_per_package(docs : Array[(PackageInfo, ExtractedDoc)]) -> Unit {
       @fs.write_string_to_file(readme_path, buf.to_string())
       println("  Generated: " + readme_path)
     } catch {
-      e =>
-        println("  Error writing " + readme_path + ": " + @debug.to_string(e))
+      @fs.IOError(msg) => println("  Error writing " + readme_path + ": " + msg)
     }
   }
 }

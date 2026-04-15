@@ -668,8 +668,8 @@ pub fn build_graph_from_source(
 /// Load graph from JSON file.
 pub fn load_graph_from_file(path : String) -> @graph.CodeGraph? {
   let content = @fs.read_file_to_string(path) catch {
-    e => {
-      log_error("Reading file: " + @debug.to_string(e))
+    @fs.IOError(msg) => {
+      log_error("Reading file: " + msg)
       return None
     }
   }
@@ -870,8 +870,8 @@ async fn run_query_async(config : CliConfig) -> Unit {
   // Load graph for unit resolution
   let graph_path = @dconfig.graph_path(config.index_dir)
   let graph_content = @fs.read_file_to_string(graph_path) catch {
-    e => {
-      log_error("Reading graph: " + @debug.to_string(e))
+    @fs.IOError(msg) => {
+      log_error("Reading graph: " + msg)
       return
     }
   }
@@ -908,8 +908,8 @@ fn run_stats(config : CliConfig) -> Unit {
   }
   // Load manifest
   let manifest_content = @fs.read_file_to_string(mp) catch {
-    e => {
-      log_error("Reading manifest: " + @debug.to_string(e))
+    @fs.IOError(msg) => {
+      log_error("Reading manifest: " + msg)
       return
     }
   }
@@ -923,8 +923,8 @@ fn run_stats(config : CliConfig) -> Unit {
   }
   let graph_path = @dconfig.graph_path(config.index_dir)
   let graph_content = @fs.read_file_to_string(graph_path) catch {
-    e => {
-      log_error("Reading graph: " + @debug.to_string(e))
+    @fs.IOError(msg) => {
+      log_error("Reading graph: " + msg)
       return
     }
   }
@@ -955,8 +955,8 @@ fn run_status(config : CliConfig) -> Unit {
     return
   }
   let manifest_content = @fs.read_file_to_string(mp) catch {
-    e => {
-      log_error("Reading manifest: " + @debug.to_string(e))
+    @fs.IOError(msg) => {
+      log_error("Reading manifest: " + msg)
       return
     }
   }

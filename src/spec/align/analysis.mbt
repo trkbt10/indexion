@@ -38,10 +38,8 @@ fn file_exists(path : String) -> Bool {
 ///|
 fn path_is_dir(path : String) -> Bool {
   @fs.is_dir(path) catch {
-    err => {
-      println(
-        "Error: failed to inspect path `" + path + "`: " + @debug.to_string(err),
-      )
+    @fs.IOError(msg) => {
+      println("Error: failed to inspect path `" + path + "`: " + msg)
       false
     }
   }
@@ -175,13 +173,8 @@ async fn collect_spec_data(
   let tracking_config = @reconcile_tracking.FileTrackingConfig::new(true, true)
   for path in spec_files {
     let content = @fs.read_file_to_string(path) catch {
-      err => {
-        println(
-          "Error: failed to read spec file `" +
-          path +
-          "`: " +
-          @debug.to_string(err),
-        )
+      @fs.IOError(msg) => {
+        println("Error: failed to read spec file `" + path + "`: " + msg)
         return ([], [], [], {}, [])
       }
     }
@@ -301,12 +294,9 @@ async fn collect_impl_data(
   let tracking_config = @reconcile_tracking.FileTrackingConfig::new(true, true)
   for path in impl_files {
     let content = @fs.read_file_to_string(path) catch {
-      err => {
+      @fs.IOError(msg) => {
         println(
-          "Error: failed to read implementation file `" +
-          path +
-          "`: " +
-          @debug.to_string(err),
+          "Error: failed to read implementation file `" + path + "`: " + msg,
         )
         return ([], [], {}, {}, [])
       }

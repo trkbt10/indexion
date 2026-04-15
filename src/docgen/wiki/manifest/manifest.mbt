@@ -15,16 +15,16 @@ pub fn load_manifest(wiki_dir : String) -> @wiki_types.WikiManifest? {
     let empty_manifest = @wiki_types.WikiManifest::new(title="Wiki", pages=[])
     let json_str = empty_manifest.to_json().stringify(indent=2)
     @fs.write_string_to_file(manifest_path, json_str) catch {
-      e => {
-        println("Error creating manifest: " + @debug.to_string(e))
+      @fs.IOError(msg) => {
+        println("Error creating manifest: " + msg)
         return None
       }
     }
     return Some(empty_manifest)
   }
   let manifest_content = @fs.read_file_to_string(manifest_path) catch {
-    e => {
-      println("Error reading manifest: " + @debug.to_string(e))
+    @fs.IOError(msg) => {
+      println("Error reading manifest: " + msg)
       return None
     }
   }
@@ -55,15 +55,15 @@ pub fn write_page(
   let manifest_path = @wiki_types.wiki_manifest_path(wiki_dir)
   let manifest_json = manifest.to_json().stringify(indent=2)
   @fs.write_string_to_file(manifest_path, manifest_json) catch {
-    e => {
-      println("Error writing manifest: " + @debug.to_string(e))
+    @fs.IOError(msg) => {
+      println("Error writing manifest: " + msg)
       return false
     }
   }
   let page_path = wiki_dir + "/" + page_id + ".md"
   @fs.write_string_to_file(page_path, content) catch {
-    e => {
-      println("Error writing page file: " + @debug.to_string(e))
+    @fs.IOError(msg) => {
+      println("Error writing page file: " + msg)
       return false
     }
   }

@@ -86,13 +86,8 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   @config.ensure_dir_recursive(output_resolved)
   let manifest = @wiki_interop.generate_manifest_json(data, wiki_title)
   @fs.write_string_to_file(wiki_mp, manifest) catch {
-    e => {
-      println(
-        "Error writing " +
-        @wiki_types.WIKI_MANIFEST_FILE +
-        ": " +
-        @debug.to_string(e),
-      )
+    @fs.IOError(msg) => {
+      println("Error writing " + @wiki_types.WIKI_MANIFEST_FILE + ": " + msg)
       return
     }
   }
@@ -102,8 +97,8 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     let path = output_resolved + "/" + id + ".md"
     @config.ensure_parent_dir(path)
     @fs.write_string_to_file(path, page.content) catch {
-      e => {
-        println("Error writing " + id + ".md: " + @debug.to_string(e))
+      @fs.IOError(msg) => {
+        println("Error writing " + id + ".md: " + msg)
         continue
       }
     }

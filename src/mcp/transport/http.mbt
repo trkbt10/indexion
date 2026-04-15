@@ -1,4 +1,15 @@
 ///|
+/// Extract a human-readable message from an HttpError.
+fn http_error_message(err : @mhttp.HttpError) -> String {
+  match err {
+    NetworkError(msg) => msg
+    InvalidUrl(msg) => msg
+    TimeoutError => "timeout"
+    NotSupported => "not supported"
+  }
+}
+
+///|
 /// # MCP Streamable HTTP transport
 ///
 /// Serves MCP over HTTP using the Streamable HTTP transport defined
@@ -21,7 +32,7 @@ pub async fn run_http(
 ) -> Unit {
   let http_server = @mhttp.Server::new(host~, port~, reuse_addr=true) catch {
     err => {
-      println("MCP HTTP server init failed: " + @debug.to_string(err))
+      println("MCP HTTP server init failed: " + http_error_message(err))
       return
     }
   }
@@ -77,7 +88,7 @@ pub async fn run_http(
     },
     allow_failure=true,
   ) catch {
-    err => eprintln("MCP HTTP server failed: " + @debug.to_string(err))
+    err => eprintln("MCP HTTP server failed: " + http_error_message(err))
   }
 }
 

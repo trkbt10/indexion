@@ -571,7 +571,7 @@ fn apply_fixes(
       @fs.write_string_to_file(full_path, modified)
       println("  Updated: " + file)
     } catch {
-      e => println("  Error writing " + file + ": " + @debug.to_string(e))
+      @fs.IOError(msg) => println("  Error writing " + file + ": " + msg)
     }
   }
 }

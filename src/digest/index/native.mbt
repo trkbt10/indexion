@@ -623,15 +623,15 @@ pub fn DigestIndex::save_to_dir(
   let (manifest_json, db_map) = self.serialize()
   // Write manifest
   @fs.write_string_to_file(@config.manifest_path(index_dir), manifest_json) catch {
-    e => errors.push("Saving manifest: " + @debug.to_string(e))
+    @fs.IOError(msg) => errors.push("Saving manifest: " + msg)
   }
   // Write vector databases per provider
   for entry in db_map {
     let key = entry.0
     let bytes = entry.1
     @fs.write_bytes_to_file(@config.vectors_db_path(index_dir, key), bytes) catch {
-      e =>
-        errors.push("Saving vectors for '" + key + "': " + @debug.to_string(e))
+      @fs.IOError(msg) =>
+        errors.push("Saving vectors for '" + key + "': " + msg)
     }
   }
   // Write TF-IDF vocabularies
@@ -644,17 +644,15 @@ pub fn DigestIndex::save_to_dir(
         @config.vocabulary_json_path(index_dir, key),
         vocab_json,
       ) catch {
-        e =>
-          errors.push(
-            "Saving vocabulary for '" + key + "': " + @debug.to_string(e),
-          )
+        @fs.IOError(msg) =>
+          errors.push("Saving vocabulary for '" + key + "': " + msg)
       }
     }
   }
   // Write graph
   let graph_json = graph.to_json_string()
   @fs.write_string_to_file(@config.graph_path(index_dir), graph_json) catch {
-    e => errors.push("Saving graph: " + @debug.to_string(e))
+    @fs.IOError(msg) => errors.push("Saving graph: " + msg)
   }
   errors
 }
