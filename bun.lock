@@ -32,6 +32,27 @@
         "react",
       ],
     },
+    "packages/graph-canvas": {
+      "name": "@indexion/graph-canvas",
+      "version": "0.0.1",
+      "devDependencies": {
+        "@indexion/api-client": "workspace:*",
+        "@tailwindcss/vite": "^4.2.2",
+        "@types/react": "^19.2.14",
+        "@types/react-dom": "^19.0.0",
+        "@vitejs/plugin-react": "^4.0.0",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "tailwindcss": "^4.2.2",
+        "typescript": "^5.9.3",
+        "vite": "^6.0.0",
+        "vitest": "^4.1.0",
+      },
+      "peerDependencies": {
+        "react": ">=18.0.0",
+        "react-dom": ">=18.0.0",
+      },
+    },
     "packages/kgf-tokenizer": {
       "name": "@indexion/kgf-tokenizer",
       "version": "0.0.1",
@@ -332,6 +353,8 @@
     "@iconify/utils": ["@iconify/utils@3.1.0", "", { "dependencies": { "@antfu/install-pkg": "^1.1.0", "@iconify/types": "^2.0.0", "mlly": "^1.8.0" } }, "sha512-Zlzem1ZXhI1iHeeERabLNzBHdOa4VhQbqAcOQaMKuTuyZCpwKbC2R4Dd0Zo3g9EAc+Y4fiarO8HIHRAth7+skw=="],
 
     "@indexion/api-client": ["@indexion/api-client@workspace:packages/api-client"],
+
+    "@indexion/graph-canvas": ["@indexion/graph-canvas@workspace:packages/graph-canvas"],
 
     "@indexion/kgf-tokenizer": ["@indexion/kgf-tokenizer@workspace:packages/kgf-tokenizer"],
 
