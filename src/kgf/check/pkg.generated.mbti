@@ -1,0 +1,57 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/check"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "trkbt10/indexion/src/kgf/types",
+}
+
+// Values
+pub fn check(@types.KGFSpec) -> Array[Diagnostic]
+
+pub fn check_source(String, String, @types.KGFSpec) -> Array[CheckDiagnostic]
+
+pub fn diagnostics_to_json(Array[CheckDiagnostic]) -> String
+
+// Errors
+
+// Types and methods
+pub struct CheckDiagnostic {
+  file : String
+  line : Int
+  col : Int
+  severity : String
+  message : String
+  source : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn CheckDiagnostic::compare(Self, Self) -> Int
+pub fn CheckDiagnostic::format_human(Self) -> String
+pub fn CheckDiagnostic::get_col(Self) -> Int
+pub fn CheckDiagnostic::get_file(Self) -> String
+pub fn CheckDiagnostic::get_line(Self) -> Int
+pub fn CheckDiagnostic::get_message(Self) -> String
+pub fn CheckDiagnostic::get_severity(Self) -> String
+pub fn CheckDiagnostic::get_source(Self) -> String
+pub fn CheckDiagnostic::new(String, Int, Int, String, String, String) -> Self
+
+pub struct Diagnostic {
+  section : String
+  severity : String
+  message : String
+}
+pub fn Diagnostic::get_message(Self) -> String
+pub fn Diagnostic::get_section(Self) -> String
+pub fn Diagnostic::get_severity(Self) -> String
+pub fn Diagnostic::new(String, String, String) -> Self
+
+pub struct SourceMap {
+  line_starts : Array[Int]
+}
+pub fn SourceMap::get_line_starts(Self) -> Array[Int]
+pub fn SourceMap::new(String) -> Self
+pub fn SourceMap::resolve(Self, Int) -> (Int, Int)
+
+// Type aliases
+
+// Traits

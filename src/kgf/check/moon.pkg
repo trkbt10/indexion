@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/json" @json,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
   "trkbt10/indexion/src/kgf/semantics" @kgf_semantics,
   "trkbt10/indexion/src/regexp" @regexp,

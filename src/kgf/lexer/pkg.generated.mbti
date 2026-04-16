@@ -2,35 +2,34 @@
 package "trkbt10/indexion/src/kgf/lexer"
 
 import {
+  "moonbitlang/core/debug",
   "trkbt10/indexion/src/kgf/types",
 }
 
 // Values
-pub fn find_pattern_captures(String, String, case_insensitive? : Bool) -> Array[CapturedMatch]
-
 pub fn lexer() -> LexerBuilder
-
-pub fn match_pattern(String, String, Int, case_insensitive? : Bool) -> MatchResult
-
-pub fn matches_at(String, String, Int, case_insensitive? : Bool) -> Bool
 
 // Errors
 
 // Types and methods
-pub struct CapturedMatch {
-  start_pos : Int
-  end_pos : Int
-  text : String
-  captures : Array[String]
-}
-
 type CompiledToken
+
+pub struct LexDiagnostic {
+  pos : Int
+  length : Int
+  text : String
+} derive(Eq, @debug.Debug)
+pub fn LexDiagnostic::get_length(Self) -> Int
+pub fn LexDiagnostic::get_pos(Self) -> Int
+pub fn LexDiagnostic::get_text(Self) -> String
+pub fn LexDiagnostic::new(Int, Int, String) -> Self
 
 pub struct Lexer {
   tokens : Array[CompiledToken]
 }
 pub fn Lexer::new(Array[@types.TokenDef]) -> Self
 pub fn Lexer::tokenize(Self, String) -> Array[@types.Tok]
+pub fn Lexer::tokenize_with_diagnostics(Self, String) -> (Array[@types.Tok], Array[LexDiagnostic])
 
 pub struct LexerBuilder {
   tokens : Array[@types.TokenDef]
@@ -39,14 +38,6 @@ pub fn LexerBuilder::build(Self) -> Lexer
 pub fn LexerBuilder::new() -> Self
 pub fn LexerBuilder::skip(Self, String, String) -> Self
 pub fn LexerBuilder::token(Self, String, String, skip? : Bool, flags? : String?) -> Self
-
-pub struct MatchResult {
-  matched : Bool
-  end_pos : Int
-  text : String
-}
-pub fn MatchResult::failure() -> Self
-pub fn MatchResult::success(Int, String) -> Self
 
 // Type aliases
 

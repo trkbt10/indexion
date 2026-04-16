@@ -1,0 +1,7 @@
+import {
+  "moonbitlang/core/argparse" @argparse,
+  "trkbt10/indexion/cmd/indexion/common" @common,
+  "trkbt10/indexion/cmd/indexion/help" @help,
+  "trkbt10/indexion/src/kgf/check" @kgf_check,
+  "trkbt10/indexion/src/kgf/features" @kgf_features,
+}

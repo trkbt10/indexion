@@ -2,6 +2,7 @@
 package "trkbt10/indexion/src/kgf/peg"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/hashset",
   "trkbt10/indexion/src/kgf/types",
 }
@@ -24,6 +25,8 @@ pub fn run_parse_filtered_iter(PEG, @types.KGFSpec, String, Array[@types.Tok], @
 pub fn run_parse_filtered_rec(PEG, @types.KGFSpec, String, Array[@types.Tok], @hashset.HashSet[String]) -> EvalResult?
 
 pub fn run_parse_iter(PEG, @types.KGFSpec, String, Array[@types.Tok], @hashset.HashSet[String], (String, Map[String, Json], Int, Int) -> Unit) -> Bool
+
+pub fn run_parse_with_diagnostics(PEG, @types.KGFSpec, String, Array[@types.Tok]) -> (EvalResult?, ParseDiagnostic)
 
 // Errors
 
@@ -68,7 +71,7 @@ pub enum Node {
   Label(String, Node)
   And(Node)
   Not(Node)
-} derive(Eq, Hash, Show)
+} derive(Eq, Hash, @debug.Debug)
 pub fn Node::get_and(Self) -> Self?
 pub fn Node::get_choice(Self) -> Array[Self]?
 pub fn Node::get_label(Self) -> (String, Self)?
@@ -88,6 +91,7 @@ pub fn Node::is_plus(Self) -> Bool
 pub fn Node::is_seq(Self) -> Bool
 pub fn Node::is_star(Self) -> Bool
 pub fn Node::is_sym(Self) -> Bool
+pub impl Show for Node
 
 pub struct PEG {
   tokens : @hashset.HashSet[String]
@@ -107,6 +111,18 @@ pub fn PEG::get_rule_attrs(Self, String) -> Array[@types.AttrAction]?
 pub fn PEG::get_tokens(Self) -> @hashset.HashSet[String]
 pub fn PEG::is_token(Self, String) -> Bool
 pub fn PEG::new() -> Self
+
+pub struct ParseDiagnostic {
+  furthest_pos : Int
+  actual_token : @types.Tok?
+  expected_kinds : Array[String]
+  fully_consumed : Bool
+}
+pub fn ParseDiagnostic::get_actual_token(Self) -> @types.Tok?
+pub fn ParseDiagnostic::get_expected_kinds(Self) -> Array[String]
+pub fn ParseDiagnostic::get_furthest_pos(Self) -> Int
+pub fn ParseDiagnostic::is_fully_consumed(Self) -> Bool
+pub fn ParseDiagnostic::new(Int, @types.Tok?, Array[String], Bool) -> Self
 
 // Type aliases
 

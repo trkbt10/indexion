@@ -32,6 +32,7 @@
 /// | `doc graph` | Generate dependency graph |
 /// | `doc readme` | Generate README from source doc comments |
 /// | `digest` | Purpose-based function index |
+/// | `check` | Validate source files against KGF specs |
 /// | `kgf` | KGF spec management and inspection |
 /// | `sim` | Calculate text similarity/distance |
 /// | `segment` | Split text into contextual segments |
@@ -66,6 +67,7 @@ fn build_command() -> @argparse.Command {
     subcommand_required=true,
     subcommands=[
       @init_cli.command(),
+      @check_cli.command(),
       @explore_cli.command(),
       @plan_cli.command(),
       @doc_cli.command(),
@@ -98,6 +100,7 @@ async fn main {
   guard matches.subcommand is Some((name, sub)) else { return }
   match name {
     "init" => @init_cli.run_matches(sub)
+    "check" => @check_cli.run_matches(sub)
     "explore" => @explore_cli.run_matches(sub)
     "plan" => @plan_cli.dispatch(sub)
     "doc" => @doc_cli.dispatch(sub)
