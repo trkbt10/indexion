@@ -35,4 +35,29 @@ export class UserService {
     }
     return result.slice(offset, offset + limit);
   }
+
+  /** Deletes a user by ID. */
+  deleteUser(id: UserId): boolean {
+    return this.users.delete(id);
+  }
+}
+
+/** Batch processor for user operations. */
+export class BatchProcessor {
+  static readonly MAX_BATCH_SIZE: number = 100;
+  private readonly service: UserService;
+
+  constructor(service: UserService) {
+    this.service = service;
+  }
+
+  /** Process multiple users in one call. */
+  async processAll(users: User[]): Promise<number> {
+    let count = 0;
+    for (const user of users) {
+      await this.service.addUser(user);
+      count++;
+    }
+    return count;
+  }
 }

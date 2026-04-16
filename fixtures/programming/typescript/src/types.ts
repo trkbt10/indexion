@@ -9,6 +9,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  tags?: string[];
 }
 
 /** Role assigned to a user. */
@@ -24,3 +25,15 @@ export interface QueryOptions {
   offset?: number;
   role?: UserRole;
 }
+
+/** Result wrapper for paginated queries. */
+export interface PagedResult<T> {
+  items: T[];
+  total: number;
+  hasMore: boolean;
+}
+
+/** Event types emitted by the service. */
+export type ServiceEvent =
+  | { kind: "created"; user: User }
+  | { kind: "deleted"; id: UserId };
