@@ -351,12 +351,25 @@ fn pad_right(s : String, width : Int) -> String {
 }
 
 ///|
+/// Load KGF registry with smart directory resolution.
+/// When `kgf_dir` is the default "kgfs", uses `@config.find_kgfs_dir()` to
+/// search environment variables, global config, project-local, and OS-standard
+/// data directories. An explicit non-default value is treated as a literal path.
+fn load_registry(kgf_dir : String) -> @registry.KGFRegistry {
+  let explicit = if kgf_dir != "kgfs" { kgf_dir } else { "" }
+  match @config.find_kgfs_dir(explicit_path=explicit) {
+    Some(dir) => @registry.KGFRegistry::load_from_dir(dir)
+    None => @registry.KGFRegistry::new()
+  }
+}
+
+///|
 /// Run full inspection.
 fn run_inspect(config : KgfConfig) -> Unit {
   println("=== indexion kgf inspect ===")
   println("File: \{config.file_path}")
   println("")
-  let registry = @registry.KGFRegistry::load_from_dir(config.kgf_dir)
+  let registry = load_registry(config.kgf_dir)
   let resolved = match
     resolve_spec_name(config.file_path, config.spec_name, registry) {
     Some(n) => n
@@ -479,7 +492,7 @@ fn run_tokens(config : KgfConfig) -> Unit {
   println("=== indexion kgf inspect ===")
   println("File: \{config.file_path}")
   println("")
-  let registry = @registry.KGFRegistry::load_from_dir(config.kgf_dir)
+  let registry = load_registry(config.kgf_dir)
   let resolved = match
     resolve_spec_name(config.file_path, config.spec_name, registry) {
     Some(n) => n
@@ -663,7 +676,7 @@ pub fn tokenize_json(
   spec_name : String,
   kgf_dir : String,
 ) -> String? {
-  let registry = @registry.KGFRegistry::load_from_dir(kgf_dir)
+  let registry = load_registry(kgf_dir)
   let resolved = match resolve_spec_name(file_path, spec_name, registry) {
     Some(n) => n
     None => return None
@@ -702,7 +715,7 @@ pub fn edges_json(
   spec_name : String,
   kgf_dir : String,
 ) -> String? {
-  let registry = @registry.KGFRegistry::load_from_dir(kgf_dir)
+  let registry = load_registry(kgf_dir)
   let resolved = match resolve_spec_name(file_path, spec_name, registry) {
     Some(n) => n
     None => return None
@@ -826,7 +839,7 @@ fn run_classify_train(
     None => 0.5
   }
   // Load registry and resolve spec
-  let registry = @registry.KGFRegistry::load_from_dir(kgf_dir)
+  let registry = load_registry(kgf_dir)
   // Collect training files
   let includes = if include_pattern.length() > 0 {
     [include_pattern]
@@ -924,7 +937,7 @@ fn run_check(kgf_dir : String, matches : @argparse.Matches) -> Unit {
     println("Error: No spec or file specified")
     return
   }
-  let registry = @registry.KGFRegistry::load_from_dir(kgf_dir)
+  let registry = load_registry(kgf_dir)
   let mut total_errors = 0
   let mut total_warnings = 0
   for target in targets {
