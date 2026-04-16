@@ -1,0 +1,9 @@
+flowchart TD
+    A[Start] --> B{Decision}
+    B -->|Yes| C[Process]
+    B -->|No| D[End]
+    C --> D
+    subgraph sub1[Sub Process]
+        E[Step 1] --> F[Step 2]
+    end
+    C --> E

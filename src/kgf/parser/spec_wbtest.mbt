@@ -32,6 +32,30 @@ test "find_substring" {
 }
 
 ///|
+test "find_line_start_substring: basic" {
+  assert_eq(find_line_start_substring("=== lex\nfoo", "==="), 0)
+  assert_eq(find_line_start_substring("foo\n=== grammar\nbar", "==="), 4)
+  assert_eq(find_line_start_substring("foo\n=== grammar\nbar", "=== grammar"), 4)
+}
+
+///|
+test "find_line_start_substring: ignores mid-line ===" {
+  // === inside a regex pattern on a line should NOT be found
+  assert_eq(find_line_start_substring("TOKEN ThickArrow /==>|===/", "==="), -1)
+  // But a line-start === after it should be found
+  assert_eq(
+    find_line_start_substring("TOKEN ThickArrow /==>|===/\n=== grammar", "=== grammar"),
+    27,
+  )
+}
+
+///|
+test "find_line_start_substring: not found" {
+  assert_eq(find_line_start_substring("no markers here", "==="), -1)
+  assert_eq(find_line_start_substring("", "==="), -1)
+}
+
+///|
 test "starts_with" {
   assert_true(starts_with("hello", "hel"))
   assert_true(starts_with("hello", "hello"))

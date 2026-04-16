@@ -87,6 +87,39 @@ pub fn find_substring(text : String, needle : String) -> Int {
 }
 
 ///|
+/// Finds the index of a substring that appears at the start of a line.
+/// A line start is either position 0 or immediately after a newline character.
+/// Returns -1 if not found.
+pub fn find_line_start_substring(text : String, needle : String) -> Int {
+  let n_len = needle.length()
+  if n_len == 0 {
+    return 0
+  }
+  if n_len > text.length() {
+    return -1
+  }
+  let text_arr = text.to_array()
+  let needle_arr = needle.to_array()
+  for i in 0..<(text.length() - n_len + 1) {
+    // Only match at line start: position 0 or after '\n'
+    if i > 0 && text_arr[i - 1] != '\n' {
+      continue
+    }
+    let mut found = true
+    for j in 0..<n_len {
+      if text_arr[i + j] != needle_arr[j] {
+        found = false
+        break
+      }
+    }
+    if found {
+      return i
+    }
+  }
+  -1
+}
+
+///|
 /// Finds the index of a character in a string starting from a position.
 /// Returns -1 if not found.
 pub fn find_char(text : String, start : Int, c : Char) -> Int {

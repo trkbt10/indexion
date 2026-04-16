@@ -74,12 +74,13 @@
 
 ///|
 /// Extracts a section body by heading marker `=== name`.
+/// Uses line-start matching to avoid false positives from `===` inside patterns.
 fn section(text : String, name : String) -> String {
   let marker = "=== " + name
-  let idx = find_substring(text, marker)
+  let idx = find_line_start_substring(text, marker)
   guard idx >= 0 else { return "" }
   let body = substr_from(text, idx + marker.length())
-  let split_idx = find_substring(body, "===")
+  let split_idx = find_line_start_substring(body, "===")
   if split_idx >= 0 {
     substr(body, 0, split_idx)
   } else {
@@ -89,8 +90,9 @@ fn section(text : String, name : String) -> String {
 
 ///|
 /// Extracts the header section (everything before the first `===`).
+/// Uses line-start matching to avoid false positives from `===` inside patterns.
 fn extract_header(text : String) -> String {
-  let idx = find_substring(text, "===")
+  let idx = find_line_start_substring(text, "===")
   if idx >= 0 {
     substr(text, 0, idx)
   } else {
