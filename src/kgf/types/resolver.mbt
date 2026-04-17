@@ -49,6 +49,12 @@ pub(all) enum ResolveStepType {
   Sibling
   /// Walk ancestor directories searching for a package directory (node_modules/, vendor/)
   Ancestors
+  /// Strip the last `/`-delimited segment of the path and retry the chain.
+  /// Languages where import paths can address items *inside* a module —
+  /// Rust (`use cli::Cli` where `cli` is the module and `Cli` is an item),
+  /// Python (`from pkg.submod import Thing` where `Thing` is a class), etc.
+  /// — need this so the resolver can land on the containing module's file.
+  Progressive
   /// Apply fallback prefix for unresolved modules (npm:, pip:)
   Fallback
 } derive(Eq, Debug)
@@ -64,6 +70,7 @@ pub fn ResolveStepType::from_string(s : String) -> ResolveStepType? {
     "ext" => Some(Ext)
     "sibling" => Some(Sibling)
     "ancestors" => Some(Ancestors)
+    "progressive" => Some(Progressive)
     "fallback" => Some(Fallback)
     _ => None
   }
@@ -80,6 +87,7 @@ pub fn ResolveStepType::as_string(self : ResolveStepType) -> String {
     Ext => "ext"
     Sibling => "sibling"
     Ancestors => "ancestors"
+    Progressive => "progressive"
     Fallback => "fallback"
   }
 }
@@ -158,6 +166,15 @@ pub fn ResolveStep::sibling(files : Array[String]) -> ResolveStep {
 /// Creates an Ancestors resolve step (walks up from file to root).
 pub fn ResolveStep::ancestors(dirs : Array[String]) -> ResolveStep {
   ResolveStep::new(Ancestors, files=dirs)
+}
+
+///|
+/// Creates a Progressive resolve step — the chain driver retries the
+/// preceding file-probe steps (exact/index/ext/sibling) with successively
+/// shorter path suffixes stripped. Needed for languages where an import
+/// path can address an item nested inside a module file.
+pub fn ResolveStep::progressive() -> ResolveStep {
+  ResolveStep::new(Progressive)
 }
 
 ///|

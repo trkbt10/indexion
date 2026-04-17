@@ -126,9 +126,42 @@ fn resolve_with_chain(
     join_path([project_root, base_path])
   }
   let target_path = normalize_path(join_path([base_abs, mod_path]))
-  for step in spec.get_resolve_chain() {
-    if step.get_step_type() == @types.ResolveStepType::Ancestors {
-      // Walk ancestor directories from base_abs up to project_root
+  let steps = spec.get_resolve_chain()
+  // Collect the file-probe steps that precede the first Progressive step, if
+  // any. Progressive replays those specific steps against progressively
+  // shorter paths *in place* during the chain traversal, so the standard
+  // iteration order continues to Fallback only after Progressive gives up.
+  let prefix_steps = collect_leading_non_progressive(steps)
+  for step in steps {
+    let t = step.get_step_type()
+    if t == @types.ResolveStepType::Progressive {
+      // Replay prefix_steps on successively shorter targets.
+      if prefix_steps.length() == 0 {
+        continue
+      }
+      let mut shorter = strip_last_segment(target_path)
+      while shorter.length() >= base_abs.length() {
+        for pstep in prefix_steps {
+          let result = execute_resolve_step(
+            pstep, shorter, module_str, project_root, file_resolver,
+          )
+          match result {
+            Some(path) => return Some(path)
+            None => ()
+          }
+        }
+        if shorter == base_abs || !contains_char(shorter, '/') {
+          break
+        }
+        let next = strip_last_segment(shorter)
+        if next == shorter {
+          break
+        }
+        shorter = next
+      }
+      continue
+    }
+    if t == @types.ResolveStepType::Ancestors {
       let from_dir = dirname(
         if is_absolute(from_file) {
           from_file
@@ -153,6 +186,46 @@ fn resolve_with_chain(
     }
   }
   None
+}
+
+///|
+/// Collect the in-file resolution steps (exact/index/ext/sibling) that can be
+/// replayed against progressively shorter paths. Manifest/Ancestors/Fallback
+/// are skipped because replaying them at a shorter path has no consistent
+/// meaning.
+fn collect_leading_non_progressive(
+  steps : Array[@types.ResolveStep],
+) -> Array[@types.ResolveStep] {
+  let result : Array[@types.ResolveStep] = []
+  for step in steps {
+    match step.get_step_type() {
+      @types.ResolveStepType::Exact
+      | @types.ResolveStepType::Index
+      | @types.ResolveStepType::Ext
+      | @types.ResolveStepType::Sibling => result.push(step)
+      _ => ()
+    }
+  }
+  result
+}
+
+///|
+fn strip_last_segment(path : String) -> String {
+  let chars = path.to_array()
+  let mut last = -1
+  for i = 0; i < chars.length(); i = i + 1 {
+    if chars[i] == '/' {
+      last = i
+    }
+  }
+  if last < 0 {
+    return path
+  }
+  let sb = StringBuilder::new()
+  for i = 0; i < last; i = i + 1 {
+    sb.write_char(chars[i])
+  }
+  sb.to_string()
 }
 
 ///|
@@ -196,7 +269,9 @@ fn resolve_ancestors(
 }
 
 ///|
-/// Collect resolve chain steps that are not Ancestors or Fallback.
+/// Collect resolve chain steps that apply as single-step file probes
+/// (exact/manifest/marker/index/ext/sibling). Ancestors, Progressive, and
+/// Fallback are chain-level directives and are excluded.
 fn collect_non_ancestors_non_fallback(
   spec : @types.ResolverSpec,
 ) -> Array[@types.ResolveStep] {
@@ -204,6 +279,7 @@ fn collect_non_ancestors_non_fallback(
   for step in spec.get_resolve_chain() {
     let t = step.get_step_type()
     if t != @types.ResolveStepType::Ancestors &&
+      t != @types.ResolveStepType::Progressive &&
       t != @types.ResolveStepType::Fallback {
       result.push(step)
     }
@@ -294,6 +370,11 @@ fn execute_resolve_step(
     }
     @types.ResolveStepType::Ancestors =>
       // Handled at resolve_with_chain level, not here
+      None
+    @types.ResolveStepType::Progressive =>
+      // Progressive is a chain-level directive handled by resolve_with_chain,
+      // which replays the prefix steps with successively shorter targets. It
+      // never fires as a standalone per-step operation.
       None
     @types.ResolveStepType::Fallback => {
       // Fallback step returns the prefixed module path

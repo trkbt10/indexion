@@ -2,42 +2,38 @@
 
 namespace App\Services;
 
+use App\Dto\UserDto;
+use GuzzleHttp\Client;
+
 /**
  * Manages user operations.
  */
 class UserService
 {
     private string $dbHost;
+    private Client $http;
 
     public function __construct(string $dbHost)
     {
         $this->dbHost = $dbHost;
+        $this->http = new Client();
     }
 
     /**
      * Find a user by ID.
      */
-    public function findById(int $id): ?array
+    public function findById(int $id): ?UserDto
     {
         return null;
     }
 
-    public function create(array $data): bool
+    public function create(UserDto $dto): bool
     {
-        return true;
+        return $this->validate($dto);
     }
 
-    private function validate(array $data): bool
+    private function validate(UserDto $dto): bool
     {
-        return !empty($data['name']);
+        return $dto->name !== '';
     }
-}
-
-/**
- * Represents a data transfer object.
- */
-class UserDto
-{
-    public string $name;
-    public int $age;
 }

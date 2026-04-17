@@ -1,0 +1,4 @@
+import {
+  "trkbt10/sample-lib/utils" @utils,
+  "moonbitlang/core/strconv" @strconv,
+}

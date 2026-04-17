@@ -1,4 +1,55 @@
 ///|
+/// Walk up from the directory of `from_file` checking for a sibling file
+/// whose basename is `marker`. Returns the directory containing the marker
+/// (or an empty string when no ancestor contains it). Used by
+/// `$findAncestor` to locate project roots (Cargo.toml, pyproject.toml, …).
+fn walk_up_for_marker(
+  from_file : String,
+  marker : String,
+  file_exists : (String) -> Bool,
+) -> String {
+  let mut dir = parent_dir_of(from_file)
+  // Bound the walk to avoid pathological inputs; real projects are never
+  // more than a few dozen directories deep.
+  let mut hops = 0
+  while hops < 64 {
+    hops = hops + 1
+    let candidate = if dir.length() == 0 { marker } else { dir + "/" + marker }
+    if file_exists(candidate) {
+      return dir
+    }
+    if dir.length() == 0 {
+      return ""
+    }
+    let parent = parent_dir_of(dir)
+    if parent == dir {
+      return ""
+    }
+    dir = parent
+  }
+  ""
+}
+
+///|
+fn parent_dir_of(path : String) -> String {
+  let chars = path.to_array()
+  let mut last = -1
+  for i = 0; i < chars.length(); i = i + 1 {
+    if chars[i] == '/' {
+      last = i
+    }
+  }
+  if last < 0 {
+    return ""
+  }
+  let sb = StringBuilder::new()
+  for i = 0; i < last; i = i + 1 {
+    sb.write_char(chars[i])
+  }
+  sb.to_string()
+}
+
+///|
 /// Checks if a value is truthy according to KGF semantics.
 /// - null/undefined -> false
 /// - boolean -> itself
@@ -107,6 +158,63 @@ fn eval_call(
         ctx.read_file,
       )
       result.to_string().to_json()
+    }
+    "resolveFrom" => {
+      // $resolveFrom(base_dir, path) — resolve `path` against a caller-
+      // chosen base directory (as opposed to $resolve, which always uses
+      // the current file's dir). Needed for language constructs where the
+      // base is not the importing file — e.g. Rust's `use crate::..`
+      // (resolve against the crate root + src), or Python's
+      // `from ..pkg import x` (resolve against an ancestor of the source
+      // file). The resolver chain remains the spec's own so all
+      // ext/manifest/marker steps apply.
+      let base_dir = if evaluated_args.length() > 0 {
+        json_to_string(evaluated_args[0])
+      } else {
+        ""
+      }
+      let mod = if evaluated_args.length() > 1 {
+        json_to_string(evaluated_args[1])
+      } else {
+        ""
+      }
+      // Rewrite the module path into a relative form anchored at base_dir
+      // so the resolver picks `base_dir/...` as its base_path. The resolver
+      // recognises "./"-prefixed paths and uses `dirname(from_file)` for
+      // them, so we inject a pseudo-file inside base_dir.
+      let rebased_mod = "./" + mod
+      let pseudo_from = if base_dir.length() == 0 {
+        ctx.file
+      } else {
+        base_dir + "/anchor"
+      }
+      let result = @resolver.resolve_module_cached(
+        ctx.resolution_cache,
+        ctx.spec.get_resolver(),
+        ctx.language,
+        pseudo_from,
+        rebased_mod,
+        ctx.root,
+        ctx.file_exists,
+        ctx.read_file,
+      )
+      result.to_string().to_json()
+    }
+    "findAncestor" => {
+      // $findAncestor(marker) — walk up from the current file's directory
+      // until a file named `marker` exists; returns the directory path
+      // that contains the marker, or an empty string if none is found.
+      // Used by language specs whose `use`/`import` semantics resolve
+      // against a project-root marker (Cargo.toml, pyproject.toml, etc.).
+      let marker = if evaluated_args.length() > 0 {
+        json_to_string(evaluated_args[0])
+      } else {
+        ""
+      }
+      if marker.length() == 0 {
+        return "".to_json()
+      }
+      walk_up_for_marker(ctx.file, marker, ctx.file_exists).to_json()
     }
     "scope" => {
       let ns = if evaluated_args.length() > 0 {
@@ -834,8 +942,14 @@ fn eval_func_cond(args : Array[Json]) -> Json {
 /// SoT: the match arms in eval_call above.
 pub fn is_known_call(name : String) -> Bool {
   match name {
-    "resolve" | "scope" | "callId" | "autoSym" | "autoCall" | "collectRefs" =>
-      true
+    "resolve"
+    | "resolveFrom"
+    | "findAncestor"
+    | "scope"
+    | "callId"
+    | "autoSym"
+    | "autoCall"
+    | "collectRefs" => true
     _ => false
   }
 }
