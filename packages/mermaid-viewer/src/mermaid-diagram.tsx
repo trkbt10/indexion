@@ -1,254 +1,32 @@
 /**
  * @file Mermaid diagram renderer with pinch-to-zoom and pan support.
  *
- * Lazy-loads mermaid, renders to SVG. SVG keeps intrinsic viewBox dimensions.
- * TransformWrapper scales it to fit container width via setTransform().
- * Container height is computed from SVG aspect ratio and measured width.
- * The diagram stays hidden until the initial fit completes to avoid flash.
+ * The SVG keeps its intrinsic viewBox dimensions; TransformWrapper scales
+ * it to fit the container width via setTransform(). Container height is
+ * derived from the SVG aspect ratio against the measured width. The
+ * diagram stays hidden until the initial fit completes to avoid a flash
+ * at native scale.
+ *
+ * Implementation is split across ./mermaid/:
+ *   - svg-parser       : raw SVG → normalized SvgData
+ *   - mermaid-store    : dynamic import + per-source render cache
+ *   - use-fit-to-width : width measurement and transform driving
+ *   - toolbar          : shared overlay buttons
+ *   - full-screen-viewer: expanded modal viewer
  */
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
-import {
-  TransformWrapper,
-  TransformComponent,
-  type ReactZoomPanPinchRef,
-} from "react-zoom-pan-pinch";
-import { Fullscreen, Maximize2, X, ZoomIn, ZoomOut } from "lucide-react";
-
-// ── Types ──────────────────────────────────────────────────────────
+import { useState } from "react";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { Fullscreen, Maximize2, ZoomIn, ZoomOut } from "lucide-react";
+import { useMermaidSvg } from "./mermaid/mermaid-store.ts";
+import { useFitToWidth } from "./mermaid/use-fit-to-width.ts";
+import { Toolbar, ToolButton } from "./mermaid/toolbar.tsx";
+import { FullScreenViewer } from "./mermaid/full-screen-viewer.tsx";
 
 type Props = {
   readonly code: string;
   readonly className?: string;
 };
-
-type SvgData = {
-  html: string;
-  w: number;
-  h: number;
-};
-
-// ── SVG parsing ────────────────────────────────────────────────────
-
-const DEFAULT_SIZE = { w: 800, h: 600 };
-
-/** Parse mermaid SVG: ensure viewBox, set intrinsic w/h, strip inline style. */
-function parseMermaidSvg(raw: string): SvgData {
-  const doc = new DOMParser().parseFromString(raw, "image/svg+xml");
-  const el = doc.querySelector("svg");
-  if (!el) {
-    return { html: raw, ...DEFAULT_SIZE };
-  }
-
-  let { w, h } = extractViewBoxSize(el);
-  if (w <= 0 || h <= 0) {
-    w = parseFloat(el.getAttribute("width") ?? String(DEFAULT_SIZE.w));
-    h = parseFloat(el.getAttribute("height") ?? String(DEFAULT_SIZE.h));
-    el.setAttribute("viewBox", `0 0 ${w} ${h}`);
-  }
-
-  el.setAttribute("width", String(w));
-  el.setAttribute("height", String(h));
-  el.removeAttribute("style"); // mermaid injects max-width
-
-  return { html: el.outerHTML, w, h };
-}
-
-function extractViewBoxSize(el: SVGSVGElement): { w: number; h: number } {
-  const vb = el.getAttribute("viewBox");
-  if (!vb) {
-    return { w: 0, h: 0 };
-  }
-  const parts = vb.split(/[\s,]+/).map(Number);
-  if (parts.length === 4 && parts[2]! > 0 && parts[3]! > 0) {
-    return { w: parts[2]!, h: parts[3]! };
-  }
-  return { w: 0, h: 0 };
-}
-
-// ── Mermaid render store ───────────────────────────────────────────
-
-type MermaidEntry =
-  | { readonly state: "resolved"; readonly svg: SvgData }
-  | { readonly state: "error"; readonly message: string };
-
-const mermaidCache = new Map<string, MermaidEntry>();
-const mermaidInflight = new Set<string>();
-const mermaidListeners = new Set<() => void>();
-let mermaidVersion = 0;
-
-function mermaidSubscribe(cb: () => void): () => void {
-  mermaidListeners.add(cb);
-  return () => mermaidListeners.delete(cb);
-}
-
-function mermaidGetSnapshot(): number {
-  return mermaidVersion;
-}
-
-function mermaidNotify(): void {
-  mermaidVersion++;
-  for (const cb of mermaidListeners) {
-    cb();
-  }
-}
-
-function ensureMermaidRender(code: string): void {
-  if (mermaidCache.has(code) || mermaidInflight.has(code)) {
-    return;
-  }
-  mermaidInflight.add(code);
-  renderMermaid(code);
-}
-
-async function renderMermaid(code: string): Promise<void> {
-  try {
-    const { default: mermaid } = await import("mermaid");
-    mermaid.initialize({ startOnLoad: false, theme: "dark" });
-    const { svg: raw } = await mermaid.render(
-      `mermaid-${Math.random().toString(36).slice(2)}`,
-      code,
-    );
-    mermaidCache.set(code, { state: "resolved", svg: parseMermaidSvg(raw) });
-  } catch (err: unknown) {
-    console.error("[mermaid-viewer] Render failed:", err);
-    mermaidCache.set(code, { state: "error", message: String(err) });
-  }
-  mermaidInflight.delete(code);
-  mermaidNotify();
-}
-
-// ── Hooks ──────────────────────────────────────────────────────────
-
-/** Lazy-load mermaid, render code to normalized SVG data. */
-function useMermaidSvg(code: string) {
-  const version = useSyncExternalStore(
-    mermaidSubscribe,
-    mermaidGetSnapshot,
-    mermaidGetSnapshot,
-  );
-
-  useEffect(() => {
-    if (code.trim()) {
-      ensureMermaidRender(code);
-    }
-  }, [code]);
-
-  return useMemo(() => {
-    void version;
-    if (!code.trim()) {
-      return { svg: null, error: null };
-    }
-    const entry = mermaidCache.get(code);
-    if (!entry) {
-      return { svg: null, error: null };
-    }
-    switch (entry.state) {
-      case "resolved":
-        return { svg: entry.svg, error: null };
-      case "error":
-        return { svg: null, error: entry.message };
-    }
-  }, [code, version]);
-}
-
-const MIN_HEIGHT = 120;
-const MAX_VH = 0.8;
-
-/**
- * Measure container width, compute display height from SVG aspect ratio,
- * and call setTransform to fit the SVG to container width.
- * Tracks `ready` state — false until the first successful fit.
- */
-/**
- * Fit-to-width state tracked via a monotonic version counter.
- * `svgVersion` increments when svg changes (not yet fitted).
- * `fitVersion` increments when fitToWidth completes.
- * `ready` = they match (current svg has been fitted).
- */
-function useFitToWidth(svg: SvgData | null) {
-  const outerRef = useRef<HTMLDivElement>(null);
-  const transformRef = useRef<ReactZoomPanPinchRef>(null);
-  const [displayHeight, setDisplayHeight] = useState(300);
-  const prevWidthRef = useRef(0);
-
-  // Version tracking: ready when fitVersion catches up to svgVersion
-  const svgVersionRef = useRef(0);
-  const [fitVersion, setFitVersion] = useState(0);
-
-  // Track svg identity changes via ref — svg is the intentional trigger
-  const prevSvgRef = useRef(svg);
-  if (prevSvgRef.current !== svg) {
-    prevSvgRef.current = svg;
-    svgVersionRef.current++;
-  }
-  const currentSvgVersion = svgVersionRef.current;
-
-  const ready = fitVersion >= currentSvgVersion;
-
-  const fitToWidth = useCallback(() => {
-    const el = outerRef.current;
-    if (!el || !svg) {
-      return;
-    }
-    const cw = el.clientWidth;
-    if (cw <= 0) {
-      return;
-    }
-
-    const scale = cw / svg.w;
-    const maxH = window.innerHeight * MAX_VH;
-    const containerH = Math.max(Math.min(svg.h * scale, maxH), MIN_HEIGHT);
-    setDisplayHeight(containerH);
-
-    // setDisplayHeight triggers re-render → need to wait for DOM update.
-    // Double-rAF: first waits for React commit, second for browser layout.
-    const targetVersion = svgVersionRef.current;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const ref = transformRef.current;
-        if (!ref) {
-          return;
-        }
-        const scaledH = svg.h * scale;
-        const y = scaledH < containerH ? (containerH - scaledH) / 2 : 0;
-        ref.setTransform(0, y, scale, 0);
-        setFitVersion(targetVersion);
-      });
-    });
-  }, [svg]);
-
-  // Observe container width changes (width-only to avoid height→resize loop)
-  useEffect(() => {
-    const el = outerRef.current;
-    if (!el || !svg) {
-      return;
-    }
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const w = entry.contentRect.width;
-        if (Math.abs(w - prevWidthRef.current) > 1) {
-          prevWidthRef.current = w;
-          fitToWidth();
-        }
-      }
-    });
-    ro.observe(el);
-    fitToWidth();
-    return () => ro.disconnect();
-  }, [svg, fitToWidth]);
-
-  return { outerRef, transformRef, displayHeight, fitToWidth, ready };
-}
-
-// ── Components ─────────────────────────────────────────────────────
 
 export const MermaidDiagram = ({
   code,
@@ -279,7 +57,6 @@ export const MermaidDiagram = ({
 
   return (
     <>
-      {/* Inline preview — hidden until initial fit completes */}
       <div
         ref={outerRef}
         className={`relative overflow-hidden rounded border border-border/50 ${ready ? "visible" : "invisible"} ${className ?? ""}`}
@@ -323,7 +100,6 @@ export const MermaidDiagram = ({
         </TransformWrapper>
       </div>
 
-      {/* Full-screen viewer */}
       {expanded && (
         <FullScreenViewer
           svgHtml={svg.html}
@@ -333,94 +109,3 @@ export const MermaidDiagram = ({
     </>
   );
 };
-
-// ── Full-screen viewer ─────────────────────────────────────────────
-
-const FullScreenViewer = ({
-  svgHtml,
-  onClose,
-}: {
-  readonly svgHtml: string;
-  readonly onClose: () => void;
-}): React.JSX.Element => (
-  <div className="fixed inset-0 z-50 bg-background">
-    <TransformWrapper
-      initialScale={1}
-      minScale={0.3}
-      maxScale={8}
-      centerOnInit
-      wheel={{ step: 0.1 }}
-      panning={{ velocityDisabled: true }}
-    >
-      {({ zoomIn, zoomOut, resetTransform, zoomToElement }) => (
-        <>
-          <TransformComponent wrapperStyle={{ width: "100%", height: "100%" }}>
-            <div
-              ref={(el) => {
-                if (el) {
-                  requestAnimationFrame(() =>
-                    zoomToElement(el, undefined, 100),
-                  );
-                }
-              }}
-              dangerouslySetInnerHTML={{ __html: svgHtml }}
-            />
-          </TransformComponent>
-          <Toolbar position="right-3 top-3" size="size-3.5">
-            <ToolButton onClick={() => zoomIn()} label="Zoom in">
-              <ZoomIn />
-            </ToolButton>
-            <ToolButton onClick={() => zoomOut()} label="Zoom out">
-              <ZoomOut />
-            </ToolButton>
-            <ToolButton onClick={() => resetTransform()} label="Reset">
-              <Maximize2 />
-            </ToolButton>
-            <ToolButton onClick={onClose} label="Close">
-              <X />
-            </ToolButton>
-          </Toolbar>
-        </>
-      )}
-    </TransformWrapper>
-  </div>
-);
-
-// ── Shared toolbar UI ──────────────────────────────────────────────
-
-const Toolbar = ({
-  position,
-  size,
-  children,
-}: {
-  readonly position: string;
-  readonly size: string;
-  readonly children: React.ReactNode;
-}): React.JSX.Element => (
-  <div className={`absolute ${position} z-10 flex gap-1 [&_svg]:${size}`}>
-    {children}
-  </div>
-);
-
-const ToolButton = ({
-  onClick,
-  label,
-  children,
-}: {
-  readonly onClick: () => void;
-  readonly label: string;
-  readonly children: React.ReactNode;
-}): React.JSX.Element => (
-  <button
-    type="button"
-    onPointerDown={(e) => e.stopPropagation()}
-    onClick={(e) => {
-      e.stopPropagation();
-      onClick();
-    }}
-    aria-label={label}
-    className="pointer-events-auto rounded bg-background/80 p-1 text-muted-foreground backdrop-blur-sm transition-colors hover:bg-accent hover:text-foreground"
-  >
-    {children}
-  </button>
-);
