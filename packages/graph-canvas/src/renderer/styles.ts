@@ -1,70 +1,77 @@
 /**
  * @file Theme presets and visual style configuration.
  *
- * Provides dark and light themes with per-kind node colors, edge styles,
- * and default node radii.
+ * Monochrome palette inspired by Linear / Vercel: neutral grayscale for
+ * structure, a single cool accent for selection, and subtle warm accent
+ * for highlights. Kinds differentiate via luminance and radius rather
+ * than hue, keeping the graph visually quiet.
  */
 
 import type { EdgeStyle, NodeStyle, ThemeColors } from "../types.ts";
 
-const DEFAULT_NODE_STYLE: NodeStyle = { radius: 5, color: "#6b7280" };
+const DEFAULT_NODE_STYLE: NodeStyle = { radius: 5, color: "#71717a" };
 const DEFAULT_EDGE_STYLE: EdgeStyle = {
-  color: "#6b7280",
+  color: "#3f3f46",
   dash: [],
   arrow: true,
 };
 
 export const DARK_THEME: ThemeColors = {
-  background: "#0f0f14",
-  labelColor: "#d1d5db",
-  selectionColor: "#3b82f6",
-  highlightColor: "#facc15",
-  dimmedOpacity: 0.15,
+  background: "#09090b",
+  labelColor: "#a1a1aa",
+  selectionColor: "#fafafa",
+  highlightColor: "#fafafa",
+  tooltipBackground: "rgba(24, 24, 27, 0.96)",
+  tooltipBorder: "#3f3f46",
+  dimmedOpacity: 0.35,
   nodeStyles: {
-    module: { radius: 8, color: "#7c3aed" },
-    function: { radius: 5, color: "#06b6d4" },
-    type: { radius: 6, color: "#f59e0b" },
-    struct: { radius: 6, color: "#f59e0b" },
-    variable: { radius: 4, color: "#10b981" },
-    external: { radius: 6, color: "#6b7280" },
-    internal: { radius: 7, color: "#8b5cf6" },
+    // Narrower luminance range so the hub / leaf contrast is subtle.
+    module: { radius: 6.5, color: "#e4e4e7" },
+    function: { radius: 4, color: "#a1a1aa" },
+    type: { radius: 5, color: "#c4c4c9" },
+    struct: { radius: 5, color: "#c4c4c9" },
+    variable: { radius: 3.5, color: "#8b8b92" },
+    external: { radius: 5, color: "#71717a" },
+    internal: { radius: 5.5, color: "#d1d1d6" },
   },
   edgeStyles: {
-    dependency: { color: "#4b5563", dash: [], arrow: true },
-    circular: { color: "#ef4444", dash: [], arrow: true },
-    calls: { color: "#06b6d4", dash: [4, 4], arrow: true },
-    extends: { color: "#f59e0b", dash: [8, 4], arrow: true },
-    implements: { color: "#8b5cf6", dash: [2, 4], arrow: true },
-    declares: { color: "#374151", dash: [], arrow: false },
-    references: { color: "#374151", dash: [2, 2], arrow: true },
-    imports: { color: "#4b5563", dash: [6, 3], arrow: true },
+    dependency: { color: "#4b4b52", dash: [], arrow: true },
+    circular: { color: "#8b8b92", dash: [], arrow: true },
+    calls: { color: "#60606a", dash: [3, 3], arrow: true },
+    extends: { color: "#60606a", dash: [6, 3], arrow: true },
+    implements: { color: "#60606a", dash: [2, 3], arrow: true },
+    declares: { color: "#3a3a40", dash: [], arrow: false },
+    references: { color: "#3a3a40", dash: [2, 2], arrow: true },
+    imports: { color: "#4b4b52", dash: [5, 3], arrow: true },
   },
 };
 
 export const LIGHT_THEME: ThemeColors = {
-  background: "#fafafa",
-  labelColor: "#1f2937",
-  selectionColor: "#2563eb",
-  highlightColor: "#ca8a04",
-  dimmedOpacity: 0.12,
+  background: "#ffffff",
+  labelColor: "#52525b",
+  selectionColor: "#09090b",
+  highlightColor: "#09090b",
+  tooltipBackground: "rgba(255, 255, 255, 0.96)",
+  tooltipBorder: "#e4e4e7",
+  dimmedOpacity: 0.15,
   nodeStyles: {
-    module: { radius: 8, color: "#6d28d9" },
-    function: { radius: 5, color: "#0891b2" },
-    type: { radius: 6, color: "#d97706" },
-    struct: { radius: 6, color: "#d97706" },
-    variable: { radius: 4, color: "#059669" },
-    external: { radius: 6, color: "#9ca3af" },
-    internal: { radius: 7, color: "#7c3aed" },
+    module: { radius: 7, color: "#09090b" },
+    function: { radius: 4, color: "#52525b" },
+    type: { radius: 5, color: "#27272a" },
+    struct: { radius: 5, color: "#27272a" },
+    variable: { radius: 3, color: "#71717a" },
+    external: { radius: 5, color: "#a1a1aa" },
+    internal: { radius: 6, color: "#18181b" },
   },
   edgeStyles: {
-    dependency: { color: "#d1d5db", dash: [], arrow: true },
-    circular: { color: "#ef4444", dash: [], arrow: true },
-    calls: { color: "#0891b2", dash: [4, 4], arrow: true },
-    extends: { color: "#d97706", dash: [8, 4], arrow: true },
-    implements: { color: "#7c3aed", dash: [2, 4], arrow: true },
-    declares: { color: "#e5e7eb", dash: [], arrow: false },
-    references: { color: "#e5e7eb", dash: [2, 2], arrow: true },
-    imports: { color: "#d1d5db", dash: [6, 3], arrow: true },
+    dependency: { color: "#d4d4d8", dash: [], arrow: true },
+    circular: { color: "#71717a", dash: [], arrow: true },
+    calls: { color: "#a1a1aa", dash: [3, 3], arrow: true },
+    extends: { color: "#a1a1aa", dash: [6, 3], arrow: true },
+    implements: { color: "#a1a1aa", dash: [2, 3], arrow: true },
+    declares: { color: "#e4e4e7", dash: [], arrow: false },
+    references: { color: "#e4e4e7", dash: [2, 2], arrow: true },
+    imports: { color: "#d4d4d8", dash: [5, 3], arrow: true },
   },
 };
 
@@ -83,7 +90,6 @@ export function resolveTheme(pref: "dark" | "light" | "auto"): ThemeColors {
   if (pref === "light") {
     return LIGHT_THEME;
   }
-  // "auto": respect system preference
   if (
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-color-scheme: dark)").matches

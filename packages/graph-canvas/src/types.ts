@@ -15,7 +15,11 @@ export type Vec2 = { x: number; y: number };
 
 /**
  * A node in the view graph. Identity fields are readonly; simulation
- * fields (x, y, vx, vy, pinned) are mutable for in-place update.
+ * fields (position, velocity, pinned) are mutable for in-place update.
+ *
+ * The placement model is 3D. The 2D renderer projects (x,y,z) to the
+ * screen using parallel projection, mapping z to size and opacity.
+ * A future WebGL renderer can read the same (x,y,z) directly.
  */
 export type ViewNode = {
   readonly id: string;
@@ -27,8 +31,10 @@ export type ViewNode = {
   readonly metadata: Record<string, string>;
   x: number;
   y: number;
+  z: number;
   vx: number;
   vy: number;
+  vz: number;
   pinned: boolean;
 };
 
@@ -76,59 +82,6 @@ export type GraphJSON = {
 /** Input type accepted by the component — either CodeGraph or GraphJSON. */
 export type GraphInput = CodeGraph | GraphJSON;
 
-// --- Simulation Config ---
-
-export type ForceConfig = {
-  /** Coulomb repulsion strength. Default: 300 */
-  readonly repulsionStrength: number;
-  /** Hooke spring stiffness. Default: 0.02 */
-  readonly springStiffness: number;
-  /** Spring rest length in world units. Default: 80 */
-  readonly springRestLength: number;
-  /** Centering force strength. Default: 0.01 */
-  readonly centerStrength: number;
-  /** Velocity damping per tick (0..1). Default: 0.6 */
-  readonly velocityDecay: number;
-  /** Alpha decay per tick. Default: 0.0228 (~300 ticks to alphaMin) */
-  readonly alphaDecay: number;
-  /** Convergence threshold. Default: 0.001 */
-  readonly alphaMin: number;
-  /** Barnes-Hut approximation parameter. Default: 0.9 */
-  readonly barnesHutTheta: number;
-  /** Node count threshold for Barnes-Hut activation. Default: 200 */
-  readonly barnesHutThreshold: number;
-};
-
-export const DEFAULT_FORCE_CONFIG: ForceConfig = {
-  repulsionStrength: 300,
-  springStiffness: 0.02,
-  springRestLength: 80,
-  centerStrength: 0.01,
-  velocityDecay: 0.6,
-  alphaDecay: 0.0228,
-  alphaMin: 0.001,
-  barnesHutTheta: 0.9,
-  barnesHutThreshold: 200,
-};
-
-// --- Camera ---
-
-export type Camera = {
-  x: number;
-  y: number;
-  scale: number;
-  readonly minScale: number;
-  readonly maxScale: number;
-};
-
-export const DEFAULT_CAMERA: Readonly<Camera> = {
-  x: 0,
-  y: 0,
-  scale: 1,
-  minScale: 0.05,
-  maxScale: 5,
-};
-
 // --- Theme ---
 
 export type NodeStyle = {
@@ -147,6 +100,8 @@ export type ThemeColors = {
   readonly labelColor: string;
   readonly selectionColor: string;
   readonly highlightColor: string;
+  readonly tooltipBackground: string;
+  readonly tooltipBorder: string;
   readonly dimmedOpacity: number;
   readonly nodeStyles: Record<string, NodeStyle>;
   readonly edgeStyles: Record<string, EdgeStyle>;
@@ -168,7 +123,184 @@ export type FilterResult = {
   readonly highlightedNodes: Set<string>;
 };
 
+// --- Render settings (DI) ---
+
+/**
+ * Tuning knobs for every visual element. Defaults live in
+ * `DEFAULT_RENDER_SETTINGS`; callers override individual fields via
+ * the component's `renderSettings` prop. Tests and tooling can inject
+ * a deterministic settings object; UI can expose any subset as live
+ * controls without having to rewrite the renderer.
+ */
+export type RenderSettings = {
+  readonly node: NodeRenderSettings;
+  readonly shell: ShellRenderSettings;
+  readonly edge: EdgeRenderSettings;
+  readonly camera: CameraSettings;
+  readonly layout: LayoutSettings;
+};
+
+export type NodeRenderSettings = {
+  /** Target screen-space radius (pixels) for a leaf node. */
+  readonly pixelTarget: number;
+  /** Multiplier applied to the highest-degree node's pixel target.
+   *  Leaves sit at 1×, hubs scale up continuously. */
+  readonly hubScale: number;
+  /** Sphere mesh tessellation (width, height segments). Higher →
+   *  rounder at cost of draw time. */
+  readonly sphereSegments: { readonly width: number; readonly height: number };
+  /** Screen radius below which nodes fade; at `cullRadius` they are
+   *  hidden entirely. Fading is smoothstep between the two. */
+  readonly fadeRadius: number;
+  readonly cullRadius: number;
+  /** Depth-aware LOD: when a node is nested inside a cluster whose
+   *  projected radius is below `interiorFadeLoPx` the node is
+   *  hidden; it fades in smoothly up to `interiorFadeHiPx` so no
+   *  hard pop when the camera slowly zooms. Applies to nodes at
+   *  hierarchy depth > 1 — top-level landmarks are always visible. */
+  readonly interiorFadeLoPx: number;
+  readonly interiorFadeHiPx: number;
+};
+
+export type ShellRenderSettings = {
+  /** Segment count of the ring silhouette used to outline each
+   *  cluster. Higher → smoother circle. `height` is unused by the
+   *  ring geometry but kept for schema symmetry. */
+  readonly sphereSegments: { readonly width: number; readonly height: number };
+  /** Screen-space size range (pixel radius) over which a shell
+   *  smoothly appears and fades. Below `fadeInPx` shells are
+   *  invisible (too small); above `fadeOutPx` the camera is nearly
+   *  inside them so the outline wraps the viewport. Between these
+   *  the alpha is a smoothstep — no pops. */
+  readonly fadeInPx: number;
+  readonly peakLoPx: number;
+  readonly peakHiPx: number;
+  readonly fadeOutPx: number;
+  readonly opacityPeak: number;
+  /** Ring thickness as a fraction of the shell's outer radius.
+   *  Larger values produce a visibly thick outline; smaller a hair-
+   *  line. Combined with `targetBandPx` to pick per-instance alpha
+   *  so the visible line always reads as ~targetBandPx regardless
+   *  of projected size. */
+  readonly ringWidthFrac: number;
+  /** Target on-screen band thickness (pixels) for a ring at peak
+   *  visibility. When a shell's projected band exceeds this, alpha
+   *  is attenuated proportionally so the line never turns into a
+   *  gray wash. */
+  readonly targetBandPx: number;
+};
+
+export type EdgeRenderSettings = {
+  /** Line width (pixels) for every edge. */
+  readonly linewidth: number;
+  /** Base material opacity. Edges are then tinted per-edge by
+   *  importance × proximity, so this is the ceiling. */
+  readonly opacity: number;
+  /** Number of straight segments used to approximate each bezier.
+   *  Higher → smoother curve, more GPU work. */
+  readonly bezierSegments: number;
+  /** Pull strength toward the cluster-pair corridor (0 = straight
+   *  line through the edge midpoint, 1 = control point sits exactly
+   *  on the shared cluster-hub midpoint). */
+  readonly bundleStrength: number;
+  /** Edges are classified by length relative to the population.
+   *  `shortQuantile` (0..1) is the quantile below which an edge is
+   *  "short" (intra-cluster); `longQuantile` the one above which it
+   *  is "long" (cross-scene). Edges are tinted smoothstep between
+   *  those so the constellation shows local structure first. */
+  readonly shortQuantile: number;
+  readonly longQuantile: number;
+  /** Floor on the edge's tint after long-edge attenuation. 0 lets
+   *  very long edges disappear entirely; small positive values keep
+   *  a ghost line so relationships never fully vanish. */
+  readonly longEdgeFloor: number;
+};
+
+export type CameraSettings = {
+  /** Perspective FOV in degrees. */
+  readonly fov: number;
+  /** Near / far planes. Narrow near enables deep zoom-in without
+   *  clipping. */
+  readonly near: number;
+  readonly far: number;
+  /** Orbit radius bounds. */
+  readonly minDistance: number;
+  readonly maxDistance: number;
+  /** Multiplicative wheel-zoom strength. Each wheel tick multiplies
+   *  camera→target distance by `exp(deltaY × zoomPerTick × 0.01)`. */
+  readonly zoomPerTick: number;
+  /** Fraction of the camera's step that the orbit target follows
+   *  toward the cursor anchor. 0 keeps target stationary; higher
+   *  values let the orbit centre follow what the user is zooming on. */
+  readonly targetFollow: number;
+};
+
+export type LayoutSettings = {
+  /** World radius of the overall scene. fitToView in the renderer
+   *  measures the real payload per frame, so this only sets the
+   *  working coordinate scale. */
+  readonly worldRadius: number;
+  /** Fractional gap kept between any two sibling bubbles. Chord
+   *  between sibling centres ≥ (r_a + r_b) × (1 + siblingGap). */
+  readonly siblingGap: number;
+  /** Hard floor on a cluster bubble's radius as a fraction of its
+   *  parent. Keeps deeply-nested singletons visible. */
+  readonly minClusterFraction: number;
+  /** When a cluster contains BOTH sub-clusters and owned leaves,
+   *  the owned leaves occupy an inner sphere of radius
+   *  `cluster × innerFraction`. */
+  readonly innerFraction: number;
+  /** Target per-leaf spacing in world units inside a pure-leaf
+   *  cluster. Larger values spread leaves further apart so the
+   *  interior is legible. */
+  readonly ownedLeafFootprint: number;
+  /** Intra-cluster force relaxation: spring rest length, attraction
+   *  strength, and repulsion strength applied for `iterations`
+   *  rounds after the initial kind-band placement. */
+  readonly intraRelax: IntraRelaxSettings;
+};
+
+export type IntraRelaxSettings = {
+  readonly iterations: number;
+  /** Spring attraction coefficient for connected pairs. */
+  readonly attraction: number;
+  /** Coulomb-style repulsion coefficient between every pair. */
+  readonly repulsion: number;
+  /** Damping applied to accumulated displacement per iteration. */
+  readonly damping: number;
+  /** Maximum fraction of the cluster radius a node may travel per
+   *  iteration. Keeps the system stable. */
+  readonly maxStep: number;
+};
+
+/** Selection-state intent produced by pointer events. */
+export type SelectionIntent =
+  | {
+      readonly type: "click";
+      readonly node: ViewNode | null;
+      readonly shift: boolean;
+    }
+  | { readonly type: "double-click"; readonly node: ViewNode | null }
+  | { readonly type: "clear" };
+
+/** Effect emitted alongside every selection transition. The host
+ *  interprets these — the reducer itself is pure. */
+export type SelectionEffect =
+  | { readonly type: "none" }
+  | { readonly type: "fit-to-view" }
+  | { readonly type: "focus-on-node"; readonly nodeId: string };
+
 // --- Component API ---
+
+export type ClusteringStrategy =
+  | "none"
+  | "kind"
+  | "directory"
+  | "module"
+  | "community";
+
+/** Layout strategy identifier. See src/layout/strategies/. */
+export type LayoutStrategyId = "hde-volume" | "k-means" | "hierarchy";
 
 export type GraphCanvasProps = {
   readonly graph: GraphInput;
@@ -182,14 +314,23 @@ export type GraphCanvasProps = {
   readonly enabledNodeKinds?: ReadonlySet<string> | readonly string[];
   readonly searchQuery?: string;
   readonly hideDisconnected?: boolean;
+  readonly clustering?: ClusteringStrategy;
+  readonly layoutStrategy?: LayoutStrategyId;
   readonly className?: string;
-  readonly simulationConfig?: Partial<ForceConfig>;
+  /** Optional overrides — any subset of the default render settings.
+   *  Missing fields fall back to defaults via a deep merge. */
+  readonly renderSettings?: DeepPartial<RenderSettings>;
+};
+
+/** Deep readonly-partial used for the `renderSettings` override. */
+export type DeepPartial<T> = {
+  readonly [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
 };
 
 export type GraphCanvasHandle = {
   fitToView(padding?: number): void;
   selectNode(id: string): void;
   clearSelection(): void;
-  resetSimulation(): void;
+  relayout(): void;
   getNodePosition(id: string): Vec2 | null;
 };

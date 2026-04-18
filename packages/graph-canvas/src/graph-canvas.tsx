@@ -1,15 +1,21 @@
 /**
- * @file React wrapper around the canvas graph viewer.
+ * @file React wrapper around the graph viewer.
  *
- * The canvas is driven imperatively through refs. React state is used
- * only for values that affect DOM attributes (canvas size, dpr) or
- * that must trigger a re-render to pick up new props (theme resolution).
- * Selection, hover, filter, and graph positions are managed through
- * refs plus explicit redraw requests — there is no mirrored useState.
+ * The layout pipeline is one-shot and deterministic:
  *
- * Environment signals (container size, device pixel ratio, OS color
- * scheme) are subscribed to via useSyncExternalStore to avoid
- * setState-inside-useEffect patterns.
+ *   graph → (optional) clustering → HDE strategy → positions
+ *
+ * There is no per-frame simulation loop. Redraws are scheduled only
+ * when something changes (graph, filter, theme, selection, hover,
+ * drag). Dragging triggers a tiny local neighbour relaxation, never a
+ * global re-solve.
+ *
+ * Rendering uses WebGL via three.js (InstancedMesh for nodes & edges,
+ * DOM overlay for labels, Raycaster hit-testing, perspective camera,
+ * OrbitControls for rotate / pan / zoom).
+ *
+ * Environment signals (container size, dpr, system colour scheme) use
+ * useSyncExternalStore so they stay in sync without setState-in-effect.
  */
 
 import {
@@ -23,9 +29,7 @@ import {
   type CSSProperties,
 } from "react";
 import type {
-  Camera,
   FilterResult,
-  ForceConfig,
   GraphCanvasHandle,
   GraphCanvasProps,
   SelectionState,
@@ -33,30 +37,22 @@ import type {
   ViewGraph,
   ViewNode,
 } from "./types.ts";
-import { DEFAULT_CAMERA, DEFAULT_FORCE_CONFIG } from "./types.ts";
 import { computeFilter } from "./filter.ts";
 import {
-  clearSelection,
+  applySelectionIntent,
   createSelectionState,
-  enterFocusMode,
-  exitFocusMode,
-  toggleSelect,
 } from "./interaction/selection.ts";
-import { createSpatialHash, type SpatialHash } from "./interaction/hit-test.ts";
-import { createPointerHandler } from "./interaction/pointer.ts";
+import { installPointerHandlers } from "./interaction/pointer.ts";
+import { startRafLoop } from "./interaction/raf-loop.ts";
+import type { SelectionEffect, SelectionIntent } from "./types.ts";
+import { resolveRenderSettings } from "./renderer/settings.ts";
 import { diffGraph, normalizeGraph } from "./normalize.ts";
-import { fitToView } from "./renderer/camera.ts";
-import { renderFrame, type CanvasSize } from "./renderer/canvas-renderer.ts";
 import { DARK_THEME, LIGHT_THEME } from "./renderer/styles.ts";
-import { circularLayout } from "./simulation/layout.ts";
-import {
-  createSimulation,
-  reheat,
-  tick,
-  type SimulationState,
-} from "./simulation/simulation.ts";
+import { WebGlRenderer } from "./renderer/webgl/webgl-renderer.ts";
+import { layoutGraph, type StrategyResult } from "./layout/index.ts";
+import { computeClustering } from "./clustering/index.ts";
 
-const INITIAL_FIT_TICKS = 50;
+type CanvasSize = { readonly width: number; readonly height: number };
 const DEFAULT_SIZE: CanvasSize = { width: 640, height: 420 };
 
 export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
@@ -64,34 +60,23 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    // --- Imperative canvas state (not React state) ---
-    const cameraRef = useRef<Camera>({ ...DEFAULT_CAMERA });
-    const simulationRef = useRef<SimulationState | null>(null);
-    if (simulationRef.current === null) {
-      simulationRef.current = createSimulation();
-    }
-    const spatialHashRef = useRef<SpatialHash | null>(null);
-    if (spatialHashRef.current === null) {
-      spatialHashRef.current = createSpatialHash();
-    }
     const graphRef = useRef<ViewGraph | null>(null);
     const filterRef = useRef<FilterResult | null>(null);
     const selectionRef = useRef<SelectionState>(createSelectionState());
     const hoverNodeRef = useRef<ViewNode | null>(null);
     const sizeRef = useRef<CanvasSize>(DEFAULT_SIZE);
     const frameRef = useRef<number | null>(null);
-    const autoFitDoneRef = useRef(false);
-    const simulationTicksRef = useRef(0);
+    const rendererRef = useRef<WebGlRenderer | null>(null);
+    /** The first fit after a renderer is created snaps instantly;
+     *  later ones ease. Reset when the renderer is disposed. */
+    const hasFittedRef = useRef(false);
+    /** Extra metadata from the last layout pass (node depths, cluster
+     *  shells). Consumed by the renderer for LOD and outlines. */
+    const layoutResultRef = useRef<StrategyResult>({});
 
-    // --- Environment signals via external stores ---
     const containerSize = useContainerSize(containerRef);
     const dpr = useDevicePixelRatio();
     const theme = useResolvedTheme(props.theme ?? "auto");
-
-    const forceConfig = useMemo<ForceConfig>(
-      () => ({ ...DEFAULT_FORCE_CONFIG, ...props.simulationConfig }),
-      [props.simulationConfig],
-    );
 
     const size = useMemo<CanvasSize>(
       () => ({
@@ -103,32 +88,24 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
     sizeRef.current = size;
 
     const renderCurrentFrame = useCallback(() => {
-      const canvas = canvasRef.current;
+      const renderer = rendererRef.current;
       const graph = graphRef.current;
       const filter = filterRef.current;
-      if (!canvas || !graph || !filter) {
+      if (!renderer || !graph || !filter) {
         return;
       }
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        return;
-      }
-      const currentSize = sizeRef.current;
-      if (currentSize.width <= 0 || currentSize.height <= 0) {
-        return;
-      }
-      renderFrame({
-        ctx,
+      const layoutResult = layoutResultRef.current;
+      renderer.update({
         graph,
-        camera: cameraRef.current,
         filter,
         selection: selectionRef.current,
-        styles: theme,
         hoverNode: hoverNodeRef.current,
-        canvasSize: currentSize,
-        dpr,
+        theme,
+        nodeDepth: layoutResult.nodeDepth,
+        clusterShells: layoutResult.clusterShells,
       });
-    }, [theme, dpr]);
+      renderer.render();
+    }, [theme]);
 
     const requestRedraw = useCallback(() => {
       if (frameRef.current !== null) {
@@ -136,34 +113,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
       }
       frameRef.current = requestAnimationFrame(() => {
         frameRef.current = null;
-        const simulation = simulationRef.current;
-        const graph = graphRef.current;
-        const filter = filterRef.current;
-        if (!simulation || !graph || !filter || !spatialHashRef.current) {
-          return;
-        }
-
-        if (simulation.running) {
-          tick(simulation, graph, forceConfig);
-          simulationTicksRef.current += 1;
-        }
-        spatialHashRef.current.rebuild(
-          visibleNodesOf(graph, filter.visibleNodes),
-        );
-        maybeInitialFit({
-          autoFitDoneRef,
-          simulationTicksRef,
-          camera: cameraRef.current,
-          graph,
-          visibleNodes: filter.visibleNodes,
-          size: sizeRef.current,
-        });
         renderCurrentFrame();
-        if (simulation.running) {
-          requestRedraw();
-        }
       });
-    }, [forceConfig, renderCurrentFrame]);
+    }, [renderCurrentFrame]);
 
     const {
       enabledNodeKinds,
@@ -196,104 +148,209 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
       [onSelectionChange, requestRedraw],
     );
 
-    // --- Graph input → ViewGraph, with position preservation ---
+    const clustering = props.clustering ?? "none";
+    const layoutStrategy = props.layoutStrategy ?? "hde-volume";
+    const renderSettings = useMemo(
+      () => resolveRenderSettings(props.renderSettings),
+      [props.renderSettings],
+    );
+
+    /** Recompute clustering + layout + filter from scratch. */
+    const rebuild = useCallback(
+      (graph: ViewGraph) => {
+        const assignment = computeClustering(graph, clustering);
+        const clusterOf = clustering === "none" ? null : assignment.clusterOf;
+        const result = layoutGraph({
+          graph,
+          clusterOf,
+          strategy: layoutStrategy,
+          settings: renderSettings.layout,
+        });
+        layoutResultRef.current = result;
+        const filter = recomputeFilter(graph);
+        const visibleNodes = graph.nodes.filter((n) =>
+          filter.visibleNodes.has(n.id),
+        );
+        const renderer = rendererRef.current;
+        if (renderer) {
+          if (hasFittedRef.current) {
+            renderer.fitToView(visibleNodes, 48);
+          } else {
+            renderer.fitToViewInstant(visibleNodes, 48);
+            hasFittedRef.current = true;
+          }
+        }
+      },
+      [clustering, layoutStrategy, recomputeFilter, renderSettings.layout],
+    );
+
+    // --- Graph input → ViewGraph (+ layout, filter, fit) ---
     useEffect(() => {
       const incoming = normalizeGraph(props.graph);
       const previous = graphRef.current;
       const nextGraph = previous ? diffGraph(previous, incoming) : incoming;
-      circularLayout(nextGraph.nodes, nextGraph.edges);
       graphRef.current = nextGraph;
-      const filter = recomputeFilter(nextGraph);
-      spatialHashRef.current?.rebuild(
-        visibleNodesOf(nextGraph, filter.visibleNodes),
-      );
-      autoFitDoneRef.current = false;
-      simulationTicksRef.current = 0;
-      if (simulationRef.current) {
-        reheat(simulationRef.current, 0.6);
-      }
+      rebuild(nextGraph);
       requestRedraw();
-    }, [props.graph, recomputeFilter, requestRedraw]);
+    }, [props.graph, rebuild, requestRedraw]);
 
-    // --- Filter inputs change → recompute, redraw ---
+    // --- Filter inputs change → recompute + redraw ---
     useEffect(() => {
       const graph = graphRef.current;
       if (!graph) {
         return;
       }
-      const filter = recomputeFilter(graph);
-      spatialHashRef.current?.rebuild(
-        visibleNodesOf(graph, filter.visibleNodes),
-      );
+      recomputeFilter(graph);
       requestRedraw();
     }, [recomputeFilter, requestRedraw]);
 
-    // --- Size/dpr/theme changed → redraw ---
+    // --- Size / dpr / theme change → redraw ---
     useEffect(() => {
       requestRedraw();
     }, [size, theme, dpr, requestRedraw]);
 
-    // --- Pointer interaction ---
+    // --- Renderer lifecycle ---
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      const container = containerRef.current;
+      if (!canvas || !container) {
+        return;
+      }
+      const renderer = new WebGlRenderer({
+        canvas,
+        container,
+        dpr,
+        width: sizeRef.current.width,
+        height: sizeRef.current.height,
+        theme,
+        settings: renderSettings,
+      });
+      rendererRef.current = renderer;
+      hasFittedRef.current = false;
+      // If the graph was laid out before the renderer existed, fit
+      // it now — otherwise the camera stays at the default spawn
+      // position (z=1200, looking at origin) while the scene is
+      // elsewhere, and the canvas shows a black void.
+      const graph = graphRef.current;
+      const filter = filterRef.current;
+      if (graph && filter) {
+        const visible = graph.nodes.filter((n) =>
+          filter.visibleNodes.has(n.id),
+        );
+        if (visible.length > 0) {
+          renderer.fitToViewInstant(visible, 48);
+          hasFittedRef.current = true;
+        }
+      }
+      requestRedraw();
+      return () => {
+        rendererRef.current = null;
+        hasFittedRef.current = false;
+        renderer.dispose();
+      };
+    }, [dpr, theme, renderSettings, requestRedraw]);
+
+    // --- Resize ---
+    useEffect(() => {
+      const renderer = rendererRef.current;
+      if (!renderer) {
+        return;
+      }
+      renderer.resize({ width: size.width, height: size.height, dpr });
+      requestRedraw();
+    }, [size, dpr, requestRedraw]);
+
+    // --- Pointer interaction + camera damping tick loop ---
     const { onNodeClick, onNodeDoubleClick } = props;
     useEffect(() => {
       const canvas = canvasRef.current;
-      const spatialHash = spatialHashRef.current;
-      if (!canvas || !spatialHash) {
+      if (!canvas) {
         return;
       }
-      const handler = createPointerHandler({
+
+      // ── RAF loop ─────────────────────────────────────────────
+      // Runs only while there's actual motion to draw. Triggered
+      // by pointer / wheel / OrbitControls change events; as soon
+      // as the camera is stationary we stop requesting frames.
+      // Idle CPU/GPU usage stays at zero.
+      const raf = startRafLoop(rendererRef);
+
+      // Wake the RAF loop whenever OrbitControls reports a user
+      // action (drag-orbit, wheel-zoom, pinch, etc) so the camera
+      // damping plays out visibly.
+      const unsubCameraChange =
+        rendererRef.current?.onCameraChange(() => raf.kick()) ?? (() => {});
+
+      const runSelectionEffect = (effect: SelectionEffect) => {
+        if (effect.type === "none") {
+          return;
+        }
+        const renderer = rendererRef.current;
+        const graph = graphRef.current;
+        const filter = filterRef.current;
+        if (!renderer || !graph || !filter) {
+          return;
+        }
+        if (effect.type === "fit-to-view") {
+          renderer.fitToView(
+            graph.nodes.filter((n) => filter.visibleNodes.has(n.id)),
+            48,
+          );
+          return;
+        }
+        const node = graph.nodeIndex.get(effect.nodeId);
+        if (node) {
+          renderer.focusOn(node);
+        }
+      };
+
+      const applyIntent = (intent: SelectionIntent) => {
+        const graph = graphRef.current;
+        if (!graph) {
+          return;
+        }
+        const transition = applySelectionIntent({
+          state: selectionRef.current,
+          intent,
+          edges: graph.edges,
+        });
+        if (transition.state !== selectionRef.current) {
+          updateSelection(transition.state);
+        }
+        runSelectionEffect(transition.effect);
+      };
+
+      // ── Pointer state machine ────────────────────────────────
+      const pointer = installPointerHandlers({
         canvas,
-        camera: cameraRef.current,
-        spatialHash,
-        callbacks: {
-          onNodeClick: (node, shift) => {
+        rendererRef,
+        graphRef,
+        hoverNodeRef,
+        onHoverChange: () => requestRedraw(),
+        onDragMove: () => {
+          requestRedraw();
+          raf.kick();
+        },
+        onClick: (node, shift) => {
+          if (node) {
             onNodeClick?.(node);
-            updateSelection(toggleSelect(selectionRef.current, node.id, shift));
-          },
-          onNodeDoubleClick: (node) => {
+          }
+          applyIntent({ type: "click", node, shift });
+          requestRedraw();
+        },
+        onDoubleClick: (node) => {
+          if (node) {
             onNodeDoubleClick?.(node);
-            const current = selectionRef.current;
-            const graph = graphRef.current;
-            if (!graph) {
-              return;
-            }
-            const next =
-              current.focusCenter === node.id
-                ? exitFocusMode(current)
-                : enterFocusMode(current, node.id, graph.edges);
-            updateSelection(next);
-          },
-          onBackgroundClick: (shift) => {
-            if (shift) {
-              return;
-            }
-            updateSelection(clearSelection(selectionRef.current));
-          },
-          onBackgroundDoubleClick: () => {
-            updateSelection(exitFocusMode(selectionRef.current));
-          },
-          onDrag: () => {
-            requestRedraw();
-          },
-          onHover: (node) => {
-            if (hoverNodeRef.current?.id === node?.id) {
-              return;
-            }
-            hoverNodeRef.current = node;
-            requestRedraw();
-          },
-          onReheat: () => {
-            if (simulationRef.current) {
-              reheat(simulationRef.current, 0.3);
-            }
-            requestRedraw();
-          },
-          requestRedraw,
+          }
+          applyIntent({ type: "double-click", node });
+          requestRedraw();
         },
       });
-      handler.attach();
+
       return () => {
-        handler.detach();
+        raf.stop();
+        unsubCameraChange();
+        pointer.dispose();
       };
     }, [onNodeClick, onNodeDoubleClick, requestRedraw, updateSelection]);
 
@@ -313,16 +370,14 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
         fitToView: (padding: number = 40) => {
           const graph = graphRef.current;
           const filter = filterRef.current;
-          if (!graph || !filter) {
+          const renderer = rendererRef.current;
+          if (!graph || !filter || !renderer) {
             return;
           }
-          fitToView({
-            camera: cameraRef.current,
-            nodes: visibleNodesOf(graph, filter.visibleNodes),
-            canvasWidth: sizeRef.current.width,
-            canvasHeight: sizeRef.current.height,
-            padding,
-          });
+          const visible = graph.nodes.filter((n) =>
+            filter.visibleNodes.has(n.id),
+          );
+          renderer.fitToView(visible, padding);
           requestRedraw();
         },
         selectNode: (id: string) => {
@@ -338,19 +393,25 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
           });
         },
         clearSelection: () => {
-          updateSelection(clearSelection(selectionRef.current));
-        },
-        resetSimulation: () => {
           const graph = graphRef.current;
-          const simulation = simulationRef.current;
-          if (!graph || !simulation) {
+          const transition = applySelectionIntent({
+            state: selectionRef.current,
+            intent: { type: "clear" },
+            edges: graph?.edges ?? [],
+          });
+          if (transition.state !== selectionRef.current) {
+            updateSelection(transition.state);
+          }
+        },
+        relayout: () => {
+          const graph = graphRef.current;
+          if (!graph) {
             return;
           }
-          resetNodePositions(graph);
-          circularLayout(graph.nodes, graph.edges);
-          reheat(simulation, 1);
-          simulationTicksRef.current = 0;
-          autoFitDoneRef.current = false;
+          for (const node of graph.nodes) {
+            node.pinned = false;
+          }
+          rebuild(graph);
           requestRedraw();
         },
         getNodePosition: (id: string) => {
@@ -361,7 +422,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
           return { x: node.x, y: node.y };
         },
       }),
-      [requestRedraw, updateSelection],
+      [rebuild, requestRedraw, updateSelection],
     );
 
     const canvasWidth = Math.max(1, Math.floor(size.width * dpr));
@@ -501,8 +562,6 @@ function useResolvedTheme(theme: "dark" | "light" | "auto"): ThemeColors {
   return prefersDark ? DARK_THEME : LIGHT_THEME;
 }
 
-// --- Pure helpers ---
-
 function makeContainerStyle(
   width: number | undefined,
   height: number | undefined,
@@ -514,53 +573,4 @@ function makeContainerStyle(
     minHeight: height ? undefined : 320,
     overflow: "hidden",
   };
-}
-
-function visibleNodesOf(
-  graph: ViewGraph,
-  visibleNodes: ReadonlySet<string>,
-): ViewNode[] {
-  return graph.nodes.filter((node) => visibleNodes.has(node.id));
-}
-
-type InitialFitCtx = {
-  readonly autoFitDoneRef: { current: boolean };
-  readonly simulationTicksRef: { current: number };
-  readonly camera: Camera;
-  readonly graph: ViewGraph;
-  readonly visibleNodes: ReadonlySet<string>;
-  readonly size: CanvasSize;
-};
-
-function maybeInitialFit(ctx: InitialFitCtx): void {
-  if (ctx.autoFitDoneRef.current) {
-    return;
-  }
-  const nodes = visibleNodesOf(ctx.graph, ctx.visibleNodes);
-  if (nodes.length === 0) {
-    return;
-  }
-  // Continuously refit during initial convergence so the graph is
-  // always visible — the force simulation may spread nodes beyond
-  // the initial layout, and a one-shot fit would leave them off-screen.
-  fitToView({
-    camera: ctx.camera,
-    nodes,
-    canvasWidth: ctx.size.width,
-    canvasHeight: ctx.size.height,
-    padding: 48,
-  });
-  if (ctx.simulationTicksRef.current >= INITIAL_FIT_TICKS) {
-    ctx.autoFitDoneRef.current = true;
-  }
-}
-
-function resetNodePositions(graph: ViewGraph): void {
-  for (const node of graph.nodes) {
-    node.x = 0;
-    node.y = 0;
-    node.vx = 0;
-    node.vy = 0;
-    node.pinned = false;
-  }
 }

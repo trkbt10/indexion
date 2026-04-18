@@ -1,197 +1,150 @@
 /**
- * @file Unified pointer and wheel interaction manager.
+ * @file Pointer state machine: drag / click / double-click.
+ *
+ * Owns only pointer-level state — the drag mode, click-vs-drag
+ * threshold, and the timing/id comparison that detects a double
+ * click. Higher-level effects (selection reducer, RAF kick, redraw)
+ * are supplied by the caller via callbacks so this module has no
+ * knowledge of React state or the renderer's selection layer.
  */
 
-import type { Camera, Vec2, ViewNode } from "../types.ts";
-import { pan, screenToWorld, zoom } from "../renderer/camera.ts";
-import type { SpatialHash } from "./hit-test.ts";
+import type { ViewGraph, ViewNode } from "../types.ts";
+import type { WebGlRenderer } from "../renderer/webgl/webgl-renderer.ts";
+import { relaxNeighbours } from "../layout/index.ts";
 
-export type PointerCallbacks = {
-  readonly onNodeClick?: (node: ViewNode, shift: boolean) => void;
-  readonly onNodeDoubleClick?: (node: ViewNode, shift: boolean) => void;
-  readonly onBackgroundClick?: (shift: boolean) => void;
-  readonly onBackgroundDoubleClick?: (shift: boolean) => void;
-  readonly onDrag?: (node: ViewNode) => void;
-  readonly onHover?: (node: ViewNode | null) => void;
-  readonly onReheat?: () => void;
-  readonly requestRedraw: () => void;
+export type PointerHandlersArgs = {
+  readonly canvas: HTMLCanvasElement;
+  readonly rendererRef: { current: WebGlRenderer | null };
+  readonly graphRef: { current: ViewGraph | null };
+  readonly hoverNodeRef: { current: ViewNode | null };
+  readonly onHoverChange: () => void;
+  readonly onDragMove: () => void;
+  readonly onClick: (node: ViewNode | null, shift: boolean) => void;
+  readonly onDoubleClick: (node: ViewNode | null) => void;
 };
 
-export type PointerHandler = {
-  attach(): void;
-  detach(): void;
-};
-
-type PointerMode = "idle" | "panning" | "dragging";
-
-type PointerState = {
-  mode: PointerMode;
-  startScreen: Vec2;
-  lastScreen: Vec2;
-  dragNode: ViewNode | null;
-  hoverNode: ViewNode | null;
-  lastClickTime: number;
-  lastClickNodeId: string | null;
+export type PointerHandle = {
+  readonly dispose: () => void;
 };
 
 const CLICK_DISTANCE = 5;
 const DOUBLE_CLICK_MS = 300;
-const HIT_RADIUS_SCREEN = 14;
 
-export type CreatePointerHandlerArgs = {
-  readonly canvas: HTMLCanvasElement;
-  readonly camera: Camera;
-  readonly spatialHash: SpatialHash;
-  readonly callbacks: PointerCallbacks;
-};
+export function installPointerHandlers(
+  args: PointerHandlersArgs,
+): PointerHandle {
+  const {
+    canvas,
+    rendererRef,
+    graphRef,
+    hoverNodeRef,
+    onHoverChange,
+    onDragMove,
+    onClick,
+    onDoubleClick,
+  } = args;
 
-export function createPointerHandler(
-  args: CreatePointerHandlerArgs,
-): PointerHandler {
-  const { canvas, camera, spatialHash, callbacks } = args;
-  const state: PointerState = {
-    mode: "idle",
-    startScreen: { x: 0, y: 0 },
-    lastScreen: { x: 0, y: 0 },
-    dragNode: null,
-    hoverNode: null,
-    lastClickTime: 0,
-    lastClickNodeId: null,
+  type Mode = "idle" | "dragging-node";
+  let mode: Mode = "idle";
+  let startX = 0;
+  let startY = 0;
+  let dragNode: ViewNode | null = null;
+  let lastClickTs = 0;
+  let lastClickNodeId: string | null = null;
+
+  const canvasPoint = (e: PointerEvent) => {
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
 
-  const getNodeAt = (screen: Vec2): ViewNode | null => {
-    const world = screenToWorld(camera, screen);
-    return spatialHash.queryPoint(
-      world.x,
-      world.y,
-      HIT_RADIUS_SCREEN / camera.scale,
-    );
-  };
-
-  const setHover = (node: ViewNode | null): void => {
-    if (state.hoverNode?.id === node?.id) {
+  const onPointerDown = (e: PointerEvent) => {
+    const renderer = rendererRef.current;
+    if (!renderer) {
       return;
     }
-    state.hoverNode = node;
-    callbacks.onHover?.(node);
-    callbacks.requestRedraw();
+    const p = canvasPoint(e);
+    startX = p.x;
+    startY = p.y;
+    const hit = renderer.pickNodeAt(p.x, p.y);
+    if (hit) {
+      dragNode = hit;
+      mode = "dragging-node";
+      renderer.setControlsEnabled(false);
+      canvas.setPointerCapture(e.pointerId);
+    }
   };
 
-  const onPointerDown = (event: PointerEvent): void => {
-    const screen = eventToCanvasPoint(canvas, event);
-    const node = getNodeAt(screen);
-    state.startScreen = screen;
-    state.lastScreen = screen;
-    state.dragNode = node;
-    state.mode = node ? "dragging" : "panning";
-    if (node) {
-      node.pinned = true;
+  const onPointerMove = (e: PointerEvent) => {
+    const renderer = rendererRef.current;
+    if (!renderer) {
+      return;
     }
-    canvas.setPointerCapture(event.pointerId);
-    callbacks.requestRedraw();
+    const p = canvasPoint(e);
+    if (mode === "dragging-node" && dragNode) {
+      const world = renderer.screenToWorldOnPlane(p.x, p.y, dragNode);
+      if (world) {
+        dragNode.x = world.x;
+        dragNode.y = world.y;
+        dragNode.z = world.z;
+        dragNode.pinned = true;
+        const graph = graphRef.current;
+        if (graph) {
+          relaxNeighbours(graph, dragNode);
+        }
+        onDragMove();
+      }
+      return;
+    }
+    const hit = renderer.pickNodeAt(p.x, p.y);
+    if (hoverNodeRef.current?.id !== hit?.id) {
+      hoverNodeRef.current = hit;
+      onHoverChange();
+    }
   };
 
-  const onPointerMove = (event: PointerEvent): void => {
-    const screen = eventToCanvasPoint(canvas, event);
-    if (state.mode === "dragging" && state.dragNode) {
-      const world = screenToWorld(camera, screen);
-      state.dragNode.x = world.x;
-      state.dragNode.y = world.y;
-      state.dragNode.vx = 0;
-      state.dragNode.vy = 0;
-      callbacks.onDrag?.(state.dragNode);
-      callbacks.onReheat?.();
-      callbacks.requestRedraw();
-    }
-    if (state.mode === "panning") {
-      pan(camera, screen.x - state.lastScreen.x, screen.y - state.lastScreen.y);
-      callbacks.requestRedraw();
-    }
-    state.lastScreen = screen;
-    setHover(getNodeAt(screen));
-  };
-
-  const onPointerUp = (event: PointerEvent): void => {
-    const screen = eventToCanvasPoint(canvas, event);
-    const wasClick = distance(state.startScreen, screen) < CLICK_DISTANCE;
-    const clickedNode = state.dragNode ?? getNodeAt(screen);
-    state.mode = "idle";
-    state.dragNode = null;
-    if (canvas.hasPointerCapture(event.pointerId)) {
-      canvas.releasePointerCapture(event.pointerId);
-    }
-
-    if (wasClick) {
-      dispatchClick(clickedNode, event.shiftKey, event.timeStamp);
-    }
-    callbacks.requestRedraw();
-  };
-
-  const dispatchClick = (
-    node: ViewNode | null,
-    shift: boolean,
-    timeStamp: number,
-  ): void => {
+  const dispatchClick = (node: ViewNode | null, shift: boolean, ts: number) => {
     const nodeId = node?.id ?? null;
-    const elapsed = timeStamp - state.lastClickTime;
-    const isDouble =
-      elapsed <= DOUBLE_CLICK_MS && state.lastClickNodeId === nodeId;
-    state.lastClickTime = timeStamp;
-    state.lastClickNodeId = nodeId;
-
+    const elapsed = ts - lastClickTs;
+    const isDouble = elapsed <= DOUBLE_CLICK_MS && lastClickNodeId === nodeId;
+    lastClickTs = ts;
+    lastClickNodeId = nodeId;
     if (isDouble) {
-      if (node) {
-        callbacks.onNodeDoubleClick?.(node, shift);
-      }
-      if (!node) {
-        callbacks.onBackgroundDoubleClick?.(shift);
-      }
+      onDoubleClick(node);
+    } else {
+      onClick(node, shift);
+    }
+  };
+
+  const onPointerUp = (e: PointerEvent) => {
+    const renderer = rendererRef.current;
+    if (!renderer) {
       return;
     }
-
-    if (node) {
-      callbacks.onNodeClick?.(node, shift);
-    } else {
-      callbacks.onBackgroundClick?.(shift);
+    const p = canvasPoint(e);
+    const dist = Math.hypot(p.x - startX, p.y - startY);
+    const wasClick = dist < CLICK_DISTANCE;
+    const clicked = dragNode;
+    mode = "idle";
+    dragNode = null;
+    renderer.setControlsEnabled(true);
+    if (canvas.hasPointerCapture(e.pointerId)) {
+      canvas.releasePointerCapture(e.pointerId);
+    }
+    if (wasClick) {
+      dispatchClick(clicked, e.shiftKey, e.timeStamp);
     }
   };
 
-  const onWheel = (event: WheelEvent): void => {
-    event.preventDefault();
-    zoom(camera, eventToCanvasPoint(canvas, event), event.deltaY);
-    callbacks.requestRedraw();
-  };
-
-  const attach = (): void => {
-    canvas.addEventListener("pointerdown", onPointerDown);
-    canvas.addEventListener("pointermove", onPointerMove);
-    canvas.addEventListener("pointerup", onPointerUp);
-    canvas.addEventListener("pointercancel", onPointerUp);
-    canvas.addEventListener("wheel", onWheel, { passive: false });
-  };
-
-  const detach = (): void => {
-    canvas.removeEventListener("pointerdown", onPointerDown);
-    canvas.removeEventListener("pointermove", onPointerMove);
-    canvas.removeEventListener("pointerup", onPointerUp);
-    canvas.removeEventListener("pointercancel", onPointerUp);
-    canvas.removeEventListener("wheel", onWheel);
-  };
-
-  return { attach, detach };
-}
-
-function eventToCanvasPoint(
-  canvas: HTMLCanvasElement,
-  event: MouseEvent,
-): Vec2 {
-  const rect = canvas.getBoundingClientRect();
+  canvas.addEventListener("pointerdown", onPointerDown);
+  canvas.addEventListener("pointermove", onPointerMove);
+  canvas.addEventListener("pointerup", onPointerUp);
+  canvas.addEventListener("pointercancel", onPointerUp);
   return {
-    x: event.clientX - rect.left,
-    y: event.clientY - rect.top,
+    dispose: () => {
+      canvas.removeEventListener("pointerdown", onPointerDown);
+      canvas.removeEventListener("pointermove", onPointerMove);
+      canvas.removeEventListener("pointerup", onPointerUp);
+      canvas.removeEventListener("pointercancel", onPointerUp);
+    },
   };
-}
-
-function distance(a: Vec2, b: Vec2): number {
-  return Math.hypot(a.x - b.x, a.y - b.y);
 }

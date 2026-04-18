@@ -78,10 +78,22 @@ export function fromCodeGraph(cg: CodeGraph): ViewGraph {
 
   // Edges
   const edges: ViewEdge[] = [];
+  let missingFrom = 0;
+  let missingTo = 0;
+  const missingSamples: string[] = [];
   for (const e of cg.edges) {
     const source = nodeIndex.get(e.from);
     const target = nodeIndex.get(e.to);
     if (!source || !target) {
+      if (!source) {
+        missingFrom++;
+      }
+      if (!target) {
+        missingTo++;
+      }
+      if (missingSamples.length < 3) {
+        missingSamples.push(`${e.from} → ${e.to}`);
+      }
       continue;
     }
     edges.push({
@@ -92,6 +104,13 @@ export function fromCodeGraph(cg: CodeGraph): ViewGraph {
       source,
       target,
     });
+  }
+
+  const dropped = cg.edges.length - edges.length;
+  if (dropped > 0) {
+    console.warn(
+      `[graph-canvas] Dropped ${dropped}/${cg.edges.length} edges whose endpoints are absent from modules/symbols (from: ${missingFrom}, to: ${missingTo}). Samples: ${missingSamples.join("; ")}`,
+    );
   }
 
   return { nodes, edges, nodeIndex };
@@ -117,10 +136,14 @@ export function fromGraphJSON(gj: GraphJSON): ViewGraph {
   }
 
   const edges: ViewEdge[] = [];
+  const missingSamples: string[] = [];
   for (const ge of gj.edges) {
     const source = nodeIndex.get(ge.from);
     const target = nodeIndex.get(ge.to);
     if (!source || !target) {
+      if (missingSamples.length < 3) {
+        missingSamples.push(`${ge.from} → ${ge.to}`);
+      }
       continue;
     }
     edges.push({
@@ -131,6 +154,13 @@ export function fromGraphJSON(gj: GraphJSON): ViewGraph {
       source,
       target,
     });
+  }
+
+  const dropped = gj.edges.length - edges.length;
+  if (dropped > 0) {
+    console.warn(
+      `[graph-canvas] Dropped ${dropped}/${gj.edges.length} GraphJSON edges with missing endpoints. Samples: ${missingSamples.join("; ")}`,
+    );
   }
 
   return { nodes, edges, nodeIndex };
@@ -146,11 +176,12 @@ export function diffGraph(oldGraph: ViewGraph, newGraph: ViewGraph): ViewGraph {
     if (oldNode) {
       node.x = oldNode.x;
       node.y = oldNode.y;
+      node.z = oldNode.z;
       node.vx = 0;
       node.vy = 0;
+      node.vz = 0;
       node.pinned = oldNode.pinned;
     } else {
-      // Place new node near centroid of its connected neighbors
       placeNearNeighbors(node, newGraph);
     }
   }
@@ -160,22 +191,31 @@ export function diffGraph(oldGraph: ViewGraph, newGraph: ViewGraph): ViewGraph {
 function placeNearNeighbors(node: ViewNode, graph: ViewGraph): void {
   let cx = 0;
   let cy = 0;
+  let cz = 0;
   let count = 0;
   for (const edge of graph.edges) {
     const neighbor = neighborOf(edge, node.id);
-    if (neighbor && (neighbor.x !== 0 || neighbor.y !== 0)) {
+    if (neighbor && !isAtOrigin(neighbor)) {
       cx += neighbor.x;
       cy += neighbor.y;
+      cz += neighbor.z;
       count++;
     }
   }
   if (count > 0) {
-    // Offset slightly from centroid to avoid overlap
-    const angle = Math.random() * Math.PI * 2;
-    node.x = cx / count + Math.cos(angle) * 30;
-    node.y = cy / count + Math.sin(angle) * 30;
+    // Offset slightly from centroid to avoid overlap.
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.random() * Math.PI - Math.PI / 2;
+    const r = 30;
+    node.x = cx / count + Math.cos(phi) * Math.cos(theta) * r;
+    node.y = cy / count + Math.cos(phi) * Math.sin(theta) * r;
+    node.z = cz / count + Math.sin(phi) * r;
   }
-  // else: leave at (0,0) — circularLayout will handle initial placement
+  // else: leave at origin — initial layout will place it.
+}
+
+function isAtOrigin(node: ViewNode): boolean {
+  return node.x === 0 && node.y === 0 && node.z === 0;
 }
 
 function neighborOf(edge: ViewEdge, nodeId: string): ViewNode | null {
@@ -203,8 +243,10 @@ function makeNode(args: MakeNodeArgs): ViewNode {
     ...args,
     x: 0,
     y: 0,
+    z: 0,
     vx: 0,
     vy: 0,
+    vz: 0,
     pinned: false,
   };
 }

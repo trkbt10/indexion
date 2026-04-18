@@ -1,1 +1,24 @@
-@import "tailwindcss";
+@import url("https://rsms.me/inter/inter.css");
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #09090b;
+}
+
+#root {
+  height: 100vh;
+}
+
+button {
+  font: inherit;
+}
+
+button:hover {
+  background: rgba(127, 127, 127, 0.08) !important;
+}
+
+button:active {
+  transform: translateY(0.5px);
+}
