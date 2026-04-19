@@ -3,6 +3,7 @@ import {
   "moonbitlang/core/builtin",
   "moonbitlang/core/hashset",
   "moonbitlang/core/json",
+  "trkbt10/indexion/src/kgf/charclass" @charclass,
   "trkbt10/indexion/src/kgf/types",
 }
 

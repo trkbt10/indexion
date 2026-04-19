@@ -35,11 +35,11 @@ pub fn parse_classify(text : String) -> @types.ClassifyModel? {
   let mut current_vocab : Map[String, Double] = {}
   for line in lines {
     let trimmed = trim_str(line)
-    if trimmed.length() == 0 || starts_with(trimmed, "#") {
+    if trimmed.length() == 0 || trimmed.has_prefix("#") {
       continue
     }
     // Class definition: @class_name prior=value
-    if starts_with(trimmed, "@") {
+    if trimmed.has_prefix("@") {
       // Finalize previous class if any
       if current_class.length() > 0 {
         classes.set(
@@ -78,7 +78,7 @@ pub fn parse_classify(text : String) -> @types.ClassifyModel? {
       current_prior = 0.0
       current_vocab = {}
       // Re-check if this is a new class or metadata
-      if starts_with(trimmed, "@") {
+      if trimmed.has_prefix("@") {
         let (name, prior) = parse_class_header(substr_from(trimmed, 1))
         current_class = name
         current_prior = prior
@@ -122,7 +122,7 @@ fn parse_class_header(text : String) -> (String, Double) {
   let params = trim_str(substr_from(trimmed, space_idx + 1))
   // Parse prior=value
   let mut prior = 0.0
-  if starts_with(params, "prior=") {
+  if params.has_prefix("prior=") {
     let value_str = trim_str(substr_from(params, 6))
     prior = parse_double(value_str)
   }

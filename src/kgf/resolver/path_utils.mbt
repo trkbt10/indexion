@@ -36,7 +36,7 @@ pub fn dirname(path : String) -> String {
     return "."
   }
   let normalized = normalize_path(path)
-  let last_slash = find_last_char(normalized, '/')
+  let last_slash = @config.find_last_char(normalized, '/')
   if last_slash < 0 {
     return "."
   }
@@ -54,7 +54,7 @@ pub fn basename(path : String) -> String {
     return ""
   }
   let normalized = normalize_path(path)
-  let last_slash = find_last_char(normalized, '/')
+  let last_slash = @config.find_last_char(normalized, '/')
   if last_slash < 0 {
     return normalized
   }
@@ -153,19 +153,6 @@ pub fn relative_path(from : String, to : String) -> String {
 pub fn is_absolute(path : String) -> Bool {
   let chars = path.to_array()
   chars.length() > 0 && chars[0] == '/'
-}
-
-///|
-/// Finds the last occurrence of a character in a string.
-/// Returns -1 if not found.
-fn find_last_char(s : String, c : Char) -> Int {
-  let chars = s.to_array()
-  for i = chars.length() - 1; i >= 0; i = i - 1 {
-    if chars[i] == c {
-      return i
-    }
-  }
-  -1
 }
 
 ///|

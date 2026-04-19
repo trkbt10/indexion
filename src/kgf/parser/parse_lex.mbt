@@ -91,11 +91,11 @@ pub fn parse_lex(text : String) -> LexResult {
   for line in lines {
     let ln = trim_str(line)
     // Skip empty lines and comments
-    if ln.length() == 0 || starts_with(ln, "#") {
+    if ln.length() == 0 || ln.has_prefix("#") {
       continue
     }
     // Parse SKIP rules
-    if starts_with(ln, "SKIP") {
+    if ln.has_prefix("SKIP") {
       match parse_skip_rule(ln) {
         Some(tok) => tokens.push(tok)
         None => ()
@@ -103,7 +103,7 @@ pub fn parse_lex(text : String) -> LexResult {
       continue
     }
     // Parse KEYWORD rules (same as TOKEN but registered as keyword)
-    if starts_with(ln, "KEYWORD") {
+    if ln.has_prefix("KEYWORD") {
       match parse_named_token_rule(ln, 7) {
         Some(tok) => {
           keyword_kinds[tok.get_name()] = true
@@ -114,7 +114,7 @@ pub fn parse_lex(text : String) -> LexResult {
       continue
     }
     // Parse TOKEN rules
-    if starts_with(ln, "TOKEN") {
+    if ln.has_prefix("TOKEN") {
       match parse_named_token_rule(ln, 5) {
         Some(tok) => tokens.push(tok)
         None => ()

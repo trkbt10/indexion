@@ -78,7 +78,7 @@ fn eval_attr_def(
   // Note: doc values are already cleaned by lexer capture groups/skip_value
   let doc : String? = match params.get("doc") {
     Some(doc_label) => {
-      let text_label = doc_label + "_text"
+      let text_label = doc_label + @types.META_TEXT_SUFFIX
       match labels.get(text_label) {
         Some(String(s)) => if s.length() > 0 { Some(s) } else { None }
         Some(json) => {

@@ -15,18 +15,13 @@ pub fn find_kgfs_dir(
 
 ///|
 /// Convert string to lowercase.
+///
+/// Thin wrapper over MoonBit's `String::to_lower()` kept for API
+/// compatibility with downstream callers. Folded here instead of
+/// re-implementing the ASCII table so the behavior matches `@tokenize`,
+/// which already relies on the builtin.
 pub fn to_lower_str(s : String) -> String {
-  let chars = s.to_array()
-  let result : Array[Char] = []
-  for c in chars {
-    let code = c.to_int()
-    if code >= 0x41 && code <= 0x5A {
-      result.push((code + 32).unsafe_to_char())
-    } else {
-      result.push(c)
-    }
-  }
-  String::from_array(result)
+  s.to_lower()
 }
 
 ///|
@@ -81,7 +76,7 @@ pub fn token_search_terms(
   spec~ : @kgf_types.KGFSpec,
 ) -> Array[String] {
   let result : Array[String] = []
-  let raw = to_lower_str(tok.get_text())
+  let raw = tok.get_text().to_lower()
   if raw.length() > 0 {
     result.push(raw)
   }
@@ -108,14 +103,14 @@ fn subtokenize_vocab_words(text : String) -> Array[String] {
       ch == '_' {
       buf.write_char(ch)
     } else {
-      let word = to_lower_str(buf.to_string())
+      let word = buf.to_string().to_lower()
       if word.length() >= 3 && !result.contains(word) {
         result.push(word)
       }
       buf.reset()
     }
   }
-  let last = to_lower_str(buf.to_string())
+  let last = buf.to_string().to_lower()
   if last.length() >= 3 && !result.contains(last) {
     result.push(last)
   }

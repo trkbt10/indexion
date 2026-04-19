@@ -114,18 +114,18 @@ pub fn parse_resolver_with_sources(
     let raw = lines[i]
     let ln = trim_str(raw)
     // Skip empty lines and comments
-    if ln.length() == 0 || starts_with(ln, "#") {
+    if ln.length() == 0 || ln.has_prefix("#") {
       i += 1
       continue
     }
     // Check for aliases block
-    if starts_with(ln, "aliases:") {
+    if ln.has_prefix("aliases:") {
       i += 1
       i = parse_aliases_block(lines, i, aliases)
       continue
     }
     // Check for resolve block
-    if starts_with(ln, "resolve:") {
+    if ln.has_prefix("resolve:") {
       i += 1
       i = parse_resolve_block(lines, i, resolve_chain)
       continue
@@ -172,7 +172,7 @@ fn parse_aliases_block(
     }
     let sub = trim_str(li)
     // Look for list item marker
-    if starts_with(sub, "-") {
+    if sub.has_prefix("-") {
       i += 1
       let (alias_entry, next_i) = parse_single_alias(lines, i)
       match alias_entry {
@@ -203,7 +203,7 @@ fn is_double_indented(line : String) -> Bool {
   if line.length() < 2 {
     return false
   }
-  starts_with(line, "    ") || starts_with(line, "\t\t")
+  line.has_prefix("    ") || line.has_prefix("\t\t")
 }
 
 ///|
@@ -256,12 +256,12 @@ fn parse_resolve_block(
     }
     let sub = trim_str(li)
     // Skip empty or comment lines
-    if sub.length() == 0 || starts_with(sub, "#") {
+    if sub.length() == 0 || sub.has_prefix("#") {
       i += 1
       continue
     }
     // Look for list item marker
-    if starts_with(sub, "-") {
+    if sub.has_prefix("-") {
       let after_dash = trim_str(substr_from(sub, 1))
       // Check if it's a single-line form: "- type: value"
       match parse_single_line_resolve_step(after_dash) {
@@ -368,7 +368,7 @@ fn parse_multi_line_resolve_step(
     }
     let t = trim_str(s)
     // Skip comments
-    if starts_with(t, "#") {
+    if t.has_prefix("#") {
       i += 1
       continue
     }

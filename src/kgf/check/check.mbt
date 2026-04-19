@@ -283,7 +283,7 @@ fn extract_symbols_from_expr(expr : String) -> Array[String] {
   let buf = StringBuilder::new()
   let chars = expr.to_array()
   for c in chars {
-    if is_ident_char(c) {
+    if @charclass.is_ident_char(c) {
       buf.write_char(c)
     } else {
       let word = buf.to_string()
@@ -308,14 +308,6 @@ fn is_symbol_candidate(word : String) -> Bool {
   let first = word.to_array()[0]
   // Must start with uppercase letter (rule/token convention)
   first >= 'A' && first <= 'Z'
-}
-
-///|
-fn is_ident_char(c : Char) -> Bool {
-  (c >= 'a' && c <= 'z') ||
-  (c >= 'A' && c <= 'Z') ||
-  (c >= '0' && c <= '9') ||
-  c == '_'
 }
 
 ///|

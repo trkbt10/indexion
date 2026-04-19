@@ -154,12 +154,7 @@ pub fn CASManifest::with_modules(
   modules : Map[String, ContentHash],
   updated_at : String,
 ) -> CASManifest {
-  {
-    created_at: self.created_at,
-    updated_at,
-    spec_hash: self.spec_hash,
-    modules,
-  }
+  { ..self, updated_at, modules }
 }
 
 ///|
@@ -169,5 +164,5 @@ pub fn CASManifest::with_spec_hash(
   spec_hash : ContentHash,
   updated_at : String,
 ) -> CASManifest {
-  { created_at: self.created_at, updated_at, spec_hash, modules: Map::new() }
+  { ..self, updated_at, spec_hash, modules: Map::new() }
 }

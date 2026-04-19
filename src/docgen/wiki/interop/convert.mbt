@@ -537,9 +537,9 @@ pub fn convert_wikilinks_to_internal(
         Some(Json::Number(n, ..)) => n.to_int() - 2
         _ => continue
       }
-      let end_pos = match labels.get("_last_pos") {
+      let end_pos = match labels.get(@kgf_types.META_LAST_POS) {
         Some(Json::Number(n, ..)) =>
-          match labels.get("_last_len") {
+          match labels.get(@kgf_types.META_LAST_LEN) {
             Some(Json::Number(l, ..)) => n.to_int() + l.to_int()
             _ => continue
           }

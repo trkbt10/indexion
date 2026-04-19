@@ -1,6 +1,8 @@
 import {
+  "trkbt10/indexion/src/kgf/charclass" @charclass,
   "trkbt10/indexion/src/kgf/types",
   "trkbt10/indexion/src/kgf/resolver",
+  "trkbt10/indexion/src/config" @config,
   "trkbt10/indexion/src/core/graph",
   "trkbt10/indexion/src/regexp",
   "moonbitlang/core/json",

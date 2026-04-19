@@ -56,14 +56,6 @@ test "find_line_start_substring: not found" {
 }
 
 ///|
-test "starts_with" {
-  assert_true(starts_with("hello", "hel"))
-  assert_true(starts_with("hello", "hello"))
-  assert_false(starts_with("hello", "world"))
-  assert_false(starts_with("hi", "hello"))
-}
-
-///|
 test "parse_list" {
   let result = parse_list("a, b, c")
   assert_eq(result.length(), 3)

@@ -90,8 +90,8 @@ fn eval_node_rec(
       let result = eval_rec(ctx, rule_node_id, pos)
       if result.ok && !target_is_rule_ref && should_emit_rule_rec(ctx, name) {
         let labels_map = materialize(result.labels, ctx.tokens)
-        labels_map.set("_start_tok", pos.to_json())
-        labels_map.set("_end_tok", result.end_pos.to_json())
+        labels_map.set(@types.META_START_TOK, pos.to_json())
+        labels_map.set(@types.META_END_TOK, result.end_pos.to_json())
         (ctx.on_rule_match)(name, labels_map, pos, result.end_pos)
       }
       if result.ok {
@@ -171,19 +171,19 @@ fn eval_node_rec(
       let result = eval_rec(ctx, child, pos)
       if result.ok {
         let labels = to_owned_labels_map(result.labels, ctx.tokens)
-        match labels.meta.get("_last") {
+        match labels.meta.get(@types.META_LAST) {
           Some(v) => labels.set_meta(label_name, v)
           None => ()
         }
-        match labels.meta.get("_last_pos") {
-          Some(v) => labels.set_meta(label_name + "_pos", v)
+        match labels.meta.get(@types.META_LAST_POS) {
+          Some(v) => labels.set_meta(label_name + @types.META_POS_SUFFIX, v)
           None => ()
         }
-        match labels.meta.get("_last_len") {
-          Some(v) => labels.set_meta(label_name + "_len", v)
+        match labels.meta.get(@types.META_LAST_LEN) {
+          Some(v) => labels.set_meta(label_name + @types.META_LEN_SUFFIX, v)
           None => ()
         }
-        publish_primary_text_as(labels, label_name + "_text")
+        publish_primary_text_as(labels, label_name + @types.META_TEXT_SUFFIX)
         { ok: true, end_pos: result.end_pos, labels: full_labels(labels) }
       } else {
         result
@@ -224,8 +224,8 @@ fn run_parse_rec_internal(
       let result = eval_rec(ctx, body_node_id, 0)
       if result.ok && should_emit_rule_rec(ctx, start_rule) {
         let labels_map = materialize(result.labels, ctx.tokens)
-        labels_map.set("_start_tok", (0).to_json())
-        labels_map.set("_end_tok", result.end_pos.to_json())
+        labels_map.set(@types.META_START_TOK, (0).to_json())
+        labels_map.set(@types.META_END_TOK, result.end_pos.to_json())
         (ctx.on_rule_match)(start_rule, labels_map, 0, result.end_pos)
       }
       let final_labels = materialize(result.labels, ctx.tokens)

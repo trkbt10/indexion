@@ -1,5 +1,6 @@
 import {
   "moonbitlang/core/json" @json,
+  "trkbt10/indexion/src/kgf/charclass" @charclass,
   "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
   "trkbt10/indexion/src/kgf/peg" @kgf_peg,
   "trkbt10/indexion/src/kgf/types" @kgf_types,

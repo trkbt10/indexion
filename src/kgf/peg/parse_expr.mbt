@@ -15,7 +15,7 @@ priv enum GrammarToken {
   AMP // & - And-predicate (positive lookahead)
   EXCL // ! - Not-predicate (negative lookahead)
   SLASH // / - Prioritized choice (PEG standard, alias for |)
-}
+} derive(Eq)
 
 ///|
 /// Parser state holding tokens and current position.
@@ -74,146 +74,19 @@ fn ParseState::eat_ident(self : ParseState) -> String? {
 }
 
 ///|
-/// Checks if current token is LP and consumes it.
-fn ParseState::eat_lp(self : ParseState) -> Bool {
+/// Consumes the current token when it equals `expected`, returning whether
+/// it did. Replaces a family of boilerplate `eat_lp`/`eat_rp`/… variants
+/// that differed only in the token being matched.
+fn ParseState::eat(self : ParseState, expected : GrammarToken) -> Bool {
   match self.peek() {
-    Some(LP) => {
-      self.advance()
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-/// Checks if current token is RP and consumes it.
-fn ParseState::eat_rp(self : ParseState) -> Bool {
-  match self.peek() {
-    Some(RP) => {
-      self.advance()
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-/// Checks if current token is LB and consumes it.
-fn ParseState::eat_lb(self : ParseState) -> Bool {
-  match self.peek() {
-    Some(LB) => {
-      self.advance()
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-/// Checks if current token is RB and consumes it.
-fn ParseState::eat_rb(self : ParseState) -> Bool {
-  match self.peek() {
-    Some(RB) => {
-      self.advance()
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-/// Checks if current token is STAR and consumes it.
-fn ParseState::eat_star(self : ParseState) -> Bool {
-  match self.peek() {
-    Some(STAR) => {
-      self.advance()
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-/// Checks if current token is PLUS and consumes it.
-fn ParseState::eat_plus(self : ParseState) -> Bool {
-  match self.peek() {
-    Some(PLUS) => {
-      self.advance()
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-/// Checks if current token is Q (?) and consumes it.
-fn ParseState::eat_q(self : ParseState) -> Bool {
-  match self.peek() {
-    Some(Q) => {
-      self.advance()
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-/// Checks if current token is BAR and consumes it.
-fn ParseState::eat_bar(self : ParseState) -> Bool {
-  match self.peek() {
-    Some(BAR) => {
-      self.advance()
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-/// Checks if current token is COLON and consumes it.
-fn ParseState::eat_colon(self : ParseState) -> Bool {
-  match self.peek() {
-    Some(COLON) => {
-      self.advance()
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-/// Checks if current token is AMP (&) and consumes it.
-fn ParseState::eat_amp(self : ParseState) -> Bool {
-  match self.peek() {
-    Some(AMP) => {
-      self.advance()
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-/// Checks if current token is EXCL (!) and consumes it.
-fn ParseState::eat_excl(self : ParseState) -> Bool {
-  match self.peek() {
-    Some(EXCL) => {
-      self.advance()
-      true
-    }
-    _ => false
-  }
-}
-
-///|
-/// Checks if current token is SLASH (/) and consumes it.
-fn ParseState::eat_slash(self : ParseState) -> Bool {
-  match self.peek() {
-    Some(SLASH) => {
-      self.advance()
-      true
-    }
-    _ => false
+    Some(tok) =>
+      if tok == expected {
+        self.advance()
+        true
+      } else {
+        false
+      }
+    None => false
   }
 }
 
@@ -224,24 +97,6 @@ fn ParseState::is_stop_token(self : ParseState) -> Bool {
     Some(RP) | Some(RB) | Some(BAR) | Some(SLASH) => true
     _ => false
   }
-}
-
-///|
-/// Checks if a character is a valid identifier start.
-fn is_ident_start(c : Char) -> Bool {
-  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
-}
-
-///|
-/// Checks if a character is a valid identifier continuation.
-fn is_ident_char(c : Char) -> Bool {
-  is_ident_start(c) || (c >= '0' && c <= '9')
-}
-
-///|
-/// Checks if a character is whitespace.
-fn is_whitespace(c : Char) -> Bool {
-  c == ' ' || c == '\t' || c == '\n' || c == '\r'
 }
 
 ///|
@@ -288,7 +143,7 @@ fn tokenize_expr(s : String) -> Array[GrammarToken] raise {
   let mut i = 0
   while i < chars.length() {
     let c = chars[i]
-    if is_whitespace(c) {
+    if @charclass.is_whitespace(c) {
       i += 1
       continue
     }
@@ -352,9 +207,9 @@ fn tokenize_expr(s : String) -> Array[GrammarToken] raise {
       i += 1
       continue
     }
-    if is_ident_start(c) {
+    if @charclass.is_ident_start(c) {
       let start = i
-      while i < chars.length() && is_ident_char(chars[i]) {
+      while i < chars.length() && @charclass.is_ident_char(chars[i]) {
         i += 1
       }
       let ident_chars : Array[Char] = []
@@ -373,7 +228,7 @@ fn tokenize_expr(s : String) -> Array[GrammarToken] raise {
 /// Parses a primary expression (identifier, label, parenthesized group, bracketed optional, or predicate).
 fn parse_primary(state : ParseState) -> Node? raise {
   // Try And-predicate (&e)
-  if state.eat_amp() {
+  if state.eat(AMP) {
     let child = parse_primary(state)
     match child {
       Some(node) => return Some(Node::And(node))
@@ -381,7 +236,7 @@ fn parse_primary(state : ParseState) -> Node? raise {
     }
   }
   // Try Not-predicate (!e)
-  if state.eat_excl() {
+  if state.eat(EXCL) {
     let child = parse_primary(state)
     match child {
       Some(node) => return Some(Node::Not(node))
@@ -389,18 +244,18 @@ fn parse_primary(state : ParseState) -> Node? raise {
     }
   }
   // Try parenthesized group
-  if state.eat_lp() {
+  if state.eat(LP) {
     let inner = parse_choice(state)
-    if !state.eat_rp() {
+    if !state.eat(RP) {
       raise @builtin.Failure("missing )")
     }
     return Some(inner)
   }
   // Try bracketed optional (deprecated: use e? instead)
-  if state.eat_lb() {
+  if state.eat(LB) {
     state.warn_deprecated("deprecated: use 'e?' instead of '[e]' for optional")
     let inner = parse_choice(state)
-    if !state.eat_rb() {
+    if !state.eat(RB) {
       raise @builtin.Failure("missing ]")
     }
     return Some(Node::Optional(inner))
@@ -409,7 +264,7 @@ fn parse_primary(state : ParseState) -> Node? raise {
   match state.eat_ident() {
     Some(ident) =>
       // Check for label
-      if state.eat_colon() {
+      if state.eat(COLON) {
         let child = parse_primary(state)
         match child {
           Some(child_node) => Some(Node::Label(ident, child_node))
@@ -429,11 +284,11 @@ fn parse_postfix(state : ParseState) -> Node? raise {
   match prim {
     None => None
     Some(node) =>
-      if state.eat_star() {
+      if state.eat(STAR) {
         Some(Node::Star(node))
-      } else if state.eat_plus() {
+      } else if state.eat(PLUS) {
         Some(Node::Plus(node))
-      } else if state.eat_q() {
+      } else if state.eat(Q) {
         Some(Node::Optional(node))
       } else {
         Some(node)
@@ -468,9 +323,9 @@ fn parse_choice(state : ParseState) -> Node raise {
   let alts : Array[Node] = []
   alts.push(parse_seq(state))
   while true {
-    if state.eat_slash() {
+    if state.eat(SLASH) {
       alts.push(parse_seq(state))
-    } else if state.eat_bar() {
+    } else if state.eat(BAR) {
       state.warn_deprecated(
         "deprecated: use '/' instead of '|' for choice operator",
       )

@@ -18,6 +18,12 @@
 /// chunks (a rope). Merges only push new chunks — concatenation happens
 /// exactly once, when the labels escape to a rule-match callback or to the
 /// final parse result (see `materialize`).
+///
+/// ## Reserved label names
+///
+/// Underscore-prefixed keys written to or read from a PEG label map are
+/// declared once in `@types` (see `meta.mbt`) as the SoT for the
+/// evaluator/consumer wire format.
 
 ///|
 /// A rope-like text accumulator: an ordered list of string chunks that is
@@ -203,9 +209,9 @@ fn labels_map_from_token(
 ) -> LabelsMap {
   let out = LabelsMap::new()
   let value = tok.get_value()
-  out.set_meta("_last", value.to_json())
-  out.set_meta("_last_pos", tok.pos.to_double().to_json())
-  out.set_meta("_last_len", tok.text.length().to_double().to_json())
+  out.set_meta(@types.META_LAST, value.to_json())
+  out.set_meta(@types.META_LAST_POS, tok.pos.to_double().to_json())
+  out.set_meta(@types.META_LAST_LEN, tok.text.length().to_double().to_json())
   out.push_text_chunk(value)
   out
 }
@@ -280,9 +286,9 @@ fn merge_into(
       let tok = tokens[idx]
       let value = tok.get_value()
       target.push_text_chunk(value)
-      target.set_meta("_last", value.to_json())
-      target.set_meta("_last_pos", tok.pos.to_double().to_json())
-      target.set_meta("_last_len", tok.text.length().to_double().to_json())
+      target.set_meta(@types.META_LAST, value.to_json())
+      target.set_meta(@types.META_LAST_POS, tok.pos.to_double().to_json())
+      target.set_meta(@types.META_LAST_LEN, tok.text.length().to_double().to_json())
     }
     Labels::Full(map) => {
       for key, value in map.meta {
@@ -343,17 +349,17 @@ fn materialize(
     Labels::TokRef(idx) => {
       let tok = tokens[idx]
       let value = tok.get_value()
-      out.set("_last", value.to_json())
-      out.set("_last_pos", tok.pos.to_double().to_json())
-      out.set("_last_len", tok.text.length().to_double().to_json())
-      out.set("_text", value.to_json())
+      out.set(@types.META_LAST, value.to_json())
+      out.set(@types.META_LAST_POS, tok.pos.to_double().to_json())
+      out.set(@types.META_LAST_LEN, tok.text.length().to_double().to_json())
+      out.set(@types.META_TEXT, value.to_json())
     }
     Labels::Full(map) => {
       for key, value in map.meta {
         out.set(key, value)
       }
       if !map.text.is_empty() {
-        out.set("_text", map.text.to_string().to_json())
+        out.set(@types.META_TEXT, map.text.to_string().to_json())
       }
       for key, rope in map.extra_texts {
         out.set(key, rope.to_string().to_json())
@@ -381,7 +387,7 @@ fn publish_primary_text_as(labels : LabelsMap, dst_key : String) -> Unit {
 fn strip_named_labels(labels : LabelsMap) -> LabelsMap {
   let out = LabelsMap::new()
   for key, value in labels.meta {
-    if key == "_last" || key == "_last_pos" || key == "_last_len" {
+    if key == @types.META_LAST || key == @types.META_LAST_POS || key == @types.META_LAST_LEN {
       out.set_meta(key, value)
     }
   }

@@ -32,21 +32,11 @@ fn walk_up_for_marker(
 
 ///|
 fn parent_dir_of(path : String) -> String {
-  let chars = path.to_array()
-  let mut last = -1
-  for i = 0; i < chars.length(); i = i + 1 {
-    if chars[i] == '/' {
-      last = i
-    }
-  }
+  let last = @config.find_last_char(path, '/')
   if last < 0 {
     return ""
   }
-  let sb = StringBuilder::new()
-  for i = 0; i < last; i = i + 1 {
-    sb.write_char(chars[i])
-  }
-  sb.to_string()
+  @config.substring(path, 0, last)
 }
 
 ///|
@@ -560,10 +550,10 @@ fn trim_string(s : String) -> String {
   let chars = s.to_array()
   let mut start = 0
   let mut end = chars.length()
-  while start < end && is_whitespace(chars[start]) {
+  while start < end && @charclass.is_whitespace(chars[start]) {
     start = start + 1
   }
-  while end > start && is_whitespace(chars[end - 1]) {
+  while end > start && @charclass.is_whitespace(chars[end - 1]) {
     end = end - 1
   }
   if start >= end {
@@ -577,29 +567,17 @@ fn trim_string(s : String) -> String {
 }
 
 ///|
-/// Checks if a character is whitespace.
-fn is_whitespace(c : Char) -> Bool {
-  c == ' ' || c == '\t' || c == '\n' || c == '\r'
-}
-
-///|
 /// Checks if a string is a valid hexadecimal number.
 fn is_valid_hex(s : String) -> Bool {
   if s.length() == 0 {
     return false
   }
   for c in s {
-    if !is_hex_char(c) {
+    if !@charclass.is_hex_char(c) {
       return false
     }
   }
   true
-}
-
-///|
-/// Checks if a character is a valid hex digit.
-fn is_hex_char(c : Char) -> Bool {
-  (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')
 }
 
 ///|
@@ -685,72 +663,52 @@ fn eval_func_strip_quotes(args : Array[Json]) -> Json {
 }
 
 ///|
-/// Evaluates the first() function.
-fn eval_func_first(args : Array[Json]) -> Json {
-  if args.length() == 0 {
-    return Json::null()
-  }
-  match args[0] {
-    Array(arr) => if arr.length() > 0 { arr[0] } else { Json::null() }
-    _ => Json::null()
-  }
-}
-
-///|
-/// Evaluates the last() function.
-fn eval_func_last(args : Array[Json]) -> Json {
+/// Returns either the first or last element of the array wrapped in `args[0]`.
+fn json_array_endpoint(args : Array[Json], last~ : Bool) -> Json {
   if args.length() == 0 {
     return Json::null()
   }
   match args[0] {
     Array(arr) =>
-      if arr.length() > 0 {
+      if arr.length() == 0 {
+        Json::null()
+      } else if last {
         arr[arr.length() - 1]
       } else {
-        Json::null()
+        arr[0]
       }
     _ => Json::null()
   }
 }
 
 ///|
+/// Evaluates the first() function.
+fn eval_func_first(args : Array[Json]) -> Json {
+  json_array_endpoint(args, last=false)
+}
+
+///|
+/// Evaluates the last() function.
+fn eval_func_last(args : Array[Json]) -> Json {
+  json_array_endpoint(args, last=true)
+}
+
+///|
 /// Evaluates the toUpper() function.
-/// Converts ASCII letters in the string to uppercase.
 fn eval_func_to_upper(args : Array[Json]) -> Json {
   if args.length() == 0 {
     return "".to_json()
   }
-  let s = json_to_string(args[0])
-  let chars = s.to_array()
-  let sb = StringBuilder::new()
-  for c in chars {
-    if c >= 'a' && c <= 'z' {
-      sb.write_char(Int::unsafe_to_char(c.to_int() - 32))
-    } else {
-      sb.write_char(c)
-    }
-  }
-  sb.to_string().to_json()
+  json_to_string(args[0]).to_upper().to_json()
 }
 
 ///|
 /// Evaluates the toLower() function.
-/// Converts ASCII letters in the string to lowercase.
 fn eval_func_to_lower(args : Array[Json]) -> Json {
   if args.length() == 0 {
     return "".to_json()
   }
-  let s = json_to_string(args[0])
-  let chars = s.to_array()
-  let sb = StringBuilder::new()
-  for c in chars {
-    if c >= 'A' && c <= 'Z' {
-      sb.write_char(Int::unsafe_to_char(c.to_int() + 32))
-    } else {
-      sb.write_char(c)
-    }
-  }
-  sb.to_string().to_json()
+  json_to_string(args[0]).to_lower().to_json()
 }
 
 ///|
@@ -778,21 +736,34 @@ fn eval_func_starts_with(args : Array[Json]) -> Json {
 }
 
 ///|
+/// Returns the portion of `text` on one side of the first occurrence of
+/// `delimiter`. `before=true` returns the prefix (everything before the
+/// match), `before=false` returns the suffix (everything after the match,
+/// excluding the delimiter itself). Shared body for `beforeFirst` /
+/// `afterFirst` in the KGF semantics DSL.
+fn split_first_occurrence(text : String, delimiter : String, before~ : Bool) -> String {
+  if delimiter.length() == 0 {
+    return if before { text } else { text }
+  }
+  let index = find_substring(text, delimiter)
+  if index < 0 {
+    return if before { text } else { "" }
+  }
+  if before {
+    text[:index].to_string()
+  } else {
+    text[index + delimiter.length():text.length()].to_string()
+  }
+}
+
+///|
 fn eval_func_before_first(args : Array[Json]) -> Json {
   if args.length() < 2 {
     return "".to_json()
   }
-  let text = json_to_string(args[0])
-  let delimiter = json_to_string(args[1])
-  if delimiter.length() == 0 {
-    return text.to_json()
-  }
-  let index = find_substring(text, delimiter)
-  if index < 0 {
-    text.to_json()
-  } else {
-    text[:index].to_string().to_json()
-  }
+  split_first_occurrence(
+    json_to_string(args[0]), json_to_string(args[1]), before=true,
+  ).to_json()
 }
 
 ///|
@@ -800,17 +771,9 @@ fn eval_func_after_first(args : Array[Json]) -> Json {
   if args.length() < 2 {
     return "".to_json()
   }
-  let text = json_to_string(args[0])
-  let delimiter = json_to_string(args[1])
-  if delimiter.length() == 0 {
-    return text.to_json()
-  }
-  let index = find_substring(text, delimiter)
-  if index < 0 {
-    "".to_json()
-  } else {
-    text[index + delimiter.length():text.length()].to_string().to_json()
-  }
+  split_first_occurrence(
+    json_to_string(args[0]), json_to_string(args[1]), before=false,
+  ).to_json()
 }
 
 ///|

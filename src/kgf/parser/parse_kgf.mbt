@@ -107,7 +107,7 @@ fn extract_language(text : String) -> String {
   let lines = split_lines(header)
   for line in lines {
     let trimmed = trim_str(line)
-    if starts_with(trimmed, "language:") {
+    if trimmed.has_prefix("language:") {
       return trim_str(substr_from(trimmed, 9))
     }
   }
@@ -122,7 +122,7 @@ fn extract_sources(text : String) -> Array[String] {
   let lines = split_lines(header)
   for line in lines {
     let trimmed = trim_str(line)
-    if starts_with(trimmed, "sources:") {
+    if trimmed.has_prefix("sources:") {
       let value = trim_str(substr_from(trimmed, 8))
       return parse_comma_list(value)
     }
@@ -239,7 +239,7 @@ fn parse_features(text : String) -> Map[String, Array[String]]? {
   let result : Map[String, Array[String]] = {}
   for line in lines {
     let trimmed = trim_str(line)
-    if trimmed.length() == 0 || starts_with(trimmed, "#") {
+    if trimmed.length() == 0 || trimmed.has_prefix("#") {
       continue
     }
     let separator = find_substring(trimmed, ":")
@@ -262,14 +262,15 @@ fn parse_features(text : String) -> Map[String, Array[String]]? {
 
 ///|
 /// Parses ignore section into list of patterns.
-/// Each line is a pattern (like .gitignore syntax).
-/// Lines starting with # are comments.
-fn parse_ignore(text : String) -> Array[String]? {
+/// Returns the non-blank, non-comment lines of `text` (one-entry-per-line
+/// section format with `#` comments). Shared body for `parse_ignore` and
+/// `parse_preprocess`, which have identical line-stripping semantics.
+fn parse_line_list(text : String) -> Array[String]? {
   let lines = split_lines(text)
   let result : Array[String] = []
   for line in lines {
     let trimmed = trim_str(line)
-    if trimmed.length() > 0 && !starts_with(trimmed, "#") {
+    if trimmed.length() > 0 && !trimmed.has_prefix("#") {
       result.push(trimmed)
     }
   }
@@ -281,19 +282,14 @@ fn parse_ignore(text : String) -> Array[String]? {
 }
 
 ///|
+/// Each line is a pattern (like .gitignore syntax).
+/// Lines starting with # are comments.
+fn parse_ignore(text : String) -> Array[String]? {
+  parse_line_list(text)
+}
+
+///|
 /// Parses preprocess section into list of transducer names.
 fn parse_preprocess(text : String) -> Array[String]? {
-  let lines = split_lines(text)
-  let result : Array[String] = []
-  for line in lines {
-    let trimmed = trim_str(line)
-    if trimmed.length() > 0 && !starts_with(trimmed, "#") {
-      result.push(trimmed)
-    }
-  }
-  if result.is_empty() {
-    None
-  } else {
-    Some(result)
-  }
+  parse_line_list(text)
 }

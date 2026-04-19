@@ -211,21 +211,11 @@ fn collect_leading_non_progressive(
 
 ///|
 fn strip_last_segment(path : String) -> String {
-  let chars = path.to_array()
-  let mut last = -1
-  for i = 0; i < chars.length(); i = i + 1 {
-    if chars[i] == '/' {
-      last = i
-    }
-  }
+  let last = @config.find_last_char(path, '/')
   if last < 0 {
     return path
   }
-  let sb = StringBuilder::new()
-  for i = 0; i < last; i = i + 1 {
-    sb.write_char(chars[i])
-  }
-  sb.to_string()
+  @config.substring(path, 0, last)
 }
 
 ///|

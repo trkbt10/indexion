@@ -304,13 +304,20 @@ fn process_choice_cont(
 }
 
 ///|
-/// Process Star continuation.
-fn process_star_cont(
+/// Shared continuation body for repetition operators (`Star` and the
+/// "rest" phase of `Plus`). Both must, after an iteration completes:
+///   1. accept the iteration (stop looping) when the child failed or made
+///      no progress, pushing the accumulated labels as a successful match;
+///   2. otherwise, merge the child's labels and re-enter the child.
+///
+/// The only difference is which work-item variant schedules the next
+/// iteration, supplied by `schedule_next`.
+fn repetition_cont(
   ctx : IterEvalContext,
   child_id : Int,
-  start_pos : Int,
   current_pos : Int,
   labels : Labels,
+  schedule_next : (Int, Int, Labels) -> WorkItem,
 ) -> Unit {
   let result = ctx.results.pop().unwrap()
   if !result.ok || result.end_pos == current_pos {
@@ -319,9 +326,22 @@ fn process_star_cont(
   }
   let merged = merge_labels(labels, result.labels, ctx.tokens)
   let new_pos = result.end_pos
-  ctx.work.push(StarCont(child_id, start_pos, new_pos, merged))
+  ctx.work.push(schedule_next(child_id, new_pos, merged))
   ctx.work.push(Eval(child_id, new_pos))
-  ignore(start_pos)
+}
+
+///|
+/// Process Star continuation.
+fn process_star_cont(
+  ctx : IterEvalContext,
+  child_id : Int,
+  start_pos : Int,
+  current_pos : Int,
+  labels : Labels,
+) -> Unit {
+  repetition_cont(ctx, child_id, current_pos, labels, fn(c, p, l) {
+    StarCont(c, start_pos, p, l)
+  })
 }
 
 ///|
@@ -353,16 +373,9 @@ fn process_plus_rest(
   current_pos : Int,
   labels : Labels,
 ) -> Unit {
-  let result = ctx.results.pop().unwrap()
-  if !result.ok || result.end_pos == current_pos {
-    ctx.results.push({ ok: true, end_pos: current_pos, labels })
-    return
-  }
-  let merged = merge_labels(labels, result.labels, ctx.tokens)
-  let new_pos = result.end_pos
-  ctx.work.push(PlusRest(child_id, start_pos, new_pos, merged))
-  ctx.work.push(Eval(child_id, new_pos))
-  ignore(start_pos)
+  repetition_cont(ctx, child_id, current_pos, labels, fn(c, p, l) {
+    PlusRest(c, start_pos, p, l)
+  })
 }
 
 ///|
@@ -391,19 +404,19 @@ fn process_label_cont(ctx : IterEvalContext, label_name : String) -> Unit {
   let result = ctx.results.pop().unwrap()
   if result.ok {
     let labels = to_owned_labels_map(result.labels, ctx.tokens)
-    match labels.meta.get("_last") {
+    match labels.meta.get(@types.META_LAST) {
       Some(v) => labels.set_meta(label_name, v)
       None => ()
     }
-    match labels.meta.get("_last_pos") {
-      Some(v) => labels.set_meta(label_name + "_pos", v)
+    match labels.meta.get(@types.META_LAST_POS) {
+      Some(v) => labels.set_meta(label_name + @types.META_POS_SUFFIX, v)
       None => ()
     }
-    match labels.meta.get("_last_len") {
-      Some(v) => labels.set_meta(label_name + "_len", v)
+    match labels.meta.get(@types.META_LAST_LEN) {
+      Some(v) => labels.set_meta(label_name + @types.META_LEN_SUFFIX, v)
       None => ()
     }
-    publish_primary_text_as(labels, label_name + "_text")
+    publish_primary_text_as(labels, label_name + @types.META_TEXT_SUFFIX)
     ctx.results.push({
       ok: true,
       end_pos: result.end_pos,
@@ -425,8 +438,8 @@ fn process_rule_ref_cont(
   let result = ctx.results.pop().unwrap()
   if result.ok && !target_is_rule_ref && should_emit_rule_iter(ctx, rule_name) {
     let labels_map = materialize(result.labels, ctx.tokens)
-    labels_map.set("_start_tok", start_pos.to_json())
-    labels_map.set("_end_tok", result.end_pos.to_json())
+    labels_map.set(@types.META_START_TOK, start_pos.to_json())
+    labels_map.set(@types.META_END_TOK, result.end_pos.to_json())
     (ctx.on_rule_match)(rule_name, labels_map, start_pos, result.end_pos)
   }
   if result.ok {
@@ -489,8 +502,8 @@ fn run_parse_iter_internal(
         .unwrap_or({ ok: false, end_pos: 0, labels: empty_labels() })
       if result.ok && should_emit_rule_iter(ctx, start_rule) {
         let labels_map = materialize(result.labels, ctx.tokens)
-        labels_map.set("_start_tok", (0).to_json())
-        labels_map.set("_end_tok", result.end_pos.to_json())
+        labels_map.set(@types.META_START_TOK, (0).to_json())
+        labels_map.set(@types.META_END_TOK, result.end_pos.to_json())
         (ctx.on_rule_match)(start_rule, labels_map, 0, result.end_pos)
       }
       let final_labels = materialize(result.labels, ctx.tokens)

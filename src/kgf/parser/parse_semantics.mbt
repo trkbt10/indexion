@@ -271,7 +271,7 @@ fn parse_block_stmts(body : String) -> Array[@types.SemStmt] {
   let result : Array[@types.SemStmt] = []
   for line in lines {
     let ln = trim_str(line)
-    if ln.length() == 0 || starts_with(ln, "#") {
+    if ln.length() == 0 || ln.has_prefix("#") {
       continue
     }
     match parse_stmt(ln) {
@@ -285,19 +285,19 @@ fn parse_block_stmts(body : String) -> Array[@types.SemStmt] {
 ///|
 /// Parses a single statement.
 fn parse_stmt(ln : String) -> @types.SemStmt? {
-  if starts_with(ln, "edge ") {
+  if ln.has_prefix("edge ") {
     return parse_edge_stmt(ln)
   }
-  if starts_with(ln, "bind ") {
+  if ln.has_prefix("bind ") {
     return parse_bind_stmt(ln)
   }
-  if starts_with(ln, "note ") {
+  if ln.has_prefix("note ") {
     return parse_note_stmt(ln)
   }
-  if starts_with(ln, "let ") {
+  if ln.has_prefix("let ") {
     return parse_let_stmt(ln)
   }
-  if starts_with(ln, "module ") {
+  if ln.has_prefix("module ") {
     return parse_module_stmt(ln)
   }
   None
@@ -481,7 +481,7 @@ fn parse_expr(s : String) -> @types.SemExpr {
     }
   }
   // $call(args) - special call syntax
-  if starts_with(trimmed, "$") && has_call_syntax(trimmed, 1) {
+  if trimmed.has_prefix("$") && has_call_syntax(trimmed, 1) {
     let (name, args) = parse_call_parts(trimmed, 1)
     return @types.SemExpr::call(name, args)
   }
@@ -491,7 +491,7 @@ fn parse_expr(s : String) -> @types.SemExpr {
     return @types.SemExpr::func(name, args)
   }
   // $variable
-  if starts_with(trimmed, "$") {
+  if trimmed.has_prefix("$") {
     return @types.SemExpr::variable(substr_from(trimmed, 1))
   }
   // Plain identifier as variable

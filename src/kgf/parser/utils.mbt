@@ -35,33 +35,35 @@ pub fn split_lines(text : String) -> Array[String] {
 }
 
 ///|
-/// Checks if a character is whitespace.
+/// Thin re-exports over `@charclass` so external callers (`@kgf_parser.is_*`)
+/// keep working, while the real definitions live in one place.
 pub fn is_whitespace(c : Char) -> Bool {
-  c == ' ' || c == '\t' || c == '\n' || c == '\r'
+  @charclass.is_whitespace(c)
 }
 
 ///|
-/// Checks if a character is a digit.
 pub fn is_digit(c : Char) -> Bool {
-  c >= '0' && c <= '9'
+  @charclass.is_digit(c)
 }
 
 ///|
-/// Checks if a character is an identifier start character.
 pub fn is_ident_start(c : Char) -> Bool {
-  (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
+  @charclass.is_ident_start(c)
 }
 
 ///|
-/// Checks if a character is an identifier character.
 pub fn is_ident_char(c : Char) -> Bool {
-  is_ident_start(c) || is_digit(c)
+  @charclass.is_ident_char(c)
 }
 
 ///|
-/// Finds the index of a substring in a string.
-/// Returns -1 if not found.
-pub fn find_substring(text : String, needle : String) -> Int {
+/// Shared substring search. `line_start_only=true` restricts matches to
+/// positions at the start of a line (index 0 or immediately after `\n`).
+fn find_substring_common(
+  text : String,
+  needle : String,
+  line_start_only~ : Bool,
+) -> Int {
   let n_len = needle.length()
   if n_len == 0 {
     return 0
@@ -72,37 +74,7 @@ pub fn find_substring(text : String, needle : String) -> Int {
   let text_arr = text.to_array()
   let needle_arr = needle.to_array()
   for i in 0..<(text.length() - n_len + 1) {
-    let mut found = true
-    for j in 0..<n_len {
-      if text_arr[i + j] != needle_arr[j] {
-        found = false
-        break
-      }
-    }
-    if found {
-      return i
-    }
-  }
-  -1
-}
-
-///|
-/// Finds the index of a substring that appears at the start of a line.
-/// A line start is either position 0 or immediately after a newline character.
-/// Returns -1 if not found.
-pub fn find_line_start_substring(text : String, needle : String) -> Int {
-  let n_len = needle.length()
-  if n_len == 0 {
-    return 0
-  }
-  if n_len > text.length() {
-    return -1
-  }
-  let text_arr = text.to_array()
-  let needle_arr = needle.to_array()
-  for i in 0..<(text.length() - n_len + 1) {
-    // Only match at line start: position 0 or after '\n'
-    if i > 0 && text_arr[i - 1] != '\n' {
+    if line_start_only && i > 0 && text_arr[i - 1] != '\n' {
       continue
     }
     let mut found = true
@@ -120,6 +92,20 @@ pub fn find_line_start_substring(text : String, needle : String) -> Int {
 }
 
 ///|
+/// Finds the index of a substring in a string. Returns -1 if not found.
+pub fn find_substring(text : String, needle : String) -> Int {
+  find_substring_common(text, needle, line_start_only=false)
+}
+
+///|
+/// Finds the index of a substring that appears at the start of a line.
+/// A line start is either position 0 or immediately after a newline character.
+/// Returns -1 if not found.
+pub fn find_line_start_substring(text : String, needle : String) -> Int {
+  find_substring_common(text, needle, line_start_only=true)
+}
+
+///|
 /// Finds the index of a character in a string starting from a position.
 /// Returns -1 if not found.
 pub fn find_char(text : String, start : Int, c : Char) -> Int {
@@ -130,22 +116,6 @@ pub fn find_char(text : String, start : Int, c : Char) -> Int {
     }
   }
   -1
-}
-
-///|
-/// Checks if a string starts with a given prefix.
-pub fn starts_with(text : String, prefix : String) -> Bool {
-  if prefix.length() > text.length() {
-    return false
-  }
-  let text_arr = text.to_array()
-  let prefix_arr = prefix.to_array()
-  for i in 0..<prefix.length() {
-    if text_arr[i] != prefix_arr[i] {
-      return false
-    }
-  }
-  true
 }
 
 ///|

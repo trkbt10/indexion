@@ -78,11 +78,11 @@ pub fn parse_attrs(text : String) -> Map[String, Array[@types.AttrAction]] {
   for line in lines {
     let ln = trim_str(line)
     // Skip empty lines and comments
-    if ln.length() == 0 || starts_with(ln, "#") {
+    if ln.length() == 0 || ln.has_prefix("#") {
       continue
     }
     // Look for "on RuleName: actions"
-    if starts_with(ln, "on ") {
+    if ln.has_prefix("on ") {
       match parse_attr_line(ln) {
         Some((rule, actions)) => result.set(rule, actions)
         None => ()
@@ -120,7 +120,7 @@ fn parse_action_list(text : String) -> Array[@types.AttrAction] {
   for part in parts {
     let trimmed = trim_str(part)
     // Skip empty parts and inline comments
-    if trimmed.length() > 0 && !starts_with(trimmed, "#") {
+    if trimmed.length() > 0 && !trimmed.has_prefix("#") {
       result.push(parse_single_action(trimmed))
     }
   }

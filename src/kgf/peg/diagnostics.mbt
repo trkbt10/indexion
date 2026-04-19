@@ -81,8 +81,8 @@ fn run_parse_diag_iter_internal(
         .unwrap_or({ ok: false, end_pos: 0, labels: empty_labels() })
       if result.ok && should_emit_rule_iter(ctx, start_rule) {
         let labels_map = materialize(result.labels, ctx.tokens)
-        labels_map.set("_start_tok", (0).to_json())
-        labels_map.set("_end_tok", result.end_pos.to_json())
+        labels_map.set(@types.META_START_TOK, (0).to_json())
+        labels_map.set(@types.META_END_TOK, result.end_pos.to_json())
         (ctx.on_rule_match)(start_rule, labels_map, 0, result.end_pos)
       }
       let final_labels = materialize(result.labels, ctx.tokens)

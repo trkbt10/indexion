@@ -47,20 +47,6 @@ fn preprocess_content(
   toolkit.preprocess(content)
 }
 
-///|
-fn to_lower_str(s : String) -> String {
-  let chars = s.to_array()
-  let result : Array[Char] = []
-  for c in chars {
-    let code = c.to_int()
-    if code >= 0x41 && code <= 0x5A {
-      result.push((code + 32).unsafe_to_char())
-    } else {
-      result.push(c)
-    }
-  }
-  String::from_array(result)
-}
 
 ///|
 pub fn tokenize_source(
@@ -272,7 +258,7 @@ fn extract_pub_declarations_via_semantics(
     let name = edge.attrs.get("name").unwrap_or("")
     let kind = edge.attrs.get("kind").unwrap_or("")
     let doc = edge.attrs.get("doc").unwrap_or("")
-    let normalized = to_lower_str(kind)
+    let normalized = kind.to_lower()
     let category = if contains_str(function_kinds, kind) {
       "function"
     } else {
@@ -389,7 +375,7 @@ pub fn extract_all_declarations_from_events(
     match def_rules.get(rule_name) {
       None => continue
       Some((id_field, kind_value)) => {
-        let name = match labels.get(id_field + "_text") {
+        let name = match labels.get(id_field + @kgf_types.META_TEXT_SUFFIX) {
           Some(String(s)) => s
           _ =>
             match labels.get(id_field) {
@@ -400,11 +386,11 @@ pub fn extract_all_declarations_from_events(
         if name.length() == 0 {
           continue
         }
-        let start_tok = match event_token_index(labels, "_start_tok") {
+        let start_tok = match event_token_index(labels, @kgf_types.META_START_TOK) {
           Some(value) => value
           None => continue
         }
-        let end_tok = match event_token_index(labels, "_end_tok") {
+        let end_tok = match event_token_index(labels, @kgf_types.META_END_TOK) {
           Some(value) => value
           None => continue
         }
@@ -434,7 +420,7 @@ pub fn extract_all_declarations_from_events(
           "type"
         }
         result.push({
-          kind: to_lower_str(kind_value),
+          kind: kind_value.to_lower(),
           name,
           line,
           start_pos,
@@ -515,11 +501,11 @@ fn extract_declaration_spans(
   let spans : Array[DeclarationSpan] = []
   for event in events {
     let labels = event.1
-    let start_tok = match event_token_index(labels, "_start_tok") {
+    let start_tok = match event_token_index(labels, @kgf_types.META_START_TOK) {
       Some(value) => value
       None => continue
     }
-    let end_tok = match event_token_index(labels, "_end_tok") {
+    let end_tok = match event_token_index(labels, @kgf_types.META_END_TOK) {
       Some(value) => value
       None => continue
     }

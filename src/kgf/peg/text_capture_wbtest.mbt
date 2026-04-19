@@ -57,7 +57,7 @@ test "text capture: single line doc comment" {
 
   let labels = doc_event.unwrap().1
   // _text should contain the doc start
-  match labels.get("_text") {
+  match labels.get(@types.META_TEXT) {
     Some(String(text)) => assert_true(text.contains("///|"))
     _ => fail("Expected _text to be set")
   }
@@ -79,7 +79,7 @@ test "text capture: multi-line doc comment accumulates text" {
 
   let labels = doc_event.unwrap().1
   // _text should contain ALL lines accumulated
-  match labels.get("_text") {
+  match labels.get(@types.META_TEXT) {
     Some(String(text)) => {
       assert_true(text.contains("///|"))
       assert_true(text.contains("First line"))
@@ -250,7 +250,7 @@ test "text capture: _last still contains last token only" {
 
   let labels = result.unwrap().labels
   // _last should be the last token value only
-  match labels.get("_last") {
+  match labels.get(@types.META_LAST) {
     Some(String(last)) => assert_eq(last, "third")
     _ => fail("Expected _last to be 'third'")
   }

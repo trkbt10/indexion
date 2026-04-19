@@ -77,7 +77,7 @@ pub fn parse_rules(text : String) -> Map[String, @types.RuleDef] {
   for line in lines {
     let ln = trim_str(line)
     // Skip empty lines and comments, but preserve newlines in buffer
-    if ln.length() == 0 || starts_with(ln, "#") {
+    if ln.length() == 0 || ln.has_prefix("#") {
       if current_name is Some(_) {
         buf.push("")
       }
