@@ -18,3 +18,4 @@ out/
 *.tgz
 coverage/
 .vscode-test/
+packages/graph-canvas/scripts/screenshots

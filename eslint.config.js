@@ -33,6 +33,7 @@ export default tseslint.config(
       "**/node_modules/**",
       "**/dist/**",
       "**/.vite/**",
+      "**/coverage/**",
       ".mooncakes/**",
       "_build/**",
       "target/**",
@@ -50,11 +51,13 @@ export default tseslint.config(
     files: ["**/*.ts", "**/*.tsx"],
     plugins: {
       prettier: eslintPluginPrettier,
+      custom: customPlugin,
     },
     rules: {
       "prettier/prettier": "error",
       "@typescript-eslint/consistent-type-definitions": ["error", "type"],
       curly: ["error", "all"],
+      "custom/no-as-outside-guard": "error",
       "no-restricted-syntax": [
         "error",
         {
@@ -89,6 +92,21 @@ export default tseslint.config(
       ],
       "max-params": ["warn", { max: 3 }],
       "no-nested-ternary": "error",
+    },
+  },
+
+  // ── Test files (any package): allow cast escape hatches ──
+  {
+    files: [
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/*.spec.ts",
+      "**/*.spec.tsx",
+      "**/test-utils/**",
+      "**/test-helpers.*",
+    ],
+    rules: {
+      "custom/no-as-outside-guard": "off",
     },
   },
 

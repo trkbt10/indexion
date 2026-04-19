@@ -174,6 +174,11 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
         );
         const renderer = rendererRef.current;
         if (renderer) {
+          // Switch the pointer-bind for the camera to match the
+          // layout's dimensionality. This must happen before
+          // fitToView so the (potentially-snapped-to-top-down) view
+          // is what gets fit, not the previous tilted angle.
+          renderer.setCameraMode(result.dimensionality ?? "3d");
           if (hasFittedRef.current) {
             renderer.fitToView(visibleNodes, 48);
           } else {
@@ -228,6 +233,14 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
       });
       rendererRef.current = renderer;
       hasFittedRef.current = false;
+      // Camera mode must reflect whatever layout already produced
+      // positions before this renderer was mounted. Without this,
+      // a remount (theme toggle, dpr change, etc.) would reset
+      // controls to the default 3D orbit even on a 2D layout —
+      // exactly the symptom that made Hierarchy left-drag tilt the
+      // treemap into a skewed perspective.
+      const layoutResult = layoutResultRef.current;
+      renderer.setCameraMode(layoutResult.dimensionality ?? "3d");
       // If the graph was laid out before the renderer existed, fit
       // it now — otherwise the camera stays at the default spawn
       // position (z=1200, looking at origin) while the scene is

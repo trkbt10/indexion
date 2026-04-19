@@ -29,6 +29,7 @@ import type {
 } from "../../types.ts";
 import { buildDirectednessContext } from "./arrow-directedness.ts";
 import { CameraController } from "./camera-controller.ts";
+import type { CameraMode } from "./scene-context.ts";
 import { ClusterBorderLayer } from "./cluster-border-layer.ts";
 import { ClusterFillLayer } from "./cluster-fill-layer.ts";
 import { ClusterLabelLayer } from "./cluster-label-layer.ts";
@@ -165,6 +166,14 @@ export class WebGlRenderer {
 
   setControlsEnabled(enabled: boolean): void {
     this.ctx.controls.enabled = enabled;
+  }
+
+  /** Switch the camera between 2D-pan and 3D-orbit operation modes.
+   *  Called by the host whenever the active layout strategy changes
+   *  dimensionality so the pointer bindings always match what the
+   *  user is actually looking at. */
+  setCameraMode(mode: CameraMode): void {
+    this.ctx.setCameraMode(mode);
   }
 
   // ─── Camera control delegation ─────────────────────────────────

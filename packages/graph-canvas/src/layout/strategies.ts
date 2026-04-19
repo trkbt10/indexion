@@ -35,6 +35,13 @@ export type StrategyArgs = {
   readonly layoutSettings: LayoutSettings;
 };
 
+/** Camera operation hint: a layout that places nodes in a single
+ *  plane (z=0) is `2d`; one that uses real depth is `3d`. The
+ *  renderer rebinds pointer controls accordingly so the user gets
+ *  pan-by-default on flat layouts and orbit-by-default on
+ *  volumetric ones. */
+export type LayoutDimensionality = "2d" | "3d";
+
 /** Optional metadata a strategy can expose for the renderer to pick
  *  up — hierarchy cluster outlines, per-node depth for LOD fading,
  *  etc. Non-hierarchical strategies can leave these empty. */
@@ -54,6 +61,11 @@ export type StrategyResult = {
    *  pattern-matching on shell paths, so adding a new strategy is
    *  one explicit map to populate, not a heuristic to guess. */
   readonly nodeCluster?: ReadonlyMap<string, string>;
+  /** Whether the layout writes coplanar (z=0) or volumetric (z≠0)
+   *  positions. Drives the renderer's camera mode (2D pan vs 3D
+   *  orbit). Missing → "3d" by default since the historic strategies
+   *  were all volumetric. */
+  readonly dimensionality?: LayoutDimensionality;
 };
 
 
@@ -85,6 +97,7 @@ export const LAYOUT_STRATEGIES: readonly LayoutStrategy[] = [
         nodeDepth: result.nodeDepth,
         clusterShells: result.clusterShells,
         nodeCluster,
+        dimensionality: "2d",
       };
     },
   },
@@ -103,7 +116,7 @@ export const LAYOUT_STRATEGIES: readonly LayoutStrategy[] = [
     apply: ({ graph, clusterOf }) => {
       if (!clusterOf || clusterOf.size === 0) {
         applyHdeLayout({ graph, finalise: volumeFinaliser });
-        return {};
+        return { dimensionality: "3d" };
       }
       applyNestedHdeLayout({ graph, clusterOf, finalise: volumeFinaliser });
       // Volume colouring follows the user-selected clustering 1:1.
@@ -113,7 +126,11 @@ export const LAYOUT_STRATEGIES: readonly LayoutStrategy[] = [
       // this the user sees coloured nodes but no indication of which
       // cluster is which — exactly the "情報が一切ない" complaint.
       const shells = buildVolumeClusterShells(graph, clusterOf);
-      return { nodeCluster: clusterOf, clusterShells: shells };
+      return {
+        nodeCluster: clusterOf,
+        clusterShells: shells,
+        dimensionality: "3d",
+      };
     },
   },
 ];
@@ -328,5 +345,5 @@ function applyKMeansLayout(graph: ViewGraph): StrategyResult {
   for (let i = 0; i < n; i++) {
     nodeCluster.set(graph.nodes[i]!.id, `kmeans-${result.assignment[i]!}`);
   }
-  return { clusterShells: shells, nodeCluster };
+  return { clusterShells: shells, nodeCluster, dimensionality: "3d" };
 }

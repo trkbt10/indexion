@@ -12,6 +12,7 @@
 
 import {
   Color,
+  MOUSE,
   PerspectiveCamera,
   Plane,
   Raycaster,
@@ -23,6 +24,15 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { CameraSettings, ThemeColors } from "../../types.ts";
 import { clamp } from "./projection.ts";
+
+/** Camera operation mode.
+ *  - "2d": layout is coplanar (z = 0). Left-drag pans along the
+ *    screen, wheel zooms; rotation is disabled because tilting a
+ *    flat plane produces a confusing skewed view.
+ *  - "3d": layout occupies a real 3D volume. Left-drag orbits,
+ *    right-drag pans, wheel zooms — the standard CAD-style
+ *    convention. */
+export type CameraMode = "2d" | "3d";
 
 export type SceneContextInit = {
   readonly canvas: HTMLCanvasElement;
@@ -85,7 +95,13 @@ export class SceneContext {
     this.controls.rotateSpeed = 0.8;
     this.controls.panSpeed = 1;
     this.controls.zoomSpeed = 1;
-    this.controls.screenSpacePanning = false;
+    // screenSpacePanning = true: pan moves the target along the
+    // camera's right/up axes regardless of viewing angle. The
+    // alternative (false) pans along the world XZ plane, which
+    // produces "the scene slides into the floor" when the camera is
+    // looking down — confusing for a graph viewer where the
+    // "ground" has no semantic meaning.
+    this.controls.screenSpacePanning = true;
     this.controls.zoomToCursor = false;
     this.controls.enableZoom = false;
     this.controls.minDistance = init.cameraSettings.minDistance;
@@ -94,6 +110,55 @@ export class SceneContext {
     this.raycaster = new Raycaster();
     this.installCursorZoom(init.canvas);
     this.applyTheme(init.theme);
+    // Default to 3D — strategies switch this on apply.
+    this.setCameraMode("3d");
+  }
+
+  /** Switch the pointer-bind for camera operations to match the
+   *  layout's dimensionality. Coplanar layouts (Hierarchy treemap)
+   *  get pan-by-default; volumetric layouts (Volume / K-means)
+   *  keep the orbit-by-default convention. The same rebind also
+   *  resets the camera tilt so a 2D layout reads as flat. */
+  setCameraMode(mode: CameraMode): void {
+    if (mode === "2d") {
+      // Left-drag pans along the screen; rotation is off so the
+      // user can't accidentally tilt a flat plane into a skewed
+      // perspective view. Right-drag also pans (no other useful
+      // operation in 2D), so a misclick on either button still
+      // does something predictable.
+      this.controls.enableRotate = false;
+      this.controls.enablePan = true;
+      this.controls.mouseButtons = {
+        LEFT: MOUSE.PAN,
+        MIDDLE: MOUSE.PAN,
+        RIGHT: MOUSE.PAN,
+      };
+      // Snap the camera straight down the +Z axis through whatever
+      // the current orbit target is. This guarantees the 2D layout
+      // shows as a top-down view; without it, switching from a
+      // tilted 3D layout would leave a 2D layout rendered at an
+      // angle — visually wrong for a coplanar diagram.
+      const target = this.controls.target;
+      const dist = this.camera.position.distanceTo(target);
+      this.camera.position.set(target.x, target.y, target.z + dist);
+      this.camera.up.set(0, 1, 0);
+      this.camera.lookAt(target);
+      this.camera.updateProjectionMatrix();
+      this.controls.update();
+    } else {
+      // Standard CAD-style binding: left=orbit, right=pan, middle
+      // also pans (matches Figma / Blender muscle memory better
+      // than middle=dolly when wheel already handles zoom).
+      this.controls.enableRotate = true;
+      this.controls.enablePan = true;
+      this.controls.mouseButtons = {
+        LEFT: MOUSE.ROTATE,
+        MIDDLE: MOUSE.PAN,
+        RIGHT: MOUSE.PAN,
+      };
+    }
+    // Wake any RAF loop so the rebind is reflected immediately.
+    this.controls.dispatchEvent({ type: "change" });
   }
 
   resize(args: ResizeArgs): void {
