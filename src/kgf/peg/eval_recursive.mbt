@@ -55,7 +55,9 @@ fn eval_rec(ctx : RecEvalContext, node_id : Int, pos : Int) -> FastEvalResult {
   }
   let result = eval_node_rec(ctx, node_id, pos)
   if result.ok {
-    ctx.memo[memo_idx] = Succeeded(result.end_pos, result.labels)
+    // Store an independent copy in the memo so future hits hand out a
+    // pristine accumulator even if the current caller mutates `result`.
+    ctx.memo[memo_idx] = Succeeded(result.end_pos, clone_labels(result.labels))
   } else {
     ctx.memo[memo_idx] = Failed
   }
@@ -87,35 +89,17 @@ fn eval_node_rec(
       }
       let result = eval_rec(ctx, rule_node_id, pos)
       if result.ok && !target_is_rule_ref && should_emit_rule_rec(ctx, name) {
-        // Materialize for callback
         let labels_map = materialize(result.labels, ctx.tokens)
         labels_map.set("_start_tok", pos.to_json())
         labels_map.set("_end_tok", result.end_pos.to_json())
         (ctx.on_rule_match)(name, labels_map, pos, result.end_pos)
       }
       if result.ok {
-        // Clean up named labels, keep only internal ones
-        // For TokRef, already clean
+        // Named labels defined inside the rule must not leak to its caller.
         match result.labels {
           Labels::TokRef(_) | Labels::NoLabels => result
           Labels::Full(map) => {
-            let clean : Map[String, Json] = Map::new()
-            match map.get("_last") {
-              Some(v) => clean.set("_last", v)
-              None => ()
-            }
-            match map.get("_last_pos") {
-              Some(v) => clean.set("_last_pos", v)
-              None => ()
-            }
-            match map.get("_last_len") {
-              Some(v) => clean.set("_last_len", v)
-              None => ()
-            }
-            match map.get("_text") {
-              Some(v) => clean.set("_text", v)
-              None => ()
-            }
+            let clean = strip_named_labels(map)
             { ok: true, end_pos: result.end_pos, labels: full_labels(clean) }
           }
         }
@@ -186,24 +170,20 @@ fn eval_node_rec(
     FLabel(label_name, child) => {
       let result = eval_rec(ctx, child, pos)
       if result.ok {
-        // Must materialize to add named label
-        let labels = materialize(result.labels, ctx.tokens)
-        match labels.get("_last") {
-          Some(v) => labels.set(label_name, v)
+        let labels = to_owned_labels_map(result.labels, ctx.tokens)
+        match labels.meta.get("_last") {
+          Some(v) => labels.set_meta(label_name, v)
           None => ()
         }
-        match labels.get("_last_pos") {
-          Some(v) => labels.set(label_name + "_pos", v)
+        match labels.meta.get("_last_pos") {
+          Some(v) => labels.set_meta(label_name + "_pos", v)
           None => ()
         }
-        match labels.get("_last_len") {
-          Some(v) => labels.set(label_name + "_len", v)
+        match labels.meta.get("_last_len") {
+          Some(v) => labels.set_meta(label_name + "_len", v)
           None => ()
         }
-        match labels.get("_text") {
-          Some(v) => labels.set(label_name + "_text", v)
-          None => ()
-        }
+        publish_primary_text_as(labels, label_name + "_text")
         { ok: true, end_pos: result.end_pos, labels: full_labels(labels) }
       } else {
         result

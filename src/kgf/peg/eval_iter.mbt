@@ -258,7 +258,10 @@ fn process_seq_cont(
   let next_idx = idx + 1
   if next_idx >= elems.length() {
     let memo_idx = node_id * ctx.num_positions + start_pos
-    ctx.memo[memo_idx] = Succeeded(new_pos, merged)
+    // memo and the downstream result must not share a mutable accumulator:
+    // whichever consumer fires next would otherwise see state mutated by
+    // the other. The memo entry must survive future `merge_labels` calls.
+    ctx.memo[memo_idx] = Succeeded(new_pos, clone_labels(merged))
     ctx.results.push({ ok: true, end_pos: new_pos, labels: merged })
   } else {
     ctx.work.push(SeqCont(node_id, next_idx, start_pos, new_pos, merged))
@@ -277,7 +280,7 @@ fn process_choice_cont(
   let result = ctx.results.pop().unwrap()
   if result.ok {
     let memo_idx = node_id * ctx.num_positions + pos
-    ctx.memo[memo_idx] = Succeeded(result.end_pos, result.labels)
+    ctx.memo[memo_idx] = Succeeded(result.end_pos, clone_labels(result.labels))
     ctx.results.push(result)
     return
   }
@@ -368,7 +371,7 @@ fn process_optional_cont(
   let result = ctx.results.pop().unwrap()
   if result.ok {
     let memo_idx = node_id * ctx.num_positions + pos
-    ctx.memo[memo_idx] = Succeeded(result.end_pos, result.labels)
+    ctx.memo[memo_idx] = Succeeded(result.end_pos, clone_labels(result.labels))
     ctx.results.push(result)
   } else {
     let memo_idx = node_id * ctx.num_positions + pos
@@ -383,24 +386,20 @@ fn process_optional_cont(
 fn process_label_cont(ctx : IterEvalContext, label_name : String) -> Unit {
   let result = ctx.results.pop().unwrap()
   if result.ok {
-    // Must materialize to add named label
-    let labels = materialize(result.labels, ctx.tokens)
-    match labels.get("_last") {
-      Some(v) => labels.set(label_name, v)
+    let labels = to_owned_labels_map(result.labels, ctx.tokens)
+    match labels.meta.get("_last") {
+      Some(v) => labels.set_meta(label_name, v)
       None => ()
     }
-    match labels.get("_last_pos") {
-      Some(v) => labels.set(label_name + "_pos", v)
+    match labels.meta.get("_last_pos") {
+      Some(v) => labels.set_meta(label_name + "_pos", v)
       None => ()
     }
-    match labels.get("_last_len") {
-      Some(v) => labels.set(label_name + "_len", v)
+    match labels.meta.get("_last_len") {
+      Some(v) => labels.set_meta(label_name + "_len", v)
       None => ()
     }
-    match labels.get("_text") {
-      Some(v) => labels.set(label_name + "_text", v)
-      None => ()
-    }
+    publish_primary_text_as(labels, label_name + "_text")
     ctx.results.push({
       ok: true,
       end_pos: result.end_pos,
@@ -421,34 +420,17 @@ fn process_rule_ref_cont(
 ) -> Unit {
   let result = ctx.results.pop().unwrap()
   if result.ok && !target_is_rule_ref && should_emit_rule_iter(ctx, rule_name) {
-    // Materialize for callback
     let labels_map = materialize(result.labels, ctx.tokens)
     labels_map.set("_start_tok", start_pos.to_json())
     labels_map.set("_end_tok", result.end_pos.to_json())
     (ctx.on_rule_match)(rule_name, labels_map, start_pos, result.end_pos)
   }
   if result.ok {
-    // Clean up named labels, keep only internal ones
+    // Named labels defined inside the rule must not leak to its caller.
     match result.labels {
       Labels::TokRef(_) | Labels::NoLabels => ctx.results.push(result)
       Labels::Full(map) => {
-        let clean : Map[String, Json] = Map::new()
-        match map.get("_last") {
-          Some(v) => clean.set("_last", v)
-          None => ()
-        }
-        match map.get("_last_pos") {
-          Some(v) => clean.set("_last_pos", v)
-          None => ()
-        }
-        match map.get("_last_len") {
-          Some(v) => clean.set("_last_len", v)
-          None => ()
-        }
-        match map.get("_text") {
-          Some(v) => clean.set("_text", v)
-          None => ()
-        }
+        let clean = strip_named_labels(map)
         ctx.results.push({
           ok: true,
           end_pos: result.end_pos,
