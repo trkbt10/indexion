@@ -211,10 +211,7 @@ fn check_features(
   token_names : Map[String, Bool],
   diagnostics : Array[Diagnostic],
 ) -> Unit {
-  let token_referencing_features = [
-    "section_token", "heading_text_tokens", "reference_token_kinds", "coverage_token_kinds",
-    "vocabulary_token_kinds", "identifier_kinds", "embedded_code_fence", "embedded_content_token",
-  ]
+  let token_referencing_features = @kgf_types.token_referencing_feature_names()
   for feature_name in token_referencing_features {
     match spec.get_feature(feature_name) {
       Some(values) =>

@@ -262,16 +262,21 @@ fn remove_comment(line : String) -> String {
 /// Preprocesses the input string: removes comments and empty lines.
 fn preprocess(s : String) -> String {
   let lines = s.split("\n")
-  let result : Array[String] = []
+  let buf = StringBuilder::new(size_hint=s.length())
+  let mut first = true
   for line in lines {
     let line_str = line.to_string()
     let cleaned = remove_comment(line_str)
     let trimmed = cleaned.trim()
     if trimmed.length() > 0 {
-      result.push(cleaned)
+      if !first {
+        buf.write_string("\n")
+      }
+      buf.write_string(cleaned)
+      first = false
     }
   }
-  result.iter().intersperse("\n").fold(init="", fn(acc, s) { acc + s })
+  buf.to_string()
 }
 
 ///|

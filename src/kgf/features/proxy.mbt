@@ -95,37 +95,17 @@ fn is_disqualifying_keyword(
 
 ///|
 /// Token kinds to skip when analyzing function body.
-/// Skips whitespace/newlines (NL, SKIP, WS), comments (*Comment*),
-/// and doc tokens (Doc* prefix). These are KGF naming conventions
-/// shared across all language specs.
+/// Skips whitespace/newlines (NL, SKIP, WS), comments (*Comment suffix),
+/// and doc tokens (Doc* prefix). These are KGF naming conventions shared
+/// across all language specs — every comment token name in kgfs/programming/
+/// ends in "Comment" (LineComment, BlockComment, DocComment, Comment), so a
+/// suffix check is both correct and O(|kind|) instead of O(|kind|²).
 fn is_skip_token(kind : String) -> Bool {
   kind == "NL" ||
   kind == "SKIP" ||
   kind == "WS" ||
   kind.has_prefix("Doc") ||
-  has_substring(kind, "Comment")
-}
-
-///|
-fn has_substring(s : String, sub : String) -> Bool {
-  let s_chars = s.to_array()
-  let sub_chars = sub.to_array()
-  if sub_chars.length() > s_chars.length() {
-    return false
-  }
-  for i = 0; i <= s_chars.length() - sub_chars.length(); i = i + 1 {
-    let mut matched = true
-    for j = 0; j < sub_chars.length(); j = j + 1 {
-      if s_chars[i + j] != sub_chars[j] {
-        matched = false
-        break
-      }
-    }
-    if matched {
-      return true
-    }
-  }
-  false
+  kind.has_suffix("Comment")
 }
 
 ///|
@@ -727,26 +707,48 @@ pub fn find_call_sites(
 
 ///|
 /// Apply character-offset edits to content string.
-/// Sorts edits by offset descending (back-to-front) so earlier offsets stay valid.
+/// Sorts edits by offset ascending and emits the output in a single pass so
+/// N edits cost O(|content| + Σ|new_text|) rather than O(N·|content|).
 pub fn apply_edits(content : String, edits : Array[UnwrapEdit]) -> String {
-  let sorted = edits.copy()
-  sorted.sort_by(fn(a, b) { b.start_offset - a.start_offset })
-  let mut buf = content
-  for edit in sorted {
-    let buf_chars = buf.to_array()
-    let before_arr : Array[Char] = []
-    for j = 0; j < edit.start_offset && j < buf_chars.length(); j = j + 1 {
-      before_arr.push(buf_chars[j])
-    }
-    let after_arr : Array[Char] = []
-    for j = edit.end_offset; j < buf_chars.length(); j = j + 1 {
-      after_arr.push(buf_chars[j])
-    }
-    buf = String::from_array(before_arr) +
-      edit.new_text +
-      String::from_array(after_arr)
+  if edits.length() == 0 {
+    return content
   }
-  buf
+  let sorted = edits.copy()
+  sorted.sort_by(fn(a, b) { a.start_offset - b.start_offset })
+  let chars = content.to_array()
+  let len = chars.length()
+  let buf = StringBuilder::new(size_hint=len)
+  let mut cursor = 0
+  for edit in sorted {
+    let start = if edit.start_offset < 0 {
+      0
+    } else if edit.start_offset > len {
+      len
+    } else {
+      edit.start_offset
+    }
+    // Overlapping or out-of-order edits: skip the later one rather than
+    // corrupt the output. Callers can detect this by diffing lengths.
+    if start < cursor {
+      continue
+    }
+    for j = cursor; j < start; j = j + 1 {
+      buf.write_char(chars[j])
+    }
+    buf.write_string(edit.new_text)
+    let end = if edit.end_offset > len {
+      len
+    } else if edit.end_offset < start {
+      start
+    } else {
+      edit.end_offset
+    }
+    cursor = end
+  }
+  for j = cursor; j < len; j = j + 1 {
+    buf.write_char(chars[j])
+  }
+  buf.to_string()
 }
 
 ///|
@@ -766,19 +768,12 @@ pub fn delete_lines(
     }
     result.push(line)
   }
-  // Remove extra blank line at deletion point
   let del_idx = start_line - 1
-  if del_idx > 0 && del_idx < result.length() {
-    if is_blank(result[del_idx - 1]) && is_blank(result[del_idx]) {
-      let cleaned : Array[String] = []
-      for i, line in result {
-        if i == del_idx {
-          continue
-        }
-        cleaned.push(line)
-      }
-      return join_lines(cleaned)
-    }
+  if del_idx > 0 &&
+    del_idx < result.length() &&
+    is_blank(result[del_idx - 1]) &&
+    is_blank(result[del_idx]) {
+    result.remove(del_idx) |> ignore
   }
   join_lines(result)
 }

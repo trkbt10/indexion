@@ -2,24 +2,30 @@
 /// Joins path parts into a single path string.
 /// Parts are joined with "/" separator. Empty parts are filtered out.
 pub fn join_path(parts : Array[String]) -> String {
-  let result : Array[String] = []
+  let mut total = 0
+  let mut non_empty = 0
   for part in parts {
     if part.length() > 0 {
-      result.push(part)
+      total += part.length()
+      non_empty += 1
     }
   }
-  if result.length() == 0 {
+  if non_empty == 0 {
     return ""
   }
-  let mut path = result[0]
-  for i = 1; i < result.length(); i = i + 1 {
-    let part = result[i]
-    if path.length() > 0 && !path.has_suffix("/") {
-      path = path + "/"
+  let buf = StringBuilder::new(size_hint=total + non_empty)
+  let mut wrote = false
+  for part in parts {
+    if part.length() == 0 {
+      continue
     }
-    path = path + part
+    if wrote {
+      buf.write_char('/')
+    }
+    buf.write_string(part)
+    wrote = true
   }
-  normalize_path(path)
+  normalize_path(buf.to_string())
 }
 
 ///|

@@ -491,14 +491,43 @@ fn normalize_kgfs_target_dirs(
 }
 
 ///|
+/// Walks from each target dir upward, returning the first ancestor that
+/// contains a `kgfs/` directory. This supports invocations where the CLI is
+/// run from a subdirectory or where the target path is a deeply-nested file —
+/// the project root is discovered rather than required to be CWD.
 fn find_project_kgfs_candidate(target_dirs : Array[String]) -> String? {
   for dir in target_dirs {
-    let project_kgfs = join_path(dir, "kgfs")
-    if is_valid_dir(project_kgfs) {
-      return Some(project_kgfs)
+    let start = resolve_to_existing_dir(dir)
+    let mut current = start
+    while current.length() > 0 {
+      let candidate = join_path(current, "kgfs")
+      if is_valid_dir(candidate) {
+        return Some(candidate)
+      }
+      let parent = dirname(current)
+      if parent == current || parent.length() == 0 {
+        break
+      }
+      current = parent
     }
   }
   None
+}
+
+///|
+/// For a target path that may be a file (e.g. `src/foo.mbt`), climb to the
+/// nearest existing directory so the ancestor walk starts from a real dir.
+fn resolve_to_existing_dir(path : String) -> String {
+  let normalized = normalize_path(path)
+  if is_valid_dir(normalized) {
+    return normalized
+  }
+  if is_valid_file(normalized) {
+    return dirname(normalized)
+  }
+  // Path doesn't exist on disk (e.g. a glob-style include). Fall back to the
+  // literal normalized form so the ancestor walk can still try its parents.
+  normalized
 }
 
 ///|

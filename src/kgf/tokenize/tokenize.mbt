@@ -122,12 +122,14 @@ pub fn tokenize_file(
   let toolkit = @toolkit.LanguageToolkit::from_spec(spec)
   let id_set = toolkit.get_identifier_set()
   let vocab_set = toolkit.get_vocabulary_set()
-  let ref_set = build_feature_set(spec, "reference_token_kinds")
+  let ref_set = build_feature_set(spec, @types.FEATURE_REFERENCE_TOKEN_KINDS)
   // Embedded code fence handling (declared in KGF features section).
   // If the spec declares embedded_code_fence, we track open/close state
   // and re-tokenize content tokens with the detected language's spec.
-  let fence_token = get_single_feature(spec, "embedded_code_fence")
-  let content_token = get_single_feature(spec, "embedded_content_token")
+  let fence_token = get_single_feature(spec, @types.FEATURE_EMBEDDED_CODE_FENCE)
+  let content_token = get_single_feature(
+    spec, @types.FEATURE_EMBEDDED_CONTENT_TOKEN,
+  )
   let tokens = toolkit.tokenize(content)
   let mut in_fence = false
   let mut fence_spec : @types.KGFSpec? = None

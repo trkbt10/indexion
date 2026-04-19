@@ -47,6 +47,7 @@ priv struct IterEvalContext {
   diagnostics_enabled : Bool
   mut furthest_pos : Int
   furthest_expected : Array[String]
+  furthest_expected_set : @hashset.HashSet[String]
   work : Array[WorkItem]
   results : Array[FastEvalResult]
 }
@@ -77,6 +78,7 @@ fn IterEvalContext::new(
     diagnostics_enabled,
     furthest_pos: 0,
     furthest_expected: [],
+    furthest_expected_set: @hashset.new(),
     work: Array::new(capacity=1024),
     results: Array::new(capacity=256),
   }
@@ -104,13 +106,15 @@ fn record_token_failure(
   if pos > ctx.furthest_pos {
     ctx.furthest_pos = pos
     ctx.furthest_expected.clear()
+    ctx.furthest_expected_set.clear()
   }
   let expected = if expected_id >= 0 && expected_id < ctx.token_names.length() {
     ctx.token_names[expected_id]
   } else {
     ""
   }
-  if expected.length() > 0 && !ctx.furthest_expected.contains(expected) {
+  if expected.length() > 0 && !ctx.furthest_expected_set.contains(expected) {
+    ctx.furthest_expected_set.add(expected)
     ctx.furthest_expected.push(expected)
   }
 }

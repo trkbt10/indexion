@@ -492,7 +492,7 @@ pub fn build_fragment_match_signals(
     match registry.get_spec(fragment.spec) {
       Some(spec) => {
         let reference_kinds = build_feature_token_kinds(
-          spec, "reference_token_kinds",
+          spec, @kgf_types.FEATURE_REFERENCE_TOKEN_KINDS,
         )
         if reference_kinds.is_empty() {
           signals.set(fragment.id, {

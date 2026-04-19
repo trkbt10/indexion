@@ -260,6 +260,55 @@ pub fn KGFSpec::get_start_rule(self : KGFSpec) -> String {
   ""
 }
 
+///|
+/// Names of the `=== features` entries whose values are token kind names
+/// (as opposed to booleans, strings, or token values).
+///
+/// This is the single source of truth for the set of "token-referencing
+/// features" — any consumer that walks feature values as token kinds (e.g.
+/// `kgf check` validation, `kgf tokenize` feature enrichment) must iterate
+/// this list rather than redeclaring it locally. Adding a new token-valued
+/// feature requires updating this list only.
+pub fn token_referencing_feature_names() -> Array[String] {
+  [
+    FEATURE_SECTION_TOKEN,
+    FEATURE_HEADING_TEXT_TOKENS,
+    FEATURE_REFERENCE_TOKEN_KINDS,
+    FEATURE_COVERAGE_TOKEN_KINDS,
+    FEATURE_VOCABULARY_TOKEN_KINDS,
+    FEATURE_IDENTIFIER_KINDS,
+    FEATURE_EMBEDDED_CODE_FENCE,
+    FEATURE_EMBEDDED_CONTENT_TOKEN,
+  ]
+}
+
+///|
+/// KGF feature name constants. These strings appear in `=== features`
+/// sections of .kgf files — treating them as first-class identifiers in
+/// MoonBit avoids spelling drift between call sites.
+pub const FEATURE_SECTION_TOKEN : String = "section_token"
+
+///|
+pub const FEATURE_HEADING_TEXT_TOKENS : String = "heading_text_tokens"
+
+///|
+pub const FEATURE_REFERENCE_TOKEN_KINDS : String = "reference_token_kinds"
+
+///|
+pub const FEATURE_COVERAGE_TOKEN_KINDS : String = "coverage_token_kinds"
+
+///|
+pub const FEATURE_VOCABULARY_TOKEN_KINDS : String = "vocabulary_token_kinds"
+
+///|
+pub const FEATURE_IDENTIFIER_KINDS : String = "identifier_kinds"
+
+///|
+pub const FEATURE_EMBEDDED_CODE_FENCE : String = "embedded_code_fence"
+
+///|
+pub const FEATURE_EMBEDDED_CONTENT_TOKEN : String = "embedded_content_token"
+
 // ── Lazy parsing helpers ──────────────────────────
 
 ///|
