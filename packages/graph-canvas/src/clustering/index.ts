@@ -99,7 +99,7 @@ function byKind(graph: ViewGraph): Map<string, string> {
   for (const node of graph.nodes) {
     map.set(node.id, `kind:${node.kind}`);
   }
-  return map;
+  return collapseSingletonsTo(map, "kind:__isolates__");
 }
 
 function byDirectory(graph: ViewGraph): Map<string, string> {
@@ -107,7 +107,7 @@ function byDirectory(graph: ViewGraph): Map<string, string> {
   for (const node of graph.nodes) {
     map.set(node.id, `dir:${topLevelDirOf(node)}`);
   }
-  return map;
+  return collapseSingletonsTo(map, "dir:__isolates__");
 }
 
 function byModule(graph: ViewGraph): Map<string, string> {
@@ -116,7 +116,29 @@ function byModule(graph: ViewGraph): Map<string, string> {
     const key = node.group.length > 0 ? node.group : (node.file ?? node.id);
     map.set(node.id, `mod:${key}`);
   }
-  return map;
+  return collapseSingletonsTo(map, "mod:__isolates__");
+}
+
+/** Reassign every assignment that produces a single-node cluster to
+ *  the shared `bucketId`. Same rationale as `collapseSingletons` in
+ *  byCommunity: thousands of single-node clusters multiply the
+ *  per-cluster fixed cost in nested-hde and made the whole pipeline
+ *  block the UI for seconds. Verified visually by switching to the
+ *  Volume strategy with each clustering. */
+function collapseSingletonsTo(
+  assignment: Map<string, string>,
+  bucketId: string,
+): Map<string, string> {
+  const counts = new Map<string, number>();
+  for (const c of assignment.values()) {
+    counts.set(c, (counts.get(c) ?? 0) + 1);
+  }
+  for (const [nodeId, c] of assignment) {
+    if ((counts.get(c) ?? 0) === 1) {
+      assignment.set(nodeId, bucketId);
+    }
+  }
+  return assignment;
 }
 
 /**
@@ -215,6 +237,13 @@ function byCommunity(graph: ViewGraph): Map<string, string> {
     }
   }
 
+  // Collapse singletons into a single "isolates" pseudo-cluster.
+  // Without this, isolated nodes (degree=0) and tiny disconnected
+  // components stay as their own community — on a real codebase
+  // graph that produced thousands of single-node clusters, which
+  // forced nested-hde to run K HDE passes (each O(|E|)) and made
+  // the whole pipeline hang for tens of seconds.
+  collapseSingletonsTo(community, "__isolates__");
   return qualify(community);
 }
 

@@ -11,8 +11,7 @@
  * pathological inputs don't spin forever.
  */
 
-import type { ViewNode } from "../../types.ts";
-import type { Vec3 } from "../geometry.ts";
+import type { Vec3, ViewNode } from "../../types.ts";
 
 export type OverlapResolutionArgs = {
   readonly clusters: ReadonlyMap<string, readonly ViewNode[]>;

@@ -13,15 +13,19 @@
  * clustering is balanced.
  */
 
-import type { ViewGraph } from "../../types.ts";
-import type { Vec3 } from "../geometry.ts";
+import type { Vec3, ViewGraph } from "../../types.ts";
 import {
   applyHdeLayout,
+  applyHdeOnSubgraph,
   DEFAULT_HDE_OPTIONS,
   type Finaliser,
   type HdeOptions,
 } from "../hde.ts";
-import { buildQuotientGraph, groupByCluster } from "./quotient.ts";
+import {
+  buildClusterSubgraphs,
+  buildQuotientGraph,
+  groupByCluster,
+} from "./quotient.ts";
 import { resolveClusterOverlaps } from "./overlaps.ts";
 
 export { buildQuotientGraph, groupByCluster } from "./quotient.ts";
@@ -59,6 +63,19 @@ export function applyNestedHdeLayout(args: NestedHdeArgs): void {
   }
 
   // 2. Per-cluster HDE on the induced subgraph, translated to centre.
+  //
+  // Build every cluster's local adjacency in a single edge-list pass
+  // (see `buildClusterSubgraphs`). Without this pre-build, the loop
+  // below would call applyHdeLayout({ subset }) per cluster, and each
+  // call walks the full graph.edges array — turning the whole pass
+  // into O(K · |E|). For 1949 module clusters on an 8710-node graph
+  // that was ~3 s of synchronous work; with the pre-build it drops to
+  // O(|E|) total.
+  const subgraphs = buildClusterSubgraphs({
+    graph: args.graph,
+    clusters,
+    clusterOf: args.clusterOf,
+  });
   const maxClusterSize = Math.max(
     ...Array.from(clusters.values(), (m) => m.length),
   );
@@ -76,16 +93,18 @@ export function applyNestedHdeLayout(args: NestedHdeArgs): void {
       innerRadii.set(clusterId, 0);
       continue;
     }
-    const memberSet = new Set(members.map((n) => n.id));
     const innerRadius =
       opts.radius * 0.15 +
       opts.radius *
         0.25 *
         Math.sqrt(members.length / Math.max(1, maxClusterSize));
     innerRadii.set(clusterId, innerRadius);
-    applyHdeLayout({
-      graph: args.graph,
-      subset: memberSet,
+    const subgraph = subgraphs.get(clusterId);
+    if (!subgraph) {
+      continue;
+    }
+    applyHdeOnSubgraph({
+      subgraph,
       centre,
       options: {
         ...opts,

@@ -8,13 +8,7 @@
  * implementations were subtly wrong (see `fibonacciPoints` below).
  */
 
-import type { ViewNode } from "../types.ts";
-
-export type Vec3 = {
-  readonly x: number;
-  readonly y: number;
-  readonly z: number;
-};
+import type { Vec3, ViewNode } from "../types.ts";
 
 export const ORIGIN: Vec3 = { x: 0, y: 0, z: 0 };
 

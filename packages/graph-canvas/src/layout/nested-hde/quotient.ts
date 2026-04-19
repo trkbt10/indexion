@@ -7,6 +7,7 @@
  */
 
 import type { ViewEdge, ViewGraph, ViewNode } from "../../types.ts";
+import type { PrebuiltSubgraph } from "../hde.ts";
 
 export type QuotientResult = {
   readonly graph: ViewGraph;
@@ -110,4 +111,73 @@ export function groupByCluster(
  *  since it cannot appear in a node id. */
 function edgeKey(a: string, b: string): string {
   return a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`;
+}
+
+/**
+ * Build a `PrebuiltSubgraph` for every cluster in a single pass over
+ * the global edge list. The previous nested-hde call site walked the
+ * whole edge list once per cluster (O(K · |E|)); using this helper
+ * collapses that to O(|E| + Σ |E_i|), which is essentially O(|E|)
+ * since Σ |E_i| ≤ |E|.
+ *
+ * Only intra-cluster edges contribute to the per-cluster local
+ * adjacency. Cross-cluster edges are excluded — they belong to the
+ * quotient graph, not to any single cluster's HDE.
+ */
+export function buildClusterSubgraphs(args: {
+  readonly graph: ViewGraph;
+  readonly clusters: ReadonlyMap<string, readonly ViewNode[]>;
+  readonly clusterOf: ReadonlyMap<string, string>;
+}): Map<string, PrebuiltSubgraph> {
+  const { graph, clusters, clusterOf } = args;
+  // Per-cluster local index: nodeId → local position within the cluster.
+  // Built once so per-edge classification is O(1).
+  const localIndex = new Map<string, number>();
+  for (const [, members] of clusters) {
+    for (let i = 0; i < members.length; i++) {
+      localIndex.set(members[i]!.id, i);
+    }
+  }
+  // Initialise empty adjacency arrays for each cluster.
+  const localAdj = new Map<string, number[][]>();
+  for (const [clusterId, members] of clusters) {
+    localAdj.set(
+      clusterId,
+      Array.from({ length: members.length }, () => []),
+    );
+  }
+  // One sweep through the edge list. Skip self-loops and edges that
+  // cross cluster boundaries — only intra-cluster connectivity feeds
+  // the per-cluster HDE.
+  for (const edge of graph.edges) {
+    const cs = clusterOf.get(edge.sourceId);
+    const ct = clusterOf.get(edge.targetId);
+    if (!cs || cs !== ct) {
+      continue;
+    }
+    if (edge.sourceId === edge.targetId) {
+      continue;
+    }
+    const adj = localAdj.get(cs);
+    if (!adj) {
+      continue;
+    }
+    const si = localIndex.get(edge.sourceId);
+    const ti = localIndex.get(edge.targetId);
+    if (si === undefined || ti === undefined) {
+      continue;
+    }
+    adj[si]!.push(ti);
+    adj[ti]!.push(si);
+  }
+  // Materialise the result, pairing each cluster's nodes with its
+  // local adjacency.
+  const out = new Map<string, PrebuiltSubgraph>();
+  for (const [clusterId, members] of clusters) {
+    out.set(clusterId, {
+      nodes: members,
+      localAdj: localAdj.get(clusterId) ?? [],
+    });
+  }
+  return out;
 }

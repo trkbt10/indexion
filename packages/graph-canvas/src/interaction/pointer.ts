@@ -44,13 +44,22 @@ export function installPointerHandlers(
     onDoubleClick,
   } = args;
 
-  type Mode = "idle" | "dragging-node";
+  type Mode = "idle" | "dragging-node" | "orbiting";
   let mode: Mode = "idle";
   let startX = 0;
   let startY = 0;
   let dragNode: ViewNode | null = null;
   let lastClickTs = 0;
   let lastClickNodeId: string | null = null;
+  /** While the user is moving the camera (orbit / pan / zoom), the
+   *  pointer crosses many nodes and edges that the user does NOT
+   *  intend to inspect. Hover-driven highlight + redraw cycles in
+   *  that window cause the screen to flash with each crossing.
+   *  Suppressing hover updates while the pointer is held down — the
+   *  same condition that gates orbit / pan in the renderer's
+   *  OrbitControls — eliminates that flicker without losing hover
+   *  responsiveness when the user is just moving the cursor. */
+  let pointerDown = false;
 
   const canvasPoint = (e: PointerEvent) => {
     const rect = canvas.getBoundingClientRect();
@@ -65,12 +74,25 @@ export function installPointerHandlers(
     const p = canvasPoint(e);
     startX = p.x;
     startY = p.y;
+    pointerDown = true;
     const hit = renderer.pickNodeAt(p.x, p.y);
     if (hit) {
       dragNode = hit;
       mode = "dragging-node";
       renderer.setControlsEnabled(false);
       canvas.setPointerCapture(e.pointerId);
+    } else {
+      // Pointer is down without a node target → user is starting an
+      // orbit / pan with OrbitControls. Hover updates are suppressed
+      // for the duration so passing over nodes mid-orbit doesn't
+      // strobe the highlight.
+      mode = "orbiting";
+    }
+    // Clear any stale hover state at the start of any pointer-down
+    // gesture so the highlight doesn't linger through the gesture.
+    if (hoverNodeRef.current !== null) {
+      hoverNodeRef.current = null;
+      onHoverChange();
     }
   };
 
@@ -93,6 +115,13 @@ export function installPointerHandlers(
         }
         onDragMove();
       }
+      return;
+    }
+    if (pointerDown) {
+      // Pointer is held (orbit / pan / drag-node) — do not run hover
+      // pickup. This is the flicker fix: without it, every pointer
+      // move during an orbit hit-tests a new node, producing a
+      // strobing highlight + redraw cycle.
       return;
     }
     const hit = renderer.pickNodeAt(p.x, p.y);
@@ -126,6 +155,7 @@ export function installPointerHandlers(
     const clicked = dragNode;
     mode = "idle";
     dragNode = null;
+    pointerDown = false;
     renderer.setControlsEnabled(true);
     if (canvas.hasPointerCapture(e.pointerId)) {
       canvas.releasePointerCapture(e.pointerId);

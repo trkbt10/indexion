@@ -1,49 +1,48 @@
 /**
- * @file Hierarchical layout — "galaxies of galaxies".
+ * @file Hierarchical layout — squarified treemap.
  *
- * Every node is positioned in a single top-down pass:
+ * Every cluster (a path in the node hierarchy) gets a 2D rectangle
+ * whose area is proportional to the number of leaf nodes under it.
+ * Sub-clusters tile their parent rectangle with another squarified
+ * treemap; leaves at the deepest level fill the cell on a jittered
+ * grid. The result is dense, area-proportional, and aspect-balanced
+ * — every node gets visible space, no nesting collapses to a dot.
  *
- *   world
- *    └─ each top-level path gets a bubble on the world sphere
- *        └─ nested paths get sub-bubbles inside their parent
- *            └─ owned leaves fill the interior by kind-band + force
+ * The previous incarnation packed clusters on Fibonacci spheres,
+ * which wasted most of the parent volume on shell space and forced
+ * cascading scale reductions. The treemap uses 100% of the parent
+ * area and never needs to "shrink to fit", so density tracks node
+ * count linearly.
  *
- * This entry orchestrates: compute intrinsic radii bottom-up, shrink
- * uniformly if the world can't host them, then walk the tree top-down
- * via placeChildren. Every algorithmic piece is its own exported
- * helper under this directory.
+ * Output:
+ *   - Each ViewNode gets x, y written; z = 0.
+ *   - One ClusterShell per visited path. Shell circles are
+ *     inscribed in their cell rectangle so the renderer's existing
+ *     spherical-shell drawing keeps working.
  *
- * All tuning values flow from `LayoutSettings` (the renderer's
- * `RenderSettings.layout` is the single source of truth). No magic
- * numbers in this file other than mathematical constants.
- *
- * Language-agnostic: consumes only the path assignment + node kinds,
- * never per-language prefixes or dir names.
+ * Language-agnostic: consumes only the path assignment + node kinds.
  */
 
-import type { LayoutSettings, ViewEdge, ViewNode } from "../../types.ts";
+import type {
+  ClusterShell,
+  LayoutSettings,
+  Rect,
+  ViewEdge,
+  ViewNode,
+} from "../../types.ts";
 import {
   buildChildrenIndex,
   buildOwnedNodesIndex,
   rootsOf,
   type HierarchicalAssignment,
 } from "../hierarchy.ts";
-import { ORIGIN } from "../geometry.ts";
-import {
-  computeIntrinsicRadii,
-  computeSiblingOuterRadius,
-} from "./intrinsic.ts";
-import { buildAdjacencyIndex, buildInterClusterEdgeIndex } from "./ordering.ts";
-import { placeChildren } from "./place.ts";
-import type { ClusterShellInfo } from "./types.ts";
-
-export type { ClusterShellInfo } from "./types.ts";
+import { computeWeights, packChildren } from "./pack.ts";
 
 export type HierarchicalLayoutArgs = {
   readonly nodes: readonly ViewNode[];
-  /** Edges used for sibling ordering, kind-band adjacency, and
-   *  intra-cluster force relaxation. Optional so the pure-layout
-   *  spec tests can drive the layout without edge data. */
+  /** Edges used to order leaves so connected nodes end up in nearby
+   *  grid slots. Optional so the pure-layout spec tests can drive
+   *  the layout without edge data. */
   readonly edges?: readonly ViewEdge[];
   readonly assignment: HierarchicalAssignment;
   readonly settings: LayoutSettings;
@@ -51,7 +50,7 @@ export type HierarchicalLayoutArgs = {
 
 export type HierarchicalLayoutResult = {
   readonly nodeDepth: ReadonlyMap<string, number>;
-  readonly clusterShells: readonly ClusterShellInfo[];
+  readonly clusterShells: readonly ClusterShell[];
 };
 
 export function applyHierarchicalLayout(
@@ -70,48 +69,64 @@ export function applyHierarchicalLayout(
   const childrenOf = buildChildrenIndex(assignment);
   const ownedNodes = buildOwnedNodesIndex(nodes, assignment);
   const roots = rootsOf(assignment);
-  const interCluster = edges
-    ? buildInterClusterEdgeIndex({ edges, assignment })
-    : null;
   const adjacency = edges ? buildAdjacencyIndex(edges) : null;
+  const weightOf = computeWeights({ roots, childrenOf, ownedNodes });
 
-  const intrinsic = computeIntrinsicRadii({
-    roots,
-    childrenOf,
-    ownedNodes,
-    settings,
-  });
+  // The world is a square centred at the origin with side
+  // 2 × worldRadius. The renderer's fitToView fits to whatever real
+  // payload is present; this only sets the working scale.
+  const side = settings.worldRadius * 2;
+  const worldRect: Rect = {
+    x: -settings.worldRadius,
+    y: -settings.worldRadius,
+    w: side,
+    h: side,
+  };
 
-  // If the sum of root intrinsic radii exceeds the world radius,
-  // scale every intrinsic uniformly so the whole scene fits. That
-  // preserves relative proportions (heavy clusters still dwarf
-  // light ones) while keeping the world inside a bounded box.
-  const rootTotal = computeSiblingOuterRadius({
-    radii: roots.map((p) => intrinsic.get(p)!),
-    settings,
-  });
-  const worldRadius = settings.worldRadius;
-  if (rootTotal > worldRadius) {
-    const scale = worldRadius / rootTotal;
-    for (const path of intrinsic.keys()) {
-      intrinsic.set(path, intrinsic.get(path)! * scale);
-    }
-  }
-
-  const shells: ClusterShellInfo[] = [];
-  placeChildren({
-    centre: ORIGIN,
-    parentRadius: worldRadius,
+  const shells: ClusterShell[] = [];
+  packChildren({
+    rect: worldRect,
     depth: 1,
     children: roots,
     childrenOf,
     ownedNodes,
-    intrinsic,
-    interCluster,
+    weightOf,
     adjacency,
     settings,
     collectShell: (s) => shells.push(s),
   });
 
+  // Singleton root special-case: if only one root exists, packChildren
+  // gives it the full world rect. That's correct, but the renderer
+  // expects nodeDepth=1 for landmarks and our recursion writes the
+  // top-level shell as the root itself. No additional fix needed; the
+  // shell list will contain the root cell at depth=1.
+
   return { nodeDepth, clusterShells: shells };
+}
+
+/** Build a node-id → neighbour-ids adjacency map from a list of
+ *  directed edges. Symmetric: both endpoints see each other so the
+ *  treemap leaf-ordering can group connected pairs regardless of
+ *  edge direction. */
+function buildAdjacencyIndex(
+  edges: readonly ViewEdge[],
+): ReadonlyMap<string, readonly string[]> {
+  const map = new Map<string, string[]>();
+  const push = (from: string, to: string): void => {
+    const list = map.get(from);
+    if (list) {
+      list.push(to);
+    } else {
+      map.set(from, [to]);
+    }
+  };
+  for (const edge of edges) {
+    if (edge.sourceId === edge.targetId) {
+      continue;
+    }
+    push(edge.sourceId, edge.targetId);
+    push(edge.targetId, edge.sourceId);
+  }
+  return map;
 }

@@ -8,8 +8,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import type { ViewNode } from "../../types.ts";
-import type { Vec3 } from "../geometry.ts";
+import type { Vec3, ViewNode } from "../../types.ts";
 import { resolveClusterOverlaps, translateCluster } from "./overlaps.ts";
 
 function mkMember(id: string, pos: Vec3): ViewNode {

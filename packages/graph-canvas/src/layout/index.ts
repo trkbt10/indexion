@@ -22,7 +22,6 @@ import { DEFAULT_RENDER_SETTINGS } from "../renderer/settings.ts";
 export { LAYOUT_STRATEGIES, getLayoutStrategy } from "./strategies.ts";
 export { relaxNeighbours } from "./drag-relax.ts";
 export type {
-  ClusterShell,
   LayoutStrategy,
   LayoutStrategyId,
   StrategyResult,
@@ -35,7 +34,7 @@ export type LayoutArgs = {
   readonly settings?: LayoutSettings;
 };
 
-const DEFAULT_STRATEGY: LayoutStrategyId = "hde-volume";
+const DEFAULT_STRATEGY: LayoutStrategyId = "hierarchy";
 
 export function layoutGraph(args: LayoutArgs): StrategyResult {
   const { graph, clusterOf } = args;

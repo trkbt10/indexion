@@ -11,7 +11,7 @@
  * Adding a strategy = adding a new entry to LAYOUT_STRATEGIES.
  */
 
-import type { LayoutSettings, ViewGraph } from "../types.ts";
+import type { ClusterShell, LayoutSettings, Vec3, ViewGraph, ViewNode } from "../types.ts";
 import { computeHierarchy } from "./hierarchy.ts";
 import { applyHdeLayout, volumeFinaliser } from "./hde.ts";
 import { applyHierarchicalLayout } from "./hierarchical/index.ts";
@@ -45,25 +45,24 @@ export type StrategyResult = {
   /** Cluster shells: (centre, radius, depth) for each hierarchy level
    *  so the renderer can outline them. */
   readonly clusterShells?: readonly ClusterShell[];
+  /** Per-node cluster id used for categorical colouring of nodes,
+   *  edges, and arrowheads. Each strategy is responsible for
+   *  authoritatively declaring which group a node belongs to —
+   *  hierarchy uses the top-level path, k-means uses `kmeans-${idx}`,
+   *  Volume + clustering passes through the user-supplied
+   *  `clusterOf`. The renderer reads this map directly instead of
+   *  pattern-matching on shell paths, so adding a new strategy is
+   *  one explicit map to populate, not a heuristic to guess. */
+  readonly nodeCluster?: ReadonlyMap<string, string>;
 };
 
-export type ClusterShell = {
-  readonly path: string;
-  readonly centre: {
-    readonly x: number;
-    readonly y: number;
-    readonly z: number;
-  };
-  readonly radius: number;
-  readonly depth: number;
-};
 
 export const LAYOUT_STRATEGIES: readonly LayoutStrategy[] = [
   {
     id: "hierarchy",
     label: "Hierarchy",
     description:
-      "Nested bubbles by id path: parents enclose sub-packages recursively. Shows the host language's package structure whatever it is.",
+      "Squarified treemap by id path. Each cluster's area is proportional to its leaf count and sub-clusters tile the parent rectangle, so nodes always have visible space.",
     apply: ({ graph, layoutSettings }) => {
       const assignment = computeHierarchy(graph.nodes);
       const result = applyHierarchicalLayout({
@@ -72,9 +71,20 @@ export const LAYOUT_STRATEGIES: readonly LayoutStrategy[] = [
         assignment,
         settings: layoutSettings,
       });
+      // Hierarchy's "cluster" for colouring is the top-level path
+      // (the broadest visual group). Sub-clusters inherit via
+      // clusterPalette's topLevelOf().
+      const nodeCluster = new Map<string, string>();
+      for (const node of graph.nodes) {
+        const path = assignment.pathOf.get(node.id);
+        if (path && path.length > 0) {
+          nodeCluster.set(node.id, path[0]!);
+        }
+      }
       return {
         nodeDepth: result.nodeDepth,
         clusterShells: result.clusterShells,
+        nodeCluster,
       };
     },
   },
@@ -96,7 +106,14 @@ export const LAYOUT_STRATEGIES: readonly LayoutStrategy[] = [
         return {};
       }
       applyNestedHdeLayout({ graph, clusterOf, finalise: volumeFinaliser });
-      return {};
+      // Volume colouring follows the user-selected clustering 1:1.
+      // Emit one ClusterShell per cluster so the shell layer can draw
+      // outlines, the cluster-fill layer can paint density patches,
+      // AND the cluster-label layer can chip-name each group. Without
+      // this the user sees coloured nodes but no indication of which
+      // cluster is which — exactly the "情報が一切ない" complaint.
+      const shells = buildVolumeClusterShells(graph, clusterOf);
+      return { nodeCluster: clusterOf, clusterShells: shells };
     },
   },
 ];
@@ -111,6 +128,72 @@ export function getLayoutStrategy(id: LayoutStrategyId): LayoutStrategy {
     throw new Error(`Unknown layout strategy: ${id as string}`);
   }
   return s;
+}
+
+// ─── Volume strategy helpers ──────────────────────────────────────
+
+/** Compute one ClusterShell per cluster from the post-layout node
+ *  positions. Centre = arithmetic mean of member positions, radius =
+ *  90th-percentile distance from that centre (robust to outliers).
+ *  rect is the axis-aligned bounding square sized to fit the radius
+ *  so the cluster-fill layer has a quad to paint. */
+function buildVolumeClusterShells(
+  graph: ViewGraph,
+  clusterOf: ReadonlyMap<string, string>,
+): ClusterShell[] {
+  const groups = new Map<string, ViewNode[]>();
+  for (const node of graph.nodes) {
+    const cluster = clusterOf.get(node.id);
+    if (!cluster) continue;
+    const list = groups.get(cluster);
+    if (list) {
+      list.push(node);
+    } else {
+      groups.set(cluster, [node]);
+    }
+  }
+  const out: ClusterShell[] = [];
+  for (const [path, members] of groups) {
+    if (members.length === 0) continue;
+    let cx = 0;
+    let cy = 0;
+    let cz = 0;
+    for (const m of members) {
+      cx += m.x;
+      cy += m.y;
+      cz += m.z;
+    }
+    const centreX = cx / members.length;
+    const centreY = cy / members.length;
+    const centreZ = cz / members.length;
+    const dists = members
+      .map((m) =>
+        Math.sqrt(
+          (m.x - centreX) ** 2 +
+            (m.y - centreY) ** 2 +
+            (m.z - centreZ) ** 2,
+        ),
+      )
+      .sort((a, b) => a - b);
+    const radius =
+      dists[Math.floor(dists.length * 0.9)] ?? dists[dists.length - 1] ?? 0;
+    out.push({
+      path,
+      centre: { x: centreX, y: centreY, z: centreZ },
+      radius,
+      depth: 1,
+      rect: {
+        x: centreX - radius,
+        y: centreY - radius,
+        w: radius * 2,
+        h: radius * 2,
+      },
+      kind: "centroid",
+      isLeaf: true,
+      leafCount: members.length,
+    });
+  }
+  return out;
 }
 
 // ─── K-means strategy ─────────────────────────────────────────────
@@ -137,11 +220,7 @@ type RobustRadiusArgs = {
   readonly points: Float64Array;
   readonly assignment: Int32Array;
   readonly clusterIdx: number;
-  readonly centre: {
-    readonly x: number;
-    readonly y: number;
-    readonly z: number;
-  };
+  readonly centre: Vec3;
 };
 
 /** Robust radius estimate from the node distribution. We use the
@@ -209,16 +288,45 @@ function applyKMeansLayout(graph: ViewGraph): StrategyResult {
 
   // 5. Emit one ClusterShell per k-means cluster. Radius uses the
   //    90th-percentile distance so outliers don't inflate the bubble.
-  const shells: ClusterShell[] = result.centroids.map((c, idx) => ({
-    path: `kmeans-${idx}`,
-    centre: { x: c.x, y: c.y, z: c.z },
-    radius: robustRadius({
+  //    K-means clusters are flat leaves with no real treemap cell; we
+  //    emit a circumscribing square so the cluster-fill layer still
+  //    has a rect to paint when the cluster reads as a density patch.
+  const shells: ClusterShell[] = result.centroids.map((c, idx) => {
+    const radius = robustRadius({
       points,
       assignment: result.assignment,
       clusterIdx: idx,
       centre: c,
-    }),
-    depth: 1,
-  }));
-  return { clusterShells: shells };
+    });
+    let leafCount = 0;
+    for (let i = 0; i < n; i++) {
+      if (result.assignment[i] === idx) {
+        leafCount++;
+      }
+    }
+    return {
+      path: `kmeans-${idx}`,
+      centre: { x: c.x, y: c.y, z: c.z },
+      radius,
+      depth: 1,
+      rect: {
+        x: c.x - radius,
+        y: c.y - radius,
+        w: radius * 2,
+        h: radius * 2,
+      },
+      kind: "centroid" as const,
+      isLeaf: true,
+      leafCount,
+    };
+  });
+  // Per-node cluster id for colouring. Mirrors the shell paths so
+  // clusterPalette returns the same hue for a node and its enclosing
+  // shell — the user sees node, edge, fill, and border all wearing
+  // the same group colour.
+  const nodeCluster = new Map<string, string>();
+  for (let i = 0; i < n; i++) {
+    nodeCluster.set(graph.nodes[i]!.id, `kmeans-${result.assignment[i]!}`);
+  }
+  return { clusterShells: shells, nodeCluster };
 }

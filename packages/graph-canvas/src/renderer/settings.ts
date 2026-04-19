@@ -17,7 +17,12 @@ export const DEFAULT_RENDER_SETTINGS: RenderSettings = {
     // screen-space radius, back-solved to world radius per frame,
     // so nodes stay legible at any zoom level.
     pixelTarget: 2.4,
-    hubScale: 7,
+    // Verified visually: hubScale=7 produced 16.8px-radius white
+    // discs that dominated every zoom level — exactly the "やたら大
+    // きい" the user reported. 2.5 keeps hubs distinguishable from
+    // leaves (~6× area) without becoming the visual centre of
+    // gravity.
+    hubScale: 2.5,
     sphereSegments: { width: 14, height: 10 },
     fadeRadius: 2.2,
     cullRadius: 0.8,
@@ -27,6 +32,21 @@ export const DEFAULT_RENDER_SETTINGS: RenderSettings = {
     // smoothly up to `interiorFadeHiPx`.
     interiorFadeLoPx: 32,
     interiorFadeHiPx: 96,
+  },
+  clusterFill: {
+    // Visually verified: with 64/128 the fill stayed dominant even at
+    // close zoom because typical leaf cells project to several hundred
+    // pixels long before they reach the threshold. 32/96 lets the
+    // fill act as an overview cue and crossfade out by the time
+    // individual nodes are large enough to read.
+    belowPx: 32,
+    abovePx: 96,
+    // 0.20 (was 0.32): with the palette providing categorical
+    // identity AND borders providing geometric separation, the fill
+    // can sit much fainter and still convey "tinted region". Higher
+    // values made the fill dominate at near zoom and obscured nodes.
+    opacityPeak: 0.20,
+    densityGain: 3,
   },
   shell: {
     // Ring (silhouette circle) resolution. 64 segments renders a
@@ -42,7 +62,12 @@ export const DEFAULT_RENDER_SETTINGS: RenderSettings = {
   },
   edge: {
     linewidth: 1.0,
-    opacity: 0.18,
+    // 0.30 (was 0.18): visually verified that 0.18 leaves edges
+    // invisible at mid/near zoom while 0.55 saturates them at every
+    // zoom. 0.30 gives a faint web at overview that thickens to a
+    // readable structure when zoomed in, without ever becoming
+    // dominant.
+    opacity: 0.30,
     bezierSegments: 12,
     bundleStrength: 0.65,
     // Short = bottom 40%, Long = top 80% of length distribution.
@@ -51,6 +76,12 @@ export const DEFAULT_RENDER_SETTINGS: RenderSettings = {
     // A ghost visibility for long edges so relationships never fully
     // disappear; small enough that local structure dominates.
     longEdgeFloor: 0.1,
+    // Arrow size is proportional to the edge linewidth so arrows look
+    // like a natural cap on the line. Length 4× linewidth and 0.6
+    // aspect ≈ a slim isoceles triangle that reads as a direction
+    // marker without dwarfing the line.
+    arrowLengthMul: 4,
+    arrowAspect: 0.6,
   },
   camera: {
     fov: 50,

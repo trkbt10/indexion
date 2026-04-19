@@ -12,11 +12,7 @@
  * clusters without any path / folder assumption.
  */
 
-export type Vec3 = {
-  readonly x: number;
-  readonly y: number;
-  readonly z: number;
-};
+import type { Vec3 } from "../types.ts";
 
 export type KMeansResult = {
   /** For each input point (in the same order as `points`), the index

@@ -20,7 +20,7 @@
  * Embedding" (GD 2002).
  */
 
-import type { ViewGraph, ViewNode } from "../types.ts";
+import type { Vec3, ViewGraph, ViewNode } from "../types.ts";
 import { fibonacciPoints, writeNode as writePosition } from "./geometry.ts";
 
 export type HdeOptions = {
@@ -52,11 +52,7 @@ export type FinaliserArgs = {
   /** Row-major (nodeCount × 3) projected coordinates. Mutable — the
    *  finaliser may rewrite it before calling writePositions. */
   readonly projected: Float32Array;
-  readonly centre: {
-    readonly x: number;
-    readonly y: number;
-    readonly z: number;
-  };
+  readonly centre: Vec3;
   readonly radius: number;
 };
 
@@ -66,13 +62,29 @@ export type HdeLayoutArgs = {
   /** If given, restrict the layout to this subset of nodes. */
   readonly subset?: ReadonlySet<string>;
   /** Centre of the output embedding. */
-  readonly centre?: {
-    readonly x: number;
-    readonly y: number;
-    readonly z: number;
-  };
+  readonly centre?: Vec3;
   /** How to turn the raw projection into final positions. Defaults to
    *  the shell finaliser (largest axis fits `radius`). */
+  readonly finalise?: Finaliser;
+};
+
+/** Pre-built per-cluster subgraph for the hot path used by
+ *  nested-hde: avoids walking the global edge list once per cluster.
+ *
+ *  - `nodes`: members of this cluster (the order defines the local
+ *    indices used by `localAdj`).
+ *  - `localAdj[i]` is the list of *local* indices adjacent to local
+ *    node i. Built once by the caller from the global edge list,
+ *    then reused — turning O(K · |E|) into O(|E| + Σ |E_i|). */
+export type PrebuiltSubgraph = {
+  readonly nodes: readonly ViewNode[];
+  readonly localAdj: readonly (readonly number[])[];
+};
+
+export type HdeOnSubgraphArgs = {
+  readonly subgraph: PrebuiltSubgraph;
+  readonly options?: Partial<HdeOptions>;
+  readonly centre?: Vec3;
   readonly finalise?: Finaliser;
 };
 
@@ -129,6 +141,53 @@ export function applyHdeLayout(args: HdeLayoutArgs): void {
   });
 }
 
+/**
+ * Apply HDE to a pre-built subgraph (nodes + local adjacency).
+ *
+ * This is the fast path for callers — like `applyNestedHdeLayout` —
+ * that loop over many clusters: building the global → cluster
+ * adjacency map once and then handing each cluster its own
+ * pre-computed subgraph avoids the O(K · |E|) cost of having
+ * `applyHdeLayout` re-scan the full edge list per cluster.
+ *
+ * Single-node subgraphs collapse to writing the node at `centre`.
+ * Multiple connected components within the subgraph are handled by
+ * the same packing logic as `applyHdeLayout`.
+ */
+export function applyHdeOnSubgraph(args: HdeOnSubgraphArgs): void {
+  const options = { ...DEFAULT_HDE_OPTIONS, ...args.options };
+  const centre = args.centre ?? { x: 0, y: 0, z: 0 };
+  const finalise = args.finalise ?? shellFinaliser;
+  const { nodes, localAdj } = args.subgraph;
+  if (nodes.length === 0) {
+    return;
+  }
+  if (nodes.length === 1) {
+    writePosition(nodes[0]!, centre);
+    return;
+  }
+  const components = connectedComponents(localAdj, nodes.length);
+  if (components.length === 1) {
+    layoutComponent({
+      nodes,
+      adjacency: localAdj,
+      indices: components[0]!,
+      options,
+      centre,
+      finalise,
+    });
+    return;
+  }
+  layoutMultipleComponents({
+    nodes,
+    adjacency: localAdj,
+    components,
+    options,
+    centre,
+    finalise,
+  });
+}
+
 // ─── Component decomposition ──────────────────────────────────────
 
 type ComponentPayload = {
@@ -136,11 +195,7 @@ type ComponentPayload = {
   readonly adjacency: Adjacency;
   readonly indices: readonly number[];
   readonly options: HdeOptions;
-  readonly centre: {
-    readonly x: number;
-    readonly y: number;
-    readonly z: number;
-  };
+  readonly centre: Vec3;
   readonly finalise: Finaliser;
 };
 
@@ -215,11 +270,7 @@ type MultiArgs = {
   readonly adjacency: Adjacency;
   readonly components: readonly (readonly number[])[];
   readonly options: HdeOptions;
-  readonly centre: {
-    readonly x: number;
-    readonly y: number;
-    readonly z: number;
-  };
+  readonly centre: Vec3;
   readonly finalise: Finaliser;
 };
 
@@ -265,9 +316,13 @@ function layoutMultipleComponents(args: MultiArgs): void {
     });
   }
   // Remaining real components ring around the biggest, pushed just
-  // beyond its radius so they don't overlap its payload.
+  // beyond its radius so they don't overlap its payload. The 1.15
+  // factor (was 1.6) keeps the ring close to the main payload so
+  // edges between the largest component and its satellites don't
+  // span half the world — verified visually that 1.6 produced
+  // long stretched edges that dominated the canvas.
   if (real.length > 1) {
-    const outerRadius = (radii[0] ?? options.radius) * 1.6;
+    const outerRadius = (radii[0] ?? options.radius) * 1.15;
     const ringCentres = fibonacciPoints(real.length - 1, outerRadius);
     for (let i = 1; i < real.length; i++) {
       const c = ringCentres[i - 1] ?? { x: 0, y: 0, z: 0 };
@@ -292,9 +347,13 @@ function layoutMultipleComponents(args: MultiArgs): void {
   }
 
   // Tiny components: spread on an *outer* halo shell so they exist
-  // but don't compete with the main constellation.
+  // but don't compete with the main constellation. The 1.4 factor
+  // (was 2.4) puts the halo just outside the real ring instead of
+  // banishing isolated nodes to the far edges of the world — that
+  // wide halo turned every cross-cluster edge into a long radial
+  // stretch when the user enabled clustering.
   if (singletons.length > 0) {
-    const haloRadius = (radii[0] ?? options.radius) * 2.4;
+    const haloRadius = (radii[0] ?? options.radius) * 1.4;
     const haloPoints = fibonacciPoints(singletons.length, haloRadius);
     singletons.forEach((comp, i) => {
       const p = haloPoints[i] ?? { x: 0, y: 0, z: 0 };

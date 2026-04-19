@@ -35,6 +35,13 @@ export function startRafLoop(rendererRef: {
     }
     const prev = renderer.getCameraSignature();
     renderer.tickControls();
+    // Camera moved this tick → recompute LOD / projected sizes against
+    // the new camera before drawing. Without this the per-frame
+    // visibility math (interior LOD fade, shell ring fades, node
+    // pixel-target back-solve) only refreshes when an event handler
+    // happens to call requestRedraw — making detail "freeze" during
+    // tweens until the user clicks or drags.
+    renderer.recomputeFrame();
     renderer.render();
     const next = renderer.getCameraSignature();
     if (next === prev && !renderer.hasActiveTween()) {

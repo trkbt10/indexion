@@ -128,4 +128,78 @@ describe("relaxNeighbours", () => {
     expect(a.y).toBe(20);
     expect(a.z).toBe(30);
   });
+
+  it("clamps per-frame movement to a maximum step", () => {
+    // Far neighbour: 5000 units away. Without a step cap, the spring
+    // pull would yank it hundreds of units in one frame, producing
+    // the visible "neighbours fly to the cursor" failure mode that
+    // the previous design exhibited.
+    const a = mkNode("a", { x: 0, y: 0, z: 0 });
+    const b = mkNode("b", { x: 5000, y: 0, z: 0 });
+    const graph = mkGraph([a, b], [mkEdge(a, b)]);
+    relaxNeighbours(graph, a);
+    const movedBy = 5000 - b.x;
+    // The cap is 18; allow some slack but anything above ~30 is a
+    // regression of the cap.
+    expect(movedBy).toBeGreaterThan(0);
+    expect(movedBy).toBeLessThanOrEqual(20);
+  });
+
+  it("repels neighbour pairs that overlap so they don't collapse onto each other", () => {
+    // Two neighbours on top of each other at the same spot, both
+    // far from the dragged node. The spring would pull both toward
+    // `a` along the same vector → without repulsion they'd stay
+    // overlapped. With repulsion, they should end up separated.
+    const a = mkNode("a", { x: 0, y: 0, z: 0 });
+    const b = mkNode("b", { x: 200, y: 1, z: 0 });
+    const c = mkNode("c", { x: 200, y: -1, z: 0 });
+    const graph = mkGraph([a, b, c], [mkEdge(a, b), mkEdge(a, c)]);
+    relaxNeighbours(graph, a);
+    const sep = Math.hypot(b.x - c.x, b.y - c.y, b.z - c.z);
+    // Initially separated by ~2 units; after repulsion the
+    // separation should grow (towards REPEL_DISTANCE = 60).
+    expect(sep).toBeGreaterThan(2);
+  });
+
+  it("does not collapse a long fan of neighbours onto the dragged node over many frames", () => {
+    // The original bug: dragging a hub repeatedly pulled every 1-hop
+    // neighbour ever-closer until they stacked on the cursor. Repeat
+    // many drag frames and assert that some pair-wise separation
+    // remains.
+    const hub = mkNode("hub", { x: 0, y: 0, z: 0 });
+    const fan: ViewNode[] = [];
+    const edges: ViewEdge[] = [];
+    const N = 8;
+    for (let i = 0; i < N; i++) {
+      const angle = (2 * Math.PI * i) / N;
+      const n = mkNode(`n${i}`, {
+        x: Math.cos(angle) * 600,
+        y: Math.sin(angle) * 600,
+        z: 0,
+      });
+      fan.push(n);
+      edges.push(mkEdge(hub, n));
+    }
+    const graph = mkGraph([hub, ...fan], edges);
+    for (let frame = 0; frame < 200; frame++) {
+      relaxNeighbours(graph, hub);
+    }
+    // After many frames the fan must NOT be a single point. Compute
+    // the max pairwise distance and require it to stay above some
+    // floor that's well clear of "all collapsed".
+    let maxSep = 0;
+    for (let i = 0; i < fan.length; i++) {
+      for (let j = i + 1; j < fan.length; j++) {
+        const d = Math.hypot(
+          fan[i]!.x - fan[j]!.x,
+          fan[i]!.y - fan[j]!.y,
+          fan[i]!.z - fan[j]!.z,
+        );
+        if (d > maxSep) maxSep = d;
+      }
+    }
+    // REPEL_DISTANCE = 60, so the equilibrium ring should have
+    // separation at least on that order.
+    expect(maxSep).toBeGreaterThan(40);
+  });
 });

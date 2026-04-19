@@ -11,6 +11,62 @@ import type { CodeGraph } from "@indexion/api-client";
 
 export type Vec2 = { x: number; y: number };
 
+/** 3D point. Single source of truth for "a position in world space" —
+ *  shared by layout output, renderer input, and clustering helpers.
+ *  Readonly so layout-emitted positions can't be mutated downstream
+ *  (the only mutation site is `writeNode` inside the layout module). */
+export type Vec3 = {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+};
+
+/** 2D rectangle in world coordinates. Used by the squarified treemap
+ *  and the cluster-fill renderer. */
+export type Rect = {
+  readonly x: number;
+  readonly y: number;
+  readonly w: number;
+  readonly h: number;
+};
+
+/** A cluster outline emitted by the hierarchical layout, consumed by
+ *  the renderer for shell rings (ring inscribed in `rect`), interior-
+ *  LOD detection (`centre`+`radius`), bundling hubs (`centre`), and
+ *  the cluster-fill density patch (`rect`+`leafCount`). Single source
+ *  of truth — every layer reads the same shape. */
+export type ClusterShell = {
+  readonly path: string;
+  /** Inscribed-circle centre of `rect`. */
+  readonly centre: Vec3;
+  /** Inscribed-circle radius of `rect` (= min(w, h) / 2 of the inner,
+   *  post-padding cell rectangle). */
+  readonly radius: number;
+  /** 1 = top-level cluster, increases per nesting level. */
+  readonly depth: number;
+  /** Cell rectangle this shell occupies. For "treemap" shells the
+   *  rect is a tight, non-overlapping cell from the squarified pack
+   *  and is used for fill + border drawing. For "centroid" shells
+   *  (Volume / K-means) the rect is just an axis-aligned bounding
+   *  square around the cluster's members — overlap with neighbours
+   *  is normal, so the border layer skips it and only the fill /
+   *  label draw against `centre` + `radius`. */
+  readonly rect: Rect;
+  /** Distinguishes treemap-style cells (Hierarchy) from centroid-
+   *  derived bounding squares (Volume / K-means). The renderer keys
+   *  off this so layers that assume non-overlapping rects (the
+   *  border layer) don't draw a chaotic web of crossed boxes when
+   *  the layout is centroid-based. */
+  readonly kind: "treemap" | "centroid";
+  /** True iff this cluster has no sub-clusters. The cluster-fill
+   *  layer paints only leaf clusters; nested clusters are represented
+   *  by their children's fills. */
+  readonly isLeaf: boolean;
+  /** Number of owned leaf nodes anywhere under this cluster. Drives
+   *  the density-patch intensity. */
+  readonly leafCount: number;
+};
+
 // --- Graph Model ---
 
 /**
@@ -135,6 +191,7 @@ export type FilterResult = {
 export type RenderSettings = {
   readonly node: NodeRenderSettings;
   readonly shell: ShellRenderSettings;
+  readonly clusterFill: ClusterFillRenderSettings;
   readonly edge: EdgeRenderSettings;
   readonly camera: CameraSettings;
   readonly layout: LayoutSettings;
@@ -160,6 +217,26 @@ export type NodeRenderSettings = {
    *  hierarchy depth > 1 — top-level landmarks are always visible. */
   readonly interiorFadeLoPx: number;
   readonly interiorFadeHiPx: number;
+};
+
+export type ClusterFillRenderSettings = {
+  /** Below this projected pixel-radius for the cluster's inscribed
+   *  circle, the cluster is drawn as a solid fill (the "density
+   *  patch") and its individual nodes are suppressed. Above this
+   *  size, the patch fades out and individual nodes fade in. The
+   *  fade window is `belowPx`..`abovePx` so the transition is
+   *  C¹-continuous (smoothstep) rather than a hard pop. */
+  readonly belowPx: number;
+  readonly abovePx: number;
+  /** Maximum opacity of the patch when fully visible (cluster smaller
+   *  than `belowPx`). Below 1 keeps a hint of underlying structure
+   *  visible — patches are an overview cue, not opaque tiles. */
+  readonly opacityPeak: number;
+  /** Density-to-opacity gain. The patch alpha is
+   *  `opacityPeak × min(1, log10(1 + leafCount) / densityGain)` so
+   *  dense clusters look denser at the same projected size, but the
+   *  log keeps the dynamic range readable. */
+  readonly densityGain: number;
 };
 
 export type ShellRenderSettings = {
@@ -214,6 +291,16 @@ export type EdgeRenderSettings = {
    *  very long edges disappear entirely; small positive values keep
    *  a ghost line so relationships never fully vanish. */
   readonly longEdgeFloor: number;
+  /** Arrow length as a multiple of the edge linewidth. Pixels: arrow
+   *  height = linewidth × arrowLengthMul. Tying this to linewidth
+   *  (rather than to node pixel radius) keeps the arrow visually
+   *  proportional to the line it terminates — so arrows look like a
+   *  natural extension of the edge instead of a separate, oversized
+   *  glyph. */
+  readonly arrowLengthMul: number;
+  /** Arrow base width as a fraction of arrow length (controls the
+   *  cone's aspect ratio: smaller = thinner triangle). */
+  readonly arrowAspect: number;
 };
 
 export type CameraSettings = {

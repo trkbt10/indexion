@@ -273,11 +273,10 @@ function graphWithSizes(big: number, small: number): GraphJSON {
 }
 
 describe("hierarchical spacing", () => {
-  it("sibling observation bubbles do not overlap (2 siblings)", () => {
-    // Two top-level folders → must sit far enough apart that their
-    // observation spheres are disjoint. Overlapping bubbles make the
-    // display look like one giant circle instead of distinct
-    // galaxies.
+  it("sibling cluster shells do not overlap (2 siblings)", () => {
+    // Two top-level folders → treemap splits the world into two
+    // disjoint cells. Inscribed shell circles inside those cells
+    // never intersect.
     const graph = normalizeGraph({
       title: "two",
       nodes: [
@@ -297,13 +296,11 @@ describe("hierarchical spacing", () => {
     const [a, b] = shells;
     const dx = a!.centre.x - b!.centre.x;
     const dy = a!.centre.y - b!.centre.y;
-    const dz = a!.centre.z - b!.centre.z;
-    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    // Disjoint means centre-to-centre > a.radius + b.radius.
+    const dist = Math.sqrt(dx * dx + dy * dy);
     expect(dist).toBeGreaterThan(a!.radius + b!.radius);
   });
 
-  it("sibling observation bubbles do not overlap (many siblings)", () => {
+  it("sibling cluster shells do not overlap (many siblings)", () => {
     const nodes: MutableGraphNode[] = [];
     for (let i = 0; i < 12; i++) {
       nodes.push({
@@ -328,8 +325,7 @@ describe("hierarchical spacing", () => {
         const b = shells[j]!;
         const dx = a.centre.x - b.centre.x;
         const dy = a.centre.y - b.centre.y;
-        const dz = a.centre.z - b.centre.z;
-        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        const dist = Math.sqrt(dx * dx + dy * dy);
         expect(dist).toBeGreaterThan(a.radius + b.radius);
       }
     }
@@ -337,11 +333,10 @@ describe("hierarchical spacing", () => {
 });
 
 describe("hierarchical sizing", () => {
-  it("a denser sibling takes a bigger slice than a sparser one", () => {
+  it("a denser sibling takes a bigger cell than a sparser one", () => {
     // `src/heavy` has 80 files, `src/light` has 5 — under the same
-    // parent `src`, heavy should get a visibly larger bubble.
-    // Bubble size tracks content density, not count directly
-    // (sqrt-scaled so extremes don't dominate the visual).
+    // parent `src`, the treemap allocates area proportional to leaf
+    // count, so heavy gets a visibly larger cell.
     const graph = normalizeGraph(graphWithSizes(80, 5));
     const assignment = computeHierarchy(graph.nodes);
     const result = applyHierarchicalLayout({
@@ -353,16 +348,12 @@ describe("hierarchical sizing", () => {
     const light = result.clusterShells.find((s) => s.path === "src/light");
     expect(heavy).toBeDefined();
     expect(light).toBeDefined();
-    expect(heavy!.radius).toBeGreaterThan(light!.radius);
-    // sqrt(80/5) ≈ 4, so the ratio should be finite but substantial.
-    expect(heavy!.radius / light!.radius).toBeGreaterThan(1.5);
-    expect(heavy!.radius / light!.radius).toBeLessThan(10);
+    expect(heavy!.radius).toBeGreaterThan(light!.radius * 2);
   });
 
   it("equal-density siblings still get equal radii", () => {
-    // When siblings have identical descendant weight the allocator
-    // must degenerate to uniform — otherwise tiny numeric jitter
-    // would make a symmetric tree look asymmetric.
+    // Symmetric tree → equal weights → equal-area cells → equal
+    // inscribed-circle radii.
     const graph = normalizeGraph({
       title: "equal",
       nodes: [
@@ -379,10 +370,12 @@ describe("hierarchical sizing", () => {
     });
     const a = result.clusterShells.find((s) => s.path === "src/a");
     const b = result.clusterShells.find((s) => s.path === "src/b");
-    expect(a!.radius).toBeCloseTo(b!.radius, 6);
+    expect(a!.radius).toBeCloseTo(b!.radius, 4);
   });
 
-  it("deeper folders have smaller observation radii than shallow ones", () => {
+  it("a child's shell radius is strictly smaller than its parent's", () => {
+    // Sub-clusters live inside the parent rectangle; their inscribed
+    // disks are bounded above by the parent's.
     const graph = normalizeGraph({
       title: "depth",
       nodes: [
@@ -393,10 +386,10 @@ describe("hierarchical sizing", () => {
           file: "src/a/b/c.mbt",
         },
         {
-          id: "src/a/b/c.mbt::f",
-          label: "f",
-          kind: "function",
-          file: "src/a/b/c.mbt",
+          id: "src/a/b/d.mbt",
+          label: "d",
+          kind: "module",
+          file: "src/a/b/d.mbt",
         },
       ],
       edges: [],
@@ -407,22 +400,19 @@ describe("hierarchical sizing", () => {
       assignment,
       settings: DEFAULT_LAYOUT,
     });
-    const byDepth = new Map<number, number>();
+    const byPath = new Map(
+      result.clusterShells.map((s) => [s.path, s] as const),
+    );
     for (const shell of result.clusterShells) {
-      const existing = byDepth.get(shell.depth);
-      byDepth.set(
-        shell.depth,
-        existing === undefined
-          ? shell.radius
-          : Math.min(existing, shell.radius),
-      );
-    }
-    const depths = Array.from(byDepth.keys()).sort();
-    // Strictly decreasing radius as depth grows.
-    for (let i = 1; i < depths.length; i++) {
-      const prev = byDepth.get(depths[i - 1]!)!;
-      const cur = byDepth.get(depths[i]!)!;
-      expect(cur).toBeLessThan(prev);
+      const slash = shell.path.lastIndexOf("/");
+      if (slash < 0) {
+        continue;
+      }
+      const parent = byPath.get(shell.path.slice(0, slash));
+      if (!parent) {
+        continue;
+      }
+      expect(shell.radius).toBeLessThan(parent.radius);
     }
   });
 });

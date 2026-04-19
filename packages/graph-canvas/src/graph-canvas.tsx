@@ -103,6 +103,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
         theme,
         nodeDepth: layoutResult.nodeDepth,
         clusterShells: layoutResult.clusterShells,
+        nodeCluster: layoutResult.nodeCluster,
       });
       renderer.render();
     }, [theme]);
@@ -149,7 +150,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(
     );
 
     const clustering = props.clustering ?? "none";
-    const layoutStrategy = props.layoutStrategy ?? "hde-volume";
+    const layoutStrategy = props.layoutStrategy ?? "hierarchy";
     const renderSettings = useMemo(
       () => resolveRenderSettings(props.renderSettings),
       [props.renderSettings],
