@@ -7,7 +7,7 @@
  */
 
 import { useCallback } from "react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSlug from "rehype-slug";
 import { MermaidDiagram } from "@indexion/mermaid-viewer";
@@ -68,14 +68,25 @@ export const WikiContent = ({ page }: Props): React.JSX.Element => {
     [colorScheme],
   );
 
+  const urlTransform = useCallback(
+    (url: string) =>
+      url.startsWith("wiki://") ? url : defaultUrlTransform(url),
+    [],
+  );
+
   const renderLink = useCallback(
-    (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
-      const href = props.href ?? "";
+    (
+      props: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+        node?: unknown;
+      },
+    ) => {
+      const { node: _node, ...rest } = props;
+      const href = rest.href ?? "";
       if (href.startsWith("wiki://")) {
         const pageId = href.slice(7);
-        return env.renderWikiLink(pageId, props.children);
+        return env.renderWikiLink(pageId, rest.children);
       }
-      return <a {...props} />;
+      return <a {...rest} />;
     },
     [env],
   );
@@ -99,6 +110,7 @@ export const WikiContent = ({ page }: Props): React.JSX.Element => {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           rehypePlugins={[rehypeSlug]}
+          urlTransform={urlTransform}
           components={{ pre: renderPre, a: renderLink, code: renderCode }}
         >
           {page.content}
