@@ -143,25 +143,16 @@ fn load_story_registry(root : String) -> @kgf_registry.KGFRegistry {
 }
 
 ///|
-fn tokens_for_sources(
-  sources : Array[SourceDoc],
+/// Tokenize each document in the group via the story KGF registry. The
+/// path is forwarded to KGF tokenize so the spec selection is consistent
+/// with what the user would see by running `kgf tokens` on the same file.
+fn tokens_for_group(
+  docs : Array[StoryDocument],
   registry : @kgf_registry.KGFRegistry,
 ) -> Array[Array[String]] {
   let result : Array[Array[String]] = []
-  for s in sources {
-    result.push(tokenize_doc(s.content, s.rel_path, registry))
-  }
-  result
-}
-
-///|
-fn tokens_for_prose(
-  prose : Array[ProseDoc],
-  registry : @kgf_registry.KGFRegistry,
-) -> Array[Array[String]] {
-  let result : Array[Array[String]] = []
-  for p in prose {
-    result.push(tokenize_doc(p.content, p.rel_path, registry))
+  for d in docs {
+    result.push(tokenize_doc(d.content, d.path, registry))
   }
   result
 }
@@ -196,33 +187,34 @@ fn average_length(lists : Array[Array[String]]) -> Double {
 }
 
 ///|
-/// Compute the n:m story divergence report using BM25 weighting.
+/// Compute the n:m story divergence report between a spec group and an
+/// impl group using BM25 weighting.
 pub fn analyze_story(
-  dataset : StoryDataset,
+  groups : StoryGroups,
   config : StoryConfig,
 ) -> StoryReport {
-  let sources = dataset.sources
-  let prose = dataset.prose
-  let registry = load_story_registry(dataset.root)
-  let source_tokens = tokens_for_sources(sources, registry)
-  let prose_tokens = tokens_for_prose(prose, registry)
+  let spec = groups.get_spec()
+  let impl_ = groups.get_impl()
+  let registry = load_story_registry(config.get_registry_root())
+  let spec_tokens = tokens_for_group(spec, registry)
+  let impl_tokens = tokens_for_group(impl_, registry)
 
-  // 1. Overall distance: BM25 cosine between sources-union and prose-union,
+  // 1. Overall distance: BM25 cosine between spec-union and impl-union,
   //    treating each side as a single document in a 2-doc corpus.
   let overall_distance = bm25_pair_distance(
-    flatten(source_tokens),
-    flatten(prose_tokens),
+    flatten(spec_tokens),
+    flatten(impl_tokens),
   )
 
-  // 2. Per-chapter attribution.
-  //    Build a single BM25 batch over [all sources..., all prose...] so that
-  //    document frequency and average length come from the entire dataset.
-  //    Then read off similarity between each prose index and each source index.
+  // 2. Per-impl attribution.
+  //    Build a single BM25 batch over [all spec..., all impl...] so DF and
+  //    average length come from the entire corpus. Then read off similarity
+  //    between each impl index and each spec index.
   let combined_tokens : Array[Array[String]] = []
-  for t in source_tokens {
+  for t in spec_tokens {
     combined_tokens.push(t)
   }
-  for t in prose_tokens {
+  for t in impl_tokens {
     combined_tokens.push(t)
   }
   let batch = if combined_tokens.length() > 0 {
@@ -231,45 +223,44 @@ pub fn analyze_story(
     @tfidf.BM25Batch::from_tokens([[]])
   }
   let attributions : Array[ChapterAttribution] = []
-  let n_sources = sources.length()
-  for i, p in prose {
-    let prose_idx = n_sources + i
-    let by_source : Array[PairSimilarity] = []
-    for j, s in sources {
+  let n_spec = spec.length()
+  for i, p in impl_ {
+    let impl_idx = n_spec + i
+    let by_spec : Array[PairSimilarity] = []
+    for j, s in spec {
       let sim = if combined_tokens.length() > 0 {
-        clamp_sim(batch.similarity(prose_idx, j))
+        clamp_sim(batch.similarity(impl_idx, j))
       } else {
         0.0
       }
-      by_source.push({
-        source_path: s.rel_path,
-        prose_path: p.rel_path,
+      by_spec.push({
+        spec_path: s.path,
+        impl_path: p.path,
         similarity: sim,
       })
     }
-    by_source.sort_by(fn(a, b) { b.similarity.compare(a.similarity) })
+    by_spec.sort_by(fn(a, b) { b.similarity.compare(a.similarity) })
     let combined = bm25_pair_similarity(
-      flatten(source_tokens),
-      prose_tokens[i],
+      flatten(spec_tokens),
+      impl_tokens[i],
     )
     attributions.push({
-      prose_path: p.rel_path,
-      by_source,
+      impl_path: p.path,
+      by_spec,
       combined_similarity: combined,
     })
   }
 
   // 3. Bidirectional gap terms via BM25 weighting.
   let under_coverage = compute_under_coverage(
-    source_tokens, prose_tokens, sources, config,
+    spec_tokens, impl_tokens, spec, config,
   )
   let out_of_source = compute_out_of_source(
-    source_tokens, prose_tokens, prose, config,
+    spec_tokens, impl_tokens, impl_, config,
   )
   {
-    root: dataset.root,
-    source_count: sources.length(),
-    prose_count: prose.length(),
+    spec_count: spec.length(),
+    impl_count: impl_.length(),
     overall_distance,
     attributions,
     under_coverage,
@@ -331,33 +322,33 @@ fn bm25_pair_distance(
 /// weighting ensures common-everywhere words don't crowd out story-specific
 /// signals — without needing a hard ubiquity cutoff.
 fn compute_under_coverage(
-  source_tokens : Array[Array[String]],
-  prose_tokens : Array[Array[String]],
-  sources : Array[SourceDoc],
+  spec_tokens : Array[Array[String]],
+  impl_tokens : Array[Array[String]],
+  spec : Array[StoryDocument],
   config : StoryConfig,
 ) -> Array[UnderCoverageTerm] {
   let combined : Array[Array[String]] = []
-  for t in source_tokens {
+  for t in spec_tokens {
     combined.push(t)
   }
-  for t in prose_tokens {
+  for t in impl_tokens {
     combined.push(t)
   }
   let df = @tfidf.build_document_frequency(combined)
   let avg_len = average_length(combined)
   let total = combined.length()
-  let source_flat = flatten(source_tokens)
-  let prose_set = build_token_set(prose_tokens)
-  let vec = @tfidf.build_bm25_vector(source_flat, df, total, avg_len)
+  let spec_flat = flatten(spec_tokens)
+  let impl_set = build_token_set(impl_tokens)
+  let vec = @tfidf.build_bm25_vector(spec_flat, df, total, avg_len)
 
-  // Pre-compute per-source token presence so we can attribute origins.
-  let source_doc_tokens : Array[Map[String, Bool]] = []
-  for tokens in source_tokens {
+  // Pre-compute per-document token presence so we can attribute origins.
+  let spec_doc_tokens : Array[Map[String, Bool]] = []
+  for tokens in spec_tokens {
     let s : Map[String, Bool] = {}
     for t in tokens {
       s[t] = true
     }
-    source_doc_tokens.push(s)
+    spec_doc_tokens.push(s)
   }
 
   let candidates : Array[UnderCoverageTerm] = []
@@ -367,30 +358,30 @@ fn compute_under_coverage(
     if term.length() < config.min_value_length {
       continue
     }
-    if prose_set.contains(term) {
+    if impl_set.contains(term) {
       continue
     }
     if is_numeric(term) {
       continue
     }
     let origins : Array[String] = []
-    for k, doc in source_doc_tokens {
+    for k, doc in spec_doc_tokens {
       if doc.contains(term) {
-        origins.push(sources[k].rel_path)
+        origins.push(spec[k].path)
       }
     }
     candidates.push({ value: term, weight, origin_paths: origins })
   }
-  // Sort with a soft penalty for terms that span every source document.
+  // Sort with a soft penalty for terms that span every spec document.
   // BM25 already discounts ubiquity, but in small corpora a word that appears
-  // in every source on one side and zero documents on the other can still
-  // outweigh a story-specific signal. The penalty preserves these terms in
-  // the output (they may still be diagnostic) while letting concept-bearing
-  // gaps rise above them.
-  let total = sources.length()
+  // in every doc on one side and zero on the other can still outweigh a
+  // story-specific signal. The penalty preserves these terms in the output
+  // (they may still be diagnostic) while letting concept-bearing gaps rise
+  // above them.
+  let total_spec = spec.length()
   candidates.sort_by(fn(a, b) {
-    let aw = penalize(a.weight, a.origin_paths.length(), total)
-    let bw = penalize(b.weight, b.origin_paths.length(), total)
+    let aw = penalize(a.weight, a.origin_paths.length(), total_spec)
+    let bw = penalize(b.weight, b.origin_paths.length(), total_spec)
     bw.compare(aw)
   })
   apply_term_limit_under(candidates, config.max_terms)
@@ -400,32 +391,32 @@ fn compute_under_coverage(
 /// Symmetric out-of-source: BM25 weights for the prose side, kept only for
 /// tokens missing from sources entirely.
 fn compute_out_of_source(
-  source_tokens : Array[Array[String]],
-  prose_tokens : Array[Array[String]],
-  prose : Array[ProseDoc],
+  spec_tokens : Array[Array[String]],
+  impl_tokens : Array[Array[String]],
+  impl_ : Array[StoryDocument],
   config : StoryConfig,
 ) -> Array[OutOfSourceTerm] {
   let combined : Array[Array[String]] = []
-  for t in source_tokens {
+  for t in spec_tokens {
     combined.push(t)
   }
-  for t in prose_tokens {
+  for t in impl_tokens {
     combined.push(t)
   }
   let df = @tfidf.build_document_frequency(combined)
   let avg_len = average_length(combined)
   let total = combined.length()
-  let prose_flat = flatten(prose_tokens)
-  let source_set = build_token_set(source_tokens)
-  let vec = @tfidf.build_bm25_vector(prose_flat, df, total, avg_len)
+  let impl_flat = flatten(impl_tokens)
+  let spec_set = build_token_set(spec_tokens)
+  let vec = @tfidf.build_bm25_vector(impl_flat, df, total, avg_len)
 
-  let prose_doc_tokens : Array[Map[String, Bool]] = []
-  for tokens in prose_tokens {
+  let impl_doc_tokens : Array[Map[String, Bool]] = []
+  for tokens in impl_tokens {
     let s : Map[String, Bool] = {}
     for t in tokens {
       s[t] = true
     }
-    prose_doc_tokens.push(s)
+    impl_doc_tokens.push(s)
   }
 
   let candidates : Array[OutOfSourceTerm] = []
@@ -435,24 +426,24 @@ fn compute_out_of_source(
     if term.length() < config.min_value_length {
       continue
     }
-    if source_set.contains(term) {
+    if spec_set.contains(term) {
       continue
     }
     if is_numeric(term) {
       continue
     }
     let origins : Array[String] = []
-    for k, doc in prose_doc_tokens {
+    for k, doc in impl_doc_tokens {
       if doc.contains(term) {
-        origins.push(prose[k].rel_path)
+        origins.push(impl_[k].path)
       }
     }
     candidates.push({ value: term, weight, origin_paths: origins })
   }
-  let total = prose.length()
+  let total_impl = impl_.length()
   candidates.sort_by(fn(a, b) {
-    let aw = penalize(a.weight, a.origin_paths.length(), total)
-    let bw = penalize(b.weight, b.origin_paths.length(), total)
+    let aw = penalize(a.weight, a.origin_paths.length(), total_impl)
+    let bw = penalize(b.weight, b.origin_paths.length(), total_impl)
     bw.compare(aw)
   })
   apply_term_limit_out(candidates, config.max_terms)

@@ -1,18 +1,24 @@
-/// Type definitions for plot ↔ prose reconciliation.
+/// Type definitions for spec-act ↔ impl-document reconciliation.
 ///
-/// Reconcile operates on a finer-grained model than `analyze`: it walks the
-/// plot side as a sequence of *acts* (numbered narrative beats parsed from a
-/// plot document's headings) and matches each act to the prose chapter that
-/// most closely mirrors it. From those matches it derives candidate actions
-/// for the writer — expand a thin chapter, prune a stray scene, restructure
-/// a multi-chapter act — backed by BM25 evidence.
+/// Reconcile operates on a finer-grained model than `analyze`: it walks
+/// the spec side as a sequence of *acts* (numbered narrative beats parsed
+/// from each spec document's headings) and matches each act to the impl
+/// document that most closely mirrors it. From those matches it derives
+/// candidate actions for the writer — expand a thin chapter, prune a
+/// stray scene, restructure a multi-chapter act — backed by BM25 evidence.
+///
+/// "Act" and "match" are domain words for what is structurally just
+/// "section of a spec doc" and "an impl doc". The story command surfaces
+/// them under these names because that is the writer-facing vocabulary;
+/// the underlying types do not care whether the project is a novel, a
+/// design spec, or anything else.
 
 ///|
-/// A single act extracted from a plot document. The act's body is the prose
-/// content under its heading, ending at the next heading at the same level
-/// or below.
+/// A single act extracted from a spec document. The act's body is the
+/// content under its heading, ending at the next heading at the same
+/// level (or the end of the document).
 pub struct PlotAct {
-  /// Source document path (relative).
+  /// Source document path (as discovered).
   source_path : String
   /// Heading level (1 = top, 2 = ##, etc.).
   level : Int
@@ -22,7 +28,7 @@ pub struct PlotAct {
   title : String
   /// Body text under the heading.
   body : String
-}
+} derive(ToJson)
 
 ///|
 pub fn PlotAct::get_source_path(self : PlotAct) -> String {
@@ -50,65 +56,71 @@ pub fn PlotAct::get_level(self : PlotAct) -> Int {
 }
 
 ///|
-/// One side of a candidate alignment: the prose chapter that most closely
-/// matches a given act, plus any runner-up matches that exceed a similarity
-/// floor.
-pub struct ChapterMatch {
-  prose_path : String
+/// One side of a candidate alignment: the impl document that most closely
+/// matches a given act, plus its similarity score.
+pub struct ImplMatch {
+  impl_path : String
   similarity : Double
+} derive(ToJson)
+
+///|
+pub fn ImplMatch::get_impl_path(self : ImplMatch) -> String {
+  self.impl_path
 }
 
 ///|
-pub fn ChapterMatch::get_prose_path(self : ChapterMatch) -> String {
-  self.prose_path
-}
-
-///|
-pub fn ChapterMatch::get_similarity(self : ChapterMatch) -> Double {
+pub fn ImplMatch::get_similarity(self : ImplMatch) -> Double {
   self.similarity
 }
 
 ///|
-/// Recommended action for a single act-to-chapter mapping.
+/// Recommended action for a single act-to-impl mapping.
 pub enum DriftAction {
   /// Mapping is healthy — no action needed.
   Ok
-  /// Best chapter similarity is below floor; act is under-represented in prose.
-  ExpandProse
-  /// Multiple chapters score similarly; act may be split or diluted.
-  ConsolidateChapters
-  /// Best chapter has high similarity but also heavy out-of-source noise.
-  PruneStrayScenes
-  /// No chapter exceeds the similarity floor at all.
-  MissingFromProse
+  /// Best impl similarity is below floor; act is under-represented.
+  ExpandImpl
+  /// Multiple impl docs score similarly; act may be split or diluted.
+  ConsolidateImpl
+  /// Best impl has high similarity but also heavy out-of-spec material.
+  PruneStray
+  /// No impl doc exceeds the similarity floor at all.
+  MissingFromImpl
 } derive(Eq, Show)
 
 ///|
 pub fn DriftAction::label(self : DriftAction) -> String {
   match self {
     Ok => "ok"
-    ExpandProse => "expand-prose"
-    ConsolidateChapters => "consolidate-chapters"
-    PruneStrayScenes => "prune-stray-scenes"
-    MissingFromProse => "missing-from-prose"
+    ExpandImpl => "expand-impl"
+    ConsolidateImpl => "consolidate-impl"
+    PruneStray => "prune-stray"
+    MissingFromImpl => "missing-from-impl"
   }
 }
 
 ///|
-/// One reconcile candidate: an act, its best chapter match, optional
+/// Custom ToJson: emit the kebab-case label so JSON consumers see the
+/// same string as the text-format rationale prefix.
+pub impl ToJson for DriftAction with to_json(self) {
+  self.label().to_json()
+}
+
+///|
+/// One reconcile candidate: an act, its best impl match, optional
 /// runner-up matches, the recommended action, and supporting evidence.
 pub struct ActReconcileCandidate {
   act : PlotAct
-  best_match : ChapterMatch?
-  runner_ups : Array[ChapterMatch]
-  /// Terms in the act not picked up by the best-matching chapter (under-coverage).
+  best_match : ImplMatch?
+  runner_ups : Array[ImplMatch]
+  /// Terms in the act not picked up by the best-matching impl (under-coverage).
   missing_terms : Array[String]
-  /// Terms in the best-matching chapter not present in the act (out-of-source for this act).
+  /// Terms in the best-matching impl not present in the act (out-of-source for this act).
   extra_terms : Array[String]
   action : DriftAction
   /// One-line human-readable rationale for the chosen action.
   rationale : String
-}
+} derive(ToJson)
 
 ///|
 pub fn ActReconcileCandidate::get_act(
@@ -120,14 +132,14 @@ pub fn ActReconcileCandidate::get_act(
 ///|
 pub fn ActReconcileCandidate::get_best_match(
   self : ActReconcileCandidate,
-) -> ChapterMatch? {
+) -> ImplMatch? {
   self.best_match
 }
 
 ///|
 pub fn ActReconcileCandidate::get_runner_ups(
   self : ActReconcileCandidate,
-) -> Array[ChapterMatch] {
+) -> Array[ImplMatch] {
   self.runner_ups
 }
 
@@ -162,18 +174,12 @@ pub fn ActReconcileCandidate::get_rationale(
 ///|
 /// Top-level reconcile report.
 pub struct ReconcileReport {
-  root : String
   acts : Array[PlotAct]
-  prose_paths : Array[String]
+  impl_paths : Array[String]
   candidates : Array[ActReconcileCandidate]
-  /// Chapters that are not the best match for any act — orphan chapters.
-  orphan_chapters : Array[String]
-}
-
-///|
-pub fn ReconcileReport::get_root(self : ReconcileReport) -> String {
-  self.root
-}
+  /// Impl docs that are not the best match for any act.
+  orphan_impl : Array[String]
+} derive(ToJson)
 
 ///|
 pub fn ReconcileReport::get_acts(self : ReconcileReport) -> Array[PlotAct] {
@@ -181,10 +187,10 @@ pub fn ReconcileReport::get_acts(self : ReconcileReport) -> Array[PlotAct] {
 }
 
 ///|
-pub fn ReconcileReport::get_prose_paths(
+pub fn ReconcileReport::get_impl_paths(
   self : ReconcileReport,
 ) -> Array[String] {
-  self.prose_paths
+  self.impl_paths
 }
 
 ///|
@@ -195,38 +201,38 @@ pub fn ReconcileReport::get_candidates(
 }
 
 ///|
-pub fn ReconcileReport::get_orphan_chapters(
+pub fn ReconcileReport::get_orphan_impl(
   self : ReconcileReport,
 ) -> Array[String] {
-  self.orphan_chapters
+  self.orphan_impl
 }
 
 ///|
 /// Configuration for the reconcile run.
 pub struct ReconcileConfig {
-  /// Story root directory (absolute or as supplied by the user).
-  root : String
-  /// Minimum similarity for a chapter to be considered a viable match.
+  /// Minimum similarity for an impl doc to be considered a viable match.
   similarity_floor : Double
   /// Margin within which runner-ups are reported alongside the best match.
   runner_up_margin : Double
   /// Maximum unique missing/extra terms per candidate.
   max_terms_per_candidate : Int
+  /// Optional KGF registry root override (mirrors StoryConfig).
+  registry_root : String
 }
 
 ///|
 pub fn ReconcileConfig::new(
-  root : String,
   similarity_floor~ : Double = 0.15,
   runner_up_margin~ : Double = 0.05,
   max_terms_per_candidate~ : Int = 8,
+  registry_root~ : String = "",
 ) -> ReconcileConfig {
-  { root, similarity_floor, runner_up_margin, max_terms_per_candidate }
-}
-
-///|
-pub fn ReconcileConfig::get_root(self : ReconcileConfig) -> String {
-  self.root
+  {
+    similarity_floor,
+    runner_up_margin,
+    max_terms_per_candidate,
+    registry_root,
+  }
 }
 
 ///|
@@ -244,4 +250,9 @@ pub fn ReconcileConfig::get_max_terms_per_candidate(
   self : ReconcileConfig,
 ) -> Int {
   self.max_terms_per_candidate
+}
+
+///|
+pub fn ReconcileConfig::get_registry_root(self : ReconcileConfig) -> String {
+  self.registry_root
 }

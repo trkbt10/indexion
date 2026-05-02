@@ -1,164 +1,97 @@
-/// Type definitions for n:m story divergence analysis.
+/// Type definitions for story divergence analysis.
 ///
-/// Story analysis treats a novel-writing project as an n:m mapping:
-///   sources/ (plot, references, scene-notes)  →  prose/ (chapters)
+/// The story commands measure divergence between two document groups:
 ///
-/// Multiple supply-side documents (plot drafts, character sheets, settings,
-/// research notes) feed into multiple derived documents (chapters, scenes).
-/// The divergence analyzer measures vocabulary flow in both directions to
-/// detect under-coverage (sources not reflected in prose) and out-of-source
-/// material (prose not traceable to any source).
+///   - **spec** group  — the source-of-truth side (plots, references,
+///     research notes, scene memos, etc.)
+///   - **impl** group  — the derived side (prose chapters, scenes,
+///     drafts that expand the spec into final text)
+///
+/// What each side _means_ is not encoded in indexion. The user specifies
+/// which files belong to which group via glob patterns on the command
+/// line. Folder names and filenames carry no semantic weight: a writer
+/// who keeps everything in `manuscript/spec.md` and `manuscript/text.md`
+/// gets the same treatment as one who uses elaborate sub-folders.
+///
+/// This mirrors the spec ↔ implementation duality used by `plan reconcile`
+/// elsewhere in indexion. The two commands are domain instances of the
+/// same abstract relation: "a source-of-truth document group `A` is
+/// expanded into a derived document group `B`; report where `B` drifts."
 
 ///|
-/// Classification of a source document by its sub-folder location.
-pub enum SourceKind {
-  Plot
-  Reference
-  SceneNote
-  OtherSource
-} derive(Eq, Show)
-
-///|
-pub fn SourceKind::label(self : SourceKind) -> String {
-  match self {
-    Plot => "plot"
-    Reference => "reference"
-    SceneNote => "scene-note"
-    OtherSource => "source"
-  }
-}
-
-///|
-/// A supply-side document: plot draft, character sheet, setting reference,
-/// or scene note. Identified by relative path under `sources/`.
-pub struct SourceDoc {
-  /// Path relative to the story root (e.g. "sources/plot/01-outline.md").
-  rel_path : String
-  /// Document name without extension, used for display.
-  display_name : String
-  /// Sub-folder classification.
-  kind : SourceKind
-  /// Raw text content.
+/// One document loaded from disk. Carries only what the divergence engine
+/// needs: a stable display path (used for attribution and ordering) and
+/// the raw text content.
+pub struct StoryDocument {
+  /// Path as discovered, normalised to forward slashes. Used as the
+  /// identifier in attribution outputs and as the path passed to KGF
+  /// tokenization (so the spec sees the right extension).
+  path : String
+  /// Raw text content read from disk.
   content : String
-} derive(Show)
-
-///|
-pub fn SourceDoc::new(
-  rel_path : String,
-  display_name : String,
-  kind : SourceKind,
-  content : String,
-) -> SourceDoc {
-  { rel_path, display_name, kind, content }
 }
 
 ///|
-pub fn SourceDoc::get_rel_path(self : SourceDoc) -> String {
-  self.rel_path
+pub fn StoryDocument::new(path : String, content : String) -> StoryDocument {
+  { path, content }
 }
 
 ///|
-pub fn SourceDoc::get_display_name(self : SourceDoc) -> String {
-  self.display_name
+pub fn StoryDocument::get_path(self : StoryDocument) -> String {
+  self.path
 }
 
 ///|
-pub fn SourceDoc::get_kind(self : SourceDoc) -> SourceKind {
-  self.kind
-}
-
-///|
-pub fn SourceDoc::get_content(self : SourceDoc) -> String {
+pub fn StoryDocument::get_content(self : StoryDocument) -> String {
   self.content
 }
 
 ///|
-/// A derived prose document: a chapter or scene.
-pub struct ProseDoc {
-  /// Path relative to the story root (e.g. "prose/01-chapter.txt").
-  rel_path : String
-  /// Document name without extension.
-  display_name : String
-  /// Raw text content.
-  content : String
-} derive(Show)
-
-///|
-pub fn ProseDoc::new(
-  rel_path : String,
-  display_name : String,
-  content : String,
-) -> ProseDoc {
-  { rel_path, display_name, content }
+/// The two document groups for one analysis or reconcile run. Always
+/// non-empty checks are the caller's responsibility; an empty side
+/// produces an empty report rather than an error so plan-style preview
+/// commands can still surface useful information.
+pub struct StoryGroups {
+  spec : Array[StoryDocument]
+  impl_ : Array[StoryDocument]
 }
 
 ///|
-pub fn ProseDoc::get_rel_path(self : ProseDoc) -> String {
-  self.rel_path
+pub fn StoryGroups::new(
+  spec : Array[StoryDocument],
+  impl_ : Array[StoryDocument],
+) -> StoryGroups {
+  { spec, impl_ }
 }
 
 ///|
-pub fn ProseDoc::get_display_name(self : ProseDoc) -> String {
-  self.display_name
+pub fn StoryGroups::get_spec(self : StoryGroups) -> Array[StoryDocument] {
+  self.spec
 }
 
 ///|
-pub fn ProseDoc::get_content(self : ProseDoc) -> String {
-  self.content
+pub fn StoryGroups::get_impl(self : StoryGroups) -> Array[StoryDocument] {
+  self.impl_
 }
 
 ///|
-/// All documents loaded from a single story directory.
-pub struct StoryDataset {
-  /// Story root directory (absolute or as supplied by the user).
-  root : String
-  /// Supply-side documents.
-  sources : Array[SourceDoc]
-  /// Derived prose documents.
-  prose : Array[ProseDoc]
-}
-
-///|
-pub fn StoryDataset::new(
-  root : String,
-  sources : Array[SourceDoc],
-  prose : Array[ProseDoc],
-) -> StoryDataset {
-  { root, sources, prose }
-}
-
-///|
-pub fn StoryDataset::get_root(self : StoryDataset) -> String {
-  self.root
-}
-
-///|
-pub fn StoryDataset::get_sources(self : StoryDataset) -> Array[SourceDoc] {
-  self.sources
-}
-
-///|
-pub fn StoryDataset::get_prose(self : StoryDataset) -> Array[ProseDoc] {
-  self.prose
-}
-
-///|
-/// Per-pair lexical similarity between one source and one prose chapter.
+/// Per-pair lexical similarity between one spec document and one impl
+/// chapter (or whatever the impl side represents).
 pub struct PairSimilarity {
-  source_path : String
-  prose_path : String
+  spec_path : String
+  impl_path : String
   /// Cosine similarity in [0, 1].
   similarity : Double
+} derive(ToJson)
+
+///|
+pub fn PairSimilarity::get_spec_path(self : PairSimilarity) -> String {
+  self.spec_path
 }
 
 ///|
-pub fn PairSimilarity::get_source_path(self : PairSimilarity) -> String {
-  self.source_path
-}
-
-///|
-pub fn PairSimilarity::get_prose_path(self : PairSimilarity) -> String {
-  self.prose_path
+pub fn PairSimilarity::get_impl_path(self : PairSimilarity) -> String {
+  self.impl_path
 }
 
 ///|
@@ -167,14 +100,14 @@ pub fn PairSimilarity::get_similarity(self : PairSimilarity) -> Double {
 }
 
 ///|
-/// Terms present in sources but absent from prose — under-coverage.
-/// Sources side is aggregated across all source docs.
+/// Terms present in the spec group but absent from the impl group —
+/// under-coverage. Spec side is aggregated across all spec documents.
 pub struct UnderCoverageTerm {
   value : String
   weight : Double
-  /// Source documents where this term originated, by relative path.
+  /// Spec documents where this term originated, by path.
   origin_paths : Array[String]
-}
+} derive(ToJson)
 
 ///|
 pub fn UnderCoverageTerm::get_value(self : UnderCoverageTerm) -> String {
@@ -194,13 +127,13 @@ pub fn UnderCoverageTerm::get_origin_paths(
 }
 
 ///|
-/// Terms present in prose but absent from any source — out-of-source drift.
+/// Terms present in the impl group but absent from any spec — out-of-source.
 pub struct OutOfSourceTerm {
   value : String
   weight : Double
-  /// Prose documents where this term appeared, by relative path.
+  /// Impl documents where this term appeared, by path.
   origin_paths : Array[String]
-}
+} derive(ToJson)
 
 ///|
 pub fn OutOfSourceTerm::get_value(self : OutOfSourceTerm) -> String {
@@ -220,25 +153,28 @@ pub fn OutOfSourceTerm::get_origin_paths(
 }
 
 ///|
-/// Per-prose chapter analysis: which sources contributed and how much.
+/// Per-impl-document analysis: which spec documents contributed and how
+/// much.
 pub struct ChapterAttribution {
-  prose_path : String
-  /// Each entry: (source_rel_path, similarity).
-  by_source : Array[PairSimilarity]
-  /// Aggregated cosine similarity to the union of all sources.
+  impl_path : String
+  /// Each entry: (spec_path, similarity).
+  by_spec : Array[PairSimilarity]
+  /// Aggregated cosine similarity to the union of all spec documents.
   combined_similarity : Double
+} derive(ToJson)
+
+///|
+pub fn ChapterAttribution::get_impl_path(
+  self : ChapterAttribution,
+) -> String {
+  self.impl_path
 }
 
 ///|
-pub fn ChapterAttribution::get_prose_path(self : ChapterAttribution) -> String {
-  self.prose_path
-}
-
-///|
-pub fn ChapterAttribution::get_by_source(
+pub fn ChapterAttribution::get_by_spec(
   self : ChapterAttribution,
 ) -> Array[PairSimilarity] {
-  self.by_source
+  self.by_spec
 }
 
 ///|
@@ -251,32 +187,27 @@ pub fn ChapterAttribution::get_combined_similarity(
 ///|
 /// Top-level story divergence report.
 pub struct StoryReport {
-  root : String
-  source_count : Int
-  prose_count : Int
-  /// Aggregate cosine distance between the union of sources and the union of prose.
+  spec_count : Int
+  impl_count : Int
+  /// Aggregate cosine distance between the union of spec and the union of
+  /// impl. 0 = identical vocabulary, 1 = orthogonal.
   overall_distance : Double
-  /// Per-chapter attribution (which sources contributed, similarity per source).
+  /// Per-impl attribution.
   attributions : Array[ChapterAttribution]
-  /// Terms in sources but not in prose, ranked by weight desc.
+  /// Terms in spec but not in impl, ranked by weight desc.
   under_coverage : Array[UnderCoverageTerm]
-  /// Terms in prose but not in sources, ranked by weight desc.
+  /// Terms in impl but not in spec, ranked by weight desc.
   out_of_source : Array[OutOfSourceTerm]
+} derive(ToJson)
+
+///|
+pub fn StoryReport::get_spec_count(self : StoryReport) -> Int {
+  self.spec_count
 }
 
 ///|
-pub fn StoryReport::get_root(self : StoryReport) -> String {
-  self.root
-}
-
-///|
-pub fn StoryReport::get_source_count(self : StoryReport) -> Int {
-  self.source_count
-}
-
-///|
-pub fn StoryReport::get_prose_count(self : StoryReport) -> Int {
-  self.prose_count
+pub fn StoryReport::get_impl_count(self : StoryReport) -> Int {
+  self.impl_count
 }
 
 ///|
@@ -306,28 +237,24 @@ pub fn StoryReport::get_out_of_source(
 }
 
 ///|
-/// Configuration for story analysis.
+/// Configuration for a story analyze run.
 pub struct StoryConfig {
-  /// Story root directory.
-  root : String
   /// Maximum terms to surface per divergence side.
   max_terms : Int
   /// Minimum value length for divergence terms.
   min_value_length : Int
+  /// Optional registry resolution hint — story root used to discover the
+  /// kgfs/story/ spec. Empty string means resolve from CWD only.
+  registry_root : String
 }
 
 ///|
 pub fn StoryConfig::new(
-  root : String,
   max_terms~ : Int = 20,
   min_value_length~ : Int = 2,
+  registry_root~ : String = "",
 ) -> StoryConfig {
-  { root, max_terms, min_value_length }
-}
-
-///|
-pub fn StoryConfig::get_root(self : StoryConfig) -> String {
-  self.root
+  { max_terms, min_value_length, registry_root }
 }
 
 ///|
@@ -338,4 +265,9 @@ pub fn StoryConfig::get_max_terms(self : StoryConfig) -> Int {
 ///|
 pub fn StoryConfig::get_min_value_length(self : StoryConfig) -> Int {
   self.min_value_length
+}
+
+///|
+pub fn StoryConfig::get_registry_root(self : StoryConfig) -> String {
+  self.registry_root
 }

@@ -1,34 +1,37 @@
-/// Extract `PlotAct` records from a plot document.
+/// Extract `PlotAct` records from spec-side documents.
 ///
-/// The extractor recognises three heading conventions, in order of priority:
+/// Earlier drafts of this module assumed the spec side had a designated
+/// `Plot` sub-classification ("act extraction only runs on documents in
+/// `sources/plot/`"). That convention is gone — the user picks which
+/// documents go on the spec side via globs, and indexion does not
+/// re-classify. So this extractor simply walks every spec document,
+/// pulls headings from each, and emits one act per heading.
 ///
-/// 1. **Markdown ATX headings** — `#`, `##`, `###`, `####` at the start of a
-///    line. The most common case for `sources/plot/*.md`.
-/// 2. **Bracketed enumerators** — `[Act 1]`, `[第一幕]` — a fall-back for
-///    plain-text plot files that do not use markdown headings.
-/// 3. **Numeric act prefixes** — lines beginning with `Act 1:` or `第一幕:`.
+/// Heading conventions recognised, in priority order:
 ///
-/// We prefer markdown when present; if no markdown headings are found we
-/// scan the document for the bracketed / numeric forms. If still no
-/// boundaries are detected the entire document becomes a single act of
-/// level 1, index 1, titled with the document's display name.
+/// 1. **Markdown ATX headings** — `#`, `##`, `###`, `####` at the start
+///    of a line. Most plot files use these.
+/// 2. *(Future: bracketed enumerators / numeric prefixes can be added by
+///    extending the heading scanner. For now we rely on writers using
+///    markdown headings, which is overwhelmingly the common case.)*
 ///
-/// Heading-level filtering matters: a plot document may have a top-level
-/// `# Outline` and per-act `## 第一幕` sub-headings. We only emit acts at
-/// the most numerous heading level, treating the parent heading as the
-/// document title rather than an act in its own right.
+/// We pick the *dominant* heading level inside each document (the level
+/// with the most headings) and emit one act per heading at that level. A
+/// document with no markdown headings becomes a single act named after
+/// the document's basename.
 
 ///|
-/// Extract acts from a single SourceDoc whose kind is Plot.
-pub fn extract_acts_from_doc(doc : @story.SourceDoc) -> Array[PlotAct] {
+/// Extract acts from a single document. `path` is used as the
+/// `source_path` of every emitted act so the user can trace a candidate
+/// back to its origin.
+pub fn extract_acts_from_doc(doc : @story.StoryDocument) -> Array[PlotAct] {
   let body = doc.get_content()
-  let path = doc.get_rel_path()
+  let path = doc.get_path()
   let lines = split_lines(body)
   let headings = collect_markdown_headings(lines)
   if headings.length() == 0 {
     return [whole_doc_as_act(doc)]
   }
-  // Find the dominant heading level (most frequent). This is the act level.
   let level = dominant_level(headings)
   let acts = build_acts_from_headings(headings, lines, path, level)
   if acts.length() == 0 {
@@ -39,7 +42,7 @@ pub fn extract_acts_from_doc(doc : @story.SourceDoc) -> Array[PlotAct] {
 }
 
 ///|
-/// Split text into lines without dropping the trailing newline information.
+/// Split text into lines preserving empty lines but discarding terminators.
 fn split_lines(text : String) -> Array[String] {
   let result : Array[String] = []
   let buf = StringBuilder::new()
@@ -63,8 +66,6 @@ fn split_lines(text : String) -> Array[String] {
   }
   if buf.to_string().length() > 0 {
     result.push(buf.to_string())
-  } else if chars.length() > 0 && chars[chars.length() - 1] != '\n' {
-    // Already pushed empty string for the final newline; nothing to do.
   }
   result
 }
@@ -84,7 +85,6 @@ fn collect_markdown_headings(lines : Array[String]) -> Array[Heading] {
   for i, line in lines {
     let chars = line.to_array()
     let mut k = 0
-    // Skip leading spaces (Markdown allows up to 3).
     while k < chars.length() && k < 3 && chars[k] == ' ' {
       k += 1
     }
@@ -96,11 +96,9 @@ fn collect_markdown_headings(lines : Array[String]) -> Array[Heading] {
     if level == 0 {
       continue
     }
-    // Must be followed by space (or end of line for empty heading).
     if k < chars.length() && chars[k] != ' ' && chars[k] != '\t' {
       continue
     }
-    // Skip leading whitespace after #.
     while k < chars.length() && (chars[k] == ' ' || chars[k] == '\t') {
       k += 1
     }
@@ -116,7 +114,7 @@ fn collect_markdown_headings(lines : Array[String]) -> Array[Heading] {
 
 ///|
 /// Strip a trailing run of "#" plus surrounding whitespace from a heading
-/// title (Markdown allows `## Title ##` as a closing marker).
+/// title (markdown allows `## Title ##`).
 fn trim_trailing_hashes(s : String) -> String {
   let chars = s.to_array()
   let mut end = chars.length()
@@ -137,8 +135,7 @@ fn trim_trailing_hashes(s : String) -> String {
 }
 
 ///|
-/// Most frequent heading level among the candidates. If two levels are tied,
-/// the deeper level wins (sub-headings are usually the per-act granularity).
+/// Most frequent heading level among the candidates.
 fn dominant_level(headings : Array[Heading]) -> Int {
   let counts : Map[Int, Int] = {}
   for h in headings {
@@ -158,8 +155,7 @@ fn dominant_level(headings : Array[Heading]) -> Int {
 }
 
 ///|
-/// Build acts from headings filtered to the dominant level. Each act runs
-/// from its heading line up to the next heading at the same level (or EOF).
+/// Build acts from headings filtered to the dominant level.
 fn build_acts_from_headings(
   all_headings : Array[Heading],
   lines : Array[String],
@@ -207,33 +203,28 @@ fn collect_body(lines : Array[String], start : Int, end : Int) -> String {
 
 ///|
 /// Fallback: treat the whole document as a single act when no headings exist.
-fn whole_doc_as_act(doc : @story.SourceDoc) -> PlotAct {
+/// Title is the path basename via @config_paths.basename (SoT).
+fn whole_doc_as_act(doc : @story.StoryDocument) -> PlotAct {
+  let title = @config_paths.basename(doc.get_path())
   {
-    source_path: doc.get_rel_path(),
+    source_path: doc.get_path(),
     level: 1,
     index: 1,
-    title: doc.get_display_name(),
+    title,
     body: doc.get_content(),
   }
 }
 
 ///|
-/// Extract all acts from every Plot-kind source in a dataset, in document
-/// order. Multiple plot files (e.g. `01-outline.md` and `02-revision.md`)
-/// are concatenated; downstream ranking distinguishes them via source_path.
-pub fn extract_acts(
-  dataset : @story.StoryDataset,
-) -> Array[PlotAct] {
+/// Extract all acts from every spec document in a `StoryGroups`, in
+/// document order. Multiple spec documents (e.g. v1 and v2 plots) are
+/// concatenated; downstream ranking distinguishes them via source_path.
+pub fn extract_acts(groups : @story.StoryGroups) -> Array[PlotAct] {
   let result : Array[PlotAct] = []
-  for s in dataset.get_sources() {
-    match s.get_kind() {
-      @story.SourceKind::Plot => {
-        let acts = extract_acts_from_doc(s)
-        for a in acts {
-          result.push(a)
-        }
-      }
-      _ => continue
+  for s in groups.get_spec() {
+    let acts = extract_acts_from_doc(s)
+    for a in acts {
+      result.push(a)
     }
   }
   result

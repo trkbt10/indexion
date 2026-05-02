@@ -1,17 +1,19 @@
 /// # indexion story reconcile
 ///
-/// Reconcile plot acts against prose chapters: detect drift, recommend
-/// concrete actions (expand, consolidate, prune, restructure), and surface
-/// the term-level evidence behind each recommendation.
+/// Reconcile spec-extracted acts against impl documents: detect drift,
+/// recommend writer actions (expand, consolidate, prune, restructure),
+/// and surface the term-level evidence behind each recommendation.
 
 ///|
 pub struct ReconcileCliConfig {
-  root : String
+  spec : Array[String]
+  impl_ : Array[String]
   format : String
   output : String
   similarity_floor : Double
   runner_up_margin : Double
   max_terms : Int
+  registry_root : String
 }
 
 ///|
@@ -38,13 +40,21 @@ pub fn ReconcileCliConfig::from_matches(
       None => default_
     }
   }
+  let get_list = fn(key : String) -> Array[String] {
+    match matches.values.get(key) {
+      Some(arr) => arr
+      None => []
+    }
+  }
   {
-    root: get_str("root", ""),
+    spec: get_list("spec"),
+    impl_: get_list("impl"),
     format: get_str("format", "text"),
     output: get_str("output", ""),
     similarity_floor: get_double("similarity-floor", 0.15),
     runner_up_margin: get_double("runner-up-margin", 0.05),
     max_terms: get_int("max-terms", 8),
+    registry_root: get_str("registry-root", ""),
   }
 }
 
@@ -52,8 +62,18 @@ pub fn ReconcileCliConfig::from_matches(
 pub fn command() -> @argparse.Command {
   @argparse.Command::new(
     "reconcile",
-    about="Reconcile plot acts against prose chapters; recommend writer actions",
+    about="Reconcile acts extracted from --spec docs against --impl docs",
     options=[
+      @argparse.OptionArg(
+        "spec",
+        action=Append,
+        about="Glob pattern for spec-side documents (repeatable)",
+      ),
+      @argparse.OptionArg(
+        "impl",
+        action=Append,
+        about="Glob pattern for impl-side documents (repeatable)",
+      ),
       @argparse.OptionArg::new(
         "format",
         about="Output format: text | json",
@@ -66,7 +86,7 @@ pub fn command() -> @argparse.Command {
       ),
       @argparse.OptionArg::new(
         "similarity-floor",
-        about="Minimum BM25 similarity for a chapter to count as a match",
+        about="Minimum BM25 similarity for an impl doc to count as a match",
         default_values=["0.15"],
       ),
       @argparse.OptionArg::new(
@@ -79,12 +99,10 @@ pub fn command() -> @argparse.Command {
         about="Maximum missing/extra terms reported per candidate",
         default_values=["8"],
       ),
-    ],
-    positionals=[
-      @argparse.PositionArg::new(
-        "root",
-        about="Story root directory containing sources/ and prose/",
-        num_args=@argparse.ValueRange::single(),
+      @argparse.OptionArg::new(
+        "registry-root",
+        about="Root for kgfs/story spec discovery (default: CWD)",
+        default_values=[""],
       ),
     ],
   )
@@ -93,28 +111,28 @@ pub fn command() -> @argparse.Command {
 ///|
 pub fn run_matches(matches : @argparse.Matches) -> Unit {
   let config = ReconcileCliConfig::from_matches(matches)
-  if config.root.length() == 0 {
-    println("Error: story root directory is required.")
+  if config.spec.is_empty() || config.impl_.is_empty() {
+    println("Error: at least one --spec and one --impl pattern is required.")
     println("")
     println(command().render_help())
     return
   }
-  let dataset = match @story.load_story_dataset(config.root) {
-    Some(ds) => ds
-    None => {
-      println(
-        "Error: no sources/ or prose/ found under " + config.root + ".",
-      )
-      return
-    }
+  let groups = @story.load_groups(config.spec, config.impl_)
+  if groups.get_spec().is_empty() {
+    println("Error: no spec documents matched the given --spec patterns.")
+    return
+  }
+  if groups.get_impl().is_empty() {
+    println("Error: no impl documents matched the given --impl patterns.")
+    return
   }
   let reconcile_config = @story_reconcile.ReconcileConfig::new(
-    config.root,
     similarity_floor=config.similarity_floor,
     runner_up_margin=config.runner_up_margin,
     max_terms_per_candidate=config.max_terms,
+    registry_root=config.registry_root,
   )
-  let report = @story_reconcile.reconcile(dataset, reconcile_config)
+  let report = @story_reconcile.reconcile(groups, reconcile_config)
   let format = @story_reconcile.ReconcileFormat::parse(config.format)
   let rendered = @story_reconcile.render_report(report, format)
   @common.write_output(config.output, rendered, label="Reconcile report")
