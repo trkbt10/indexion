@@ -1,5 +1,6 @@
 import {
   "moonbitlang/core/argparse" @argparse,
+  "trkbt10/indexion/cmd/indexion/common" @common,
   "trkbt10/indexion/src/config" @config_paths,
   "trkbt10/indexion/src/story" @story,
   "trkbt10/indexion/src/story/wiki" @story_wiki,

@@ -14,22 +14,10 @@ pub struct BuildConfig {
 
 ///|
 pub fn BuildConfig::from_matches(matches : @argparse.Matches) -> BuildConfig {
-  let get_str = fn(key : String, default_ : String) -> String {
-    match matches.values.get(key) {
-      Some(arr) => if arr.length() > 0 { arr[0] } else { default_ }
-      None => default_
-    }
-  }
-  let get_list = fn(key : String) -> Array[String] {
-    match matches.values.get(key) {
-      Some(arr) => arr
-      None => []
-    }
-  }
   {
-    spec: get_list("spec"),
-    wiki_dir: get_str("wiki-dir", ""),
-    actor: get_str("actor", "indexion"),
+    spec: @common.arg_list(matches, "spec"),
+    wiki_dir: @common.arg_str(matches, "wiki-dir", ""),
+    actor: @common.arg_str(matches, "actor", "indexion"),
   }
 }
 

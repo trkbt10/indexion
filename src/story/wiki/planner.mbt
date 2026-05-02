@@ -4,23 +4,44 @@
 /// --------
 /// One job: turn the spec group into a list of `PageProposal` values.
 /// Filename, folder, and document role are all opaque — the planner
-/// only sees `(path, content)` pairs. For each document it splits the
-/// content on the dominant markdown heading level and produces one
-/// page proposal per heading section. Documents with no headings yield
-/// a single page named after the basename.
+/// only sees `(path, content)` pairs. For each document it asks the
+/// project SoT `@doc_structure.load_document_sections` for the section
+/// breakdown (driven by `section_token` / `heading_text_tokens` in the
+/// KGF spec). Each section becomes one wiki page; documents with no
+/// sections yield a single page named after the basename.
 ///
-/// This mirrors the act extractor's heading-splitting logic; in the
-/// long run both should share a single `markdown_section` helper, but
-/// for now we keep them as parallel implementations because they share
-/// no other code and the duplication is small.
+/// Heading detection is therefore a property of the KGF spec, not of
+/// this code. A future spec that wants to split prose by sentence
+/// boundary or by speaker tag would extend `kgfs/story/...` rather
+/// than this file.
 
 ///|
 /// Build a plan from the spec side of a `StoryGroups`.
 pub fn plan_story_wiki(groups : @story.StoryGroups) -> StoryWikiPlan {
+  let registry = load_registry_for_root("")
+  plan_with_registry(groups, registry)
+}
+
+///|
+/// Variant for callers that already have a registry. Lets the build
+/// step share a registry with reconcile/analyze in the same process,
+/// avoiding two `load_from_dir` walks.
+pub fn plan_story_wiki_with_registry(
+  groups : @story.StoryGroups,
+  registry : @kgf_registry.KGFRegistry,
+) -> StoryWikiPlan {
+  plan_with_registry(groups, registry)
+}
+
+///|
+fn plan_with_registry(
+  groups : @story.StoryGroups,
+  registry : @kgf_registry.KGFRegistry,
+) -> StoryWikiPlan {
   let proposals : Array[PageProposal] = []
   let mut source_doc_count = 0
   for s in groups.get_spec() {
-    let pages = pages_from_doc(s)
+    let pages = pages_from_doc(s, registry)
     if pages.length() > 0 {
       source_doc_count += 1
     }
@@ -32,15 +53,40 @@ pub fn plan_story_wiki(groups : @story.StoryGroups) -> StoryWikiPlan {
 }
 
 ///|
-/// Turn a single spec document into one or more page proposals by
-/// splitting on its dominant markdown heading level.
-fn pages_from_doc(doc : @story.StoryDocument) -> Array[PageProposal] {
+/// Resolve the story-scoped KGF registry. Mirrors the resolution logic
+/// `analyze_story` uses (probe `<root>/kgfs/story/` then `kgfs/story/`
+/// in CWD) so wiki planning sees the same spec as reconcile.
+fn load_registry_for_root(root : String) -> @kgf_registry.KGFRegistry {
+  let root_dir = if root.length() == 0 { "." } else { root }
+  let candidates = [
+    @config_paths.join_path(root_dir, "kgfs/story"),
+    "kgfs/story",
+  ]
+  for path in candidates {
+    if @fs.path_exists(path) {
+      return @kgf_registry.KGFRegistry::load_from_dir(path)
+    }
+  }
+  @kgf_registry.KGFRegistry::new()
+}
+
+///|
+/// Turn a single spec document into one or more page proposals using
+/// the project's section SoT.
+fn pages_from_doc(
+  doc : @story.StoryDocument,
+  registry : @kgf_registry.KGFRegistry,
+) -> Array[PageProposal] {
   let path = doc.get_path()
-  let sections = split_markdown_sections(doc.get_content())
+  let sections = @doc_structure.load_document_sections(
+    doc.get_content(),
+    path,
+    Some(registry),
+  )
   let result : Array[PageProposal] = []
-  if sections.is_empty() {
+  if sections.length() == 0 {
     let title = path_stem(path)
-    let id = page_slug_with_path(title, path)
+    let id = page_id_from(title, path, registry)
     result.push({
       id,
       title,
@@ -50,11 +96,11 @@ fn pages_from_doc(doc : @story.StoryDocument) -> Array[PageProposal] {
     return result
   }
   for section in sections {
-    let id = page_slug_with_path(section.title, path)
+    let id = page_id_from(section.title, path, registry)
     result.push({
       id,
       title: section.title,
-      content: render_body(section.body, [path]),
+      content: render_body(section.content, [path]),
       sources: [path],
     })
   }
@@ -85,175 +131,25 @@ fn render_body(body : String, sources : Array[String]) -> String {
 }
 
 ///|
-/// A markdown section produced by `split_markdown_sections`.
-priv struct MarkdownSection {
-  title : String
-  body : String
-}
-
-///|
-/// Split markdown content on the dominant heading level. Returns an
-/// empty array when no markdown headings are present (caller falls
-/// back to a single page).
-fn split_markdown_sections(content : String) -> Array[MarkdownSection] {
-  let lines = split_lines_text(content)
-  let headings : Array[(Int, Int, String)] = []
-  for i, line in lines {
-    match scan_atx_heading(line) {
-      Some((level, title)) => headings.push((i, level, title))
-      None => continue
-    }
-  }
-  if headings.length() == 0 {
-    return []
-  }
-  let level = dominant_level(headings)
-  let chosen : Array[(Int, String)] = []
-  for h in headings {
-    if h.1 == level {
-      chosen.push((h.0, h.2))
-    }
-  }
-  let result : Array[MarkdownSection] = []
-  for k, h in chosen {
-    let next_line = if k + 1 < chosen.length() {
-      chosen[k + 1].0
-    } else {
-      lines.length()
-    }
-    let body = collect_body(lines, h.0 + 1, next_line)
-    result.push({ title: h.1, body })
-  }
-  result
-}
-
-///|
-/// Detect an ATX heading at the start of `line`. Returns (level, title)
-/// or None.
-fn scan_atx_heading(line : String) -> (Int, String)? {
-  let chars = line.to_array()
-  let mut k = 0
-  while k < chars.length() && k < 3 && chars[k] == ' ' {
-    k += 1
-  }
-  let mut level = 0
-  while k < chars.length() && chars[k] == '#' && level < 6 {
-    level += 1
-    k += 1
-  }
-  if level == 0 {
-    return None
-  }
-  if k < chars.length() && chars[k] != ' ' && chars[k] != '\t' {
-    return None
-  }
-  while k < chars.length() && (chars[k] == ' ' || chars[k] == '\t') {
-    k += 1
-  }
-  let title_chars : Array[Char] = []
-  for j = k; j < chars.length(); j = j + 1 {
-    title_chars.push(chars[j])
-  }
-  let raw = String::from_array(title_chars)
-  Some((level, trim_trailing_hashes(raw)))
-}
-
-///|
-fn trim_trailing_hashes(s : String) -> String {
-  let chars = s.to_array()
-  let mut end = chars.length()
-  while end > 0 && (chars[end - 1] == ' ' || chars[end - 1] == '\t') {
-    end -= 1
-  }
-  while end > 0 && chars[end - 1] == '#' {
-    end -= 1
-  }
-  while end > 0 && (chars[end - 1] == ' ' || chars[end - 1] == '\t') {
-    end -= 1
-  }
-  let buf = StringBuilder::new()
-  for k = 0; k < end; k = k + 1 {
-    buf.write_char(chars[k])
-  }
-  buf.to_string()
-}
-
-///|
-fn dominant_level(headings : Array[(Int, Int, String)]) -> Int {
-  let counts : Map[Int, Int] = {}
-  for h in headings {
-    counts[h.1] = counts.get(h.1).unwrap_or(0) + 1
-  }
-  let mut best_level = headings[0].1
-  let mut best_count = -1
-  for entry in counts {
-    let lvl = entry.0
-    let cnt = entry.1
-    if cnt > best_count || (cnt == best_count && lvl > best_level) {
-      best_level = lvl
-      best_count = cnt
-    }
-  }
-  best_level
-}
-
-///|
-fn collect_body(lines : Array[String], start : Int, end : Int) -> String {
-  let buf = StringBuilder::new()
-  let mut first = true
-  for i = start; i < end; i = i + 1 {
-    if !first {
-      buf.write_char('\n')
-    }
-    buf.write_string(lines[i])
-    first = false
-  }
-  buf.to_string()
-}
-
-///|
-/// Naive line splitter — preserves the lines themselves but discards
-/// line terminators.
-fn split_lines_text(text : String) -> Array[String] {
-  let result : Array[String] = []
-  let buf = StringBuilder::new()
-  let chars = text.to_array()
-  let mut i = 0
-  while i < chars.length() {
-    let c = chars[i]
-    if c == '\n' {
-      result.push(buf.to_string())
-      buf.reset()
-    } else if c == '\r' {
-      result.push(buf.to_string())
-      buf.reset()
-      if i + 1 < chars.length() && chars[i + 1] == '\n' {
-        i += 1
-      }
-    } else {
-      buf.write_char(c)
-    }
-    i += 1
-  }
-  if buf.to_string().length() > 0 {
-    result.push(buf.to_string())
-  }
-  result
-}
-
-///|
-/// Slug for a page id, prefixed by the spec doc's path stem so pages
-/// from different docs cannot collide (e.g. v1 plot's "Act 1" and v2
-/// plot's "Act 1").
+/// Build the page id for a title belonging to a particular spec doc.
 ///
-/// The slug keeps any non-whitespace, non-punctuation Unicode character
-/// — not just ASCII — so CJK titles survive intact. Slugs become
-/// filenames (`<id>.md`); modern filesystems handle UTF-8 names. ASCII
-/// letters are lowercased; non-ASCII is left as-is.
-fn page_slug_with_path(title : String, path : String) -> String {
+/// We compose two `Name::id` values from `@identity.derive_id`:
+///
+///   - `prefix` — the doc's path stem ("01-outline.md" → "01-outline")
+///   - `core`   — the heading title or doc display name
+///
+/// joined with `-`. The prefix prevents collisions when two different
+/// spec docs each have an "Act 1" heading; `@identity` guarantees that
+/// punctuation/structural markers are dropped according to the KGF
+/// spec rather than character-class hard-coding.
+fn page_id_from(
+  title : String,
+  path : String,
+  registry : @kgf_registry.KGFRegistry,
+) -> String {
   let stem = path_stem(path)
-  let prefix = slug_chars(stem)
-  let core = slug_chars(title)
+  let prefix = @identity.derive_id(stem, path, registry)
+  let core = @identity.derive_id(title, path, registry)
   let parts : Array[String] = []
   if prefix.length() > 0 {
     parts.push(prefix)
@@ -274,63 +170,7 @@ fn page_slug_with_path(title : String, path : String) -> String {
 }
 
 ///|
-/// Turn an arbitrary string into the alpha-numeric slug body
-/// (no kind prefix, no path stem). Whitespace and ASCII punctuation
-/// collapse into hyphens; leading and trailing hyphens are stripped.
-fn slug_chars(raw : String) -> String {
-  let buf = StringBuilder::new()
-  let mut last_hyphen = true
-  for c in raw {
-    if is_slug_keep(c) {
-      let lc = if c >= 'A' && c <= 'Z' {
-        Int::unsafe_to_char(c.to_int() + 32)
-      } else {
-        c
-      }
-      buf.write_char(lc)
-      last_hyphen = false
-    } else if !last_hyphen {
-      buf.write_char('-')
-      last_hyphen = true
-    }
-  }
-  let core = buf.to_string()
-  let chars = core.to_array()
-  let mut start = 0
-  while start < chars.length() && chars[start] == '-' {
-    start += 1
-  }
-  let mut end = chars.length()
-  while end > start && chars[end - 1] == '-' {
-    end -= 1
-  }
-  let trimmed = StringBuilder::new()
-  for i = start; i < end; i = i + 1 {
-    trimmed.write_char(chars[i])
-  }
-  trimmed.to_string()
-}
-
-///|
-/// Whether a character is preserved in a slug. Drops control codes,
-/// whitespace, and ASCII punctuation; keeps everything else (ASCII
-/// alphanumerics, CJK ideographs, hiragana, katakana, hangul, accented
-/// Latin, etc.).
-fn is_slug_keep(c : Char) -> Bool {
-  let code = c.to_int()
-  if (code >= 0x30 && code <= 0x39) ||
-    (code >= 0x41 && code <= 0x5A) ||
-    (code >= 0x61 && code <= 0x7A) {
-    return true
-  }
-  if code < 0x80 {
-    return false
-  }
-  true
-}
-
-///|
-/// Path basename minus its extension via @config_paths SoT — so
+/// Path basename minus its extension via `@config_paths` SoT — so
 /// "spec/plot/01-outline.md" becomes "01-outline".
 fn path_stem(path : String) -> String {
   let base = @config_paths.basename(path)

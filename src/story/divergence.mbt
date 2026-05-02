@@ -63,6 +63,11 @@ pub fn tokenize_doc(
   path : String,
   registry : @kgf_registry.KGFRegistry,
 ) -> Array[String] {
+  // Which kinds count as content is read from the KGF spec's
+  // `identifier_kinds` declaration via `@identity` — no hard-coded
+  // language list lives in this file. Adding a new natural-language
+  // spec under `kgfs/story/` becomes a spec-only change.
+  let kinds = @identity.identifier_kinds_for(registry, path)
   let raw = @kgf_tokenize.tokenize_file(content, path, registry)
   let result : Array[String] = []
   for feat in raw {
@@ -70,49 +75,22 @@ pub fn tokenize_doc(
       continue
     }
     let kind = @kgf_tokenize.feature_kind(feat)
-    if !is_content_kind(kind) {
+    if !kinds.is_empty() && !kinds.contains(kind) {
       continue
     }
     let value = @kgf_tokenize.feature_value(feat)
     if value.length() == 0 {
       continue
     }
-    // Emit just the value. Story divergence treats tokens as natural-language
-    // words (the kind prefix is informative for filtering but irrelevant for
-    // BM25/DF ranking and would clutter the gap-term reports). Two languages
-    // with the same surface form (e.g. an English "act" vs a Latin loan)
-    // collapse to one token, which is acceptable for prose where the writer
-    // sees the literal word, not the language tag.
+    // Emit just the value. Story divergence treats tokens as natural-
+    // language words; the kind prefix is informative for filtering
+    // but irrelevant for BM25/DF ranking and would clutter the gap-
+    // term reports. Two kinds with the same surface form collapse to
+    // one token, which is acceptable for prose where the writer sees
+    // the literal word, not the language tag.
     result.push(value)
   }
   result
-}
-
-///|
-/// True for KGF feature kinds emitted by the story multilingual prose spec
-/// that carry lexical content.
-///
-/// The kind names below come from `kgfs/story/multilang-prose.kgf` and are
-/// language-prefixed (En*, Jp*, Cn*, Kr*) so each language's content tokens
-/// are explicit and additive. Function words (EnPronoun, JpJoshi, etc.),
-/// punctuation, brackets, quotes, and markdown structural markers are
-/// intentionally absent — this is the declarative side of "drop function
-/// words at the lex layer."
-///
-/// Note: KGF lowercases feature strings before emitting them
-/// (see `tokenize_file` in src/kgf/tokenize/tokenize.mbt), so the kind
-/// values we compare against are already lowercased.
-fn is_content_kind(kind : String) -> Bool {
-  match kind {
-    "enword" => true
-    "enpropernoun" => true
-    "jpkanji" => true
-    "jpkatakana" => true
-    "jphiragana" => true
-    "cnhanzi" => true
-    "krhangul" => true
-    _ => false
-  }
 }
 
 ///|

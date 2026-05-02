@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/argparse" @argparse,
   "trkbt10/indexion/cmd/indexion/story/analyze" @story_analyze,
+  "trkbt10/indexion/cmd/indexion/story/names" @story_names,
   "trkbt10/indexion/cmd/indexion/story/reconcile" @story_reconcile_cli,
   "trkbt10/indexion/cmd/indexion/story/wiki" @story_wiki_cli,
 }

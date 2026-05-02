@@ -22,9 +22,9 @@ pub fn reconcile(
   groups : @story.StoryGroups,
   config : ReconcileConfig,
 ) -> ReconcileReport {
-  let acts = extract_acts(groups)
-  let impl_ = groups.get_impl()
   let registry = resolve_registry(config.get_registry_root())
+  let acts = extract_acts(groups, registry)
+  let impl_ = groups.get_impl()
   let impl_paths : Array[String] = []
   for p in impl_ {
     impl_paths.push(p.get_path())

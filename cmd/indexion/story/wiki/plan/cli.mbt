@@ -11,22 +11,10 @@ pub struct PlanConfig {
 
 ///|
 pub fn PlanConfig::from_matches(matches : @argparse.Matches) -> PlanConfig {
-  let get_str = fn(key : String, default_ : String) -> String {
-    match matches.values.get(key) {
-      Some(arr) => if arr.length() > 0 { arr[0] } else { default_ }
-      None => default_
-    }
-  }
-  let get_list = fn(key : String) -> Array[String] {
-    match matches.values.get(key) {
-      Some(arr) => arr
-      None => []
-    }
-  }
   {
-    spec: get_list("spec"),
-    format: get_str("format", "text"),
-    output: get_str("output", ""),
+    spec: @common.arg_list(matches, "spec"),
+    format: @common.arg_str(matches, "format", "text"),
+    output: @common.arg_str(matches, "output", ""),
   }
 }
 

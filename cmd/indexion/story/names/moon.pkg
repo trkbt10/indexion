@@ -1,13 +1,10 @@
 import {
-  "moonbitlang/core/env" @env,
+  "moonbitlang/core/argparse" @argparse,
   "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/cmd/indexion/common" @common,
   "trkbt10/indexion/src/config" @config_paths,
-  "trkbt10/indexion/src/docgen/wiki/manifest" @wiki_manifest,
-  "trkbt10/indexion/src/docgen/wiki/types" @wiki_types,
-  "trkbt10/indexion/src/docgen/wiki/log" @wiki_log,
   "trkbt10/indexion/src/document/structure" @doc_structure,
   "trkbt10/indexion/src/identity" @identity,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/story" @story,
 }
-

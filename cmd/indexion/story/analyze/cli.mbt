@@ -22,37 +22,14 @@ pub struct AnalyzeConfig {
 pub fn AnalyzeConfig::from_matches(
   matches : @argparse.Matches,
 ) -> AnalyzeConfig {
-  let get_str = fn(key : String, default_ : String) -> String {
-    match matches.values.get(key) {
-      Some(arr) => if arr.length() > 0 { arr[0] } else { default_ }
-      None => default_
-    }
-  }
-  let get_int = fn(key : String, default_ : Int) -> Int {
-    match matches.values.get(key) {
-      Some(arr) =>
-        if arr.length() > 0 {
-          @common.parse_int(arr[0])
-        } else {
-          default_
-        }
-      None => default_
-    }
-  }
-  let get_list = fn(key : String) -> Array[String] {
-    match matches.values.get(key) {
-      Some(arr) => arr
-      None => []
-    }
-  }
   {
-    spec: get_list("spec"),
-    impl_: get_list("impl"),
-    format: get_str("format", "text"),
-    output: get_str("output", ""),
-    max_terms: get_int("max-terms", 20),
-    min_value_length: get_int("min-value-length", 2),
-    registry_root: get_str("registry-root", ""),
+    spec: @common.arg_list(matches, "spec"),
+    impl_: @common.arg_list(matches, "impl"),
+    format: @common.arg_str(matches, "format", "text"),
+    output: @common.arg_str(matches, "output", ""),
+    max_terms: @common.arg_int(matches, "max-terms", 20),
+    min_value_length: @common.arg_int(matches, "min-value-length", 2),
+    registry_root: @common.arg_str(matches, "registry-root", ""),
   }
 }
 

@@ -20,41 +20,15 @@ pub struct ReconcileCliConfig {
 pub fn ReconcileCliConfig::from_matches(
   matches : @argparse.Matches,
 ) -> ReconcileCliConfig {
-  let get_str = fn(key : String, default_ : String) -> String {
-    match matches.values.get(key) {
-      Some(arr) => if arr.length() > 0 { arr[0] } else { default_ }
-      None => default_
-    }
-  }
-  let get_int = fn(key : String, default_ : Int) -> Int {
-    match matches.values.get(key) {
-      Some(arr) =>
-        if arr.length() > 0 { @common.parse_int(arr[0]) } else { default_ }
-      None => default_
-    }
-  }
-  let get_double = fn(key : String, default_ : Double) -> Double {
-    match matches.values.get(key) {
-      Some(arr) =>
-        if arr.length() > 0 { @common.parse_double(arr[0]) } else { default_ }
-      None => default_
-    }
-  }
-  let get_list = fn(key : String) -> Array[String] {
-    match matches.values.get(key) {
-      Some(arr) => arr
-      None => []
-    }
-  }
   {
-    spec: get_list("spec"),
-    impl_: get_list("impl"),
-    format: get_str("format", "text"),
-    output: get_str("output", ""),
-    similarity_floor: get_double("similarity-floor", 0.15),
-    runner_up_margin: get_double("runner-up-margin", 0.05),
-    max_terms: get_int("max-terms", 8),
-    registry_root: get_str("registry-root", ""),
+    spec: @common.arg_list(matches, "spec"),
+    impl_: @common.arg_list(matches, "impl"),
+    format: @common.arg_str(matches, "format", "text"),
+    output: @common.arg_str(matches, "output", ""),
+    similarity_floor: @common.arg_double(matches, "similarity-floor", 0.15),
+    runner_up_margin: @common.arg_double(matches, "runner-up-margin", 0.05),
+    max_terms: @common.arg_int(matches, "max-terms", 8),
+    registry_root: @common.arg_str(matches, "registry-root", ""),
   }
 }
 

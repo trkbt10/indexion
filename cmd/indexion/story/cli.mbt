@@ -31,6 +31,7 @@ pub fn command() -> @argparse.Command {
     subcommands=[
       @story_analyze.command(),
       @story_reconcile_cli.command(),
+      @story_names.command(),
       @story_wiki_cli.command(),
     ],
   )
@@ -42,6 +43,7 @@ pub fn dispatch(matches : @argparse.Matches) -> Unit {
   match name {
     "analyze" => @story_analyze.run_matches(sub)
     "reconcile" => @story_reconcile_cli.run_matches(sub)
+    "names" => @story_names.run_matches(sub)
     "wiki" => @story_wiki_cli.dispatch(sub)
     _ => ()
   }

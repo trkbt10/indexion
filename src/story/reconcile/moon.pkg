@@ -1,6 +1,7 @@
 import {
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/config" @config_paths,
+  "trkbt10/indexion/src/document/structure" @doc_structure,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/story" @story,
   "trkbt10/indexion/src/text/tfidf" @tfidf,
