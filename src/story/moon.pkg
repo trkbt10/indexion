@@ -1,0 +1,9 @@
+import {
+  "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/src/config" @config_paths,
+  "trkbt10/indexion/src/kgf/features" @kgf_features,
+  "trkbt10/indexion/src/kgf/registry" @kgf_registry,
+  "trkbt10/indexion/src/kgf/tokenize" @kgf_tokenize,
+  "trkbt10/indexion/src/pipeline" @pipeline,
+  "trkbt10/indexion/src/text/tfidf" @tfidf,
+}

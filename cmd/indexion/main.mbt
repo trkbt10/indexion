@@ -83,6 +83,7 @@ fn build_command() -> @argparse.Command {
       @mcp_cli.command(),
       @spec_cli.command(),
       @wiki_cli.command(),
+      @story_cli.command(),
     ],
   )
 }
@@ -116,6 +117,7 @@ async fn main {
     "mcp" => @mcp_cli.run_matches(sub)
     "spec" => @spec_cli.dispatch(sub)
     "wiki" => @wiki_cli.dispatch(sub)
+    "story" => @story_cli.dispatch(sub)
     _ => ()
   }
 }
