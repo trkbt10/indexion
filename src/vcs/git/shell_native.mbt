@@ -10,9 +10,6 @@ pub fn query_path(root : String, path : String) -> String {
   if path == "." {
     return "."
   }
-  if !@config_paths.is_absolute_path(path) {
-    return path
-  }
   let rel = @config_paths.relative_to(root, path)
   if rel.length() == 0 {
     "."
