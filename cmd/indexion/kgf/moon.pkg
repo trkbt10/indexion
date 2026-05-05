@@ -13,4 +13,5 @@ import {
   "trkbt10/indexion/src/kgf/peg" @peg,
   "trkbt10/indexion/src/kgf/registry" @registry,
   "trkbt10/indexion/src/kgf/semantics" @semantics,
+  "trkbt10/indexion/src/kgf/transpile" @kgf_transpile,
 }

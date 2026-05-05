@@ -43,6 +43,8 @@ priv struct KgfConfig {
   mut file_path : String
   mut spec_name : String // empty means auto-detect
   mut kgf_dir : String
+  mut format : String // "human" or "json"
+  mut target_lang : String // for `transcribe`: target KGF spec name
   show_tokens : Bool
   show_events : Bool
   show_edges : Bool
@@ -55,6 +57,8 @@ fn KgfConfig::default() -> KgfConfig {
     file_path: "",
     spec_name: "",
     kgf_dir: "kgfs",
+    format: "human",
+    target_lang: "",
     show_tokens: true,
     show_events: true,
     show_edges: true,
@@ -92,6 +96,13 @@ fn KgfConfig::from_matches(matches : @argparse.Matches) -> KgfConfig {
             Some(vals) => if vals.length() > 0 { config.file_path = vals[0] }
             None => ()
           }
+          match sub_matches.values.get("format") {
+            Some(vals) =>
+              if vals.length() > 0 && vals[0].length() > 0 {
+                config.format = vals[0]
+              }
+            None => ()
+          }
           match name {
             "tokens" =>
               config = { ..config, show_events: false, show_edges: false }
@@ -100,6 +111,19 @@ fn KgfConfig::from_matches(matches : @argparse.Matches) -> KgfConfig {
             "edges" =>
               config = { ..config, show_tokens: false, show_events: false }
             _ => ()
+          }
+        }
+        "transcribe" => {
+          match sub_matches.values.get("file") {
+            Some(vals) => if vals.length() > 0 { config.file_path = vals[0] }
+            None => ()
+          }
+          match sub_matches.values.get("to") {
+            Some(vals) =>
+              if vals.length() > 0 && vals[0].length() > 0 {
+                config.target_lang = vals[0]
+              }
+            None => ()
           }
         }
         _ => ()
@@ -134,6 +158,13 @@ pub fn command() -> @argparse.Command {
       num_args=@argparse.ValueRange::single(),
     ),
   ]
+  let format_option : Array[@argparse.OptionArg] = [
+    @argparse.OptionArg(
+      "format",
+      about="Output format: human, json",
+      default_values=["human"],
+    ),
+  ]
   @argparse.Command(
     "kgf",
     about="KGF spec management and inspection",
@@ -154,21 +185,37 @@ pub fn command() -> @argparse.Command {
         "inspect",
         about="Full inspection (tokens, events, edges)",
         positionals=file_positional[:],
+        options=format_option[:],
       ),
       @argparse.Command(
         "tokens",
         about="Show tokenization only",
         positionals=file_positional[:],
+        options=format_option[:],
       ),
       @argparse.Command(
         "events",
         about="Show parse events only",
         positionals=file_positional[:],
+        options=format_option[:],
       ),
       @argparse.Command(
         "edges",
         about="Show generated edges only",
         positionals=file_positional[:],
+        options=format_option[:],
+      ),
+      @argparse.Command(
+        "transcribe",
+        about="Rewrite KGF events from one language spec into another (data-driven)",
+        positionals=file_positional[:],
+        options=[
+          @argparse.OptionArg(
+            "to",
+            about="Target KGF spec name (e.g. moonbit). Used to look up kgfs/transpile/<source>-to-<to>.json",
+            default_values=[""],
+          ),
+        ],
       ),
       @argparse.Command(
         "check",
@@ -237,11 +284,53 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
       }
       run_kgf_add(config.file_path)
     }
+    "transcribe" => {
+      if config.file_path.length() == 0 {
+        println("Error: No file specified")
+        println("")
+        println(command().render_help())
+        return
+      }
+      if config.target_lang.length() == 0 {
+        println("Error: --to <target-lang> is required")
+        return
+      }
+      match
+        @kgf_transpile.transpile_file_json(
+          config.file_path,
+          config.target_lang,
+          config.kgf_dir,
+        ) {
+        Some(s) => println(s)
+        None =>
+          println(
+            "Error: cannot transcribe '\{config.file_path}' to '\{config.target_lang}'",
+          )
+      }
+    }
     "inspect" | "tokens" | "events" | "edges" => {
       if config.file_path.length() == 0 {
         println("Error: No file specified")
         println("")
         println(command().render_help())
+        return
+      }
+      if config.format == "json" {
+        let json_out = match config.subcommand {
+          "inspect" =>
+            inspect_json(config.file_path, config.spec_name, config.kgf_dir)
+          "tokens" =>
+            tokenize_json(config.file_path, config.spec_name, config.kgf_dir)
+          "events" =>
+            events_json(config.file_path, config.spec_name, config.kgf_dir)
+          "edges" =>
+            edges_json(config.file_path, config.spec_name, config.kgf_dir)
+          _ => None
+        }
+        match json_out {
+          Some(s) => println(s)
+          None => println("Error: failed to inspect '\{config.file_path}'")
+        }
         return
       }
       match config.subcommand {
@@ -706,6 +795,155 @@ pub fn tokenize_json(
     })
     .collect()
   Some(Json::array(arr).stringify())
+}
+
+///|
+/// Extract parse events from a file and return as JSON string.
+///
+/// Each event is `{"rule": String, "labels": Object}`. Labels mirror the
+/// per-event metadata produced by the PEG evaluator (id text/positions, span
+/// tokens, captured slices). Used by transpilation/refactoring tools that
+/// consume the AST without re-parsing the human-readable transcript.
+pub fn events_json(
+  file_path : String,
+  spec_name : String,
+  kgf_dir : String,
+) -> String? {
+  let registry = load_registry(kgf_dir)
+  let resolved = match resolve_spec_name(file_path, spec_name, registry) {
+    Some(n) => n
+    None => return None
+  }
+  let spec = match registry.get_spec(resolved) {
+    Some(s) => s
+    None => return None
+  }
+  let source = match read_source(file_path) {
+    Some(s) => s
+    None => return None
+  }
+  let lex = @lexer.Lexer::new(spec.get_tokens())
+  let tokens = lex.tokenize(source)
+  let peg = @peg.build_peg(spec) catch { _ => return None }
+  let start_rule = spec.get_start_rule()
+  match @peg.run_parse(peg, spec, start_rule, tokens) {
+    Some(eval_result) => {
+      let events = eval_result.get_events()
+      let arr : Array[Json] = events
+        .iter()
+        .map(fn(event) {
+          let obj : Map[String, Json] = {}
+          obj.set("rule", event.0.to_json())
+          obj.set("labels", Json::object(event.1))
+          Json::object(obj)
+        })
+        .collect()
+      Some(Json::array(arr).stringify())
+    }
+    None => None
+  }
+}
+
+///|
+/// Combined inspection (tokens + events + edges) as JSON string.
+///
+/// Top-level keys: `spec`, `file`, `source_length`, `tokens`, `events`, `edges`.
+/// Returns `None` when the file is unreadable or the spec cannot be resolved;
+/// returns a partial object (with `parse_failed: true`) when the parse fails
+/// so callers can still use the token stream.
+pub fn inspect_json(
+  file_path : String,
+  spec_name : String,
+  kgf_dir : String,
+) -> String? {
+  let registry = load_registry(kgf_dir)
+  let resolved = match resolve_spec_name(file_path, spec_name, registry) {
+    Some(n) => n
+    None => return None
+  }
+  let spec = match registry.get_spec(resolved) {
+    Some(s) => s
+    None => return None
+  }
+  let source = match read_source(file_path) {
+    Some(s) => s
+    None => return None
+  }
+  let lex = @lexer.Lexer::new(spec.get_tokens())
+  let tokens = lex.tokenize(source)
+  let line_starts = build_line_starts(source)
+  let tokens_json : Array[Json] = tokens
+    .iter()
+    .map(fn(tok) {
+      let (line, col) = pos_to_line_col(line_starts, tok.pos)
+      let obj : Map[String, Json] = {}
+      obj.set("kind", tok.kind.to_json())
+      obj.set("text", tok.text.to_json())
+      obj.set("pos", tok.pos.to_json())
+      obj.set("line", line.to_json())
+      obj.set("col", col.to_json())
+      Json::object(obj)
+    })
+    .collect()
+  let root : Map[String, Json] = {}
+  root.set("spec", resolved.to_json())
+  root.set("file", file_path.to_json())
+  root.set("source_length", source.length().to_json())
+  root.set("tokens", Json::array(tokens_json))
+  let peg = @peg.build_peg(spec) catch {
+    _ => {
+      root.set("parse_failed", true.to_json())
+      return Some(Json::object(root).stringify())
+    }
+  }
+  let start_rule = spec.get_start_rule()
+  match @peg.run_parse(peg, spec, start_rule, tokens) {
+    Some(eval_result) => {
+      let events = eval_result.get_events()
+      let events_arr : Array[Json] = events
+        .iter()
+        .map(fn(event) {
+          let obj : Map[String, Json] = {}
+          obj.set("rule", event.0.to_json())
+          obj.set("labels", Json::object(event.1))
+          Json::object(obj)
+        })
+        .collect()
+      root.set("events", Json::array(events_arr))
+      let graph = @graph.CodeGraph::new()
+      let _ = graph.get_or_add_module(file_path, file=Some(file_path))
+      let ctx = @semantics.SemEvalCtx::new(
+        spec,
+        graph,
+        file_path,
+        "",
+        spec.get_language(),
+        fn(_path) { false },
+      )
+      for event in events {
+        @semantics.eval_rule_semantics(event.0, event.1, ctx)
+      }
+      let edges = graph.get_edges()
+      let edges_arr : Array[Json] = edges
+        .iter()
+        .map(fn(edge) {
+          let obj : Map[String, Json] = {}
+          obj.set("from", edge.from.to_json())
+          obj.set("to", edge.to.to_json())
+          obj.set("kind", edge.kind.to_string().to_json())
+          let attrs : Map[String, Json] = {}
+          for entry in edge.attrs {
+            attrs.set(entry.0, entry.1.to_json())
+          }
+          obj.set("attrs", Json::object(attrs))
+          Json::object(obj)
+        })
+        .collect()
+      root.set("edges", Json::array(edges_arr))
+    }
+    None => root.set("parse_failed", true.to_json())
+  }
+  Some(Json::object(root).stringify())
 }
 
 ///|

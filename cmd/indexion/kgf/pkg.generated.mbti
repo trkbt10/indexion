@@ -12,6 +12,10 @@ pub fn command() -> @argparse.Command
 
 pub fn edges_json(String, String, String) -> String?
 
+pub fn events_json(String, String, String) -> String?
+
+pub fn inspect_json(String, String, String) -> String?
+
 pub fn list_specs_json() -> String
 
 pub async fn run_matches(@argparse.Matches) -> Unit
