@@ -177,6 +177,7 @@
         "rehype-slug": "^6.0.0",
         "remark-gfm": "^4.0.1",
         "tailwind-merge": "^3.5.0",
+        "three": "^0.170.0",
       },
       "devDependencies": {
         "@tailwindcss/vite": "^4.2.2",

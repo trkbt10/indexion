@@ -19,6 +19,7 @@
   "dependencies": {
     "@indexion/api-client": "workspace:*",
     "@indexion/graph-canvas": "workspace:*",
+    "three": "^0.170.0",
     "@indexion/kgf-tokenizer": "workspace:*",
     "@indexion/mermaid-viewer": "workspace:*",
     "@indexion/syntax-highlight": "workspace:*",
