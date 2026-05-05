@@ -3,10 +3,12 @@ import {
   "moonbitlang/core/env" @env,
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/cmd/indexion/common" @common,
+  "trkbt10/indexion/cmd/indexion/wiki/common" @wiki_cli_common,
   "trkbt10/indexion/src/docgen/wiki/types" @wiki_types,
   "trkbt10/indexion/src/docgen/wiki/manifest" @wiki_manifest,
   "trkbt10/indexion/src/docgen/wiki/log" @wiki_log,
   "trkbt10/indexion/src/docgen/wiki/search" @wiki_search,
+  "trkbt10/indexion/src/docgen/wiki/workspace" @wiki_workspace,
   "trkbt10/indexion/src/digest/embed" @embed,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
 }

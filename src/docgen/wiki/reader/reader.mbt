@@ -48,7 +48,7 @@ pub fn load_wiki(
   }
   let nav = build_nav(manifest.pages)
   let index_content : String? = Some(
-    @fs.read_file_to_string(wiki_dir + "/index.md"),
+    @fs.read_file_to_string(@types.wiki_index_path(wiki_dir)),
   ) catch {
     _ => None
   }

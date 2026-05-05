@@ -12,7 +12,7 @@ async fn load_wiki_pages(
   provider : @embed_config.EmbeddingProvider,
 ) -> (@wiki_types.WikiData, @wiki_search.WikiSearchIndex?) {
   let wiki_dir = match
-    @config.resolve_project_indexion_dir(config.workspace_dir, "wiki") {
+    @wiki_workspace.resolve_project_wiki_dir(config.workspace_dir) {
     Some(dir) => dir
     None => {
       @digest_cli.log_progress("Wiki: no project root found. Skipping wiki.")

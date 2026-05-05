@@ -32,10 +32,7 @@ pub fn WikiPlanConfig::from_matches(
     Some(arr) => if arr.length() > 0 { arr[0] } else { "kgfs" }
     _ => "kgfs"
   }
-  let wiki_dir = match matches.values.get("wiki-dir") {
-    Some(arr) => if arr.length() > 0 { arr[0] } else { ".indexion/wiki" }
-    _ => ".indexion/wiki"
-  }
+  let wiki_dir = @wiki_cli_common.wiki_dir_arg(matches)
   let target_dir = match matches.values.get("directory") {
     Some(arr) => if arr.length() > 0 { arr[0] } else { "." }
     _ => "."
@@ -59,7 +56,7 @@ pub fn command() -> @argparse.Command {
         "kgfs",
       ]),
       @argparse.OptionArg("wiki-dir", about="Wiki directory", default_values=[
-        ".indexion/wiki",
+        @wiki_workspace.DEFAULT_WIKI_DIR,
       ]),
     ],
     positionals=[
@@ -75,10 +72,11 @@ pub fn command() -> @argparse.Command {
 ///|
 pub fn run_matches(matches : @argparse.Matches) -> Unit {
   let parsed = WikiPlanConfig::from_matches(matches)
-  let wiki_dir_resolved = match @common.resolve_wiki_dir(parsed.wiki_dir) {
+  let wiki_dir_resolved = match
+    @wiki_workspace.resolve_wiki_dir(parsed.wiki_dir) {
     Some(dir) => dir
     None => {
-      println("Error: Could not find project root directory.")
+      @wiki_cli_common.print_project_root_error()
       return
     }
   }

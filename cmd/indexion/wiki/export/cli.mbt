@@ -17,7 +17,7 @@ pub fn command() -> @argparse.Command {
         "input",
         short='i',
         about="Input wiki directory (default: .indexion/wiki)",
-        default_values=[".indexion/wiki"],
+        default_values=[@wiki_workspace.DEFAULT_WIKI_DIR],
       ),
       @argparse.OptionArg("output", short='o', about="Output directory"),
     ],
@@ -35,12 +35,12 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     return
   }
   let input_resolved = match
-    @common.resolve_wiki_dir(
-      @common.get_option(matches, "input", ".indexion/wiki"),
+    @wiki_workspace.resolve_wiki_dir(
+      @common.get_option(matches, "input", @wiki_workspace.DEFAULT_WIKI_DIR),
     ) {
     Some(dir) => dir
     None => {
-      println("Error: Could not find project root directory.")
+      @wiki_cli_common.print_project_root_error()
       return
     }
   }

@@ -29,7 +29,7 @@ pub fn command() -> @argparse.Command {
       default_values=["user"],
     ),
     @argparse.OptionArg("wiki-dir", about="Wiki directory", default_values=[
-      ".indexion/wiki",
+      @wiki_workspace.DEFAULT_WIKI_DIR,
     ]),
   ])
 }
@@ -49,16 +49,10 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
     println("Usage: indexion wiki pages update --id=<id> --content=<file.md>")
     return
   }
-  let wiki_dir_resolved = match
-    @common.resolve_wiki_dir(
-      match matches.values.get("wiki-dir") {
-        Some(arr) => if arr.length() > 0 { arr[0] } else { ".indexion/wiki" }
-        _ => ".indexion/wiki"
-      },
-    ) {
+  let wiki_dir_resolved = match @wiki_cli_common.resolve_wiki_dir_arg(matches) {
     Some(dir) => dir
     None => {
-      println("Error: Could not find project root directory.")
+      @wiki_cli_common.print_project_root_error()
       return
     }
   }

@@ -117,11 +117,12 @@ pub async fn run_export(matches : @argparse.Matches) -> Unit {
   // Static Pages cannot hit the live /api/wiki/assets handler, so publish
   // project wiki assets at the same API-shaped path used in config JSON.
   let wiki_asset_count = match
-    @config.resolve_project_indexion_dir(
-      serve_config.workspace_dir,
-      "wiki/assets",
-    ) {
-    Some(dir) => copy_dir_recursive(dir, output_dir + "/api/wiki/assets")
+    @wiki_workspace.resolve_project_wiki_dir(serve_config.workspace_dir) {
+    Some(dir) =>
+      copy_dir_recursive(
+        @wiki_workspace.assets_dir(dir),
+        output_dir + "/api/wiki/assets",
+      )
     None => 0
   }
   if wiki_asset_count > 0 {

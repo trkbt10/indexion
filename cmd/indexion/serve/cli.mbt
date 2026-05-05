@@ -569,11 +569,8 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
           "/api/wiki/assets/".length(),
         )
         let wiki_assets_dir = match
-          @config.resolve_project_indexion_dir(
-            config.workspace_dir,
-            "wiki/assets",
-          ) {
-          Some(dir) => dir
+          @wiki_workspace.resolve_project_wiki_dir(config.workspace_dir) {
+          Some(dir) => @wiki_workspace.assets_dir(dir)
           None => {
             send_json_error(conn, 404, "Not Found", cors_enabled)
             return

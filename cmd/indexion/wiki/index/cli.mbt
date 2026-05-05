@@ -43,7 +43,7 @@ fn build_command() -> @argparse.Command {
     ],
     options=[
       @argparse.OptionArg("wiki-dir", about="Wiki directory", default_values=[
-        ".indexion/wiki",
+        @wiki_workspace.DEFAULT_WIKI_DIR,
       ]),
       @argparse.OptionArg("output", short='o', about="Output file path"),
       @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
@@ -78,16 +78,10 @@ fn build_command() -> @argparse.Command {
 
 ///|
 async fn run_build(matches : @argparse.Matches) -> Unit {
-  let wiki_dir_resolved = match
-    @common.resolve_wiki_dir(
-      match matches.values.get("wiki-dir") {
-        Some(arr) => if arr.length() > 0 { arr[0] } else { ".indexion/wiki" }
-        _ => ".indexion/wiki"
-      },
-    ) {
+  let wiki_dir_resolved = match @wiki_cli_common.resolve_wiki_dir_arg(matches) {
     Some(dir) => dir
     None => {
-      println("Error: Could not find project root directory.")
+      @wiki_cli_common.print_project_root_error()
       return
     }
   }
@@ -129,7 +123,7 @@ async fn run_build(matches : @argparse.Matches) -> Unit {
   if dry_run || output.length() > 0 {
     @common.write_output(output, content, label="Wiki index")
   } else {
-    let index_path = wiki_dir_resolved + "/index.md"
+    let index_path = @wiki_types.wiki_index_path(wiki_dir_resolved)
     @fs.write_string_to_file(index_path, content) catch {
       @fs.IOError(msg) => {
         println("Error writing index.md: " + msg)

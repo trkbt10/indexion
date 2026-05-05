@@ -8,7 +8,7 @@
 pub fn command() -> @argparse.Command {
   @argparse.Command("lint", about="Check wiki structural integrity", options=[
     @argparse.OptionArg("wiki-dir", about="Wiki directory", default_values=[
-      ".indexion/wiki",
+      @wiki_workspace.DEFAULT_WIKI_DIR,
     ]),
     @argparse.OptionArg(
       "format",
@@ -24,16 +24,10 @@ pub fn command() -> @argparse.Command {
 
 ///|
 pub fn run_matches(matches : @argparse.Matches) -> Unit {
-  let wiki_dir_resolved = match
-    @common.resolve_wiki_dir(
-      match matches.values.get("wiki-dir") {
-        Some(arr) => if arr.length() > 0 { arr[0] } else { ".indexion/wiki" }
-        _ => ".indexion/wiki"
-      },
-    ) {
+  let wiki_dir_resolved = match @wiki_cli_common.resolve_wiki_dir_arg(matches) {
     Some(dir) => dir
     None => {
-      println("Error: Could not find project root directory.")
+      @wiki_cli_common.print_project_root_error()
       return
     }
   }

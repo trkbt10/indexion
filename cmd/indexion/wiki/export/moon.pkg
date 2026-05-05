@@ -2,6 +2,8 @@ import {
   "moonbitlang/core/argparse" @argparse,
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/cmd/indexion/common" @common,
+  "trkbt10/indexion/cmd/indexion/wiki/common" @wiki_cli_common,
   "trkbt10/indexion/src/docgen/wiki/interop" @wiki_interop,
+  "trkbt10/indexion/src/docgen/wiki/workspace" @wiki_workspace,
   "trkbt10/indexion/src/config" @config,
 }

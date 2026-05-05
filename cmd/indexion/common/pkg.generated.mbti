@@ -1,12 +1,27 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/cmd/indexion/common"
 
+import {
+  "moonbitlang/core/argparse",
+  "trkbt10/indexion/src/kgf/registry",
+}
+
 // Values
 pub fn ancestor_dirs(String) -> Array[String]
 
+pub fn arg_double(@argparse.Matches, String, Double) -> Double
+
+pub fn arg_flag(@argparse.Matches, String, Bool) -> Bool
+
+pub fn arg_int(@argparse.Matches, String, Int) -> Int
+
+pub fn arg_list(@argparse.Matches, String) -> Array[String]
+
+pub fn arg_str(@argparse.Matches, String, String) -> String
+
 pub fn capitalize(String) -> String
 
-pub fn collect_files(Array[String], includes? : Array[String], excludes? : Array[String], extensions? : Array[String]) -> Array[(String, String)]
+pub fn collect_files(Array[String], includes? : Array[String], excludes? : Array[String], extensions? : Array[String], registry? : @registry.KGFRegistry?) -> Array[(String, String)]
 
 pub fn count_lines(String) -> Int
 
@@ -25,6 +40,10 @@ pub fn first_sentence(String) -> String
 pub fn format_percent(Double) -> String
 
 pub fn get_dirname_prefix(String) -> String
+
+pub fn get_flag(@argparse.Matches, String) -> Bool
+
+pub fn get_option(@argparse.Matches, String, String) -> String
 
 pub fn get_relative_part(String) -> String
 

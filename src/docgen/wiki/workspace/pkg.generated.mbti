@@ -7,13 +7,17 @@ import {
 }
 
 // Values
-pub fn index_files_exist(String) -> Bool
+pub const DEFAULT_WIKI_DIR : String = ".indexion/wiki"
+
+pub fn assets_dir(String) -> String
 
 pub fn is_wiki_dir(String) -> Bool
 
 pub fn is_wiki_search_generated_path(String) -> Bool
 
 pub async fn may_be_stale(String) -> Bool
+
+pub fn resolve_project_wiki_dir(String) -> String?
 
 pub fn resolve_wiki_dir(String) -> String?
 

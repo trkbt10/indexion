@@ -133,9 +133,19 @@ pub const WIKI_MANIFEST_FILE : String = "wiki.json"
 pub const WIKI_LOG_FILE : String = "log.json"
 
 ///|
+/// Wiki navigation index file name (SoT).
+pub const WIKI_INDEX_FILE : String = "index.md"
+
+///|
 /// Construct the full path to the wiki log file in a given directory.
 pub fn wiki_log_path(dir : String) -> String {
   dir + "/" + WIKI_LOG_FILE
+}
+
+///|
+/// Construct the full path to the wiki navigation index in a given directory.
+pub fn wiki_index_path(dir : String) -> String {
+  dir + "/" + WIKI_INDEX_FILE
 }
 
 ///|

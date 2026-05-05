@@ -32,4 +32,5 @@ import {
   "trkbt10/indexion/src/docgen/wiki/types" @wiki_types,
   "trkbt10/indexion/src/docgen/wiki/interop" @wiki_interop,
   "trkbt10/indexion/src/docgen/wiki/search" @wiki_search,
+  "trkbt10/indexion/src/docgen/wiki/workspace" @wiki_workspace,
 }

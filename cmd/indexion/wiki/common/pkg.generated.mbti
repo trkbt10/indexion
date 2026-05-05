@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/wiki/common"
+
+import {
+  "moonbitlang/core/argparse",
+}
+
+// Values
+pub const PROJECT_ROOT_ERROR : String = "Error: Could not find project root directory."
+
+pub const WIKI_DIR_ARG : String = "wiki-dir"
+
+pub fn print_project_root_error() -> Unit
+
+pub fn resolve_wiki_dir_arg(@argparse.Matches) -> String?
+
+pub fn wiki_dir_arg(@argparse.Matches) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

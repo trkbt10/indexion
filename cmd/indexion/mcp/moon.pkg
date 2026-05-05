@@ -19,6 +19,7 @@ import {
   "trkbt10/indexion/src/docgen/wiki/reader" @wiki_reader,
   "trkbt10/indexion/src/docgen/wiki/lint" @wiki_lint,
   "trkbt10/indexion/src/docgen/wiki/ingest" @wiki_ingest,
+  "trkbt10/indexion/src/docgen/wiki/workspace" @wiki_workspace,
   "trkbt10/indexion/src/plan/render" @plan_render,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/mcp/server" @mcp_server,

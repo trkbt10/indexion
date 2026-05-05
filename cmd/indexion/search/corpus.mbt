@@ -17,11 +17,14 @@ pub fn build_corpus(
   let wiki_paths : Array[String] = []
   let file_paths : Array[String] = []
   for path in paths {
-    let resolved = resolve_wiki_path(path)
-    if is_wiki_dir(resolved) {
-      wiki_paths.push(resolved)
-    } else {
-      file_paths.push(path)
+    match @wiki_workspace.resolve_wiki_dir(path) {
+      Some(resolved) =>
+        if @wiki_workspace.is_wiki_dir(resolved) {
+          wiki_paths.push(resolved)
+        } else {
+          file_paths.push(path)
+        }
+      None => file_paths.push(path)
     }
   }
   // 2. Load KGF registry (shared by wiki and file corpus)
@@ -151,12 +154,6 @@ fn common_dir_prefix(left : String, right : String) -> String {
 }
 
 ///|
-/// Check if a directory contains wiki manifest (wiki content).
-fn is_wiki_dir(path : String) -> Bool {
-  @fs.path_exists(@wiki_types.wiki_manifest_path(path))
-}
-
-///|
 /// Try to load a pre-built wiki search index from vectors.db + sections JSON.
 /// Returns Some(WikiSearchIndex) when the path is a single wiki directory with
 /// a persisted index; None otherwise (caller should fall back to build_corpus).
@@ -167,33 +164,17 @@ pub fn load_prebuilt_wiki_index(
   if paths.length() != 1 {
     return None
   }
-  let resolved = resolve_wiki_path(paths[0])
-  if !is_wiki_dir(resolved) {
+  let resolved = match @wiki_workspace.resolve_wiki_dir(paths[0]) {
+    Some(dir) => dir
+    None => return None
+  }
+  if !@wiki_workspace.is_wiki_dir(resolved) {
     return None
   }
   if !@wiki_search.exists(resolved) {
     return None
   }
   @wiki_search.load(resolved)
-}
-
-///|
-/// Resolve wiki path — if it's `.indexion/wiki`, resolve via config.
-fn resolve_wiki_path(path : String) -> String {
-  if path.has_suffix(".indexion/wiki") || path.has_suffix(".indexion/wiki/") {
-    let base = if path.has_suffix(".indexion/wiki/") {
-      @common.substring(path, 0, path.to_array().length() - 15)
-    } else {
-      @common.substring(path, 0, path.to_array().length() - 14)
-    }
-    let resolved_base = if base.length() == 0 { "." } else { base }
-    match @config.resolve_project_indexion_dir(resolved_base, "wiki") {
-      Some(dir) => dir
-      None => path
-    }
-  } else {
-    path
-  }
 }
 
 ///|

@@ -805,19 +805,6 @@ pub fn count_lines(text : String) -> Int {
 }
 
 ///|
-/// Resolve a wiki directory path.
-/// If `wiki_dir` is the default ".indexion/wiki", walks up from `base_dir`
-/// to find the project root and returns `<root>/.indexion/wiki`.
-/// Returns None if the project root cannot be found.
-pub fn resolve_wiki_dir(wiki_dir : String, base_dir? : String = ".") -> String? {
-  if wiki_dir == ".indexion/wiki" {
-    @config_paths.resolve_project_indexion_dir(base_dir, "wiki")
-  } else {
-    Some(wiki_dir)
-  }
-}
-
-///|
 /// Get a string option value from CLI matches, with a default fallback.
 pub fn get_option(
   matches : @argparse.Matches,

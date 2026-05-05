@@ -824,14 +824,14 @@ fn register_wiki_lint(
       },
     },
     fn(params) {
-      let wiki_dir_raw = json_string(params, "wikiDir", ".indexion/wiki")
-      let wiki_dir = if wiki_dir_raw == ".indexion/wiki" {
-        match @config.resolve_project_indexion_dir(".", "wiki") {
-          Some(dir) => dir
-          None => return @mcp_types.error_result("Project root not found")
-        }
-      } else {
-        wiki_dir_raw
+      let wiki_dir_raw = json_string(
+        params,
+        "wikiDir",
+        @wiki_workspace.DEFAULT_WIKI_DIR,
+      )
+      let wiki_dir = match @wiki_workspace.resolve_wiki_dir(wiki_dir_raw) {
+        Some(dir) => dir
+        None => return @mcp_types.error_result("Project root not found")
       }
       let format = json_string(params, "format", "md")
       let registry = @kgf_features.load_registry(specs_dir~, target_dir=".")
@@ -879,14 +879,14 @@ fn register_wiki_ingest(
       },
     },
     fn(params) {
-      let wiki_dir_raw = json_string(params, "wikiDir", ".indexion/wiki")
-      let wiki_dir = if wiki_dir_raw == ".indexion/wiki" {
-        match @config.resolve_project_indexion_dir(".", "wiki") {
-          Some(dir) => dir
-          None => return @mcp_types.error_result("Project root not found")
-        }
-      } else {
-        wiki_dir_raw
+      let wiki_dir_raw = json_string(
+        params,
+        "wikiDir",
+        @wiki_workspace.DEFAULT_WIKI_DIR,
+      )
+      let wiki_dir = match @wiki_workspace.resolve_wiki_dir(wiki_dir_raw) {
+        Some(dir) => dir
+        None => return @mcp_types.error_result("Project root not found")
       }
       let format = json_string(params, "format", "md")
       let dry_run = json_bool(params, "dryRun", true)

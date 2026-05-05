@@ -2,11 +2,20 @@
 package "trkbt10/indexion/src/docgen/wiki/types"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
 }
 
 // Values
+pub const WIKI_INDEX_FILE : String = "index.md"
+
+pub const WIKI_LOG_FILE : String = "log.json"
+
 pub const WIKI_MANIFEST_FILE : String = "wiki.json"
+
+pub fn wiki_index_path(String) -> String
+
+pub fn wiki_log_path(String) -> String
 
 pub fn wiki_manifest_path(String) -> String
 
@@ -19,13 +28,20 @@ pub struct ManifestPage {
   file : String
   sources : Array[String]
   children : Array[String]
-} derive(Eq, Show, @json.FromJson)
+  provenance : String?
+  last_actor : String?
+} derive(Eq, ToJson, @debug.Debug)
+pub fn ManifestPage::new(id~ : String, title~ : String, file~ : String, sources? : Array[String], children? : Array[String], provenance? : String?, last_actor? : String?) -> Self
+pub fn ManifestPage::with_updates(Self, sources? : Array[String], children? : Array[String], provenance? : String?, last_actor? : String?) -> Self
+pub impl Show for ManifestPage
+pub impl @json.FromJson for ManifestPage
 
 pub struct WikiData {
   nav : WikiNav
   pages : Map[String, WikiPage]
+  index_content : String?
 }
-pub fn WikiData::new(nav~ : WikiNav, pages~ : Map[String, WikiPage]) -> Self
+pub fn WikiData::new(nav~ : WikiNav, pages~ : Map[String, WikiPage], index_content? : String?) -> Self
 
 pub struct WikiHeading {
   level : Int
@@ -37,7 +53,10 @@ pub fn WikiHeading::new(level~ : Int, text~ : String, anchor~ : String) -> Self
 pub struct WikiManifest {
   title : String
   pages : Array[ManifestPage]
-} derive(Eq, Show, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn WikiManifest::new(title~ : String, pages~ : Array[ManifestPage]) -> Self
+pub impl Show for WikiManifest
+pub impl @json.FromJson for WikiManifest
 
 pub struct WikiNav {
   pages : Array[WikiNavItem]

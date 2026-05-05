@@ -161,6 +161,22 @@ test "build_corpus indexes explicit versioning metadata file lists" {
 }
 
 ///|
+test "build_corpus does not rewrite normal project paths to default wiki" {
+  let root = fixture_root()
+  @config.ensure_dir_recursive(root + "/.indexion/wiki")
+  write_file(
+    root + "/.indexion/wiki/wiki.json",
+    "{\"title\":\"Docs\",\"pages\":[]}\n",
+  )
+  write_file(root + "/src/main.mbt", "///|\npub fn main_value() -> Int { 1 }\n")
+  let docs = build_corpus([root + "/src"], search_config())
+  assert_true(has_document_for_source(docs, root + "/src/main.mbt"))
+  assert_false(
+    has_document_for_source(docs, root + "/.indexion/wiki/wiki.json"),
+  )
+}
+
+///|
 async test "search self-host retrieval finds versioning metadata chain" {
   let _unit = @async.with_task_group(_group => ())
   let root = fixture_root()
