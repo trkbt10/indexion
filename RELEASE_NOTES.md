@@ -1,3 +1,93 @@
+# v0.12.0
+
+## Highlights
+
+- **Graph Canvas 3D Rendering** — Full 3D support with camera controls, cluster rendering, and dimensionality handling
+- **Story Commands** — N:M plot/prose divergence detection and reconciliation with `story names`, `story diverge`, and `story reconcile`
+- **Branding Support** — Favicon and logo customization in wiki with asset URL resolution
+- **Mermaid Full-Screen Viewer** — Enhanced mermaid diagram rendering with full-screen support and optimized SVG parsing
+- **KGF Output Formats** — New `--format` and `--target-lang` options for KGF commands
+
+## New Features
+
+### Graph Canvas 3D Rendering
+
+Complete WebGL-based 3D graph visualization:
+
+- **3D point and cluster rendering** — Full spatial layout support
+- **Camera controls** — Enhanced 2D/3D camera with dimensionality switching
+- **Cluster fill/label layers** — Visual cluster grouping in 3D space
+
+### Story Commands — Plot/Prose Divergence
+
+New story analysis commands for specification-implementation drift:
+
+```bash
+# List all story names
+indexion story names src/
+
+# Detect divergence between plot (spec) and prose (impl)
+indexion story diverge src/
+
+# Reconcile plot and prose
+indexion story reconcile src/
+```
+
+- **N:M matching** — Supports many-to-many plot/prose relationships
+- **Glob-based grouping** — Dropped folder/filename conventions for flexible matching
+
+### Branding & Favicon Support
+
+Wiki branding customization:
+
+- **Favicon support** — Custom favicon with MIME type detection (.svg, .ico)
+- **Logo URL resolution** — Asset URLs resolved in branding context
+- **Color scheme** — Theme-aware branding
+
+### KGF Command Enhancements
+
+```bash
+# Specify output format
+indexion kgf parse --format=json src/file.ts
+
+# Target language for transpilation
+indexion kgf transpile --target-lang=python src/
+```
+
+## Improvements
+
+### Reconcile: Covered Terms
+
+`ActReconcileCandidate` now tracks `covered_terms` for more precise reconciliation analysis.
+
+### Text Operations Refactoring
+
+New text utility functions for formatting and operations.
+
+### Search & Explorer UI
+
+- **New search box component** — Enhanced search panel and wiki filter
+- **File/folder types** — New type definitions for explorer structures
+
+### Edge Resolution
+
+- **Trailing name resolution** — Edge targets resolved by trailing identifier
+- **Cross-package enrichment** — Post-merge passes for cross-package edges and identifier canonicalization
+
+### Integration Tests
+
+- TypeScript todo-app transpilation tests
+- Package ecosystem snapshots
+- Layout algorithm and geometry function tests
+
+## Bug Fixes
+
+- **Regexp alternation** — Surface all alternatives in fixed-width alternation matching
+- **three.js dependency** — Moved to dependencies for proper wiki build resolution
+- **ESLint compliance** — Resolved prettier/curly/nested-ternary violations
+
+---
+
 # v0.11.0
 
 ## Highlights
