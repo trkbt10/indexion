@@ -147,7 +147,7 @@ fn build_candidate(
     }
     None => ()
   }
-  let (missing_terms, extra_terms) = compute_term_diffs(
+  let (missing_terms, extra_terms, covered_terms) = compute_term_diffs(
     act, impl_, best_match, config.max_terms_per_candidate,
     registry, corpus_df, corpus_total, corpus_avg_len,
   )
@@ -163,6 +163,7 @@ fn build_candidate(
     runner_ups,
     missing_terms,
     extra_terms,
+    covered_terms,
     action,
     rationale,
   }
@@ -170,9 +171,14 @@ fn build_candidate(
 
 ///|
 /// Term-level diff between an act body and its best-match impl content.
-/// Returns (missing, extra) where:
+/// Returns (missing, extra, covered) where:
 ///   - missing: tokens in act but absent from impl
 ///   - extra:   tokens in impl but absent from act
+///   - covered: tokens in act AND in impl (BM25-weighted from the act
+///              vector, parallel to `missing`). Surfaces the
+///              intersection so callers running reconcile in inverted
+///              polarity (spec corpus = constraints the impl must not
+///              echo) can read leak terms directly from the report.
 ///
 /// Ranked by BM25 weight against the full corpus so that frequent low-
 /// information words (function words) sink. Function words are also
@@ -187,10 +193,10 @@ fn compute_term_diffs(
   corpus_df : Map[String, Int],
   corpus_total : Int,
   corpus_avg_len : Double,
-) -> (Array[String], Array[String]) {
+) -> (Array[String], Array[String], Array[String]) {
   let act_tokens = @story.tokenize_doc(act.body, act.source_path, registry)
   match best_match {
-    None => ([], [])
+    None => ([], [], [])
     Some(m) => {
       let impl_content = lookup_impl_content(impl_, m.impl_path)
       let impl_tokens = @story.tokenize_doc(
@@ -205,16 +211,18 @@ fn compute_term_diffs(
         impl_tokens, corpus_df, corpus_total, corpus_avg_len,
       )
       let missing_candidates : Array[(String, Double)] = []
+      let covered_candidates : Array[(String, Double)] = []
       for entry in missing_vec.iter() {
         let term = entry.0
         let weight = entry.1
-        if impl_set.contains(term) {
-          continue
-        }
         if is_numeric_value(term) {
           continue
         }
-        missing_candidates.push((term, weight))
+        if impl_set.contains(term) {
+          covered_candidates.push((term, weight))
+        } else {
+          missing_candidates.push((term, weight))
+        }
       }
       let extra_candidates : Array[(String, Double)] = []
       for entry in extra_vec.iter() {
@@ -230,6 +238,7 @@ fn compute_term_diffs(
       }
       missing_candidates.sort_by(fn(a, b) { b.1.compare(a.1) })
       extra_candidates.sort_by(fn(a, b) { b.1.compare(a.1) })
+      covered_candidates.sort_by(fn(a, b) { b.1.compare(a.1) })
       let missing : Array[String] = []
       for i = 0; i < missing_candidates.length() && i < max_terms; i = i + 1 {
         missing.push(missing_candidates[i].0)
@@ -238,7 +247,11 @@ fn compute_term_diffs(
       for i = 0; i < extra_candidates.length() && i < max_terms; i = i + 1 {
         extra.push(extra_candidates[i].0)
       }
-      (missing, extra)
+      let covered : Array[String] = []
+      for i = 0; i < covered_candidates.length() && i < max_terms; i = i + 1 {
+        covered.push(covered_candidates[i].0)
+      }
+      (missing, extra, covered)
     }
   }
 }

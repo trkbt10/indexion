@@ -117,6 +117,21 @@ pub struct ActReconcileCandidate {
   missing_terms : Array[String]
   /// Terms in the best-matching impl not present in the act (out-of-source for this act).
   extra_terms : Array[String]
+  /// Terms in the act that ARE present in the best-matching impl,
+  /// ranked by the act-side BM25 weight. Symmetric complement of
+  /// `missing_terms` from the same vocabulary computation.
+  ///
+  /// Interpretation depends on the polarity the caller assigned to
+  /// the spec corpus:
+  ///   - Standard polarity (spec is must-cover content): these terms
+  ///     are positive — the act requirements the impl satisfied.
+  ///   - Inverted polarity (spec is a constraint corpus the impl
+  ///     must NOT echo, e.g. lint guidance fed as `--spec`): these
+  ///     terms are the leak set — constraint vocabulary that
+  ///     surfaced in impl when it should not have.
+  /// Reconcile itself is polarity-agnostic; the project pipeline
+  /// frames the interpretation.
+  covered_terms : Array[String]
   action : DriftAction
   /// One-line human-readable rationale for the chosen action.
   rationale : String
@@ -155,6 +170,13 @@ pub fn ActReconcileCandidate::get_extra_terms(
   self : ActReconcileCandidate,
 ) -> Array[String] {
   self.extra_terms
+}
+
+///|
+pub fn ActReconcileCandidate::get_covered_terms(
+  self : ActReconcileCandidate,
+) -> Array[String] {
+  self.covered_terms
 }
 
 ///|

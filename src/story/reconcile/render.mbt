@@ -104,6 +104,11 @@ fn render_text(report : ReconcileReport) -> String {
           "  extra in impl:   " + join_terms(c.extra_terms) + "\n",
         )
       }
+      if c.covered_terms.length() > 0 {
+        buf.write_string(
+          "  covered in impl: " + join_terms(c.covered_terms) + "\n",
+        )
+      }
       buf.write_string("  action: " + c.rationale + "\n")
     }
   }
