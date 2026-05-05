@@ -759,7 +759,7 @@ pub fn delete_lines(
   start_line : Int,
   end_line : Int,
 ) -> String {
-  let lines = split_by_newline(content)
+  let lines = @text_ops.split_by_newline(content)
   let result : Array[String] = []
   for i, line in lines {
     let line_num = i + 1
@@ -787,27 +787,6 @@ fn is_blank(s : String) -> Bool {
     }
   }
   true
-}
-
-///|
-fn split_by_newline(text : String) -> Array[String] {
-  let lines : Array[String] = []
-  let chars = text.to_array()
-  let buf : Array[Char] = []
-  for c in chars {
-    if c == '\n' {
-      lines.push(String::from_array(buf))
-      buf.clear()
-    } else if c == '\r' {
-      continue
-    } else {
-      buf.push(c)
-    }
-  }
-  if buf.length() > 0 {
-    lines.push(String::from_array(buf))
-  }
-  lines
 }
 
 ///|

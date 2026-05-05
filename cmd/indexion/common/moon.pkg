@@ -4,6 +4,8 @@ import {
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/config" @config_paths,
   "trkbt10/indexion/src/pipeline" @pipeline,
+  "trkbt10/indexion/src/text/format" @text_format,
+  "trkbt10/indexion/src/text/ops" @text_ops,
   "trkbt10/indexion/src/vfs" @vfs,
   "trkbt10/indexion/src/kgf/registry" @registry,
 }

@@ -42,7 +42,7 @@ pub struct InterpretedDocument {
 pub fn json_int_field(payload : Map[String, Json], key : String) -> Int {
   match payload.get(key) {
     Some(Number(value, ..)) => value.to_int()
-    Some(String(value)) => parse_int_or_zero(value)
+    Some(String(value)) => @text_parse.parse_int_or_zero(value)
     _ => 0
   }
 }
@@ -112,15 +112,6 @@ fn json_pair_array_field(
 }
 
 ///|
-fn merge_unique_strings(target : Array[String], values : Array[String]) -> Unit {
-  for value in values {
-    if value.length() > 0 && !target.contains(value) {
-      target.push(value)
-    }
-  }
-}
-
-///|
 fn merge_unique_pairs(
   target : Array[DocumentTablePair],
   values : Array[DocumentTablePair],
@@ -143,7 +134,10 @@ pub fn section_refs_for_line(
       json_int_field(fact.payload, "line") != line {
       continue
     }
-    merge_unique_strings(result, json_string_array_field(fact.payload, "refs"))
+    @text_ops.merge_unique_strings(
+      result,
+      json_string_array_field(fact.payload, "refs"),
+    )
   }
   result
 }
@@ -159,7 +153,7 @@ pub fn literals_for_line(
       json_int_field(fact.payload, "line") != line {
       continue
     }
-    merge_unique_strings(
+    @text_ops.merge_unique_strings(
       result,
       json_string_array_field(fact.payload, "values"),
     )
@@ -329,27 +323,6 @@ fn crossed_newline(start : Int, end : Int, source_chars : Array[Char]) -> Bool {
 }
 
 ///|
-fn split_by_newline(text : String) -> Array[String] {
-  let lines : Array[String] = []
-  let chars = text.to_array()
-  let buf : Array[Char] = []
-  for c in chars {
-    if c == '\n' {
-      lines.push(String::from_array(buf))
-      buf.clear()
-    } else if c == '\r' {
-      continue
-    } else {
-      buf.push(c)
-    }
-  }
-  if buf.length() > 0 {
-    lines.push(String::from_array(buf))
-  }
-  lines
-}
-
-///|
 pub fn extract_document_sections(
   tokens : Array[@kgf_types.Tok],
   content : String,
@@ -358,7 +331,7 @@ pub fn extract_document_sections(
 ) -> Array[DocumentSection] {
   guard spec is Some(_) else { return [] }
   let headings = extract_headings(tokens, spec~, source=content, path~)
-  let lines = split_by_newline(content)
+  let lines = @text_ops.split_by_newline(content)
   let sections : Array[DocumentSection] = []
   for idx, heading in headings {
     let end_line = if idx + 1 < headings.length() {
@@ -414,7 +387,7 @@ fn merge_heading_levels(
   if headings.length() == 0 || path.length() == 0 {
     return headings
   }
-  let total_lines = split_by_newline(content).length()
+  let total_lines = @text_ops.split_by_newline(content).length()
   let sections : Array[DocumentSection] = []
   for idx, heading in headings {
     let end_line = if idx + 1 < headings.length() {
@@ -463,27 +436,8 @@ fn heading_levels_by_line(facts : Array[DocumentFact]) -> Map[Int, Int] {
 fn json_int_or_zero(value : Json?) -> Int {
   match value {
     Some(Number(n, ..)) => n.to_int()
-    Some(String(text)) => parse_int_or_zero(text)
+    Some(String(text)) => @text_parse.parse_int_or_zero(text)
     _ => 0
-  }
-}
-
-///|
-fn parse_int_or_zero(text : String) -> Int {
-  let mut value = 0
-  let mut has_digit = false
-  for ch in text {
-    if ch >= '0' && ch <= '9' {
-      value = value * 10 + (ch.to_int() - '0'.to_int())
-      has_digit = true
-    } else {
-      return 0
-    }
-  }
-  if has_digit {
-    value
-  } else {
-    0
   }
 }
 

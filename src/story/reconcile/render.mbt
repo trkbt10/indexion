@@ -77,7 +77,7 @@ fn render_text(report : ReconcileReport) -> String {
             "  best:   " +
             m.impl_path +
             " (" +
-            format_pct(m.similarity) +
+            @text_format.format_percent(m.similarity) +
             ")\n",
           )
         None => buf.write_string("  best:   (none above floor)\n")
@@ -89,7 +89,7 @@ fn render_text(report : ReconcileReport) -> String {
             buf.write_string(", ")
           }
           buf.write_string(
-            r.impl_path + " (" + format_pct(r.similarity) + ")",
+            r.impl_path + " (" + @text_format.format_percent(r.similarity) + ")",
           )
         }
         buf.write_string("\n")
@@ -122,12 +122,6 @@ fn render_text(report : ReconcileReport) -> String {
     }
   }
   buf.to_string()
-}
-
-///|
-fn format_pct(v : Double) -> String {
-  let pct = (v * 100.0 + 0.5).to_int()
-  pct.to_string() + "%"
 }
 
 ///|

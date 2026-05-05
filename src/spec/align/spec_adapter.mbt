@@ -56,7 +56,7 @@ fn section_roles_from_facts(
     if fact.kind != "document_section_role" {
       continue
     }
-    let line = json_int_field(fact.payload, "line")
+    let line = @doc_structure.json_int_field(fact.payload, "line")
     let role = json_string_field(fact.payload, "role").unwrap_or("")
     if line > 0 && role.length() > 0 {
       roles.set(line, role)
@@ -223,34 +223,6 @@ fn json_string_field(payload : Map[String, Json], key : String) -> String? {
 }
 
 ///|
-fn json_int_field(payload : Map[String, Json], key : String) -> Int {
-  match payload.get(key) {
-    Some(Number(value, ..)) => value.to_int()
-    Some(String(value)) => parse_int_or_zero(value)
-    _ => 0
-  }
-}
-
-///|
-fn parse_int_or_zero(text : String) -> Int {
-  let mut value = 0
-  let mut has_digit = false
-  for ch in text {
-    if ch >= '0' && ch <= '9' {
-      value = value * 10 + (ch.to_int() - '0'.to_int())
-      has_digit = true
-    } else {
-      return 0
-    }
-  }
-  if has_digit {
-    value
-  } else {
-    0
-  }
-}
-
-///|
 fn json_string_array_field(
   payload : Map[String, Json],
   key : String,
@@ -287,7 +259,7 @@ fn note_strings_by_line(
     if fact.kind != kind {
       continue
     }
-    let line = json_int_field(fact.payload, "line")
+    let line = @doc_structure.json_int_field(fact.payload, "line")
     if line <= 0 {
       continue
     }
@@ -312,7 +284,7 @@ fn note_pairs_by_line(
   let result : Map[Int, Array[String]] = {}
   let seen : Map[Int, Bool] = {}
   for fact in interpreted.facts {
-    let line = json_int_field(fact.payload, "line")
+    let line = @doc_structure.json_int_field(fact.payload, "line")
     if fact.kind != "document_table_pairs" || line <= 0 || seen.contains(line) {
       continue
     }
@@ -372,17 +344,17 @@ fn load_spec_nodes(
           normative: json_string_field(payload, "normative"),
           source_format,
           source_file: path,
-          source_start_line: json_int_field(payload, "line"),
-          source_end_line: json_int_field(payload, "end_line"),
+          source_start_line: @doc_structure.json_int_field(payload, "line"),
+          source_end_line: @doc_structure.json_int_field(payload, "end_line"),
           criteria: [],
           section_refs: refs_by_line
-          .get(json_int_field(payload, "line"))
+          .get(@doc_structure.json_int_field(payload, "line"))
           .unwrap_or([]),
           literals: literals_by_line
-          .get(json_int_field(payload, "line"))
+          .get(@doc_structure.json_int_field(payload, "line"))
           .unwrap_or([]),
           table_pairs: pairs_by_line
-          .get(json_int_field(payload, "line"))
+          .get(@doc_structure.json_int_field(payload, "line"))
           .unwrap_or([]),
         })
       } else if ty == "document_scenario" {
@@ -398,16 +370,16 @@ fn load_spec_nodes(
           then_: json_string_array_field(payload, "then"),
           parent_req: parent_id,
           source_file: path,
-          source_start_line: json_int_field(payload, "line"),
-          source_end_line: json_int_field(payload, "end_line"),
+          source_start_line: @doc_structure.json_int_field(payload, "line"),
+          source_end_line: @doc_structure.json_int_field(payload, "end_line"),
           section_refs: refs_by_line
-          .get(json_int_field(payload, "line"))
+          .get(@doc_structure.json_int_field(payload, "line"))
           .unwrap_or([]),
           literals: literals_by_line
-          .get(json_int_field(payload, "line"))
+          .get(@doc_structure.json_int_field(payload, "line"))
           .unwrap_or([]),
           table_pairs: pairs_by_line
-          .get(json_int_field(payload, "line"))
+          .get(@doc_structure.json_int_field(payload, "line"))
           .unwrap_or([]),
         })
       } else if ty == "document_requirement_criteria" {

@@ -4,5 +4,7 @@ import {
   "trkbt10/indexion/src/kgf/semantics" @kgf_semantics,
   "trkbt10/indexion/src/kgf/toolkit" @kgf_toolkit,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
+  "trkbt10/indexion/src/text/ops" @text_ops,
+  "trkbt10/indexion/src/text/parse" @text_parse,
   "moonbitlang/core/json" @json,
 }

@@ -14,6 +14,7 @@ import {
   "trkbt10/indexion/src/reconcile/tracking" @reconcile_tracking,
   "trkbt10/indexion/src/reconcile/store" @reconcile_store,
   "trkbt10/indexion/src/similarity/ncd" @ncd,
+  "trkbt10/indexion/src/text/ops" @text_ops,
   "trkbt10/indexion/src/text/tfidf" @tfidf,
   "trkbt10/indexion/src/text/tokenizer" @tokenizer,
   "trkbt10/indexion/src/vcs/git" @git,

@@ -426,28 +426,14 @@ pub fn extract_unique_dir_names(dirs : Array[String]) -> Array[String] {
 /// Split text into lines by newline characters.
 /// Handles both \n and \r\n line endings.
 pub fn split_lines(text : String) -> Array[String] {
-  let lines : Array[String] = []
-  let current : Array[Char] = []
-  for c in text {
-    if c == '\n' {
-      lines.push(String::from_array(current))
-      current.clear()
-    } else if c != '\r' {
-      current.push(c)
-    }
-  }
-  if current.length() > 0 {
-    lines.push(String::from_array(current))
-  }
-  lines
+  @text_ops.split_by_newline(text)
 }
 
 ///|
 /// Format a double (0.0-1.0) as a percentage string.
 /// Example: format_percent(0.75) -> "75%"
 pub fn format_percent(d : Double) -> String {
-  let percent = (d * 100.0).to_int()
-  percent.to_string() + "%"
+  @text_format.format_percent(d)
 }
 
 ///|

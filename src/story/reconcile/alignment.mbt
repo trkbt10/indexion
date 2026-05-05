@@ -340,7 +340,7 @@ fn build_rationale(
           buf.write_string("best impl ")
           buf.write_string(m.impl_path)
           buf.write_string(" matches at ")
-          buf.write_string(format_similarity_pct(m.similarity))
+          buf.write_string(@text_format.format_percent(m.similarity))
         }
         None => buf.write_string("no signal")
       }
@@ -349,9 +349,9 @@ fn build_rationale(
         Some(m) => {
           buf.write_string(m.impl_path)
           buf.write_string(" similarity ")
-          buf.write_string(format_similarity_pct(m.similarity))
+          buf.write_string(@text_format.format_percent(m.similarity))
           buf.write_string(", missing: ")
-          buf.write_string(join_first(missing_terms, 3))
+          buf.write_string(@text_ops.join_with_limit(missing_terms, 3))
         }
         None => buf.write_string("missing entirely")
       }
@@ -370,36 +370,12 @@ fn build_rationale(
         Some(m) => {
           buf.write_string(m.impl_path)
           buf.write_string(" introduces unrelated terms: ")
-          buf.write_string(join_first(extra_terms, 3))
+          buf.write_string(@text_ops.join_with_limit(extra_terms, 3))
         }
         None => buf.write_string("stray content")
       }
     MissingFromImpl =>
       buf.write_string("no impl doc exceeds the similarity floor")
-  }
-  buf.to_string()
-}
-
-///|
-fn format_similarity_pct(v : Double) -> String {
-  let pct = (v * 100.0 + 0.5).to_int()
-  pct.to_string() + "%"
-}
-
-///|
-fn join_first(arr : Array[String], n : Int) -> String {
-  let buf = StringBuilder::new()
-  let limit = if n < arr.length() { n } else { arr.length() }
-  for i = 0; i < limit; i = i + 1 {
-    if i > 0 {
-      buf.write_string(", ")
-    }
-    buf.write_string(arr[i])
-  }
-  if arr.length() > limit {
-    buf.write_string(" (+")
-    buf.write_string((arr.length() - limit).to_string())
-    buf.write_string(" more)")
   }
   buf.to_string()
 }

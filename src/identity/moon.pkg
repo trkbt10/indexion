@@ -2,4 +2,6 @@ import {
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/kgf/tokenize" @kgf_tokenize,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
+  "trkbt10/indexion/src/text/format" @text_format,
+  "trkbt10/indexion/src/text/ops" @text_ops,
 }

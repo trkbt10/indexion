@@ -422,15 +422,6 @@ fn requirement_text(
 }
 
 ///|
-fn merge_unique_strings(target : Array[String], values : Array[String]) -> Unit {
-  for value in values {
-    if value.length() > 0 && !target.contains(value) {
-      target.push(value)
-    }
-  }
-}
-
-///|
 fn requirement_section_refs(
   requirement : RequirementNode,
   scenarios : Array[ScenarioNode],
@@ -440,7 +431,7 @@ fn requirement_section_refs(
     if scenario.parent_req != requirement.id {
       continue
     }
-    merge_unique_strings(refs, scenario.section_refs)
+    @text_ops.merge_unique_strings(refs, scenario.section_refs)
   }
   refs
 }
@@ -455,7 +446,7 @@ fn requirement_literals(
     if scenario.parent_req != requirement.id {
       continue
     }
-    merge_unique_strings(values, scenario.literals)
+    @text_ops.merge_unique_strings(values, scenario.literals)
   }
   values
 }
@@ -470,7 +461,7 @@ fn requirement_table_pairs(
     if scenario.parent_req != requirement.id {
       continue
     }
-    merge_unique_strings(pairs, scenario.table_pairs)
+    @text_ops.merge_unique_strings(pairs, scenario.table_pairs)
   }
   pairs
 }

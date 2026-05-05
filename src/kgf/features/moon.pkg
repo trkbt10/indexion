@@ -5,4 +5,5 @@ import {
   "trkbt10/indexion/src/kgf/toolkit" @kgf_toolkit,
   "trkbt10/indexion/src/kgf/declarations" @kgf_declarations,
   "trkbt10/indexion/src/similarity/apted" @apted,
+  "trkbt10/indexion/src/text/ops" @text_ops,
 }

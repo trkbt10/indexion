@@ -245,51 +245,27 @@ fn build_rationale(
       buf.write_string("name '")
       buf.write_string(name.display)
       buf.write_string("' is reflected in the body (")
-      buf.write_string(format_pct(name_in_content_score))
+      buf.write_string(@text_format.format_percent(name_in_content_score))
       buf.write_string(")")
     }
     Rename => {
       buf.write_string("name '")
       buf.write_string(name.display)
       buf.write_string("' rarely appears in body (")
-      buf.write_string(format_pct(name_in_content_score))
+      buf.write_string(@text_format.format_percent(name_in_content_score))
       buf.write_string("); prominent terms: ")
-      buf.write_string(join_first(prominent_unused, 3))
+      buf.write_string(@text_ops.join_with_limit(prominent_unused, 3))
     }
     Split => {
       buf.write_string("body covers many distinct topics (breadth ")
-      buf.write_string(format_pct(content_breadth))
+      buf.write_string(@text_format.format_percent(content_breadth))
       buf.write_string(") and the name covers only a slice; consider splitting around: ")
-      buf.write_string(join_first(prominent_unused, 4))
+      buf.write_string(@text_ops.join_with_limit(prominent_unused, 4))
     }
     Hollow =>
       buf.write_string(
         "body too thin to support a specific name; consider expanding or removing",
       )
-  }
-  buf.to_string()
-}
-
-///|
-fn format_pct(v : Double) -> String {
-  let pct = (v * 100.0 + 0.5).to_int()
-  pct.to_string() + "%"
-}
-
-///|
-fn join_first(arr : Array[String], n : Int) -> String {
-  let buf = StringBuilder::new()
-  let limit = if n < arr.length() { n } else { arr.length() }
-  for i = 0; i < limit; i = i + 1 {
-    if i > 0 {
-      buf.write_string(", ")
-    }
-    buf.write_string(arr[i])
-  }
-  if arr.length() > limit {
-    buf.write_string(" (+")
-    buf.write_string((arr.length() - limit).to_string())
-    buf.write_string(" more)")
   }
   buf.to_string()
 }
