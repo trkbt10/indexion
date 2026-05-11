@@ -19,8 +19,7 @@ priv struct OrientVocabularyPayloadSummary {
 }
 
 ///|
-#warnings("-unused_async")
-pub async fn load_or_build_provider(
+pub fn load_or_build_provider(
   config : AgentOrientConfig,
   corpus_texts : Array[String]?,
   dim : Int,
@@ -37,8 +36,7 @@ pub async fn load_or_build_provider(
 }
 
 ///|
-#warnings("-unused_async")
-pub async fn persist_provider(
+pub fn persist_provider(
   config : AgentOrientConfig,
   provider : @text_embed.TfidfEmbeddingProvider,
 ) -> Unit raise OrientCacheLayoutStorageError {

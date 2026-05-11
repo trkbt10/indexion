@@ -33,7 +33,7 @@ pub fn is_documentation_path(String) -> Bool
 
 pub fn load_cached_orient_map(@model.AgentOrientConfig) -> @model.AgentOrientMap?
 
-pub async fn load_or_build_provider(@model.AgentOrientConfig, Array[String]?, Int) -> OrientVocabularyState
+pub fn load_or_build_provider(@model.AgentOrientConfig, Array[String]?, Int) -> OrientVocabularyState
 
 pub fn load_wiki_manifest(String) -> @trkbt10/indexion/src/agent/orient/types.LocalWikiManifest?
 
@@ -63,7 +63,7 @@ pub fn owner_files_still_match(@model.AgentOrientMapOwner, Array[@model.AgentOri
 
 pub fn owner_paths(Array[@model.AgentOrientMapOwner]) -> Array[String]
 
-pub async fn persist_provider(@model.AgentOrientConfig, @embed.TfidfEmbeddingProvider) -> Unit raise OrientCacheLayoutStorageError
+pub fn persist_provider(@model.AgentOrientConfig, @embed.TfidfEmbeddingProvider) -> Unit raise OrientCacheLayoutStorageError
 
 pub async fn prepare_orient_cache_runtime(@model.AgentOrientConfig) -> OrientCacheRuntimeReadiness
 
@@ -153,4 +153,3 @@ pub fn OrientWriterLock::release(Self) -> Unit
 // Type aliases
 
 // Traits
-
