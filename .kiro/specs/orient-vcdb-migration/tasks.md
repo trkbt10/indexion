@@ -58,7 +58,7 @@
   - _Requirements: 1, 3, 10, 11_
   - _Boundary: SourceDiscovery_
 
-- [ ] 2.5 Apply incremental record updates
+- [x] 2.5 Apply incremental record updates
   - Compare current source hashes with cached record attributes to classify new, changed, deleted, and unchanged files.
   - Embed and upsert only new or changed files, remove deleted records, and skip both embedding and upsert for unchanged files.
   - Populate the existing map status counters from update decisions and cache counts instead of persisted owner profiles.

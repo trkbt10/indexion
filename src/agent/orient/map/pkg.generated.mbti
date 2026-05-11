@@ -12,6 +12,8 @@ import {
 // Values
 pub fn affected_owner_dirs(Array[String], Array[String], Array[String], Array[String], Bool, @model.AgentOrientMap?) -> Array[String]
 
+pub async fn apply_incremental_cache_updates(OrientCacheHandle, Array[@trkbt10/indexion/src/agent/orient/types.LocalFileBrief], timestamp_ns? : Int64) -> OrientCacheUpdateResult raise OrientCacheError
+
 pub fn attrs_from_brief(@trkbt10/indexion/src/agent/orient/types.LocalFileBrief, preview_limit? : Int) -> @trkbt10/vcdb/core/types.Attrs
 
 pub fn build_or_update_orient_map(@model.AgentOrientConfig, Array[@trkbt10/indexion/src/agent/orient/types.LocalFileBrief], @model.AgentOrientMap?) -> @model.AgentOrientMap
@@ -166,6 +168,19 @@ pub(all) struct OrientCacheRuntimeReadiness {
 pub(all) struct OrientCacheSearchHit {
   file : OrientCachedFile
   score : Double
+}
+
+pub(all) struct OrientCacheUpdateResult {
+  status : @model.AgentOrientMapStatus
+  new_files : Array[String]
+  changed_files : Array[String]
+  deleted_files : Array[String]
+  unchanged_files : Array[String]
+  upserted_files : Array[String]
+  removed_files : Array[String]
+  embedding_count : Int
+  upsert_count : Int
+  remove_count : Int
 }
 
 pub(all) struct OrientCachedFile {
