@@ -68,7 +68,7 @@
   - _Boundary: OrientCacheUpdater_
 
 - [ ] 3. Query and report composition
-- [ ] 3.1 Build vector-similarity query service with role filters
+- [x] 3.1 Build vector-similarity query service with role filters
   - Embed the task text with the same persisted TF-IDF provider used during ingestion.
   - Use vector search with role filters to derive implementation owners, consumer surfaces, command-line consumers, documentation sources, forbidden surfaces, preflight paths, and evidence candidates.
   - Aggregate owner candidates from top-ranked implementation hits only, not from an in-memory scan of every cached token list.

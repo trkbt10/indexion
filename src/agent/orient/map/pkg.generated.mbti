@@ -76,6 +76,8 @@ pub async fn prepare_orient_cache_runtime(@model.AgentOrientConfig) -> OrientCac
 
 pub fn push_unique_dir(Array[String], String) -> Unit
 
+pub fn query_orient_cache(OrientCacheHandle, String, Int) -> OrientQueryResult raise OrientCacheError
+
 pub async fn rebuild_empty_cache(@model.AgentOrientConfig, @embed.TfidfEmbeddingProvider) -> OrientCacheHandle raise OrientCacheError
 
 pub fn record_to_cached_file(@trkbt10/vcdb/core/types.VectorId, @trkbt10/vcdb/core/types.VectorRecord) -> OrientCachedFile? raise OrientRecordSchemaError
@@ -193,6 +195,51 @@ pub(all) struct OrientCachedFile {
   summary_preview : String
   summary_full : String?
 } derive(Eq)
+
+pub(all) struct OrientDocumentationCandidate {
+  path : String
+  role : String
+  owner : String
+  score : Double
+  summary_preview : String
+  summary_full : String?
+}
+
+pub(all) struct OrientEvidenceCandidate {
+  path : String
+  role : String
+  score : Double
+  summary : String
+}
+
+pub(all) struct OrientOwnerCandidate {
+  path : String
+  score : Double
+  implementation_paths : Array[String]
+  top_implementation_path : String
+  summary_preview : String
+}
+
+pub(all) struct OrientQueryCandidate {
+  path : String
+  role : String
+  owner : String
+  score : Double
+  summary_preview : String
+}
+
+pub(all) struct OrientQueryResult {
+  task : String
+  query_dim : Int
+  owner_candidates : Array[OrientOwnerCandidate]
+  implementation_hits : Array[OrientQueryCandidate]
+  consumer_candidates : Array[OrientQueryCandidate]
+  cli_consumers : Array[OrientQueryCandidate]
+  documentation_sources : Array[OrientDocumentationCandidate]
+  forbidden_surfaces : Array[OrientQueryCandidate]
+  preflight_candidates : Array[OrientQueryCandidate]
+  evidence_candidates : Array[OrientEvidenceCandidate]
+}
 
 pub(all) enum OrientVocabularyState {
   OrientVocabularyLoaded(@embed.TfidfEmbeddingProvider)
