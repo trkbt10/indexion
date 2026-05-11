@@ -26,7 +26,7 @@ pub type AgentOrientQuizItem = @model.AgentOrientQuizItem
 pub type AgentOrientReport = @model.AgentOrientReport
 
 ///|
-pub fn orient_agent(config : AgentOrientConfig) -> AgentOrientReport {
+pub async fn orient_agent(config : AgentOrientConfig) -> AgentOrientReport {
   @orient.orient_agent(config)
 }
 

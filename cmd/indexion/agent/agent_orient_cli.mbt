@@ -57,7 +57,7 @@ fn orient_command() -> @argparse.Command {
 }
 
 ///|
-fn run_orient(matches : @argparse.Matches) -> Unit {
+async fn run_orient(matches : @argparse.Matches) -> Unit {
   let config = orient_config_from_matches(matches)
   let report = @agent_orient.orient_agent(config)
   let rendered = match @common.arg_str(matches, "format", "md") {

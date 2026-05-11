@@ -1,8 +1,26 @@
 import {
+  "moonbitlang/async/fs" @async_fs,
   "moonbitlang/core/json" @json,
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/agent/orient/matching" @matching,
   "trkbt10/indexion/src/agent/orient/types" @types,
   "trkbt10/indexion/src/config" @config_paths,
   "trkbt10/indexion/src/kgf/cas/hash" @cas_hash,
+  "trkbt10/indexion/src/text/embed" @text_embed,
+  "trkbt10/vcdb" @vcdb,
+  "trkbt10/vcdb/core/filter" @vcdb_filter,
+  "trkbt10/vcdb/core/storage" @vcdb_storage,
+  "trkbt10/vcdb/core/types" @vcdb_types,
 }
+
+import {
+  "moonbitlang/async",
+} for "wbtest"
+
+options(
+  targets: {
+    "orient_cache_runtime_native.mbt": [ "native" ],
+    "orient_cache_runtime_stub.mbt": [ "wasm", "wasm-gc", "js" ],
+    "orient_cache_runtime_wbtest.mbt": [ "native" ],
+  },
+)

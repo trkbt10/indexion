@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn orient_agent(@model.AgentOrientConfig) -> @model.AgentOrientReport
+pub async fn orient_agent(@model.AgentOrientConfig) -> @model.AgentOrientReport
 
 pub fn orient_map_path(@model.AgentOrientConfig) -> String
 

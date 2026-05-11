@@ -1,7 +1,8 @@
 ///|
 /// Entry point for building an agent orientation report from cached or freshly
 /// scanned file briefs and owner maps.
-pub fn orient_agent(config : AgentOrientConfig) -> AgentOrientReport {
+pub async fn orient_agent(config : AgentOrientConfig) -> AgentOrientReport {
+  let _runtime = @map.prepare_orient_cache_runtime(config)
   let cached_map = @map.load_cached_orient_map(config)
   let raw_task_terms = @matching.task_tokens(config.task)
   if config.no_update {
