@@ -72,29 +72,21 @@ fn OrientRecordSchemaError::diagnostic(
 ///|
 pub fn vector_id_for_path(path : String) -> @vcdb_types.VectorId {
   let hash = @cas_hash.compute_hash(path).to_string()
-  @vcdb_types.VectorId::from_bytes16(hash_to_bytes16(hash))
+  @vcdb_types.VectorId::from_int64(path_hash_to_int64(hash))
 }
 
 ///|
-fn hash_to_bytes16(hash : String) -> @vcdb_types.Bytes16 {
-  @vcdb_types.Bytes16::new(
-    hex_byte_at(hash, 0),
-    hex_byte_at(hash, 2),
-    hex_byte_at(hash, 4),
-    hex_byte_at(hash, 6),
-    hex_byte_at(hash, 8),
-    hex_byte_at(hash, 10),
-    hex_byte_at(hash, 12),
-    hex_byte_at(hash, 14),
-    hex_byte_at(hash, 16),
-    hex_byte_at(hash, 18),
-    hex_byte_at(hash, 20),
-    hex_byte_at(hash, 22),
-    hex_byte_at(hash, 24),
-    hex_byte_at(hash, 26),
-    hex_byte_at(hash, 28),
-    hex_byte_at(hash, 30),
-  )
+fn path_hash_to_int64(hash : String) -> Int64 {
+  // Current vcdb upsert indexes ids as Int64, so orient reduces the
+  // path digest by parsing its first 16 hex chars as a big-endian Int64.
+  (hex_byte_at(hash, 0).to_int64() << 56) |
+  (hex_byte_at(hash, 2).to_int64() << 48) |
+  (hex_byte_at(hash, 4).to_int64() << 40) |
+  (hex_byte_at(hash, 6).to_int64() << 32) |
+  (hex_byte_at(hash, 8).to_int64() << 24) |
+  (hex_byte_at(hash, 10).to_int64() << 16) |
+  (hex_byte_at(hash, 12).to_int64() << 8) |
+  hex_byte_at(hash, 14).to_int64()
 }
 
 ///|

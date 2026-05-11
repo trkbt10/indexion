@@ -92,7 +92,7 @@ pub async fn prepare_orient_cache_runtime(
     persistence_ready,
     embedding_ready: provider.has_vocabulary() &&
     sample_vector.length() == orient_cache_vector_dim(),
-    path_hash_ready: path_id.as_bytes16() is Some(_),
+    path_hash_ready: path_id.as_int64() is Some(_),
     filter_ready: @vcdb_filter.eval_filter(filter, attrs),
     lock_path: orient_writer_lock_path(config),
     cache_exists,

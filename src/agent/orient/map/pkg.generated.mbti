@@ -6,6 +6,7 @@ import {
   "moonbitlang/core/json",
   "trkbt10/indexion/src/agent/orient/model",
   "trkbt10/indexion/src/text/embed",
+  "trkbt10/vcdb/core/filter",
 }
 
 // Values
@@ -23,6 +24,8 @@ pub fn cached_file_hashes(@model.AgentOrientMap?) -> Map[String, String]
 
 pub fn cached_owner_for(String, @model.AgentOrientMap?) -> @model.AgentOrientMapOwner?
 
+pub async fn checkpoint_cache(OrientCacheHandle) -> Unit raise OrientCacheError
+
 pub fn collect_wiki_docs(String, Array[String]) -> Array[@trkbt10/indexion/src/agent/orient/types.LocalDocSource]
 
 pub fn deleted_file_paths(Map[String, String], Map[String, String]) -> Array[String]
@@ -38,6 +41,8 @@ pub fn load_or_build_provider(@model.AgentOrientConfig, Array[String]?, Int) -> 
 pub fn load_wiki_manifest(String) -> @trkbt10/indexion/src/agent/orient/types.LocalWikiManifest?
 
 pub fn map_status_for_cached(@model.AgentOrientMap) -> @model.AgentOrientMapStatus
+
+pub async fn open_cache(@model.AgentOrientConfig, OrientCacheOpenMode, @embed.TfidfEmbeddingProvider) -> OrientCacheHandle raise OrientCacheError
 
 pub fn orient_knowledge_hash(Array[@trkbt10/indexion/src/agent/orient/types.LocalDocSource]) -> String
 
@@ -69,6 +74,8 @@ pub async fn prepare_orient_cache_runtime(@model.AgentOrientConfig) -> OrientCac
 
 pub fn push_unique_dir(Array[String], String) -> Unit
 
+pub async fn rebuild_empty_cache(@model.AgentOrientConfig, @embed.TfidfEmbeddingProvider) -> OrientCacheHandle raise OrientCacheError
+
 pub fn record_to_cached_file(@trkbt10/vcdb/core/types.VectorId, @trkbt10/vcdb/core/types.VectorRecord) -> OrientCachedFile? raise OrientRecordSchemaError
 
 pub fn refreshed_map_status(Int, Array[@model.AgentOrientMapOwner], Array[String], Array[String], Array[String], Bool, Array[String], Array[String]) -> @model.AgentOrientMapStatus
@@ -92,6 +99,15 @@ pub fn wiki_page_covers_owner(@trkbt10/indexion/src/agent/orient/types.LocalWiki
 pub fn wiki_page_is_owner_specific(@trkbt10/indexion/src/agent/orient/types.LocalWikiPage) -> Bool
 
 // Errors
+pub(all) suberror OrientCacheError {
+  OrientCacheUnavailable(String)
+  OrientCacheStorageFailure(String)
+  OrientCacheReplayFailure(String)
+  OrientCacheDatabaseFailure(String)
+  OrientCacheCheckpointFailure(String)
+  OrientCacheRecordFailure(String)
+}
+
 pub(all) suberror OrientCacheLayoutStorageError {
   OrientCacheLayoutStorageError(String)
 }
@@ -109,6 +125,20 @@ pub(all) suberror OrientWriterLockError {
 }
 
 // Types and methods
+type OrientCacheHandle
+pub fn OrientCacheHandle::cache_version(Self) -> String
+pub fn OrientCacheHandle::count(Self, filter? : @filter.FilterExpr?) -> Int
+pub fn OrientCacheHandle::dim(Self) -> Int
+pub fn OrientCacheHandle::lookup_id(Self, @trkbt10/vcdb/core/types.VectorId) -> OrientCachedFile? raise OrientCacheError
+pub fn OrientCacheHandle::lookup_path(Self, String) -> OrientCachedFile? raise OrientCacheError
+pub fn OrientCacheHandle::provider(Self) -> @embed.TfidfEmbeddingProvider
+pub async fn OrientCacheHandle::remove_id(Self, @trkbt10/vcdb/core/types.VectorId, timestamp_ns? : Int64) -> Bool raise OrientCacheError
+pub async fn OrientCacheHandle::remove_path(Self, String, timestamp_ns? : Int64) -> Bool raise OrientCacheError
+pub fn OrientCacheHandle::scan(Self, filter? : @filter.FilterExpr?, offset? : Int64?, limit? : Int) -> Array[OrientCachedFile] raise OrientCacheError
+pub fn OrientCacheHandle::search(Self, Array[Double], Int, filter? : @filter.FilterExpr?) -> Array[OrientCacheSearchHit] raise OrientCacheError
+pub async fn OrientCacheHandle::upsert_brief(Self, @trkbt10/indexion/src/agent/orient/types.LocalFileBrief, timestamp_ns? : Int64) -> Unit raise OrientCacheError
+pub async fn OrientCacheHandle::upsert_many(Self, Array[@trkbt10/indexion/src/agent/orient/types.LocalFileBrief], timestamp_ns? : Int64) -> Unit raise OrientCacheError
+
 type OrientCacheInvalidReason derive(Eq, @debug.Debug)
 
 type OrientCacheLayout derive(Eq, @debug.Debug)
@@ -119,7 +149,10 @@ type OrientCacheMetadataRead derive(Eq, @debug.Debug)
 
 type OrientCacheOpenDecision derive(Eq, @debug.Debug)
 
-type OrientCacheOpenMode derive(Eq, @debug.Debug)
+pub(all) enum OrientCacheOpenMode {
+  OrientCacheReadWrite
+  OrientCacheReadOnly
+} derive(Eq, @debug.Debug)
 
 pub(all) struct OrientCacheRuntimeReadiness {
   persistence_ready : Bool
@@ -129,6 +162,11 @@ pub(all) struct OrientCacheRuntimeReadiness {
   lock_path : String
   cache_exists : Bool
 } derive(Eq, @debug.Debug)
+
+pub(all) struct OrientCacheSearchHit {
+  file : OrientCachedFile
+  score : Double
+}
 
 pub(all) struct OrientCachedFile {
   vector_id : @trkbt10/vcdb/core/types.VectorId

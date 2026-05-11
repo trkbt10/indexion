@@ -41,7 +41,7 @@
   - _Requirements: 4, 5, 9, 12_
   - _Boundary: OrientVocabularyStore_
 
-- [ ] 2.3 Open and operate the vcdb-backed cache store
+- [x] 2.3 Open and operate the vcdb-backed cache store
   - Open the native persistent database only after the vocabulary dimension and cache metadata have been validated.
   - Support record lookup, filtered scanning, vector search, upsert, remove, and checkpoint operations without falling back to aggregate JSON persistence.
   - Propagate database, storage, replay, and checkpoint failures as cache errors rather than silently discarding them.

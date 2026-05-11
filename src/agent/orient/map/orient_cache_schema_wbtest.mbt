@@ -53,7 +53,7 @@ test "orient vcdb schema: vector id is stable for normalized path" {
   let other = vector_id_for_path("src/agent/orient/map/other.mbt")
   assert_eq(first, second)
   assert_true(first != other)
-  assert_true(first.as_bytes16() is Some(_))
+  assert_true(first.as_int64() is Some(_))
   assert_eq(first, orient_path_vector_id(path))
 }
 

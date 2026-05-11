@@ -17,8 +17,7 @@ struct OrientCacheMetadata {
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
-#warnings("-unused_constructor")
-enum OrientCacheOpenMode {
+pub(all) enum OrientCacheOpenMode {
   OrientCacheReadWrite
   OrientCacheReadOnly
 } derive(Eq, Debug)
