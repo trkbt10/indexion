@@ -33,7 +33,7 @@
   - _Requirements: 1, 2, 3, 10_
   - _Boundary: OrientRecordSchema_
 
-- [ ] 2.2 (P) Implement persisted TF-IDF vocabulary lifecycle
+- [x] 2.2 (P) Implement persisted TF-IDF vocabulary lifecycle
   - Build the TF-IDF provider from the full analyzed corpus only when creating a fresh cache.
   - Persist and reload the vocabulary so subsequent runs reuse the same dimension and term weights rather than rebuilding from a partial corpus.
   - Treat missing, unreadable, empty, or dimension-mismatched vocabulary state as cache invalidation, with no implicit rebuild unless the cache itself is being rebuilt.

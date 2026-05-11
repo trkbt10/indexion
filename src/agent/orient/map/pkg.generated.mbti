@@ -5,6 +5,7 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "trkbt10/indexion/src/agent/orient/model",
+  "trkbt10/indexion/src/text/embed",
 }
 
 // Values
@@ -31,6 +32,8 @@ pub fn doc_source_exists(Array[@trkbt10/indexion/src/agent/orient/types.LocalDoc
 pub fn is_documentation_path(String) -> Bool
 
 pub fn load_cached_orient_map(@model.AgentOrientConfig) -> @model.AgentOrientMap?
+
+pub async fn load_or_build_provider(@model.AgentOrientConfig, Array[String]?, Int) -> OrientVocabularyState
 
 pub fn load_wiki_manifest(String) -> @trkbt10/indexion/src/agent/orient/types.LocalWikiManifest?
 
@@ -60,6 +63,8 @@ pub fn owner_files_still_match(@model.AgentOrientMapOwner, Array[@model.AgentOri
 
 pub fn owner_paths(Array[@model.AgentOrientMapOwner]) -> Array[String]
 
+pub async fn persist_provider(@model.AgentOrientConfig, @embed.TfidfEmbeddingProvider) -> Unit raise OrientCacheLayoutStorageError
+
 pub async fn prepare_orient_cache_runtime(@model.AgentOrientConfig) -> OrientCacheRuntimeReadiness
 
 pub fn push_unique_dir(Array[String], String) -> Unit
@@ -87,6 +92,10 @@ pub fn wiki_page_covers_owner(@trkbt10/indexion/src/agent/orient/types.LocalWiki
 pub fn wiki_page_is_owner_specific(@trkbt10/indexion/src/agent/orient/types.LocalWikiPage) -> Bool
 
 // Errors
+pub(all) suberror OrientCacheLayoutStorageError {
+  OrientCacheLayoutStorageError(String)
+}
+
 pub(all) suberror OrientRecordSchemaError {
   PathIdentityCollision(String, String, String)
   MissingRecordPath(String)
@@ -131,6 +140,12 @@ pub(all) struct OrientCachedFile {
   summary_preview : String
   summary_full : String?
 } derive(Eq)
+
+pub(all) enum OrientVocabularyState {
+  OrientVocabularyLoaded(@embed.TfidfEmbeddingProvider)
+  OrientVocabularyBuilt(@embed.TfidfEmbeddingProvider)
+  OrientVocabularyInvalid(OrientCacheInvalidReason)
+}
 
 type OrientWriterLock
 pub fn OrientWriterLock::release(Self) -> Unit

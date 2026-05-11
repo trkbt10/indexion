@@ -33,6 +33,7 @@ enum OrientCacheInvalidReason {
   MetadataDimensionMismatch(Int, Int)
   MissingVocabulary
   VocabularyUnreadable
+  VocabularyEmpty
   VocabularyDimensionMismatch(Int, Int)
 } derive(Eq, Debug)
 
@@ -44,7 +45,7 @@ enum OrientCacheOpenDecision {
 } derive(Eq, Debug)
 
 ///|
-priv suberror OrientCacheLayoutStorageError {
+pub(all) suberror OrientCacheLayoutStorageError {
   OrientCacheLayoutStorageError(String)
 }
 
@@ -122,17 +123,7 @@ fn initialize_orient_cache_layout(
         msg,
       )
   }
-  @fs.write_string_to_file(
-    layout.vocabulary_path,
-    provider.to_json_string() + "\n",
-  ) catch {
-    @fs.IOError(msg) =>
-      raise orient_cache_layout_storage_error(
-        "vocabulary",
-        layout.vocabulary_path,
-        msg,
-      )
-  }
+  write_orient_vocabulary_provider(layout, provider)
 }
 
 ///|
@@ -226,33 +217,7 @@ fn validate_orient_vocabulary(
   layout : OrientCacheLayout,
   expected_dim : Int,
 ) -> OrientCacheInvalidReason? {
-  if !@fs.path_exists(layout.vocabulary_path) {
-    return Some(MissingVocabulary)
-  }
-  let content = @fs.read_file_to_string(layout.vocabulary_path) catch {
-    _ => return Some(VocabularyUnreadable)
-  }
-  let dim = match orient_vocabulary_dim_from_json(content) {
-    Some(dim) => dim
-    None => return Some(VocabularyUnreadable)
-  }
-  if dim != expected_dim {
-    return Some(VocabularyDimensionMismatch(dim, expected_dim))
-  }
-  let provider = @text_embed.TfidfEmbeddingProvider::new(expected_dim)
-  if !provider.load_from_json_string(content) {
-    return Some(VocabularyUnreadable)
-  }
-  None
-}
-
-///|
-fn orient_vocabulary_dim_from_json(content : String) -> Int? {
-  let json = @json.parse(content) catch { _ => return None }
-  match json {
-    { "dim": Number(dim, ..), .. } => Some(dim.to_int())
-    _ => None
-  }
+  validate_orient_vocabulary_provider(layout, expected_dim)
 }
 
 ///|
@@ -275,6 +240,7 @@ fn OrientCacheInvalidReason::diagnostic(
       expected.to_string()
     MissingVocabulary => "orient vcdb TF-IDF vocabulary is missing"
     VocabularyUnreadable => "orient vcdb TF-IDF vocabulary is unreadable"
+    VocabularyEmpty => "orient vcdb TF-IDF vocabulary is empty"
     VocabularyDimensionMismatch(found, expected) =>
       "orient vcdb TF-IDF vocabulary dimension mismatch: found " +
       found.to_string() +
