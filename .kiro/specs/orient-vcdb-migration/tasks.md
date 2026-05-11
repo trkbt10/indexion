@@ -50,7 +50,7 @@
   - _Requirements: 1, 2, 4, 5, 7, 9, 12_
   - _Boundary: OrientCacheStore_
 
-- [ ] 2.4 Adapt source brief generation for bounded cache inputs
+- [x] 2.4 Adapt source brief generation for bounded cache inputs
   - Produce cache-ready structural summaries and bounded previews without creating a repository-sized serialized graph or retaining full code-file content for persistence.
   - Preserve the role and owner signals needed by the record schema and report composition.
   - Keep full pre-tokenized summary text available only for documentation records where the schema allows it.

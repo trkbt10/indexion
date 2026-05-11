@@ -29,6 +29,27 @@ pub fn build_with_graph_progress(
   config : DocConfig,
   on_progress : ProgressCallback?,
 ) -> (@render.DocOutput, @graph.CodeGraph) {
+  let merged = build_graph_only_progress(config, on_progress)
+  let output = match config.options.format {
+    @render.Markdown => @render.render_markdown(merged, config.options)
+    @render.Json => @render.DocOutput::with_json(@render.render_json(merged))
+  }
+  (output, merged)
+}
+
+///|
+/// Build the enriched merged graph without rendering documentation. Callers
+/// that only need the graph (e.g. agent orient discovery) must use this to
+/// avoid the large-string overhead of rendering Markdown/JSON.
+pub fn build_graph_only(config : DocConfig) -> @graph.CodeGraph {
+  build_graph_only_progress(config, None)
+}
+
+///|
+fn build_graph_only_progress(
+  config : DocConfig,
+  on_progress : ProgressCallback?,
+) -> @graph.CodeGraph {
   let (graphs, file_tokens) = analyze_files_collect(
     config.files,
     config.specs,
@@ -36,11 +57,7 @@ pub fn build_with_graph_progress(
   )
   let merged = merge_graphs(graphs)
   enrich_graph(merged, file_tokens, config.specs)
-  let output = match config.options.format {
-    @render.Markdown => @render.render_markdown(merged, config.options)
-    @render.Json => @render.DocOutput::with_json(@render.render_json(merged))
-  }
-  (output, merged)
+  merged
 }
 
 ///|

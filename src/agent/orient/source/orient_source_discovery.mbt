@@ -74,11 +74,6 @@ pub fn build_graph(
   for file in files {
     inputs.push((file.path, file.content))
   }
-  let doc_config = @build.DocConfig::new(
-    inputs,
-    registry.to_specs_map(),
-    options=@render.RenderOptions::new(format=@render.OutputFormat::json()),
-  )
-  let (_, graph) = @build.build_with_graph(doc_config)
-  graph
+  let doc_config = @build.DocConfig::new(inputs, registry.to_specs_map())
+  @build.build_graph_only(doc_config)
 }

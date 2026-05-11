@@ -9,9 +9,13 @@ import {
 }
 
 // Values
+pub fn analyze_files_collect(Array[(String, String)], Map[String, @types.KGFSpec], ProgressCallback?) -> (Array[@graph.CodeGraph], Array[FileTokens])
+
 pub fn analyze_files_with_progress(Array[(String, String)], Map[String, @types.KGFSpec], ProgressCallback?) -> Array[@graph.CodeGraph]
 
 pub fn build(DocConfig) -> @render.DocOutput
+
+pub fn build_graph_only(DocConfig) -> @graph.CodeGraph
 
 pub fn build_json(Array[(String, String)], Map[String, @types.KGFSpec]) -> String
 
@@ -20,6 +24,8 @@ pub fn build_markdown(Array[(String, String)], Map[String, @types.KGFSpec]) -> S
 pub fn build_with_graph(DocConfig) -> (@render.DocOutput, @graph.CodeGraph)
 
 pub fn build_with_graph_progress(DocConfig, ProgressCallback?) -> (@render.DocOutput, @graph.CodeGraph)
+
+pub fn enrich_graph(@graph.CodeGraph, Array[FileTokens], Map[String, @types.KGFSpec]) -> Unit
 
 pub fn generate_markdown(@analyze.AnalysisResult) -> String
 
@@ -46,9 +52,17 @@ pub fn DocConfig::get_root_path(Self) -> String
 pub fn DocConfig::get_specs(Self) -> Map[String, @types.KGFSpec]
 pub fn DocConfig::new(Array[(String, String)], Map[String, @types.KGFSpec], options? : @render.RenderOptions, root_path? : String) -> Self
 
+pub struct FileTokens {
+  path : String
+  spec_name : String
+  tokens : Array[@types.Tok]
+}
+pub fn FileTokens::get_path(Self) -> String
+pub fn FileTokens::get_spec_name(Self) -> String
+pub fn FileTokens::get_tokens(Self) -> Array[@types.Tok]
+pub fn FileTokens::new(String, String, Array[@types.Tok]) -> Self
+
 pub struct ProgressCallback(((Int, Int, String)) -> Unit)
-#deprecated
-pub fn ProgressCallback::inner(Self) -> ((Int, Int, String)) -> Unit
 pub fn ProgressCallback::new(((Int, Int, String)) -> Unit) -> Self
 
 // Type aliases

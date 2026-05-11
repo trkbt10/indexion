@@ -20,12 +20,13 @@ pub fn build_file_briefs(
     let source_hash = @cas_hash.compute_hash(file.content).to_string()
     match cached_file_for(file.path, source_hash, cached_map) {
       Some(cached) => {
+        let summary = source_summary_for_cache(file, cached.structural_summary)
         result.push(
           new_local_file_brief(
             cached.path,
             cached.source_hash,
             cached.structural_summary,
-            cached.summary,
+            summary,
             role=cached.role,
           ),
         )
@@ -33,25 +34,8 @@ pub fn build_file_briefs(
       }
       None => ()
     }
-    let summary = StringBuilder::new()
-    summary.write_string(file.path)
-    summary.write_string("\n")
-    match symbols_by_module.get(file.path) {
-      Some(lines) =>
-        for line in lines {
-          summary.write_string(line)
-          summary.write_string("\n")
-        }
-      None => ()
-    }
-    for note in graph.get_notes("module_doc", file.path) {
-      summary.write_string(note.content)
-      summary.write_string("\n")
-    }
-    summary.write_string(file.content)
-    summary.write_string("\n")
-    let text = summary.to_string()
     let structural = structural_summary(file, graph, symbols_by_module)
+    let text = source_summary_for_cache(file, structural)
     let structural_terms = task_tokens(structural)
     let summary_terms = task_tokens(text)
     let role = infer_file_role(
@@ -76,6 +60,42 @@ pub fn build_file_briefs(
   }
   normalize_surface_owner_roles(result)
   result
+}
+
+///|
+fn source_summary_for_cache(
+  file : @pipeline.SupportedFile,
+  structural : String,
+) -> String {
+  if keeps_full_source_summary(file) {
+    let summary = StringBuilder::new()
+    summary.write_string(structural)
+    summary.write_string(file.content)
+    summary.write_string("\n")
+    summary.to_string()
+  } else {
+    bounded_source_preview(file.content, @map.orient_summary_preview_limit)
+  }
+}
+
+///|
+fn keeps_full_source_summary(file : @pipeline.SupportedFile) -> Bool {
+  file.content_type == Some("document") || @map.is_documentation_path(file.path)
+}
+
+///|
+fn bounded_source_preview(text : String, limit : Int) -> String {
+  let limit = if limit < 0 { 0 } else { limit }
+  let chars = text.to_array()
+  if chars.length() <= limit {
+    text
+  } else {
+    let preview = StringBuilder::new()
+    for i in 0..<limit {
+      preview.write_char(chars[i])
+    }
+    preview.to_string()
+  }
 }
 
 ///|
