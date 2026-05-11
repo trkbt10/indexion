@@ -10,7 +10,7 @@ pub(all) struct OrientCacheRuntimeReadiness {
 
 ///|
 fn orient_cache_db_dir(config : AgentOrientConfig) -> String {
-  config.cache_dir + "/orient-vcdb"
+  orient_cache_layout(config).vcdb_dir
 }
 
 ///|
@@ -25,7 +25,7 @@ fn orient_cache_vector_dim() -> Int {
 
 ///|
 pub fn orient_writer_lock_path(config : AgentOrientConfig) -> String {
-  config.cache_dir + "/orient-cache.lock"
+  orient_cache_layout(config).writer_lock_path
 }
 
 ///|

@@ -13,7 +13,8 @@ struct OrientWriterLock {
 pub async fn prepare_orient_cache_runtime(
   config : AgentOrientConfig,
 ) -> OrientCacheRuntimeReadiness {
-  let cache_exists = @async_fs.exists(config.cache_dir)
+  let layout = orient_cache_layout(config)
+  let cache_exists = @async_fs.exists(layout.root_dir)
   let _wal_storage = @vcdb_storage.NativeFileStorage::new(
     orient_cache_db_dir(config),
   )
@@ -55,10 +56,11 @@ fn orient_native_db_type_ready(_db : OrientNativePersistentDB?) -> Bool {
 pub async fn try_acquire_orient_writer_lock(
   config : AgentOrientConfig,
 ) -> OrientWriterLock? {
-  if !@async_fs.exists(config.cache_dir) {
-    @async_fs.mkdir(config.cache_dir, permission=0o755, recursive=true)
+  let layout = orient_cache_layout(config)
+  if !@async_fs.exists(layout.root_dir) {
+    @async_fs.mkdir(layout.root_dir, permission=0o755, recursive=true)
   }
-  let path = orient_writer_lock_path(config)
+  let path = layout.writer_lock_path
   let file = @async_fs.open(path, mode=ReadWrite, create=0o644)
   let locked = file.try_lock(Exclusive) catch { _ => false }
   if locked {

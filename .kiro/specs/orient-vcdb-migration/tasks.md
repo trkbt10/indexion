@@ -8,7 +8,7 @@
   - _Requirements: 7, 11_
   - _Boundary: OrientAgentEntry_
 
-- [ ] 1.2 Establish versioned cache layout and invalidation decisions
+- [x] 1.2 Establish versioned cache layout and invalidation decisions
   - Create the new cache-local layout for bounded metadata, persisted vocabulary, writer lock target, and native database storage under the configured cache directory.
   - Recognize prior JSON cache layouts by path only and treat missing, old, or mismatched metadata as a fresh-build trigger when updates are allowed.
   - In read-only mode, invalid cache states surface as an unavailable or empty cache diagnostic without mutating the cache directory.

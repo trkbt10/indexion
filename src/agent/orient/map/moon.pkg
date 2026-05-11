@@ -19,6 +19,7 @@ import {
 
 options(
   targets: {
+    "orient_cache_layout_wbtest.mbt": [ "native" ],
     "orient_cache_runtime_native.mbt": [ "native" ],
     "orient_cache_runtime_stub.mbt": [ "wasm", "wasm-gc", "js" ],
     "orient_cache_runtime_wbtest.mbt": [ "native" ],
