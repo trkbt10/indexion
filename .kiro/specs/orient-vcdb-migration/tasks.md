@@ -25,7 +25,7 @@
   - _Boundary: OrientWriterLock_
 
 - [ ] 2. Persistence: file records, vocabulary, and incremental updates
-- [ ] 2.1 (P) Define deterministic file record identity and flat attributes
+- [x] 2.1 (P) Define deterministic file record identity and flat attributes
   - Derive one stable record identity from each normalized analyzed-file path and validate that an existing record's path still matches that identity before overwriting it.
   - Store path, role, owner, source hash, structural summary, and bounded summary preview as separate string attributes, with full pre-tokenized summary text only for documentation records.
   - Avoid packing multiple logical fields into one serialized attribute value.
