@@ -9,6 +9,22 @@ pub(all) struct OrientCacheRuntimeReadiness {
 } derive(Eq, Debug)
 
 ///|
+pub(all) suberror OrientWriterLockError {
+  WriterAlreadyActive(String)
+  WriterLockStorageError(String)
+}
+
+///|
+#warnings("-unused_value")
+fn OrientWriterLockError::diagnostic(self : OrientWriterLockError) -> String {
+  match self {
+    WriterAlreadyActive(path) =>
+      "orient vcdb writer is already active for `" + path + "`"
+    WriterLockStorageError(message) => message
+  }
+}
+
+///|
 fn orient_cache_db_dir(config : AgentOrientConfig) -> String {
   orient_cache_layout(config).vcdb_dir
 }

@@ -30,9 +30,13 @@ pub async fn prepare_orient_cache_runtime(
 ///|
 #warnings("-unused_async")
 pub async fn try_acquire_orient_writer_lock(
-  _config : AgentOrientConfig,
-) -> OrientWriterLock? {
-  None
+  config : AgentOrientConfig,
+) -> OrientWriterLock raise OrientWriterLockError {
+  raise WriterLockStorageError(
+    "orient vcdb writer lock is unavailable on this target for `" +
+    orient_writer_lock_path(config) +
+    "`",
+  )
 }
 
 ///|

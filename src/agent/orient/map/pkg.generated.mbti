@@ -3,6 +3,7 @@ package "trkbt10/indexion/src/agent/orient/map"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "trkbt10/indexion/src/agent/orient/model",
 }
 
@@ -69,15 +70,31 @@ pub fn source_matches_owner(String, String) -> Bool
 
 pub fn trim_trailing_slash(String) -> String
 
-pub async fn try_acquire_orient_writer_lock(@model.AgentOrientConfig) -> OrientWriterLock?
+pub async fn try_acquire_orient_writer_lock(@model.AgentOrientConfig) -> OrientWriterLock raise OrientWriterLockError
 
 pub fn wiki_page_covers_owner(@trkbt10/indexion/src/agent/orient/types.LocalWikiPage, String) -> Bool
 
 pub fn wiki_page_is_owner_specific(@trkbt10/indexion/src/agent/orient/types.LocalWikiPage) -> Bool
 
 // Errors
+pub(all) suberror OrientWriterLockError {
+  WriterAlreadyActive(String)
+  WriterLockStorageError(String)
+}
 
 // Types and methods
+type OrientCacheInvalidReason derive(Eq, @debug.Debug)
+
+type OrientCacheLayout derive(Eq, @debug.Debug)
+
+type OrientCacheMetadata derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+type OrientCacheMetadataRead derive(Eq, @debug.Debug)
+
+type OrientCacheOpenDecision derive(Eq, @debug.Debug)
+
+type OrientCacheOpenMode derive(Eq, @debug.Debug)
+
 pub(all) struct OrientCacheRuntimeReadiness {
   persistence_ready : Bool
   embedding_ready : Bool

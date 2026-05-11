@@ -7,6 +7,7 @@ type OrientNativePersistentDB = @vcdb.PersistentDB[
 ///|
 struct OrientWriterLock {
   file : @async_fs.File
+  mut released : Bool
 }
 
 ///|
@@ -55,24 +56,62 @@ fn orient_native_db_type_ready(_db : OrientNativePersistentDB?) -> Bool {
 ///|
 pub async fn try_acquire_orient_writer_lock(
   config : AgentOrientConfig,
-) -> OrientWriterLock? {
+) -> OrientWriterLock raise OrientWriterLockError {
   let layout = orient_cache_layout(config)
-  if !@async_fs.exists(layout.root_dir) {
-    @async_fs.mkdir(layout.root_dir, permission=0o755, recursive=true)
+  let root_exists = @async_fs.exists(layout.root_dir) catch {
+    err =>
+      raise WriterLockStorageError(
+        "failed to inspect orient vcdb lock directory `" +
+        layout.root_dir +
+        "`: " +
+        err.to_string(),
+      )
+  }
+  if !root_exists {
+    @async_fs.mkdir(layout.root_dir, permission=0o755, recursive=true) catch {
+      err =>
+        raise WriterLockStorageError(
+          "failed to create orient vcdb lock directory `" +
+          layout.root_dir +
+          "`: " +
+          err.to_string(),
+        )
+    }
   }
   let path = layout.writer_lock_path
-  let file = @async_fs.open(path, mode=ReadWrite, create=0o644)
-  let locked = file.try_lock(Exclusive) catch { _ => false }
+  let file = @async_fs.open(path, mode=ReadWrite, create=0o644) catch {
+    err =>
+      raise WriterLockStorageError(
+        "failed to open orient vcdb writer lock `" +
+        path +
+        "`: " +
+        err.to_string(),
+      )
+  }
+  let locked = file.try_lock(Exclusive) catch {
+    err => {
+      file.close()
+      raise WriterLockStorageError(
+        "failed to lock orient vcdb writer lock `" +
+        path +
+        "`: " +
+        err.to_string(),
+      )
+    }
+  }
   if locked {
-    Some({ file, })
+    { file, released: false }
   } else {
     file.close()
-    None
+    raise WriterAlreadyActive(path)
   }
 }
 
 ///|
 pub fn OrientWriterLock::release(self : OrientWriterLock) -> Unit {
-  self.file.unlock()
-  self.file.close()
+  if !self.released {
+    self.released = true
+    self.file.unlock()
+    self.file.close()
+  }
 }

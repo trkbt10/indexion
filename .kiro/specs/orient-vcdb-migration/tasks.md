@@ -16,7 +16,7 @@
   - _Requirements: 5, 7, 9, 12_
   - _Boundary: OrientCacheStore_
 
-- [ ] 1.3 Add writer lock behavior for mutable cache access
+- [x] 1.3 Add writer lock behavior for mutable cache access
   - Acquire an exclusive advisory lock before any cache mutation and keep the lock handle alive for the entire update path.
   - Return a typed lock-conflict failure immediately when another writer already owns the cache.
   - Keep lock and storage paths inside the configured cache directory and rely on operating system lock release after process termination.
