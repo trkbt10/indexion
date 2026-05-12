@@ -77,7 +77,7 @@
   - _Requirements: 3, 6, 11_
   - _Boundary: OrientQueryService_
 
-- [ ] 3.2 Preserve report composition over query results
+- [x] 3.2 Preserve report composition over query results
   - Convert query candidates into the existing orient report fields, workflow, notes, map status, readiness quiz, preflight, and evidence sections.
   - Preserve Markdown section headings, section order, JSON field names, and the existing format choices.
   - Keep storage-specific attributes out of the public report while using bounded previews for evidence text.

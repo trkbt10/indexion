@@ -179,6 +179,216 @@ pub fn orient_report_from_map(
 }
 
 ///|
+/// Compose the final agent orientation report from bounded vcdb query results
+/// while preserving the existing public report model and renderer inputs.
+pub fn orient_report_from_query(
+  config : AgentOrientConfig,
+  query : @map.OrientQueryResult,
+  status : @types.AgentOrientMapStatus,
+) -> AgentOrientReport {
+  let owners = report_owners_from_query(query.owner_candidates, config.limit)
+  let knowledge_sources = report_knowledge_sources_from_query(
+    query.documentation_sources,
+    config.limit,
+  )
+  let consumers = report_consumers_from_query(
+    query.consumer_candidates,
+    query.cli_consumers,
+    config.limit,
+  )
+  let forbidden = report_forbidden_from_query(
+    query.forbidden_surfaces,
+    config.limit,
+  )
+  let preflight = report_preflight_from_query(
+    query.preflight_candidates,
+    config.limit,
+  )
+  {
+    version: "agent-orient-v1",
+    task: config.task,
+    likely_owners: owners,
+    knowledge_sources,
+    consumer_surfaces: consumers,
+    do_not_implement_here: forbidden,
+    required_preflight: preflight,
+    readiness_quiz: readiness_quiz(
+      owners, knowledge_sources, consumers, forbidden, preflight,
+    ),
+    map_status: status,
+    evidence: report_evidence_from_query(
+      query.evidence_candidates,
+      config.limit,
+    ),
+    workflow: orientation_workflow(),
+    notes: orientation_notes(),
+  }
+}
+
+///|
+fn report_owners_from_query(
+  candidates : Array[@map.OrientOwnerCandidate],
+  limit : Int,
+) -> Array[AgentOrientItem] {
+  let result : Array[AgentOrientItem] = []
+  let capped = orient_bounded_count(limit, candidates.length())
+  for i in 0..<capped {
+    let candidate = candidates[i]
+    if candidate.score <= 0.0 {
+      continue
+    }
+    let reason = if result.length() == 0 {
+      "Initial implementation-owner hypothesis; highest-scored implementation profile from vector search: "
+    } else {
+      "Alternate implementation owner candidate from vector search: "
+    }
+    result.push({
+      path: candidate.path,
+      reason: reason + candidate.summary_preview,
+    })
+  }
+  result
+}
+
+///|
+fn report_knowledge_sources_from_query(
+  candidates : Array[@map.OrientDocumentationCandidate],
+  limit : Int,
+) -> Array[AgentOrientItem] {
+  let result : Array[AgentOrientItem] = []
+  let capped = orient_bounded_count(limit, candidates.length())
+  for i in 0..<capped {
+    let candidate = candidates[i]
+    if candidate.score <= 0.0 {
+      continue
+    }
+    result.push({
+      path: candidate.path,
+      reason: "Knowledge source matching vector query; use as context, not as an implementation target: " +
+      candidate.summary_preview,
+    })
+  }
+  result
+}
+
+///|
+fn report_consumers_from_query(
+  consumers : Array[@map.OrientQueryCandidate],
+  cli_consumers : Array[@map.OrientQueryCandidate],
+  limit : Int,
+) -> Array[AgentOrientItem] {
+  let result : Array[AgentOrientItem] = []
+  for candidate in consumers {
+    push_report_consumer_item(result, candidate)
+    if report_limit_reached(result.length(), limit) {
+      return result
+    }
+  }
+  for candidate in cli_consumers {
+    push_report_consumer_item(result, candidate)
+    if report_limit_reached(result.length(), limit) {
+      return result
+    }
+  }
+  result
+}
+
+///|
+fn push_report_consumer_item(
+  result : Array[AgentOrientItem],
+  candidate : @map.OrientQueryCandidate,
+) -> Unit {
+  if candidate.score <= 0.0 {
+    return
+  }
+  push_unique_report_item(result, {
+    path: candidate.path,
+    reason: "Adapter or workflow surface related to vector query: " +
+    candidate.summary_preview,
+  })
+}
+
+///|
+fn report_forbidden_from_query(
+  candidates : Array[@map.OrientQueryCandidate],
+  limit : Int,
+) -> Array[AgentOrientItem] {
+  let result : Array[AgentOrientItem] = []
+  for candidate in candidates {
+    if candidate.score <= 0.0 {
+      continue
+    }
+    push_unique_report_item(result, {
+      path: candidate.path,
+      reason: "CLI files should parse options, call core packages, and render output; keep domain logic in likely owner packages.",
+    })
+    if report_limit_reached(result.length(), limit) {
+      break
+    }
+  }
+  result
+}
+
+///|
+fn report_preflight_from_query(
+  candidates : Array[@map.OrientQueryCandidate],
+  limit : Int,
+) -> Array[AgentOrientItem] {
+  let result : Array[AgentOrientItem] = []
+  for candidate in candidates {
+    if candidate.score <= 0.0 {
+      continue
+    }
+    push_unique_report_item(result, {
+      path: candidate.path,
+      reason: "Read before editing; it is part of the mechanical evidence for this task.",
+    })
+    if report_limit_reached(result.length(), limit) {
+      break
+    }
+  }
+  result
+}
+
+///|
+fn report_evidence_from_query(
+  candidates : Array[@map.OrientEvidenceCandidate],
+  limit : Int,
+) -> Array[AgentOrientEvidence] {
+  let result : Array[AgentOrientEvidence] = []
+  let capped = orient_bounded_count(limit, candidates.length())
+  for i in 0..<capped {
+    let candidate = candidates[i]
+    result.push({
+      path: candidate.path,
+      kind: candidate.role,
+      score: candidate.score,
+      matched_terms: [],
+      summary: evidence_preview(candidate.summary, 220),
+    })
+  }
+  result
+}
+
+///|
+fn push_unique_report_item(
+  result : Array[AgentOrientItem],
+  item : AgentOrientItem,
+) -> Unit {
+  for existing in result {
+    if existing.path == item.path {
+      return
+    }
+  }
+  result.push(item)
+}
+
+///|
+fn report_limit_reached(count : Int, limit : Int) -> Bool {
+  limit > 0 && count >= limit
+}
+
+///|
 pub fn briefs_from_orient_map(map : AgentOrientMap) -> Array[LocalFileBrief] {
   let briefs : Array[LocalFileBrief] = []
   for file in map.files {

@@ -2,6 +2,7 @@
 package "trkbt10/indexion/src/agent/orient/report"
 
 import {
+  "trkbt10/indexion/src/agent/orient/map",
   "trkbt10/indexion/src/agent/orient/model",
   "trkbt10/indexion/src/agent/orient/types",
 }
@@ -27,6 +28,8 @@ pub fn orient_map_file_is_consumer(@model.AgentOrientMap, String) -> Bool
 
 pub fn orient_report_from_map(@model.AgentOrientConfig, Array[String], Array[@types.LocalFileBrief], @model.AgentOrientMap) -> @model.AgentOrientReport
 
+pub fn orient_report_from_query(@model.AgentOrientConfig, @map.OrientQueryResult, @model.AgentOrientMapStatus) -> @model.AgentOrientReport
+
 pub fn orientation_notes() -> Array[String]
 
 pub fn orientation_workflow() -> Array[String]
@@ -48,4 +51,3 @@ pub fn required_preflight(@model.AgentOrientMap, Array[@model.AgentOrientItem], 
 // Type aliases
 
 // Traits
-
