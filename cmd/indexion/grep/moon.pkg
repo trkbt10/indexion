@@ -6,6 +6,7 @@ import {
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
   "trkbt10/indexion/src/config" @config,
+  "trkbt10/indexion/src/regexp" @regexp,
   "trkbt10/indexion/src/search" @search,
 }
 

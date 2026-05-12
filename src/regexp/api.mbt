@@ -96,6 +96,62 @@ fn captured_match_from_state(
 }
 
 ///|
+/// If this compiled pattern accepts exactly one input string — that is,
+/// the parsed regex reduces to a fixed character sequence with no
+/// quantifiers, alternation, character classes, anchors, capture groups,
+/// shortcut escapes, or case-insensitivity — return that literal string.
+/// Otherwise return `None`.
+///
+/// A high-level introspection query over the compiled pattern. The
+/// underlying AST stays private to `@regexp`; callers see only this
+/// answer, not the regex grammar. Used by KGF-spec tooling that needs to
+/// surface punctuation tokens (e.g. mapping `TOKEN LPAREN /\(/` to the
+/// literal `"("`) without re-implementing regex parsing outside this
+/// package.
+pub fn CompiledPattern::literal_text(self : CompiledPattern) -> String? {
+  // Case-insensitive patterns accept multiple input strings.
+  if self.case_insensitive {
+    return None
+  }
+  // A `\b` anchor at the start makes the pattern position-sensitive — it
+  // accepts the literal text but only at word boundaries. Conceptually
+  // this is a keyword form, not a punctuation literal; callers wanting
+  // keyword aliases handle that path separately.
+  if self.requires_word_boundary_start {
+    return None
+  }
+  if self.alternatives.length() != 1 {
+    return None
+  }
+  let alt = self.alternatives[0]
+  let buf = StringBuilder::new()
+  for q in alt {
+    if q.lazy_ {
+      return None
+    }
+    match q.quantifier {
+      One => ()
+      _ => return None
+    }
+    match q.element {
+      Literal(c) => buf.write_char(c)
+      Escape(escape_char) =>
+        match escape_literal_char(escape_char) {
+          Some(c) => buf.write_char(c)
+          None => return None
+        }
+      _ => return None
+    }
+  }
+  let s = buf.to_string()
+  if s.length() == 0 {
+    None
+  } else {
+    Some(s)
+  }
+}
+
+///|
 pub fn find_pattern_captures(
   pattern : String,
   input : String,

@@ -919,15 +919,7 @@ fn match_elements_backtrack(
         let next_literal = if idx + 1 < elements.length() {
           match elements[idx + 1].element {
             Literal(c) => Some(c)
-            Escape(escape_char) =>
-              match escape_char {
-                'n' => Some('\n')
-                'r' => Some('\r')
-                't' => Some('\t')
-                // Character classes (\s, \d, \w, \S, \D, \W) are NOT single literals
-                's' | 'S' | 'd' | 'D' | 'w' | 'W' => None
-                _ => Some(escape_char) // Escaped punctuation: \*, \., \/ etc.
-              }
+            Escape(escape_char) => escape_literal_char(escape_char)
             _ => None
           }
         } else {
@@ -995,15 +987,7 @@ fn match_elements_backtrack(
         let next_literal_greedy = if idx + 1 < elements.length() {
           match elements[idx + 1].element {
             Literal(c) => Some(c)
-            Escape(escape_char) =>
-              match escape_char {
-                'n' => Some('\n')
-                'r' => Some('\r')
-                't' => Some('\t')
-                // Character classes (\s, \d, \w, \S, \D, \W) are NOT single literals
-                's' | 'S' | 'd' | 'D' | 'w' | 'W' => None
-                _ => Some(escape_char) // Escaped punctuation: \*, \., \/ etc.
-              }
+            Escape(escape_char) => escape_literal_char(escape_char)
             _ => None
           }
         } else {

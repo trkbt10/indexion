@@ -98,3 +98,109 @@ test "api: find_pattern_captures multiple non-overlapping" {
   assert_eq(matches[1].text, "22")
   assert_eq(matches[2].text, "333")
 }
+
+///|
+test "api: CompiledPattern::literal_text recovers single-literal patterns" {
+  // Punctuation-style patterns whose entire regex reduces to a fixed
+  // string — possibly with escaped meta characters — must report that
+  // string. Lets KGF tooling map `TOKEN LPAREN /\(/` to `"("` without
+  // re-implementing regex parsing outside this package.
+  let cases : Array[(String, String)] = [
+    ("\\(", "("),
+    ("\\)", ")"),
+    ("\\{", "{"),
+    ("\\}", "}"),
+    ("\\[", "["),
+    ("\\]", "]"),
+    ("\\.", "."),
+    ("\\|", "|"),
+    ("\\?", "?"),
+    ("\\*", "*"),
+    ("\\+", "+"),
+    ("::", "::"),
+    (":", ":"),
+    (",", ","),
+    ("=", "="),
+    ("=>", "=>"),
+    ("->", "->"),
+    (";", ";"),
+    ("~", "~"),
+    ("!", "!"),
+    ("@", "@"),
+    ("&", "&"),
+  ]
+  for case in cases {
+    let (pattern, expected) = case
+    let compiled = match compile_pattern(pattern) {
+      Some(c) => c
+      None => {
+        println("expected to compile pattern: " + pattern)
+        assert_true(false)
+        return
+      }
+    }
+    match compiled.literal_text() {
+      Some(value) => assert_eq(value, expected)
+      None => {
+        println("expected Some literal for pattern: " + pattern)
+        assert_true(false)
+      }
+    }
+  }
+}
+
+///|
+test "api: CompiledPattern::literal_text rejects non-literal patterns" {
+  // Anything with quantifiers, alternation, character classes, anchors,
+  // capture groups, shortcut escapes, or case-insensitivity must report
+  // None — otherwise consumers would extract bogus literals from
+  // structural patterns like identifier classes or keyword forms.
+  let non_literals = [
+    "[A-Z][A-Za-z0-9_]*", // identifier class
+    "\\r?\\n", // newline pattern
+    "[ \\t]+", // whitespace run
+    "\\d+", // shortcut escape
+    "\\s+", // shortcut escape
+    "pub\\b", // keyword with word boundary
+    "<<=|>>=|==", // alternation
+    "0x[0-9a-fA-F_]+", // mixed
+    "\\/\\/[^\\r\\n]*", // line comment
+  ]
+  for pattern in non_literals {
+    let compiled = match compile_pattern(pattern) {
+      Some(c) => c
+      None => continue
+    }
+    match compiled.literal_text() {
+      None => ()
+      Some(value) => {
+        println(
+          "expected None for non-literal pattern: " +
+          pattern +
+          ", got: " +
+          value,
+        )
+        assert_true(false)
+      }
+    }
+  }
+}
+
+///|
+test "api: CompiledPattern::literal_text returns None for case-insensitive patterns" {
+  let compiled = match compile_pattern("abc", case_insensitive=true) {
+    Some(c) => c
+    None => {
+      println("expected pattern to compile")
+      assert_true(false)
+      return
+    }
+  }
+  match compiled.literal_text() {
+    None => ()
+    Some(_) => {
+      println("expected None for case-insensitive pattern")
+      assert_true(false)
+    }
+  }
+}

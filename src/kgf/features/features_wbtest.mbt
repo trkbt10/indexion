@@ -4,107 +4,6 @@ fn test_registry() -> @kgf_registry.KGFRegistry {
 }
 
 ///|
-test "extract_literal_from_pattern recognizes pure-literal regex patterns" {
-  // Punctuation tokens whose entire regex pattern is a literal — possibly
-  // with escaped meta characters — should yield the literal text. This is
-  // what lets grep build punctuation aliases from a KGF spec without
-  // hardcoding any name→literal mapping.
-  let cases : Array[(String, String)] = [
-    ("\\(", "("),
-    ("\\)", ")"),
-    ("\\{", "{"),
-    ("\\}", "}"),
-    ("\\[", "["),
-    ("\\]", "]"),
-    ("\\.", "."),
-    ("\\|", "|"),
-    ("\\?", "?"),
-    ("\\*", "*"),
-    ("\\+", "+"),
-    ("::", "::"),
-    (":", ":"),
-    (",", ","),
-    ("=", "="),
-    ("=>", "=>"),
-    ("->", "->"),
-    (";", ";"),
-    ("~", "~"),
-    ("!", "!"),
-    ("@", "@"),
-    ("&", "&"),
-  ]
-  for case in cases {
-    let (pattern, expected) = case
-    match extract_literal_from_pattern(pattern) {
-      Some(value) => assert_eq(value, expected)
-      None => {
-        println("expected Some literal for pattern: " + pattern)
-        assert_true(false)
-      }
-    }
-  }
-}
-
-///|
-test "extract_literal_from_pattern rejects patterns with regex operators" {
-  // Patterns containing quantifiers, alternation, character classes, or
-  // shortcut escapes are NOT literals and must return None — otherwise the
-  // alias table would invent bogus literals from things like keywords with
-  // word boundaries or identifier classes.
-  let non_literals = [
-    "[A-Z][A-Za-z0-9_]*", // identifier class
-    "\\r?\\n", // NL pattern
-    "[ \\t]+", // whitespace run
-    "\\d+", // shortcut escape
-    "\\s+", // shortcut escape
-    "pub\\b", // keyword with word boundary
-    "<<=|>>=|==", // alternation
-    "0x[0-9a-fA-F_]+", // mixed
-    "\\/\\/[^\\r\\n]*", // line comment
-    "", // empty pattern
-  ]
-  for pattern in non_literals {
-    match extract_literal_from_pattern(pattern) {
-      None => ()
-      Some(value) => {
-        println(
-          "expected None for non-literal pattern: " +
-          pattern +
-          ", got: " +
-          value,
-        )
-        assert_true(false)
-      }
-    }
-  }
-}
-
-///|
-test "pattern_is_whitespace_only detects newline and indentation patterns" {
-  let whitespace_patterns = [
-    "\\r?\\n", // MoonBit/Rust/Go NL
-    "\\r?\\n[ \\t]+", // Python NL_INDENT
-    "[ \\t]+", // generic WS
-    "\\s+", // shortcut WS
-    " ", // literal space
-  ]
-  for pattern in whitespace_patterns {
-    assert_true(pattern_is_whitespace_only(pattern))
-  }
-  let non_ws = [
-    "[A-Z][A-Za-z0-9_]*",
-    "\\(", // punctuation
-    "pub\\b", // keyword
-    "0x[0-9a-fA-F_]+",
-    "\\d+",
-    "",
-  ]
-  for pattern in non_ws {
-    assert_false(pattern_is_whitespace_only(pattern))
-  }
-}
-
-///|
 test "build_insignificant_token_set covers Python NL and NL_INDENT" {
   // Regression: grep used to hardcode the names NL/WS/SKIP for the filter
   // applied to token streams before pattern matching, so Python's
@@ -119,13 +18,25 @@ test "build_insignificant_token_set covers Python NL and NL_INDENT" {
       return
     }
   }
-  let set = build_insignificant_token_set(spec~)
+  let set = build_insignificant_token_set(spec=Some(spec))
   assert_true(set.contains("NL"))
   assert_true(set.contains("NL_INDENT"))
   // Significant kinds — identifiers, numbers, strings — must NOT be in
   // the insignificant set, otherwise grep would silently skip them.
   assert_false(set.contains("Ident"))
   assert_false(set.contains("Number"))
+}
+
+///|
+test "build_insignificant_token_set defaults to NL with no spec" {
+  // The default set always includes the KGF naming convention `NL`, even
+  // when no KGF spec is available — for example when a file lacks a
+  // matching spec entirely. Test that explicitly so any regression that
+  // narrows the default surface is caught.
+  let set = build_insignificant_token_set()
+  assert_true(set.contains("NL"))
+  assert_false(set.contains("WS"))
+  assert_false(set.contains("SKIP"))
 }
 
 ///|

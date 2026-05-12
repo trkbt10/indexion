@@ -116,6 +116,26 @@ priv enum Quantifier {
 }
 
 ///|
+/// If an `Escape(c)` element matches exactly one literal character — i.e.
+/// `c` is NOT a regex shortcut class like `\s`/`\S`/`\d`/`\D`/`\w`/`\W` —
+/// return that character. Returns `None` for shortcut classes, which
+/// match a set of characters rather than a single literal.
+///
+/// Centralizes the regex engine's "which escapes denote a single literal
+/// char" knowledge in one place so the matcher's fast-path scanners and
+/// the introspection API (`CompiledPattern::literal_text`) cannot drift
+/// apart.
+fn escape_literal_char(escape_char : Char) -> Char? {
+  match escape_char {
+    's' | 'S' | 'd' | 'D' | 'w' | 'W' => None
+    'n' => Some('\n')
+    'r' => Some('\r')
+    't' => Some('\t')
+    _ => Some(escape_char)
+  }
+}
+
+///|
 /// Pattern element with quantifier.
 priv struct QuantifiedElement {
   element : PatternElement

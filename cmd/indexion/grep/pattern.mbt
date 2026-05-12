@@ -35,8 +35,9 @@ pub enum TokenMatcher {
 ///      `TOKEN LPAREN /\(/` becomes `"(" → "LPAREN"`,
 ///      `TOKEN DCOLON /::/` becomes `"::" → "DCOLON"`, and
 ///      `TOKEN FATARROW /=>/` becomes `"=>" → "FATARROW"`.
-///      Literal extraction is delegated to
-///      `@kgf_features.extract_literal_from_pattern`.
+///      Literal extraction is delegated to `TokenDef::literal_text` —
+///      regex-grammar interpretation lives on the type that owns the
+///      pattern, not in this consumer.
 ///
 /// Keyword aliases take precedence over punctuation aliases for the same
 /// literal so that `pub` always resolves to `KW_pub`, never to a stray
@@ -74,8 +75,16 @@ pub fn build_alias_table(
       }
     }
     // (2) Punctuation/operator aliases derived from purely-literal
-    //     patterns. Skip when the literal would shadow a keyword.
-    match @kgf_features.extract_literal_from_pattern(pattern) {
+    //     patterns. The "is this regex a fixed literal?" question is
+    //     answered by the regex engine itself via
+    //     `CompiledPattern::literal_text`, so regex grammar knowledge
+    //     stays inside `@regexp`. Skip when the literal would shadow a
+    //     keyword.
+    let literal_opt = match @regexp.compile_pattern(pattern) {
+      Some(compiled) => compiled.literal_text()
+      None => None
+    }
+    match literal_opt {
       Some(literal) =>
         if !aliases.contains(literal) {
           aliases[literal] = name
@@ -309,10 +318,7 @@ pub fn find_matches(
   // derived from the active KGF spec rather than hardcoded — see
   // `@kgf_features.build_insignificant_token_set`. Original indices are
   // preserved for position reporting.
-  let insignificant = match spec {
-    Some(s) => @kgf_features.build_insignificant_token_set(spec=s)
-    None => default_insignificant_kinds()
-  }
+  let insignificant = @kgf_features.build_insignificant_token_set(spec~)
   let significant : Array[(Int, @kgf_types.Tok)] = []
   for i, tok in tokens {
     if !insignificant.contains(tok.get_kind()) {
@@ -368,16 +374,6 @@ fn build_token_lines(tokens : Array[@kgf_types.Tok]) -> Array[Int] {
   token_lines
 }
 
-///|
-/// Fallback insignificant-kind set used when `find_matches` runs without a
-/// loaded KGF spec — typically in unit tests that exercise the matcher
-/// directly against a synthetic token list. The names here are the
-/// conventional whitespace-class kinds that ship across the bundled KGF
-/// specs (`NL` in MoonBit/Rust/Go, `WS` and `SKIP` in older specs); when a
-/// spec is available this fallback is bypassed entirely.
-fn default_insignificant_kinds() -> Map[String, Bool] {
-  { "NL": true, "WS": true, "SKIP": true }
-}
 
 ///|
 /// Try to match the pattern starting at position `pos` in the significant token array.

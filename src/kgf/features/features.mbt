@@ -69,156 +69,36 @@ pub fn build_vocabulary_token_set(
 
 ///|
 /// Build the set of token kinds that should be filtered from a token stream
-/// before structural pattern matching (e.g. grep). Newlines, indentation
-/// tokens, and other purely whitespace-bearing kinds carry no semantic
-/// content for grep-style queries, but they vary in name across specs —
-/// MoonBit/Rust/Go declare `NL`; Python adds `NL_INDENT`; future specs may
-/// use other names entirely.
+/// before structural pattern matching (e.g. grep).
 ///
-/// A kind is included when either:
-///   1. The spec lists it in the `insignificant_token_kinds` feature, OR
-///   2. Its regex pattern matches only whitespace characters and regex
-///      quantifiers/character-class brackets — see
-///      `pattern_is_whitespace_only`.
+/// Starts from a fixed default — the single kind name `NL`, which is the
+/// KGF community convention for the newline token across every bundled
+/// spec. Specs that emit additional newline-class kinds (e.g. Python's
+/// `NL_INDENT`) extend the set by declaring `insignificant_token_kinds`
+/// in their `=== features` block; the declaration is additive over the
+/// default so a one-liner suffices.
 ///
-/// `is_skip` tokens are already discarded by the lexer and are not included.
+/// Including `NL` in the default set even when a spec has no TOKEN by
+/// that name (or when `spec` is `None` because the file isn't recognized
+/// by any KGF spec) is harmless — it simply matches nothing in that
+/// token stream.
 pub fn build_insignificant_token_set(
-  spec~ : @kgf_types.KGFSpec,
+  spec? : @kgf_types.KGFSpec? = None,
 ) -> Map[String, Bool] {
   let set : Map[String, Bool] = {}
-  match spec.get_feature("insignificant_token_kinds") {
-    Some(kinds) =>
-      for kind in kinds {
-        set[kind] = true
+  set["NL"] = true
+  match spec {
+    Some(s) =>
+      match s.get_feature("insignificant_token_kinds") {
+        Some(kinds) =>
+          for kind in kinds {
+            set[kind] = true
+          }
+        None => ()
       }
     None => ()
   }
-  for tok_def in spec.get_tokens() {
-    if tok_def.is_skip() {
-      continue
-    }
-    if pattern_is_whitespace_only(tok_def.get_pattern()) {
-      set[tok_def.get_name()] = true
-    }
-  }
   set
-}
-
-///|
-/// Try to read a KGF token regex pattern as a plain literal string.
-/// Returns `Some(literal)` only when the pattern is a sequence of literal
-/// characters and escaped regex meta-characters, with no quantifiers,
-/// alternation, character classes, or shortcut escapes like `\s`, `\d`,
-/// `\b`. Allows callers to surface punctuation tokens — e.g.
-/// `TOKEN LPAREN /\(/` becomes `Some("(")` — without hardcoding any
-/// name → literal mappings.
-pub fn extract_literal_from_pattern(pattern : String) -> String? {
-  let buf = StringBuilder::new()
-  let chars = pattern.to_array()
-  let n = chars.length()
-  let mut i = 0
-  while i < n {
-    let c = chars[i]
-    if c == '\\' {
-      if i + 1 >= n {
-        return None
-      }
-      let next = chars[i + 1]
-      match next {
-        '\\'
-        | '.'
-        | '('
-        | ')'
-        | '['
-        | ']'
-        | '{'
-        | '}'
-        | '*'
-        | '+'
-        | '?'
-        | '|'
-        | '^'
-        | '$'
-        | '/'
-        | '-' => {
-          buf.write_char(next)
-          i += 2
-        }
-        _ => return None
-      }
-    } else {
-      match c {
-        '('
-        | ')'
-        | '['
-        | ']'
-        | '{'
-        | '}'
-        | '.'
-        | '*'
-        | '+'
-        | '?'
-        | '|'
-        | '^'
-        | '$' => return None
-        _ => {
-          buf.write_char(c)
-          i += 1
-        }
-      }
-    }
-  }
-  let s = buf.to_string()
-  if s.length() == 0 {
-    None
-  } else {
-    Some(s)
-  }
-}
-
-///|
-/// Check whether a KGF token regex pattern matches only whitespace.
-/// Returns true if every possible match consists exclusively of whitespace
-/// characters. Recognizes literal spaces/tabs/CR/LF, whitespace escapes
-/// (`\r`, `\n`, `\t`, `\v`, `\f`, `\s`, `\ `), regex quantifiers
-/// (`?`, `*`, `+`, `|`), and character-class brackets (`[`, `]`) wrapping
-/// any combination of the above. Any other character — including ordinary
-/// letters, digits, or non-whitespace escapes like `\d` — is rejected.
-/// Used by `build_insignificant_token_set` to detect NL / NL_INDENT / WS
-/// style tokens without hardcoding their names.
-pub fn pattern_is_whitespace_only(pattern : String) -> Bool {
-  if pattern.length() == 0 {
-    return false
-  }
-  let chars = pattern.to_array()
-  let n = chars.length()
-  let mut i = 0
-  let mut saw_content = false
-  while i < n {
-    let c = chars[i]
-    match c {
-      ' ' | '\t' | '\r' | '\n' => {
-        saw_content = true
-        i += 1
-      }
-      '?' | '*' | '+' | '|' | '[' | ']' | '(' | ')' => i += 1
-      '\\' => {
-        if i + 1 >= n {
-          return false
-        }
-        let next = chars[i + 1]
-        match next {
-          'r' | 'n' | 't' | 'v' | 'f' | 's' | ' ' => {
-            saw_content = true
-            i += 2
-          }
-          _ => return false
-        }
-      }
-      _ => return false
-    }
-  }
-  saw_content
 }
 
 ///|
