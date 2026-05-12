@@ -1,6 +1,7 @@
 supported_targets = "native"
 
 import {
+  "trkbt10/indexion/src/agent/orient/cache" @cache,
   "trkbt10/indexion/src/agent/orient/map" @map,
   "trkbt10/indexion/src/agent/orient/matching" @matching,
   "trkbt10/indexion/src/agent/orient/owner" @owner,

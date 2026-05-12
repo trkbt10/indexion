@@ -1,29 +1,29 @@
 ///|
-pub let orient_summary_preview_limit : Int = 512
+pub let summary_preview_limit : Int = 512
 
 ///|
-let orient_attr_path : String = "path"
+let attr_path : String = "path"
 
 ///|
-let orient_attr_role : String = "role"
+let attr_role : String = "role"
 
 ///|
-let orient_attr_owner : String = "owner"
+let attr_owner : String = "owner"
 
 ///|
-let orient_attr_source_hash : String = "source_hash"
+let attr_source_hash : String = "source_hash"
 
 ///|
-let orient_attr_structural_summary : String = "structural_summary"
+let attr_structural_summary : String = "structural_summary"
 
 ///|
-let orient_attr_summary_preview : String = "summary_preview"
+let attr_summary_preview : String = "summary_preview"
 
 ///|
-let orient_attr_summary_full : String = "summary_full"
+let attr_summary_full : String = "summary_full"
 
 ///|
-pub(all) struct OrientCachedFile {
+pub(all) struct CachedFile {
   vector_id : @vcdb_types.VectorId
   path : String
   role : String
@@ -35,7 +35,7 @@ pub(all) struct OrientCachedFile {
 } derive(Eq)
 
 ///|
-pub(all) suberror OrientRecordSchemaError {
+pub(all) suberror RecordSchemaError {
   PathIdentityCollision(String, String, String)
   MissingRecordPath(String)
   MissingRecordAttr(String)
@@ -44,8 +44,8 @@ pub(all) suberror OrientRecordSchemaError {
 
 ///|
 #warnings("-unused_value")
-fn OrientRecordSchemaError::diagnostic(
-  self : OrientRecordSchemaError,
+fn RecordSchemaError::diagnostic(
+  self : RecordSchemaError,
 ) -> String {
   match self {
     PathIdentityCollision(expected, existing, vector_id) =>
@@ -112,32 +112,32 @@ fn hex_nibble(c : Char) -> Int {
 ///|
 pub fn attrs_from_brief(
   brief : LocalFileBrief,
-  preview_limit? : Int = orient_summary_preview_limit,
+  preview_limit? : Int = summary_preview_limit,
 ) -> @vcdb_types.Attrs {
   let attrs = @vcdb_types.empty_attrs()
-  attrs.set(orient_attr_path, @vcdb_types.AttrValue::String(brief.path))
-  attrs.set(orient_attr_role, @vcdb_types.AttrValue::String(brief.role))
+  attrs.set(attr_path, @vcdb_types.AttrValue::String(brief.path))
+  attrs.set(attr_role, @vcdb_types.AttrValue::String(brief.role))
   attrs.set(
-    orient_attr_owner,
-    @vcdb_types.AttrValue::String(owner_dir(brief.path)),
+    attr_owner,
+    @vcdb_types.AttrValue::String(@map.owner_dir(brief.path)),
   )
   attrs.set(
-    orient_attr_source_hash,
+    attr_source_hash,
     @vcdb_types.AttrValue::String(brief.source_hash),
   )
   attrs.set(
-    orient_attr_structural_summary,
+    attr_structural_summary,
     @vcdb_types.AttrValue::String(brief.structural_summary),
   )
   attrs.set(
-    orient_attr_summary_preview,
+    attr_summary_preview,
     @vcdb_types.AttrValue::String(
       bounded_summary_preview(brief.summary, preview_limit),
     ),
   )
   if is_documentation_record(brief) {
     attrs.set(
-      orient_attr_summary_full,
+      attr_summary_full,
       @vcdb_types.AttrValue::String(brief.summary),
     )
   }
@@ -146,7 +146,7 @@ pub fn attrs_from_brief(
 
 ///|
 fn is_documentation_record(brief : LocalFileBrief) -> Bool {
-  brief.role == "documentation" || is_documentation_path(brief.path)
+  brief.role == "documentation" || @map.is_documentation_path(brief.path)
 }
 
 ///|
@@ -163,7 +163,7 @@ fn bounded_summary_preview(text : String, limit : Int) -> String {
 pub fn validate_record_path_for_overwrite(
   expected_path : String,
   record : @vcdb_types.VectorRecord,
-) -> Unit raise OrientRecordSchemaError {
+) -> Unit raise RecordSchemaError {
   let vector_id = vector_id_for_path(expected_path).to_display_string()
   let existing_path = record_required_path(record, vector_id)
   if existing_path != expected_path {
@@ -175,7 +175,7 @@ pub fn validate_record_path_for_overwrite(
 pub fn record_to_cached_file(
   id : @vcdb_types.VectorId,
   record : @vcdb_types.VectorRecord,
-) -> OrientCachedFile? raise OrientRecordSchemaError {
+) -> CachedFile? raise RecordSchemaError {
   let vector_id = id.to_display_string()
   let path = record_required_path(record, vector_id)
   let expected_id = vector_id_for_path(path)
@@ -185,19 +185,19 @@ pub fn record_to_cached_file(
   Some({
     vector_id: id,
     path,
-    role: record_required_string_attr(record, orient_attr_role, vector_id),
-    owner: record_required_string_attr(record, orient_attr_owner, vector_id),
+    role: record_required_string_attr(record, attr_role, vector_id),
+    owner: record_required_string_attr(record, attr_owner, vector_id),
     source_hash: record_required_string_attr(
-      record, orient_attr_source_hash, vector_id,
+      record, attr_source_hash, vector_id,
     ),
     structural_summary: record_required_string_attr(
-      record, orient_attr_structural_summary, vector_id,
+      record, attr_structural_summary, vector_id,
     ),
     summary_preview: record_required_string_attr(
-      record, orient_attr_summary_preview, vector_id,
+      record, attr_summary_preview, vector_id,
     ),
     summary_full: record_optional_string_attr(
-      record, orient_attr_summary_full, vector_id,
+      record, attr_summary_full, vector_id,
     ),
   })
 }
@@ -206,10 +206,10 @@ pub fn record_to_cached_file(
 fn record_required_path(
   record : @vcdb_types.VectorRecord,
   vector_id : String,
-) -> String raise OrientRecordSchemaError {
-  match record.attrs.get(orient_attr_path) {
+) -> String raise RecordSchemaError {
+  match record.attrs.get(attr_path) {
     Some(@vcdb_types.AttrValue::String(path)) => path
-    Some(_) => raise NonStringRecordAttr(orient_attr_path, vector_id)
+    Some(_) => raise NonStringRecordAttr(attr_path, vector_id)
     None => raise MissingRecordPath(vector_id)
   }
 }
@@ -219,7 +219,7 @@ fn record_required_string_attr(
   record : @vcdb_types.VectorRecord,
   key : String,
   vector_id : String,
-) -> String raise OrientRecordSchemaError {
+) -> String raise RecordSchemaError {
   match record.attrs.get(key) {
     Some(@vcdb_types.AttrValue::String(value)) => value
     Some(_) => raise NonStringRecordAttr(key, vector_id)
@@ -232,7 +232,7 @@ fn record_optional_string_attr(
   record : @vcdb_types.VectorRecord,
   key : String,
   vector_id : String,
-) -> String? raise OrientRecordSchemaError {
+) -> String? raise RecordSchemaError {
   match record.attrs.get(key) {
     Some(@vcdb_types.AttrValue::String(value)) => Some(value)
     Some(_) => raise NonStringRecordAttr(key, vector_id)

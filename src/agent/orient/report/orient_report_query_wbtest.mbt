@@ -14,7 +14,7 @@ fn orient_query_report_status() -> @types.AgentOrientMapStatus {
 }
 
 ///|
-fn orient_query_report_fixture() -> @map.OrientQueryResult {
+fn orient_query_report_fixture() -> @cache.QueryResult {
   {
     task: "wire query report adapter",
     query_dim: 16,

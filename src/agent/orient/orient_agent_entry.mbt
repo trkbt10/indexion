@@ -14,7 +14,7 @@ pub async fn orient_agent(config : AgentOrientConfig) -> AgentOrientReport {
 
 ///|
 async fn orient_agent_update(config : AgentOrientConfig) -> AgentOrientReport {
-  let lock = @map.try_acquire_orient_writer_lock(config)
+  let lock = @cache.try_acquire_writer_lock(config)
   let report = orient_agent_update_locked(config) catch {
     err => {
       lock.release()
@@ -36,13 +36,13 @@ async fn orient_agent_update_locked(
   let files = @source.discover_files(config, registry)
   let graph = @source.build_graph(files, registry)
   let briefs = @source.build_file_briefs(files, graph, None)
-  let handle = @map.open_cache_for_update(
+  let handle = @cache.open_for_update(
     config,
     orient_entry_corpus_texts(briefs),
     orient_entry_vector_dim,
   )
-  let update = @map.apply_incremental_cache_updates(handle, briefs)
-  let query = @map.query_orient_cache(handle, config.task, config.limit)
+  let update = @cache.apply_incremental_updates(handle, briefs)
+  let query = @cache.query(handle, config.task, config.limit)
   @report.orient_report_from_query(config, query, update.status)
 }
 
@@ -51,20 +51,20 @@ async fn orient_agent_read_only(
   config : AgentOrientConfig,
 ) -> AgentOrientReport {
   let provider = match
-    @map.load_or_build_provider(config, None, orient_entry_vector_dim) {
-    @map.OrientVocabularyLoaded(provider) => provider
-    @map.OrientVocabularyBuilt(_) =>
-      raise @map.OrientCacheUnavailable(
+    @cache.load_or_build_provider(config, None, orient_entry_vector_dim) {
+    @cache.VocabularyLoaded(provider) => provider
+    @cache.VocabularyBuilt(_) =>
+      raise @cache.Unavailable(
         "orient vcdb TF-IDF vocabulary rebuild is disabled in read-only mode",
       )
-    @map.OrientVocabularyInvalid(_) =>
-      raise @map.OrientCacheUnavailable(
+    @cache.VocabularyInvalid(_) =>
+      raise @cache.Unavailable(
         "orient vcdb cache is unavailable in read-only mode",
       )
   }
-  let handle = @map.open_cache(config, @map.OrientCacheReadOnly, provider)
-  let status = @map.current_orient_cache_status(handle)
-  let query = @map.query_orient_cache(handle, config.task, config.limit)
+  let handle = @cache.open(config, @cache.ReadOnly, provider)
+  let status = @cache.current_status(handle)
+  let query = @cache.query(handle, config.task, config.limit)
   @report.orient_report_from_query(config, query, status)
 }
 

@@ -1,0 +1,198 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/agent/orient/cache"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "trkbt10/indexion/src/agent/orient/model",
+  "trkbt10/indexion/src/text/embed",
+  "trkbt10/vcdb/core/filter",
+}
+
+// Values
+pub async fn apply_incremental_updates(Handle, Array[@trkbt10/indexion/src/agent/orient/types.LocalFileBrief], timestamp_ns? : Int64) -> UpdateResult raise CacheError
+
+pub fn attrs_from_brief(@trkbt10/indexion/src/agent/orient/types.LocalFileBrief, preview_limit? : Int) -> @trkbt10/vcdb/core/types.Attrs
+
+pub async fn checkpoint(Handle) -> Unit raise CacheError
+
+pub fn current_status(Handle) -> @model.AgentOrientMapStatus raise CacheError
+
+pub fn load_or_build_provider(@model.AgentOrientConfig, Array[String]?, Int) -> VocabularyState
+
+pub async fn open(@model.AgentOrientConfig, OpenMode, @embed.TfidfEmbeddingProvider) -> Handle raise CacheError
+
+pub async fn open_for_update(@model.AgentOrientConfig, Array[String], Int) -> Handle raise CacheError
+
+pub fn persist_provider(@model.AgentOrientConfig, @embed.TfidfEmbeddingProvider) -> Unit raise LayoutStorageError
+
+pub async fn prepare_runtime(@model.AgentOrientConfig) -> RuntimeReadiness
+
+pub fn query(Handle, String, Int) -> QueryResult raise CacheError
+
+pub async fn rebuild_empty(@model.AgentOrientConfig, @embed.TfidfEmbeddingProvider) -> Handle raise CacheError
+
+pub fn record_to_cached_file(@trkbt10/vcdb/core/types.VectorId, @trkbt10/vcdb/core/types.VectorRecord) -> CachedFile? raise RecordSchemaError
+
+pub let summary_preview_limit : Int
+
+pub async fn try_acquire_writer_lock(@model.AgentOrientConfig) -> WriterLock raise WriterLockError
+
+pub fn validate_record_path_for_overwrite(String, @trkbt10/vcdb/core/types.VectorRecord) -> Unit raise RecordSchemaError
+
+pub fn vector_id_for_path(String) -> @trkbt10/vcdb/core/types.VectorId
+
+pub fn writer_lock_path(@model.AgentOrientConfig) -> String
+
+// Errors
+pub(all) suberror CacheError {
+  Unavailable(String)
+  StorageFailure(String)
+  ReplayFailure(String)
+  DatabaseFailure(String)
+  CheckpointFailure(String)
+  RecordFailure(String)
+}
+
+pub(all) suberror LayoutStorageError {
+  LayoutStorageError(String)
+}
+
+pub(all) suberror RecordSchemaError {
+  PathIdentityCollision(String, String, String)
+  MissingRecordPath(String)
+  MissingRecordAttr(String)
+  NonStringRecordAttr(String, String)
+}
+
+pub(all) suberror WriterLockError {
+  WriterAlreadyActive(String)
+  WriterLockStorageError(String)
+}
+
+// Types and methods
+pub(all) struct CachedFile {
+  vector_id : @trkbt10/vcdb/core/types.VectorId
+  path : String
+  role : String
+  owner : String
+  source_hash : String
+  structural_summary : String
+  summary_preview : String
+  summary_full : String?
+} derive(Eq)
+
+pub(all) struct DocumentationCandidate {
+  path : String
+  role : String
+  owner : String
+  score : Double
+  summary_preview : String
+  summary_full : String?
+}
+
+pub(all) struct EvidenceCandidate {
+  path : String
+  role : String
+  score : Double
+  summary : String
+}
+
+type Handle
+pub fn Handle::cache_version(Self) -> String
+pub fn Handle::count(Self, filter? : @filter.FilterExpr?) -> Int
+pub fn Handle::dim(Self) -> Int
+pub fn Handle::lookup_id(Self, @trkbt10/vcdb/core/types.VectorId) -> CachedFile? raise CacheError
+pub fn Handle::lookup_path(Self, String) -> CachedFile? raise CacheError
+pub fn Handle::provider(Self) -> @embed.TfidfEmbeddingProvider
+pub async fn Handle::remove_id(Self, @trkbt10/vcdb/core/types.VectorId, timestamp_ns? : Int64) -> Bool raise CacheError
+pub async fn Handle::remove_path(Self, String, timestamp_ns? : Int64) -> Bool raise CacheError
+pub fn Handle::scan(Self, filter? : @filter.FilterExpr?, offset? : Int64?, limit? : Int) -> Array[CachedFile] raise CacheError
+pub fn Handle::search(Self, Array[Double], Int, filter? : @filter.FilterExpr?) -> Array[SearchHit] raise CacheError
+pub async fn Handle::upsert_brief(Self, @trkbt10/indexion/src/agent/orient/types.LocalFileBrief, timestamp_ns? : Int64) -> Unit raise CacheError
+pub async fn Handle::upsert_many(Self, Array[@trkbt10/indexion/src/agent/orient/types.LocalFileBrief], timestamp_ns? : Int64) -> Unit raise CacheError
+
+type InvalidReason derive(Eq, @debug.Debug)
+
+type Layout derive(Eq, @debug.Debug)
+
+type Metadata derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+type MetadataRead derive(Eq, @debug.Debug)
+
+type OpenDecision derive(Eq, @debug.Debug)
+
+pub(all) enum OpenMode {
+  ReadWrite
+  ReadOnly
+} derive(Eq, @debug.Debug)
+
+pub(all) struct OwnerCandidate {
+  path : String
+  score : Double
+  implementation_paths : Array[String]
+  top_implementation_path : String
+  summary_preview : String
+}
+
+pub(all) struct QueryCandidate {
+  path : String
+  role : String
+  owner : String
+  score : Double
+  summary_preview : String
+}
+
+pub(all) struct QueryResult {
+  task : String
+  query_dim : Int
+  owner_candidates : Array[OwnerCandidate]
+  implementation_hits : Array[QueryCandidate]
+  consumer_candidates : Array[QueryCandidate]
+  cli_consumers : Array[QueryCandidate]
+  documentation_sources : Array[DocumentationCandidate]
+  forbidden_surfaces : Array[QueryCandidate]
+  preflight_candidates : Array[QueryCandidate]
+  evidence_candidates : Array[EvidenceCandidate]
+}
+
+pub(all) struct RuntimeReadiness {
+  persistence_ready : Bool
+  embedding_ready : Bool
+  path_hash_ready : Bool
+  filter_ready : Bool
+  lock_path : String
+  cache_exists : Bool
+} derive(Eq, @debug.Debug)
+
+pub(all) struct SearchHit {
+  file : CachedFile
+  score : Double
+}
+
+pub(all) struct UpdateResult {
+  status : @model.AgentOrientMapStatus
+  new_files : Array[String]
+  changed_files : Array[String]
+  deleted_files : Array[String]
+  unchanged_files : Array[String]
+  upserted_files : Array[String]
+  removed_files : Array[String]
+  embedding_count : Int
+  upsert_count : Int
+  remove_count : Int
+}
+
+pub(all) enum VocabularyState {
+  VocabularyLoaded(@embed.TfidfEmbeddingProvider)
+  VocabularyBuilt(@embed.TfidfEmbeddingProvider)
+  VocabularyInvalid(InvalidReason)
+}
+
+type WriterLock
+pub fn WriterLock::release(Self) -> Unit
+
+// Type aliases
+
+// Traits
+

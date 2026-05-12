@@ -1,5 +1,5 @@
 ///|
-pub(all) struct OrientCacheUpdateResult {
+pub(all) struct UpdateResult {
   status : AgentOrientMapStatus
   new_files : Array[String]
   changed_files : Array[String]
@@ -13,7 +13,7 @@ pub(all) struct OrientCacheUpdateResult {
 }
 
 ///|
-priv struct OrientCacheUpdateDecision {
+priv struct UpdateDecision {
   upsert_briefs : Array[LocalFileBrief]
   new_files : Array[String]
   changed_files : Array[String]
@@ -24,15 +24,15 @@ priv struct OrientCacheUpdateDecision {
 }
 
 ///|
-let orient_cache_update_scan_page_size : Int = 512
+let update_scan_page_size : Int = 512
 
 ///|
-pub async fn apply_incremental_cache_updates(
-  handle : OrientCacheHandle,
+pub async fn apply_incremental_updates(
+  handle : Handle,
   briefs : Array[LocalFileBrief],
   timestamp_ns? : Int64 = 0L,
-) -> OrientCacheUpdateResult raise OrientCacheError {
-  let decision = classify_orient_cache_updates(handle, briefs)
+) -> UpdateResult raise CacheError {
+  let decision = classify_updates(handle, briefs)
   if decision.upsert_briefs.length() > 0 {
     handle.upsert_many(decision.upsert_briefs, timestamp_ns~)
   }
@@ -42,8 +42,8 @@ pub async fn apply_incremental_cache_updates(
       removed_files.push(path)
     }
   }
-  let cached_after_update = scan_all_orient_cached_files(handle)
-  let status = cache_update_status_from_records(
+  let cached_after_update = scan_all_cached_files(handle)
+  let status = status_from_records(
     cached_after_update,
     decision.changed_files,
     decision.new_files,
@@ -67,11 +67,11 @@ pub async fn apply_incremental_cache_updates(
 }
 
 ///|
-pub fn current_orient_cache_status(
-  handle : OrientCacheHandle,
-) -> AgentOrientMapStatus raise OrientCacheError {
-  cache_update_status_from_records(
-    scan_all_orient_cached_files(handle),
+pub fn current_status(
+  handle : Handle,
+) -> AgentOrientMapStatus raise CacheError {
+  status_from_records(
+    scan_all_cached_files(handle),
     [],
     [],
     [],
@@ -81,12 +81,12 @@ pub fn current_orient_cache_status(
 }
 
 ///|
-fn classify_orient_cache_updates(
-  handle : OrientCacheHandle,
+fn classify_updates(
+  handle : Handle,
   briefs : Array[LocalFileBrief],
-) -> OrientCacheUpdateDecision raise OrientCacheError {
-  let cached_files = scan_all_orient_cached_files(handle)
-  let cached_by_path : Map[String, OrientCachedFile] = {}
+) -> UpdateDecision raise CacheError {
+  let cached_files = scan_all_cached_files(handle)
+  let cached_by_path : Map[String, CachedFile] = {}
   for file in cached_files {
     cached_by_path.set(file.path, file)
   }
@@ -106,7 +106,7 @@ fn classify_orient_cache_updates(
       Some(_) => {
         changed_files.push(brief.path)
         upsert_briefs.push(brief)
-        push_unique_string(affected_owners, owner_dir(brief.path))
+        push_unique_string(affected_owners, @map.owner_dir(brief.path))
         if is_documentation_record(brief) {
           knowledge_changed = true
         }
@@ -114,7 +114,7 @@ fn classify_orient_cache_updates(
       None => {
         new_files.push(brief.path)
         upsert_briefs.push(brief)
-        push_unique_string(affected_owners, owner_dir(brief.path))
+        push_unique_string(affected_owners, @map.owner_dir(brief.path))
         if is_documentation_record(brief) {
           knowledge_changed = true
         }
@@ -142,20 +142,20 @@ fn classify_orient_cache_updates(
 }
 
 ///|
-fn scan_all_orient_cached_files(
-  handle : OrientCacheHandle,
-) -> Array[OrientCachedFile] raise OrientCacheError {
-  let files : Array[OrientCachedFile] = []
+fn scan_all_cached_files(
+  handle : Handle,
+) -> Array[CachedFile] raise CacheError {
+  let files : Array[CachedFile] = []
   let mut offset : Int64? = None
   while true {
-    let page = handle.scan(offset~, limit=orient_cache_update_scan_page_size)
+    let page = handle.scan(offset~, limit=update_scan_page_size)
     if page.length() == 0 {
       break
     }
     for file in page {
       files.push(file)
     }
-    if page.length() < orient_cache_update_scan_page_size {
+    if page.length() < update_scan_page_size {
       break
     }
     match page[page.length() - 1].vector_id.as_int64() {
@@ -167,8 +167,8 @@ fn scan_all_orient_cached_files(
 }
 
 ///|
-fn cache_update_status_from_records(
-  cached_files : Array[OrientCachedFile],
+fn status_from_records(
+  cached_files : Array[CachedFile],
   changed_files : Array[String],
   new_files : Array[String],
   deleted_files : Array[String],
@@ -214,8 +214,8 @@ fn paths_from_briefs(briefs : Array[LocalFileBrief]) -> Array[String] {
 }
 
 ///|
-fn cached_file_is_documentation(file : OrientCachedFile) -> Bool {
-  file.role == "documentation" || is_documentation_path(file.path)
+fn cached_file_is_documentation(file : CachedFile) -> Bool {
+  file.role == "documentation" || @map.is_documentation_path(file.path)
 }
 
 ///|

@@ -43,7 +43,7 @@ fn build_or_update_orient_map(
   briefs : Array[LocalFileBrief],
   cached_map : AgentOrientMap?,
 ) -> AgentOrientMap {
-  @map.build_or_update_orient_map(config, briefs, cached_map)
+  @map.build_or_update(config, briefs, cached_map)
 }
 
 ///|

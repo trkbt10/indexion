@@ -2,67 +2,42 @@
 package "trkbt10/indexion/src/agent/orient/map"
 
 import {
-  "moonbitlang/core/debug",
-  "moonbitlang/core/json",
   "trkbt10/indexion/src/agent/orient/model",
-  "trkbt10/indexion/src/text/embed",
-  "trkbt10/vcdb/core/filter",
+  "trkbt10/indexion/src/agent/orient/types",
 }
 
 // Values
 pub fn affected_owner_dirs(Array[String], Array[String], Array[String], Array[String], Bool, @model.AgentOrientMap?) -> Array[String]
 
-pub async fn apply_incremental_cache_updates(OrientCacheHandle, Array[@trkbt10/indexion/src/agent/orient/types.LocalFileBrief], timestamp_ns? : Int64) -> OrientCacheUpdateResult raise OrientCacheError
+pub fn build_or_update(@model.AgentOrientConfig, Array[@types.LocalFileBrief], @model.AgentOrientMap?) -> @model.AgentOrientMap
 
-pub fn attrs_from_brief(@trkbt10/indexion/src/agent/orient/types.LocalFileBrief, preview_limit? : Int) -> @trkbt10/vcdb/core/types.Attrs
+pub fn build_owner_map_entries(Array[@model.AgentOrientMapFile], Array[@types.LocalDocSource], @model.AgentOrientMap?, Array[String]) -> Array[@model.AgentOrientMapOwner]
 
-pub fn build_or_update_orient_map(@model.AgentOrientConfig, Array[@trkbt10/indexion/src/agent/orient/types.LocalFileBrief], @model.AgentOrientMap?) -> @model.AgentOrientMap
-
-pub fn build_owner_map_entries(Array[@model.AgentOrientMapFile], Array[@trkbt10/indexion/src/agent/orient/types.LocalDocSource], @model.AgentOrientMap?, Array[String]) -> Array[@model.AgentOrientMapOwner]
-
-pub fn build_owner_map_entry(String, Array[@model.AgentOrientMapFile], Array[@trkbt10/indexion/src/agent/orient/types.LocalDocSource]) -> @model.AgentOrientMapOwner
+pub fn build_owner_map_entry(String, Array[@model.AgentOrientMapFile], Array[@types.LocalDocSource]) -> @model.AgentOrientMapOwner
 
 pub fn cached_file_hashes(@model.AgentOrientMap?) -> Map[String, String]
 
 pub fn cached_owner_for(String, @model.AgentOrientMap?) -> @model.AgentOrientMapOwner?
 
-pub async fn checkpoint_cache(OrientCacheHandle) -> Unit raise OrientCacheError
-
-pub fn collect_wiki_docs(String, Array[String]) -> Array[@trkbt10/indexion/src/agent/orient/types.LocalDocSource]
-
-pub fn current_orient_cache_status(OrientCacheHandle) -> @model.AgentOrientMapStatus raise OrientCacheError
+pub fn collect_wiki_docs(String, Array[String]) -> Array[@types.LocalDocSource]
 
 pub fn deleted_file_paths(Map[String, String], Map[String, String]) -> Array[String]
 
-pub fn doc_source_exists(Array[@trkbt10/indexion/src/agent/orient/types.LocalDocSource], String, String) -> Bool
+pub fn doc_source_exists(Array[@types.LocalDocSource], String, String) -> Bool
+
+pub fn file_from_brief(@types.LocalFileBrief) -> @model.AgentOrientMapFile
 
 pub fn is_documentation_path(String) -> Bool
 
-pub fn load_cached_orient_map(@model.AgentOrientConfig) -> @model.AgentOrientMap?
+pub fn knowledge_hash(Array[@types.LocalDocSource]) -> String
 
-pub fn load_or_build_provider(@model.AgentOrientConfig, Array[String]?, Int) -> OrientVocabularyState
+pub fn load_cached(@model.AgentOrientConfig) -> @model.AgentOrientMap?
 
-pub fn load_wiki_manifest(String) -> @trkbt10/indexion/src/agent/orient/types.LocalWikiManifest?
+pub fn load_wiki_manifest(String) -> @types.LocalWikiManifest?
 
 pub fn map_status_for_cached(@model.AgentOrientMap) -> @model.AgentOrientMapStatus
 
-pub async fn open_cache(@model.AgentOrientConfig, OrientCacheOpenMode, @embed.TfidfEmbeddingProvider) -> OrientCacheHandle raise OrientCacheError
-
-pub async fn open_cache_for_update(@model.AgentOrientConfig, Array[String], Int) -> OrientCacheHandle raise OrientCacheError
-
-pub fn orient_knowledge_hash(Array[@trkbt10/indexion/src/agent/orient/types.LocalDocSource]) -> String
-
-pub fn orient_map_file_from_brief(@trkbt10/indexion/src/agent/orient/types.LocalFileBrief) -> @model.AgentOrientMapFile
-
 pub fn orient_map_path(@model.AgentOrientConfig) -> String
-
-pub fn orient_map_version() -> String
-
-pub fn orient_path_vector_id(String) -> @trkbt10/vcdb/core/types.VectorId
-
-pub let orient_summary_preview_limit : Int
-
-pub fn orient_writer_lock_path(@model.AgentOrientConfig) -> String
 
 pub fn owner_dir(String) -> String
 
@@ -74,186 +49,29 @@ pub fn owner_files_still_match(@model.AgentOrientMapOwner, Array[@model.AgentOri
 
 pub fn owner_paths(Array[@model.AgentOrientMapOwner]) -> Array[String]
 
-pub fn persist_provider(@model.AgentOrientConfig, @embed.TfidfEmbeddingProvider) -> Unit raise OrientCacheLayoutStorageError
-
-pub async fn prepare_orient_cache_runtime(@model.AgentOrientConfig) -> OrientCacheRuntimeReadiness
-
 pub fn push_unique_dir(Array[String], String) -> Unit
-
-pub fn query_orient_cache(OrientCacheHandle, String, Int) -> OrientQueryResult raise OrientCacheError
-
-pub async fn rebuild_empty_cache(@model.AgentOrientConfig, @embed.TfidfEmbeddingProvider) -> OrientCacheHandle raise OrientCacheError
-
-pub fn record_to_cached_file(@trkbt10/vcdb/core/types.VectorId, @trkbt10/vcdb/core/types.VectorRecord) -> OrientCachedFile? raise OrientRecordSchemaError
 
 pub fn refreshed_map_status(Int, Array[@model.AgentOrientMapOwner], Array[String], Array[String], Array[String], Bool, Array[String], Array[String]) -> @model.AgentOrientMapStatus
 
 pub fn reused_owner_dirs(Array[@model.AgentOrientMapOwner], Array[String]) -> Array[String]
 
-pub fn save_orient_map(@model.AgentOrientConfig, @model.AgentOrientMap) -> Unit
+pub fn save(@model.AgentOrientConfig, @model.AgentOrientMap) -> Unit
 
 pub fn source_matches_owner(String, String) -> Bool
 
 pub fn trim_trailing_slash(String) -> String
 
-pub async fn try_acquire_orient_writer_lock(@model.AgentOrientConfig) -> OrientWriterLock raise OrientWriterLockError
+pub fn version() -> String
 
-pub fn validate_record_path_for_overwrite(String, @trkbt10/vcdb/core/types.VectorRecord) -> Unit raise OrientRecordSchemaError
+pub fn wiki_page_covers_owner(@types.LocalWikiPage, String) -> Bool
 
-pub fn vector_id_for_path(String) -> @trkbt10/vcdb/core/types.VectorId
-
-pub fn wiki_page_covers_owner(@trkbt10/indexion/src/agent/orient/types.LocalWikiPage, String) -> Bool
-
-pub fn wiki_page_is_owner_specific(@trkbt10/indexion/src/agent/orient/types.LocalWikiPage) -> Bool
+pub fn wiki_page_is_owner_specific(@types.LocalWikiPage) -> Bool
 
 // Errors
-pub(all) suberror OrientCacheError {
-  OrientCacheUnavailable(String)
-  OrientCacheStorageFailure(String)
-  OrientCacheReplayFailure(String)
-  OrientCacheDatabaseFailure(String)
-  OrientCacheCheckpointFailure(String)
-  OrientCacheRecordFailure(String)
-}
-
-pub(all) suberror OrientCacheLayoutStorageError {
-  OrientCacheLayoutStorageError(String)
-}
-
-pub(all) suberror OrientRecordSchemaError {
-  PathIdentityCollision(String, String, String)
-  MissingRecordPath(String)
-  MissingRecordAttr(String)
-  NonStringRecordAttr(String, String)
-}
-
-pub(all) suberror OrientWriterLockError {
-  WriterAlreadyActive(String)
-  WriterLockStorageError(String)
-}
 
 // Types and methods
-type OrientCacheHandle
-pub fn OrientCacheHandle::cache_version(Self) -> String
-pub fn OrientCacheHandle::count(Self, filter? : @filter.FilterExpr?) -> Int
-pub fn OrientCacheHandle::dim(Self) -> Int
-pub fn OrientCacheHandle::lookup_id(Self, @trkbt10/vcdb/core/types.VectorId) -> OrientCachedFile? raise OrientCacheError
-pub fn OrientCacheHandle::lookup_path(Self, String) -> OrientCachedFile? raise OrientCacheError
-pub fn OrientCacheHandle::provider(Self) -> @embed.TfidfEmbeddingProvider
-pub async fn OrientCacheHandle::remove_id(Self, @trkbt10/vcdb/core/types.VectorId, timestamp_ns? : Int64) -> Bool raise OrientCacheError
-pub async fn OrientCacheHandle::remove_path(Self, String, timestamp_ns? : Int64) -> Bool raise OrientCacheError
-pub fn OrientCacheHandle::scan(Self, filter? : @filter.FilterExpr?, offset? : Int64?, limit? : Int) -> Array[OrientCachedFile] raise OrientCacheError
-pub fn OrientCacheHandle::search(Self, Array[Double], Int, filter? : @filter.FilterExpr?) -> Array[OrientCacheSearchHit] raise OrientCacheError
-pub async fn OrientCacheHandle::upsert_brief(Self, @trkbt10/indexion/src/agent/orient/types.LocalFileBrief, timestamp_ns? : Int64) -> Unit raise OrientCacheError
-pub async fn OrientCacheHandle::upsert_many(Self, Array[@trkbt10/indexion/src/agent/orient/types.LocalFileBrief], timestamp_ns? : Int64) -> Unit raise OrientCacheError
-
-type OrientCacheInvalidReason derive(Eq, @debug.Debug)
-
-type OrientCacheLayout derive(Eq, @debug.Debug)
-
-type OrientCacheMetadata derive(Eq, ToJson, @debug.Debug, @json.FromJson)
-
-type OrientCacheMetadataRead derive(Eq, @debug.Debug)
-
-type OrientCacheOpenDecision derive(Eq, @debug.Debug)
-
-pub(all) enum OrientCacheOpenMode {
-  OrientCacheReadWrite
-  OrientCacheReadOnly
-} derive(Eq, @debug.Debug)
-
-pub(all) struct OrientCacheRuntimeReadiness {
-  persistence_ready : Bool
-  embedding_ready : Bool
-  path_hash_ready : Bool
-  filter_ready : Bool
-  lock_path : String
-  cache_exists : Bool
-} derive(Eq, @debug.Debug)
-
-pub(all) struct OrientCacheSearchHit {
-  file : OrientCachedFile
-  score : Double
-}
-
-pub(all) struct OrientCacheUpdateResult {
-  status : @model.AgentOrientMapStatus
-  new_files : Array[String]
-  changed_files : Array[String]
-  deleted_files : Array[String]
-  unchanged_files : Array[String]
-  upserted_files : Array[String]
-  removed_files : Array[String]
-  embedding_count : Int
-  upsert_count : Int
-  remove_count : Int
-}
-
-pub(all) struct OrientCachedFile {
-  vector_id : @trkbt10/vcdb/core/types.VectorId
-  path : String
-  role : String
-  owner : String
-  source_hash : String
-  structural_summary : String
-  summary_preview : String
-  summary_full : String?
-} derive(Eq)
-
-pub(all) struct OrientDocumentationCandidate {
-  path : String
-  role : String
-  owner : String
-  score : Double
-  summary_preview : String
-  summary_full : String?
-}
-
-pub(all) struct OrientEvidenceCandidate {
-  path : String
-  role : String
-  score : Double
-  summary : String
-}
-
-pub(all) struct OrientOwnerCandidate {
-  path : String
-  score : Double
-  implementation_paths : Array[String]
-  top_implementation_path : String
-  summary_preview : String
-}
-
-pub(all) struct OrientQueryCandidate {
-  path : String
-  role : String
-  owner : String
-  score : Double
-  summary_preview : String
-}
-
-pub(all) struct OrientQueryResult {
-  task : String
-  query_dim : Int
-  owner_candidates : Array[OrientOwnerCandidate]
-  implementation_hits : Array[OrientQueryCandidate]
-  consumer_candidates : Array[OrientQueryCandidate]
-  cli_consumers : Array[OrientQueryCandidate]
-  documentation_sources : Array[OrientDocumentationCandidate]
-  forbidden_surfaces : Array[OrientQueryCandidate]
-  preflight_candidates : Array[OrientQueryCandidate]
-  evidence_candidates : Array[OrientEvidenceCandidate]
-}
-
-pub(all) enum OrientVocabularyState {
-  OrientVocabularyLoaded(@embed.TfidfEmbeddingProvider)
-  OrientVocabularyBuilt(@embed.TfidfEmbeddingProvider)
-  OrientVocabularyInvalid(OrientCacheInvalidReason)
-}
-
-type OrientWriterLock
-pub fn OrientWriterLock::release(Self) -> Unit
 
 // Type aliases
 
 // Traits
+

@@ -74,7 +74,7 @@ fn source_summary_for_cache(
     summary.write_string("\n")
     summary.to_string()
   } else {
-    bounded_source_preview(file.content, @map.orient_summary_preview_limit)
+    bounded_source_preview(file.content, @cache.summary_preview_limit)
   }
 }
 

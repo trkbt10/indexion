@@ -65,7 +65,7 @@ test "agent orient source: code briefs use bounded cache summaries" {
   assert_true(
     brief.structural_summary.contains("cache source module documentation"),
   )
-  assert_true(brief.summary.length() <= @map.orient_summary_preview_limit)
+  assert_true(brief.summary.length() <= @cache.summary_preview_limit)
   assert_false(brief.summary.contains(sentinel))
   assert_false(brief.summary.contains(content))
   assert_false(brief.summary_terms.contains("sentinel"))
@@ -104,7 +104,7 @@ test "agent orient source: cached code briefs are re-bounded before reuse" {
   let brief = briefs[0]
   assert_eq(brief.structural_summary, cached_file.structural_summary)
   assert_eq(brief.role, cached_file.role)
-  assert_true(brief.summary.length() <= @map.orient_summary_preview_limit)
+  assert_true(brief.summary.length() <= @cache.summary_preview_limit)
   assert_false(brief.summary.contains(sentinel))
   assert_false(brief.summary.contains(cached_file.summary))
 }

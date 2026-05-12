@@ -97,7 +97,7 @@ pub fn doc_source_exists(
 }
 
 ///|
-pub fn orient_knowledge_hash(wiki_docs : Array[LocalDocSource]) -> String {
+pub fn knowledge_hash(wiki_docs : Array[LocalDocSource]) -> String {
   let parts : Array[String] = []
   for doc in wiki_docs {
     parts.push(doc.owner + "\t" + doc.path + "\t" + doc.source_hash)

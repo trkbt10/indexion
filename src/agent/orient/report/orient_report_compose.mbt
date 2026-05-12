@@ -183,7 +183,7 @@ pub fn orient_report_from_map(
 /// while preserving the existing public report model and renderer inputs.
 pub fn orient_report_from_query(
   config : AgentOrientConfig,
-  query : @map.OrientQueryResult,
+  query : @cache.QueryResult,
   status : @types.AgentOrientMapStatus,
 ) -> AgentOrientReport {
   let owners = report_owners_from_query(query.owner_candidates, config.limit)
@@ -227,7 +227,7 @@ pub fn orient_report_from_query(
 
 ///|
 fn report_owners_from_query(
-  candidates : Array[@map.OrientOwnerCandidate],
+  candidates : Array[@cache.OwnerCandidate],
   limit : Int,
 ) -> Array[AgentOrientItem] {
   let result : Array[AgentOrientItem] = []
@@ -252,7 +252,7 @@ fn report_owners_from_query(
 
 ///|
 fn report_knowledge_sources_from_query(
-  candidates : Array[@map.OrientDocumentationCandidate],
+  candidates : Array[@cache.DocumentationCandidate],
   limit : Int,
 ) -> Array[AgentOrientItem] {
   let result : Array[AgentOrientItem] = []
@@ -273,8 +273,8 @@ fn report_knowledge_sources_from_query(
 
 ///|
 fn report_consumers_from_query(
-  consumers : Array[@map.OrientQueryCandidate],
-  cli_consumers : Array[@map.OrientQueryCandidate],
+  consumers : Array[@cache.QueryCandidate],
+  cli_consumers : Array[@cache.QueryCandidate],
   limit : Int,
 ) -> Array[AgentOrientItem] {
   let result : Array[AgentOrientItem] = []
@@ -296,7 +296,7 @@ fn report_consumers_from_query(
 ///|
 fn push_report_consumer_item(
   result : Array[AgentOrientItem],
-  candidate : @map.OrientQueryCandidate,
+  candidate : @cache.QueryCandidate,
 ) -> Unit {
   if candidate.score <= 0.0 {
     return
@@ -310,7 +310,7 @@ fn push_report_consumer_item(
 
 ///|
 fn report_forbidden_from_query(
-  candidates : Array[@map.OrientQueryCandidate],
+  candidates : Array[@cache.QueryCandidate],
   limit : Int,
 ) -> Array[AgentOrientItem] {
   let result : Array[AgentOrientItem] = []
@@ -331,7 +331,7 @@ fn report_forbidden_from_query(
 
 ///|
 fn report_preflight_from_query(
-  candidates : Array[@map.OrientQueryCandidate],
+  candidates : Array[@cache.QueryCandidate],
   limit : Int,
 ) -> Array[AgentOrientItem] {
   let result : Array[AgentOrientItem] = []
@@ -352,7 +352,7 @@ fn report_preflight_from_query(
 
 ///|
 fn report_evidence_from_query(
-  candidates : Array[@map.OrientEvidenceCandidate],
+  candidates : Array[@cache.EvidenceCandidate],
   limit : Int,
 ) -> Array[AgentOrientEvidence] {
   let result : Array[AgentOrientEvidence] = []

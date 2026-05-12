@@ -141,7 +141,7 @@ async fn expect_orient_entry_writer_conflict(
     let _report = orient_agent(config)
     fail("expected orient entry update to raise writer lock conflict")
   } catch {
-    @map.WriterAlreadyActive(path) => assert_eq(path, expected_path)
+    @cache.WriterAlreadyActive(path) => assert_eq(path, expected_path)
     err => raise err
   }
 }
@@ -154,7 +154,7 @@ async fn expect_orient_entry_cache_unavailable(
     let _report = orient_agent(config)
     fail("expected orient entry read-only mode to raise cache unavailable")
   } catch {
-    @map.OrientCacheUnavailable(_) => ()
+    @cache.Unavailable(_) => ()
     err => raise err
   }
 }
@@ -212,10 +212,10 @@ async test "orient entry: update mode refuses mutation without writer lock" {
   reset_orient_entry_fixture(name)
   let config = orient_entry_config(name, false)
   seed_orient_entry_repo(config)
-  let lock = @map.try_acquire_orient_writer_lock(config)
+  let lock = @cache.try_acquire_writer_lock(config)
   expect_orient_entry_writer_conflict(
     config,
-    @map.orient_writer_lock_path(config),
+    @cache.writer_lock_path(config),
   )
   assert_orient_entry_cache_unwritten(config)
   lock.release()
@@ -229,7 +229,7 @@ async test "orient entry: read-only mode queries existing cache without writer l
   seed_orient_entry_repo(update_config)
   let update_report = orient_agent(update_config)
   let read_config = { ..update_config, no_update: true }
-  let lock = @map.try_acquire_orient_writer_lock(update_config)
+  let lock = @cache.try_acquire_writer_lock(update_config)
   let read_report = orient_agent(read_config)
   lock.release()
   assert_eq(read_report.task, update_report.task)
@@ -248,5 +248,5 @@ async test "orient entry: read-only invalid cache does not rebuild or write" {
   seed_orient_entry_repo(config)
   expect_orient_entry_cache_unavailable(config)
   assert_orient_entry_cache_unwritten(config)
-  assert_false(orient_entry_path_exists(@map.orient_writer_lock_path(config)))
+  assert_false(orient_entry_path_exists(@cache.writer_lock_path(config)))
 }

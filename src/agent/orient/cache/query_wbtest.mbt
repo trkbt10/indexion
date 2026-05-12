@@ -44,11 +44,11 @@ async fn reset_orient_query_fixture(cache_dir : String) -> Unit {
 }
 
 ///|
-async fn orient_query_test_handle(name : String) -> OrientCacheHandle {
+async fn orient_query_test_handle(name : String) -> Handle {
   let config = orient_query_test_config(name)
   reset_orient_query_fixture(config.cache_dir)
   let provider = orient_query_test_provider()
-  let handle = rebuild_empty_cache(config, provider)
+  let handle = rebuild_empty(config, provider)
   let long_doc = "# Orient query migration\n" +
     "Documentation source explains vector query migration role filters and report composition. " +
     "This full documentation field is allowed for documentation records."
@@ -59,7 +59,7 @@ async fn orient_query_test_handle(name : String) -> OrientCacheHandle {
   handle.upsert_many(
     [
       orient_query_test_brief(
-        "src/agent/orient/map/orient_cache_query.mbt", "implementation", long_evidence,
+        "src/agent/orient/cache/query.mbt", "implementation", long_evidence,
       ),
       orient_query_test_brief(
         "src/agent/orient/report/orient_report_compose.mbt", "implementation", "orient cache query service implementation owner candidate report adapter",
@@ -86,8 +86,8 @@ test "orient cache query: role filter helper uses direct role attrs" {
     "packages/editor/src/orient-panel.mbt", "consumer", "consumer surface calls vector query service",
   )
   let attrs = attrs_from_brief(brief, preview_limit=64)
-  let consumer_filter = orient_query_role_filter("consumer")
-  let implementation_filter = orient_query_role_filter("implementation")
+  let consumer_filter = query_role_filter("consumer")
+  let implementation_filter = query_role_filter("implementation")
   assert_true(@vcdb_filter.eval_filter(consumer_filter, attrs))
   assert_false(@vcdb_filter.eval_filter(implementation_filter, attrs))
 }
@@ -95,7 +95,7 @@ test "orient cache query: role filter helper uses direct role attrs" {
 ///|
 async test "orient cache query: implementation filter drives owner aggregation" {
   let handle = orient_query_test_handle("implementation-owners")
-  let result = query_orient_cache(
+  let result = query(
     handle, "build vector similarity query service role filters", 2,
   )
   assert_eq(result.query_dim, handle.provider().dim())
@@ -106,7 +106,7 @@ async test "orient cache query: implementation filter drives owner aggregation" 
   assert_eq(result.owner_candidates.length(), 2)
   assert_true(
     result.owner_candidates[0].implementation_paths.contains(
-      "src/agent/orient/map/orient_cache_query.mbt",
+      "src/agent/orient/cache/query.mbt",
     ),
   )
   for owner in result.owner_candidates {
@@ -117,7 +117,7 @@ async test "orient cache query: implementation filter drives owner aggregation" 
 ///|
 async test "orient cache query: consumer and cli role filters are visible" {
   let handle = orient_query_test_handle("consumer-filters")
-  let result = query_orient_cache(
+  let result = query(
     handle, "wire consumer surface and command line orient query service", 4,
   )
   assert_eq(result.consumer_candidates.length(), 1)
@@ -138,21 +138,21 @@ async test "orient cache query: consumer and cli role filters are visible" {
 ///|
 async test "orient cache query: documentation filter keeps preview and full doc" {
   let handle = orient_query_test_handle("documentation-filter")
-  let result = query_orient_cache(
+  let result = query(
     handle, "read documentation source for orient query migration", 3,
   )
   assert_eq(result.documentation_sources.length(), 1)
   let doc = result.documentation_sources[0]
   assert_eq(doc.role, "documentation")
   assert_eq(doc.path, "docs/orient-query.md")
-  assert_true(doc.summary_preview.length() <= orient_summary_preview_limit)
+  assert_true(doc.summary_preview.length() <= summary_preview_limit)
   assert_true(doc.summary_full is Some(_))
 }
 
 ///|
 async test "orient cache query: evidence and preflight candidates are bounded" {
   let handle = orient_query_test_handle("bounded-evidence")
-  let result = query_orient_cache(
+  let result = query(
     handle, "vector similarity query service role filters implementation owner",
     3,
   )
@@ -162,7 +162,7 @@ async test "orient cache query: evidence and preflight candidates are bounded" {
   assert_true(result.evidence_candidates.length() <= 3)
   for evidence in result.evidence_candidates {
     assert_true(
-      evidence.summary.length() <= orient_query_evidence_preview_limit + 3,
+      evidence.summary.length() <= query_evidence_preview_limit + 3,
     )
   }
 }

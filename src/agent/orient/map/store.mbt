@@ -31,7 +31,7 @@ fn map_file_is_consumer(file : AgentOrientMapFile) -> Bool {
 }
 
 ///|
-pub fn orient_map_version() -> String {
+pub fn version() -> String {
   "agent-orient-map-v1"
 }
 
@@ -42,12 +42,12 @@ pub fn orient_map_path(config : AgentOrientConfig) -> String {
 }
 
 ///|
-pub fn load_cached_orient_map(config : AgentOrientConfig) -> AgentOrientMap? {
+pub fn load_cached(config : AgentOrientConfig) -> AgentOrientMap? {
   let path = orient_map_path(config)
   let content = @fs.read_file_to_string(path) catch { _ => return None }
   let json = @json.parse(content) catch { _ => return None }
   let map : AgentOrientMap = @json.from_json(json) catch { _ => return None }
-  if map.version == orient_map_version() {
+  if map.version == version() {
     Some(map)
   } else {
     None
@@ -55,7 +55,7 @@ pub fn load_cached_orient_map(config : AgentOrientConfig) -> AgentOrientMap? {
 }
 
 ///|
-pub fn save_orient_map(
+pub fn save(
   config : AgentOrientConfig,
   map : AgentOrientMap,
 ) -> Unit {

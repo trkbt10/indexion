@@ -32,7 +32,7 @@ async test "orient vocabulary store: fresh build persists and second run loads v
     Some(["zephyr zephyr zephyr alpha"]),
     2,
   )
-  guard built_state is OrientVocabularyBuilt(provider) else {
+  guard built_state is VocabularyBuilt(provider) else {
     fail("expected fresh cache to build a provider from the full corpus")
   }
   assert_true(orient_vocabulary_has_signal(provider.embed("zephyr")))
@@ -43,7 +43,7 @@ async test "orient vocabulary store: fresh build persists and second run loads v
     Some(["mistral mistral mistral"]),
     2,
   )
-  guard loaded_state is OrientVocabularyLoaded(loaded_provider) else {
+  guard loaded_state is VocabularyLoaded(loaded_provider) else {
     fail("expected second run to load the persisted vocabulary")
   }
   assert_true(orient_vocabulary_has_signal(loaded_provider.embed("zephyr")))
@@ -55,7 +55,7 @@ async test "orient vocabulary store: missing state invalidates without corpus re
   let config = orient_vocabulary_test_config("missing-no-rebuild")
   reset_orient_vocabulary_fixture(config.cache_dir)
   let state = load_or_build_provider(config, None, 4)
-  guard state is OrientVocabularyInvalid(reason) else {
+  guard state is VocabularyInvalid(reason) else {
     fail("expected missing vocabulary to invalidate without implicit rebuild")
   }
   assert_true(reason == MissingVocabulary)
@@ -65,7 +65,7 @@ async test "orient vocabulary store: missing state invalidates without corpus re
 async test "orient vocabulary store: empty payload invalidates cache state" {
   let config = orient_vocabulary_test_config("empty-payload")
   reset_orient_vocabulary_fixture(config.cache_dir)
-  let layout = orient_cache_layout(config)
+  let layout = layout_for(config)
   @config_paths.ensure_dir_recursive(layout.root_dir)
   @fs.write_string_to_file(
     layout.vocabulary_path,
@@ -74,10 +74,36 @@ async test "orient vocabulary store: empty payload invalidates cache state" {
     _ => fail("failed to write empty vocabulary fixture")
   }
   let state = load_or_build_provider(config, None, 4)
-  guard state is OrientVocabularyInvalid(reason) else {
+  guard state is VocabularyInvalid(reason) else {
     fail("expected empty vocabulary to invalidate without implicit rebuild")
   }
   assert_true(reason == VocabularyEmpty)
+}
+
+///|
+async test "orient vocabulary store: loaded provider preserves dimension and determinism" {
+  let config = orient_vocabulary_test_config("dim-determinism")
+  reset_orient_vocabulary_fixture(config.cache_dir)
+  let built_state = load_or_build_provider(
+    config,
+    Some(["alpha beta gamma delta", "alpha alpha beta"]),
+    6,
+  )
+  guard built_state is VocabularyBuilt(built_provider) else {
+    fail("expected fresh cache to build provider")
+  }
+  let first = built_provider.embed("alpha beta")
+  let second = built_provider.embed("alpha beta")
+  assert_eq(first.length(), 6)
+  assert_eq(first, second)
+  persist_provider(config, built_provider)
+  let loaded_state = load_or_build_provider(config, None, 6)
+  guard loaded_state is VocabularyLoaded(loaded_provider) else {
+    fail("expected second run to load persisted vocabulary")
+  }
+  let reloaded = loaded_provider.embed("alpha beta")
+  assert_eq(reloaded.length(), 6)
+  assert_eq(reloaded, first)
 }
 
 ///|
@@ -86,12 +112,12 @@ async test "orient vocabulary store: mismatched payload prevents database reuse"
   reset_orient_vocabulary_fixture(config.cache_dir)
   let metadata_provider = @text_embed.TfidfEmbeddingProvider::new(4)
   metadata_provider.build_vocabulary(["alpha beta gamma delta"])
-  initialize_orient_cache_layout(config, metadata_provider)
+  initialize_layout_for(config, metadata_provider)
   let mismatched_provider = @text_embed.TfidfEmbeddingProvider::new(2)
   mismatched_provider.build_vocabulary(["alpha beta"])
   persist_provider(config, mismatched_provider)
   assert_eq(
-    decide_orient_cache_open(config, OrientCacheReadWrite, metadata_provider),
-    OrientCacheFreshBuild(VocabularyDimensionMismatch(2, 4)),
+    decide_open(config, ReadWrite, metadata_provider),
+    FreshBuild(VocabularyDimensionMismatch(2, 4)),
   )
 }

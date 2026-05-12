@@ -57,9 +57,65 @@ fn orient_command() -> @argparse.Command {
 }
 
 ///|
+extern "c" fn agent_orient_native_exit(code : Int) = "exit"
+
+///|
+fn agent_orient_exit_with_code(code : Int) -> Unit {
+  agent_orient_native_exit(code)
+  panic()
+}
+
+///|
+fn agent_orient_fail(message : String) -> Unit {
+  println("error: " + message)
+  agent_orient_exit_with_code(1)
+}
+
+///|
 async fn run_orient(matches : @argparse.Matches) -> Unit {
   let config = orient_config_from_matches(matches)
-  let report = @agent_orient.orient_agent(config)
+  let report = @agent_orient.orient_agent(config) catch {
+    @cache.WriterAlreadyActive(path) => {
+      agent_orient_fail(
+        "agent orient: another writer holds the cache lock at `" +
+        path +
+        "`. Re-run after it finishes or pass --no-update.",
+      )
+      return
+    }
+    @cache.WriterLockStorageError(message) => {
+      agent_orient_fail("agent orient: writer lock failed: " + message)
+      return
+    }
+    @cache.Unavailable(message) => {
+      agent_orient_fail("agent orient: cache unavailable: " + message)
+      return
+    }
+    @cache.StorageFailure(message) => {
+      agent_orient_fail("agent orient: cache storage failure: " + message)
+      return
+    }
+    @cache.ReplayFailure(message) => {
+      agent_orient_fail("agent orient: cache replay failure: " + message)
+      return
+    }
+    @cache.DatabaseFailure(message) => {
+      agent_orient_fail("agent orient: cache database failure: " + message)
+      return
+    }
+    @cache.CheckpointFailure(message) => {
+      agent_orient_fail("agent orient: cache checkpoint failure: " + message)
+      return
+    }
+    @cache.RecordFailure(message) => {
+      agent_orient_fail("agent orient: cache record failure: " + message)
+      return
+    }
+    err => {
+      agent_orient_fail("agent orient: " + err.to_string())
+      return
+    }
+  }
   let rendered = match @common.arg_str(matches, "format", "md") {
     "json" => report.to_json().stringify(indent=2) + "\n"
     _ => render_markdown(report)

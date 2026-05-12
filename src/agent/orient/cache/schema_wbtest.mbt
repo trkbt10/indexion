@@ -47,28 +47,28 @@ fn assert_no_json_packed_schema_attr(attrs : @vcdb_types.Attrs) -> Unit raise {
 
 ///|
 test "orient vcdb schema: vector id is stable for normalized path" {
-  let path = "src/agent/orient/map/orient_cache_schema.mbt"
+  let path = "src/agent/orient/cache/schema.mbt"
   let first = vector_id_for_path(path)
   let second = vector_id_for_path(path)
-  let other = vector_id_for_path("src/agent/orient/map/other.mbt")
+  let other = vector_id_for_path("src/agent/orient/cache/other.mbt")
   assert_eq(first, second)
   assert_true(first != other)
   assert_true(first.as_int64() is Some(_))
-  assert_eq(first, orient_path_vector_id(path))
+  assert_eq(first, vector_id_for_path(path))
 }
 
 ///|
 test "orient vcdb schema: code brief attrs are discrete strings with bounded preview" {
   let summary = "0123456789abcdefghijklmnopqrstuvwxyz"
   let brief = orient_schema_test_brief(
-    "src/agent/orient/map/orient_cache_schema.mbt", "implementation", summary,
+    "src/agent/orient/cache/schema.mbt", "implementation", summary,
   )
   let attrs = attrs_from_brief(brief, preview_limit=12)
   assert_eq(attrs.size(), 6)
   assert_no_json_packed_schema_attr(attrs)
   assert_eq(expect_schema_attr(attrs, "path"), brief.path)
   assert_eq(expect_schema_attr(attrs, "role"), "implementation")
-  assert_eq(expect_schema_attr(attrs, "owner"), "src/agent/orient/map")
+  assert_eq(expect_schema_attr(attrs, "owner"), "src/agent/orient/cache")
   assert_eq(expect_schema_attr(attrs, "source_hash"), brief.source_hash)
   assert_eq(
     expect_schema_attr(attrs, "structural_summary"),
@@ -129,7 +129,7 @@ fn observe_path_identity_collision(
 ///|
 test "orient vcdb schema: existing record path is validated before overwrite" {
   let existing = orient_schema_test_brief(
-    "src/agent/orient/map/existing.mbt", "implementation", "Existing file summary",
+    "src/agent/orient/cache/existing.mbt", "implementation", "Existing file summary",
   )
   let record : @vcdb_types.VectorRecord = {
     vector: [0.0, 1.0],
@@ -138,12 +138,50 @@ test "orient vcdb schema: existing record path is validated before overwrite" {
   validate_record_path_for_overwrite(existing.path, record)
   assert_true(
     observe_path_identity_collision(
-      "src/agent/orient/map/new-colliding-path.mbt", record,
+      "src/agent/orient/cache/new-colliding-path.mbt", record,
     ) ==
     Some(
-      "src/agent/orient/map/new-colliding-path.mbt|src/agent/orient/map/existing.mbt",
+      "src/agent/orient/cache/new-colliding-path.mbt|src/agent/orient/cache/existing.mbt",
     ),
   )
+}
+
+///|
+fn repeat_string(unit : String, count : Int) -> String {
+  let buf = StringBuilder::new()
+  for _ in 0..<count {
+    buf.write_string(unit)
+  }
+  buf.to_string()
+}
+
+///|
+test "orient vcdb schema: code brief preview stays bounded for huge summaries" {
+  // 16 KiB summary; preview must still be capped by summary_preview_limit.
+  let huge = repeat_string("orient cache vector vocabulary record schema ", 360)
+  let brief = orient_schema_test_brief(
+    "src/agent/orient/cache/schema.mbt", "implementation", huge,
+  )
+  assert_true(brief.summary.length() > summary_preview_limit)
+  let attrs = attrs_from_brief(brief)
+  assert_eq(attrs.size(), 6)
+  assert_no_json_packed_schema_attr(attrs)
+  let preview = expect_schema_attr(attrs, "summary_preview")
+  assert_true(preview.length() <= summary_preview_limit)
+  assert_true(attr_string(attrs, "summary_full") is None)
+}
+
+///|
+test "orient vcdb schema: documentation brief retains huge summary in summary_full" {
+  let huge = repeat_string("# orient docs section\nbody body body ", 1024)
+  let brief = orient_schema_test_brief(
+    "docs/orient-huge.md", "documentation", huge,
+  )
+  let attrs = attrs_from_brief(brief)
+  assert_eq(attrs.size(), 7)
+  assert_eq(expect_schema_attr(attrs, "summary_full"), huge)
+  let preview = expect_schema_attr(attrs, "summary_preview")
+  assert_true(preview.length() <= summary_preview_limit)
 }
 
 ///|

@@ -1,5 +1,5 @@
 ///|
-struct OrientCacheLayout {
+struct Layout {
   root_dir : String
   metadata_path : String
   vocabulary_path : String
@@ -9,7 +9,7 @@ struct OrientCacheLayout {
 } derive(Eq, Debug)
 
 ///|
-struct OrientCacheMetadata {
+struct Metadata {
   cache_version : String
   schema_version : Int
   dim : Int
@@ -17,13 +17,13 @@ struct OrientCacheMetadata {
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
-pub(all) enum OrientCacheOpenMode {
-  OrientCacheReadWrite
-  OrientCacheReadOnly
+pub(all) enum OpenMode {
+  ReadWrite
+  ReadOnly
 } derive(Eq, Debug)
 
 ///|
-enum OrientCacheInvalidReason {
+enum InvalidReason {
   MissingMetadata
   OldJsonLayout
   MetadataUnreadable
@@ -37,47 +37,47 @@ enum OrientCacheInvalidReason {
 } derive(Eq, Debug)
 
 ///|
-enum OrientCacheOpenDecision {
-  OrientCacheReady(OrientCacheLayout)
-  OrientCacheFreshBuild(OrientCacheInvalidReason)
-  OrientCacheUnavailable(OrientCacheInvalidReason)
+enum OpenDecision {
+  Ready(Layout)
+  FreshBuild(InvalidReason)
+  Unavailable(InvalidReason)
 } derive(Eq, Debug)
 
 ///|
-pub(all) suberror OrientCacheLayoutStorageError {
-  OrientCacheLayoutStorageError(String)
+pub(all) suberror LayoutStorageError {
+  LayoutStorageError(String)
 }
 
 ///|
 #warnings("-unused_value")
-impl Show for OrientCacheOpenDecision with output(self, logger) {
+impl Show for OpenDecision with output(self, logger) {
   to_repr(self).output(logger)
 }
 
 ///|
-enum OrientCacheMetadataRead {
-  MetadataLoaded(OrientCacheMetadata)
+enum MetadataRead {
+  MetadataLoaded(Metadata)
   MetadataMissing
   MetadataInvalid
 } derive(Eq, Debug)
 
 ///|
-fn orient_cache_version() -> String {
+fn cache_version() -> String {
   "agent-orient-vcdb-v1"
 }
 
 ///|
-fn orient_cache_schema_version() -> Int {
+fn cache_schema_version() -> Int {
   1
 }
 
 ///|
-fn orient_cache_created_by() -> String {
+fn cache_created_by() -> String {
   "indexion-agent-orient"
 }
 
 ///|
-fn orient_cache_layout(config : AgentOrientConfig) -> OrientCacheLayout {
+fn layout_for(config : AgentOrientConfig) -> Layout {
   let root_dir = config.cache_dir + "/orient-vcdb"
   {
     root_dir,
@@ -85,72 +85,72 @@ fn orient_cache_layout(config : AgentOrientConfig) -> OrientCacheLayout {
     vocabulary_path: root_dir + "/tfidf-vocabulary.json",
     writer_lock_path: root_dir + "/writer.lock",
     vcdb_dir: root_dir + "/vcdb",
-    old_map_path: orient_map_path(config),
+    old_map_path: @map.orient_map_path(config),
   }
 }
 
 ///|
-fn orient_cache_metadata_for_provider(
+fn metadata_for_provider(
   provider : @text_embed.TfidfEmbeddingProvider,
-) -> OrientCacheMetadata {
+) -> Metadata {
   {
-    cache_version: orient_cache_version(),
-    schema_version: orient_cache_schema_version(),
+    cache_version: cache_version(),
+    schema_version: cache_schema_version(),
     dim: provider.dim(),
-    created_by: orient_cache_created_by(),
+    created_by: cache_created_by(),
   }
 }
 
 ///|
 #warnings("-unused_value")
-fn initialize_orient_cache_layout(
+fn initialize_layout_for(
   config : AgentOrientConfig,
   provider : @text_embed.TfidfEmbeddingProvider,
-) -> Unit raise OrientCacheLayoutStorageError {
-  let layout = orient_cache_layout(config)
+) -> Unit raise LayoutStorageError {
+  let layout = layout_for(config)
   @config_paths.ensure_dir_recursive(layout.root_dir)
   @config_paths.ensure_dir_recursive(layout.vcdb_dir)
   @fs.write_string_to_file(
     layout.metadata_path,
-    orient_cache_metadata_for_provider(provider).to_json().stringify(indent=2) +
+    metadata_for_provider(provider).to_json().stringify(indent=2) +
     "\n",
   ) catch {
     @fs.IOError(msg) =>
-      raise orient_cache_layout_storage_error(
+      raise layout_storage_error_for(
         "metadata",
         layout.metadata_path,
         msg,
       )
   }
-  write_orient_vocabulary_provider(layout, provider)
+  write_vocabulary_provider(layout, provider)
 }
 
 ///|
-fn orient_cache_layout_storage_error(
+fn layout_storage_error_for(
   target : String,
   path : String,
   message : String,
-) -> OrientCacheLayoutStorageError {
-  OrientCacheLayoutStorageError(
+) -> LayoutStorageError {
+  LayoutStorageError(
     "failed to write orient vcdb " + target + " `" + path + "`: " + message,
   )
 }
 
 ///|
 #warnings("-unused_value")
-fn read_orient_cache_metadata(
-  layout : OrientCacheLayout,
-) -> OrientCacheMetadata? {
-  match load_orient_cache_metadata(layout) {
+fn read_metadata(
+  layout : Layout,
+) -> Metadata? {
+  match load_metadata(layout) {
     MetadataLoaded(metadata) => Some(metadata)
     _ => None
   }
 }
 
 ///|
-fn load_orient_cache_metadata(
-  layout : OrientCacheLayout,
-) -> OrientCacheMetadataRead {
+fn load_metadata(
+  layout : Layout,
+) -> MetadataRead {
   if !@fs.path_exists(layout.metadata_path) {
     return MetadataMissing
   }
@@ -158,7 +158,7 @@ fn load_orient_cache_metadata(
     _ => return MetadataInvalid
   }
   let json = @json.parse(content) catch { _ => return MetadataInvalid }
-  let metadata : OrientCacheMetadata = @json.from_json(json) catch {
+  let metadata : Metadata = @json.from_json(json) catch {
     _ => return MetadataInvalid
   }
   MetadataLoaded(metadata)
@@ -166,28 +166,28 @@ fn load_orient_cache_metadata(
 
 ///|
 #warnings("-unused_value")
-fn decide_orient_cache_open(
+fn decide_open(
   config : AgentOrientConfig,
-  mode : OrientCacheOpenMode,
+  mode : OpenMode,
   provider : @text_embed.TfidfEmbeddingProvider,
-) -> OrientCacheOpenDecision {
-  let layout = orient_cache_layout(config)
-  match orient_cache_invalid_reason(layout, provider) {
-    None => OrientCacheReady(layout)
+) -> OpenDecision {
+  let layout = layout_for(config)
+  match invalid_reason_for(layout, provider) {
+    None => Ready(layout)
     Some(reason) =>
       match mode {
-        OrientCacheReadWrite => OrientCacheFreshBuild(reason)
-        OrientCacheReadOnly => OrientCacheUnavailable(reason)
+        ReadWrite => FreshBuild(reason)
+        ReadOnly => Unavailable(reason)
       }
   }
 }
 
 ///|
-fn orient_cache_invalid_reason(
-  layout : OrientCacheLayout,
+fn invalid_reason_for(
+  layout : Layout,
   provider : @text_embed.TfidfEmbeddingProvider,
-) -> OrientCacheInvalidReason? {
-  let metadata = match load_orient_cache_metadata(layout) {
+) -> InvalidReason? {
+  let metadata = match load_metadata(layout) {
     MetadataLoaded(metadata) => metadata
     MetadataMissing =>
       return Some(
@@ -199,30 +199,30 @@ fn orient_cache_invalid_reason(
       )
     MetadataInvalid => return Some(MetadataUnreadable)
   }
-  if metadata.cache_version != orient_cache_version() {
+  if metadata.cache_version != cache_version() {
     return Some(CacheVersionMismatch(metadata.cache_version))
   }
-  if metadata.schema_version != orient_cache_schema_version() {
+  if metadata.schema_version != cache_schema_version() {
     return Some(SchemaVersionMismatch(metadata.schema_version))
   }
   if metadata.dim != provider.dim() {
     return Some(MetadataDimensionMismatch(metadata.dim, provider.dim()))
   }
-  validate_orient_vocabulary(layout, provider.dim())
+  validate_vocabulary_payload(layout, provider.dim())
 }
 
 ///|
-fn validate_orient_vocabulary(
-  layout : OrientCacheLayout,
+fn validate_vocabulary_payload(
+  layout : Layout,
   expected_dim : Int,
-) -> OrientCacheInvalidReason? {
-  validate_orient_vocabulary_provider(layout, expected_dim)
+) -> InvalidReason? {
+  validate_vocabulary_provider(layout, expected_dim)
 }
 
 ///|
 #warnings("-unused_value")
-fn OrientCacheInvalidReason::diagnostic(
-  self : OrientCacheInvalidReason,
+fn InvalidReason::diagnostic(
+  self : InvalidReason,
 ) -> String {
   match self {
     MissingMetadata => "orient vcdb cache metadata is missing"
