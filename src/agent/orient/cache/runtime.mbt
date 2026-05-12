@@ -114,14 +114,13 @@ pub async fn try_acquire_writer_lock(
       )
   }
   if !root_exists {
-    @async_fs.mkdir(layout.root_dir, permission=0o755, recursive=true) catch {
-      err =>
-        raise WriterLockStorageError(
-          "failed to create orient vcdb lock directory `" +
-          layout.root_dir +
-          "`: " +
-          err.to_string(),
-        )
+    @config_paths.ensure_dir_recursive(layout.root_dir)
+    if !@fs.path_exists(layout.root_dir) {
+      raise WriterLockStorageError(
+        "failed to create orient vcdb lock directory `" +
+        layout.root_dir +
+        "`",
+      )
     }
   }
   let path = layout.writer_lock_path

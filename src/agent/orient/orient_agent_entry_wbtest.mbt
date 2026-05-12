@@ -1,6 +1,6 @@
 ///|
 fn orient_entry_fixture_root(name : String) -> String {
-  "/private/tmp/indexion-orient-entry/" + name
+  "/tmp/indexion-orient-entry/" + name
 }
 
 ///|

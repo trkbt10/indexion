@@ -243,14 +243,13 @@ async fn reset_database_dir(
       }
     }
   }
-  @async_fs.mkdir(layout.vcdb_dir, permission=0o755, recursive=true) catch {
-    err =>
-      raise StorageFailure(
-        "failed to create orient vcdb database directory `" +
-        layout.vcdb_dir +
-        "`: " +
-        err.to_string(),
-      )
+  @config_paths.ensure_dir_recursive(layout.vcdb_dir)
+  if !@fs.path_exists(layout.vcdb_dir) {
+    raise StorageFailure(
+      "failed to create orient vcdb database directory `" +
+      layout.vcdb_dir +
+      "`",
+    )
   }
 }
 
