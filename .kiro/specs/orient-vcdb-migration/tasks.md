@@ -87,7 +87,7 @@
   - _Boundary: ReportComposerAdapter_
 
 - [ ] 4. Integration: orient entry, CLI behavior, and build surface
-- [ ] 4.1 Integrate the async orient workflow for update and read-only modes
+- [x] 4.1 Integrate the async orient workflow for update and read-only modes
   - Coordinate writer locking, source discovery, vocabulary state, cache opening, incremental update, query execution, and report composition from the orient entry flow.
   - Ensure update mode never mutates without the writer lock and read-only mode never rebuilds or rewrites an invalid cache.
   - Preserve safe recovery behavior by relying on database replay for committed records after interruption.

@@ -2,9 +2,16 @@ supported_targets = "native"
 
 import {
   "trkbt10/indexion/src/agent/orient/map" @map,
-  "trkbt10/indexion/src/agent/orient/matching" @matching,
   "trkbt10/indexion/src/agent/orient/model" @model,
   "trkbt10/indexion/src/agent/orient/report" @report,
   "trkbt10/indexion/src/agent/orient/source" @source,
+  "trkbt10/indexion/src/agent/orient/types" @types,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
 }
+
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs" @async_fs,
+  "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/src/config" @config_paths,
+} for "wbtest"

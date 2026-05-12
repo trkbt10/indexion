@@ -55,6 +55,39 @@ pub async fn open_cache(
 }
 
 ///|
+pub async fn open_cache_for_update(
+  config : AgentOrientConfig,
+  corpus_texts : Array[String],
+  dim : Int,
+) -> OrientCacheHandle raise OrientCacheError {
+  let dim_probe = @text_embed.TfidfEmbeddingProvider::new(dim)
+  match decide_orient_cache_open(config, OrientCacheReadWrite, dim_probe) {
+    OrientCacheReady(layout) => {
+      let provider = match load_or_build_provider(config, None, dim) {
+        OrientVocabularyLoaded(provider) => provider
+        OrientVocabularyBuilt(provider) => provider
+        OrientVocabularyInvalid(_) =>
+          build_orient_provider_from_current_corpus(corpus_texts, dim)
+      }
+      open_validated_orient_cache_handle(
+        config,
+        OrientCacheReadWrite,
+        provider,
+        layout,
+      )
+    }
+    OrientCacheFreshBuild(_) => {
+      let provider = build_orient_provider_from_current_corpus(
+        corpus_texts, dim,
+      )
+      rebuild_empty_cache(config, provider)
+    }
+    OrientCacheUnavailable(reason) =>
+      raise OrientCacheUnavailable(reason.diagnostic())
+  }
+}
+
+///|
 pub async fn rebuild_empty_cache(
   config : AgentOrientConfig,
   provider : @text_embed.TfidfEmbeddingProvider,
@@ -76,6 +109,19 @@ pub async fn rebuild_empty_cache(
     )
   }
   { db, provider, layout, metadata, mode: OrientCacheReadWrite }
+}
+
+///|
+fn build_orient_provider_from_current_corpus(
+  corpus_texts : Array[String],
+  dim : Int,
+) -> @text_embed.TfidfEmbeddingProvider raise OrientCacheError {
+  match build_orient_vocabulary_provider(corpus_texts, dim) {
+    OrientVocabularyBuilt(provider) => provider
+    OrientVocabularyLoaded(provider) => provider
+    OrientVocabularyInvalid(reason) =>
+      raise OrientCacheUnavailable(reason.diagnostic())
+  }
 }
 
 ///|

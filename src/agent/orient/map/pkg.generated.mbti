@@ -30,6 +30,8 @@ pub async fn checkpoint_cache(OrientCacheHandle) -> Unit raise OrientCacheError
 
 pub fn collect_wiki_docs(String, Array[String]) -> Array[@trkbt10/indexion/src/agent/orient/types.LocalDocSource]
 
+pub fn current_orient_cache_status(OrientCacheHandle) -> @model.AgentOrientMapStatus raise OrientCacheError
+
 pub fn deleted_file_paths(Map[String, String], Map[String, String]) -> Array[String]
 
 pub fn doc_source_exists(Array[@trkbt10/indexion/src/agent/orient/types.LocalDocSource], String, String) -> Bool
@@ -45,6 +47,8 @@ pub fn load_wiki_manifest(String) -> @trkbt10/indexion/src/agent/orient/types.Lo
 pub fn map_status_for_cached(@model.AgentOrientMap) -> @model.AgentOrientMapStatus
 
 pub async fn open_cache(@model.AgentOrientConfig, OrientCacheOpenMode, @embed.TfidfEmbeddingProvider) -> OrientCacheHandle raise OrientCacheError
+
+pub async fn open_cache_for_update(@model.AgentOrientConfig, Array[String], Int) -> OrientCacheHandle raise OrientCacheError
 
 pub fn orient_knowledge_hash(Array[@trkbt10/indexion/src/agent/orient/types.LocalDocSource]) -> String
 

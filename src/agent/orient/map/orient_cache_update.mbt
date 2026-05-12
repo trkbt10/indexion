@@ -67,6 +67,20 @@ pub async fn apply_incremental_cache_updates(
 }
 
 ///|
+pub fn current_orient_cache_status(
+  handle : OrientCacheHandle,
+) -> AgentOrientMapStatus raise OrientCacheError {
+  cache_update_status_from_records(
+    scan_all_orient_cached_files(handle),
+    [],
+    [],
+    [],
+    false,
+    [],
+  )
+}
+
+///|
 fn classify_orient_cache_updates(
   handle : OrientCacheHandle,
   briefs : Array[LocalFileBrief],
