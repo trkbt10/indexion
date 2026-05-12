@@ -86,6 +86,12 @@
       "sections": ["overview", "usage"]
     },
     {
+      "path": "cmd/indexion/plan/drift",
+      "title": "plan drift",
+      "include_in_root": true,
+      "sections": ["overview", "usage"]
+    },
+    {
       "path": "cmd/indexion/digest",
       "title": "digest",
       "include_in_root": true,
