@@ -18,6 +18,15 @@ pub fn exit(code : Int) -> Unit {
 }
 
 ///|
+/// Return the OS-level process id of the running indexion process. Used by the
+/// orient cache lock to record ownership so a crashed process can be diagnosed
+/// before a stale lock is taken over. Returns a negative value on platforms
+/// that do not implement `getpid` (only the wasm/js stubs).
+pub fn pid() -> Int {
+  getpid_native()
+}
+
+///|
 /// Run multiple tasks in parallel using fork.
 /// Each task returns a String (typically serialized JSON).
 /// Falls back to sequential execution if fork is unavailable.

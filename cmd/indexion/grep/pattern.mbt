@@ -19,56 +19,68 @@ pub enum TokenMatcher {
 }
 
 ///|
-/// Build a reverse alias table from KGF spec: literal keyword → token kind.
-/// E.g. "pub" → "KW_pub", "fn" → "KW_fn".
-/// Also maps punctuation/operators to their token kinds.
+/// Build a reverse alias table from a single KGF spec: literal text → token kind.
+///
+/// Two kinds of aliases are derived purely from spec contents — no token
+/// name is hardcoded here:
+///
+///   1. **Keyword aliases.** For each token marked `KEYWORD` whose pattern
+///      ends with `\b` (the conventional KGF keyword form `pub\b`,
+///      `fn\b`, ...), strip the trailing `\b` and register the literal as
+///      an alias to the kind name. E.g. `TOKEN KW_pub /pub\b/` becomes
+///      `"pub" → "KW_pub"`.
+///   2. **Punctuation aliases.** For any token whose entire pattern is a
+///      literal string (modulo regex meta-character escapes), register
+///      that literal as an alias to the kind name. E.g.
+///      `TOKEN LPAREN /\(/` becomes `"(" → "LPAREN"`,
+///      `TOKEN DCOLON /::/` becomes `"::" → "DCOLON"`, and
+///      `TOKEN FATARROW /=>/` becomes `"=>" → "FATARROW"`.
+///      Literal extraction is delegated to
+///      `@kgf_features.extract_literal_from_pattern`.
+///
+/// Keyword aliases take precedence over punctuation aliases for the same
+/// literal so that `pub` always resolves to `KW_pub`, never to a stray
+/// punctuation kind that happens to use the literal text "pub".
+///
+/// The table is per-spec because different KGF specs use different names
+/// for the same literal (MoonBit's `LPAREN` vs Mermaid's `RoundOpen` both
+/// declare `TOKEN ... /\(/`). A global union would silently lose entries
+/// to name collisions; pinning the table to one spec keeps grep correct
+/// in mixed-language projects.
 pub fn build_alias_table(
-  registry : @kgf_registry.KGFRegistry?,
+  spec : @kgf_types.KGFSpec?,
 ) -> Map[String, String] {
   let aliases : Map[String, String] = {}
-  let reg = match registry {
-    Some(r) => r
+  let spec_value = match spec {
+    Some(s) => s
     None => return aliases
   }
-  // Iterate all specs to collect token aliases
-  for spec_entry in reg.specs {
-    let spec = spec_entry.1
-    let tokens = spec.get_tokens()
-    for tok_def in tokens {
-      let name = tok_def.get_name()
-      let pattern = tok_def.get_pattern()
-      if tok_def.is_skip() {
+  for tok_def in spec_value.get_tokens() {
+    if tok_def.is_skip() {
+      continue
+    }
+    let name = tok_def.get_name()
+    let pattern = tok_def.get_pattern()
+    // (1) Keyword aliases derived from `<literal>\b` patterns.
+    if spec_value.is_keyword(name) && pattern.has_suffix("\\b") {
+      let literal = @config.substring(
+        pattern,
+        0,
+        pattern.to_array().length() - 2,
+      )
+      if literal.length() > 0 {
+        aliases[literal] = name
         continue
       }
-      // Keywords (KEYWORD declarations) with pattern "pub\b" → alias "pub" → "KW_pub"
-      if spec.is_keyword(name) && pattern.has_suffix("\\b") {
-        let literal = @config.substring(
-          pattern,
-          0,
-          pattern.to_array().length() - 2,
-        )
-        if literal.length() > 0 {
-          aliases.set(literal, name)
+    }
+    // (2) Punctuation/operator aliases derived from purely-literal
+    //     patterns. Skip when the literal would shadow a keyword.
+    match @kgf_features.extract_literal_from_pattern(pattern) {
+      Some(literal) =>
+        if !aliases.contains(literal) {
+          aliases[literal] = name
         }
-      }
-      // Simple punctuation: name like LPAREN with single-char pattern
-      // Map common symbols
-      match name {
-        "LPAREN" => aliases.set("(", name)
-        "RPAREN" => aliases.set(")", name)
-        "LBRACE" => aliases.set("{", name)
-        "RBRACE" => aliases.set("}", name)
-        "LBRACKET" => aliases.set("[", name)
-        "RBRACKET" => aliases.set("]", name)
-        "COMMA" => aliases.set(",", name)
-        "COLON" => aliases.set(":", name)
-        "DOT" => aliases.set(".", name)
-        "EQ" => aliases.set("=", name)
-        "ARROW" => aliases.set("->", name)
-        "FATARROW" => aliases.set("=>", name)
-        "DCOLON" => aliases.set("::", name)
-        _ => ()
-      }
+      None => ()
     }
   }
   aliases
@@ -86,6 +98,54 @@ fn resolve_alias(part : String, aliases : Map[String, String]) -> String {
 }
 
 ///|
+/// Collect the set of token-kind names defined by a single KGF spec.
+/// Used by `parse_pattern_with_aliases` to decide whether a bare pattern
+/// part (e.g. `TypeIdent`, `KW_fn`) refers to a real token kind. Per-spec
+/// so that a pattern like `TypeIdent` (a MoonBit kind) is treated as a
+/// Kind matcher when grepping MoonBit but falls back to a Text matcher
+/// when grepping a language that has no such kind.
+pub fn build_kind_set(
+  spec : @kgf_types.KGFSpec?,
+) -> Map[String, Bool] {
+  let kinds : Map[String, Bool] = {}
+  let spec_value = match spec {
+    Some(s) => s
+    None => return kinds
+  }
+  for tok_def in spec_value.get_tokens() {
+    if tok_def.is_skip() {
+      continue
+    }
+    kinds[tok_def.get_name()] = true
+  }
+  kinds
+}
+
+///|
+/// Convenience wrapper that resolves the KGF spec for `path` from
+/// `registry` and parses `pattern` against that spec. Returns an empty
+/// matcher list if the pattern is empty or the registry has no entry for
+/// the file (in which case parsing falls back to language-agnostic
+/// heuristics, so plain text patterns like `version` still work).
+pub fn parse_pattern_for_path(
+  pattern : String,
+  path : String,
+  registry : @kgf_registry.KGFRegistry?,
+) -> Array[TokenMatcher] {
+  let spec = match registry {
+    Some(reg) =>
+      match reg.detect_from_path(path) {
+        Some(lang) => reg.get_spec(lang)
+        None => None
+      }
+    None => None
+  }
+  let aliases = build_alias_table(spec)
+  let kinds = build_kind_set(spec)
+  parse_pattern_with_aliases(pattern, aliases, kinds~)
+}
+
+///|
 /// Parse a space-separated pattern string into token matchers.
 /// Supports natural language aliases: "pub fn *" is equivalent to "KW_pub KW_fn *".
 pub fn parse_pattern(pattern : String) -> Array[TokenMatcher] {
@@ -94,9 +154,17 @@ pub fn parse_pattern(pattern : String) -> Array[TokenMatcher] {
 
 ///|
 /// Parse pattern with alias resolution from KGF spec.
+///
+/// A bare pattern part becomes a `Kind` matcher when it names a real token
+/// kind from the loaded KGF registry, and a `Text` matcher otherwise. The
+/// `kinds` argument carries that set (see `build_kind_set`). When `kinds`
+/// is empty — typically because no registry is available, as in tests that
+/// only pass a literal alias map — the parser falls back to a lexical
+/// heuristic so callers without a registry still get plausible behavior.
 pub fn parse_pattern_with_aliases(
   pattern : String,
   aliases : Map[String, String],
+  kinds~ : Map[String, Bool] = {},
 ) -> Array[TokenMatcher] {
   let matchers : Array[TokenMatcher] = []
   let parts = split_pattern(pattern)
@@ -118,7 +186,7 @@ pub fn parse_pattern_with_aliases(
         matchers.push(KindText(resolved_kind, text))
       } else {
         let resolved = resolve_alias(part, aliases)
-        if resolved != part || looks_like_token_kind(part) {
+        if resolved != part || is_known_kind(part, kinds) {
           matchers.push(Kind(resolved))
         } else {
           matchers.push(Text(normalize_token_text(part)))
@@ -127,6 +195,22 @@ pub fn parse_pattern_with_aliases(
     }
   }
   matchers
+}
+
+///|
+/// Decide whether `part` names a token kind that should be matched
+/// structurally rather than as text. When the KGF registry is available
+/// (`kinds` non-empty) we authoritatively check against the set of declared
+/// kinds — this avoids the historical bug where PascalCase identifiers like
+/// `Handle` were treated as kind names even though no spec defines such a
+/// kind. With no registry loaded (`kinds` empty), fall back to the original
+/// lexical heuristic so test fixtures that pass only an alias map keep
+/// working.
+fn is_known_kind(part : String, kinds : Map[String, Bool]) -> Bool {
+  if kinds.is_empty() {
+    return looks_like_token_kind(part)
+  }
+  kinds.contains(part)
 }
 
 ///|
@@ -219,14 +303,19 @@ pub fn find_matches(
   spec? : @kgf_types.KGFSpec? = None,
 ) -> Array[GrepMatch] {
   let results : Array[GrepMatch] = []
-  // Build token -> line number mapping
   let token_lines = build_token_lines(tokens)
-  // Filter out whitespace/newline tokens for pattern matching
-  // but keep track of original indices for position reporting
+  // Filter out structurally insignificant tokens (newlines, indentation,
+  // whitespace) before pattern matching. The set of kinds to drop is
+  // derived from the active KGF spec rather than hardcoded — see
+  // `@kgf_features.build_insignificant_token_set`. Original indices are
+  // preserved for position reporting.
+  let insignificant = match spec {
+    Some(s) => @kgf_features.build_insignificant_token_set(spec=s)
+    None => default_insignificant_kinds()
+  }
   let significant : Array[(Int, @kgf_types.Tok)] = []
   for i, tok in tokens {
-    let kind = tok.get_kind()
-    if kind != "NL" && kind != "WS" && kind != "SKIP" {
+    if !insignificant.contains(tok.get_kind()) {
       significant.push((i, tok))
     }
   }
@@ -260,16 +349,34 @@ pub fn find_matches(
 }
 
 ///|
+/// Map each token index to the 1-indexed line where the token begins.
+/// Advances the line counter by the number of `\n` characters in each
+/// token's own text, which is correct regardless of how a given KGF spec
+/// names its newline-bearing tokens (NL, NL_INDENT, ...) and also accounts
+/// for multi-line tokens like block comments and multi-line strings.
 fn build_token_lines(tokens : Array[@kgf_types.Tok]) -> Array[Int] {
   let token_lines : Array[Int] = Array::make(tokens.length(), 1)
   let mut line = 1
   for i, tok in tokens {
     token_lines[i] = line
-    if tok.get_kind() == "NL" {
-      line += 1
+    for ch in tok.get_text() {
+      if ch == '\n' {
+        line += 1
+      }
     }
   }
   token_lines
+}
+
+///|
+/// Fallback insignificant-kind set used when `find_matches` runs without a
+/// loaded KGF spec — typically in unit tests that exercise the matcher
+/// directly against a synthetic token list. The names here are the
+/// conventional whitespace-class kinds that ship across the bundled KGF
+/// specs (`NL` in MoonBit/Rust/Go, `WS` and `SKIP` in older specs); when a
+/// spec is available this fallback is bypassed entirely.
+fn default_insignificant_kinds() -> Map[String, Bool] {
+  { "NL": true, "WS": true, "SKIP": true }
 }
 
 ///|

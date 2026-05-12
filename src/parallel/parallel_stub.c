@@ -10,6 +10,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#else
+#include <process.h>
+#include <windows.h>
 #endif
 
 static char *indexion_par_copy_cstr(const char *src, int32_t len) {
@@ -25,6 +28,15 @@ static char *indexion_par_copy_cstr(const char *src, int32_t len) {
   }
   dst[len] = '\0';
   return dst;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t indexion_parallel_available(void) {
+#ifdef _WIN32
+  return 0;
+#else
+  return 1;
+#endif
 }
 
 MOONBIT_FFI_EXPORT
@@ -67,7 +79,7 @@ void indexion_parallel_exit(int32_t code) {
 MOONBIT_FFI_EXPORT
 int32_t indexion_parallel_getpid(void) {
 #ifdef _WIN32
-  return -1;
+  return (int32_t)_getpid();
 #else
   return (int32_t)getpid();
 #endif

@@ -189,16 +189,7 @@ pub fn run_to_json(config : GrepConfig) -> String? {
   if config.pattern.length() == 0 {
     return None
   }
-  let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
-    target_dirs=paths,
-  )
-  let aliases = build_alias_table(registry)
-  let matchers = parse_pattern_with_aliases(config.pattern, aliases)
-  if matchers.length() == 0 {
-    return None
-  }
-  run_pattern_search_json(paths, matchers, config)
+  run_pattern_search_json(paths, config.pattern, config)
 }
 
 ///|
@@ -231,16 +222,5 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     )
     return
   }
-  // Build alias table from KGF specs for natural pattern syntax
-  let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
-    target_dirs=paths,
-  )
-  let aliases = build_alias_table(registry)
-  let matchers = parse_pattern_with_aliases(config.pattern, aliases)
-  if matchers.length() == 0 {
-    println("Error: Empty pattern")
-    return
-  }
-  run_pattern_search(paths, matchers, config)
+  run_pattern_search(paths, config.pattern, config)
 }

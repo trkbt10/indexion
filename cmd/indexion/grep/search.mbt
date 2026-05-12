@@ -21,10 +21,13 @@ fn load_registry_and_files(
 }
 
 ///|
-/// Run token pattern search across files.
+/// Run token pattern search across files. The pattern is reparsed per file
+/// against that file's KGF spec, so a literal like `pub` resolves to
+/// `KW_pub` for MoonBit/Rust and to a Text matcher for languages without
+/// that keyword — preserving correctness in mixed-language projects.
 pub fn run_pattern_search(
   paths : Array[String],
-  matchers : Array[TokenMatcher],
+  pattern : String,
   config : GrepConfig,
 ) -> Unit {
   let (registry, files) = match load_registry_and_files(paths, config) {
@@ -45,6 +48,10 @@ pub fn run_pattern_search(
           None => None
         }
       None => None
+    }
+    let matchers = parse_pattern_for_path(pattern, path, registry)
+    if matchers.length() == 0 {
+      continue
     }
     let tokens = match @kgf_features.tokenize_source(content, path, registry) {
       Some(t) => t
@@ -167,7 +174,7 @@ fn collect_search_files(
 /// For use by `indexion serve` API endpoint.
 pub fn run_pattern_search_json(
   paths : Array[String],
-  matchers : Array[TokenMatcher],
+  pattern : String,
   config : GrepConfig,
 ) -> String? {
   let (registry, files) = match load_registry_and_files(paths, config) {
@@ -188,6 +195,10 @@ pub fn run_pattern_search_json(
         }
       None => None
     }
+    let matchers = parse_pattern_for_path(pattern, path, registry)
+    if matchers.length() == 0 {
+      continue
+    }
     let tokens = match @kgf_features.tokenize_source(content, path, registry) {
       Some(t) => t
       None => continue
@@ -205,21 +216,20 @@ pub fn run_pattern_search_json(
 }
 
 ///|
-/// Prepare grep search: load registry, collect files, parse pattern.
-/// Returns (registry, files, matchers) or None if setup fails.
+/// Prepare grep search: load registry and collect files. The pattern is
+/// not parsed here because matchers are per-file (see `grep_single_file`).
+/// Returns None if no pattern was supplied or no registry could be loaded.
 pub fn prepare_pattern_search(
   paths : Array[String],
   config : GrepConfig,
-) -> (@kgf_registry.KGFRegistry?, Array[(String, String)], Array[TokenMatcher])? {
+) -> (@kgf_registry.KGFRegistry?, Array[(String, String)])? {
+  if config.pattern.length() == 0 {
+    return None
+  }
   let registry = @kgf_features.load_registry(
     specs_dir=config.specs_dir,
     target_dirs=paths,
   )
-  let aliases = build_alias_table(registry)
-  let matchers = parse_pattern_with_aliases(config.pattern, aliases)
-  if matchers.length() == 0 {
-    return None
-  }
   let files = collect_search_files(
     paths,
     config,
@@ -232,17 +242,24 @@ pub fn prepare_pattern_search(
         )
     },
   )
-  Some((registry, files, matchers))
+  Some((registry, files))
 }
 
 ///|
-/// Process a single file for grep matches, returning JSON items.
+/// Process a single file for grep matches, returning JSON items. The
+/// pattern is parsed against this file's KGF spec so cross-language
+/// projects each see the aliases and kind names native to their own
+/// language.
 pub fn grep_single_file(
   path : String,
   content : String,
-  matchers : Array[TokenMatcher],
+  pattern : String,
   registry : @kgf_registry.KGFRegistry?,
 ) -> Array[Json] {
+  let matchers = parse_pattern_for_path(pattern, path, registry)
+  if matchers.length() == 0 {
+    return []
+  }
   let tokens = match @kgf_features.tokenize_source(content, path, registry) {
     Some(t) => t
     None => return []

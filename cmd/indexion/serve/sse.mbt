@@ -156,14 +156,14 @@ async fn handle_grep_stream(
       sse_error(conn, "Pattern or semantic query required")
       return
     }
-    Some((registry, files, matchers)) => {
+    Some((registry, files)) => {
       // Process files one at a time, yielding between each file
       // so the event loop can serve other requests (health, wiki, etc).
       let mut total = 0
       for i, file in files {
         let (path, content) = file
         let items = @grep_cli.grep_single_file(
-          path, content, matchers, registry,
+          path, content, grep_config.pattern, registry,
         )
         for item in items {
           sse_item(conn, item)

@@ -1,4 +1,7 @@
 ///|
+extern "C" fn c_parallel_available() -> Int = "indexion_parallel_available"
+
+///|
 extern "C" fn c_parallel_fork() -> Int = "indexion_parallel_fork"
 
 ///|
@@ -83,5 +86,5 @@ fn cpu_count_native() -> Int {
 
 ///|
 fn parallel_available_native() -> Bool {
-  true
+  c_parallel_available() != 0
 }
