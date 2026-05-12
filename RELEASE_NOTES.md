@@ -1,3 +1,51 @@
+# v0.14.0
+
+## Highlights
+
+- **Orient cache → VCDB backend** — `indexion agent orient` now persists its orientation cache in a versioned, vector-cache-database (VCDB) store with writer locks, incremental updates, and a vector-similarity query service. The previous map-backed cache is replaced end-to-end.
+- **Async orient workflow** — Update and read-only modes share an async pipeline that streams bounded source briefs into the cache and preserves report composition across query results.
+- **Native-only orient chain** — JS stubs dropped from the orient chain; the workflow is native-target only, matching the rest of the indexer's hot paths.
+- **Agent orientation brief markdown rendering** — Briefs render to structured markdown with test coverage.
+- **`@regexp` as regex grammar SoT** — Grep's regex grammar is centralized in `@regexp`; insignificant-token classification is simplified to use the shared grammar.
+
+## New Features
+
+### Orient cache on VCDB
+
+The orient cache is now backed by a vector cache database instead of an in-memory map:
+
+- **Versioned cache layout** under the project's data directory, so layout changes don't silently corrupt prior caches.
+- **Writer-lock behavior** — concurrent orient invocations serialize cleanly against the shared store.
+- **File record schema** — orient records carry stable schema fields for source briefs and derived signals.
+- **Vocabulary lifecycle** — vocab is managed as part of the cache, not reconstructed per run.
+- **Incremental record updates** — only changed files re-cache.
+- **Bounded source briefs** — adapt brief inputs to the cache's bounded record size.
+- **Vector-similarity query service** with role filters — query the cache by similarity, scoped to the role surface you care about.
+- **Report composition preserved over query results** — orient reports stay coherent even when assembled from VCDB lookups.
+
+### Async orient workflow
+
+`agent orient` integrates the async workflow across both update (rebuild cache) and read-only (query cache) modes, replacing the prior synchronous map-based path.
+
+### Cache subpackage split
+
+The cache subpackage is split out from the map module; redundant prefixes are dropped so identifiers read cleanly against the new layout.
+
+### Agent orientation brief — markdown rendering
+
+The orientation brief now renders as markdown with end-to-end tests covering the rendering path.
+
+## Improvements
+
+- **`@regexp` centralization** — grep's regex grammar (token classes, insignificant-token rules) lives in `@regexp` as the SoT; downstream classification is simplified accordingly.
+- **wiki.json sources and metadata** — additional sources and metadata fields surfaced for wiki ingestion.
+
+## Tooling
+
+- **Orient chain is native-only** — JS stubs dropped during the VCDB migration cleanup (Tasks 1.1–2.2).
+
+---
+
 # v0.13.0
 
 ## Highlights
