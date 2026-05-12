@@ -1,3 +1,43 @@
+# v0.15.0
+
+## Highlights
+
+- **`plan drift` — file-pair translation / documentation drift detection.** New subcommand that compares two files (e.g. `README.md` ↔ `README-ja.md`, or an English README before/after an update) and reports per-direction drift terms plus cosine distance. Cross-lingual pairs are supported natively.
+- **Vocab sub-tokenization delegates to natural-language KGFs.** Prose tokenization now runs the English/Japanese/Chinese/Korean overlay specs from `kgfs/natural/` and excludes POS-style stop classes (Article, Preposition, Joshi, Particle, Ending, …) by token kind. Latin-script-only ASCII regex remains as fallback for callers without a registry.
+- **`@vocab.measure_divergence` opt-in for prose↔prose.** New `include_vocab_terms` flag on `GapConfig` lets natural-language doc↔doc comparisons surface `vocab:*` features as gap candidates. Ubiquity threshold is clamped at ≥ 2 so 2-doc corpora no longer collapse and discard every term. Existing reconcile / spec-verify behaviour is preserved (the flag defaults to `false`).
+
+## New Features
+
+### `plan drift A B`
+
+A new sibling of `plan reconcile` for **doc ↔ doc** drift, where reconcile is for **code ↔ doc**:
+
+```bash
+indexion plan drift README.md README-ja.md
+indexion plan drift --format=json README.md README-ja.md
+indexion plan drift --vocab-threshold=0.3 README.md README-ja.md   # exits 1 if exceeded
+```
+
+Options mirror `plan reconcile` where they overlap: `-o/--output`, `--format=text|md|json`, `--vocab-threshold` (cosine-distance gate), `--specs-dir`. JSON output is consumable by CI and tooling. The threshold gate makes drift checks suitable as a pre-merge guard.
+
+Eight fixture scenarios (identical, synced, drifted, reverse-drift, same-language, partial-translation, code-heavy, unrelated) are bound to integration tests under `tests/integration/translation-drift/` so the detector's behaviour is locked in per scenario.
+
+### Natural-language KGF delegation for vocab sub-tokenization
+
+`@kgf_tokenize.sub_tokenize_vocab_via_kgfs` is the new entry point that hands prose text to every spec in the registry declaring `content_token_kinds`. Each natural-language overlay spec (english, japanese, chinese, korean) now declares the content-bearing kinds in its script (Word/ProperNoun for English; Kanji/Hiragana/Katakana for Japanese; Hanzi for Chinese; Hangul for Korean — plus Number across all four). Non-content kinds (Article, Preposition, Joshi, Particle, Adverb, Ending, …) are excluded by kind, so cross-lingual prose drift detection no longer needs ASCII-only heuristics.
+
+The legacy ASCII sub-tokenizer remains as `sub_tokenize_vocab` for callers without a registry.
+
+### `@common.exit_with_code`
+
+Cross-target process-exit helper (native / wasm / js), lifted out of `cmd/indexion/check/` so commands like `plan drift` can implement CI-friendly threshold gates without duplicating the platform-conditional `exit` shims.
+
+## Improvements
+
+- **Sim CLI restored to text-only.** The earlier `sim --strategy=drift --mode=files` patchwork is removed; drift now lives at `plan drift` where the rest of the drift-detection family sits.
+- **2-doc corpus regression guard** in `@vocab.measure_divergence` — the ubiquity threshold is bounded below by 2 so tiny corpora no longer wipe out every gap term. Covered by wbtest.
+- **Drift integration tests** assert distance ordering (synced < drifted < unrelated), per-direction gap content (`locale`/`overrides` surface on the modified side), and the threshold gate.
+
 # v0.14.0
 
 ## Highlights
