@@ -155,7 +155,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   if config.text1.length() == 0 || config.text2.length() == 0 {
     println("Error: Two text arguments required.")
     println("")
-    println("Usage: indexion similarity [options] <text1> <text2>")
+    println("Usage: indexion sim [options] <text1> <text2>")
     return
   }
   // Calculate similarity

@@ -7,13 +7,14 @@
 ///   solid         - Generate solidification plan for common code extraction
 ///   reconcile     - Generate implementation/documentation drift report
 ///   unwrap        - Detect unnecessary wrappers for removal
+///   drift         - Detect translation/documentation drift between two files
 
 ///|
 /// Build the argparse Command for the plan subcommand.
 pub fn command() -> @argparse.Command {
   @argparse.Command(
     "plan",
-    about="Generate planning documents (refactor, solid, unwrap, etc.)",
+    about="Generate planning documents (refactor, solid, unwrap, drift, etc.)",
     subcommand_required=true,
     subcommands=[
       @refactor.command(),
@@ -22,6 +23,7 @@ pub fn command() -> @argparse.Command {
       @solid.command(),
       @reconcile.command(),
       @unwrap.command(),
+      @drift.command(),
     ],
   )
 }
@@ -37,6 +39,7 @@ pub async fn dispatch(matches : @argparse.Matches) -> Unit {
     "solid" => @solid.run_matches(sub)
     "reconcile" => @reconcile.run_matches(sub)
     "unwrap" => @unwrap.run_matches(sub)
+    "drift" => @drift.run_matches(sub)
     _ => ()
   }
 }

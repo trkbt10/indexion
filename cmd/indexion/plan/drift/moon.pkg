@@ -1,0 +1,9 @@
+import {
+  "moonbitlang/core/argparse" @argparse,
+  "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/cmd/indexion/common" @common,
+  "trkbt10/indexion/cmd/indexion/help" @help,
+  "trkbt10/indexion/src/kgf/features" @kgf_features,
+  "trkbt10/indexion/src/kgf/tokenize" @kgf_tokenize,
+  "trkbt10/indexion/src/pipeline/vocabulary" @vocab,
+}
