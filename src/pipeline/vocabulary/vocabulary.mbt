@@ -29,11 +29,17 @@ pub(all) struct GapConfig {
   min_value_length : Int
   /// Maximum number of gap terms to return (0 = no limit beyond threshold)
   max_terms : Int
+  /// Include `vocab:*` sub-token features (sub-tokenized prose words from
+  /// `vocabulary_token_kinds`) as gap candidates. Default `false` keeps
+  /// gap extraction restricted to identifier-style `Kind:value` features,
+  /// which is what code↔doc and spec↔impl comparison want. Set `true` for
+  /// prose↔prose comparison where `vocab:*` is the primary signal.
+  include_vocab_terms : Bool
 } derive(Eq, Debug)
 
 ///|
 pub fn GapConfig::default() -> GapConfig {
-  { min_value_length: 2, max_terms: 0 }
+  { min_value_length: 2, max_terms: 0, include_vocab_terms: false }
 }
 
 ///|
@@ -77,7 +83,12 @@ pub fn measure_divergence(
   let local_df = @tfidf.build_document_frequency([source_flat, target_flat])
   let source_vec = @tfidf.build_tfidf_vector(source_flat, local_df, 2)
   let target_tf = @tfidf.build_term_frequency(target_flat)
-  let ubiquity_threshold = total_docs / 3 + 1
+  // Ubiquity filter: drop terms that appear in roughly a third or more of the
+  // corpus as too-common-to-be-distinctive. Clamp to a minimum of 2 so the
+  // formula does not collapse to threshold=1 on tiny corpora (e.g. a 2-doc
+  // doc↔doc pair), which would discard every term since df ≥ 1 by definition.
+  let raw_ubiquity = total_docs / 3 + 1
+  let ubiquity_threshold = if raw_ubiquity < 2 { 2 } else { raw_ubiquity }
   let gap_terms = extract_gap_terms(
     source_vec, target_tf, project_df, ubiquity_threshold, config,
   )
@@ -112,8 +123,14 @@ fn extract_gap_terms(
   for entry in source_vec.iter() {
     let term = entry.0
     let weight = entry.1
-    // Only identifier-style tokens (Kind:value), not vocab: sub-tokens
-    if !@kgf_tokenize.feature_has_value(term) || term.has_prefix("vocab:") {
+    // Require a value-bearing feature (`Kind:value`). Bare-kind features like
+    // `text` carry no specific signal.
+    if !@kgf_tokenize.feature_has_value(term) {
+      continue
+    }
+    // `vocab:*` sub-tokens come from prose word splitting; whether they belong
+    // in the gap set depends on caller intent — see `include_vocab_terms` doc.
+    if !config.include_vocab_terms && term.has_prefix("vocab:") {
       continue
     }
     let value = @kgf_tokenize.feature_value(term)

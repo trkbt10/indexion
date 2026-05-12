@@ -62,11 +62,13 @@ pub fn feature_kind(feature : String) -> String {
 // ── Vocabulary sub-tokenization ─────────────────────────────────────
 
 ///|
-/// Split text into lowercase words and emit "vocab:" prefixed feature strings.
-/// Words shorter than 3 characters are discarded.
+/// ASCII-only sub-tokenizer.
 ///
-/// Used for vocabulary_token_kinds content (doc comments, string literals,
-/// natural language text) to enable vocabulary-level comparison.
+/// Splits text into lowercase words on `[a-zA-Z0-9_]` boundaries and emits
+/// `vocab:` feature strings for runs of length ≥ 3. Has no notion of script
+/// or part of speech. Used by callers without a `@registry.KGFRegistry`,
+/// and as the fallback inside `sub_tokenize_vocab_via_kgfs` when no spec
+/// in the registry declares `content_token_kinds`.
 pub fn sub_tokenize_vocab(text : String, output : Array[String]) -> Unit {
   let buf = StringBuilder::new()
   for ch in text {
@@ -76,16 +78,92 @@ pub fn sub_tokenize_vocab(text : String, output : Array[String]) -> Unit {
       ch == '_' {
       buf.write_char(ch)
     } else {
-      let word = buf.to_string().to_lower()
-      if word.length() >= 3 {
-        output.push("vocab:" + word)
-      }
+      emit_ascii_vocab_word(buf.to_string(), output)
       buf.reset()
     }
   }
-  let last = buf.to_string().to_lower()
-  if last.length() >= 3 {
-    output.push("vocab:" + last)
+  emit_ascii_vocab_word(buf.to_string(), output)
+}
+
+///|
+fn emit_ascii_vocab_word(raw : String, output : Array[String]) -> Unit {
+  let word = raw.to_lower()
+  if word.length() < 3 {
+    return
+  }
+  output.push("vocab:" + word)
+}
+
+///|
+/// Pairs a prepared `LanguageToolkit` with the token kinds the spec declared
+/// in `content_token_kinds`.
+pub(all) struct NaturalLanguageBinding {
+  toolkit : @toolkit.LanguageToolkit
+  content_kinds : Map[String, Bool]
+}
+
+///|
+/// Collect every spec in the registry that declares `content_token_kinds`
+/// and prepare a `LanguageToolkit` for each, ready for
+/// `sub_tokenize_vocab_via_kgfs`.
+pub fn build_natural_language_toolkits(
+  registry : @registry.KGFRegistry,
+) -> Array[NaturalLanguageBinding] {
+  let result : Array[NaturalLanguageBinding] = []
+  for lang in registry.get_languages() {
+    match registry.get_spec(lang) {
+      Some(spec) =>
+        match spec.get_feature("content_token_kinds") {
+          Some(kinds) => {
+            let set : Map[String, Bool] = {}
+            for k in kinds {
+              set[k] = true
+            }
+            result.push({
+              toolkit: @toolkit.LanguageToolkit::from_spec(spec),
+              content_kinds: set,
+            })
+          }
+          None => ()
+        }
+      None => ()
+    }
+  }
+  result
+}
+
+///|
+/// Sub-tokenize prose text into `vocab:` features by running each binding's
+/// `LanguageToolkit` over the text and keeping tokens whose kind is in that
+/// binding's `content_kinds`. Words shorter than 3 characters and duplicates
+/// across bindings are dropped.
+///
+/// When `natural_kgfs` is empty, falls back to `sub_tokenize_vocab`.
+pub fn sub_tokenize_vocab_via_kgfs(
+  text : String,
+  output : Array[String],
+  natural_kgfs : Array[NaturalLanguageBinding],
+) -> Unit {
+  if natural_kgfs.length() == 0 {
+    sub_tokenize_vocab(text, output)
+    return
+  }
+  let seen : Map[String, Bool] = {}
+  for binding in natural_kgfs {
+    for tok in binding.toolkit.tokenize(text) {
+      if !binding.content_kinds.contains(tok.get_kind()) {
+        continue
+      }
+      let word = tok.get_text().to_lower()
+      if word.length() < 3 {
+        continue
+      }
+      if seen.contains(word) {
+        continue
+      }
+      seen[word] = true
+      output.push("vocab:" + word)
+    }
   }
 }
 
@@ -123,6 +201,7 @@ pub fn tokenize_file(
   let id_set = toolkit.get_identifier_set()
   let vocab_set = toolkit.get_vocabulary_set()
   let ref_set = build_feature_set(spec, @types.FEATURE_REFERENCE_TOKEN_KINDS)
+  let natural_kgfs = build_natural_language_toolkits(registry)
   // Embedded code fence handling (declared in KGF features section).
   // If the spec declares embedded_code_fence, we track open/close state
   // and re-tokenize content tokens with the detected language's spec.
@@ -161,7 +240,7 @@ pub fn tokenize_file(
     match (fence_spec, content_token) {
       (Some(fspec), Some(ct)) =>
         if in_fence && kind == ct {
-          tokenize_with_spec(tok.get_text(), fspec, result)
+          tokenize_with_spec(tok.get_text(), fspec, result, natural_kgfs~)
           continue
         }
       _ => ()
@@ -175,7 +254,7 @@ pub fn tokenize_file(
     }
     // Vocabulary sub-tokens for natural language content
     if vocab_set.contains(kind) {
-      sub_tokenize_vocab(tok.get_text(), result)
+      sub_tokenize_vocab_via_kgfs(tok.get_text(), result, natural_kgfs)
     }
   }
   result
@@ -185,10 +264,15 @@ pub fn tokenize_file(
 /// Tokenize content using a specific KGF spec, appending feature strings
 /// to the output array. Used both for top-level file tokenization and
 /// for re-tokenizing embedded code blocks with their own spec.
+///
+/// `natural_kgfs` is forwarded to `sub_tokenize_vocab_via_kgfs` for vocab
+/// sub-tokenization; omitting it routes vocab tokens through the ASCII
+/// fallback `sub_tokenize_vocab`.
 pub fn tokenize_with_spec(
   content : String,
   spec : @types.KGFSpec,
   output : Array[String],
+  natural_kgfs? : Array[NaturalLanguageBinding] = [],
 ) -> Unit {
   let toolkit = @toolkit.LanguageToolkit::from_spec(spec)
   let id_set = toolkit.get_identifier_set()
@@ -201,7 +285,7 @@ pub fn tokenize_with_spec(
       output.push(lowered)
     }
     if vocab_set.contains(tok.get_kind()) {
-      sub_tokenize_vocab(tok.get_text(), output)
+      sub_tokenize_vocab_via_kgfs(tok.get_text(), output, natural_kgfs)
     }
   }
 }

@@ -43,7 +43,11 @@ pub fn compute_vocabulary_divergences(
     })
   }
   let results : Array[VocabularyDivergence] = []
-  let gap_config : @vocab.GapConfig = { min_value_length: 3, max_terms: 15 }
+  let gap_config : @vocab.GapConfig = {
+    min_value_length: 3,
+    max_terms: 15,
+    include_vocab_terms: false,
+  }
   for tg in tokenized_groups {
     let result = @vocab.measure_divergence(
       tg.source_tokens,
