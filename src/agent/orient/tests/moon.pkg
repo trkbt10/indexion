@@ -1,4 +1,7 @@
 import {
+}
+
+import {
   "trkbt10/indexion/src/agent/orient/map" @map,
   "trkbt10/indexion/src/agent/orient/matching" @matching,
   "trkbt10/indexion/src/agent/orient/owner" @owner,
@@ -6,6 +9,6 @@ import {
   "trkbt10/indexion/src/agent/orient/source" @source,
   "trkbt10/indexion/src/agent/orient/types" @types,
   "trkbt10/indexion/src/pipeline" @pipeline,
-}
+} for "wbtest"
 
 supported_targets = "native"

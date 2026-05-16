@@ -305,12 +305,12 @@ pub async fn update_index_if_stale(
       if signatures_match_disk(sigs) {
         @progress.stage(
           "[digest] signature fast-path: no changes",
-          "files=" + sigs.signatures.size().to_string(),
+          "files=" + sigs.signatures.length().to_string(),
           0UL,
         )
         return Some({
           indexed_count: 0,
-          skipped_count: sigs.signatures.size(),
+          skipped_count: sigs.signatures.length(),
           removed_count: 0,
           saved: false,
           save_errors: [],

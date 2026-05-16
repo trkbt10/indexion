@@ -86,7 +86,7 @@ pub enum DriftAction {
   PruneStray
   /// No impl doc exceeds the similarity floor at all.
   MissingFromImpl
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn DriftAction::label(self : DriftAction) -> String {

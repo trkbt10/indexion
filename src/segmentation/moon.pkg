@@ -4,3 +4,5 @@ import {
   "trkbt10/indexion/src/segmentation/tfidf" @tfidf,
   "trkbt10/indexion/src/segmentation/window" @window,
 }
+
+supported_targets = "native"

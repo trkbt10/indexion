@@ -24,7 +24,7 @@
 pub struct TypeWrap {
   source_suffix : String
   target_template : String
-} derive(Eq, Show, FromJson, ToJson)
+} derive(Eq, Debug, FromJson, ToJson)
 
 ///|
 pub fn TypeWrap::source_suffix(self : TypeWrap) -> String {
@@ -48,7 +48,7 @@ pub struct CollectInnerAs {
   rule : String
   /// Label name on the parent IR event to populate (e.g. `fields`, `params`).
   label : String
-} derive(Eq, Show, FromJson, ToJson)
+} derive(Eq, Debug, FromJson, ToJson)
 
 ///|
 /// One `extract_text` rule: derive a label by isolating a fragment of the
@@ -69,7 +69,7 @@ pub struct ExtractText {
   /// without leaving target-invalid syntax. The original source is still
   /// preserved via `source_intent_comment` so a later agent can refine.
   simplify_unions : Bool?
-} derive(Eq, Show, FromJson, ToJson)
+} derive(Eq, Debug, FromJson, ToJson)
 
 ///|
 /// One conditional-lift rule: when the parent's `_text` matches a simple
@@ -91,7 +91,7 @@ pub struct ConditionalLift {
   predicate : String
   lift_to : String
   split_label_capitalized : String?
-} derive(Eq, Show, FromJson, ToJson)
+} derive(Eq, Debug, FromJson, ToJson)
 
 ///|
 /// Structural rules attached to a SOURCE KGF rule. Applied at lower time
@@ -116,7 +116,7 @@ pub struct StructuralRule {
   /// agents can finish the port. Renders the same `{{...}}` placeholders
   /// as the main template plus `{{comment_prefix}}`.
   source_intent_comment : String?
-} derive(Show, FromJson, ToJson)
+} derive(Debug, FromJson, ToJson)
 
 ///|
 /// Lift section: how a language's KGF events map to canonical IR events.
@@ -163,7 +163,7 @@ pub struct LiftSpec {
   /// patterns — that would re-introduce the N×M coupling that the
   /// lift/lower split exists to eliminate.
   regex_replace : Array[RegexReplace]?
-} derive(Show, FromJson, ToJson)
+} derive(Debug, FromJson, ToJson)
 
 ///|
 pub fn LiftSpec::scalars(self : LiftSpec) -> Map[String, String] {
@@ -295,14 +295,14 @@ pub struct LowerSpec {
   /// Maps canonical library symbols to the target's equivalents
   /// (e.g. `fs.read_to_string` → `read_file_to_string` for moonbit's `@fs`).
   symbol_aliases : Map[String, String]?
-} derive(Show, FromJson, ToJson)
+} derive(Debug, FromJson, ToJson)
 
 ///|
 /// One simple substring replacement rule for `lower.text_replace`.
 pub struct TextReplace {
   from : String
   to : String
-} derive(Eq, Show, FromJson, ToJson)
+} derive(Eq, Debug, FromJson, ToJson)
 
 ///|
 /// One regex-based rewrite. Used for body-level translation rules where
@@ -313,7 +313,7 @@ pub struct TextReplace {
 pub struct RegexReplace {
   pattern : String
   replacement : String
-} derive(Eq, Show, FromJson, ToJson)
+} derive(Eq, Debug, FromJson, ToJson)
 
 ///|
 /// One paired-delimiter rewrite. Matches `<open><inner><close>` and
@@ -329,7 +329,7 @@ pub struct TextReplacePair {
   open : String
   close : String
   template : String
-} derive(Eq, Show, FromJson, ToJson)
+} derive(Eq, Debug, FromJson, ToJson)
 
 ///|
 pub fn LowerSpec::scalars(self : LowerSpec) -> Map[String, String] {
@@ -435,7 +435,7 @@ pub fn LowerSpec::variant_case_style(self : LowerSpec) -> String {
 pub struct TranspileLimits {
   comment : String?
   unresolved_marker : String?
-} derive(Show, FromJson, ToJson)
+} derive(Debug, FromJson, ToJson)
 
 ///|
 /// One language's transpile capabilities. A language can be a source-only
@@ -445,7 +445,7 @@ pub struct LanguageSpec {
   lift : LiftSpec?
   lower : LowerSpec?
   limits : TranspileLimits?
-} derive(Show, FromJson, ToJson)
+} derive(Debug, FromJson, ToJson)
 
 ///|
 pub fn LanguageSpec::language(self : LanguageSpec) -> String {

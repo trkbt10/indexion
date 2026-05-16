@@ -1,4 +1,6 @@
 ///|
+using @test {assert_eq}
+
 /// Project manifest fixtures tests.
 /// Validates KGF parsing for package.json, Cargo.toml, go.mod, moon.mod.json, pyproject.toml, deno.json
 

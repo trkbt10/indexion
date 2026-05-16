@@ -7,17 +7,10 @@ import {
 }
 
 import {
+  "moonbitlang/core/test" @test,
   "moonbitlang/async",
   "moonbitlang/core/env" @env,
   "moonbitlang/x/fs" @fs,
 } for "wbtest"
 
-options(
-  targets: {
-    "host_native.mbt": [ "native" ],
-    "host_stub.mbt": [ "wasm", "wasm-gc", "js", "llvm" ],
-    "shell_native.mbt": [ "native" ],
-    "shell_security_wbtest.mbt": [ "native" ],
-    "shell_stub.mbt": [ "wasm", "wasm-gc", "js", "llvm" ],
-  },
-)
+supported_targets = "native"

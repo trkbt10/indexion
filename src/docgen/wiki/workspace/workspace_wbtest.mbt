@@ -1,4 +1,6 @@
 ///|
+using @test {assert_eq}
+
 fn temp_wiki_workspace_dir(label : String) -> String {
   let dir = "/tmp/indexion-wiki-workspace/" +
     label +

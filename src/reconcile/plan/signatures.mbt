@@ -111,7 +111,7 @@ pub fn save_signatures(
 /// tracked" and reports `false` so the caller never short-circuits on an
 /// uninitialized snapshot.
 pub fn signatures_match_disk(file : ReconcileSignaturesFile) -> Bool {
-  if file.signatures.size() == 0 {
+  if file.signatures.length() == 0 {
     return false
   }
   for entry in file.signatures {
@@ -147,16 +147,16 @@ pub fn signatures_for_file_states(
 
 ///|
 fn parse_int64_or_zero(text : String) -> Int64 {
-  let trimmed = text.trim(chars=" \t").to_string()
+  let trimmed = text.trim(chars=" \t").to_owned()
   if trimmed.length() == 0 {
     return 0L
   }
-  let negative = trimmed.unsafe_char_at(0) == '-'
+  let negative = trimmed.get_char(0).unwrap() == '-'
   let start = if negative { 1 } else { 0 }
   let mut acc : Int64 = 0L
   let mut i = start
   while i < trimmed.length() {
-    let c = trimmed.unsafe_char_at(i)
+    let c = trimmed.get_char(i).unwrap()
     if c < '0' || c > '9' {
       return 0L
     }

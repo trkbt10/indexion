@@ -14,3 +14,5 @@ import {
   "trkbt10/indexion/src/kgf/parser",
   "trkbt10/indexion/src/kgf/semantics",
 } for "wbtest"
+
+supported_targets = "native"

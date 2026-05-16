@@ -41,7 +41,7 @@ pub fn feature_has_value(feature : String) -> Bool {
 pub fn feature_value(feature : String) -> String {
   for i = 0; i < feature.length(); i = i + 1 {
     if feature[i] == ':' && i < feature.length() - 1 {
-      return feature[i + 1:].to_string()
+      return feature[i + 1:].to_owned()
     }
   }
   feature
@@ -53,7 +53,7 @@ pub fn feature_value(feature : String) -> String {
 pub fn feature_kind(feature : String) -> String {
   for i = 0; i < feature.length(); i = i + 1 {
     if feature[i] == ':' {
-      return feature[:i].to_string()
+      return feature[:i].to_owned()
     }
   }
   feature

@@ -11,7 +11,7 @@
 pub enum ReconcileFormat {
   Text
   Json
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn ReconcileFormat::parse(s : String) -> ReconcileFormat {

@@ -5,6 +5,9 @@
 // scenario.
 
 ///|
+using @test {assert_eq}
+
+///|
 fn fixture(rel : String) -> String {
   "fixtures/translation-drift/" + rel
 }

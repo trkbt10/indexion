@@ -2,9 +2,4 @@ import {
   "mizchi/x/http" @mhttp,
 }
 
-options(
-  targets: {
-    "fetch.mbt": [ "native" ],
-    "fetch_stub.mbt": [ "wasm", "wasm-gc", "js" ],
-  },
-)
+supported_targets = "native"

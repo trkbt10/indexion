@@ -1,4 +1,6 @@
 ///|
+using @test {assert_eq}
+
 /// Creates a test context with minimal setup.
 fn create_test_ctx() -> SemEvalCtx {
   let spec = @types.KGFSpec::new("test")

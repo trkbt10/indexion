@@ -242,7 +242,7 @@ fn append_implementation_node(
   let span_text = if start_pos >= 0 &&
     source_end_pos > start_pos &&
     source_end_pos <= content.length() {
-    trim(content[start_pos:source_end_pos].to_string())
+    trim(content[start_pos:source_end_pos].to_owned())
   } else {
     ""
   }
@@ -361,7 +361,7 @@ async fn collect_impl_data(
         Some(registry),
       )
       for section in sections {
-        let title = section.title.trim().to_string()
+        let title = section.title.trim().to_owned()
         if title.length() == 0 {
           continue
         }
@@ -716,7 +716,7 @@ fn literal_overlap_score(
 ///|
 fn decode_table_pair(pair : String) -> (String, String) {
   match pair.split_once("\u0001") {
-    Some((label, literal)) => (label.to_string(), literal.to_string())
+    Some((label, literal)) => (label.to_owned(), literal.to_owned())
     None => (pair, "")
   }
 }

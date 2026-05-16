@@ -4,7 +4,7 @@
 
 ///|
 fn path_join(base : String, child : StringView) -> String {
-  let suffix = child.to_string()
+  let suffix = child.to_owned()
   if base.has_suffix("/") {
     base + suffix
   } else {

@@ -623,7 +623,7 @@ fn parse_int(text : String) -> Int {
 
 ///|
 fn trim_string(text : String) -> String {
-  text.trim().to_string()
+  text.trim().to_owned()
 }
 
 ///|

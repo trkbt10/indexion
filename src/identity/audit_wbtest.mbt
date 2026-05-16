@@ -1,4 +1,6 @@
 ///|
+using @test {assert_eq}
+
 test "identity audit: file names are scoped by parent directory" {
   let model : PathNameModel = {
     basename_counts: { "main.mbt": 2, "unique.mbt": 1 },

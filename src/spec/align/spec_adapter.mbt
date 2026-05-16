@@ -431,7 +431,7 @@ fn load_spec_nodes(
       let classify_model = spec.get_classify()
       let fallback : Array[RequirementNode] = []
       for section in sections {
-        let title = section.title.trim().to_string()
+        let title = section.title.trim().to_owned()
         if title.length() == 0 {
           continue
         }

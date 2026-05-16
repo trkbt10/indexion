@@ -90,13 +90,13 @@ fn count_unresolved_kinds(code : String) -> Array[(String, Int)] {
   let marker_len = marker.length()
   let mut i = 0
   while i + marker_len <= chars.length() {
-    if code.substring(start=i, end=i + marker_len) == marker {
+    if code[i:i + marker_len].to_owned() == marker {
       let mut j = i + marker_len
       while j < chars.length() && is_kind_char(chars[j]) {
         j = j + 1
       }
       if j > i + marker_len {
-        let kind = code.substring(start=i + marker_len, end=j)
+        let kind = code[i + marker_len:j].to_owned()
         counts[kind] = counts.get(kind).unwrap_or(0) + 1
       }
       i = j
@@ -241,10 +241,7 @@ async fn build_target_snapshot(target : String) -> TargetSnapshot {
   // output dir is a valid project for the target compiler.
   bootstrap_project(target, output_dir)
   for f in files {
-    let json_str = @kgf_transpile.transpile_file_json(f, target, "kgfs") catch {
-      _ => fail("transpile_file_json returned None for " + f)
-    }
-    let json_str = match json_str {
+    let json_str = match @kgf_transpile.transpile_file_json(f, target, "kgfs") {
       Some(s) => s
       None => fail("transpile_file_json returned None for " + f)
     }
@@ -280,13 +277,13 @@ async fn build_target_snapshot(target : String) -> TargetSnapshot {
       totals_unresolved[k.0] = totals_unresolved.get(k.0).unwrap_or(0) + k.1
     }
     let rel = if f.has_prefix(ts_src_root + "/") {
-      f.substring(start=ts_src_root.length() + 1, end=f.length())
+      f[ts_src_root.length() + 1:f.length()].to_owned()
     } else {
       f
     }
     let emit_parse_errors = check_emit_parses(code, target)
     // Persist transpiled code to disk so users can inspect / hand-compile.
-    let stem = rel.substring(start=0, end=rel.length() - 3) // strip ".ts"
+    let stem = rel[:rel.length() - 3].to_owned() // strip ".ts"
     let out_path = output_dir + "/" + stem + target_extension(target)
     @fs.write_string_to_file(out_path, code)
     // Hand off to the target language's compiler in syntax-only mode.
@@ -449,7 +446,7 @@ fn target_extension(target : String) -> String {
 
 ///|
 /// Ensure a directory exists, creating parents as needed.
-fn ensure_dir(path : String) -> Unit raise {
+fn ensure_dir(path : String) -> Unit {
   let parts = split_path(path)
   let mut acc = ""
   for p in parts {
@@ -457,7 +454,7 @@ fn ensure_dir(path : String) -> Unit raise {
       continue
     }
     acc = if acc.length() == 0 { p } else { acc + "/" + p }
-    if not(@fs.is_dir(acc) catch { _ => false }) {
+    if !(@fs.is_dir(acc) catch { _ => false }) {
       @fs.create_dir(acc) catch {
         _ => ()
       }
@@ -473,12 +470,12 @@ fn split_path(path : String) -> Array[String] {
   let mut i = 0
   while i < chars.length() {
     if chars[i] == '/' {
-      result.push(path.substring(start~, end=i))
+      result.push(path[start:i].to_owned())
       start = i + 1
     }
     i = i + 1
   }
-  result.push(path.substring(start~, end=path.length()))
+  result.push(path[start:path.length()].to_owned())
   result
 }
 
@@ -488,15 +485,15 @@ fn split_on_runner(text : String, sep : String) -> Array[String] {
   let mut start = 0
   let mut i = 0
   while i + sep.length() <= text.length() {
-    if text.substring(start=i, end=i + sep.length()) == sep {
-      result.push(text.substring(start~, end=i))
+    if text[i:i + sep.length()].to_owned() == sep {
+      result.push(text[start:i].to_owned())
       i = i + sep.length()
       start = i
     } else {
       i = i + 1
     }
   }
-  result.push(text.substring(start~, end=text.length()))
+  result.push(text[start:text.length()].to_owned())
   result
 }
 
@@ -634,7 +631,7 @@ fn parent_dir(path : String) -> String {
   let mut i = path.length() - 1
   while i >= 0 {
     if path.to_array()[i] == '/' {
-      return path.substring(start=0, end=i)
+      return path[:i].to_owned()
     }
     i = i - 1
   }
@@ -652,8 +649,7 @@ fn which(cmd : String) -> String {
   }
   for dir in split_on_runner(path, ":") {
     let candidate = dir + "/" + cmd
-    let exists = @fs.path_exists(candidate) catch { _ => false }
-    if exists {
+    if @fs.path_exists(candidate) {
       return candidate
     }
   }

@@ -2,3 +2,8 @@ import {
   "trkbt10/indexion/src/kgf/types",
   "trkbt10/indexion/src/regexp",
 }
+
+import {
+  "moonbitlang/core/test" @test,
+} for "wbtest"
+supported_targets = "native"

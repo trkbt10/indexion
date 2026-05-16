@@ -31,8 +31,7 @@ pub(all) suberror SignatureError {
 }
 
 ///|
-#borrow(path)
-#borrow(out)
+#borrow(path, out)
 extern "C" fn c_signature_stat(
   path : Bytes,
   path_len : Int,

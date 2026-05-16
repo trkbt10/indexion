@@ -37,24 +37,24 @@ fn apply_one(
   fsts : Map[String, CompiledFst],
 ) -> String raise Error {
   if step.has_prefix("fst:") {
-    let fst_name = step[4:].to_string()
+    let fst_name = step[4:].to_owned()
     match fsts.get(fst_name) {
       Some(fst) => run_fst(fst, input)
       None => raise Failure::Failure("Unknown preprocess FST: \{fst_name}")
     }
   } else if step.has_prefix("blankLineIfContainsCodepoint:") {
     let codepoint = parse_hex_codepoint(
-      step["blankLineIfContainsCodepoint:".length():].to_string(),
+      step["blankLineIfContainsCodepoint:".length():].to_owned(),
     )
     blank_line_if_contains_codepoint(input, codepoint)
   } else if step.has_prefix("blankLineIfContains:") {
-    let needle = step["blankLineIfContains:".length():].to_string()
+    let needle = step["blankLineIfContains:".length():].to_owned()
     blank_line_if_contains(input, needle)
   } else if step.has_prefix("blankLineIfTrimHasPrefix:") {
-    let prefix = step["blankLineIfTrimHasPrefix:".length():].to_string()
+    let prefix = step["blankLineIfTrimHasPrefix:".length():].to_owned()
     blank_line_if_trim_has_prefix(input, prefix)
   } else if step.has_prefix("blankLineIfRegex:") {
-    let pattern = step["blankLineIfRegex:".length():].to_string()
+    let pattern = step["blankLineIfRegex:".length():].to_owned()
     blank_line_if_regex(input, pattern)
   } else if step == "base64ToHex" {
     base64_to_hex(input)
@@ -71,7 +71,7 @@ fn blank_matching_lines(
   let buf = StringBuilder::new()
   let line = StringBuilder::new()
   let flush = fn(text : String, has_newline : Bool) {
-    let trimmed = text.trim().to_string()
+    let trimmed = text.trim().to_owned()
     if predicate(text, trimmed) {
       if has_newline {
         buf.write_string("\n")

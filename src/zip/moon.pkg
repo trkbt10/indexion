@@ -3,3 +3,5 @@ import {
   "hustcer/fzip" @fzip,
   "trkbt10/indexion/src/glob" @glob,
 }
+
+supported_targets = "native"

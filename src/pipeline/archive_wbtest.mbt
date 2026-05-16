@@ -1,4 +1,6 @@
 ///|
+using @test {assert_eq}
+
 /// SoT guarantee tests: SupportedFile.path is always a real filesystem path.
 /// Archive files (pptx/docx/xlsx) must never produce virtual paths in
 /// SupportedFile — only in @common.collect_files display_name.

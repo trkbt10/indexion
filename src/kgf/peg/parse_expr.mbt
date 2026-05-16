@@ -120,7 +120,7 @@ fn preprocess(s : String) -> String {
   let buf = StringBuilder::new(size_hint=s.length())
   let mut first = true
   for line in lines {
-    let line_str = line.to_string()
+    let line_str = line.to_owned()
     let cleaned = remove_comment(line_str)
     let trimmed = cleaned.trim()
     if trimmed.length() > 0 {

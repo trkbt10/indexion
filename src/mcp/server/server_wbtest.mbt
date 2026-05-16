@@ -1,4 +1,7 @@
 ///|
+using @test {assert_eq}
+
+///|
 /// Initialize and mark server as ready (initialize + notifications/initialized).
 async fn do_init(server : McpServer) -> Unit {
   server.handle_message(
@@ -31,7 +34,7 @@ async test "notification returns None" {
   let resp = server.handle_message(
     "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}",
   )
-  inspect(resp, content="None")
+  assert_eq(resp, None)
 }
 
 ///|

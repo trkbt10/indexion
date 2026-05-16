@@ -754,9 +754,9 @@ fn split_first_occurrence(
     return if before { text } else { "" }
   }
   if before {
-    text[:index].to_string()
+    text[:index].to_owned()
   } else {
-    text[index + delimiter.length():text.length()].to_string()
+    text[index + delimiter.length():text.length()].to_owned()
   }
 }
 
@@ -845,11 +845,11 @@ fn eval_func_collect_lines_after_prefixes(args : Array[Json]) -> Json {
   }
   let result : Array[Json] = []
   for line in text.split("\n") {
-    let trimmed = trim_string(line.to_string())
+    let trimmed = trim_string(line.to_owned())
     for prefix in prefixes {
       if trimmed.has_prefix(prefix) {
         result.push(
-          trim_string(trimmed[prefix.length():trimmed.length()].to_string()).to_json(),
+          trim_string(trimmed[prefix.length():trimmed.length()].to_owned()).to_json(),
         )
         break
       }

@@ -1,5 +1,9 @@
 import {
-  "trkbt10/indexion/cmd/indexion/plan/drift" @drift,
 }
+
+import {
+  "moonbitlang/core/test" @test,
+  "trkbt10/indexion/cmd/indexion/plan/drift" @drift,
+} for "test"
 
 supported_targets = "native"

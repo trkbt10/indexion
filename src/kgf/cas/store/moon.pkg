@@ -5,3 +5,5 @@ import {
 import {
   "trkbt10/indexion/src/core/graph" @graph,
 } for "wbtest"
+
+supported_targets = "native"

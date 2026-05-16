@@ -4,3 +4,5 @@ import {
   "trkbt10/indexion/src/docgen/wiki/types" @wiki_types,
   "trkbt10/indexion/src/config" @config,
 }
+
+supported_targets = "native"

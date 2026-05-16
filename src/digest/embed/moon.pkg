@@ -4,3 +4,5 @@ import {
   "trkbt10/indexion/src/digest/config" @config,
   "moonbitlang/core/json" @json,
 }
+
+supported_targets = "native"

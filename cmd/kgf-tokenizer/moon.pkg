@@ -3,11 +3,9 @@ import {
   "trkbt10/indexion/src/kgf/parser" @parser,
 }
 
+supported_targets = "js"
+
 options(
   "is-main": true,
   link: { "js": { "exports": [ "tokenize" ], "format": "esm" } },
-  targets: {
-    "main.mbt": [ "js" ],
-    "main_stub.mbt": [ "native", "wasm", "wasm-gc" ],
-  },
 )

@@ -4,6 +4,7 @@ import {
 }
 
 import {
+  "moonbitlang/core/test" @test,
   "hustcer/fzip" @fzip,
   "moonbitlang/core/env" @env,
   "moonbitlang/x/fs" @fs,
@@ -18,3 +19,5 @@ options(
     "xlsx_wbtest.mbt": [ "native" ],
   },
 )
+
+supported_targets = "native"

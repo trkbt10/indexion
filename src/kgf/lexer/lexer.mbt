@@ -96,7 +96,7 @@ fn Lexer::try_match(
           if token_def.skip {
             return Some((token_def, end_pos_value, None, None))
           } else {
-            let text = input[pos:end_pos_value].to_string()
+            let text = input[pos:end_pos_value].to_owned()
             // Extract first capture group text
             let group1 = match captures {
               Some(cap) => cap.get_group_text(1, input_chars)
@@ -141,7 +141,7 @@ fn extract_quoted_value(text : String) -> String? {
     let first = text[0].to_int().unsafe_to_char()
     let last = text[text.length() - 1].to_int().unsafe_to_char()
     if (first == '"' && last == '"') || (first == '\'' && last == '\'') {
-      return Some(text[1:text.length() - 1].to_string())
+      return Some(text[1:text.length() - 1].to_owned())
     }
   }
   None

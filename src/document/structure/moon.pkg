@@ -8,3 +8,8 @@ import {
   "trkbt10/indexion/src/text/parse" @text_parse,
   "moonbitlang/core/json" @json,
 }
+
+import {
+  "moonbitlang/core/test" @test,
+} for "wbtest"
+supported_targets = "native"

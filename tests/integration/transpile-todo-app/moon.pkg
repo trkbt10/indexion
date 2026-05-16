@@ -1,6 +1,6 @@
 import {
   "mizchi/x/process" @process,
-  "moonbitlang/async",
+  "moonbitlang/core/json" @json,
   "moonbitlang/x/fs" @fs,
   "moonbitlang/x/sys" @sys,
   "trkbt10/indexion/src/config" @config,
@@ -8,5 +8,9 @@ import {
   "trkbt10/indexion/src/kgf/registry" @registry,
   "trkbt10/indexion/src/kgf/transpile" @kgf_transpile,
 }
+
+import {
+  "moonbitlang/async",
+} for "test"
 
 supported_targets = "native"

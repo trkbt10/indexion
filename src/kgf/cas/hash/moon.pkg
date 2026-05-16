@@ -1,3 +1,5 @@
 import {
   "trkbt10/indexion/src/kgf/cas/types" @types,
 }
+
+supported_targets = "native"

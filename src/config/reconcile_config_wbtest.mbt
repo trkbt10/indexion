@@ -1,4 +1,5 @@
 ///|
+
 fn temp_config_dir(prefix : String) -> String {
   let base = match get_global_cache_dir() {
     Some(dir) => dir + "/indexion-test"

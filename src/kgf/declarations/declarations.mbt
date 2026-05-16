@@ -548,7 +548,7 @@ fn best_declaration_span(
     Shortest => 1 << 30 // start large, pick smaller
   }
   for span in spans {
-    let span_text = content[span.start_pos:span.end_pos].to_string()
+    let span_text = content[span.start_pos:span.end_pos].to_owned()
     if !span_text.contains(name) {
       continue
     }

@@ -7,7 +7,7 @@ pub(all) struct DriftGapTerm {
   kind : String
   /// TF-IDF weight in the source side. Higher = rarer / more salient.
   weight : Double
-} derive(Eq, Show, ToJson)
+} derive(Eq, Debug, ToJson)
 
 ///|
 /// Drift terms surfaced from one direction of comparison.
@@ -15,7 +15,7 @@ pub(all) struct DriftDirection {
   source_path : String
   target_path : String
   gap_terms : Array[DriftGapTerm]
-} derive(Eq, Show, ToJson)
+} derive(Eq, Debug, ToJson)
 
 ///|
 /// Full drift report for one file pair.
@@ -38,4 +38,4 @@ pub(all) struct DriftReport {
   threshold_passed : Bool?
   /// The configured cosine-distance threshold (None = no threshold set).
   threshold : Double?
-} derive(Eq, Show, ToJson)
+} derive(Eq, Debug, ToJson)

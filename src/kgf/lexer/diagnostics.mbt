@@ -53,7 +53,7 @@ pub fn Lexer::tokenize_with_diagnostics(
             LexDiagnostic::new(
               unmatched_start,
               unmatched_end - unmatched_start,
-              input[unmatched_start:unmatched_end].to_string(),
+              input[unmatched_start:unmatched_end].to_owned(),
             ),
           )
           unmatched_start = -1
@@ -89,7 +89,7 @@ pub fn Lexer::tokenize_with_diagnostics(
       LexDiagnostic::new(
         unmatched_start,
         unmatched_end - unmatched_start,
-        input[unmatched_start:unmatched_end].to_string(),
+        input[unmatched_start:unmatched_end].to_owned(),
       ),
     )
   }

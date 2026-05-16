@@ -1,4 +1,5 @@
 ///|
+
 test "project_config: default has inherit_global true" {
   let config = ProjectFileConfig::default()
   assert_true(config.inherit_global)

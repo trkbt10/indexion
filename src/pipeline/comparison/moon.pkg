@@ -6,3 +6,5 @@ import {
   "trkbt10/indexion/src/pipeline/comparison/candidates" @candidates,
   "trkbt10/indexion/src/pipeline/comparison/tree_extract" @tree_extract,
 }
+
+supported_targets = "native"

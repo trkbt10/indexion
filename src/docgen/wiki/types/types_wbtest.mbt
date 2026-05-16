@@ -1,4 +1,6 @@
 ///|
+using @test {assert_eq}
+
 /// Tests for ManifestPage and WikiManifest JSON round-trip and
 /// tolerance of optional fields being absent or null.
 

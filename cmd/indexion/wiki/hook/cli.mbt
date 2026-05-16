@@ -293,7 +293,7 @@ fn remove_hook_section(content : String) -> String {
   } else {
     section_start
   }
-  content[:cut_start].to_string() + content[section_end:].to_string()
+  content[:cut_start].to_owned() + content[section_end:].to_owned()
 }
 
 ///|

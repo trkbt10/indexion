@@ -13,3 +13,8 @@ import {
   "trkbt10/indexion/src/text/tfidf" @tfidf,
   "trkbt10/indexion/src/text/tokenizer" @tokenizer,
 }
+
+import {
+  "moonbitlang/core/test" @test,
+} for "wbtest"
+supported_targets = "native"

@@ -145,7 +145,7 @@ async fn send_cors_preflight(conn : @mhttp.ServerConnection) -> Unit {
 fn strip_query_string(path : String) -> String {
   for i = 0; i < path.length(); i = i + 1 {
     if path[i] == '?' {
-      return path[:i].to_string()
+      return path[:i].to_owned()
     }
   }
   path

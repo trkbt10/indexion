@@ -9,3 +9,8 @@ import {
   "trkbt10/osenv/dirs" @osenv_dirs,
   "trkbt10/osenv/path" @osenv_path,
 }
+
+import {
+  "moonbitlang/core/test" @test,
+} for "wbtest"
+supported_targets = "native"

@@ -7,3 +7,8 @@ import {
   "trkbt10/indexion/src/similarity/apted" @apted,
   "trkbt10/indexion/src/text/ops" @text_ops,
 }
+
+import {
+  "moonbitlang/core/test" @test,
+} for "wbtest"
+supported_targets = "native"

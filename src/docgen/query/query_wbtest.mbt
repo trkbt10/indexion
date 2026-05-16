@@ -3,6 +3,8 @@
 // Helper to create EdgeKind from string
 
 ///|
+using @test {assert_eq}
+
 fn edge_kind(s : String) -> @graph.EdgeKind {
   @graph.EdgeKind::from_string(s)
 }

@@ -1,3 +1,8 @@
 import {
   "moonbitlang/core/json" @json,
 }
+
+import {
+  "moonbitlang/core/test" @test,
+} for "wbtest"
+supported_targets = "native"

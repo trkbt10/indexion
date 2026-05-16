@@ -8,7 +8,7 @@ pub enum PlanFormat {
   Text
   Markdown
   Json
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn PlanFormat::parse(s : String) -> PlanFormat {

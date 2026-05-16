@@ -777,7 +777,7 @@ async fn handle_rebuild(
 fn strip_query_string(path : String) -> String {
   for i = 0; i < path.length(); i = i + 1 {
     if path[i] == '?' {
-      return path[:i].to_string()
+      return path[:i].to_owned()
     }
   }
   path
@@ -1047,7 +1047,7 @@ fn get_extension(path : String) -> String {
     }
   }
   if last_dot >= 0 {
-    path[last_dot:].to_string()
+    path[last_dot:].to_owned()
   } else {
     ""
   }

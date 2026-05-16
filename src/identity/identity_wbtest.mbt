@@ -2,6 +2,7 @@
 // reconcile.
 
 ///|
+
 test "name: id and display roles" {
   let n = Name::new(id="dorian-gray", display="Dorian Gray")
   assert_eq(n.get_id(), "dorian-gray")

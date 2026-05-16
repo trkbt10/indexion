@@ -3,3 +3,5 @@ import {
   "trkbt10/indexion/src/docgen/query" @query,
   "trkbt10/indexion/src/docgen/diagram" @diagram,
 }
+
+supported_targets = "native"

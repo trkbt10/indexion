@@ -75,7 +75,7 @@ pub fn normalize_text(text : String) -> String {
   let raw = result.to_string()
   // Trim trailing space without re-materializing the body.
   if raw.length() > 0 && raw[raw.length() - 1] == ' ' {
-    raw.substring(start=0, end=raw.length() - 1)
+    raw[:raw.length() - 1].to_owned()
   } else {
     raw
   }

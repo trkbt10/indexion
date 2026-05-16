@@ -1,4 +1,6 @@
 ///|
+using @test {assert_eq}
+
 fn test_registry() -> @kgf_registry.KGFRegistry {
   load_registry_or_empty(specs_dir="kgfs", target_dir=".")
 }

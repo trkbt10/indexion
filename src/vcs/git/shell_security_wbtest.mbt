@@ -1,4 +1,6 @@
 ///|
+using @test {assert_eq}
+
 fn temp_git_dir(prefix : String) -> String {
   let base = match @config_paths.get_global_cache_dir() {
     Some(dir) => dir + "/indexion-test"

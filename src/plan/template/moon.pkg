@@ -4,3 +4,5 @@ import {
   "trkbt10/indexion/src/config" @config,
   "moonbitlang/x/fs" @fs,
 }
+
+supported_targets = "native"

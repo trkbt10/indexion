@@ -12,6 +12,7 @@ import {
 }
 
 import {
+  "moonbitlang/core/test" @test,
   "moonbitlang/core/env" @env,
   "moonbitlang/async" @async,
 } for "wbtest"

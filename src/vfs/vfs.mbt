@@ -204,8 +204,8 @@ pub fn parse_virtual_path(virtual_path : String) -> (String, String?) {
   while i + sep_len <= len {
     if virtual_path[i] == '!' && i + 1 < len && virtual_path[i + 1] == '/' {
       // Found separator at position i
-      let archive_part = virtual_path[:i].to_string()
-      let inner_part = virtual_path[i + sep_len:].to_string()
+      let archive_part = virtual_path[:i].to_owned()
+      let inner_part = virtual_path[i + sep_len:].to_owned()
       return (archive_part, Some(inner_part))
     }
     i += 1

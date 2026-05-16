@@ -5,6 +5,7 @@ import {
 }
 
 import {
+  "moonbitlang/core/test" @test,
   "trkbt10/indexion/src/regexp",
   "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
 } for "wbtest"

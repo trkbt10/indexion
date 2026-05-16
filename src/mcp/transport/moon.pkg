@@ -3,3 +3,5 @@ import {
   "mizchi/x/http" @mhttp,
   "trkbt10/indexion/src/mcp/server" @server,
 }
+
+supported_targets = "native"

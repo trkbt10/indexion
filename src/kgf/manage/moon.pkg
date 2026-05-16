@@ -7,10 +7,4 @@ import {
   "moonbitlang/core/json" @json,
 }
 
-options(
-  targets: {
-    "download.mbt": [ "native" ],
-    "install.mbt": [ "native" ],
-    "manage_stub.mbt": [ "wasm", "wasm-gc", "js" ],
-  },
-)
+supported_targets = "native"

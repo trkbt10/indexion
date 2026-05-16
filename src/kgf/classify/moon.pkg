@@ -4,3 +4,5 @@ import {
   "trkbt10/indexion/src/kgf/registry" @registry,
   "trkbt10/indexion/src/document/structure" @doc_structure,
 }
+
+supported_targets = "native"

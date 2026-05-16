@@ -1,4 +1,6 @@
 ///|
+using @test {assert_eq}
+
 /// Registry tests - validates that all KGF files in kgfs/ parse correctly.
 /// Tests are consolidated to minimize registry loading overhead.
 

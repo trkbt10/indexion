@@ -9,6 +9,7 @@ import {
 }
 
 import {
+  "moonbitlang/core/test" @test,
   "moonbitlang/async",
   "moonbitlang/core/env" @env,
   "moonbitlang/x/fs" @fs,

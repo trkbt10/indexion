@@ -1,4 +1,7 @@
 ///|
+using @test {assert_eq}
+
+///|
 test "split_lines basic" {
   let lines = split_lines("a\nb\nc")
   assert_eq(lines.length(), 3)

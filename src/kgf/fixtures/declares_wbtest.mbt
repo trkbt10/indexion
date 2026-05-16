@@ -61,7 +61,7 @@ fn programming_langs_from_kgfs() -> Map[String, Bool] {
     if !entry.has_suffix(".kgf") {
       continue
     }
-    let lang = entry[0:entry.length() - 4].to_string()
+    let lang = entry[0:entry.length() - 4].to_owned()
     langs.set(lang, true)
   }
   langs

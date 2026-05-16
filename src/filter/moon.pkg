@@ -8,3 +8,5 @@ import {
   "trkbt10/indexion/src/vcs/git" @vcs_git,
   "trkbt10/indexion/src/config" @config,
 } for "wbtest"
+
+supported_targets = "native"

@@ -466,7 +466,7 @@ fn split_json_path(path : String) -> Array[String] {
       let s = buf.to_string()
       // Strip quotes: "." → .
       if s.length() >= 2 && s[0] == '"' {
-        let inner = s[1:s.length() - 1].to_string()
+        let inner = s[1:s.length() - 1].to_owned()
         segments.push(inner)
       } else {
         segments.push(s)

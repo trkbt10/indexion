@@ -3,3 +3,5 @@ import {
   "trkbt10/indexion/src/core/graph",
   "trkbt10/indexion/src/kgf/registry" @registry,
 }
+
+supported_targets = "native"

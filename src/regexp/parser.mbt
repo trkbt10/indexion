@@ -322,7 +322,7 @@ fn parse_pattern_ctx(
         if is_non_capturing || is_pos_lookahead || is_neg_lookahead {
           group_start = group_start + 2
         }
-        let group_pattern = pattern[group_start:group_end].to_string()
+        let group_pattern = pattern[group_start:group_end].to_owned()
         // Lookahead -- zero-width assertion
         if is_pos_lookahead || is_neg_lookahead {
           match parse_pattern_ctx(group_pattern, ctx) {
@@ -461,14 +461,14 @@ fn split_by_alternation(pattern : String) -> Array[String] {
       Some('\\') => pos = pos + 1
       Some('|') =>
         if depth == 0 {
-          result.push(pattern[start:pos].to_string())
+          result.push(pattern[start:pos].to_owned())
           start = pos + 1
         }
       _ => ()
     }
     pos = pos + 1
   }
-  result.push(pattern[start:pattern.length()].to_string())
+  result.push(pattern[start:pattern.length()].to_owned())
   result
 }
 

@@ -3,3 +3,5 @@ import {
   "trkbt10/indexion/src/kgf/cas/types" @cas_types,
   "moonbitlang/core/json" @json,
 }
+
+supported_targets = "native"

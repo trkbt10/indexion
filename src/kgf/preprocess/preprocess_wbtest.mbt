@@ -1,4 +1,6 @@
 ///|
+using @test {assert_eq}
+
 test "compile_char_class with single char" {
   let class = compile_char_class("test", "[a]")
   assert_eq(class.name, "test")

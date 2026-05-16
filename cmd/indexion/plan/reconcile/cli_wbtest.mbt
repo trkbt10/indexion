@@ -1,4 +1,6 @@
 ///|
+using @test {assert_eq}
+
 type FragmentMatchSignals = @reconcile_plan.FragmentMatchSignals
 
 ///|

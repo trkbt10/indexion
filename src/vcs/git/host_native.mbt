@@ -94,7 +94,7 @@ async fn git_repo_root_native(anchor : String) -> String? {
     if exit_code != 0 {
       return None
     }
-    Some(stdout.text().trim().to_string())
+    Some(stdout.text().trim().to_owned())
   } catch {
     _ => None
   }
@@ -119,7 +119,7 @@ async fn git_head_commit_native(
     if exit_code != 0 {
       return None
     }
-    Some(stdout.text().trim().to_string())
+    Some(stdout.text().trim().to_owned())
   } catch {
     _ => None
   }
@@ -163,7 +163,7 @@ async fn git_changed_files_native(
     }
     let files : Array[String] = []
     for line in stdout.text().split("\n") {
-      let trimmed = line.trim().to_string()
+      let trimmed = line.trim().to_owned()
       if trimmed.length() > 0 {
         files.push(trimmed)
       }
@@ -197,7 +197,7 @@ async fn git_worktree_changed_files_native(
     }
     let files : Array[String] = []
     for line in stdout.text().split("\n") {
-      let trimmed = line.trim().to_string()
+      let trimmed = line.trim().to_owned()
       if trimmed.length() < 4 {
         continue
       }

@@ -1,6 +1,8 @@
 // Tests for the code graph module.
 
 ///|
+using @test {assert_eq}
+
 test "CodeGraph::new creates empty graph" {
   let graph = CodeGraph::new()
   assert_eq(graph.module_count(), 0)

@@ -11,12 +11,4 @@ import {
   "moonbitlang/async",
 } for "wbtest"
 
-options(
-  targets: {
-    "fs_async.mbt": [ "native" ],
-    "fs_async_stub.mbt": [ "wasm", "wasm-gc", "js" ],
-    "fs_async_wbtest.mbt": [ "native" ],
-    "platform_async.mbt": [ "native" ],
-    "platform_async_stub.mbt": [ "wasm", "wasm-gc", "js" ],
-  },
-)
+supported_targets = "native"

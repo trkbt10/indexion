@@ -12,7 +12,7 @@
 pub enum StoryFormat {
   Text
   Json
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn StoryFormat::parse(s : String) -> StoryFormat {

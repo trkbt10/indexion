@@ -1,3 +1,8 @@
 import {
   "trkbt10/indexion/src/core/graph" @graph,
 }
+
+import {
+  "moonbitlang/core/test" @test,
+} for "wbtest"
+supported_targets = "native"

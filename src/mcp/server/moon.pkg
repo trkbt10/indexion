@@ -4,6 +4,9 @@ import {
 }
 
 import {
+  "moonbitlang/core/test" @test,
   "moonbitlang/async",
   "moonbitlang/core/json" @json,
 } for "wbtest"
+
+supported_targets = "native"

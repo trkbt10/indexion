@@ -6,7 +6,10 @@ import {
 }
 
 import {
+  "moonbitlang/core/test" @test,
   "trkbt10/indexion/src/kgf/lexer" @lexer,
   "trkbt10/indexion/src/kgf/peg" @peg,
   "trkbt10/indexion/src/kgf/fixtures" @kgf_fixtures,
 } for "wbtest"
+
+supported_targets = "native"

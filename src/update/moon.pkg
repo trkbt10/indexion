@@ -6,3 +6,5 @@ import {
   "moonbitlang/core/json" @json,
   "moonbitlang/x/crypto" @crypto,
 }
+
+supported_targets = "native"

@@ -5,3 +5,5 @@ import {
   "trkbt10/indexion/src/similarity/tfidf_strategy" @tfidf_strategy,
   "trkbt10/indexion/src/similarity/hybrid" @hybrid,
 }
+
+supported_targets = "native"

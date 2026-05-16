@@ -1,4 +1,6 @@
 ///|
+using @test {assert_eq}
+
 /// Test fixture helpers for PPTX (ECMA-376 PresentationML) archive expansion.
 /// Creates a realistic PPTX structure programmatically using fzip,
 /// then verifies that VFS correctly includes/excludes entries per KGF spec.
@@ -675,7 +677,7 @@ test "pptx: virtual paths use archive separator" {
     let expected_prefix = pptx_path + "!/"
     let prefix_len = expected_prefix.length()
     assert_true(e.virtual_path.length() > prefix_len)
-    let actual_prefix = e.virtual_path[:prefix_len].to_string()
+    let actual_prefix = e.virtual_path[:prefix_len].to_owned()
     assert_eq(actual_prefix, expected_prefix)
     // parse_virtual_path should decompose correctly
     let (archive_part, inner_opt) = parse_virtual_path(e.virtual_path)

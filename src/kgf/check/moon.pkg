@@ -13,3 +13,5 @@ import {
   "trkbt10/indexion/src/kgf/fixtures" @kgf_fixtures,
   "trkbt10/indexion/src/kgf/registry" @registry,
 } for "wbtest"
+
+supported_targets = "native"

@@ -170,7 +170,7 @@ fn extract_body_from_source(
     } else if c == open_ch {
       depth = depth - 1
       if depth == 0 {
-        return source.substring(start=i, end=body_close_pos + body_close_len)
+        return source[i:body_close_pos + body_close_len].to_owned()
       }
     }
     i = i - 1
@@ -204,7 +204,7 @@ fn enrich_with_raw_body(
   let inner = if raw.length() >= 2 &&
     raw.to_array()[0] == open_ch &&
     raw.to_array()[raw.length() - 1] == close_ch {
-    raw.substring(start=1, end=raw.length() - 1)
+    raw[1:raw.length() - 1].to_owned()
   } else {
     raw
   }

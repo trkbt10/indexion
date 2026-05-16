@@ -22,7 +22,7 @@ fn is_text_label(key : String) -> Bool {
 /// Anything else is a boundary. Mirrors the lexical class used by most
 /// C-family and ML-family languages and keeps the engine language-agnostic.
 fn is_token_boundary(c : Char) -> Bool {
-  not(is_identifier_char(c))
+  !is_identifier_char(c)
 }
 
 ///|
@@ -50,10 +50,10 @@ fn apply_scalar_subs(text : String, scalars : Map[String, String]) -> String {
       continue
     }
     let start = i
-    while i < chars.length() && not(is_token_boundary(chars[i])) {
+    while i < chars.length() && !is_token_boundary(chars[i]) {
       i = i + 1
     }
-    let token = text.substring(start~, end=i)
+    let token = text[start:i].to_owned()
     match scalars.get(token) {
       Some(replacement) => buf.write_string(replacement)
       None => buf.write_string(token)
@@ -88,23 +88,20 @@ fn apply_type_wraps(text : String, wraps : Array[TypeWrap]) -> String {
 /// Apply a single suffix-wrap rule. `target_template` uses `%s` as the
 /// inner-type placeholder.
 fn apply_one_wrap(text : String, wrap : TypeWrap) -> String {
-  if not(text.has_suffix(wrap.source_suffix)) {
+  if !text.has_suffix(wrap.source_suffix) {
     return text
   }
   let inner_len = text.length() - wrap.source_suffix.length()
   if inner_len <= 0 {
     return text
   }
-  let inner = text.substring(start=0, end=inner_len)
+  let inner = text[:inner_len].to_owned()
   let placeholder_pos = find_substring(wrap.target_template, "%s")
   match placeholder_pos {
     Some(p) =>
-      wrap.target_template.substring(start=0, end=p) +
+      wrap.target_template[:p].to_owned() +
       inner +
-      wrap.target_template.substring(
-        start=p + 2,
-        end=wrap.target_template.length(),
-      )
+      wrap.target_template[p + 2:wrap.target_template.length()].to_owned()
     None => wrap.target_template
   }
 }
@@ -236,7 +233,7 @@ fn render_template(
       let key_start = i + 2
       let mut j = key_start
       while j + 1 < chars.length() &&
-            not(chars[j] == '}' && chars[j + 1] == '}') {
+            !(chars[j] == '}' && chars[j + 1] == '}') {
         j = j + 1
       }
       if j + 1 >= chars.length() {
@@ -245,7 +242,7 @@ fn render_template(
         i = i + 1
         continue
       }
-      let key = template.substring(start=key_start, end=j)
+      let key = template[key_start:j].to_owned()
       let value = label_to_string(labels.get(key))
       match value {
         Some(s) => buf.write_string(s)
@@ -334,7 +331,7 @@ pub fn lower_to_code(
   for event in ir_events {
     let rule = event.0
     let labels = event.1
-    if not(order_set.contains(rule)) {
+    if !order_set.contains(rule) {
       continue
     }
     // Copy labels through unchanged. Do NOT apply lower_type_text to
@@ -355,7 +352,7 @@ pub fn lower_to_code(
     )
     // The conditional lift may have moved the event into a rule that is
     // outside the original `emit_order` membership — re-check.
-    if not(order_set.contains(effective_rule)) {
+    if !order_set.contains(effective_rule) {
       continue
     }
     // Translate library imports semantically (node:fs → fs → @fs etc.).
@@ -383,7 +380,7 @@ pub fn lower_to_code(
         )
         let rendered = render_template(template, post_labels, unresolved_marker)
         buf.write_string(rendered)
-        if not(rendered.has_suffix("\n")) {
+        if !rendered.has_suffix("\n") {
           buf.write_string("\n")
         }
       }
@@ -442,7 +439,7 @@ fn emit_source_intent_comment(
       with_prefix.set("comment_prefix", Json::string(lower.comment_prefix))
       let rendered = render_template(template, with_prefix, unresolved_marker)
       buf.write_string(rendered)
-      if not(rendered.has_suffix("\n")) {
+      if !rendered.has_suffix("\n") {
         buf.write_string("\n")
       }
     }
@@ -564,7 +561,7 @@ fn is_string_literal_union(text : String) -> Bool {
     }
     let chars = stripped.to_array()
     for c in chars {
-      if not(is_identifier_char(c)) {
+      if !is_identifier_char(c) {
         return false
       }
     }
@@ -614,7 +611,7 @@ fn to_ascii_lower(s : String) -> String {
   let buf = StringBuilder::new()
   for c in s {
     if c >= 'A' && c <= 'Z' {
-      buf.write_char(Char::from_int(c.to_int() + 32))
+      buf.write_char((c.to_int() + 32).unsafe_to_char())
     } else {
       buf.write_char(c)
     }
@@ -627,7 +624,7 @@ fn to_ascii_upper(s : String) -> String {
   let buf = StringBuilder::new()
   for c in s {
     if c >= 'a' && c <= 'z' {
-      buf.write_char(Char::from_int(c.to_int() - 32))
+      buf.write_char((c.to_int() - 32).unsafe_to_char())
     } else {
       buf.write_char(c)
     }
@@ -641,15 +638,15 @@ fn split_on(text : String, sep : String) -> Array[String] {
   let mut start = 0
   let mut i = 0
   while i + sep.length() <= text.length() {
-    if text.substring(start=i, end=i + sep.length()) == sep {
-      result.push(text.substring(start~, end=i))
+    if text[i:i + sep.length()].to_owned() == sep {
+      result.push(text[start:i].to_owned())
       i = i + sep.length()
       start = i
     } else {
       i = i + 1
     }
   }
-  result.push(text.substring(start~, end=text.length()))
+  result.push(text[start:text.length()].to_owned())
   result
 }
 
@@ -661,7 +658,7 @@ fn strip_quotes(s : String) -> String {
   let first = s.to_array()[0]
   let last = s.to_array()[s.length() - 1]
   if (first == '"' && last == '"') || (first == '\'' && last == '\'') {
-    s.substring(start=1, end=s.length() - 1)
+    s[1:s.length() - 1].to_owned()
   } else {
     s
   }
@@ -675,13 +672,13 @@ fn capitalize_first(s : String) -> String {
   let chars = s.to_array()
   let first = chars[0]
   let upper = if first >= 'a' && first <= 'z' {
-    Char::from_int(first.to_int() - 32)
+    (first.to_int() - 32).unsafe_to_char()
   } else {
     first
   }
   let buf = StringBuilder::new()
   buf.write_char(upper)
-  buf.write_string(s.substring(start=1, end=s.length()))
+  buf.write_string(s[1:s.length()].to_owned())
   buf.to_string()
 }
 
@@ -701,8 +698,8 @@ fn apply_id_from(
     Some(p) => p
     None => return
   }
-  let sibling_rule = spec.substring(start=0, end=dot_pos)
-  let label_key = spec.substring(start=dot_pos + 1, end=spec.length())
+  let sibling_rule = spec[:dot_pos].to_owned()
+  let label_key = spec[dot_pos + 1:spec.length()].to_owned()
   for ev in raw_events {
     if ev.0 != sibling_rule {
       continue
@@ -754,13 +751,13 @@ fn apply_extract_text(
   let before_pos = if rule.before.length() == 0 {
     text.length()
   } else {
-    let tail = text.substring(start=after_pos, end=text.length())
+    let tail = text[after_pos:text.length()].to_owned()
     match find_substring(tail, rule.before) {
       Some(p) => after_pos + p
       None => text.length()
     }
   }
-  let raw = text.substring(start=after_pos, end=before_pos)
+  let raw = text[after_pos:before_pos].to_owned()
   let trimmed = if rule.trim { trim_ascii(raw) } else { raw }
   // Source-side rewrite: TS `T[]` → canonical `Array<T>`; `number` → `Float`.
   let lifted = lift_type_text(trimmed, lift)
@@ -806,7 +803,7 @@ fn trim_ascii(s : String) -> String {
   while j > i && is_space(chars[j - 1]) {
     j = j - 1
   }
-  s.substring(start=i, end=j)
+  s[i:j].to_owned()
 }
 
 ///|
@@ -862,10 +859,10 @@ fn apply_collect_inner_as(
       // `other` strictly contains `ev` and `other` is inside the parent.
       let other_inside_parent = os >= start_tok &&
         oe <= end_tok &&
-        not(os == start_tok && oe == end_tok)
+        !(os == start_tok && oe == end_tok)
       let other_strictly_contains_ev = os <= s &&
         oe >= e &&
-        not(os == s && oe == e)
+        !(os == s && oe == e)
       if other_inside_parent && other_strictly_contains_ev {
         nested = true
         break
@@ -916,7 +913,7 @@ fn apply_collect_inner_as(
   // Deduplicate by exact rendered string.
   let unique : Array[String] = []
   for r in rendered_children {
-    if not(unique.contains(r)) {
+    if !unique.contains(r) {
       unique.push(r)
     }
   }
@@ -972,8 +969,8 @@ fn apply_text_replace_to_labels(
   pair_rules : Array[TextReplacePair],
   regex_rules : Array[RegexReplace],
 ) -> Map[String, Json] {
-  let has_scalars = not(scalars.is_empty())
-  if not(has_scalars) &&
+  let has_scalars = !scalars.is_empty()
+  if !has_scalars &&
     rules.length() == 0 &&
     pair_rules.length() == 0 &&
     regex_rules.length() == 0 {
@@ -983,7 +980,7 @@ fn apply_text_replace_to_labels(
   for entry in labels {
     let key = entry.0
     let value = entry.1
-    let rewritten = if not(key.has_prefix("_")) && not(key.has_suffix("_raw")) {
+    let rewritten = if !key.has_prefix("_") && !key.has_suffix("_raw") {
       match value {
         String(s) => {
           let after_scalars = if has_scalars {
@@ -1043,11 +1040,11 @@ fn regex_replace_one(
     if m.start_pos < cursor {
       continue
     }
-    buf.write_string(text.substring(start=cursor, end=m.start_pos))
+    buf.write_string(text[cursor:m.start_pos].to_owned())
     buf.write_string(expand_replacement(replacement, m.captures))
     cursor = m.end_pos
   }
-  buf.write_string(text.substring(start=cursor, end=text.length()))
+  buf.write_string(text[cursor:text.length()].to_owned())
   buf.to_string()
 }
 
@@ -1134,27 +1131,24 @@ fn apply_one_pair(text : String, rule : TextReplacePair) -> String {
     Some(pos) => {
       let inner_start = pos + rule.open.length()
       let close_rel = find_substring(
-        text.substring(start=inner_start, end=text.length()),
+        text[inner_start:text.length()].to_owned(),
         rule.close,
       )
       match close_rel {
         Some(rel) => {
           let inner_end = inner_start + rel
-          let inner = text.substring(start=inner_start, end=inner_end)
+          let inner = text[inner_start:inner_end].to_owned()
           let placeholder = find_substring(rule.template, "%s")
           let replacement = match placeholder {
             Some(p) =>
-              rule.template.substring(start=0, end=p) +
+              rule.template[:p].to_owned() +
               inner +
-              rule.template.substring(start=p + 2, end=rule.template.length())
+              rule.template[p + 2:rule.template.length()].to_owned()
             None => rule.template
           }
-          text.substring(start=0, end=pos) +
+          text[:pos].to_owned() +
           replacement +
-          text.substring(
-            start=inner_end + rule.close.length(),
-            end=text.length(),
-          )
+          text[inner_end + rule.close.length():text.length()].to_owned()
         }
         None => text
       }
@@ -1174,15 +1168,15 @@ fn find_innermost_open(text : String, open : String, close : String) -> Int? {
   let mut best : Int? = None
   let mut i = 0
   while i + open.length() <= text.length() {
-    if text.substring(start=i, end=i + open.length()) == open {
+    if text[i:i + open.length()].to_owned() == open {
       // Is there a close BEFORE the next open in the remainder?
       let after = i + open.length()
       let next_open = find_substring(
-        text.substring(start=after, end=text.length()),
+        text[after:text.length()].to_owned(),
         open,
       )
       let next_close = find_substring(
-        text.substring(start=after, end=text.length()),
+        text[after:text.length()].to_owned(),
         close,
       )
       let close_first = match (next_open, next_close) {
@@ -1210,7 +1204,7 @@ fn replace_all(text : String, from : String, to : String) -> String {
   let mut i = 0
   while i < text.length() {
     if i + from.length() <= text.length() &&
-      text.substring(start=i, end=i + from.length()) == from {
+      text[i:i + from.length()].to_owned() == from {
       buf.write_string(to)
       i = i + from.length()
     } else {
@@ -1288,7 +1282,7 @@ fn find_substring(haystack : String, needle : String) -> Int? {
   let limit = haystack.length() - needle.length()
   let mut i = 0
   while i <= limit {
-    let slice = haystack.substring(start=i, end=i + needle.length())
+    let slice = haystack[i:i + needle.length()].to_owned()
     if slice == needle {
       return Some(i)
     }

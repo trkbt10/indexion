@@ -126,7 +126,7 @@ pub enum NameAction {
   /// The body has been hollowed out; the name now points at very little
   /// substance. Either grow the body or remove the entity.
   Hollow
-} derive(Eq, Show)
+} derive(Eq, Debug)
 
 ///|
 pub fn NameAction::label(self : NameAction) -> String {

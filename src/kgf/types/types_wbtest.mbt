@@ -1,4 +1,7 @@
 ///|
+using @test {assert_eq}
+
+///|
 test "TokenDef::new creates token with defaults" {
   let token = TokenDef::new("IDENT", "[a-zA-Z_][a-zA-Z0-9_]*")
   assert_eq(token.get_name(), "IDENT")

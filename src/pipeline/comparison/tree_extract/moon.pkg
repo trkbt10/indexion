@@ -4,3 +4,5 @@ import {
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/kgf/toolkit" @kgf_toolkit,
 }
+
+supported_targets = "native"

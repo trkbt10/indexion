@@ -3,6 +3,7 @@ import {
 }
 
 import {
+  "moonbitlang/core/test" @test,
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/core/graph" @graph,
   "trkbt10/indexion/src/kgf/lexer" @lexer,
@@ -12,3 +13,5 @@ import {
   "trkbt10/indexion/src/kgf/features" @features,
   "trkbt10/indexion/src/pipeline/comparison" @batch,
 } for "wbtest"
+
+supported_targets = "native"
