@@ -1,3 +1,37 @@
+# v0.15.1
+
+## Highlights
+
+- **Stat-only cache invalidation via file signatures.** `reconcile plan` and `spec align` now persist `FileSignature` sidecars (path, mtime, size) alongside their reports and snapshots, so reruns that touch nothing skip work after a stat-only check instead of re-reading and re-tokenizing the workspace. Orient cache updates and source-brief building use the same signature classifier.
+- **`moon check` is clean on both targets.** The wasm-gc default backend previously surfaced 309 warnings (260 on native); this release drives both to zero by propagating `supported_targets = "native"` across the CLI tree and the src/** packages that are transitively native, removing vestigial cross-target stubs, and migrating deprecated syntax across the wbtest suite.
+
+## New Features
+
+### `@pipeline.signature` — file signature management
+
+New package providing a single source of truth for cache-invalidation signatures:
+
+- `FileSignature` carries `(path, mtime, size)` and is the unit of change detection used by caches.
+- `discover_signatures` walks a workspace and `classify_against_cache` partitions files into added / changed / unchanged / removed against a prior snapshot — no content reads on the cache-hit path.
+- Sidecar persistence lives next to the consumer's report: `reconcile plan` writes signatures next to the reconciled report; `spec align` writes them next to the alignment snapshot.
+- The orient cache pipeline routes its file-change classification through the same module, so update vs. read-only mode share one stat-based criterion.
+
+### `@progress` — stderr progress reporting
+
+Small helper for printing progress to stderr without disturbing stdout pipelines. Used by the new signature classification path and by `agent orient` to surface cache update activity during long runs.
+
+## Improvements
+
+- **CLI tree declares `supported_targets = "native"` end to end.** Every `cmd/indexion/**` package — and the `src/docgen/wiki/{reader,search,interop,workspace}` and `src/spec/draft` packages that were transitively native via `cmd/indexion/common` — now declares its native target explicitly. `cmd/indexion/wiki/pages/plan` was the immediate trigger (it pulled in `cmd/indexion/digest` and broke `moon check` on the default backend), but the fix is propagated uniformly.
+- **Vestigial cross-target stubs removed.** `src/http`, `src/parallel`, `src/kgf/manage`, `src/platform`, and `src/vcs/git` no longer ship JS/wasm stubs they didn't actually need; `cmd/kgf-tokenizer` is declared js-only since that is its sole real target.
+- **wbtest migration off deprecated syntax.** ~19 wbtest packages now use `@test.assert_eq` / `assert_not_eq` via `using @test {…}` (with the matching `moonbitlang/core/test` import in `moon.pkg`). Codebase-wide replacements: `derive(Show)` → `derive(Debug)`, `.substring(...)` → slice + `.to_owned()`, StringView `.to_string()` → `.to_owned()`, `not(x)` → `!x`, `unsafe_char_at(i)` → `get_char(i).unwrap()`, `Char::from_int` → `.unsafe_to_char()`, `.size` → `.length`. Unused imports / values / try / async cleaned up; a couple of helper files moved into `_wbtest.mbt` where they belonged.
+- **Memory-leaner text path.** `src/text/tokenizer/tokenizer.mbt` text normalization and token extraction reworked to reduce allocations on large corpora, which feeds reconcile and spec verify.
+
+## Bug Fixes
+
+- **`moon check` on wasm-gc no longer fails the CLI build.** `cmd/indexion/wiki/pages/plan` was missing `supported_targets` and transitively pulled native-only packages through `cmd/indexion/digest`. Resolved by the `supported_targets` propagation above.
+- **`src/kgf/transpile`** was missing its `moonbitlang/core/json` import; added.
+
 # v0.15.0
 
 ## Highlights
