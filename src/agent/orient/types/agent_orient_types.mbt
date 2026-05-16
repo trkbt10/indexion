@@ -37,6 +37,11 @@ pub(all) struct LocalFileBrief {
   summary_terms : Array[String]
   score : Double
   matched_terms : Array[String]
+  // FileSignature carry-through — populated when the brief is built from a
+  // discovered signature. Zero on briefs synthesized from older caches (those
+  // get re-stat'd on the next signature pass).
+  mtime_ns : Int64
+  size_bytes : Int64
 }
 
 ///|

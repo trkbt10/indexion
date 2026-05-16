@@ -23,6 +23,12 @@ let attr_summary_preview : String = "summary_preview"
 let attr_summary_full : String = "summary_full"
 
 ///|
+let attr_mtime_ns : String = "mtime_ns"
+
+///|
+let attr_size_bytes : String = "size_bytes"
+
+///|
 pub(all) struct CachedFile {
   vector_id : @vcdb_types.VectorId
   path : String
@@ -32,6 +38,13 @@ pub(all) struct CachedFile {
   structural_summary : String
   summary_preview : String
   summary_full : String?
+  // FileSignature SoT — mtime/size attrs default to zero on records written
+  // by older indexion releases, which is the same as "treat as unknown" and
+  // forces a content re-read on first contact. Once a record is upserted by a
+  // signature-aware build, subsequent runs skip content reads entirely while
+  // the file remains untouched.
+  mtime_ns : Int64
+  size_bytes : Int64
 } derive(Eq)
 
 ///|
@@ -138,9 +151,60 @@ pub fn attrs_from_brief(
   if is_documentation_record(brief) {
     attrs.set(
       attr_summary_full,
-      @vcdb_types.AttrValue::String(brief.summary),
+      @vcdb_types.AttrValue::String(bounded_summary_full(brief.summary)),
     )
   }
+  // Store FileSignature fields as strings rather than Int(Int64). The vcdb
+  // WAL codec routes Int through JSON Double, which loses precision above
+  // 2^53 — nanosecond timestamps cross that threshold around 1970 + ~100
+  // days, so any modern mtime would silently round-trip into Float. String
+  // encoding is round-trip lossless and trivially decoded.
+  attrs.set(
+    attr_mtime_ns,
+    @vcdb_types.AttrValue::String(brief.mtime_ns.to_string()),
+  )
+  attrs.set(
+    attr_size_bytes,
+    @vcdb_types.AttrValue::String(brief.size_bytes.to_string()),
+  )
+  attrs
+}
+
+///|
+/// Rebuild the complete attrs set for a cached record while overriding just
+/// the FileSignature fields. vcdb's `update_attrs` replaces the entire attrs
+/// map, so any field omitted here would be lost on the next read.
+pub fn signature_refresh_attrs(
+  cached : CachedFile,
+  mtime_ns : Int64,
+  size_bytes : Int64,
+) -> @vcdb_types.Attrs {
+  let attrs = @vcdb_types.empty_attrs()
+  attrs.set(attr_path, @vcdb_types.AttrValue::String(cached.path))
+  attrs.set(attr_role, @vcdb_types.AttrValue::String(cached.role))
+  attrs.set(attr_owner, @vcdb_types.AttrValue::String(cached.owner))
+  attrs.set(
+    attr_source_hash, @vcdb_types.AttrValue::String(cached.source_hash),
+  )
+  attrs.set(
+    attr_structural_summary,
+    @vcdb_types.AttrValue::String(cached.structural_summary),
+  )
+  attrs.set(
+    attr_summary_preview,
+    @vcdb_types.AttrValue::String(cached.summary_preview),
+  )
+  match cached.summary_full {
+    Some(text) =>
+      attrs.set(attr_summary_full, @vcdb_types.AttrValue::String(text))
+    None => ()
+  }
+  attrs.set(
+    attr_mtime_ns, @vcdb_types.AttrValue::String(mtime_ns.to_string()),
+  )
+  attrs.set(
+    attr_size_bytes, @vcdb_types.AttrValue::String(size_bytes.to_string()),
+  )
   attrs
 }
 
@@ -150,12 +214,33 @@ fn is_documentation_record(brief : LocalFileBrief) -> Bool {
 }
 
 ///|
+let summary_full_max_bytes : Int = 65536
+
+///|
 fn bounded_summary_preview(text : String, limit : Int) -> String {
+  // Cheap O(1) check via UTF-16 length: when it already fits under limit
+  // there is no need to materialize a Char array. For a 100MB document the
+  // old `text.to_array().length()` pass allocated ~100M chars just to read
+  // the length, which abort()ed the runtime on large source trees.
   let limit = if limit < 0 { 0 } else { limit }
-  if text.to_array().length() <= limit {
+  if text.length() <= limit {
     text
   } else {
     @config_paths.substring(text, 0, limit)
+  }
+}
+
+///|
+/// Cap the `summary_full` blob stored in the vcdb. Documentation records keep
+/// the source body so reconcile / wiki paths can reuse it, but unbounded
+/// content (e.g. multi-MB HTML fixtures) blows out the WAL and triggers OOM
+/// during attrs encoding. We keep only the prefix — downstream callers that
+/// need the full document re-read it from disk via the recorded path.
+fn bounded_summary_full(text : String) -> String {
+  if text.length() <= summary_full_max_bytes {
+    text
+  } else {
+    @config_paths.substring(text, 0, summary_full_max_bytes)
   }
 }
 
@@ -199,7 +284,48 @@ pub fn record_to_cached_file(
     summary_full: record_optional_string_attr(
       record, attr_summary_full, vector_id,
     ),
+    mtime_ns: record_optional_int64_attr(record, attr_mtime_ns),
+    size_bytes: record_optional_int64_attr(record, attr_size_bytes),
   })
+}
+
+///|
+fn record_optional_int64_attr(
+  record : @vcdb_types.VectorRecord,
+  attr : String,
+) -> Int64 {
+  match record.attrs.get(attr) {
+    Some(@vcdb_types.AttrValue::Int(value)) => value
+    // Older records (and the live encoding) carry signature integers as
+    // strings to avoid the JSON Double precision floor on Int64.
+    Some(@vcdb_types.AttrValue::String(s)) => parse_int64_or_zero(s)
+    _ => 0L
+  }
+}
+
+///|
+fn parse_int64_or_zero(text : String) -> Int64 {
+  let trimmed = text.trim(chars=" \t").to_string()
+  if trimmed.length() == 0 {
+    return 0L
+  }
+  let negative = trimmed.unsafe_char_at(0) == '-'
+  let start = if negative { 1 } else { 0 }
+  let mut acc : Int64 = 0L
+  let mut i = start
+  while i < trimmed.length() {
+    let c = trimmed.unsafe_char_at(i)
+    if c < '0' || c > '9' {
+      return 0L
+    }
+    acc = acc * 10L + (c.to_int() - '0'.to_int()).to_int64()
+    i = i + 1
+  }
+  if negative {
+    -acc
+  } else {
+    acc
+  }
 }
 
 ///|

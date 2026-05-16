@@ -8,6 +8,16 @@ pub(all) struct AgentOrientConfig {
   wiki_dir : String
   no_update : Bool
   limit : Int
+  // Emit per-stage progress / timing diagnostics to stderr while the update
+  // pipeline runs. The stage diagnostics are essential for diagnosing why
+  // orient is slow on large repos, so the default keeps them on; set to true
+  // only when piping stderr to a log would be noisy.
+  quiet : Bool
+  // Force a full filesystem walk on update. The default warm-cache path
+  // stat()s only the paths already in the cache, which skips ~10s of walk
+  // overhead on a 1900-file repo but cannot discover newly created files.
+  // Pass `rescan: true` (or `--rescan` on the CLI) after adding files.
+  rescan : Bool
 } derive(Eq, Debug)
 
 ///|
@@ -20,6 +30,8 @@ pub fn AgentOrientConfig::default() -> AgentOrientConfig {
     wiki_dir: ".indexion/wiki",
     no_update: false,
     limit: 12,
+    quiet: false,
+    rescan: false,
   }
 }
 

@@ -34,6 +34,8 @@ fn orient_update_test_brief(
     summary_terms: [],
     score: 0.0,
     matched_terms: [],
+    mtime_ns: 0L,
+    size_bytes: 0L,
   }
 }
 

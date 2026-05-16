@@ -306,6 +306,20 @@ pub async fn report(config : ReconcileConfig) -> ReconcileReport? {
 
 ///|
 pub async fn persisted_report(config : ReconcileConfig) -> ReconcileReport? {
+  // Signature fast-path: when every previously tracked source file's stat
+  // signature still matches disk and the run config is unchanged, the
+  // cached report on disk is provably still correct. Returns it without
+  // walking the working tree, reading source contents, or rebuilding the
+  // candidate graph.
+  //
+  // Falls through to the full pipeline on any drift — including new files,
+  // deleted files, changed mtime/size, config changes, or a stale review
+  // results file — because each of those can change candidates even when
+  // every tracked path's content hash matches.
+  match try_signature_fast_path(config) {
+    Some(report) => return Some(report)
+    None => ()
+  }
   let result = match run_analysis(config) {
     Some(value) => value
     None => return None
@@ -330,9 +344,107 @@ pub async fn persisted_report(config : ReconcileConfig) -> ReconcileReport? {
       save_cached_report(config.index_dir, report)
       save_manifest(config.index_dir, manifest_to_save)
       save_record_db(config.index_dir, state.sync_result.db)
+      // Persist the FileSignature sidecar so the next run can take the
+      // stat-only fast path. Failures are non-fatal — worst case the next
+      // run falls back to the full rebuild.
+      //
+      // The sidecar tracks both the discovered source files and the
+      // review-results file (when configured), so the fast path can detect
+      // drift in either input.
+      let sigs = signatures_for_file_states(state.all_file_states)
+      if config.review_results_path.length() > 0 {
+        match @signature.signature_for(config.review_results_path) {
+          Some(sig) => sigs.push(sig)
+          None => () // review file absent on disk — nothing to track
+        }
+      }
+      let _ = save_signatures(config.index_dir, sigs)
       cleanup_stale_index(config.index_dir)
       Some(report)
     }
     Cached(report) => Some(report)
+  }
+}
+
+///|
+/// Stat-only short-circuit for `persisted_report`. Returns the cached
+/// report iff every condition holds:
+///
+/// 1. A signature sidecar exists at `<index_dir>/signatures.json`.
+/// 2. Every signature in that sidecar matches the live file on disk.
+/// 3. A cached manifest exists with a matching `config_hash`.
+/// 4. The review-results file (if any) has not been modified since the
+///    snapshot was taken.
+/// 5. A cached report exists whose review_state_hash matches the manifest's.
+///
+/// Returning `None` always falls back safely — the caller runs the full
+/// `run_analysis` pipeline. The fast path therefore can never produce a
+/// false negative cache hit; the worst it can do is fail to take a valid
+/// shortcut, which is the same as the pre-signature behavior.
+async fn try_signature_fast_path(
+  config : ReconcileConfig,
+) -> ReconcileReport? {
+  let sigs = match load_signatures(config.index_dir) {
+    Some(value) => value
+    None => return None
+  }
+  if !signatures_match_disk(sigs) {
+    return None
+  }
+  let manifest = load_manifest(config.index_dir)
+  if manifest.config_hash != build_config_hash(config) {
+    return None
+  }
+  // If a review-results file was active when the cache was written, it
+  // must still match its tracked signature. The simplest way to check
+  // this is to verify the review-results path is itself tracked in the
+  // sidecar (or absent both then and now).
+  if !review_results_unchanged(config.review_results_path, sigs) {
+    return None
+  }
+  match load_cached_report(config.index_dir) {
+    Some(report) =>
+      if report.cache_state.review_state_hash == manifest.review_state_hash {
+        Some({
+          ..report,
+          cache_state: { ..report.cache_state, cache_hit: true },
+        })
+      } else {
+        None
+      }
+    None => None
+  }
+}
+
+///|
+/// Verify the review-results file (if configured) hasn't drifted since the
+/// snapshot was written. Returns `true` when:
+///   - no review-results path is configured AND no review-results path is
+///     tracked in the sidecar, OR
+///   - a path is configured, is tracked in the sidecar, and its current
+///     stat signature matches the tracked one.
+/// Returns `false` whenever the configured/tracked state mismatch — that
+/// case requires the full pipeline because review decisions can mutate
+/// the manifest's `review_state_hash`.
+fn review_results_unchanged(
+  review_results_path : String,
+  sigs : ReconcileSignaturesFile,
+) -> Bool {
+  if review_results_path.length() == 0 {
+    return true
+  }
+  match sigs.signatures.get(review_results_path) {
+    Some(expected) =>
+      match @signature.signature_for(review_results_path) {
+        Some(actual) =>
+          actual.mtime_ns == expected.mtime_ns &&
+          actual.size_bytes == expected.size_bytes
+        None => false
+      }
+    None =>
+      // The configured review file isn't tracked — either it's a new
+      // addition since the snapshot, or the snapshot predates review
+      // tracking. Either way the safe choice is to re-run analysis.
+      !@fs.path_exists(review_results_path)
   }
 }

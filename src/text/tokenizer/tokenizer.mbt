@@ -52,50 +52,58 @@ fn to_lower(c : Char) -> Char {
 ///|
 /// Normalize text for TF-IDF processing.
 /// Converts to lowercase and normalizes whitespace.
+///
+/// Streams characters via `StringBuilder` instead of materializing the input
+/// as `Array[Char]`. On large inputs (multi-MB documents, embedded HTML
+/// fixtures) the old `text.to_array()` pass allocated one Char per code
+/// point of the entire body before doing any work, which dominated tokenize
+/// time and triggered OOM on huge files.
 pub fn normalize_text(text : String) -> String {
-  let chars = text.to_array()
-  let result : Array[Char] = []
+  let result = StringBuilder::new()
   let mut last_was_space = true // Start true to trim leading space
-  for c in chars {
+  for c in text {
     if c == ' ' || c == '\t' || c == '\n' || c == '\r' {
       if !last_was_space {
-        result.push(' ')
+        result.write_char(' ')
         last_was_space = true
       }
     } else {
-      result.push(to_lower(c))
+      result.write_char(to_lower(c))
       last_was_space = false
     }
   }
-  // Trim trailing space
-  if result.length() > 0 && result[result.length() - 1] == ' ' {
-    let _ = result.pop()
+  let raw = result.to_string()
+  // Trim trailing space without re-materializing the body.
+  if raw.length() > 0 && raw[raw.length() - 1] == ' ' {
+    raw.substring(start=0, end=raw.length() - 1)
+  } else {
+    raw
   }
-  String::from_array(result)
 }
 
 ///|
-/// Extract word tokens from text.
-/// Returns tokens of 2 or more characters.
+/// Extract word tokens from text. Returns tokens of 2 or more characters.
+///
+/// Streams via `StringBuilder` to avoid materializing the input as a Char
+/// array — see `normalize_text` for the underlying memory rationale.
 pub fn extract_word_tokens(text : String) -> Array[String] {
-  let chars = text.to_array()
   let tokens : Array[String] = []
-  let current_word : Array[Char] = []
-  for c in chars {
+  let current_word = StringBuilder::new()
+  let mut current_len = 0
+  for c in text {
     if is_word_char(c) && !is_cjk_char(c) {
-      // Only include non-CJK word characters
-      current_word.push(c)
+      current_word.write_char(c)
+      current_len = current_len + 1
     } else {
-      // End of word
-      if current_word.length() >= 2 {
-        tokens.push(String::from_array(current_word))
+      if current_len >= 2 {
+        tokens.push(current_word.to_string())
       }
-      current_word.clear()
+      current_word.reset()
+      current_len = 0
     }
   }
-  // Handle last word
-  if current_word.length() >= 2 {
-    tokens.push(String::from_array(current_word))
+  if current_len >= 2 {
+    tokens.push(current_word.to_string())
   }
   tokens
 }

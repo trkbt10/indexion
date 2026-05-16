@@ -60,6 +60,19 @@ pub async fn open_for_update(
   corpus_texts : Array[String],
   dim : Int,
 ) -> Handle raise CacheError {
+  open_for_update_lazy(config, fn() { corpus_texts }, dim)
+}
+
+///|
+/// Open an orient vcdb handle for writing, deferring corpus construction to a
+/// thunk that only runs when the TF-IDF vocabulary actually needs to be
+/// rebuilt. Saves the caller from doing the full graph + brief build on every
+/// run when the vocabulary is already cached on disk.
+pub async fn open_for_update_lazy(
+  config : AgentOrientConfig,
+  corpus_fn : () -> Array[String],
+  dim : Int,
+) -> Handle raise CacheError {
   let dim_probe = @text_embed.TfidfEmbeddingProvider::new(dim)
   match decide_open(config, ReadWrite, dim_probe) {
     Ready(layout) => {
@@ -67,7 +80,7 @@ pub async fn open_for_update(
         VocabularyLoaded(provider) => provider
         VocabularyBuilt(provider) => provider
         VocabularyInvalid(_) =>
-          build_provider_from_current_corpus(corpus_texts, dim)
+          build_provider_from_current_corpus(corpus_fn(), dim)
       }
       open_validated_handle(
         config,
@@ -78,7 +91,7 @@ pub async fn open_for_update(
     }
     FreshBuild(_) => {
       let provider = build_provider_from_current_corpus(
-        corpus_texts, dim,
+        corpus_fn(), dim,
       )
       rebuild_empty(config, provider)
     }
@@ -402,6 +415,41 @@ pub async fn Handle::upsert_many(
         err.to_string(),
       )
   }
+}
+
+///|
+/// Refresh just the FileSignature attrs (mtime_ns / size_bytes) on a cached
+/// record without re-embedding its vector. Used when the file's content hash
+/// is unchanged but its on-disk signature drifted (e.g. `touch`). The full
+/// attrs set is rewritten from the supplied `CachedFile` plus the new
+/// signature values — vcdb's `update_attrs` replaces all attrs, so we must
+/// reconstruct the complete set or other fields would be lost.
+pub async fn Handle::refresh_signature_for(
+  self : Handle,
+  cached : CachedFile,
+  mtime_ns : Int64,
+  size_bytes : Int64,
+  timestamp_ns? : Int64 = 0L,
+) -> Unit raise CacheError {
+  validate_is_mutable(self, "refresh-signature")
+  let attrs = signature_refresh_attrs(cached, mtime_ns, size_bytes)
+  let _ = self.db.update_attrs(cached.vector_id, attrs, timestamp_ns) catch {
+    @vcdb_storage.AsyncIOFailed(message) =>
+      raise StorageFailure(
+        "orient vcdb signature refresh failed for `" +
+        self.layout.vcdb_dir +
+        "`: " +
+        message,
+      )
+    err =>
+      raise DatabaseFailure(
+        "orient vcdb signature refresh failed for `" +
+        self.layout.vcdb_dir +
+        "`: " +
+        err.to_string(),
+      )
+  }
+
 }
 
 ///|

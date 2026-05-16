@@ -9,6 +9,14 @@ fn orient_command() -> @argparse.Command {
         "no-update",
         about="Use the saved orientation map without refreshing changed files",
       ),
+      @argparse.FlagArg::new(
+        "quiet",
+        about="Suppress per-stage progress diagnostics on stderr",
+      ),
+      @argparse.FlagArg::new(
+        "rescan",
+        about="Force a full filesystem walk to pick up newly created files",
+      ),
     ],
     options=[
       @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
@@ -143,6 +151,8 @@ fn orient_config_from_matches(
     wiki_dir: @common.arg_str(matches, "wiki-dir", base.wiki_dir),
     no_update: @common.arg_flag(matches, "no-update", base.no_update),
     limit: @common.arg_int(matches, "limit", base.limit),
+    quiet: @common.arg_flag(matches, "quiet", base.quiet),
+    rescan: @common.arg_flag(matches, "rescan", base.rescan),
   }
 }
 

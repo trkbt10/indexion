@@ -1,0 +1,11 @@
+supported_targets = "native"
+
+import {
+  "moonbitlang/core/encoding/utf8" @utf8,
+  "trkbt10/indexion/src/kgf/registry" @registry,
+  "trkbt10/indexion/src/pipeline" @pipeline,
+}
+
+options(
+  "native-stub": [ "signature_stub.c" ],
+)

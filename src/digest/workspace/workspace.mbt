@@ -9,6 +9,9 @@ pub struct GraphBuildResult {
   graph : @graph.CodeGraph
   /// Map of file path -> content hash for all analyzed files.
   file_hashes : Map[String, @cas_types.ContentHash]
+  /// Snapshot of `(mtime_ns, size_bytes)` per analyzed file, written to the
+  /// signatures sidecar so the next run can take the stat-only fast path.
+  signatures : Array[@signature.FileSignature]
 }
 
 ///|
@@ -160,36 +163,65 @@ pub fn build_graph_from_source(
   specs_dir : String,
   progress? : ((Int, Int, String)) -> Unit = fn(_info) { () },
 ) -> GraphBuildResult? {
+  let t = @progress.now_ms()
   let registry = @kgf_features.load_registry_or_empty(
     specs_dir~,
     target_dir=source_dir,
   )
+  @progress.stage(
+    "[digest] load registry", "", @progress.elapsed_ms(t),
+  )
+  let t = @progress.now_ms()
   let kgf_ignore = registry.collect_ignore_patterns()
   let discover_opts = @pipeline.DiscoverOptions::new(
     kgf_ignore~,
     root_dir=source_dir,
   )
   let paths = @pipeline.discover_files([source_dir], discover_opts)
+  @progress.stage(
+    "[digest] discover files",
+    "files=" + paths.length().to_string(),
+    @progress.elapsed_ms(t),
+  )
   if paths.length() == 0 {
     return None
   }
+  let t = @progress.now_ms()
   let files = @pipeline.collect_supported_files(paths, registry)
+  @progress.stage(
+    "[digest] read content",
+    "files=" + files.length().to_string(),
+    @progress.elapsed_ms(t),
+  )
   if files.length() == 0 {
     return None
   }
+  let t = @progress.now_ms()
   let file_hashes : Map[String, @cas_types.ContentHash] = {}
+  let signatures : Array[@signature.FileSignature] = []
   for entry in files {
     let path = entry.0
     let content = entry.1
     file_hashes.set(path, @cas_hash.compute_hash(content))
+    match @signature.signature_for(path) {
+      Some(sig) => signatures.push(sig)
+      None => ()
+    }
   }
+  @progress.stage(
+    "[digest] hash + signature content",
+    "files=" + signatures.length().to_string(),
+    @progress.elapsed_ms(t),
+  )
+  let t = @progress.now_ms()
   let progress_callback = @build.ProgressCallback::new(progress)
   let doc_config = @build.DocConfig::new(files, registry.to_specs_map())
   let (_, graph) = @build.build_with_graph_progress(
     doc_config,
     Some(progress_callback),
   )
-  Some({ graph, file_hashes })
+  @progress.stage("[digest] build code graph", "", @progress.elapsed_ms(t))
+  Some({ graph, file_hashes, signatures })
 }
 
 ///|
@@ -200,12 +232,17 @@ pub async fn update_index(
   digest_config : @dconfig.DigestConfig,
   progress? : ((Int, Int, String)) -> Unit = fn(_info) { () },
 ) -> UpdateResult? {
+  let total_start = @progress.now_ms()
+  @progress.stage("[digest] update_index start", "", 0UL)
   let build_result = match
     build_graph_from_source(workspace_dir, specs_dir, progress~) {
     Some(r) => r
     None => return None
   }
+  let t = @progress.now_ms()
   let index = @index.DigestIndex::load_or_create(index_dir, digest_config)
+  @progress.stage("[digest] load index", "", @progress.elapsed_ms(t))
+  let t = @progress.now_ms()
   let file_hashes : Map[String, @cas_types.ContentHash]? = Some(
     build_result.file_hashes,
   )
@@ -214,11 +251,27 @@ pub async fn update_index(
     digest_config,
     file_hashes~,
   )
+  @progress.stage(
+    "[digest] build_with_config",
+    "indexed=" + result.indexed_count.to_string() + " skipped=" +
+      result.skipped_count.to_string() + " removed=" +
+      result.removed_count.to_string(),
+    @progress.elapsed_ms(t),
+  )
+  let t = @progress.now_ms()
   let save_errors = if result.indexed_count > 0 || result.removed_count > 0 {
     index.save_to_dir(index_dir, build_result.graph)
   } else {
     []
   }
+  @progress.stage("[digest] save index", "", @progress.elapsed_ms(t))
+  // Persist the FileSignature sidecar so the next run can take the
+  // stat-only fast path. Failures are non-fatal — worst case the next run
+  // falls back to the full rebuild.
+  let _ = save_signatures(index_dir, build_result.signatures)
+  @progress.stage(
+    "[digest] update_index done", "", @progress.elapsed_ms(total_start),
+  )
   Some({
     indexed_count: result.indexed_count,
     skipped_count: result.skipped_count,
@@ -239,6 +292,28 @@ pub async fn update_index_if_stale(
 ) -> UpdateResult? {
   if !may_be_stale(workspace_dir, index_dir) {
     return None
+  }
+  // FileSignature fast-path: when every path we previously indexed still
+  // has identical mtime/size, no graph/embedding work is needed at all.
+  // Skip the 40s walk + 4s read + 27s graph build (measured on a 1900-file
+  // monorepo) and return a zero-change UpdateResult.
+  match load_signatures(index_dir) {
+    Some(sigs) =>
+      if signatures_match_disk(sigs) {
+        @progress.stage(
+          "[digest] signature fast-path: no changes",
+          "files=" + sigs.signatures.size().to_string(),
+          0UL,
+        )
+        return Some({
+          indexed_count: 0,
+          skipped_count: sigs.signatures.size(),
+          removed_count: 0,
+          saved: false,
+          save_errors: [],
+        })
+      }
+    None => ()
   }
   update_index(workspace_dir, index_dir, specs_dir, digest_config, progress~)
 }

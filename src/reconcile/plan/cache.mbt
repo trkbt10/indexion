@@ -81,9 +81,15 @@ fn load_cached_report(index_dir : String) -> ReconcileReport? {
       return None
     }
   }
-  @json.from_json(json) catch {
-    _ => None
+  // Bind to a concrete `ReconcileReport` so the FromJson impl resolved is
+  // for the struct itself rather than `Option<ReconcileReport>`. Without
+  // this annotation, `catch { _ => None }` causes the expected type to be
+  // `ReconcileReport?`, which decodes the root Object as an Option and
+  // always fails with `Option::from_json: expected array or null`.
+  let report : ReconcileReport = @json.from_json(json) catch {
+    _ => return None
   }
+  Some(report)
 }
 
 ///|

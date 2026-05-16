@@ -14,6 +14,8 @@ fn orient_schema_test_brief(
     summary_terms: [],
     score: 0.0,
     matched_terms: [],
+    mtime_ns: 0L,
+    size_bytes: 0L,
   }
 }
 
@@ -64,7 +66,9 @@ test "orient vcdb schema: code brief attrs are discrete strings with bounded pre
     "src/agent/orient/cache/schema.mbt", "implementation", summary,
   )
   let attrs = attrs_from_brief(brief, preview_limit=12)
-  assert_eq(attrs.size(), 6)
+  // path, role, owner, source_hash, structural_summary, summary_preview,
+  // mtime_ns, size_bytes — the FileSignature SoT adds the last two.
+  assert_eq(attrs.size(), 8)
   assert_no_json_packed_schema_attr(attrs)
   assert_eq(expect_schema_attr(attrs, "path"), brief.path)
   assert_eq(expect_schema_attr(attrs, "role"), "implementation")
@@ -76,6 +80,8 @@ test "orient vcdb schema: code brief attrs are discrete strings with bounded pre
   )
   assert_eq(expect_schema_attr(attrs, "summary_preview"), "0123456789ab")
   assert_true(attr_string(attrs, "summary_full") is None)
+  assert_eq(expect_schema_attr(attrs, "mtime_ns"), "0")
+  assert_eq(expect_schema_attr(attrs, "size_bytes"), "0")
 }
 
 ///|
@@ -85,7 +91,8 @@ test "orient vcdb schema: documentation keeps full summary separately" {
     "docs/orient-vcdb-migration.md", "documentation", summary,
   )
   let attrs = attrs_from_brief(brief, preview_limit=18)
-  assert_eq(attrs.size(), 7)
+  // 7 base attrs (incl. summary_full) + 2 FileSignature attrs.
+  assert_eq(attrs.size(), 9)
   assert_no_json_packed_schema_attr(attrs)
   assert_eq(expect_schema_attr(attrs, "summary_preview"), "# Cache migration\n")
   assert_eq(expect_schema_attr(attrs, "summary_full"), summary)
@@ -164,7 +171,7 @@ test "orient vcdb schema: code brief preview stays bounded for huge summaries" {
   )
   assert_true(brief.summary.length() > summary_preview_limit)
   let attrs = attrs_from_brief(brief)
-  assert_eq(attrs.size(), 6)
+  assert_eq(attrs.size(), 8)
   assert_no_json_packed_schema_attr(attrs)
   let preview = expect_schema_attr(attrs, "summary_preview")
   assert_true(preview.length() <= summary_preview_limit)
@@ -178,7 +185,7 @@ test "orient vcdb schema: documentation brief retains huge summary in summary_fu
     "docs/orient-huge.md", "documentation", huge,
   )
   let attrs = attrs_from_brief(brief)
-  assert_eq(attrs.size(), 7)
+  assert_eq(attrs.size(), 9)
   assert_eq(expect_schema_attr(attrs, "summary_full"), huge)
   let preview = expect_schema_attr(attrs, "summary_preview")
   assert_true(preview.length() <= summary_preview_limit)

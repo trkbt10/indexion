@@ -14,6 +14,8 @@ fn orient_entry_config(name : String, no_update : Bool) -> AgentOrientConfig {
     wiki_dir: root + "/wiki",
     no_update,
     limit: 4,
+    quiet: true,
+    rescan: false,
   }
 }
 

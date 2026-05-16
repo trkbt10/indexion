@@ -24,10 +24,16 @@ pub fn task_token_stream(text : String) -> Array[String] {
 ///|
 pub fn collect_orient_tokens(text : String, unique~ : Bool) -> Array[String] {
   let result : Array[String] = []
+  // Side index for O(1) dedup membership. The legacy `result.contains(_)`
+  // scan turned into O(N²) on large documents (e.g. multi-MB HTML
+  // fixtures) and dominated cold-cache orient time. Building the map
+  // alongside the array preserves insertion order in `result` while
+  // keeping the dedup cost constant.
+  let seen : Map[String, Unit] = {}
   for token in @tokenizer.extract_word_tokens(@tokenizer.normalize_text(text)) {
-    push_orient_token(result, token, unique~)
+    push_orient_token(result, seen, token, unique~)
     for part in split_orient_token(token) {
-      push_orient_token(result, part, unique~)
+      push_orient_token(result, seen, part, unique~)
     }
   }
   result
@@ -36,13 +42,21 @@ pub fn collect_orient_tokens(text : String, unique~ : Bool) -> Array[String] {
 ///|
 pub fn push_orient_token(
   result : Array[String],
+  seen : Map[String, Unit],
   token : String,
   unique~ : Bool,
 ) -> Unit {
   let canonical = canonical_orient_token(token)
-  if canonical.length() >= 2 && (!unique || !result.contains(canonical)) {
-    result.push(canonical)
+  if canonical.length() < 2 {
+    return
   }
+  if unique {
+    if seen.contains(canonical) {
+      return
+    }
+    seen.set(canonical, ())
+  }
+  result.push(canonical)
 }
 
 ///|

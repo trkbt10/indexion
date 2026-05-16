@@ -2342,6 +2342,14 @@ async fn snapshot_for_config_async(config : SpecAlignConfig) -> AlignSnapshot? {
   }
   // Fast path: if a cached snapshot exists and all source files are unchanged,
   // skip the expensive build_snapshot (BM25 + NCD) entirely.
+  //
+  // Two-tier check:
+  //   1. FileSignature SoT — stat-only walk + classify against the
+  //      signatures sidecar. When nothing drifted at the stat level we can
+  //      trust the cached `file_hashes` without reading any contents.
+  //   2. Content-hash fallback — if the sidecar is missing or any signature
+  //      drifted, fall back to `build_current_file_hashes` so behavior
+  //      matches the pre-signature release exactly.
   match previous {
     Some(cached) =>
       if cached.config.algorithm == config.algorithm &&
@@ -2351,10 +2359,24 @@ async fn snapshot_for_config_async(config : SpecAlignConfig) -> AlignSnapshot? {
           specs_dir=config.specs_dir,
           target_dir=config.impl_path,
         )
-        let current_hashes = build_current_file_hashes(
-          effective_config, registry,
-        )
-        if file_hashes_match(cached.file_hashes, current_hashes) {
+        let hash_match = match load_signatures(cache_dir) {
+          Some(sidecar) => {
+            let fresh = discover_signatures_for_align(
+              effective_config, registry,
+            )
+            let class = @signature.classify_against_cache(
+              fresh, sidecar.signatures,
+            )
+            class.candidates.length() == 0 && class.deleted_paths.length() == 0
+          }
+          None => {
+            let current_hashes = build_current_file_hashes(
+              effective_config, registry,
+            )
+            file_hashes_match(cached.file_hashes, current_hashes)
+          }
+        }
+        if hash_match {
           // Carry forward the caller's config so that report-only fields
           // (subcommand, fail_on, direction, format, agent) take effect.
           let snapshot = { ..cached, config: effective_config, cache_hit: true }
@@ -2377,6 +2399,19 @@ async fn snapshot_for_config_async(config : SpecAlignConfig) -> AlignSnapshot? {
   let snapshot = { ..snapshot, commit: current_commit_info(effective_config) }
   if !save_snapshot(cache_dir, snapshot) {
     return None
+  }
+  // Persist the FileSignature sidecar so the next run can take the
+  // stat-only fast path. Built from the exact paths the snapshot used,
+  // so the sidecar key set always equals `snapshot.file_hashes` keys.
+  // Failures are non-fatal — worst case the next run falls back to the
+  // content-hash path.
+  {
+    let registry = @kgf_features.load_registry_or_empty(
+      specs_dir=effective_config.specs_dir,
+      target_dir=effective_config.impl_path,
+    )
+    let sigs = discover_signatures_for_align(effective_config, registry)
+    let _ = save_signatures(cache_dir, sigs)
   }
   let snapshot = match load_snapshot(cache_dir) {
     Some(value) => value

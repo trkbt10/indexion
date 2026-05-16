@@ -15,6 +15,11 @@ pub(all) struct UpdateResult {
 ///|
 priv struct UpdateDecision {
   upsert_briefs : Array[LocalFileBrief]
+  // Files whose source content hash already matches the cache but whose
+  // FileSignature (mtime / size) drifted. We refresh just their attrs via
+  // vcdb's `update_attrs` so the next stat-only pass can skip them — without
+  // paying for a vector re-embedding pass on every untouched file.
+  signature_refresh_briefs : Array[LocalFileBrief]
   new_files : Array[String]
   changed_files : Array[String]
   deleted_files : Array[String]
@@ -32,9 +37,41 @@ pub async fn apply_incremental_updates(
   briefs : Array[LocalFileBrief],
   timestamp_ns? : Int64 = 0L,
 ) -> UpdateResult raise CacheError {
-  let decision = classify_updates(handle, briefs)
+  apply_incremental_updates_with_cache(handle, briefs, None, timestamp_ns~)
+}
+
+///|
+/// Same as `apply_incremental_updates`, but lets the caller supply a
+/// previously scanned cache snapshot to avoid rescanning the vcdb twice when
+/// the caller already paid for one full scan during the classification step.
+pub async fn apply_incremental_updates_with_cache(
+  handle : Handle,
+  briefs : Array[LocalFileBrief],
+  cached_files_in : Array[CachedFile]?,
+  timestamp_ns? : Int64 = 0L,
+) -> UpdateResult raise CacheError {
+  let decision = classify_updates_with_cache(handle, briefs, cached_files_in)
   if decision.upsert_briefs.length() > 0 {
     handle.upsert_many(decision.upsert_briefs, timestamp_ns~)
+  }
+  // Apply signature-only attr refreshes via the cheap update_attrs path —
+  // skips vector re-embedding for files whose content is unchanged.
+  let cached_by_path : Map[String, CachedFile] = {}
+  match cached_files_in {
+    Some(files) =>
+      for cached in files {
+        cached_by_path.set(cached.path, cached)
+      }
+    None => ()
+  }
+  for brief in decision.signature_refresh_briefs {
+    match cached_by_path.get(brief.path) {
+      Some(cached) =>
+        handle.refresh_signature_for(cached, brief.mtime_ns, brief.size_bytes,
+          timestamp_ns~,
+        )
+      None => ()
+    }
   }
   let removed_files : Array[String] = []
   for path in decision.deleted_files {
@@ -81,11 +118,15 @@ pub fn current_status(
 }
 
 ///|
-fn classify_updates(
+fn classify_updates_with_cache(
   handle : Handle,
   briefs : Array[LocalFileBrief],
+  cached_files_in : Array[CachedFile]?,
 ) -> UpdateDecision raise CacheError {
-  let cached_files = scan_all_cached_files(handle)
+  let cached_files = match cached_files_in {
+    Some(files) => files
+    None => scan_all_cached_files(handle)
+  }
   let cached_by_path : Map[String, CachedFile] = {}
   for file in cached_files {
     cached_by_path.set(file.path, file)
@@ -98,11 +139,20 @@ fn classify_updates(
   let deleted_files : Array[String] = []
   let affected_owners : Array[String] = []
   let mut knowledge_changed = false
+  let signature_refresh_briefs : Array[LocalFileBrief] = []
   for brief in briefs {
     current_hashes.set(brief.path, brief.source_hash)
     match cached_by_path.get(brief.path) {
-      Some(cached) if cached.source_hash == brief.source_hash =>
+      Some(cached) if cached.source_hash == brief.source_hash => {
+        // Source content is unchanged. If the FileSignature drifted, queue
+        // an attrs-only refresh so the next stat-only pass can skip this
+        // file at the cheaper signature stage. No vector re-embedding.
+        if cached.mtime_ns != brief.mtime_ns ||
+          cached.size_bytes != brief.size_bytes {
+          signature_refresh_briefs.push(brief)
+        }
         unchanged_files.push(brief.path)
+      }
       Some(_) => {
         changed_files.push(brief.path)
         upsert_briefs.push(brief)
@@ -132,6 +182,7 @@ fn classify_updates(
   }
   {
     upsert_briefs,
+    signature_refresh_briefs,
     new_files,
     changed_files,
     deleted_files,
@@ -142,7 +193,13 @@ fn classify_updates(
 }
 
 ///|
-fn scan_all_cached_files(
+/// Page through the orient vcdb and return every cached file record.
+///
+/// Callers that need to classify a fresh discovery against the cache should
+/// call this once and then pass the result into `apply_incremental_updates`
+/// via `apply_incremental_updates_with_cache`, so the cache is scanned only
+/// once per orient run instead of twice.
+pub fn scan_all_cached_files(
   handle : Handle,
 ) -> Array[CachedFile] raise CacheError {
   let files : Array[CachedFile] = []
