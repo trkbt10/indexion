@@ -11,7 +11,7 @@
 /// sidecar is interpreted as "we don't know yet" and forces a full rebuild,
 /// which then persists the sidecar for the run after.
 pub struct SignaturesFile {
-  signatures : Map[String, @signature.FileSignature]
+  signatures : Map[String, @pipeline.FileSignature]
 }
 
 ///|
@@ -33,7 +33,7 @@ pub fn load_signatures(index_dir : String) -> SignaturesFile? {
   let json = @json.parse(raw) catch { _ => return None }
   match json {
     Object(obj) => {
-      let signatures : Map[String, @signature.FileSignature] = {}
+      let signatures : Map[String, @pipeline.FileSignature] = {}
       for entry in obj {
         let (k, v) = entry
         match v {
@@ -63,7 +63,7 @@ pub fn load_signatures(index_dir : String) -> SignaturesFile? {
 /// missing).
 pub fn save_signatures(
   index_dir : String,
-  signatures : Array[@signature.FileSignature],
+  signatures : Array[@pipeline.FileSignature],
 ) -> Bool {
   let buf = StringBuilder::new()
   buf.write_string("{\n")
@@ -97,11 +97,11 @@ pub fn save_signatures(
 pub fn signatures_match_disk(file : SignaturesFile) -> Bool {
   for entry in file.signatures {
     let (path, expected) = entry
-    match @signature.signature_for(path) {
+    match @pipeline.signature_for(path) {
       Some(actual) =>
         if actual.mtime_ns != expected.mtime_ns ||
           actual.size_bytes != expected.size_bytes {
-          @progress.stage(
+          @pipeline.stage(
             "[digest] signature mismatch",
             "path=" +
             path +
@@ -118,7 +118,7 @@ pub fn signatures_match_disk(file : SignaturesFile) -> Bool {
           return false
         }
       None => {
-        @progress.stage(
+        @pipeline.stage(
           "[digest] signature missing on disk",
           "path=" + path,
           0UL,

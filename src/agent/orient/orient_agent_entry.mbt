@@ -29,30 +29,30 @@ async fn orient_agent_update(config : AgentOrientConfig) -> AgentOrientReport {
 async fn orient_agent_update_locked(
   config : AgentOrientConfig,
 ) -> AgentOrientReport {
-  let total_start = @progress.now_ms()
+  let total_start = @pipeline.now_ms()
   log_progress(config, "[orient] starting update", "", 0UL)
 
   // Stage: load KGF registry.
-  let t = @progress.now_ms()
+  let t = @pipeline.now_ms()
   let registry = @kgf_features.load_registry_or_empty(
     specs_dir=config.specs_dir,
     target_dirs=config.paths,
   )
-  log_progress(config, "[orient] load registry", "", @progress.elapsed_ms(t))
+  log_progress(config, "[orient] load registry", "", @pipeline.elapsed_ms(t))
 
   // Open the vcdb with a lazy bootstrap thunk. On a cold cache the thunk has
   // to walk the filesystem and build the corpus from scratch — we capture
   // its briefs into the Ref so the main flow below can reuse them instead of
   // recomputing the same load+graph+brief pass after the cache is open.
   let bootstrap_briefs : Ref[Array[@types.LocalFileBrief]?] = Ref(None)
-  let t = @progress.now_ms()
+  let t = @pipeline.now_ms()
   let handle = @cache.open_for_update_lazy(
     config,
     fn() {
       log_progress(config, "[orient] cold-cache vocabulary bootstrap", "", 0UL)
       let opts = orient_entry_discover_options(config, registry)
-      let sigs = @signature.discover_signatures(config.paths, opts, registry)
-      let files = @signature.load_contents(sigs, registry)
+      let sigs = @pipeline.discover_signatures(config.paths, opts, registry)
+      let files = @pipeline.load_contents(sigs, registry)
       let graph = @source.build_graph(files, registry)
       let briefs = @source.build_file_briefs(files, graph, None)
       bootstrap_briefs.val = Some(orient_entry_stamp_signatures(briefs, sigs))
@@ -60,7 +60,7 @@ async fn orient_agent_update_locked(
     },
     orient_entry_vector_dim,
   )
-  log_progress(config, "[orient] open cache", "", @progress.elapsed_ms(t))
+  log_progress(config, "[orient] open cache", "", @pipeline.elapsed_ms(t))
 
   // Cold-cache fast path: the bootstrap thunk already paid the full
   // load+graph+briefs cost while building the TF-IDF corpus. Reuse those
@@ -81,9 +81,9 @@ async fn orient_agent_update_locked(
 
   // Warm path. Project the cached vcdb entries into the signature view used
   // for classification.
-  let t = @progress.now_ms()
+  let t = @pipeline.now_ms()
   let cached_files = @cache.scan_all_cached_files(handle)
-  let cached_signature_by_path : Map[String, @signature.FileSignature] = {}
+  let cached_signature_by_path : Map[String, @pipeline.FileSignature] = {}
   let cached_by_path : Map[String, @cache.CachedFile] = {}
   for cached in cached_files {
     cached_by_path.set(cached.path, cached)
@@ -97,7 +97,7 @@ async fn orient_agent_update_locked(
     config,
     "[orient] scan cache",
     "cached=" + cached_files.length().to_string(),
-    @progress.elapsed_ms(t),
+    @pipeline.elapsed_ms(t),
   )
 
   // Stage: stat the file set we need to verify. Two modes:
@@ -107,16 +107,16 @@ async fn orient_agent_update_locked(
   //      ~10s. New files on disk are *not* discovered here.
   //   2) Rescan (`--rescan` or `config.rescan=true`): full FS walk so newly
   //      created files enter the orient brief.
-  let t = @progress.now_ms()
+  let t = @pipeline.now_ms()
   let fresh_signatures = if config.rescan || cached_files.length() == 0 {
     let opts = orient_entry_discover_options(config, registry)
-    @signature.discover_signatures(config.paths, opts, registry)
+    @pipeline.discover_signatures(config.paths, opts, registry)
   } else {
     let paths : Array[String] = []
     for cached in cached_files {
       paths.push(cached.path)
     }
-    @signature.signatures_for_paths(paths)
+    @pipeline.signatures_for_paths(paths)
   }
   log_progress(
     config,
@@ -126,13 +126,13 @@ async fn orient_agent_update_locked(
       "[orient] discover signatures (cached paths)"
     },
     "files=" + fresh_signatures.length().to_string(),
-    @progress.elapsed_ms(t),
+    @pipeline.elapsed_ms(t),
   )
 
   // Classify against the cached signatures. `unchanged` files require zero
   // work; `candidates` may need a content re-read and a possible rebuild.
-  let t = @progress.now_ms()
-  let classification = @signature.classify_against_cache(
+  let t = @pipeline.now_ms()
+  let classification = @pipeline.classify_against_cache(
     fresh_signatures, cached_signature_by_path,
   )
   log_progress(
@@ -144,12 +144,12 @@ async fn orient_agent_update_locked(
     classification.candidates.length().to_string() +
     " deleted=" +
     classification.deleted_paths.length().to_string(),
-    @progress.elapsed_ms(t),
+    @pipeline.elapsed_ms(t),
   )
 
   // Load content for candidates and recompute their hashes.
-  let t = @progress.now_ms()
-  let candidate_files = @signature.load_contents(
+  let t = @pipeline.now_ms()
+  let candidate_files = @pipeline.load_contents(
     classification.candidates,
     registry,
   )
@@ -172,12 +172,12 @@ async fn orient_agent_update_locked(
     candidate_files.length().to_string() +
     " content-changed=" +
     content_changed.to_string(),
-    @progress.elapsed_ms(t),
+    @pipeline.elapsed_ms(t),
   )
 
   // Build the per-file brief list.
   let needs_graph = content_changed > 0
-  let signatures_by_fresh_path : Map[String, @signature.FileSignature] = {}
+  let signatures_by_fresh_path : Map[String, @pipeline.FileSignature] = {}
   for sig in fresh_signatures {
     signatures_by_fresh_path.set(sig.path, sig)
   }
@@ -197,14 +197,14 @@ async fn orient_agent_update_locked(
       None => () // file vanished between signature walk and content load
     }
   }
-  let t = @progress.now_ms()
+  let t = @pipeline.now_ms()
   let rebuild_briefs : Array[@types.LocalFileBrief] = if needs_graph {
     let graph = @source.build_graph(rebuild_files, registry)
     log_progress(
       config,
       "[orient] build code graph",
       "rebuild=" + rebuild_files.length().to_string(),
-      @progress.elapsed_ms(t),
+      @pipeline.elapsed_ms(t),
     )
     @source.build_file_briefs(rebuild_files, graph, None)
   } else {
@@ -278,7 +278,7 @@ async fn orient_agent_update_locked(
     refreshed_only.to_string() +
     " reused=" +
     reused_pure.to_string(),
-    @progress.elapsed_ms(t),
+    @pipeline.elapsed_ms(t),
   )
 
   orient_entry_finalize(
@@ -297,7 +297,7 @@ async fn orient_entry_finalize(
   total_start : UInt64,
   label : String,
 ) -> AgentOrientReport {
-  let t = @progress.now_ms()
+  let t = @pipeline.now_ms()
   let cache_snapshot : Array[@cache.CachedFile]? = if cached_snapshot.length() ==
     0 {
     None
@@ -314,16 +314,16 @@ async fn orient_entry_finalize(
     update.upsert_count.to_string() +
     " remove=" +
     update.remove_count.to_string(),
-    @progress.elapsed_ms(t),
+    @pipeline.elapsed_ms(t),
   )
-  let t = @progress.now_ms()
+  let t = @pipeline.now_ms()
   let query = @cache.query(handle, config.task, config.limit)
-  log_progress(config, "[orient] query", "", @progress.elapsed_ms(t))
+  log_progress(config, "[orient] query", "", @pipeline.elapsed_ms(t))
   log_progress(
     config,
     "[orient] done (" + label + ")",
     "",
-    @progress.elapsed_ms(total_start),
+    @pipeline.elapsed_ms(total_start),
   )
   @report.orient_report_from_query(config, query, update.status)
 }
@@ -382,9 +382,9 @@ fn orient_entry_corpus_texts(
 /// into vcdb already carry the file signature that the next run can match.
 fn orient_entry_stamp_signatures(
   briefs : Array[@types.LocalFileBrief],
-  signatures : Array[@signature.FileSignature],
+  signatures : Array[@pipeline.FileSignature],
 ) -> Array[@types.LocalFileBrief] {
-  let sig_by_path : Map[String, @signature.FileSignature] = {}
+  let sig_by_path : Map[String, @pipeline.FileSignature] = {}
   for sig in signatures {
     sig_by_path.set(sig.path, sig)
   }
@@ -413,5 +413,5 @@ fn log_progress(
   if config.quiet {
     return
   }
-  @progress.stage(stage, detail, elapsed_ms)
+  @pipeline.stage(stage, detail, elapsed_ms)
 }

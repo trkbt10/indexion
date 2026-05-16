@@ -9,8 +9,6 @@ import {
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/pipeline" @pipeline,
-  "trkbt10/indexion/src/pipeline/signature" @signature,
-  "trkbt10/indexion/src/progress" @progress,
 }
 
 import {

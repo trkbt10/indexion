@@ -8,9 +8,7 @@ import {
   "trkbt10/indexion/src/kgf/cas/types" @cas_types,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/pipeline" @pipeline,
-  "trkbt10/indexion/src/pipeline/signature" @signature,
   "trkbt10/indexion/src/docgen/build" @build,
-  "trkbt10/indexion/src/progress" @progress,
   "trkbt10/indexion/src/vcs/git" @git,
   "moonbitlang/core/json" @json,
 }

@@ -353,7 +353,7 @@ pub async fn persisted_report(config : ReconcileConfig) -> ReconcileReport? {
       // drift in either input.
       let sigs = signatures_for_file_states(state.all_file_states)
       if config.review_results_path.length() > 0 {
-        match @signature.signature_for(config.review_results_path) {
+        match @pipeline.signature_for(config.review_results_path) {
           Some(sig) => sigs.push(sig)
           None => () // review file absent on disk — nothing to track
         }
@@ -433,7 +433,7 @@ fn review_results_unchanged(
   }
   match sigs.signatures.get(review_results_path) {
     Some(expected) =>
-      match @signature.signature_for(review_results_path) {
+      match @pipeline.signature_for(review_results_path) {
         Some(actual) =>
           actual.mtime_ns == expected.mtime_ns &&
           actual.size_bytes == expected.size_bytes

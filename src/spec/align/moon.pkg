@@ -11,7 +11,6 @@ import {
   "trkbt10/indexion/src/kgf/registry" @registry,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
   "trkbt10/indexion/src/pipeline" @pipeline,
-  "trkbt10/indexion/src/pipeline/signature" @signature,
   "trkbt10/indexion/src/reconcile/tracking" @reconcile_tracking,
   "trkbt10/indexion/src/reconcile/store" @reconcile_store,
   "trkbt10/indexion/src/similarity/ncd" @ncd,

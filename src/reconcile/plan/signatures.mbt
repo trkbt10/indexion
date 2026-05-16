@@ -12,7 +12,7 @@
 /// existing full-rebuild path, which then writes the sidecar for the run
 /// after.
 pub struct ReconcileSignaturesFile {
-  signatures : Map[String, @signature.FileSignature]
+  signatures : Map[String, @pipeline.FileSignature]
 }
 
 ///|
@@ -36,7 +36,7 @@ pub fn load_signatures(index_dir : String) -> ReconcileSignaturesFile? {
   let json = @json.parse(raw) catch { _ => return None }
   match json {
     Object(obj) => {
-      let signatures : Map[String, @signature.FileSignature] = {}
+      let signatures : Map[String, @pipeline.FileSignature] = {}
       for entry in obj {
         let (k, v) = entry
         match v {
@@ -72,7 +72,7 @@ pub fn load_signatures(index_dir : String) -> ReconcileSignaturesFile? {
 /// 1970 + ~100 days.
 pub fn save_signatures(
   index_dir : String,
-  signatures : Array[@signature.FileSignature],
+  signatures : Array[@pipeline.FileSignature],
 ) -> Bool {
   match
     @reconcile_store.ensure_cache_dir(index_dir, "reconcile cache directory") {
@@ -116,7 +116,7 @@ pub fn signatures_match_disk(file : ReconcileSignaturesFile) -> Bool {
   }
   for entry in file.signatures {
     let (path, expected) = entry
-    match @signature.signature_for(path) {
+    match @pipeline.signature_for(path) {
       Some(actual) =>
         if actual.mtime_ns != expected.mtime_ns ||
           actual.size_bytes != expected.size_bytes {
@@ -134,10 +134,10 @@ pub fn signatures_match_disk(file : ReconcileSignaturesFile) -> Bool {
 /// payload from the `all_file_states` array a fresh analysis produces.
 pub fn signatures_for_file_states(
   file_states : Array[FileState],
-) -> Array[@signature.FileSignature] {
-  let result : Array[@signature.FileSignature] = []
+) -> Array[@pipeline.FileSignature] {
+  let result : Array[@pipeline.FileSignature] = []
   for state in file_states {
-    match @signature.signature_for(state.path) {
+    match @pipeline.signature_for(state.path) {
       Some(sig) => result.push(sig)
       None => ()
     }

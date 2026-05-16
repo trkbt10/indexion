@@ -2364,7 +2364,7 @@ async fn snapshot_for_config_async(config : SpecAlignConfig) -> AlignSnapshot? {
             let fresh = discover_signatures_for_align(
               effective_config, registry,
             )
-            let class = @signature.classify_against_cache(
+            let class = @pipeline.classify_against_cache(
               fresh,
               sidecar.signatures,
             )

@@ -1,5 +1,7 @@
 import {
   "moonbitlang/core/bench",
+  "moonbitlang/core/encoding/utf8" @utf8,
+  "moonbitlang/core/env" @env,
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/filter" @filter,
   "trkbt10/indexion/src/config" @config,
@@ -17,7 +19,10 @@ import {
   "trkbt10/indexion/src/kgf/peg" @kgf_peg,
   "hustcer/fzip" @fzip,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
-  "moonbitlang/core/env" @env,
 } for "wbtest"
 
 supported_targets = "native"
+
+options(
+  "native-stub": [ "progress_stub.c", "signature_stub.c" ],
+)

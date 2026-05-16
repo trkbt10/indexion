@@ -9,7 +9,7 @@
 /// re-read and re-hashed". This split lets re-update paths avoid reading
 /// thousands of unchanged files end to end.
 ///
-/// Adoption pattern (see README.md for migration sketches):
+/// Adoption pattern (see signature_README.md for migration sketches):
 ///   1. `discover_signatures(paths, opts, registry)` — stat-only walk.
 ///   2. For each signature, consult your feature's cache:
 ///      - `lookup(path)` returns `(cached_signature, cached_source_hash)`.
@@ -39,7 +39,7 @@ extern "C" fn c_signature_stat(
 ) -> Int = "indexion_signature_stat"
 
 ///|
-fn encode_path(path : String) -> Bytes {
+fn encode_signature_path(path : String) -> Bytes {
   @utf8.encode(path)
 }
 
@@ -48,7 +48,7 @@ fn encode_path(path : String) -> Bytes {
 /// path no longer exists (or stat fails) — callers should treat that the same
 /// as "deleted from the working tree".
 pub fn signature_for(path : String) -> FileSignature? {
-  let bytes = encode_path(path)
+  let bytes = encode_signature_path(path)
   let out : FixedArray[Int64] = FixedArray::make(2, 0L)
   let ok = c_signature_stat(bytes, bytes.length(), out)
   if ok == 0 {
@@ -61,14 +61,14 @@ pub fn signature_for(path : String) -> FileSignature? {
 ///|
 /// Discover every file under the given input paths and return only their
 /// stat-level signatures — never reads file contents. Use this in place of
-/// `@pipeline.collect_supported_file_info` whenever your downstream stage
-/// can short-circuit on a signature match against a previous cache snapshot.
+/// `collect_supported_file_info` whenever your downstream stage can
+/// short-circuit on a signature match against a previous cache snapshot.
 pub fn discover_signatures(
   paths : Array[String],
-  options : @pipeline.DiscoverOptions,
+  options : DiscoverOptions,
   registry : @registry.KGFRegistry,
 ) -> Array[FileSignature] {
-  let file_paths = @pipeline.discover_files(paths, options)
+  let file_paths = discover_files(paths, options)
   let result : Array[FileSignature] = []
   for path in file_paths {
     match registry.detect_from_path(path) {
@@ -106,16 +106,16 @@ pub fn signatures_for_paths(paths : Array[String]) -> Array[FileSignature] {
 
 ///|
 /// Load the file content for a previously discovered signature, returning a
-/// fully populated `@pipeline.SupportedFile` so downstream stages (graph
-/// build, brief construction, embedding, etc.) can run unchanged.
+/// fully populated `SupportedFile` so downstream stages (graph build, brief
+/// construction, embedding, etc.) can run unchanged.
 ///
 /// Returns `None` if the path could not be opened — usually because it was
 /// deleted between the signature walk and the content load.
 pub fn load_content(
   sig : FileSignature,
   registry : @registry.KGFRegistry,
-) -> @pipeline.SupportedFile? {
-  let files = @pipeline.load_supported_file_info([sig.path], registry)
+) -> SupportedFile? {
+  let files = load_supported_file_info([sig.path], registry)
   if files.length() == 0 {
     None
   } else {
@@ -129,12 +129,12 @@ pub fn load_content(
 pub fn load_contents(
   sigs : Array[FileSignature],
   registry : @registry.KGFRegistry,
-) -> Array[@pipeline.SupportedFile] {
+) -> Array[SupportedFile] {
   let paths : Array[String] = []
   for sig in sigs {
     paths.push(sig.path)
   }
-  @pipeline.load_supported_file_info(paths, registry)
+  load_supported_file_info(paths, registry)
 }
 
 ///|

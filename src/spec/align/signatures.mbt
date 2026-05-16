@@ -11,7 +11,7 @@
 /// to the existing `build_current_file_hashes` content-read path, which
 /// then writes the sidecar for the run after.
 pub struct AlignSignaturesFile {
-  signatures : Map[String, @signature.FileSignature]
+  signatures : Map[String, @pipeline.FileSignature]
 }
 
 ///|
@@ -35,7 +35,7 @@ pub fn load_signatures(cache_dir : String) -> AlignSignaturesFile? {
   let json = @json.parse(raw) catch { _ => return None }
   match json {
     Object(obj) => {
-      let signatures : Map[String, @signature.FileSignature] = {}
+      let signatures : Map[String, @pipeline.FileSignature] = {}
       for entry in obj {
         let (k, v) = entry
         match v {
@@ -68,7 +68,7 @@ pub fn load_signatures(cache_dir : String) -> AlignSignaturesFile? {
 /// timestamps cross that threshold around 1970 + ~100 days.
 pub fn save_signatures(
   cache_dir : String,
-  signatures : Array[@signature.FileSignature],
+  signatures : Array[@pipeline.FileSignature],
 ) -> Bool {
   match @reconcile_store.ensure_cache_dir(cache_dir, "align cache directory") {
     Err(_) => return false
@@ -110,13 +110,13 @@ pub fn save_signatures(
 pub fn discover_signatures_for_align(
   config : SpecAlignConfig,
   registry : @registry.KGFRegistry,
-) -> Array[@signature.FileSignature] {
-  let result : Array[@signature.FileSignature] = []
+) -> Array[@pipeline.FileSignature] {
+  let result : Array[@pipeline.FileSignature] = []
   for sig in discover_signatures_doc_only(config.spec_path, registry) {
     result.push(sig)
   }
-  let impl_code : Array[@signature.FileSignature] = []
-  let impl_doc : Array[@signature.FileSignature] = []
+  let impl_code : Array[@pipeline.FileSignature] = []
+  let impl_doc : Array[@pipeline.FileSignature] = []
   for sig in discover_signatures_kgf(config.impl_path, registry) {
     match @kgf_features.content_type_for_file(sig.path, Some(registry)) {
       Some("document") => impl_doc.push(sig)
@@ -136,9 +136,9 @@ pub fn discover_signatures_for_align(
 fn discover_signatures_doc_only(
   root : String,
   registry : @registry.KGFRegistry,
-) -> Array[@signature.FileSignature] {
+) -> Array[@pipeline.FileSignature] {
   let raw = discover_signatures_kgf(root, registry)
-  let result : Array[@signature.FileSignature] = []
+  let result : Array[@pipeline.FileSignature] = []
   for sig in raw {
     if @kgf_features.content_type_for_file(sig.path, Some(registry)) ==
       Some("document") {
@@ -158,15 +158,15 @@ fn discover_signatures_doc_only(
 fn discover_signatures_kgf(
   root : String,
   registry : @registry.KGFRegistry,
-) -> Array[@signature.FileSignature] {
+) -> Array[@pipeline.FileSignature] {
   if root.length() == 0 || !@fs.path_exists(root) {
     return []
   }
-  let result : Array[@signature.FileSignature] = []
+  let result : Array[@pipeline.FileSignature] = []
   let is_dir = @fs.is_dir(root) catch { _ => false }
   if !is_dir {
     if registry.detect_from_path(root) is Some(_) {
-      match @signature.signature_for(root) {
+      match @pipeline.signature_for(root) {
         Some(sig) => result.push(sig)
         None => ()
       }
@@ -175,7 +175,7 @@ fn discover_signatures_kgf(
   }
   let kgf_ignore = registry.collect_ignore_patterns()
   let opts = @pipeline.DiscoverOptions::new(kgf_ignore~, root_dir=root)
-  for sig in @signature.discover_signatures([root], opts, registry) {
+  for sig in @pipeline.discover_signatures([root], opts, registry) {
     result.push(sig)
   }
   result
