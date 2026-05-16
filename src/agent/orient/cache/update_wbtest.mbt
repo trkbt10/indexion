@@ -89,9 +89,9 @@ async test "orient cache update: applies new changed deleted and skips unchanged
     [unchanged_current, changed_current, new_current],
     timestamp_ns=200L,
   )
-  assert_eq(result.new_files, [new_current.path])
-  assert_eq(result.changed_files, [changed_current.path])
-  assert_eq(result.unchanged_files, [unchanged_current.path])
+  assert_true(result.new_files == [new_current.path])
+  assert_true(result.changed_files == [changed_current.path])
+  assert_true(result.unchanged_files == [unchanged_current.path])
   assert_eq(result.deleted_files.length(), 1)
   assert_eq(result.deleted_files[0], deleted_original.path)
   assert_eq(result.upserted_files.length(), 2)
@@ -133,7 +133,7 @@ async test "orient cache update: applies new changed deleted and skips unchanged
   assert_true(
     result.status.refreshed_owners.contains("src/agent/orient/report"),
   )
-  assert_eq(result.status.reused_owners, ["src/agent/orient/cache"])
+  assert_true(result.status.reused_owners == ["src/agent/orient/cache"])
 }
 
 ///|

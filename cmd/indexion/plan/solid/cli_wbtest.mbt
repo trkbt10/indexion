@@ -1,4 +1,7 @@
 ///|
+using @test {assert_eq}
+
+///|
 test "solid: from_matches splits comma-separated source directories via common parser" {
   let cmd = command()
   let matches = cmd.parse(argv=["--from=apps/web, apps/admin ,pkg/shared"][:])

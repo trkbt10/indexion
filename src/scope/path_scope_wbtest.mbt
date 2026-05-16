@@ -1,4 +1,7 @@
 ///|
+using @test {assert_eq}
+
+///|
 test "PathSubject::new keeps canonical path first and deduplicates alternatives" {
   let subject = PathSubject::new("docs/api.md", additional_paths=[
     "docs/api.md", "/tmp/project/docs/api.md",

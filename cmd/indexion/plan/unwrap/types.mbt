@@ -40,9 +40,9 @@ pub struct UnwrapPlanJSON {
 ///|
 /// Convert to JSON.
 pub fn UnwrapPlanJSON::to_json(self : UnwrapPlanJSON) -> Json {
-  let root : Map[String, Json] = Map::new()
+  let root : Map[String, Json] = Map([])
   // Config
-  let cfg : Map[String, Json] = Map::new()
+  let cfg : Map[String, Json] = Map([])
   cfg.set("target_dir", self.config.target_dir.to_json())
   let inc_arr : Array[Json] = []
   for s in self.config.includes {
@@ -58,7 +58,7 @@ pub fn UnwrapPlanJSON::to_json(self : UnwrapPlanJSON) -> Json {
   // Candidates
   let cand_arr : Array[Json] = []
   for p in self.candidates {
-    let obj : Map[String, Json] = Map::new()
+    let obj : Map[String, Json] = Map([])
     obj.set("file", p.file.to_json())
     obj.set("line", p.line.to_json())
     obj.set("name", p.name.to_json())
@@ -78,7 +78,7 @@ pub fn UnwrapPlanJSON::to_json(self : UnwrapPlanJSON) -> Json {
   }
   root.set("candidates", Json::array(cand_arr))
   // Summary
-  let sum : Map[String, Json] = Map::new()
+  let sum : Map[String, Json] = Map([])
   sum.set("total_files_scanned", self.summary.total_files_scanned.to_json())
   sum.set(
     "total_functions_scanned",

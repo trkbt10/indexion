@@ -12,6 +12,7 @@ import {
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/kgf/fixtures" @kgf_fixtures,
   "trkbt10/indexion/src/kgf/registry" @registry,
+  "moonbitlang/core/test" @test,
 } for "wbtest"
 
 supported_targets = "native"

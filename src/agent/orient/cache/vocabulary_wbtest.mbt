@@ -95,7 +95,7 @@ async test "orient vocabulary store: loaded provider preserves dimension and det
   let first = built_provider.embed("alpha beta")
   let second = built_provider.embed("alpha beta")
   assert_eq(first.length(), 6)
-  assert_eq(first, second)
+  assert_true(first == second)
   persist_provider(config, built_provider)
   let loaded_state = load_or_build_provider(config, None, 6)
   guard loaded_state is VocabularyLoaded(loaded_provider) else {
@@ -103,7 +103,7 @@ async test "orient vocabulary store: loaded provider preserves dimension and det
   }
   let reloaded = loaded_provider.embed("alpha beta")
   assert_eq(reloaded.length(), 6)
-  assert_eq(reloaded, first)
+  assert_true(reloaded == first)
 }
 
 ///|

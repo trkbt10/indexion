@@ -40,7 +40,7 @@ fn init_buckets(n : Int) -> Array[Map[Int, Array[Int]]] {
   let arr : Array[Map[Int, Array[Int]]] = []
   for i = 0; i < n; i = i + 1 {
     ignore(i)
-    arr.push(Map::new())
+    arr.push(Map([]))
   }
   arr
 }

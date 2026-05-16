@@ -46,8 +46,8 @@ pub fn KGFSpec::new(
   language : String,
   tokens? : Array[TokenDef] = [],
   keyword_kinds? : Map[String, Bool] = {},
-  rules? : Map[String, RuleDef] = Map::new(),
-  attrs? : Map[String, Array[AttrAction]] = Map::new(),
+  rules? : Map[String, RuleDef] = Map([]),
+  attrs? : Map[String, Array[AttrAction]] = Map([]),
   resolver? : ResolverSpec = ResolverSpec::new(),
   features? : Map[String, Array[String]]? = None,
   semantics? : Map[String, Array[SemOnBlock]]? = None,
@@ -150,7 +150,7 @@ pub fn KGFSpec::is_keyword(self : KGFSpec, kind : String) -> Bool {
 /// Returns the rules (lazy: parses grammar section on first call).
 pub fn KGFSpec::get_rules(self : KGFSpec) -> Map[String, RuleDef] {
   self.ensure_grammar_parsed()
-  self.rules_cache.unwrap_or(Map::new())
+  self.rules_cache.unwrap_or(Map([]))
 }
 
 ///|
@@ -163,7 +163,7 @@ pub fn KGFSpec::get_rule(self : KGFSpec, name : String) -> RuleDef? {
 /// Returns the attributes (lazy: parses attrs section on first call).
 pub fn KGFSpec::get_attrs(self : KGFSpec) -> Map[String, Array[AttrAction]] {
   self.ensure_attrs_parsed()
-  self.attrs_cache.unwrap_or(Map::new())
+  self.attrs_cache.unwrap_or(Map([]))
 }
 
 ///|
@@ -343,7 +343,7 @@ fn KGFSpec::ensure_grammar_parsed(self : KGFSpec) -> Unit {
       self.rules_cache = Some((parse_grammar_lazy.val)(source))
       self.grammar_source = None
     }
-    None => self.rules_cache = Some(Map::new())
+    None => self.rules_cache = Some(Map([]))
   }
 }
 
@@ -358,7 +358,7 @@ fn KGFSpec::ensure_attrs_parsed(self : KGFSpec) -> Unit {
       self.attrs_cache = Some((parse_attrs_lazy.val)(source))
       self.attrs_source = None
     }
-    None => self.attrs_cache = Some(Map::new())
+    None => self.attrs_cache = Some(Map([]))
   }
 }
 
@@ -427,7 +427,7 @@ fn KGFSpec::ensure_classify_parsed(self : KGFSpec) -> Unit {
 ///|
 /// Callback: parse lex section text → (tokens, keyword_kinds).
 /// Set by the parser package at init time.
-pub let parse_lex_lazy : Ref[(String) -> (Array[TokenDef], Map[String, Bool])] = Ref::new(fn(
+pub let parse_lex_lazy : Ref[(String) -> (Array[TokenDef], Map[String, Bool])] = Ref(fn(
     _s,
   ) {
     ([], {})
@@ -436,24 +436,24 @@ pub let parse_lex_lazy : Ref[(String) -> (Array[TokenDef], Map[String, Bool])] =
 
 ///|
 /// Callback: parse grammar section text → rules.
-pub let parse_grammar_lazy : Ref[(String) -> Map[String, RuleDef]] = Ref::new(fn(
+pub let parse_grammar_lazy : Ref[(String) -> Map[String, RuleDef]] = Ref(fn(
   _s,
 ) {
-  Map::new()
+  Map([])
 })
 
 ///|
 /// Callback: parse attrs section text → attrs.
-pub let parse_attrs_lazy : Ref[(String) -> Map[String, Array[AttrAction]]] = Ref::new(fn(
+pub let parse_attrs_lazy : Ref[(String) -> Map[String, Array[AttrAction]]] = Ref(fn(
     _s,
   ) {
-    Map::new()
+    Map([])
   },
 )
 
 ///|
 /// Callback: parse semantics section text → semantics.
-pub let parse_semantics_lazy : Ref[(String) -> Map[String, Array[SemOnBlock]]?] = Ref::new(fn(
+pub let parse_semantics_lazy : Ref[(String) -> Map[String, Array[SemOnBlock]]?] = Ref(fn(
     _s,
   ) {
     None
@@ -462,7 +462,7 @@ pub let parse_semantics_lazy : Ref[(String) -> Map[String, Array[SemOnBlock]]?] 
 
 ///|
 /// Callback: parse preprocess section text → preprocess directives.
-pub let parse_preprocess_lazy : Ref[(String) -> Array[String]?] = Ref::new(fn(
+pub let parse_preprocess_lazy : Ref[(String) -> Array[String]?] = Ref(fn(
   _s,
 ) {
   None
@@ -470,7 +470,7 @@ pub let parse_preprocess_lazy : Ref[(String) -> Array[String]?] = Ref::new(fn(
 
 ///|
 /// Callback: parse preprocess_fst section text → FST specs.
-pub let parse_preprocess_fst_lazy : Ref[(String) -> Array[PreprocessFstSpec]?] = Ref::new(fn(
+pub let parse_preprocess_fst_lazy : Ref[(String) -> Array[PreprocessFstSpec]?] = Ref(fn(
     _s,
   ) {
     None
@@ -479,7 +479,7 @@ pub let parse_preprocess_fst_lazy : Ref[(String) -> Array[PreprocessFstSpec]?] =
 
 ///|
 /// Callback: parse classify section text → trained classify model.
-pub let parse_classify_lazy : Ref[(String) -> ClassifyModel?] = Ref::new(fn(
+pub let parse_classify_lazy : Ref[(String) -> ClassifyModel?] = Ref(fn(
   _s,
 ) {
   None

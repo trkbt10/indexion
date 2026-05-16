@@ -73,7 +73,7 @@ test "lift_type_text: wraps run before scalars on isolated type fragments" {
   let wraps : Array[TypeWrap] = [
     { source_suffix: "[]", target_template: "Array<%s>" },
   ]
-  let lift = make_lift(scalars, wraps, Map::new())
+  let lift = make_lift(scalars, wraps, Map([]))
   inspect(lift_type_text("number[]", lift), content="Array<Float>")
 }
 
@@ -86,7 +86,7 @@ test "lift_event: scalars applied broadly, wraps NOT applied to composite _text"
   let wraps : Array[TypeWrap] = [
     { source_suffix: "[]", target_template: "Array<%s>" },
   ]
-  let lift = make_lift(scalars, wraps, Map::new())
+  let lift = make_lift(scalars, wraps, Map([]))
   let labels : Map[String, Json] = {}
   labels.set("_text", "argv:string[]".to_json())
   let lifted = lift_events([("Param", labels)], lift)
@@ -100,11 +100,11 @@ test "lift_event: scalars applied broadly, wraps NOT applied to composite _text"
 test "lower: emit_templates fill placeholders, missing → @@UNRESOLVED@@" {
   let templates : Map[String, String] = {}
   templates.set("IREnum", "pub enum {{id_text}} { {{variants}} }\n")
-  let lower = make_lower(Map::new(), [], templates, ["IREnum"])
+  let lower = make_lower(Map([]), [], templates, ["IREnum"])
   let labels : Map[String, Json] = {}
   labels.set("id_text", "TodoStatus".to_json())
   // No `variants` label — should become @@UNRESOLVED@@variants
-  let lift = make_lift(Map::new(), [], Map::new())
+  let lift = make_lift(Map([]), [], Map([]))
   let code = lower_to_code(
     [("IREnum", labels)],
     [],
@@ -125,10 +125,10 @@ test "lower: emit_templates fill placeholders, missing → @@UNRESOLVED@@" {
 test "lower: rule outside emit_order is skipped" {
   let templates : Map[String, String] = {}
   templates.set("IREnum", "ENUM:{{id_text}}\n")
-  let lower = make_lower(Map::new(), [], templates, ["IREnum"])
+  let lower = make_lower(Map([]), [], templates, ["IREnum"])
   let labels : Map[String, Json] = {}
   labels.set("id_text", "X".to_json())
-  let lift = make_lift(Map::new(), [], Map::new())
+  let lift = make_lift(Map([]), [], Map([]))
   let code = lower_to_code(
     [("Item", labels), ("IREnum", labels)],
     [],
@@ -148,7 +148,7 @@ test "module_alias: node:fs → fs → @fs end-to-end" {
   let lift_aliases : Map[String, String] = {}
   lift_aliases.set("node:fs", "fs")
   let lift : LiftSpec = {
-    scalars: Map::new(),
+    scalars: Map([]),
     type_wraps: [],
     rule_lifts: { "ImportNamed": "IRImport" },
     structural_rules: None,
@@ -162,7 +162,7 @@ test "module_alias: node:fs → fs → @fs end-to-end" {
   let templates : Map[String, String] = {}
   templates.set("IRImport", "use {{module_target}}\n")
   let lower : LowerSpec = {
-    scalars: Map::new(),
+    scalars: Map([]),
     type_wraps: [],
     emit_templates: templates,
     emit_order: ["IRImport"],

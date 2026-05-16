@@ -3,7 +3,7 @@
 ///|
 /// Create a new empty code graph.
 pub fn CodeGraph::new() -> CodeGraph {
-  { modules: Map::new(), symbols: Map::new(), edges: [], notes: [] }
+  { modules: Map([]), symbols: Map([]), edges: [], notes: [] }
 }
 
 ///|
@@ -110,7 +110,7 @@ pub fn CodeGraph::add_edge(
   kind : EdgeKind,
   from : String,
   to : String,
-  attrs? : Map[String, String] = Map::new(),
+  attrs? : Map[String, String] = Map([]),
 ) -> Unit {
   let edge : Edge = { kind, from, to, attrs }
   self.edges.push(edge)

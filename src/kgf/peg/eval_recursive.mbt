@@ -219,7 +219,7 @@ fn run_parse_rec_internal(
 ) -> (Bool, Map[String, Json]) {
   let ctx = RecEvalContext::new(peg, tokens, on_rule_match, emit_filter~)
   match peg.get_fast_rule_body_id(start_rule) {
-    None => (false, Map::new())
+    None => (false, Map([]))
     Some(body_node_id) => {
       let result = eval_rec(ctx, body_node_id, 0)
       if result.ok && should_emit_rule_rec(ctx, start_rule) {

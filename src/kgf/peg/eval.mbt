@@ -11,7 +11,7 @@ pub struct EvalResult {
 /// Creates a new successful EvalResult.
 pub fn EvalResult::success(
   pos : Int,
-  labels? : Map[String, Json] = Map::new(),
+  labels? : Map[String, Json] = Map([]),
   events? : Array[(String, Map[String, Json])] = [],
 ) -> EvalResult {
   { ok: true, pos, labels, events }
@@ -20,7 +20,7 @@ pub fn EvalResult::success(
 ///|
 /// Creates a new failed EvalResult.
 pub fn EvalResult::failure(pos : Int) -> EvalResult {
-  { ok: false, pos, labels: Map::new(), events: [] }
+  { ok: false, pos, labels: Map([]), events: [] }
 }
 
 ///|
@@ -69,7 +69,7 @@ pub fn run_parse(
   start_rule : String,
   tokens : Array[@types.Tok],
 ) -> EvalResult? {
-  let active_rules : @hashset.HashSet[String] = @hashset.new()
+  let active_rules : @hashset.HashSet[String] = HashSet([])
   for name, _ in spec.get_rules() {
     active_rules.add(name)
   }

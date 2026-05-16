@@ -162,9 +162,9 @@ pub fn analyze_files_collect(
     }
   }
   let root = ""
-  let active_rules_cache : Map[String, @hashset.HashSet[String]] = Map::new()
-  let peg_cache : Map[String, @kgf_peg.PEG] = Map::new()
-  let lexer_cache : Map[String, @kgf_toolkit.LanguageToolkit] = Map::new()
+  let active_rules_cache : Map[String, @hashset.HashSet[String]] = Map([])
+  let peg_cache : Map[String, @kgf_peg.PEG] = Map([])
+  let lexer_cache : Map[String, @kgf_toolkit.LanguageToolkit] = Map([])
   let graphs : Array[@graph.CodeGraph] = []
   let file_tokens : Array[FileTokens] = []
   let total = files.length()

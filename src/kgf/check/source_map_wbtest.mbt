@@ -1,4 +1,7 @@
 ///|
+using @test {assert_eq}
+
+///|
 test "SourceMap resolves LF offsets" {
   let source_map = SourceMap::new("hello\nworld")
   assert_eq(source_map.resolve(0), (1, 1))

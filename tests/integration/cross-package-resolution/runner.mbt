@@ -107,9 +107,37 @@ pub fn snapshot_of(graph : @graph.CodeGraph) -> String raise {
     dep_json.push(Json::object(obj))
   }
   let unresolved = count_unresolved_structural_in(round_tripped)
+  // Count unique edges by (kind, from, to) and aggregate per-kind counts.
+  // The raw `edge_count()` includes duplicates and varies with filesystem
+  // traversal order on different platforms (macOS APFS vs Linux ext4);
+  // deduping pins the snapshot to the set of distinct relationships the
+  // graph asserts, regardless of how many times each was emitted during
+  // the build pass.
+  let unique_edge_keys : Map[String, Unit] = {}
+  let by_kind : Map[String, Int] = {}
+  for edge in round_tripped.get_edges() {
+    let kind_str = edge.kind.to_string()
+    let key = kind_str + "\u{1f}" + edge.from + "\u{1f}" + edge.to
+    if unique_edge_keys.contains(key) {
+      continue
+    }
+    unique_edge_keys.set(key, ())
+    let prev = by_kind.get(kind_str).unwrap_or(0)
+    by_kind.set(kind_str, prev + 1)
+  }
+  let kind_keys : Array[String] = []
+  for entry in by_kind {
+    kind_keys.push(entry.0)
+  }
+  kind_keys.sort()
+  let by_kind_json : Map[String, Json] = {}
+  for k in kind_keys {
+    by_kind_json.set(k, by_kind.get(k).unwrap().to_json())
+  }
   let stats : Map[String, Json] = {}
   stats.set("symbols", symbols.length().to_json())
-  stats.set("edges", round_tripped.edge_count().to_json())
+  stats.set("edges", unique_edge_keys.size().to_json())
+  stats.set("edgesByKind", Json::object(by_kind_json))
   stats.set("unresolved_structural_edges", unresolved.to_json())
   let root : Json = {
     "modules": Json::array(module_json),

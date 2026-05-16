@@ -2,4 +2,9 @@ import {
   "trkbt10/indexion/src/segmentation/types" @types,
 }
 
+import {
+  "moonbitlang/core/test" @test,
+  "moonbitlang/core/debug" @debug,
+} for "wbtest"
+
 supported_targets = "native"

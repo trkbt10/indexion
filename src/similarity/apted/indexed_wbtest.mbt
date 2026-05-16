@@ -1,3 +1,6 @@
+///|
+using @test {assert_eq}
+
 // Whitebox tests for indexed tree helpers and size-based upper bounds.
 
 // ============================================================

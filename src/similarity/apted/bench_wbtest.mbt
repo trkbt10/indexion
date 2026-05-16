@@ -48,7 +48,7 @@ test "bench: chain vs flat - finalize_labels distinguishes structure" {
     finalize_labels: true,
   })
   // finalize_labels should make TSED distinguish chain from flat better
-  inspect(
+  debug_inspect(
     (old_sim, tsed_no_finalize, tsed_with_finalize),
     content="(0.5, 0, 0)",
   )
@@ -87,7 +87,7 @@ test "bench: size mismatch with max-based normalization" {
   })
   // old: 1 - raw_dist/max_dist, tsed: 1 - raw_dist/max(1,6)
   // tsed gives lower score for size mismatch (0.167 vs 0.286)
-  inspect(
+  debug_inspect(
     (old_sim, tsed_sim),
     content="(0.2857142857142857, 0.16666666666666663)",
   )
@@ -116,7 +116,7 @@ test "bench: normalization comparison for partially similar trees" {
   })
   // distance=2 (rename C→X, D→Y), size=4 each
   // old: 1 - 2/8 = 0.75, tsed: 1 - 2/4 = 0.5
-  inspect((old_sim, tsed_sim), content="(0.75, 0.5)")
+  debug_inspect((old_sim, tsed_sim), content="(0.75, 0.5)")
 }
 
 // ============================================================
@@ -164,7 +164,7 @@ test "bench: PEG-style AST comparison" {
   })
   // 5 nodes, 1 rename (Sym:b→Sym:c), dist=1
   // old: 1-1/10=0.9, tsed(finalize): 1-1/5=0.8, tsed(no finalize): 1-1/5=0.8
-  inspect((old_sim, tsed_sim, tsed_no_finalize), content="(0.9, 0.8, 0.8)")
+  debug_inspect((old_sim, tsed_sim, tsed_no_finalize), content="(0.9, 0.8, 0.8)")
 }
 
 // ============================================================

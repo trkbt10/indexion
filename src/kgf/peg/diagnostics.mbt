@@ -69,7 +69,7 @@ fn run_parse_diag_iter_internal(
     None =>
       (
         { ok: false, end_pos: 0, labels: empty_labels() },
-        Map::new(),
+        Map([]),
         ctx.furthest_pos,
         ctx.furthest_expected,
       )
@@ -99,7 +99,7 @@ pub fn run_parse_with_diagnostics(
   start_rule : String,
   tokens : Array[@types.Tok],
 ) -> (EvalResult?, ParseDiagnostic) {
-  let active_rules : @hashset.HashSet[String] = @hashset.new()
+  let active_rules : @hashset.HashSet[String] = HashSet([])
   for name, _ in spec.get_rules() {
     active_rules.add(name)
   }

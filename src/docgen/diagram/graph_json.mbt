@@ -33,7 +33,7 @@ pub struct GraphJSON {
 ///|
 /// Creates a new empty GraphJSON.
 pub fn GraphJSON::new(title? : String = "Graph") -> GraphJSON {
-  { title, nodes: [], edges: [], metadata: Map::new() }
+  { title, nodes: [], edges: [], metadata: Map([]) }
 }
 
 ///|
@@ -45,7 +45,7 @@ pub fn GraphJSON::add_node(
   kind? : String = "module",
   file? : String? = None,
 ) -> Unit {
-  self.nodes.push({ id, label, kind, file, metadata: Map::new() })
+  self.nodes.push({ id, label, kind, file, metadata: Map([]) })
 }
 
 ///|
@@ -56,7 +56,7 @@ pub fn GraphJSON::add_edge(
   to : String,
   kind? : String = "dependency",
 ) -> Unit {
-  self.edges.push({ from, to, kind, metadata: Map::new() })
+  self.edges.push({ from, to, kind, metadata: Map([]) })
 }
 
 ///|
@@ -64,7 +64,7 @@ pub fn GraphJSON::add_edge(
 pub fn GraphJSON::to_json(self : GraphJSON) -> Json {
   let nodes_json : Array[Json] = []
   for node in self.nodes {
-    let obj : Map[String, Json] = Map::new()
+    let obj : Map[String, Json] = Map([])
     obj.set("id", node.id.to_json())
     obj.set("label", node.label.to_json())
     obj.set("kind", node.kind.to_json())
@@ -73,7 +73,7 @@ pub fn GraphJSON::to_json(self : GraphJSON) -> Json {
       None => ()
     }
     if node.metadata.length() > 0 {
-      let meta : Map[String, Json] = Map::new()
+      let meta : Map[String, Json] = Map([])
       for k, v in node.metadata {
         meta.set(k, v.to_json())
       }
@@ -83,12 +83,12 @@ pub fn GraphJSON::to_json(self : GraphJSON) -> Json {
   }
   let edges_json : Array[Json] = []
   for edge in self.edges {
-    let obj : Map[String, Json] = Map::new()
+    let obj : Map[String, Json] = Map([])
     obj.set("from", edge.from.to_json())
     obj.set("to", edge.to.to_json())
     obj.set("kind", edge.kind.to_json())
     if edge.metadata.length() > 0 {
-      let meta : Map[String, Json] = Map::new()
+      let meta : Map[String, Json] = Map([])
       for k, v in edge.metadata {
         meta.set(k, v.to_json())
       }
@@ -96,12 +96,12 @@ pub fn GraphJSON::to_json(self : GraphJSON) -> Json {
     }
     edges_json.push(Json::object(obj))
   }
-  let root : Map[String, Json] = Map::new()
+  let root : Map[String, Json] = Map([])
   root.set("title", self.title.to_json())
   root.set("nodes", Json::array(nodes_json))
   root.set("edges", Json::array(edges_json))
   if self.metadata.length() > 0 {
-    let meta : Map[String, Json] = Map::new()
+    let meta : Map[String, Json] = Map([])
     for k, v in self.metadata {
       meta.set(k, v.to_json())
     }
@@ -142,7 +142,7 @@ pub fn GraphJSON::from_json(json : Json) -> GraphJSON? {
                   Some(String(s)) => Some(s)
                   _ => None
                 }
-                graph.nodes.push({ id, label, kind, file, metadata: Map::new() })
+                graph.nodes.push({ id, label, kind, file, metadata: Map([]) })
               }
               _ => ()
             }
@@ -167,7 +167,7 @@ pub fn GraphJSON::from_json(json : Json) -> GraphJSON? {
                   Some(String(s)) => s
                   _ => "dependency"
                 }
-                graph.edges.push({ from, to, kind, metadata: Map::new() })
+                graph.edges.push({ from, to, kind, metadata: Map([]) })
               }
               _ => ()
             }
@@ -190,7 +190,7 @@ pub fn build_graph_from_deps(
 ) -> GraphJSON {
   let result = GraphJSON::new(title~)
   // Collect internal module IDs
-  let internal_ids : Map[String, String] = Map::new() // id -> file
+  let internal_ids : Map[String, String] = Map([]) // id -> file
   let internal_paths : Array[Array[String]] = [] // for common prefix detection
   for entry in graph.get_modules() {
     let mod_info = entry.1
@@ -206,8 +206,8 @@ pub fn build_graph_from_deps(
   // Compute common prefix across all internal modules
   let common_prefix = find_common_prefix(internal_paths)
   // Collect unique nodes
-  let seen_nodes : Map[String, Bool] = Map::new()
-  let node_labels : Map[String, String] = Map::new() // original -> label
+  let seen_nodes : Map[String, Bool] = Map([])
+  let node_labels : Map[String, String] = Map([]) // original -> label
   let mut id_counter = 0
   for dep in deps {
     for name in [dep.from, dep.to] {
@@ -248,7 +248,7 @@ pub fn build_graph_from_deps(
           label,
           kind,
           file,
-          metadata: Map::new(),
+          metadata: Map([]),
         })
       }
     }
@@ -276,13 +276,13 @@ pub fn build_graph_from_deps(
           label,
           kind,
           file,
-          metadata: Map::new(),
+          metadata: Map([]),
         })
       }
     }
   }
   // Add edges
-  let seen_edges : Map[String, Bool] = Map::new()
+  let seen_edges : Map[String, Bool] = Map([])
   for dep in deps {
     let from_id = node_labels.get(dep.from).unwrap()
     let to_id = node_labels.get(dep.to).unwrap()
@@ -293,7 +293,7 @@ pub fn build_graph_from_deps(
         from: from_id,
         to: to_id,
         kind: "dependency",
-        metadata: Map::new(),
+        metadata: Map([]),
       })
     }
   }
@@ -308,7 +308,7 @@ pub fn build_graph_from_deps(
         from: from_id,
         to: to_id,
         kind: "circular",
-        metadata: Map::new(),
+        metadata: Map([]),
       })
     }
   }

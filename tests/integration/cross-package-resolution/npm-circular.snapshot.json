@@ -27,6 +27,13 @@
   "stats": {
     "symbols": 9,
     "edges": 13,
+    "edgesByKind": {
+      "declares": 7,
+      "dependsOn": 1,
+      "packageName": 1,
+      "packageVersion": 1,
+      "module_depends_on": 3
+    },
     "unresolved_structural_edges": 0
   }
 }

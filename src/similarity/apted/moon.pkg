@@ -3,4 +3,9 @@ import {
   "trkbt10/indexion/src/kgf/peg",
 }
 
+import {
+  "moonbitlang/core/test" @test,
+  "moonbitlang/core/debug" @debug,
+} for "wbtest"
+
 supported_targets = "native"

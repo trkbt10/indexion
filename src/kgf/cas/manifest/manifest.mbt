@@ -5,7 +5,7 @@
 /// Create an empty manifest with the given spec hash.
 pub fn create_manifest(spec_hash : @types.ContentHash) -> @types.CASManifest {
   let now = get_timestamp()
-  @types.CASManifest::new(now, now, spec_hash, Map::new())
+  @types.CASManifest::new(now, now, spec_hash, Map([]))
 }
 
 ///|
@@ -24,7 +24,7 @@ pub fn update_manifest(
   module_id : String,
   chunk_hash : @types.ContentHash,
 ) -> @types.CASManifest {
-  let new_modules : Map[String, @types.ContentHash] = Map::new()
+  let new_modules : Map[String, @types.ContentHash] = Map([])
   for entry in manifest.modules {
     new_modules.set(entry.0, entry.1)
   }
@@ -39,7 +39,7 @@ pub fn remove_module(
   manifest : @types.CASManifest,
   module_id : String,
 ) -> @types.CASManifest {
-  let new_modules : Map[String, @types.ContentHash] = Map::new()
+  let new_modules : Map[String, @types.ContentHash] = Map([])
   for entry in manifest.modules {
     if entry.0 != module_id {
       new_modules.set(entry.0, entry.1)
@@ -151,7 +151,7 @@ pub fn merge(
   manifest : @types.CASManifest,
   other : @types.CASManifest,
 ) -> @types.CASManifest {
-  let new_modules : Map[String, @types.ContentHash] = Map::new()
+  let new_modules : Map[String, @types.ContentHash] = Map([])
   // Copy this manifest's modules
   for entry in manifest.modules {
     new_modules.set(entry.0, entry.1)

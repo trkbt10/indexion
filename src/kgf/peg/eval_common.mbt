@@ -98,17 +98,17 @@ priv struct LabelsMap {
 
 ///|
 fn LabelsMap::new() -> LabelsMap {
-  { text: TextRope::empty(), meta: Map::new(), extra_texts: Map::new() }
+  { text: TextRope::empty(), meta: Map([]), extra_texts: Map([]) }
 }
 
 ///|
 /// Returns a new LabelsMap sharing no mutable state with `self`.
 fn LabelsMap::clone(self : LabelsMap) -> LabelsMap {
-  let meta : Map[String, Json] = Map::new()
+  let meta : Map[String, Json] = Map([])
   for k, v in self.meta {
     meta.set(k, v)
   }
-  let extra_texts : Map[String, TextRope] = Map::new()
+  let extra_texts : Map[String, TextRope] = Map([])
   for k, v in self.extra_texts {
     extra_texts.set(k, v.clone())
   }
@@ -344,7 +344,7 @@ fn materialize(
   labels : Labels,
   tokens : Array[@types.Tok],
 ) -> Map[String, Json] {
-  let out : Map[String, Json] = Map::new()
+  let out : Map[String, Json] = Map([])
   match labels {
     Labels::NoLabels => ()
     Labels::TokRef(idx) => {

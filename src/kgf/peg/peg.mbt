@@ -17,15 +17,15 @@ pub struct PEG {
 /// Creates a new empty PEG.
 pub fn PEG::new() -> PEG {
   {
-    tokens: @hashset.new(),
-    ast: Map::new(),
-    attrs: Map::new(),
+    tokens: HashSet([]),
+    ast: Map([]),
+    attrs: Map([]),
     compiled_nodes: [],
-    rule_node_ids: Map::new(),
-    token_ids: Map::new(),
+    rule_node_ids: Map([]),
+    token_ids: Map([]),
     fast_nodes: [],
-    fast_rule_ids: Map::new(),
-    fast_rule_body_ids: Map::new(),
+    fast_rule_ids: Map([]),
+    fast_rule_body_ids: Map([]),
   }
 }
 
@@ -84,8 +84,8 @@ pub fn PEG::get_rule_attrs(
 /// Builds a PEG from a KGFSpec.
 /// Parses all rule expressions into AST nodes and collects token names.
 pub fn build_peg(spec : @types.KGFSpec) -> PEG raise {
-  let tokens : @hashset.HashSet[String] = @hashset.new()
-  let token_ids : Map[String, Int] = Map::new()
+  let tokens : @hashset.HashSet[String] = HashSet([])
+  let token_ids : Map[String, Int] = Map([])
   // Collect non-skip tokens and assign IDs
   let mut token_id_counter = 0
   for token_def in spec.get_tokens() {
@@ -95,9 +95,9 @@ pub fn build_peg(spec : @types.KGFSpec) -> PEG raise {
       token_id_counter = token_id_counter + 1
     }
   }
-  let ast : Map[String, Node] = Map::new()
+  let ast : Map[String, Node] = Map([])
   let compiled_nodes : Array[CompiledNode] = []
-  let rule_node_ids : Map[String, Int] = Map::new()
+  let rule_node_ids : Map[String, Int] = Map([])
   // Parse all rule expressions (original compiled nodes)
   for name, rule_def in spec.get_rules() {
     let node = parse_expr(rule_def.expr)
@@ -107,8 +107,8 @@ pub fn build_peg(spec : @types.KGFSpec) -> PEG raise {
   }
   // Build fast nodes with pre-computed IDs (two-pass)
   let fast_nodes : Array[FastCompiledNode] = []
-  let fast_rule_ids : Map[String, Int] = Map::new()
-  let fast_rule_body_ids : Map[String, Int] = Map::new()
+  let fast_rule_ids : Map[String, Int] = Map([])
+  let fast_rule_body_ids : Map[String, Int] = Map([])
   // First pass: reserve IDs for rule body placeholders
   for name, _ in spec.get_rules() {
     fast_rule_ids.set(name, fast_nodes.length())
@@ -232,7 +232,7 @@ fn compile_node(node : Node, out : Array[CompiledNode]) -> Int {
 /// Collects rules that can affect semantic output.
 /// This is used to suppress unnecessary parse events for pure grammar rules.
 pub fn collect_active_rules(spec : @types.KGFSpec) -> @hashset.HashSet[String] {
-  let active : @hashset.HashSet[String] = @hashset.new()
+  let active : @hashset.HashSet[String] = HashSet([])
   for entry in spec.get_attrs() {
     active.add(entry.0)
   }

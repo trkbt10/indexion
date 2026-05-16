@@ -1,4 +1,7 @@
 ///|
+using @test {assert_eq}
+
+///|
 fn orient_query_report_status() -> @types.AgentOrientMapStatus {
   {
     total_files: 6,

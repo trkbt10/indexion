@@ -25,7 +25,7 @@ pub struct MemoryChunkStore {
 ///|
 /// Create a new in-memory chunk store.
 pub fn MemoryChunkStore::new() -> MemoryChunkStore {
-  { chunks: Map::new() }
+  { chunks: Map([]) }
 }
 
 ///|
@@ -100,7 +100,7 @@ pub fn MemoryChunkStore::find_orphans(
   self : MemoryChunkStore,
   referenced : Array[@types.ContentHash],
 ) -> Array[@types.ContentHash] {
-  let ref_set : Map[@types.ContentHash, Unit] = Map::new()
+  let ref_set : Map[@types.ContentHash, Unit] = Map([])
   for hash in referenced {
     ref_set.set(hash, ())
   }

@@ -11,7 +11,7 @@ pub fn fill_issue_form(
   let buf = StringBuilder::new()
   let style = @render.RenderStyle::markdown()
   // Map section IDs to content
-  let section_map : Map[String, @types.PlanSection] = Map::new()
+  let section_map : Map[String, @types.PlanSection] = Map([])
   for section in doc.sections {
     section_map.set(section.id, section)
   }

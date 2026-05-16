@@ -78,7 +78,7 @@ fn IterEvalContext::new(
     diagnostics_enabled,
     furthest_pos: 0,
     furthest_expected: [],
-    furthest_expected_set: @hashset.new(),
+    furthest_expected_set: HashSet([]),
     work: Array::new(capacity=1024),
     results: Array::new(capacity=256),
   }
@@ -493,7 +493,7 @@ fn run_parse_iter_internal(
 ) -> (Bool, Map[String, Json]) {
   let ctx = IterEvalContext::new(peg, tokens, on_rule_match, emit_filter~)
   match peg.get_fast_rule_body_id(start_rule) {
-    None => (false, Map::new())
+    None => (false, Map([]))
     Some(body_node_id) => {
       ctx.work.push(Eval(body_node_id, 0))
       eval_iter_loop(ctx)

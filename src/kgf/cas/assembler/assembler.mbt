@@ -123,7 +123,7 @@ pub fn assemble_partial_graph(
 /// Get summary statistics for the manifest.
 pub fn get_manifest_stats(manifest : @types.CASManifest) -> (Int, Int) {
   // Returns (total_modules, unique_hashes)
-  let unique_hashes : Map[@types.ContentHash, Unit] = Map::new()
+  let unique_hashes : Map[@types.ContentHash, Unit] = Map([])
   for entry in manifest.modules {
     unique_hashes.set(entry.1, ())
   }

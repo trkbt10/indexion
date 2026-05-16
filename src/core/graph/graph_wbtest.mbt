@@ -93,7 +93,7 @@ test "add_edge creates edge" {
 ///|
 test "add_edge with attributes" {
   let graph = CodeGraph::new()
-  let attrs : Map[String, String] = Map::new()
+  let attrs : Map[String, String] = Map([])
   attrs.set("line", "42")
   attrs.set("col", "10")
   graph.add_edge(Calls, "pkg/foo#caller", "pkg/bar#callee", attrs~)

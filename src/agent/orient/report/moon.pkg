@@ -8,4 +8,8 @@ import {
   "trkbt10/indexion/src/config" @config_paths,
 }
 
+import {
+  "moonbitlang/core/test" @test,
+} for "wbtest"
+
 supported_targets = "native"

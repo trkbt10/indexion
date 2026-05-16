@@ -44,7 +44,7 @@ async fn orient_agent_update_locked(
   // to walk the filesystem and build the corpus from scratch — we capture
   // its briefs into the Ref so the main flow below can reuse them instead of
   // recomputing the same load+graph+brief pass after the cache is open.
-  let bootstrap_briefs : Ref[Array[@types.LocalFileBrief]?] = Ref::new(None)
+  let bootstrap_briefs : Ref[Array[@types.LocalFileBrief]?] = Ref(None)
   let t = @progress.now_ms()
   let handle = @cache.open_for_update_lazy(
     config,

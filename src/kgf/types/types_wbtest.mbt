@@ -53,7 +53,7 @@ test "AttrAction::new creates action with defaults" {
 
 ///|
 test "AttrAction::new creates action with params" {
-  let params : Map[String, String] = Map::new()
+  let params : Map[String, String] = Map([])
   params.set("scope", "local")
   let action = AttrAction::new("def", params~)
   assert_eq(action.get_param("scope"), Some("local"))
@@ -280,7 +280,7 @@ test "KGFSpec::new creates spec with defaults" {
 ///|
 test "KGFSpec::new creates spec with values" {
   let tokens = [TokenDef::new("IDENT", "[a-z]+")]
-  let rules : Map[String, RuleDef] = Map::new()
+  let rules : Map[String, RuleDef] = Map([])
   rules.set("prog", RuleDef::new("prog", "stmt*"))
   let features : Map[String, Array[String]] = {}
   features.set("reference_token_kinds", ["INLINE_CODE"])
@@ -300,7 +300,7 @@ test "KGFSpec::new creates spec with values" {
 
 ///|
 test "KGFSpec::get_semantic returns semantic blocks" {
-  let semantics : Map[String, Array[SemOnBlock]] = Map::new()
+  let semantics : Map[String, Array[SemOnBlock]] = Map([])
   let blocks = [SemOnBlock::new("ident", [SemStmt::note("found")])]
   semantics.set("ident", blocks)
   let spec = KGFSpec::new("typescript", semantics=Some(semantics))

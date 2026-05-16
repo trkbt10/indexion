@@ -11,6 +11,14 @@
   "stats": {
     "symbols": 10,
     "edges": 11,
+    "edgesByKind": {
+      "declares": 3,
+      "dependsOn": 4,
+      "projectName": 1,
+      "projectLicense": 1,
+      "projectVersion": 1,
+      "projectDescription": 1
+    },
     "unresolved_structural_edges": 0
   }
 }

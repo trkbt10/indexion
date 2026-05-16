@@ -69,7 +69,7 @@ fn render_architecture_section(
   buf.write_string("### 1.1 Architecture Overview\n\n")
   buf.write_string("```\n")
 
-  let dir_files : Map[String, Array[String]] = Map::new()
+  let dir_files : Map[String, Array[String]] = Map([])
   for cluster in plan.clusters {
     for file in cluster.files {
       let dir = extract_directory(file)

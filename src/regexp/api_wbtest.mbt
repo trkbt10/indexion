@@ -1,4 +1,7 @@
 ///|
+using @test {assert_eq}
+
+///|
 test "api: find_pattern_captures returns groups" {
   let matches = find_pattern_captures("(foo)=(\\d+)", "foo=10\nfoo=20")
   assert_eq(matches.length(), 2)

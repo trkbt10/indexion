@@ -98,7 +98,17 @@
   ],
   "stats": {
     "symbols": 8,
-    "edges": 31,
+    "edges": 23,
+    "edgesByKind": {
+      "declares": 5,
+      "dependsOn": 3,
+      "projectName": 1,
+      "projectKeyword": 3,
+      "projectLicense": 1,
+      "projectVersion": 1,
+      "module_depends_on": 8,
+      "projectDescription": 1
+    },
     "unresolved_structural_edges": 0
   }
 }

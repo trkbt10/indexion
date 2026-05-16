@@ -1,3 +1,9 @@
+///|
+using @test {assert_eq}
+
+///|
+using @debug {debug_inspect}
+
 // Tests for segmentation/utils package.
 
 ///|
@@ -40,7 +46,7 @@ test "is_trailing_punctuation includes closing brackets" {
 test "find_sentence_boundaries basic English" {
   let text = "Hello world. How are you? I am fine!"
   let boundaries = find_sentence_boundaries_default(text)
-  inspect(boundaries, content="[13, 26, 36]")
+  debug_inspect(boundaries, content="[13, 26, 36]")
 }
 
 ///|
@@ -49,7 +55,7 @@ test "find_sentence_boundaries basic Japanese" {
   let text = "こんにちは。元気ですか？私は元気です！"
   let boundaries = find_sentence_boundaries_default(text)
   // Boundaries at character indices: 6, 12, 19
-  inspect(boundaries, content="[6, 12, 19]")
+  debug_inspect(boundaries, content="[6, 12, 19]")
 }
 
 ///|
@@ -59,7 +65,7 @@ test "find_sentence_boundaries protects Japanese quotes" {
   let text = "彼は「元気です。」と言った。"
   let boundaries = find_sentence_boundaries_default(text)
   // Only the final 。 should be a boundary, not the one inside quotes
-  inspect(boundaries, content="[14]")
+  debug_inspect(boundaries, content="[14]")
 }
 
 ///|
@@ -68,7 +74,7 @@ test "find_sentence_boundaries protects nested Japanese quotes" {
   let text = "彼女は「『本当？』と聞いた。」と話した。"
   let boundaries = find_sentence_boundaries_default(text)
   // Only the final 。 should be a boundary
-  inspect(boundaries, content="[20]")
+  debug_inspect(boundaries, content="[20]")
 }
 
 ///|
@@ -92,28 +98,28 @@ test "find_sentence_boundaries with extended terminators" {
   let boundaries = find_sentence_boundaries(text, options)
   // 」 should be treated as a terminator with extended option
   // First boundary at 6 (after 」), second at 10 (after 。)
-  inspect(boundaries, content="[6, 10]")
+  debug_inspect(boundaries, content="[6, 10]")
 }
 
 ///|
 test "find_next_boundary finds first boundary" {
   let text = "Hello. World."
   let boundary = find_next_boundary_default(text, 0)
-  inspect(boundary, content="7")
+  debug_inspect(boundary, content="7")
 }
 
 ///|
 test "find_next_boundary from middle" {
   let text = "Hello. World."
   let boundary = find_next_boundary_default(text, 7)
-  inspect(boundary, content="13")
+  debug_inspect(boundary, content="13")
 }
 
 ///|
 test "find_next_boundary returns length when no boundary" {
   let text = "No ending"
   let boundary = find_next_boundary_default(text, 0)
-  inspect(boundary, content="9")
+  debug_inspect(boundary, content="9")
 }
 
 ///|
@@ -224,7 +230,7 @@ test "find_local_maxima with empty array" {
 ///|
 test "find_local_maxima with single element above threshold" {
   let result = find_local_maxima([0.5], 0.3)
-  inspect(result, content="[0]")
+  debug_inspect(result, content="[0]")
 }
 
 ///|
@@ -238,7 +244,7 @@ test "find_local_maxima identifies peak" {
   let values = [0.1, 0.5, 0.2, 0.8, 0.3]
   let result = find_local_maxima(values, 0.3)
   // After smoothing, peaks shift: index 2 (around 0.5) and index 4 (around 0.55)
-  inspect(result, content="[2, 4]")
+  debug_inspect(result, content="[2, 4]")
 }
 
 ///|
@@ -246,7 +252,7 @@ test "find_local_maxima respects threshold" {
   let values = [0.1, 0.5, 0.2, 0.4, 0.3]
   let result = find_local_maxima(values, 0.45)
   // After smoothing, no peak exceeds 0.45 — smoothing reveals no strong signal
-  inspect(result, content="[]")
+  debug_inspect(result, content="[]")
 }
 
 ///|
@@ -258,19 +264,19 @@ test "min_max_normalize with empty array" {
 ///|
 test "min_max_normalize with single element" {
   let result = min_max_normalize([0.5])
-  inspect(result, content="[0.5]")
+  debug_inspect(result, content="[0.5]")
 }
 
 ///|
 test "min_max_normalize with all same values" {
   let result = min_max_normalize([0.5, 0.5, 0.5])
-  inspect(result, content="[0.5, 0.5, 0.5]")
+  debug_inspect(result, content="[0.5, 0.5, 0.5]")
 }
 
 ///|
 test "min_max_normalize normalizes range" {
   let result = min_max_normalize([0.0, 0.5, 1.0])
-  inspect(result, content="[0, 0.5, 1]")
+  debug_inspect(result, content="[0, 0.5, 1]")
 }
 
 ///|

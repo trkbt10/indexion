@@ -3,7 +3,7 @@
 ## Highlights
 
 - **Stat-only cache invalidation via file signatures.** `reconcile plan` and `spec align` now persist `FileSignature` sidecars (path, mtime, size) alongside their reports and snapshots, so reruns that touch nothing skip work after a stat-only check instead of re-reading and re-tokenizing the workspace. Orient cache updates and source-brief building use the same signature classifier.
-- **`moon check` is clean on both targets.** The wasm-gc default backend previously surfaced 309 warnings (260 on native); this release drives both to zero by propagating `supported_targets = "native"` across the CLI tree and the src/** packages that are transitively native, removing vestigial cross-target stubs, and migrating deprecated syntax across the wbtest suite.
+- **`moon check` is clean on both targets.** The wasm-gc default backend previously surfaced 309 warnings (260 on native); this release drives both to zero by propagating `supported_targets = "native"` across the CLI tree and the src/** packages that are transitively native, removing vestigial cross-target stubs, and migrating deprecated syntax across the wbtest suite. A follow-up sweep clears the remaining 186 native / 22 wasm-gc deprecations introduced after the initial sweep (see below).
 
 ## New Features
 
@@ -26,11 +26,14 @@ Small helper for printing progress to stderr without disturbing stdout pipelines
 - **Vestigial cross-target stubs removed.** `src/http`, `src/parallel`, `src/kgf/manage`, `src/platform`, and `src/vcs/git` no longer ship JS/wasm stubs they didn't actually need; `cmd/kgf-tokenizer` is declared js-only since that is its sole real target.
 - **wbtest migration off deprecated syntax.** ~19 wbtest packages now use `@test.assert_eq` / `assert_not_eq` via `using @test {…}` (with the matching `moonbitlang/core/test` import in `moon.pkg`). Codebase-wide replacements: `derive(Show)` → `derive(Debug)`, `.substring(...)` → slice + `.to_owned()`, StringView `.to_string()` → `.to_owned()`, `not(x)` → `!x`, `unsafe_char_at(i)` → `get_char(i).unwrap()`, `Char::from_int` → `.unsafe_to_char()`, `.size` → `.length`. Unused imports / values / try / async cleaned up; a couple of helper files moved into `_wbtest.mbt` where they belonged.
 - **Memory-leaner text path.** `src/text/tokenizer/tokenizer.mbt` text normalization and token extraction reworked to reduce allocations on large corpora, which feeds reconcile and spec verify.
+- **Codebase-wide deprecated-constructor migration.** `Map::new(...)` → `Map([], capacity=...)`, `@hashset.new(...)` → `HashSet([], capacity=...)`, and `Ref::new(x)` → `Ref(x)` across ~130 call sites in `src/` and `cmd/`. Drops every deprecation warning of those four shapes on both `native` and `wasm-gc` targets.
+- **wbtest assertion migration.** 14 wbtest files now route `assert_eq` through `using @test {assert_eq}` and `inspect` through `using @debug {debug_inspect}`, with matching `moonbitlang/core/test` / `moonbitlang/core/debug` imports under `for "wbtest"` in each package's `moon.pkg`. The `using` directives are package-scoped in MoonBit, so each package declares them in exactly one wbtest file to avoid duplicate-toplevel errors. Cache wbtests that compared `Array` values via `assert_eq` (which goes through the deprecated `Show for Array[X]`) switched to `assert_true(arr == expected)` to keep `vcdb 0.3.0`-defined types (no `Debug` derive) usable.
 
 ## Bug Fixes
 
 - **`moon check` on wasm-gc no longer fails the CLI build.** `cmd/indexion/wiki/pages/plan` was missing `supported_targets` and transitively pulled native-only packages through `cmd/indexion/digest`. Resolved by the `supported_targets` propagation above.
 - **`src/kgf/transpile`** was missing its `moonbitlang/core/json` import; added.
+- **`cross-package-resolution` snapshot tests determinism.** The snapshot's `stats.edges` now reports the unique edge count (deduped by `(kind, from, to)`) plus a per-kind `edgesByKind` breakdown, replacing the raw `edge_count()` that included build-pass duplicates. The previous count varied with filesystem traversal order between macOS (APFS) and Linux (ext4); the deduped count is invariant. Linux-only edges (if any remain after dedup) are now visible per kind in the snapshot, so any future divergence surfaces as a specific kind diff rather than an opaque total.
 
 # v0.15.0
 

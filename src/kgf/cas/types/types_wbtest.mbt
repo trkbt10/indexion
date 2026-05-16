@@ -80,7 +80,7 @@ test "ModuleChunk::add_edge" {
     @graph.EdgeKind::from_string("declares"),
     "src/main.ts",
     "src/main.ts#foo",
-    attrs=Map::new(),
+    attrs=Map([]),
   )
   let edges = helper.get_edges()
   if edges.length() > 0 {

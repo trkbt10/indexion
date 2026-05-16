@@ -91,7 +91,7 @@ pub fn ModuleChunk::new(
     hash,
     module_id,
     module_node,
-    symbols: Map::new(),
+    symbols: Map([]),
     edges: [],
     source_hash,
     spec_hash,
@@ -164,5 +164,5 @@ pub fn CASManifest::with_spec_hash(
   spec_hash : ContentHash,
   updated_at : String,
 ) -> CASManifest {
-  { ..self, updated_at, spec_hash, modules: Map::new() }
+  { ..self, updated_at, spec_hash, modules: Map([]) }
 }

@@ -14,7 +14,7 @@ pub struct PlanDocument {
 ///|
 /// Create a new empty plan document.
 pub fn PlanDocument::new(title : String) -> PlanDocument {
-  { title, description: "", sections: [], metadata: Map::new() }
+  { title, description: "", sections: [], metadata: Map([]) }
 }
 
 ///|
@@ -216,7 +216,7 @@ pub fn ChecklistItem::with_desc(
 ///|
 /// Convert PlanDocument to JSON.
 pub fn PlanDocument::to_json(self : PlanDocument) -> Json {
-  let obj : Map[String, Json] = Map::new()
+  let obj : Map[String, Json] = Map([])
   obj.set("title", self.title.to_json())
   obj.set("description", self.description.to_json())
   // Sections
@@ -226,7 +226,7 @@ pub fn PlanDocument::to_json(self : PlanDocument) -> Json {
   }
   obj.set("sections", Json::array(sections_arr))
   // Metadata
-  let meta_obj : Map[String, Json] = Map::new()
+  let meta_obj : Map[String, Json] = Map([])
   self.metadata.each(fn(k, v) { meta_obj.set(k, v.to_json()) })
   obj.set("metadata", Json::object(meta_obj))
   Json::object(obj)
@@ -235,7 +235,7 @@ pub fn PlanDocument::to_json(self : PlanDocument) -> Json {
 ///|
 /// Convert PlanSection to JSON.
 pub fn PlanSection::to_json(self : PlanSection) -> Json {
-  let obj : Map[String, Json] = Map::new()
+  let obj : Map[String, Json] = Map([])
   obj.set("id", self.id.to_json())
   obj.set("heading", self.heading.to_json())
   obj.set("content", self.content.to_json())
@@ -245,7 +245,7 @@ pub fn PlanSection::to_json(self : PlanSection) -> Json {
 ///|
 /// Convert SectionContent to JSON.
 pub fn SectionContent::to_json(self : SectionContent) -> Json {
-  let obj : Map[String, Json] = Map::new()
+  let obj : Map[String, Json] = Map([])
   match self {
     Text(s) => {
       obj.set("type", "text".to_json())
@@ -255,7 +255,7 @@ pub fn SectionContent::to_json(self : SectionContent) -> Json {
       obj.set("type", "list".to_json())
       let arr : Array[Json] = []
       for item in items {
-        let item_obj : Map[String, Json] = Map::new()
+        let item_obj : Map[String, Json] = Map([])
         item_obj.set("text", item.text.to_json())
         if item.description.length() > 0 {
           item_obj.set("description", item.description.to_json())
@@ -277,7 +277,7 @@ pub fn SectionContent::to_json(self : SectionContent) -> Json {
       obj.set("type", "checklist".to_json())
       let arr : Array[Json] = []
       for item in items {
-        let item_obj : Map[String, Json] = Map::new()
+        let item_obj : Map[String, Json] = Map([])
         item_obj.set("label", item.label.to_json())
         if item.description.length() > 0 {
           item_obj.set("description", item.description.to_json())
@@ -308,7 +308,7 @@ pub fn SectionContent::to_json(self : SectionContent) -> Json {
       let arr : Array[Json] = []
       for pair in pairs {
         let (k, v) = pair
-        let pair_obj : Map[String, Json] = Map::new()
+        let pair_obj : Map[String, Json] = Map([])
         pair_obj.set("key", k.to_json())
         pair_obj.set("value", v.to_json())
         arr.push(Json::object(pair_obj))

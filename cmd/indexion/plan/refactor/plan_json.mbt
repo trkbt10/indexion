@@ -141,9 +141,9 @@ pub fn RefactorPlanJSON::update_summary(
 ///|
 /// Convert to JSON.
 pub fn RefactorPlanJSON::to_json(self : RefactorPlanJSON) -> Json {
-  let root : Map[String, Json] = Map::new()
+  let root : Map[String, Json] = Map([])
   // Config
-  let config_obj : Map[String, Json] = Map::new()
+  let config_obj : Map[String, Json] = Map([])
   config_obj.set("target_dir", self.config.target_dir.to_json())
   config_obj.set("threshold", self.config.threshold.to_json())
   config_obj.set("strategy", self.config.strategy.to_json())
@@ -163,7 +163,7 @@ pub fn RefactorPlanJSON::to_json(self : RefactorPlanJSON) -> Json {
   }
   root.set("magic_strings", Json::array(magic_arr))
   // Summary
-  let summary_obj : Map[String, Json] = Map::new()
+  let summary_obj : Map[String, Json] = Map([])
   summary_obj.set("total_clusters", self.summary.total_clusters.to_json())
   summary_obj.set(
     "total_files_analyzed",
@@ -185,13 +185,13 @@ fn json_string_array(arr : Array[String]) -> Json {
 
 ///|
 fn cluster_to_json(cluster : ClusterJSON) -> Json {
-  let obj : Map[String, Json] = Map::new()
+  let obj : Map[String, Json] = Map([])
   obj.set("group_id", cluster.group_id.to_json())
   obj.set("files", json_string_array(cluster.files))
   // Pairs
   let pairs_arr : Array[Json] = []
   for pair in cluster.pairs {
-    let pair_obj : Map[String, Json] = Map::new()
+    let pair_obj : Map[String, Json] = Map([])
     pair_obj.set("file1", pair.file1.to_json())
     pair_obj.set("file2", pair.file2.to_json())
     pair_obj.set("similarity", pair.similarity.to_json())
@@ -203,7 +203,7 @@ fn cluster_to_json(cluster : ClusterJSON) -> Json {
   // Duplicates
   let dups_arr : Array[Json] = []
   for dup in cluster.duplicates {
-    let dup_obj : Map[String, Json] = Map::new()
+    let dup_obj : Map[String, Json] = Map([])
     dup_obj.set("file1", dup.file1.to_json())
     dup_obj.set("file2", dup.file2.to_json())
     dup_obj.set("start_line1", dup.start_line1.to_json())
@@ -218,7 +218,7 @@ fn cluster_to_json(cluster : ClusterJSON) -> Json {
   }
   obj.set("duplicates", Json::array(dups_arr))
   // Suggestions
-  let sugg_obj : Map[String, Json] = Map::new()
+  let sugg_obj : Map[String, Json] = Map([])
   sugg_obj.set("shared_module", cluster.suggestions.shared_module.to_json())
   sugg_obj.set(
     "functions_to_extract",

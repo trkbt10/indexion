@@ -23,13 +23,13 @@ fn both(t1 : TreeNode, t2 : TreeNode) -> (Double, Double) {
 ///|
 test "A1: identical leaf" {
   let t = TreeNode::leaf("X")
-  inspect(both(t, t), content="(1, 1)")
+  debug_inspect(both(t, t), content="(1, 1)")
 }
 
 ///|
 test "A2: identical 3-node" {
   let t = TreeNode::node("A", [TreeNode::leaf("B"), TreeNode::leaf("C")])
-  inspect(both(t, t), content="(1, 1)")
+  debug_inspect(both(t, t), content="(1, 1)")
 }
 
 ///|
@@ -38,7 +38,7 @@ test "A3: identical deep tree" {
     TreeNode::node("Args", [TreeNode::leaf("x"), TreeNode::leaf("y")]),
     TreeNode::node("Body", [TreeNode::node("Return", [TreeNode::leaf("x")])]),
   ])
-  inspect(both(t, t), content="(1, 1)")
+  debug_inspect(both(t, t), content="(1, 1)")
 }
 
 // ============================================================
@@ -52,7 +52,7 @@ test "B1: all-different labels, 3 nodes" {
   let t2 = TreeNode::node("X", [TreeNode::leaf("Y"), TreeNode::leaf("Z")])
   // ZS: renames only, dist=3, max_dist=6, 1-3/6=0.5
   // TSED: dist=3, max(3,3)=3, 1-3/3=0.0
-  inspect(
+  debug_inspect(
     both(t1, t2),
     content=(
       #|(0.5, 0)
@@ -70,7 +70,7 @@ test "B2: all-different labels, 7 nodes" {
     TreeNode::node("Q", [TreeNode::leaf("R"), TreeNode::leaf("S")]),
     TreeNode::node("T", [TreeNode::leaf("U"), TreeNode::leaf("V")]),
   ])
-  inspect(
+  debug_inspect(
     both(t1, t2),
     content=(
       #|(0.5, 0)
@@ -95,7 +95,7 @@ test "C1: function rename - Fn(foo,Args(x,y)) vs Fn(bar,Args(x,y))" {
     TreeNode::node("Args", [TreeNode::leaf("x"), TreeNode::leaf("y")]),
   ])
   // 5 nodes, 1 rename → dist=1
-  inspect(
+  debug_inspect(
     both(t1, t2),
     content=(
       #|(0.9, 0.8)
@@ -119,7 +119,7 @@ test "C2: argument added - Args(x,y) vs Args(x,y,z)" {
       TreeNode::leaf("z"),
     ]),
   ])
-  inspect(
+  debug_inspect(
     both(t1, t2),
     content=(
       #|(0.9090909090909091, 0.6666666666666667)
@@ -141,7 +141,7 @@ test "C3: if to match refactor" {
     TreeNode::node("Arm", [TreeNode::leaf("a")]),
     TreeNode::node("Arm", [TreeNode::leaf("b")]),
   ])
-  inspect(
+  debug_inspect(
     both(t1, t2),
     content=(
       #|(0.7142857142857143, 0.4285714285714286)
@@ -180,7 +180,7 @@ test "C4: body change in large function" {
     ]),
   ])
   // 14 nodes, 1 rename (x→y in Return)
-  inspect(
+  debug_inspect(
     both(t1, t2),
     content=(
       #|(0.9666666666666667, 0.9333333333333333)
@@ -198,7 +198,7 @@ test "C4: body change in large function" {
 test "D1: unrelated small trees" {
   let t1 = TreeNode::node("Print", [TreeNode::leaf("hello")])
   let t2 = TreeNode::node("Return", [TreeNode::leaf("42")])
-  inspect(
+  debug_inspect(
     both(t1, t2),
     content=(
       #|(0.5, 0)
@@ -216,7 +216,7 @@ test "D2: tiny vs large tree" {
     TreeNode::node("Args", [TreeNode::leaf("a"), TreeNode::leaf("b")]),
     TreeNode::node("Body", [TreeNode::node("Return", [TreeNode::leaf("a")])]),
   ])
-  inspect(
+  debug_inspect(
     both(t1, t2),
     content=(
       #|(0.11111111111111116, 0)
@@ -240,7 +240,7 @@ test "D3: same leaves, different structure" {
     TreeNode::node("X", [TreeNode::leaf("a"), TreeNode::leaf("b")]),
     TreeNode::node("Y", [TreeNode::leaf("c"), TreeNode::leaf("d")]),
   ])
-  inspect(
+  debug_inspect(
     both(t1, t2),
     content=(
       #|(0.8333333333333334, 0.5714285714285714)
@@ -277,7 +277,7 @@ test "E1: PEG similar rules - only terminal differs" {
     ]),
   ])
   // 8 nodes, 1 rename
-  inspect(
+  debug_inspect(
     both(t1, t2),
     content=(
       #|(0.9285714285714286, 0.8571428571428572)
@@ -300,7 +300,7 @@ test "E2: PEG structurally different rules" {
     TreeNode::leaf("Sym:b"),
     TreeNode::leaf("Sym:c"),
   ])
-  inspect(
+  debug_inspect(
     both(t1, t2),
     content=(
       #|(0.7142857142857143, 0.5)
@@ -322,7 +322,7 @@ test "E3: PEG added Optional wrapper" {
     TreeNode::leaf("Sym:a"),
     TreeNode::node("Optional", [TreeNode::leaf("Sym:b")]),
   ])
-  inspect(
+  debug_inspect(
     both(t1, t2),
     content=(
       #|(0.8571428571428572, 0.75)

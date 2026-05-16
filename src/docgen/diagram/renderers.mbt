@@ -125,8 +125,8 @@ pub fn render_text(graph : GraphJSON) -> String {
   lines.push("# " + graph.title)
   lines.push("")
   // Build adjacency map
-  let adj : Map[String, Array[String]] = Map::new()
-  let labels : Map[String, String] = Map::new()
+  let adj : Map[String, Array[String]] = Map([])
+  let labels : Map[String, String] = Map([])
   for node in graph.nodes {
     labels.set(node.id, node.label)
     adj.set(node.id, [])

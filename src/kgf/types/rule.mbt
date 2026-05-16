@@ -37,7 +37,7 @@ pub struct AttrAction {
 /// Creates a new AttrAction with the specified parameters.
 pub fn AttrAction::new(
   kind : String,
-  params? : Map[String, String] = Map::new(),
+  params? : Map[String, String] = Map([]),
 ) -> AttrAction {
   { kind, params }
 }

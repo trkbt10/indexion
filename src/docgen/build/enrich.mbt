@@ -48,7 +48,7 @@ priv struct AliasIndex {
 
 ///|
 fn AliasIndex::new() -> AliasIndex {
-  { entries: Map::new() }
+  { entries: Map([]) }
 }
 
 ///|
@@ -310,9 +310,9 @@ priv struct ProjectEntry {
 fn build_cluster_meta(specs : Map[String, @kgf_types.KGFSpec]) -> ClusterMeta {
   let bare_prefixes : Array[String] = []
   let ancestor_dirs : Array[String] = []
-  let identity_edge_kinds : @hashset.HashSet[String] = @hashset.new()
-  let entry_edge_kinds : @hashset.HashSet[String] = @hashset.new()
-  let source_dir_edge_kinds : @hashset.HashSet[String] = @hashset.new()
+  let identity_edge_kinds : @hashset.HashSet[String] = HashSet([])
+  let entry_edge_kinds : @hashset.HashSet[String] = HashSet([])
+  let source_dir_edge_kinds : @hashset.HashSet[String] = HashSet([])
   let default_source_dir_by_identity : Map[String, String] = {}
   let seen_prefix : Map[String, Bool] = {}
   let seen_anc : Map[String, Bool] = {}

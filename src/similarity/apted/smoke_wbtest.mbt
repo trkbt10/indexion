@@ -1,3 +1,6 @@
+///|
+using @debug {debug_inspect}
+
 // Smoke tests: diagnose algorithm behavior on various tree structures.
 
 ///|
@@ -17,7 +20,7 @@ test "smoke: raw distance for 2-child nested tree with renames" {
     ]),
   ])
   let dist = compute_tree_edit_distance(t1, t2, CostConfig::default())
-  inspect(
+  debug_inspect(
     dist,
     content=(
       #|1
@@ -38,7 +41,7 @@ test "smoke: raw distance for multi-branch rename" {
     TreeNode::node("Fn", [TreeNode::leaf("Y"), TreeNode::leaf("D")]),
   ])
   let dist = compute_tree_edit_distance(t1, t2, CostConfig::default())
-  inspect(
+  debug_inspect(
     dist,
     content=(
       #|2
@@ -59,7 +62,7 @@ test "smoke: raw distance for deep nested 2-branch rename" {
     TreeNode::node("C", [TreeNode::leaf("Y")]),
   ])
   let dist = compute_tree_edit_distance(t1, t2, CostConfig::default())
-  inspect(
+  debug_inspect(
     dist,
     content=(
       #|2
@@ -80,7 +83,7 @@ test "smoke: identical 2-branch nested trees" {
     ]),
   ])
   let dist = compute_tree_edit_distance(t, t, CostConfig::default())
-  inspect(dist, content="0")
+  debug_inspect(dist, content="0")
 }
 
 ///|
@@ -103,7 +106,7 @@ test "smoke: TSED vs old on moderate trees with known difference" {
   })
   let tsed_full = calculate_tsed(t1, t2, TSEDConfig::default())
   // raw=2, old_sim=1-2/14≈0.857, tsed_sim=1-2/7≈0.714, tsed_full(finalized)=1-2/7≈0.714
-  inspect(
+  debug_inspect(
     (raw, old_sim, tsed_sim, tsed_full),
     content=(
       #|(2, 0.8571428571428572, 0.7142857142857143, 0.7142857142857143)

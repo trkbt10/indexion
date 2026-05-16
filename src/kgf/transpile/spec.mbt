@@ -186,7 +186,7 @@ pub fn LiftSpec::structural_rules(
 ) -> Map[String, StructuralRule] {
   match self.structural_rules {
     Some(m) => m
-    None => Map::new()
+    None => Map([])
   }
 }
 
@@ -194,7 +194,7 @@ pub fn LiftSpec::structural_rules(
 pub fn LiftSpec::module_aliases(self : LiftSpec) -> Map[String, String] {
   match self.module_aliases {
     Some(m) => m
-    None => Map::new()
+    None => Map([])
   }
 }
 
@@ -202,7 +202,7 @@ pub fn LiftSpec::module_aliases(self : LiftSpec) -> Map[String, String] {
 pub fn LiftSpec::symbol_aliases(self : LiftSpec) -> Map[String, String] {
   match self.symbol_aliases {
     Some(m) => m
-    None => Map::new()
+    None => Map([])
   }
 }
 
@@ -401,7 +401,7 @@ pub fn LowerSpec::regex_replace(self : LowerSpec) -> Array[RegexReplace] {
 pub fn LowerSpec::collect_separators(self : LowerSpec) -> Map[String, String] {
   match self.collect_separators {
     Some(m) => m
-    None => Map::new()
+    None => Map([])
   }
 }
 
@@ -409,7 +409,7 @@ pub fn LowerSpec::collect_separators(self : LowerSpec) -> Map[String, String] {
 pub fn LowerSpec::module_aliases(self : LowerSpec) -> Map[String, String] {
   match self.module_aliases {
     Some(m) => m
-    None => Map::new()
+    None => Map([])
   }
 }
 
@@ -417,7 +417,7 @@ pub fn LowerSpec::module_aliases(self : LowerSpec) -> Map[String, String] {
 pub fn LowerSpec::symbol_aliases(self : LowerSpec) -> Map[String, String] {
   match self.symbol_aliases {
     Some(m) => m
-    None => Map::new()
+    None => Map([])
   }
 }
 

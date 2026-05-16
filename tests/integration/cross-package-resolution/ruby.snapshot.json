@@ -48,7 +48,13 @@
   ],
   "stats": {
     "symbols": 24,
-    "edges": 29,
+    "edges": 25,
+    "edgesByKind": {
+      "declares": 13,
+      "dependsOn": 8,
+      "rubyVersion": 1,
+      "module_depends_on": 3
+    },
     "unresolved_structural_edges": 0
   }
 }
