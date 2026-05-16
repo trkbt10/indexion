@@ -107,11 +107,7 @@ fn query_candidates_for_role(
   role : String,
   limit : Int,
 ) -> Array[QueryCandidate] raise CacheError {
-  let hits = handle.search(
-    query,
-    limit,
-    filter=Some(query_role_filter(role)),
-  )
+  let hits = handle.search(query, limit, filter=Some(query_role_filter(role)))
   let result : Array[QueryCandidate] = []
   for hit in hits {
     result.push(query_candidate_from_hit(hit))
@@ -143,9 +139,7 @@ fn query_role_filter(role : String) -> @vcdb_filter.FilterExpr {
 }
 
 ///|
-fn query_candidate_from_hit(
-  hit : SearchHit,
-) -> QueryCandidate {
+fn query_candidate_from_hit(hit : SearchHit) -> QueryCandidate {
   {
     path: hit.file.path,
     role: hit.file.role,
@@ -159,9 +153,7 @@ fn query_candidate_from_hit(
 }
 
 ///|
-fn documentation_candidate_from_hit(
-  hit : SearchHit,
-) -> DocumentationCandidate {
+fn documentation_candidate_from_hit(hit : SearchHit) -> DocumentationCandidate {
   {
     path: hit.file.path,
     role: hit.file.role,
@@ -241,10 +233,7 @@ fn preflight_candidates(
     }
   }
   for doc in documentation_sources {
-    push_unique_query_candidate(
-      result,
-      query_candidate_from_documentation(doc),
-    )
+    push_unique_query_candidate(result, query_candidate_from_documentation(doc))
     if result.length() >= limit {
       return result
     }
@@ -282,9 +271,7 @@ fn evidence_candidates(
   for doc in documentation_sources {
     push_unique_evidence_candidate(
       result,
-      evidence_candidate_from_query(
-        query_candidate_from_documentation(doc),
-      ),
+      evidence_candidate_from_query(query_candidate_from_documentation(doc)),
     )
   }
   result.sort_by(fn(a, b) {
@@ -420,7 +407,6 @@ fn evidence_preview_text(text : String) -> String {
   if text.length() <= query_evidence_preview_limit {
     text
   } else {
-    @config_paths.substring(text, 0, query_evidence_preview_limit) +
-    "..."
+    @config_paths.substring(text, 0, query_evidence_preview_limit) + "..."
   }
 }

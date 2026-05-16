@@ -1,5 +1,3 @@
-supported_targets = "native"
-
 import {
   "moonbitlang/core/argparse" @argparse,
   "moonbitlang/async",
@@ -25,6 +23,8 @@ import {
   "trkbt10/indexion/cmd/indexion/identity" @identity_cli,
   "trkbt10/indexion/cmd/indexion/agent" @agent_cli,
 }
+
+supported_targets = "native"
 
 options(
   "is-main": true,

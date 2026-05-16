@@ -94,9 +94,7 @@ pub fn discover_signatures(
 /// Each returned signature is for a path that currently exists; vanished
 /// paths are dropped (their absence is itself information the caller's
 /// classify step will surface as "deleted").
-pub fn signatures_for_paths(
-  paths : Array[String],
-) -> Array[FileSignature] {
+pub fn signatures_for_paths(paths : Array[String]) -> Array[FileSignature] {
   let result : Array[FileSignature] = []
   for path in paths {
     match signature_for(path) {
@@ -164,8 +162,8 @@ pub fn classify_against_cache(
   for sig in fresh {
     seen.set(sig.path, ())
     match cached_by_path.get(sig.path) {
-      Some(cached) if cached.mtime_ns == sig.mtime_ns && cached.size_bytes ==
-      sig.size_bytes => unchanged.push(sig)
+      Some(cached) if cached.mtime_ns == sig.mtime_ns &&
+        cached.size_bytes == sig.size_bytes => unchanged.push(sig)
       _ => candidates.push(sig)
     }
   }

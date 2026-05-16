@@ -1,5 +1,3 @@
-supported_targets = "native"
-
 import {
   "trkbt10/indexion/src/agent/orient/map" @map,
   "trkbt10/indexion/src/agent/orient/matching" @matching,
@@ -9,3 +7,5 @@ import {
   "trkbt10/indexion/src/agent/orient/types" @types,
   "trkbt10/indexion/src/pipeline" @pipeline,
 }
+
+supported_targets = "native"

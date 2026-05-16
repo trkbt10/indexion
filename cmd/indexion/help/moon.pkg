@@ -1,2 +1,4 @@
 import {
 }
+
+supported_targets = "native"

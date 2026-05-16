@@ -3,3 +3,5 @@ import {
   "trkbt10/indexion/cmd/indexion/story/wiki/plan" @story_wiki_plan,
   "trkbt10/indexion/cmd/indexion/story/wiki/build" @story_wiki_build,
 }
+
+supported_targets = "native"

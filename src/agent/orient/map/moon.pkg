@@ -1,5 +1,3 @@
-supported_targets = "native"
-
 import {
   "moonbitlang/core/json" @json,
   "moonbitlang/x/fs" @fs,
@@ -8,3 +6,5 @@ import {
   "trkbt10/indexion/src/config" @config_paths,
   "trkbt10/indexion/src/kgf/cas/hash" @cas_hash,
 }
+
+supported_targets = "native"

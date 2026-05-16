@@ -13,3 +13,5 @@ import {
   "trkbt10/indexion/src/plan/render" @plan_render,
   "trkbt10/indexion/src/pipeline/comparison" @batch,
 }
+
+supported_targets = "native"

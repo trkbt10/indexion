@@ -75,11 +75,7 @@ fn write_vocabulary_provider(
     provider.to_json_string() + "\n",
   ) catch {
     @fs.IOError(msg) =>
-      raise layout_storage_error_for(
-        "vocabulary",
-        layout.vocabulary_path,
-        msg,
-      )
+      raise layout_storage_error_for("vocabulary", layout.vocabulary_path, msg)
   }
 }
 
@@ -128,9 +124,7 @@ fn load_vocabulary_provider(
 }
 
 ///|
-fn vocabulary_payload_summary(
-  content : String,
-) -> VocabularyPayloadSummary? {
+fn vocabulary_payload_summary(content : String) -> VocabularyPayloadSummary? {
   let json = @json.parse(content) catch { _ => return None }
   match json {
     {

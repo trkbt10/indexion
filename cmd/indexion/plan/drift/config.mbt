@@ -64,11 +64,9 @@ pub fn command() -> @argparse.Command {
     about="Detect translation / documentation drift between two files",
     options=[
       @argparse.OptionArg("output", short='o', about=@help.output),
-      @argparse.OptionArg(
-        "format",
-        about="Output format: text, md, json",
-        default_values=["text"],
-      ),
+      @argparse.OptionArg("format", about="Output format: text, md, json", default_values=[
+        "text",
+      ]),
       @argparse.OptionArg(
         "top",
         about="Max gap terms reported per direction (0 = unlimited)",

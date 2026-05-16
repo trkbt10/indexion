@@ -16,3 +16,5 @@ import {
   "trkbt10/indexion/src/plan/types" @plan_types,
   "trkbt10/indexion/src/plan/render" @plan_render,
 }
+
+supported_targets = "native"

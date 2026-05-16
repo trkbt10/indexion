@@ -7,3 +7,5 @@ import {
   "trkbt10/indexion/src/docgen/wiki/workspace" @wiki_workspace,
   "trkbt10/indexion/src/config" @config,
 }
+
+supported_targets = "native"

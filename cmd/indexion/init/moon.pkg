@@ -3,3 +3,5 @@ import {
   "moonbitlang/x/fs",
   "moonbitlang/core/argparse",
 }
+
+supported_targets = "native"

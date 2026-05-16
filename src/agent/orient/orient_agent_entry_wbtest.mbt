@@ -215,10 +215,7 @@ async test "orient entry: update mode refuses mutation without writer lock" {
   let config = orient_entry_config(name, false)
   seed_orient_entry_repo(config)
   let lock = @cache.try_acquire_writer_lock(config)
-  expect_orient_entry_writer_conflict(
-    config,
-    @cache.writer_lock_path(config),
-  )
+  expect_orient_entry_writer_conflict(config, @cache.writer_lock_path(config))
   assert_orient_entry_cache_unwritten(config)
   lock.release()
 }

@@ -51,7 +51,7 @@ pub fn load_signatures(index_dir : String) -> SignaturesFile? {
           _ => ()
         }
       }
-      Some({ signatures })
+      Some({ signatures, })
     }
     _ => None
   }
@@ -83,7 +83,9 @@ pub fn save_signatures(
   }
   buf.write_string("\n}\n")
   let path = signatures_path(index_dir)
-  @fs.write_string_to_file(path, buf.to_string()) catch { _ => return false }
+  @fs.write_string_to_file(path, buf.to_string()) catch {
+    _ => return false
+  }
   true
 }
 
@@ -102,22 +104,24 @@ pub fn signatures_match_disk(file : SignaturesFile) -> Bool {
           @progress.stage(
             "[digest] signature mismatch",
             "path=" +
-              path +
-              " expected_mtime=" +
-              expected.mtime_ns.to_string() +
-              " actual_mtime=" +
-              actual.mtime_ns.to_string() +
-              " expected_size=" +
-              expected.size_bytes.to_string() +
-              " actual_size=" +
-              actual.size_bytes.to_string(),
+            path +
+            " expected_mtime=" +
+            expected.mtime_ns.to_string() +
+            " actual_mtime=" +
+            actual.mtime_ns.to_string() +
+            " expected_size=" +
+            expected.size_bytes.to_string() +
+            " actual_size=" +
+            actual.size_bytes.to_string(),
             0UL,
           )
           return false
         }
       None => {
         @progress.stage(
-          "[digest] signature missing on disk", "path=" + path, 0UL,
+          "[digest] signature missing on disk",
+          "path=" + path,
+          0UL,
         )
         return false
       }

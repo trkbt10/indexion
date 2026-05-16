@@ -182,7 +182,9 @@ async test "orient cache update: large per-record summaries flow through without
     unchanged_briefs.push(brief)
   }
   let second = apply_incremental_updates(
-    handle, unchanged_briefs, timestamp_ns=200L,
+    handle,
+    unchanged_briefs,
+    timestamp_ns=200L,
   )
   assert_eq(second.embedding_count, 0)
   assert_eq(second.upsert_count, 0)

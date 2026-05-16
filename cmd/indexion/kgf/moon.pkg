@@ -15,3 +15,5 @@ import {
   "trkbt10/indexion/src/kgf/semantics" @semantics,
   "trkbt10/indexion/src/kgf/transpile" @kgf_transpile,
 }
+
+supported_targets = "native"

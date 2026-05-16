@@ -6,3 +6,5 @@ import {
   "trkbt10/indexion/src/segmentation/types" @types,
   "trkbt10/indexion/src/segmentation/window" @window,
 }
+
+supported_targets = "native"

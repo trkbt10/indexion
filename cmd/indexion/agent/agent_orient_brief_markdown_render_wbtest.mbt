@@ -4,10 +4,7 @@ fn orient_render_fixture_report() -> @agent_orient.AgentOrientReport {
     version: "agent-orient-vcdb-v1",
     task: "compose orient brief from vcdb query",
     likely_owners: [
-      {
-        path: "src/agent/orient/map",
-        reason: "owns vcdb cache lifecycle",
-      },
+      { path: "src/agent/orient/map", reason: "owns vcdb cache lifecycle" },
     ],
     knowledge_sources: [
       {
@@ -28,10 +25,7 @@ fn orient_render_fixture_report() -> @agent_orient.AgentOrientReport {
       },
     ],
     required_preflight: [
-      {
-        path: "src/agent/orient/source",
-        reason: "discovers file briefs",
-      },
+      { path: "src/agent/orient/source", reason: "discovers file briefs" },
     ],
     readiness_quiz: [
       {
@@ -68,17 +62,9 @@ fn orient_render_fixture_report() -> @agent_orient.AgentOrientReport {
 ///|
 fn orient_render_section_order() -> Array[String] {
   [
-    "## Task",
-    "## Likely Implementation Owners",
-    "## Knowledge Sources",
-    "## Consumer Surfaces",
-    "## Do Not Implement Here",
-    "## Required Preflight",
-    "## Readiness Quiz",
-    "## Orientation Map",
-    "## Evidence",
-    "## Workflow",
-    "## Notes",
+    "## Task", "## Likely Implementation Owners", "## Knowledge Sources", "## Consumer Surfaces",
+    "## Do Not Implement Here", "## Required Preflight", "## Readiness Quiz", "## Orientation Map",
+    "## Evidence", "## Workflow", "## Notes",
   ]
 }
 
@@ -93,7 +79,7 @@ fn find_substring_index(haystack : String, needle : String) -> Int {
     return -1
   }
   let limit = h_len - n_len
-  for start in 0..=limit {
+  for start in 0..<=limit {
     let mut matched = true
     for offset in 0..<n_len {
       if haystack.unsafe_get(start + offset) != needle.unsafe_get(offset) {
@@ -148,18 +134,12 @@ test "agent orient markdown render: empty sections still emit headings" {
     notes: [],
   }
   let rendered = render_markdown(empty)
-  for heading in [
-    "## Likely Implementation Owners",
-    "## Knowledge Sources",
-    "## Consumer Surfaces",
-    "## Do Not Implement Here",
-    "## Required Preflight",
-    "## Readiness Quiz",
-    "## Orientation Map",
-    "## Evidence",
-    "## Workflow",
-    "## Notes",
-  ] {
+  for
+    heading in [
+      "## Likely Implementation Owners", "## Knowledge Sources", "## Consumer Surfaces",
+      "## Do Not Implement Here", "## Required Preflight", "## Readiness Quiz", "## Orientation Map",
+      "## Evidence", "## Workflow", "## Notes",
+    ] {
     assert_true(find_substring_index(rendered, heading) >= 0)
   }
 }
@@ -168,20 +148,13 @@ test "agent orient markdown render: empty sections still emit headings" {
 test "agent orient json render: preserves top-level field names" {
   let report = orient_render_fixture_report()
   let payload = report.to_json().stringify(indent=2)
-  for field in [
-    "\"version\":",
-    "\"task\":",
-    "\"likely_owners\":",
-    "\"knowledge_sources\":",
-    "\"consumer_surfaces\":",
-    "\"do_not_implement_here\":",
-    "\"required_preflight\":",
-    "\"readiness_quiz\":",
-    "\"map_status\":",
-    "\"evidence\":",
-    "\"workflow\":",
-    "\"notes\":",
-  ] {
+  for
+    field in [
+      "\"version\":", "\"task\":", "\"likely_owners\":", "\"knowledge_sources\":",
+      "\"consumer_surfaces\":", "\"do_not_implement_here\":", "\"required_preflight\":",
+      "\"readiness_quiz\":", "\"map_status\":", "\"evidence\":", "\"workflow\":",
+      "\"notes\":",
+    ] {
     assert_true(find_substring_index(payload, field) >= 0)
   }
 }

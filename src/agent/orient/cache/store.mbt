@@ -46,11 +46,9 @@ pub async fn open(
   provider : @text_embed.TfidfEmbeddingProvider,
 ) -> Handle raise CacheError {
   match decide_open(config, mode, provider) {
-    Ready(layout) =>
-      open_validated_handle(config, mode, provider, layout)
+    Ready(layout) => open_validated_handle(config, mode, provider, layout)
     FreshBuild(_) => rebuild_empty(config, provider)
-    Unavailable(reason) =>
-      raise Unavailable(reason.diagnostic())
+    Unavailable(reason) => raise Unavailable(reason.diagnostic())
   }
 }
 
@@ -82,21 +80,13 @@ pub async fn open_for_update_lazy(
         VocabularyInvalid(_) =>
           build_provider_from_current_corpus(corpus_fn(), dim)
       }
-      open_validated_handle(
-        config,
-        ReadWrite,
-        provider,
-        layout,
-      )
+      open_validated_handle(config, ReadWrite, provider, layout)
     }
     FreshBuild(_) => {
-      let provider = build_provider_from_current_corpus(
-        corpus_fn(), dim,
-      )
+      let provider = build_provider_from_current_corpus(corpus_fn(), dim)
       rebuild_empty(config, provider)
     }
-    Unavailable(reason) =>
-      raise Unavailable(reason.diagnostic())
+    Unavailable(reason) => raise Unavailable(reason.diagnostic())
   }
 }
 
@@ -108,8 +98,7 @@ pub async fn rebuild_empty(
   let layout = layout_for(config)
   reset_database_dir(layout)
   initialize_layout_for(config, provider) catch {
-    LayoutStorageError(message) =>
-      raise StorageFailure(message)
+    LayoutStorageError(message) => raise StorageFailure(message)
   }
   let metadata = metadata_for_provider(provider)
   let db = open_persistent_db(layout, provider)
@@ -132,15 +121,12 @@ fn build_provider_from_current_corpus(
   match build_vocabulary_provider(corpus_texts, dim) {
     VocabularyBuilt(provider) => provider
     VocabularyLoaded(provider) => provider
-    VocabularyInvalid(reason) =>
-      raise Unavailable(reason.diagnostic())
+    VocabularyInvalid(reason) => raise Unavailable(reason.diagnostic())
   }
 }
 
 ///|
-pub async fn checkpoint(
-  handle : Handle,
-) -> Unit raise CacheError {
+pub async fn checkpoint(handle : Handle) -> Unit raise CacheError {
   handle.db.checkpoint() catch {
     @vcdb_storage.AsyncIOFailed(message) =>
       raise CheckpointFailure(
@@ -168,13 +154,7 @@ async fn open_validated_handle(
 ) -> Handle raise CacheError {
   let db = open_persistent_db(layout, provider)
   if db.dim() == provider.dim() {
-    {
-      db,
-      provider,
-      layout,
-      metadata: metadata_for_provider(provider),
-      mode,
-    }
+    { db, provider, layout, metadata: metadata_for_provider(provider), mode }
   } else {
     let message = "orient vcdb database dimension mismatch: found " +
       db.dim().to_string() +
@@ -220,9 +200,7 @@ async fn open_persistent_db(
 }
 
 ///|
-async fn reset_database_dir(
-  layout : Layout,
-) -> Unit raise CacheError {
+async fn reset_database_dir(layout : Layout) -> Unit raise CacheError {
   let exists = @async_fs.exists(layout.vcdb_dir) catch {
     err =>
       raise StorageFailure(
@@ -277,9 +255,7 @@ pub fn Handle::cache_version(self : Handle) -> String {
 }
 
 ///|
-pub fn Handle::provider(
-  self : Handle,
-) -> @text_embed.TfidfEmbeddingProvider {
+pub fn Handle::provider(self : Handle) -> @text_embed.TfidfEmbeddingProvider {
   self.provider
 }
 
@@ -449,7 +425,6 @@ pub async fn Handle::refresh_signature_for(
         err.to_string(),
       )
   }
-
 }
 
 ///|
@@ -546,9 +521,7 @@ fn cached_file_from_record(
         "orient vcdb record `" + vector_id + "` is missing path attr",
       )
     MissingRecordAttr(attr) =>
-      raise RecordFailure(
-        "orient vcdb record is missing `" + attr + "` attr",
-      )
+      raise RecordFailure("orient vcdb record is missing `" + attr + "` attr")
     NonStringRecordAttr(attr, vector_id) =>
       raise RecordFailure(
         "orient vcdb record `" +
@@ -598,9 +571,7 @@ fn validate_existing_record_path(
         "orient vcdb record `" + vector_id + "` is missing path attr",
       )
     MissingRecordAttr(attr) =>
-      raise RecordFailure(
-        "orient vcdb record is missing `" + attr + "` attr",
-      )
+      raise RecordFailure("orient vcdb record is missing `" + attr + "` attr")
     NonStringRecordAttr(attr, vector_id) =>
       raise RecordFailure(
         "orient vcdb record `" +

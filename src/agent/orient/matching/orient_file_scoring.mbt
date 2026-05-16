@@ -41,12 +41,16 @@ pub fn score_briefs(
     } else {
       matched_terms_in_tokens(task_terms, brief.summary_terms)
     }
-    result.push({ ..brief, score: orientation_score(
+    result.push({
+      ..brief,
+      score: orientation_score(
         task,
         brief.structural_summary,
         task_terms,
         matched.length(),
-      ), matched_terms: matched })
+      ),
+      matched_terms: matched,
+    })
   }
   result
 }

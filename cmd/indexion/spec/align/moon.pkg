@@ -12,3 +12,5 @@ import {
   "moonbitlang/x/fs" @fs,
   "moonbitlang/async",
 } for "wbtest"
+
+supported_targets = "native"

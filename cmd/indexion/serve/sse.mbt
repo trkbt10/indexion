@@ -163,7 +163,10 @@ async fn handle_grep_stream(
       for i, file in files {
         let (path, content) = file
         let items = @grep_cli.grep_single_file(
-          path, content, grep_config.pattern, registry,
+          path,
+          content,
+          grep_config.pattern,
+          registry,
         )
         for item in items {
           sse_item(conn, item)

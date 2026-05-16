@@ -1,5 +1,3 @@
-supported_targets = "native"
-
 import {
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/config" @config,
@@ -20,3 +18,5 @@ import {
 import {
   "moonbitlang/core/env" @env,
 } for "wbtest"
+
+supported_targets = "native"

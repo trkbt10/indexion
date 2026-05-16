@@ -92,7 +92,9 @@ pub fn save_signatures(
   }
   buf.write_string("\n}\n")
   let path = align_signatures_path(cache_dir)
-  @fs.write_string_to_file(path, buf.to_string()) catch { _ => return false }
+  @fs.write_string_to_file(path, buf.to_string()) catch {
+    _ => return false
+  }
   true
 }
 

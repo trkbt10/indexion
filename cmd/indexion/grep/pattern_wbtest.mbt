@@ -139,9 +139,7 @@ test "parse_pattern_for_path resolves aliases per file's language" {
   // `KW_pub` for a MoonBit file (where the spec defines that keyword)
   // and fall back to a Text matcher when the file has no matching spec
   // (or the matching spec doesn't define `pub` as a keyword).
-  let registry = Some(
-    @kgf_features.load_registry_or_empty(specs_dir="kgfs"),
-  )
+  let registry = Some(@kgf_features.load_registry_or_empty(specs_dir="kgfs"))
   let moonbit_matchers = parse_pattern_for_path("pub", "demo.mbt", registry)
   assert_eq(moonbit_matchers.length(), 1)
   match moonbit_matchers[0] {

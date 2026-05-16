@@ -27,3 +27,5 @@ import {
   "moonbitlang/core/env" @env,
   "moonbitlang/async" @async,
 } for "wbtest"
+
+supported_targets = "native"

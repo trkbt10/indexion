@@ -157,14 +157,14 @@ test "api: CompiledPattern::literal_text rejects non-literal patterns" {
   // structural patterns like identifier classes or keyword forms.
   let non_literals = [
     "[A-Z][A-Za-z0-9_]*", // identifier class
-    "\\r?\\n", // newline pattern
-    "[ \\t]+", // whitespace run
-    "\\d+", // shortcut escape
-    "\\s+", // shortcut escape
-    "pub\\b", // keyword with word boundary
-    "<<=|>>=|==", // alternation
-    "0x[0-9a-fA-F_]+", // mixed
-    "\\/\\/[^\\r\\n]*", // line comment
+     "\\r?\\n", // newline pattern
+     "[ \\t]+", // whitespace run
+     "\\d+", // shortcut escape
+     "\\s+", // shortcut escape
+     "pub\\b", // keyword with word boundary
+     "<<=|>>=|==", // alternation
+     "0x[0-9a-fA-F_]+", // mixed
+     "\\/\\/[^\\r\\n]*", // line comment
   ]
   for pattern in non_literals {
     let compiled = match compile_pattern(pattern) {

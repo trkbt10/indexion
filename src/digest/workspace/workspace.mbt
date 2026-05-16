@@ -168,9 +168,7 @@ pub fn build_graph_from_source(
     specs_dir~,
     target_dir=source_dir,
   )
-  @progress.stage(
-    "[digest] load registry", "", @progress.elapsed_ms(t),
-  )
+  @progress.stage("[digest] load registry", "", @progress.elapsed_ms(t))
   let t = @progress.now_ms()
   let kgf_ignore = registry.collect_ignore_patterns()
   let discover_opts = @pipeline.DiscoverOptions::new(
@@ -253,9 +251,12 @@ pub async fn update_index(
   )
   @progress.stage(
     "[digest] build_with_config",
-    "indexed=" + result.indexed_count.to_string() + " skipped=" +
-      result.skipped_count.to_string() + " removed=" +
-      result.removed_count.to_string(),
+    "indexed=" +
+    result.indexed_count.to_string() +
+    " skipped=" +
+    result.skipped_count.to_string() +
+    " removed=" +
+    result.removed_count.to_string(),
     @progress.elapsed_ms(t),
   )
   let t = @progress.now_ms()
@@ -270,7 +271,9 @@ pub async fn update_index(
   // falls back to the full rebuild.
   let _ = save_signatures(index_dir, build_result.signatures)
   @progress.stage(
-    "[digest] update_index done", "", @progress.elapsed_ms(total_start),
+    "[digest] update_index done",
+    "",
+    @progress.elapsed_ms(total_start),
   )
   Some({
     indexed_count: result.indexed_count,

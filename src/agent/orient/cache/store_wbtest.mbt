@@ -134,7 +134,10 @@ async test "orient cache store: read only invalid open reports cache error witho
   let config = orient_store_test_config("readonly-invalid")
   reset_orient_store_fixture(config.cache_dir)
   @config_paths.ensure_dir_recursive(config.cache_dir)
-  @fs.write_string_to_file(@map.orient_map_path(config), "{legacy json not parsed") catch {
+  @fs.write_string_to_file(
+    @map.orient_map_path(config),
+    "{legacy json not parsed",
+  ) catch {
     _ => fail("failed to write legacy map fixture")
   }
   let provider = orient_store_test_provider()
@@ -218,8 +221,7 @@ async test "orient cache store: checkpoint storage failure is surfaced as cache 
     checkpoint(handle)
     fail("expected checkpoint failure to raise a cache error")
   } catch {
-    CheckpointFailure(message) =>
-      assert_true(message.contains("checkpoint"))
+    CheckpointFailure(message) => assert_true(message.contains("checkpoint"))
     _ => fail("expected CheckpointFailure")
   }
 }

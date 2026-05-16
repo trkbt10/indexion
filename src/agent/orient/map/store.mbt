@@ -55,10 +55,7 @@ pub fn load_cached(config : AgentOrientConfig) -> AgentOrientMap? {
 }
 
 ///|
-pub fn save(
-  config : AgentOrientConfig,
-  map : AgentOrientMap,
-) -> Unit {
+pub fn save(config : AgentOrientConfig, map : AgentOrientMap) -> Unit {
   @config_paths.ensure_dir_recursive(config.cache_dir)
   @fs.write_string_to_file(
     orient_map_path(config),

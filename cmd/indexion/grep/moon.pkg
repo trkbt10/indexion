@@ -14,3 +14,5 @@ import {
   "moonbitlang/core/env" @env,
   "moonbitlang/x/fs" @fs,
 } for "wbtest"
+
+supported_targets = "native"

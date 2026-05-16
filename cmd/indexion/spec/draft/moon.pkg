@@ -4,3 +4,5 @@ import {
   "trkbt10/indexion/cmd/indexion/help" @help,
   "trkbt10/indexion/src/spec/draft" @spec_draft,
 }
+
+supported_targets = "native"

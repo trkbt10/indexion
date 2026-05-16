@@ -57,9 +57,7 @@ pub(all) suberror RecordSchemaError {
 
 ///|
 #warnings("-unused_value")
-fn RecordSchemaError::diagnostic(
-  self : RecordSchemaError,
-) -> String {
+fn RecordSchemaError::diagnostic(self : RecordSchemaError) -> String {
   match self {
     PathIdentityCollision(expected, existing, vector_id) =>
       "orient vcdb path identity collision for `" +
@@ -134,10 +132,7 @@ pub fn attrs_from_brief(
     attr_owner,
     @vcdb_types.AttrValue::String(@map.owner_dir(brief.path)),
   )
-  attrs.set(
-    attr_source_hash,
-    @vcdb_types.AttrValue::String(brief.source_hash),
-  )
+  attrs.set(attr_source_hash, @vcdb_types.AttrValue::String(brief.source_hash))
   attrs.set(
     attr_structural_summary,
     @vcdb_types.AttrValue::String(brief.structural_summary),
@@ -183,9 +178,7 @@ pub fn signature_refresh_attrs(
   attrs.set(attr_path, @vcdb_types.AttrValue::String(cached.path))
   attrs.set(attr_role, @vcdb_types.AttrValue::String(cached.role))
   attrs.set(attr_owner, @vcdb_types.AttrValue::String(cached.owner))
-  attrs.set(
-    attr_source_hash, @vcdb_types.AttrValue::String(cached.source_hash),
-  )
+  attrs.set(attr_source_hash, @vcdb_types.AttrValue::String(cached.source_hash))
   attrs.set(
     attr_structural_summary,
     @vcdb_types.AttrValue::String(cached.structural_summary),
@@ -199,11 +192,10 @@ pub fn signature_refresh_attrs(
       attrs.set(attr_summary_full, @vcdb_types.AttrValue::String(text))
     None => ()
   }
+  attrs.set(attr_mtime_ns, @vcdb_types.AttrValue::String(mtime_ns.to_string()))
   attrs.set(
-    attr_mtime_ns, @vcdb_types.AttrValue::String(mtime_ns.to_string()),
-  )
-  attrs.set(
-    attr_size_bytes, @vcdb_types.AttrValue::String(size_bytes.to_string()),
+    attr_size_bytes,
+    @vcdb_types.AttrValue::String(size_bytes.to_string()),
   )
   attrs
 }

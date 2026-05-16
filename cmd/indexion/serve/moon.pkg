@@ -34,3 +34,5 @@ import {
   "trkbt10/indexion/src/docgen/wiki/search" @wiki_search,
   "trkbt10/indexion/src/docgen/wiki/workspace" @wiki_workspace,
 }
+
+supported_targets = "native"

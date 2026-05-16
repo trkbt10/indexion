@@ -113,11 +113,7 @@ test "disjoint token bags yield large cosine distance" {
 ///|
 test "max_terms caps the gap output" {
   let source = [
-    "Ident:alpha",
-    "Ident:beta",
-    "Ident:gamma",
-    "Ident:delta",
-    "Ident:epsilon",
+    "Ident:alpha", "Ident:beta", "Ident:gamma", "Ident:delta", "Ident:epsilon",
   ]
   let target = ["Ident:other"]
   let config : GapConfig = {

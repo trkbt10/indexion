@@ -77,11 +77,7 @@ async test "orient vcdb layout: initializing fresh cache writes bounded metadata
   assert_eq(metadata.schema_version, cache_schema_version())
   assert_eq(metadata.dim, provider.dim())
   assert_eq(metadata.created_by, "indexion-agent-orient")
-  let decision = decide_open(
-    config,
-    ReadWrite,
-    provider,
-  )
+  let decision = decide_open(config, ReadWrite, provider)
   assert_eq(decision, Ready(layout))
 }
 
@@ -94,10 +90,7 @@ async test "orient vcdb layout: old json cache path is recognized without parsin
     _ => fail("failed to write old cache fixture")
   }
   let provider = orient_layout_test_provider(8)
-  assert_eq(
-    decide_open(config, ReadWrite, provider),
-    FreshBuild(OldJsonLayout),
-  )
+  assert_eq(decide_open(config, ReadWrite, provider), FreshBuild(OldJsonLayout))
 }
 
 ///|
@@ -134,10 +127,7 @@ async test "orient vcdb layout: read only invalid cache reports unavailable and 
   }
   let provider = orient_layout_test_provider(8)
   let layout = layout_for(config)
-  assert_eq(
-    decide_open(config, ReadOnly, provider),
-    Unavailable(OldJsonLayout),
-  )
+  assert_eq(decide_open(config, ReadOnly, provider), Unavailable(OldJsonLayout))
   assert_true(!@fs.path_exists(layout.root_dir))
 }
 

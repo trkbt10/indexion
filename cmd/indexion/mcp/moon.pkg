@@ -33,3 +33,5 @@ options(
     "stdio_js.mbt": [ "js", "wasm", "wasm-gc" ],
   },
 )
+
+supported_targets = "native"

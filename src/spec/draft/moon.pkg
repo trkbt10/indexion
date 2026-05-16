@@ -15,3 +15,5 @@ import {
   "trkbt10/indexion/cmd/indexion/spec/align" @align_cli,
   "trkbt10/indexion/src/spec/align" @spec_align,
 } for "wbtest"
+
+supported_targets = "native"

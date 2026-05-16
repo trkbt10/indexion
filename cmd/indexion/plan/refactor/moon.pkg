@@ -16,3 +16,5 @@ import {
   "trkbt10/indexion/src/pipeline/comparison" @batch,
   "moonbitlang/core/bench",
 }
+
+supported_targets = "native"

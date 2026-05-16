@@ -1,5 +1,3 @@
-supported_targets = "native"
-
 import {
   "moonbitlang/async/fs" @async_fs,
   "moonbitlang/core/json" @json,
@@ -18,3 +16,5 @@ import {
 import {
   "moonbitlang/async",
 } for "wbtest"
+
+supported_targets = "native"

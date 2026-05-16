@@ -381,9 +381,7 @@ pub async fn persisted_report(config : ReconcileConfig) -> ReconcileReport? {
 /// `run_analysis` pipeline. The fast path therefore can never produce a
 /// false negative cache hit; the worst it can do is fail to take a valid
 /// shortcut, which is the same as the pre-signature behavior.
-async fn try_signature_fast_path(
-  config : ReconcileConfig,
-) -> ReconcileReport? {
+async fn try_signature_fast_path(config : ReconcileConfig) -> ReconcileReport? {
   let sigs = match load_signatures(config.index_dir) {
     Some(value) => value
     None => return None

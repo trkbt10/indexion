@@ -57,22 +57,13 @@ struct WriterLock {
 }
 
 ///|
-pub async fn prepare_runtime(
-  config : AgentOrientConfig,
-) -> RuntimeReadiness {
+pub async fn prepare_runtime(config : AgentOrientConfig) -> RuntimeReadiness {
   let layout = layout_for(config)
   let cache_exists = @async_fs.exists(layout.root_dir)
-  let _wal_storage = @vcdb_storage.NativeFileStorage::new(
-    db_dir(config),
-  )
-  let _snapshot_storage = @vcdb_storage.NativeFileStorage::new(
-    db_dir(config),
-  )
-  let persistence_ready = native_db_type_ready(None) &&
-    db_name().length() > 0
-  let provider = @text_embed.TfidfEmbeddingProvider::new(
-    vector_dim(),
-  )
+  let _wal_storage = @vcdb_storage.NativeFileStorage::new(db_dir(config))
+  let _snapshot_storage = @vcdb_storage.NativeFileStorage::new(db_dir(config))
+  let persistence_ready = native_db_type_ready(None) && db_name().length() > 0
+  let provider = @text_embed.TfidfEmbeddingProvider::new(vector_dim())
   provider.build_vocabulary(["orient cache runtime", config.task])
   let sample_vector = provider.embed(config.cache_dir)
   let path_id = vector_id_for_path(config.cache_dir)
@@ -117,9 +108,7 @@ pub async fn try_acquire_writer_lock(
     @config_paths.ensure_dir_recursive(layout.root_dir)
     if !@fs.path_exists(layout.root_dir) {
       raise WriterLockStorageError(
-        "failed to create orient vcdb lock directory `" +
-        layout.root_dir +
-        "`",
+        "failed to create orient vcdb lock directory `" + layout.root_dir + "`",
       )
     }
   }

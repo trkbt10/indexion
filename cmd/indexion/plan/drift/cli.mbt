@@ -43,7 +43,8 @@ pub fn build_report(config : DriftConfig) -> DriftReport? {
     }
   }
   let registry = match config.specs_dir {
-    Some(dir) => @kgf_features.load_registry_or_empty(specs_dir=dir, target_dir=".")
+    Some(dir) =>
+      @kgf_features.load_registry_or_empty(specs_dir=dir, target_dir=".")
     None => @kgf_features.load_registry_or_empty(target_dir=".")
   }
   if registry.get_languages().length() == 0 {

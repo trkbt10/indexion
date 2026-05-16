@@ -12,7 +12,9 @@ pub fn render_output(report : DriftReport, format : String) -> String {
 ///|
 fn render_text(report : DriftReport) -> String {
   let buf = StringBuilder::new()
-  buf.write_string("Strategy: drift (KGF tokenize → @vocab.measure_divergence, natural-language mode)\n")
+  buf.write_string(
+    "Strategy: drift (KGF tokenize → @vocab.measure_divergence, natural-language mode)\n",
+  )
   buf.write_string("File 1: ")
   buf.write_string(report.file_a)
   buf.write_string(" (spec=")
@@ -45,11 +47,17 @@ fn render_text(report : DriftReport) -> String {
     _ => ()
   }
   buf.write_string("\n")
-  write_text_section(buf, "Drift terms in " + report.file_a +
-    " (missing on the other side):", report.a_to_b.gap_terms)
+  write_text_section(
+    buf,
+    "Drift terms in " + report.file_a + " (missing on the other side):",
+    report.a_to_b.gap_terms,
+  )
   buf.write_string("\n")
-  write_text_section(buf, "Drift terms in " + report.file_b +
-    " (missing on the other side):", report.b_to_a.gap_terms)
+  write_text_section(
+    buf,
+    "Drift terms in " + report.file_b + " (missing on the other side):",
+    report.b_to_a.gap_terms,
+  )
   buf.to_string()
 }
 

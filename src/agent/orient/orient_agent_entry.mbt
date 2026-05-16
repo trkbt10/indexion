@@ -69,7 +69,12 @@ async fn orient_agent_update_locked(
   match bootstrap_briefs.val {
     Some(briefs) =>
       return orient_entry_finalize(
-        config, handle, briefs, [], total_start, "cold build",
+        config,
+        handle,
+        briefs,
+        [],
+        total_start,
+        "cold build",
       )
     None => ()
   }
@@ -133,16 +138,20 @@ async fn orient_agent_update_locked(
   log_progress(
     config,
     "[orient] classify signatures",
-    "unchanged=" + classification.unchanged.length().to_string() +
-      " candidates=" + classification.candidates.length().to_string() +
-      " deleted=" + classification.deleted_paths.length().to_string(),
+    "unchanged=" +
+    classification.unchanged.length().to_string() +
+    " candidates=" +
+    classification.candidates.length().to_string() +
+    " deleted=" +
+    classification.deleted_paths.length().to_string(),
     @progress.elapsed_ms(t),
   )
 
   // Load content for candidates and recompute their hashes.
   let t = @progress.now_ms()
   let candidate_files = @signature.load_contents(
-    classification.candidates, registry,
+    classification.candidates,
+    registry,
   )
   let candidate_files_by_path : Map[String, @pipeline.SupportedFile] = {}
   let candidate_hashes : Map[String, String] = {}
@@ -159,8 +168,10 @@ async fn orient_agent_update_locked(
   log_progress(
     config,
     "[orient] read candidates",
-    "loaded=" + candidate_files.length().to_string() + " content-changed=" +
-      content_changed.to_string(),
+    "loaded=" +
+    candidate_files.length().to_string() +
+    " content-changed=" +
+    content_changed.to_string(),
     @progress.elapsed_ms(t),
   )
 
@@ -261,8 +272,12 @@ async fn orient_agent_update_locked(
   log_progress(
     config,
     "[orient] build briefs",
-    "rebuilt=" + rebuilt.to_string() + " refreshed-meta=" +
-      refreshed_only.to_string() + " reused=" + reused_pure.to_string(),
+    "rebuilt=" +
+    rebuilt.to_string() +
+    " refreshed-meta=" +
+    refreshed_only.to_string() +
+    " reused=" +
+    reused_pure.to_string(),
     @progress.elapsed_ms(t),
   )
 
@@ -295,15 +310,19 @@ async fn orient_entry_finalize(
   log_progress(
     config,
     "[orient] apply updates",
-    "upsert=" + update.upsert_count.to_string() + " remove=" +
-      update.remove_count.to_string(),
+    "upsert=" +
+    update.upsert_count.to_string() +
+    " remove=" +
+    update.remove_count.to_string(),
     @progress.elapsed_ms(t),
   )
   let t = @progress.now_ms()
   let query = @cache.query(handle, config.task, config.limit)
   log_progress(config, "[orient] query", "", @progress.elapsed_ms(t))
   log_progress(
-    config, "[orient] done (" + label + ")", "",
+    config,
+    "[orient] done (" + label + ")",
+    "",
     @progress.elapsed_ms(total_start),
   )
   @report.orient_report_from_query(config, query, update.status)

@@ -1,5 +1,3 @@
-supported_targets = "native"
-
 import {
   "trkbt10/indexion/src/agent/orient/cache" @cache,
   "trkbt10/indexion/src/agent/orient/map" @map,
@@ -21,3 +19,5 @@ import {
   "moonbitlang/x/fs" @fs,
   "trkbt10/indexion/src/config" @config_paths,
 } for "wbtest"
+
+supported_targets = "native"

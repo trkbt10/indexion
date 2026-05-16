@@ -48,9 +48,7 @@ pub enum TokenMatcher {
 /// declare `TOKEN ... /\(/`). A global union would silently lose entries
 /// to name collisions; pinning the table to one spec keeps grep correct
 /// in mixed-language projects.
-pub fn build_alias_table(
-  spec : @kgf_types.KGFSpec?,
-) -> Map[String, String] {
+pub fn build_alias_table(spec : @kgf_types.KGFSpec?) -> Map[String, String] {
   let aliases : Map[String, String] = {}
   let spec_value = match spec {
     Some(s) => s
@@ -85,10 +83,7 @@ pub fn build_alias_table(
       None => None
     }
     match literal_opt {
-      Some(literal) =>
-        if !aliases.contains(literal) {
-          aliases[literal] = name
-        }
+      Some(literal) => if !aliases.contains(literal) { aliases[literal] = name }
       None => ()
     }
   }
@@ -113,9 +108,7 @@ fn resolve_alias(part : String, aliases : Map[String, String]) -> String {
 /// so that a pattern like `TypeIdent` (a MoonBit kind) is treated as a
 /// Kind matcher when grepping MoonBit but falls back to a Text matcher
 /// when grepping a language that has no such kind.
-pub fn build_kind_set(
-  spec : @kgf_types.KGFSpec?,
-) -> Map[String, Bool] {
+pub fn build_kind_set(spec : @kgf_types.KGFSpec?) -> Map[String, Bool] {
   let kinds : Map[String, Bool] = {}
   let spec_value = match spec {
     Some(s) => s
@@ -173,7 +166,7 @@ pub fn parse_pattern(pattern : String) -> Array[TokenMatcher] {
 pub fn parse_pattern_with_aliases(
   pattern : String,
   aliases : Map[String, String],
-  kinds~ : Map[String, Bool] = {},
+  kinds? : Map[String, Bool] = {},
 ) -> Array[TokenMatcher] {
   let matchers : Array[TokenMatcher] = []
   let parts = split_pattern(pattern)
@@ -373,7 +366,6 @@ fn build_token_lines(tokens : Array[@kgf_types.Tok]) -> Array[Int] {
   }
   token_lines
 }
-
 
 ///|
 /// Try to match the pattern starting at position `pos` in the significant token array.

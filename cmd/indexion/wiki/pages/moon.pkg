@@ -5,3 +5,5 @@ import {
   "trkbt10/indexion/cmd/indexion/wiki/pages/update" @wiki_update_page,
   "trkbt10/indexion/cmd/indexion/wiki/pages/ingest" @wiki_ingest_cli,
 }
+
+supported_targets = "native"

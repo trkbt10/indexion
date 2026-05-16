@@ -2365,7 +2365,8 @@ async fn snapshot_for_config_async(config : SpecAlignConfig) -> AlignSnapshot? {
               effective_config, registry,
             )
             let class = @signature.classify_against_cache(
-              fresh, sidecar.signatures,
+              fresh,
+              sidecar.signatures,
             )
             class.candidates.length() == 0 && class.deleted_paths.length() == 0
           }

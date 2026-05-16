@@ -7,3 +7,5 @@ import {
   "trkbt10/indexion/src/pipeline/comparison" @batch,
   "trkbt10/indexion/cmd/indexion/common" @common,
 }
+
+supported_targets = "native"

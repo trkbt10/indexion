@@ -74,7 +74,8 @@ pub fn save_signatures(
   index_dir : String,
   signatures : Array[@signature.FileSignature],
 ) -> Bool {
-  match @reconcile_store.ensure_cache_dir(index_dir, "reconcile cache directory") {
+  match
+    @reconcile_store.ensure_cache_dir(index_dir, "reconcile cache directory") {
     Err(_) => return false
     Ok(_) => ()
   }
@@ -96,7 +97,9 @@ pub fn save_signatures(
   }
   buf.write_string("\n}\n")
   let path = reconcile_signatures_path(index_dir)
-  @fs.write_string_to_file(path, buf.to_string()) catch { _ => return false }
+  @fs.write_string_to_file(path, buf.to_string()) catch {
+    _ => return false
+  }
   true
 }
 

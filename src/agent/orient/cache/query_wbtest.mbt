@@ -163,8 +163,6 @@ async test "orient cache query: evidence and preflight candidates are bounded" {
   assert_true(result.evidence_candidates.length() > 0)
   assert_true(result.evidence_candidates.length() <= 3)
   for evidence in result.evidence_candidates {
-    assert_true(
-      evidence.summary.length() <= query_evidence_preview_limit + 3,
-    )
+    assert_true(evidence.summary.length() <= query_evidence_preview_limit + 3)
   }
 }

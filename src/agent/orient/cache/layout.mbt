@@ -112,15 +112,10 @@ fn initialize_layout_for(
   @config_paths.ensure_dir_recursive(layout.vcdb_dir)
   @fs.write_string_to_file(
     layout.metadata_path,
-    metadata_for_provider(provider).to_json().stringify(indent=2) +
-    "\n",
+    metadata_for_provider(provider).to_json().stringify(indent=2) + "\n",
   ) catch {
     @fs.IOError(msg) =>
-      raise layout_storage_error_for(
-        "metadata",
-        layout.metadata_path,
-        msg,
-      )
+      raise layout_storage_error_for("metadata", layout.metadata_path, msg)
   }
   write_vocabulary_provider(layout, provider)
 }
@@ -138,9 +133,7 @@ fn layout_storage_error_for(
 
 ///|
 #warnings("-unused_value")
-fn read_metadata(
-  layout : Layout,
-) -> Metadata? {
+fn read_metadata(layout : Layout) -> Metadata? {
   match load_metadata(layout) {
     MetadataLoaded(metadata) => Some(metadata)
     _ => None
@@ -148,9 +141,7 @@ fn read_metadata(
 }
 
 ///|
-fn load_metadata(
-  layout : Layout,
-) -> MetadataRead {
+fn load_metadata(layout : Layout) -> MetadataRead {
   if !@fs.path_exists(layout.metadata_path) {
     return MetadataMissing
   }
@@ -221,9 +212,7 @@ fn validate_vocabulary_payload(
 
 ///|
 #warnings("-unused_value")
-fn InvalidReason::diagnostic(
-  self : InvalidReason,
-) -> String {
+fn InvalidReason::diagnostic(self : InvalidReason) -> String {
   match self {
     MissingMetadata => "orient vcdb cache metadata is missing"
     OldJsonLayout => "legacy orient-map.json cache layout is incompatible"

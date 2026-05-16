@@ -4,3 +4,5 @@ import {
   "trkbt10/indexion/src/story" @story,
   "trkbt10/indexion/src/story/reconcile" @story_reconcile,
 }
+
+supported_targets = "native"

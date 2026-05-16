@@ -67,7 +67,10 @@ pub async fn apply_incremental_updates_with_cache(
   for brief in decision.signature_refresh_briefs {
     match cached_by_path.get(brief.path) {
       Some(cached) =>
-        handle.refresh_signature_for(cached, brief.mtime_ns, brief.size_bytes,
+        handle.refresh_signature_for(
+          cached,
+          brief.mtime_ns,
+          brief.size_bytes,
           timestamp_ns~,
         )
       None => ()
@@ -104,17 +107,8 @@ pub async fn apply_incremental_updates_with_cache(
 }
 
 ///|
-pub fn current_status(
-  handle : Handle,
-) -> AgentOrientMapStatus raise CacheError {
-  status_from_records(
-    scan_all_cached_files(handle),
-    [],
-    [],
-    [],
-    false,
-    [],
-  )
+pub fn current_status(handle : Handle) -> AgentOrientMapStatus raise CacheError {
+  status_from_records(scan_all_cached_files(handle), [], [], [], false, [])
 }
 
 ///|

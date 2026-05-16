@@ -15,3 +15,5 @@ import {
   "trkbt10/indexion/src/plan/render" @plan_render,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
 }
+
+supported_targets = "native"
