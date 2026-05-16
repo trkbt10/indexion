@@ -26,13 +26,15 @@
   ],
   "stats": {
     "symbols": 9,
-    "edges": 13,
+    "edges": 15,
     "edgesByKind": {
       "declares": 7,
       "dependsOn": 1,
-      "packageName": 1,
-      "packageVersion": 1,
-      "module_depends_on": 3
+      "projectName": 1,
+      "projectLicense": 1,
+      "projectVersion": 1,
+      "module_depends_on": 3,
+      "projectDescription": 1
     },
     "unresolved_structural_edges": 0
   }

@@ -35,6 +35,15 @@ fn load_specs_recursive(registry : KGFRegistry, dir : String) -> Unit {
       return
     }
     let entries = @fs.read_dir(dir)
+    // Sort entries alphabetically before iterating so spec registration order
+    // is platform-independent. `@fs.read_dir` returns entries in filesystem
+    // order, which differs between macOS APFS and Linux ext4. When multiple
+    // specs claim the same `sources` extension (e.g. both `dsl/npm-package-json.kgf`
+    // and `project/package-json.kgf` claim `package.json`), the last general
+    // spec to register wins (see `register_spec`), so traversal order decides
+    // the winner. Sorting first makes the choice deterministic across CI and
+    // local dev environments.
+    entries.sort()
     for entry in entries {
       let path = dir + "/" + entry
       if entry.has_suffix(".kgf") {

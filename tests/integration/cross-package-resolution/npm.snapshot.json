@@ -38,15 +38,17 @@
   ],
   "stats": {
     "symbols": 17,
-    "edges": 20,
+    "edges": 25,
     "edgesByKind": {
       "declares": 6,
       "dependsOn": 5,
-      "mainEntry": 1,
-      "typesEntry": 1,
-      "packageName": 1,
-      "packageVersion": 1,
-      "module_depends_on": 5
+      "projectName": 1,
+      "projectKeyword": 3,
+      "projectLicense": 1,
+      "projectVersion": 1,
+      "module_depends_on": 5,
+      "projectRepository": 2,
+      "projectDescription": 1
     },
     "unresolved_structural_edges": 0
   }

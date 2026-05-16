@@ -14,8 +14,8 @@
     "edges": 8,
     "edgesByKind": {
       "declares": 6,
-      "packageName": 1,
-      "packageVersion": 1
+      "projectName": 1,
+      "projectVersion": 1
     },
     "unresolved_structural_edges": 0
   }

@@ -136,7 +136,7 @@ pub fn snapshot_of(graph : @graph.CodeGraph) -> String raise {
   }
   let stats : Map[String, Json] = {}
   stats.set("symbols", symbols.length().to_json())
-  stats.set("edges", unique_edge_keys.size().to_json())
+  stats.set("edges", unique_edge_keys.length().to_json())
   stats.set("edgesByKind", Json::object(by_kind_json))
   stats.set("unresolved_structural_edges", unresolved.to_json())
   let root : Json = {

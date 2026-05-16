@@ -74,16 +74,16 @@
   ],
   "stats": {
     "symbols": 15,
-    "edges": 42,
+    "edges": 43,
     "edgesByKind": {
       "declares": 8,
       "dependsOn": 10,
-      "mainEntry": 2,
-      "typesEntry": 2,
-      "packageName": 4,
-      "packageVersion": 4,
-      "workspacePattern": 1,
-      "module_depends_on": 11
+      "projectName": 4,
+      "projectLicense": 1,
+      "projectVersion": 4,
+      "module_depends_on": 11,
+      "projectRepository": 1,
+      "projectDescription": 4
     },
     "unresolved_structural_edges": 0
   }
