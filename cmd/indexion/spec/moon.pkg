@@ -3,6 +3,7 @@ import {
   "trkbt10/indexion/cmd/indexion/spec/align" @align,
   "trkbt10/indexion/cmd/indexion/spec/draft" @draft,
   "trkbt10/indexion/cmd/indexion/spec/verify" @verify,
+  "trkbt10/indexion/cmd/indexion/spec/vocabulary" @vocabulary,
 }
 
 supported_targets = "native"

@@ -27,14 +27,7 @@ pub fn to_lower_str(s : String) -> String {
 ///|
 /// Build identifier kind set from KGF spec's `identifier_kinds` feature.
 pub fn build_identifier_set(spec~ : @kgf_types.KGFSpec) -> Map[String, Bool] {
-  let set : Map[String, Bool] = {}
-  match spec.get_feature("identifier_kinds") {
-    Some(kinds) =>
-      for kind in kinds {
-        set[kind] = true
-      }
-    None => ()
-  }
+  let set = build_feature_set(spec, @kgf_types.FEATURE_IDENTIFIER_KINDS)
   if set.is_empty() {
     // Spec has no identifier_kinds feature — nothing to identify
     set["Ident"] = true
@@ -56,15 +49,23 @@ pub fn is_identifier_kind(kind : String, id_set~ : Map[String, Bool]) -> Bool {
 pub fn build_vocabulary_token_set(
   spec~ : @kgf_types.KGFSpec,
 ) -> Map[String, Bool] {
-  let set : Map[String, Bool] = {}
-  match spec.get_feature("vocabulary_token_kinds") {
-    Some(kinds) =>
-      for kind in kinds {
-        set[kind] = true
-      }
-    None => ()
+  build_feature_set(spec, @kgf_types.FEATURE_VOCABULARY_TOKEN_KINDS)
+}
+
+///|
+/// Build token kinds that should participate in coverage checks.
+///
+/// `coverage_token_kinds` is the primary source. When omitted, this falls back
+/// to the explicit `identifier_kinds` feature without adding the legacy `Ident`
+/// default used by name-oriented search.
+pub fn build_coverage_token_set(
+  spec~ : @kgf_types.KGFSpec,
+) -> Map[String, Bool] {
+  let set = build_feature_set(spec, @kgf_types.FEATURE_COVERAGE_TOKEN_KINDS)
+  if !set.is_empty() {
+    return set
   }
-  set
+  build_feature_set(spec, @kgf_types.FEATURE_IDENTIFIER_KINDS)
 }
 
 ///|
@@ -149,6 +150,22 @@ fn subtokenize_vocab_words(text : String) -> Array[String] {
     result.push(last)
   }
   result
+}
+
+///|
+fn build_feature_set(
+  spec : @kgf_types.KGFSpec,
+  feature_name : String,
+) -> Map[String, Bool] {
+  let set : Map[String, Bool] = {}
+  match spec.get_feature(feature_name) {
+    Some(kinds) =>
+      for kind in kinds {
+        set[kind] = true
+      }
+    None => ()
+  }
+  set
 }
 
 ///|

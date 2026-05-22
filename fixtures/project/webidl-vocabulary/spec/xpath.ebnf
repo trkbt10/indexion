@@ -1,0 +1,4 @@
+# Tiny XPath-like EBNF fixture for generic vocabulary checking.
+
+[1] AxisName ::= 'ancestor' | 'child'
+[2] NodeType ::= 'comment' | 'text'

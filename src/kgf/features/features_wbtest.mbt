@@ -1,6 +1,7 @@
 ///|
 using @test {assert_eq}
 
+///|
 fn test_registry() -> @kgf_registry.KGFRegistry {
   load_registry_or_empty(specs_dir="kgfs", target_dir=".")
 }
@@ -39,6 +40,19 @@ test "build_insignificant_token_set defaults to NL with no spec" {
   assert_true(set.contains("NL"))
   assert_false(set.contains("WS"))
   assert_false(set.contains("SKIP"))
+}
+
+///|
+test "build_coverage_token_set uses coverage feature before identifier fallback" {
+  let registry = test_registry()
+  let ebnf = registry.get_spec("ebnf").unwrap()
+  let ebnf_set = build_coverage_token_set(spec=ebnf)
+  assert_true(ebnf_set.contains("Ident"))
+  assert_true(ebnf_set.contains("Literal"))
+  let yaml = registry.get_spec("yaml").unwrap()
+  let yaml_set = build_coverage_token_set(spec=yaml)
+  assert_true(yaml_set.contains("BareWord"))
+  assert_false(yaml_set.contains("Ident"))
 }
 
 ///|

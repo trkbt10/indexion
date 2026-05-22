@@ -10,6 +10,8 @@ import {
 // Values
 pub fn apply_edits(String, Array[UnwrapEdit]) -> String
 
+pub fn build_coverage_token_set(spec~ : @types.KGFSpec) -> Map[String, Bool]
+
 pub fn build_identifier_set(spec~ : @types.KGFSpec) -> Map[String, Bool]
 
 pub fn build_line_func_map(String, String, @registry.KGFRegistry?) -> Map[Int, String]
@@ -106,4 +108,3 @@ pub fn UnwrapEdit::new(String, Int, Int, String, String, Int) -> Self
 // Type aliases
 
 // Traits
-

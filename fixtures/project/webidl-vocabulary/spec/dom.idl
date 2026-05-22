@@ -1,0 +1,21 @@
+[Exposed=*]
+interface Node {
+  readonly attribute unsigned short nodeType;
+  undefined appendChild(Node node);
+};
+
+interface mixin ParentNode {
+  [CEReactions, Unscopable] undefined append((Node or DOMString)... nodes);
+};
+
+callback interface EventListener {
+  undefined handleEvent(Event event);
+};
+
+partial interface Window {
+  [Replaceable] readonly attribute (Event or undefined) event;
+};
+
+dictionary EventInit {
+  boolean bubbles = false;
+};

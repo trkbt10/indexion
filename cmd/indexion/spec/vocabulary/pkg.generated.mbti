@@ -1,0 +1,79 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/spec/vocabulary"
+
+import {
+  "moonbitlang/core/argparse",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn command() -> @argparse.Command
+
+pub fn run_matches(@argparse.Matches) -> Unit
+
+pub fn run_to_string(VocabularyConfig) -> String?
+
+// Errors
+
+// Types and methods
+pub(all) struct VocabularyConfig {
+  source_paths : Array[String]
+  target_paths : Array[String]
+  specs_dir : String?
+  direction : String
+  format : String
+  output : String
+} derive(Eq, @debug.Debug)
+pub fn VocabularyConfig::default() -> Self
+
+pub(all) struct VocabularyFileSummary {
+  path : String
+  language : String
+  required_count : Int
+  allowed_count : Int
+  observed_count : Int
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct VocabularyIssueAssessment {
+  term : VocabularyTerm
+  classification : String
+  reason : String
+  evidence_terms : Array[VocabularyTerm]
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct VocabularyReport {
+  version : String
+  direction : String
+  source_paths : Array[String]
+  target_paths : Array[String]
+  source_file_count : Int
+  target_file_count : Int
+  source_required_count : Int
+  source_allowed_count : Int
+  target_observed_count : Int
+  source_files : Array[VocabularyFileSummary]
+  target_files : Array[VocabularyFileSummary]
+  source_required_terms : Array[VocabularyTerm]
+  source_allowed_terms : Array[VocabularyTerm]
+  target_terms : Array[VocabularyTerm]
+  missing_source_terms : Array[VocabularyTerm]
+  target_drift_terms : Array[VocabularyTerm]
+  missing_source_assessments : Array[VocabularyIssueAssessment]
+  target_drift_assessments : Array[VocabularyIssueAssessment]
+  report_precision_candidate_count : Int
+  output_noise_candidate_count : Int
+  unresolved_issue_count : Int
+  passed : Bool
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub(all) struct VocabularyTerm {
+  key : String
+  kind : String
+  value : String
+  origin : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+// Type aliases
+
+// Traits
