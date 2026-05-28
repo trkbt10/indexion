@@ -68,7 +68,14 @@ def repo_root() -> Path:
 
 def find_dry_run_steps(moon_home: str) -> tuple[list[str], list[str]]:
     """Extract the `moonc link-core` and final `cc … -o …/indexion.exe` argvs
-    from `moon build --dry-run`. Both have `$MOON_HOME` expanded."""
+    from `moon build --dry-run`. Both have `$MOON_HOME` expanded.
+
+    Must be called *before* any failed `moon build` invocation. n2's
+    build database remembers failed nodes, and `--dry-run` after a
+    failed run reflects the post-failure state rather than the
+    original full plan (we observed it returning a partial plan that
+    omitted the final-cc step on Windows after a CreateProcessW
+    failure)."""
     dr = subprocess.run(
         ["moon", "build", "--target", "native", "--release", "--dry-run"],
         capture_output=True,
@@ -88,6 +95,21 @@ def find_dry_run_steps(moon_home: str) -> tuple[list[str], list[str]]:
         ):
             final_cc_line = line
     if link_line is None or final_cc_line is None:
+        sys.stderr.write(
+            "[build-native-release] could not locate required steps in `moon build --dry-run` output.\n"
+        )
+        sys.stderr.write(f"[build-native-release]   link-core line found: {link_line is not None}\n")
+        sys.stderr.write(f"[build-native-release]   final-cc line found:  {final_cc_line is not None}\n")
+        sys.stderr.write(
+            "[build-native-release] --- first 30 lines of dry-run stdout ---\n"
+        )
+        for l in dr.stdout.splitlines()[:30]:
+            sys.stderr.write(l[:240] + ("…" if len(l) > 240 else "") + "\n")
+        sys.stderr.write(
+            "[build-native-release] --- last 5 lines of dry-run stdout ---\n"
+        )
+        for l in dr.stdout.splitlines()[-5:]:
+            sys.stderr.write(l[:240] + ("…" if len(l) > 240 else "") + "\n")
         raise RuntimeError(
             "could not locate `moonc link-core` and/or final cc step in `moon build --dry-run` output"
         )
@@ -98,10 +120,7 @@ def find_dry_run_steps(moon_home: str) -> tuple[list[str], list[str]]:
     return expand(link_line), expand(final_cc_line)
 
 
-def recover_link_and_final_cc() -> int:
-    moon_home = os.environ.get("MOON_HOME") or str(Path.home() / ".moon")
-    link_argv, final_cc_argv = find_dry_run_steps(moon_home)
-
+def recover_link_and_final_cc(link_argv: list[str], final_cc_argv: list[str]) -> int:
     # 1) moonc link-core via -rsp-file.
     # link_argv[0] is "moonc" (normalized by --dry-run); we re-resolve
     # via PATH so subprocess uses the actual .exe on Windows.
@@ -127,6 +146,16 @@ def recover_link_and_final_cc() -> int:
 def main() -> int:
     os.chdir(repo_root())
 
+    # Capture the build plan BEFORE attempting the build. Once moon fails
+    # at link-core, --dry-run reflects the post-failure n2 state instead
+    # of the full plan, and we may no longer see the final-cc step.
+    moon_home = os.environ.get("MOON_HOME") or str(Path.home() / ".moon")
+    print(
+        "[build-native-release] capturing full build plan via moon --dry-run",
+        flush=True,
+    )
+    link_argv, final_cc_argv = find_dry_run_steps(moon_home)
+
     print(
         "[build-native-release] moon build --target native --release",
         flush=True,
@@ -148,7 +177,7 @@ def main() -> int:
         "[build-native-release] CreateProcessW cmdline limit hit; recovering link-core + final cc",
         flush=True,
     )
-    return recover_link_and_final_cc()
+    return recover_link_and_final_cc(link_argv, final_cc_argv)
 
 
 if __name__ == "__main__":

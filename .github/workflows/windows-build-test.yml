@@ -1,0 +1,79 @@
+name: Windows Build Test
+
+# Dedicated Windows-only validation for `scripts/build-native-release.py`.
+# Triggers far faster than the full Release matrix workflow because it
+# runs only the windows-latest leg and skips frontend/wiki/artifact-upload.
+#
+# Auto-runs on changes to the build script or this workflow file, and
+# can be triggered manually via "Run workflow" in the GitHub UI.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/build-native-release.py'
+      - '.github/workflows/windows-build-test.yml'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      # Same C:\s short-path workaround as release.yml: project paths
+      # under D:\a\indexion\indexion would themselves push the moonc
+      # link-core cmdline over the 32k limit regardless of the rsp-file
+      # recovery. We test the same conditions release uses.
+      - name: Copy to short path
+        shell: pwsh
+        run: |
+          robocopy "${{ github.workspace }}" "C:\s" /E /NFL /NDL /NJH /NJS /NC /NS /NP
+          if ($LASTEXITCODE -gt 7) { exit $LASTEXITCODE } else { $global:LASTEXITCODE = 0 }
+
+      - name: Install MoonBit CLI
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+          echo "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Moon update
+        shell: pwsh
+        working-directory: C:\s
+        run: moon update
+
+      - name: Sync version from moon.mod.json
+        shell: pwsh
+        working-directory: C:\s
+        run: |
+          $version = (Get-Content moon.mod.json | ConvertFrom-Json).version
+          $file = "src/update/version.mbt"
+          (Get-Content $file) -replace 'pub let current_version : String = ".*"', "pub let current_version : String = `"$version`"" | Set-Content $file
+
+      - name: Build via scripts/build-native-release.py
+        shell: pwsh
+        working-directory: C:\s
+        run: python scripts\build-native-release.py
+
+      - name: Smoke test indexion.exe
+        shell: pwsh
+        working-directory: C:\s
+        run: |
+          $exe = "_build\native\release\build\cmd\indexion\indexion.exe"
+          if (-not (Test-Path $exe)) {
+            Write-Error "indexion.exe was not produced at $exe"
+            exit 1
+          }
+          $size = (Get-Item $exe).Length
+          Write-Host "indexion.exe size: $size bytes"
+          & $exe --version
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "indexion.exe --version failed (exit $LASTEXITCODE)"
+            exit 1
+          }
