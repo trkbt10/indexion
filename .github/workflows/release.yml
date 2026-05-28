@@ -158,7 +158,14 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         working-directory: C:\s
-        run: moon build --target native --release
+        # `moon build` invokes `moonc link-core` with one .core file path
+        # and one `-pkg-sources` mapping per package. The accumulated
+        # cmdline exceeds Windows' CreateProcessW 32k limit once the
+        # workspace grows past a certain package count. The driver script
+        # detects that failure mode and recovers by re-running link-core
+        # via `moonc -rsp-file`, which has no length limit. macOS and
+        # Linux fall through to plain `moon build` inside the same script.
+        run: python scripts\build-native-release.py
 
       - name: Download wiki artifact
         uses: actions/download-artifact@v4
