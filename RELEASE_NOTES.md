@@ -1,3 +1,51 @@
+# v0.16.0
+
+## Highlights
+
+- **Standard coverage report formats for measurement plans.** `plan` commands whose semantics is "for each scanned unit, pass or fail" can now emit `lcov.info` (genhtml, Codecov, …) or Cobertura `coverage.xml` (SonarQube, Azure DevOps, GitLab, Jenkins). Wired into `plan documentation`, `plan unwrap`, `plan refactor`, `plan solid`, `plan reconcile`, `spec verify`, `identity audit`, and `check`. Producers build a `ScanResult` via `@coverage.ScanBuilder` and route through `@common.render_coverage_format` — adding a new format later touches one dispatch helper plus a new `src/formats/<name>/` package.
+- **`spec vocabulary` — n:m vocabulary coverage/drift between spec and implementation.** New `spec vocabulary` subcommand compares one or more source documents (spec, terminology, grammar) against one or more target documents (implementation, conformance), using KGF for language detection and token classification. Reports required-term coverage in the target group and observed-term allowance against the source group; `--direction` chooses which check gates the exit status. Text / markdown / JSON output.
+
+## New Features
+
+### `@coverage` IR + `src/formats/` per-format renderers
+
+New package providing the data shapes for plan-style coverage reports, plus per-format renderers under `src/formats/`:
+
+- `CoverageReport` / `FileCoverage` / `LineHit` / `FunctionHit` / `BranchHit` / `CoverageTotals` — the format-neutral IR.
+- `ScanResult` / `ScanFile` / `ScanUnit` / `ScanBuilder` — the measurement-plan bridge. Plan commands describe each scanned unit as "passed / failed", and the projection to lcov / Cobertura (max-hits dedup per line, FunctionHit emission, …) lives in one place.
+- `src/formats/lcov/render_lcov` — `lcov.info` output.
+- `src/formats/cobertura/render_cobertura` — Cobertura `coverage.xml` output.
+- `cmd/indexion/common/coverage_format.mbt` — CLI-layer dispatch from `--format=…` to the renderer, so the renderer packages stay free of CLI imports.
+
+### `@xml` — XML producer SoT
+
+New package consumed by `@coverage.render_cobertura` (and any future XML producer). Builders construct an `XmlElement` tree; `render_document` / `render_element` is the only place that handles character escaping, attribute quoting, self-closing tags, and indentation — so a producer cannot forget to escape `&` or close a tag. Replaces hand-concatenated XML strings.
+
+### `spec vocabulary <source…> <target…>`
+
+A new subcommand under `spec`:
+
+```
+indexion spec vocabulary \
+  --source spec/dom.idl --source spec/terms.md \
+  --target src/conformance/conformance.mbt \
+  --direction both --format md
+```
+
+- KGF supplies language detection and token classes; the command only decides which vocabulary sets to compare.
+- `--direction` picks `both`, `source-to-target` (coverage), or `target-to-source` (drift).
+- `--format` selects `text`, `md`, or `json`.
+- `--specs-dir` lets callers point at a non-default KGF specs directory.
+- Exits non-zero when the gated direction fails, suitable for CI gates next to `spec verify` and `plan reconcile`.
+
+Test fixtures under `fixtures/project/webidl-vocabulary/` cover WebIDL ↔ MoonBit and EBNF ↔ MoonBit drift scenarios.
+
+## Improvements
+
+- **`@kgf_features` exposes vocabulary-token extraction.** `src/kgf/features/features.mbt` gained the surface used by `spec vocabulary` to classify tokens via the KGF registry; existing reconcile / spec-verify paths continue to use the same SoT.
+- **kgfs submodule** advanced to the latest grammar/spec snapshot to back the new vocabulary command's tokenization across the supported language set.
+- **`.gitignore`** tightened so the new `src/coverage/` package is tracked (the previous `coverage/` rule was matching anywhere in the tree).
+
 # v0.15.1
 
 ## Highlights
