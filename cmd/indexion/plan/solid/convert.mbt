@@ -309,6 +309,58 @@ fn build_unmatched_section(
 // format_percent: use @common (SoT)
 
 ///|
+/// Convert solid analysis results to the `@coverage` IR.
+///
+/// Semantics — what "covered" means for `plan solid`:
+///
+/// - Each `ExtractionFile` (file matched by a rule) → finding on both
+///   source files. Cross-directory duplication is the thing the developer
+///   should address.
+/// - Each `UnmatchedFile` → finding on both source files. The matches
+///   exist but no extraction rule covers them yet.
+/// - Each `CrossFunctionMatch` → finding on both source files. Function
+///   line is not directly carried on the match, so we anchor at line 1
+///   as a file-level marker.
+///
+/// Files with no findings do not appear. This follows the static-analysis
+/// convention used by `plan refactor`.
+pub fn to_coverage_report(
+  source_root : String,
+  plan : SolidPlanJSON,
+) -> @coverage.CoverageReport {
+  let b = @coverage.ScanBuilder::new()
+  let from_dirs = plan.config.from_dirs
+  // Extracted file matches: one finding on each side of the pair.
+  for group in plan.extractions {
+    for file in group.files {
+      b.record(resolve_display_name(file.source1, from_dirs), 1)
+      b.record(resolve_display_name(file.source2, from_dirs), 1)
+    }
+  }
+  // Unmatched (similar but no rule covers them).
+  for file in plan.unmatched {
+    b.record(resolve_display_name(file.source1, from_dirs), 1)
+    b.record(resolve_display_name(file.source2, from_dirs), 1)
+  }
+  // Cross-directory function duplicates.
+  for m in plan.function_matches {
+    b.record(
+      resolve_display_name(m.file1, from_dirs),
+      1,
+      name=m.func_name1,
+      is_function=true,
+    )
+    b.record(
+      resolve_display_name(m.file2, from_dirs),
+      1,
+      name=m.func_name2,
+      is_function=true,
+    )
+  }
+  b.to_coverage_report("indexion-plan-solid", source_root)
+}
+
+///|
 fn sanitize_id(s : String) -> String {
   let chars = s.to_array()
   let result : Array[Char] = []

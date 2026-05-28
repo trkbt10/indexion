@@ -262,6 +262,13 @@ fn render_vocabulary_divergences_issue(
 
 ///|
 fn render_output(report : ReconcileReport, format : String) -> String {
+  if @common.is_coverage_format(format) {
+    let coverage_report = to_coverage_report(report.config.target_dir, report)
+    match @common.render_coverage_format(format, coverage_report) {
+      Some(s) => return s
+      None => ()
+    }
+  }
   match format {
     "json" => report.to_json().stringify(indent=2)
     "github-issue" => render_github_issue(report)

@@ -117,9 +117,11 @@ pub fn command() -> @argparse.Command {
       @argparse.OptionArg("include", action=Append, about=@help.include_pattern),
       @argparse.OptionArg("exclude", action=Append, about=@help.exclude_pattern),
       @argparse.OptionArg("output", short='o', about=@help.output),
-      @argparse.OptionArg("format", about="Output format: md, json, text", default_values=[
-        "md",
-      ]),
+      @argparse.OptionArg(
+        "format",
+        about="Output format: md, json, text, lcov, cobertura",
+        default_values=["md"],
+      ),
       @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
@@ -233,6 +235,12 @@ pub fn run_to_string(config : UnwrapConfig) -> String? {
   let (files, wrappers, registry) = match collect_wrappers(config) {
     Some(r) => r
     None => return None
+  }
+  if @common.is_coverage_format(config.format) {
+    let report = to_coverage_report(
+      config.target_dir, files, wrappers, registry,
+    )
+    return @common.render_coverage_format(config.format, report)
   }
   let plan = build_report_plan(config, files, wrappers, registry)
   Some(

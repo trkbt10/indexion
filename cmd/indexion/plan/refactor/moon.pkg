@@ -14,6 +14,7 @@ import {
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/kgf/toolkit" @kgf_toolkit,
   "trkbt10/indexion/src/pipeline/comparison" @batch,
+  "trkbt10/indexion/src/coverage" @coverage,
   "moonbitlang/core/bench",
 }
 

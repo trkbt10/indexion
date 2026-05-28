@@ -97,9 +97,11 @@ pub fn command() -> @argparse.Command {
     options=[
       @argparse.OptionArg("include", action=Append, about=@help.include_pattern),
       @argparse.OptionArg("exclude", action=Append, about=@help.exclude_pattern),
-      @argparse.OptionArg("format", about="Output format: human, json", default_values=[
-        "human",
-      ]),
+      @argparse.OptionArg(
+        "format",
+        about="Output format: human, json, lcov, cobertura",
+        default_values=["human"],
+      ),
       @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
@@ -166,7 +168,18 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     }
   }
   let exit_code = if has_errors { 1 } else { 0 }
-  if config.format == "json" {
+  if @common.is_coverage_format(config.format) {
+    let source_root = if config.paths.length() > 0 { config.paths[0] } else { "." }
+    let report = diagnostics_to_coverage_report(
+      source_root,
+      diagnostics,
+      include_warnings=!config.quiet,
+    )
+    match @common.render_coverage_format(config.format, report) {
+      Some(s) => println(s)
+      None => ()
+    }
+  } else if config.format == "json" {
     println(@kgf_check.diagnostics_to_json(diagnostics))
   } else {
     for diagnostic in diagnostics {
@@ -179,4 +192,31 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   if exit_code != 0 {
     exit_with_code(exit_code)
   }
+}
+
+///|
+/// Convert check diagnostics to the `@coverage` IR.
+///
+/// Semantics — what "covered" means for `indexion check`:
+///
+/// - Each `CheckDiagnostic` → finding at `(file, line)` with the
+///   diagnostic's source rule attached as the symbol name. Severity
+///   filtering follows the same rule as the human-readable renderer:
+///   warnings are dropped when `include_warnings` is false (i.e. `-q`).
+///
+/// Files with no diagnostics do not appear (static-analysis convention).
+fn diagnostics_to_coverage_report(
+  source_root : String,
+  diagnostics : Array[@kgf_check.CheckDiagnostic],
+  include_warnings~ : Bool,
+) -> @coverage.CoverageReport {
+  let b = @coverage.ScanBuilder::new()
+  for d in diagnostics {
+    if !include_warnings && d.get_severity() == "warning" {
+      continue
+    }
+    let line = if d.get_line() > 0 { d.get_line() } else { 1 }
+    b.record(d.get_file(), line, name=d.get_source())
+  }
+  b.to_coverage_report("indexion-check", source_root)
 }

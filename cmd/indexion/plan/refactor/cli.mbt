@@ -194,7 +194,7 @@ pub fn command() -> @argparse.Command {
       @argparse.OptionArg("output", short='o', about=@help.output),
       @argparse.OptionArg(
         "format",
-        about="Output format: md, json, text, github-issue",
+        about="Output format: md, json, text, github-issue, lcov, cobertura",
         default_values=["md"],
       ),
       @argparse.OptionArg("style", about="Output style: raw, structured", default_values=[
@@ -499,6 +499,16 @@ fn extract_project_name(path : String) -> String {
 ///|
 /// Render a refactor plan to the configured output format.
 fn render_plan(config : RefactorPlanConfig, plan : RefactorPlanJSON) -> String {
+  if @common.is_coverage_format(config.format) {
+    let scanned : Array[String] = []
+    for cluster in plan.clusters {
+      for file in cluster.files {
+        scanned.push(file)
+      }
+    }
+    let report = to_coverage_report(config.target_dir, plan, scanned)
+    return @common.render_coverage_format(config.format, report).unwrap()
+  }
   let name = if config.project_name.length() > 0 {
     config.project_name
   } else {

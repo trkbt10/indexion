@@ -42,9 +42,11 @@ fn audit_command() -> @argparse.Command {
       @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
-      @argparse.OptionArg::new("format", about="Output format: text | json", default_values=[
-        "text",
-      ]),
+      @argparse.OptionArg::new(
+        "format",
+        about="Output format: text, json, lcov, cobertura",
+        default_values=["text"],
+      ),
       @argparse.OptionArg::new(
         "output",
         about="Output file path (- or empty = stdout)",
@@ -74,15 +76,59 @@ fn run_audit(matches : @argparse.Matches) -> Unit {
   let config = audit_config_from_matches(matches)
   let report = @identity_core.audit_code_identity(config)
   let format = @common.arg_str(matches, "format", "text")
-  let rendered = match format {
-    "json" => report.to_json().stringify(indent=2) + "\n"
-    _ => render_audit_text(report)
+  let rendered = if @common.is_coverage_format(format) {
+    let source_root = if config.paths.length() > 0 {
+      config.paths[0]
+    } else {
+      "."
+    }
+    let coverage_report = audit_to_coverage_report(source_root, report)
+    @common.render_coverage_format(format, coverage_report).unwrap()
+  } else {
+    match format {
+      "json" => report.to_json().stringify(indent=2) + "\n"
+      _ => render_audit_text(report)
+    }
   }
   @common.write_output(
     @common.arg_str(matches, "output", ""),
     rendered,
     label="Identity audit report",
   )
+}
+
+///|
+/// Convert identity-audit results to the `@coverage` IR.
+///
+/// Semantics — what "covered" means for `identity audit`:
+///
+/// - Each `IdentityAuditCandidate` → finding anchored at the candidate's
+///   `path`. Audit candidates represent names whose content drift exceeds
+///   the configured threshold; they fail the identity check.
+/// - The candidate's `kind` (file/folder/symbol) drives whether a
+///   `FunctionHit` is emitted: symbol-kind candidates carry a meaningful
+///   name and emit per-symbol records; file/folder candidates emit
+///   line-only records.
+///
+/// Line numbers are not available on audit candidates, so all findings
+/// anchor at line 1 (the static-analysis "file-level finding" marker).
+///
+/// Files with no findings do not appear — the static-analysis convention.
+fn audit_to_coverage_report(
+  source_root : String,
+  report : @identity_core.IdentityAuditReport,
+) -> @coverage.CoverageReport {
+  let b = @coverage.ScanBuilder::new()
+  for candidate in report.candidates {
+    let is_symbol_kind = candidate.kind == "symbol"
+    b.record(
+      candidate.path,
+      1,
+      name=candidate.name,
+      is_function=is_symbol_kind,
+    )
+  }
+  b.to_coverage_report("indexion-identity-audit", source_root)
 }
 
 ///|

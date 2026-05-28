@@ -8,6 +8,9 @@ import {
   "trkbt10/indexion/src/text/ops" @text_ops,
   "trkbt10/indexion/src/vfs" @vfs,
   "trkbt10/indexion/src/kgf/registry" @registry,
+  "trkbt10/indexion/src/coverage" @coverage,
+  "trkbt10/indexion/src/formats/lcov" @lcov,
+  "trkbt10/indexion/src/formats/cobertura" @cobertura,
 }
 
 import {

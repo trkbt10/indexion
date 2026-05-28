@@ -1,11 +1,61 @@
 ///|
 /// Render the verify report in the requested format.
 fn render_output(report : VerifyReport, format : String) -> String {
+  if @common.is_coverage_format(format) {
+    let coverage_report = verify_to_coverage_report(
+      report.config.target_dir, report,
+    )
+    match @common.render_coverage_format(format, coverage_report) {
+      Some(s) => return s
+      None => ()
+    }
+  }
   match format {
     "json" => report.to_json().stringify(indent=2)
     "github-issue" => render_github_issue(report)
     _ => render_markdown(report)
   }
+}
+
+///|
+/// Convert spec-verify results to the `@coverage` IR.
+///
+/// Semantics — what "covered" means for `spec verify`:
+///
+/// - Each `VerifyItem` is one ScanUnit anchored at `spec_symbol.source_path`
+///   with the spec's `source_line`.
+/// - `status == "matched"` → the spec symbol is found in the
+///   implementation → `passed = true` (hits=1).
+/// - Any other status (`missing`, `dead`, `drift`) → `passed = false`.
+///
+/// Unlike the static-analysis-style converters used elsewhere, spec verify
+/// has real per-symbol line numbers and a clear pass/fail status on each
+/// item, so the coverage rate it produces is a true rate:
+/// `matched / spec_symbols`.
+fn verify_to_coverage_report(
+  source_root : String,
+  report : VerifyReport,
+) -> @coverage.CoverageReport {
+  let b = @coverage.ScanBuilder::new()
+  for item in report.items {
+    let line = if item.spec_symbol.source_line > 0 {
+      item.spec_symbol.source_line
+    } else {
+      1
+    }
+    let passed = item.status == "matched"
+    let is_ident_kind = item.spec_symbol.kind == "ident"
+    b.add_unit(
+      item.spec_symbol.source_path,
+      @coverage.ScanUnit::new(
+        line,
+        passed,
+        name=item.spec_symbol.identifier,
+        is_function=is_ident_kind && item.spec_symbol.identifier.length() > 0,
+      ),
+    )
+  }
+  b.to_coverage_report("indexion-spec-verify", source_root)
 }
 
 ///|

@@ -1,0 +1,6 @@
+import {
+  "trkbt10/indexion/src/coverage" @coverage,
+  "trkbt10/indexion/src/xml" @xml,
+}
+
+supported_targets = "native"

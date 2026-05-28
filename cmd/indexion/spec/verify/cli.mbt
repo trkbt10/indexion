@@ -29,7 +29,7 @@ pub fn command() -> @argparse.Command {
       ),
       @argparse.OptionArg(
         "format",
-        about="Output format: json, md, github-issue",
+        about="Output format: json, md, github-issue, lcov, cobertura",
         default_values=["json"],
       ),
       @argparse.OptionArg(

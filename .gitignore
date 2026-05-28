@@ -16,7 +16,8 @@ dist/
 out/
 *.vsix
 *.tgz
-coverage/
+/coverage/
+packages/*/coverage/
 .vscode-test/
 packages/graph-canvas/scripts/screenshots
 

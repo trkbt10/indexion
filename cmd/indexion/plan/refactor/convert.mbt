@@ -194,6 +194,56 @@ fn build_refactor_actions(plan : RefactorPlanJSON) -> @plan_types.PlanSection {
 }
 
 ///|
+/// Convert refactor analysis results to the `@coverage` IR.
+///
+/// Semantics — what "covered" means for `plan refactor`:
+///
+/// - Each scanned file is one ScanFile.
+/// - Every duplicate code block, function-duplicate pair, and
+///   magic-string occurrence becomes one ScanUnit with `passed = false`
+///   on each affected file:line.
+/// - Files with no findings stay as empty ScanFiles → 100%-covered
+///   placeholders (the cobertura/lcov shells still appear so the file is
+///   visible in coverage UIs).
+///
+/// This is the same convention static-analysis tools (ESLint, gosec, …)
+/// use for their lcov/cobertura output: findings = uncovered.
+pub fn to_coverage_report(
+  source_root : String,
+  plan : RefactorPlanJSON,
+  scanned_files : Array[String],
+) -> @coverage.CoverageReport {
+  let b = @coverage.ScanBuilder::new()
+  // Pre-create empty ScanFiles for clean files so cobertura groups them
+  // by package even when they have zero findings.
+  for path in scanned_files {
+    ignore(b.ensure_file(path))
+  }
+  // Duplicate code blocks: one finding per side, anchored at start line.
+  for cluster in plan.clusters {
+    for dup in cluster.duplicates {
+      let name = dup.func_name.unwrap_or("")
+      let is_fn = name.length() > 0
+      b.record(dup.file1, dup.start_line1, name~, is_function=is_fn)
+      b.record(dup.file2, dup.start_line2, name~, is_function=is_fn)
+    }
+  }
+  // Function-level duplicates: line is not directly carried on the pair,
+  // so we anchor at line 1 as a "file-level" marker.
+  for fd in plan.function_duplicates {
+    b.record(fd.file1, 1, name=fd.func1, is_function=true)
+    b.record(fd.file2, 1, name=fd.func2, is_function=true)
+  }
+  // Magic-string occurrences: each (file, line) is a separate finding.
+  for group in plan.magic_strings {
+    for occ in group.occurrences {
+      b.record(occ.file, occ.line)
+    }
+  }
+  b.to_coverage_report("indexion-plan-refactor", source_root)
+}
+
+///|
 fn format_similarity(sim : Double) -> String {
   let percent = (sim * 100.0).to_int()
   percent.to_string() + "%"

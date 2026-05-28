@@ -15,7 +15,7 @@
 /// |--------|-------------|---------|
 /// | `--output=FILE`, `-o=` | Output file path | stdout |
 /// | `--style=STYLE` | Output style: coverage, full | full |
-/// | `--format=FORMAT` | Output format: md, json, github-issue | md |
+/// | `--format=FORMAT` | Output format: md, json, github-issue, lcov, cobertura | md |
 /// | `--template=FILE` | GitHub Issue Form template (.yml) | - |
 /// | `--name=NAME` | Project name (auto-detect from moon.mod.json) | - |
 /// | `--specs-dir=DIR` | KGF specs directory | kgfs |
@@ -95,7 +95,7 @@ pub fn command() -> @argparse.Command {
       ]),
       @argparse.OptionArg(
         "format",
-        about="Output format: md, json, github-issue",
+        about="Output format: md, json, github-issue, lcov, cobertura",
         default_values=["md"],
       ),
       @argparse.OptionArg("template", about="GitHub Issue Form template (.yml)"),
@@ -150,6 +150,10 @@ fn render_output(
   project_info : ProjectInfo,
   project_name : String,
 ) -> String {
+  if @common.is_coverage_format(config.format) {
+    let report = to_coverage_report(analysis, config.target_dir)
+    return @common.render_coverage_format(config.format, report).unwrap()
+  }
   match config.format {
     "json" => {
       // Convert to IR and output as JSON

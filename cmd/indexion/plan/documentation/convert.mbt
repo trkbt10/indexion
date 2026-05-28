@@ -1,5 +1,35 @@
 ///|
-/// Convert DocAnalysis to PlanDocument IR.
+/// Convert DocAnalysis to PlanDocument IR and to CoverageReport IR.
+
+///|
+/// Convert documentation analysis to a CoverageReport so it can be
+/// emitted in standard coverage formats (lcov.info, coverage.xml).
+///
+/// Each public declaration is one scanned unit — the unit "passes" iff it
+/// carries a doc comment. All line-dedup and FunctionHit emission rules
+/// live in `@coverage.ScanResult::to_coverage_report` so this function is
+/// pure projection.
+pub fn to_coverage_report(
+  analysis : DocAnalysis,
+  source_root : String,
+) -> @coverage.CoverageReport {
+  let b = @coverage.ScanBuilder::new()
+  for pkg in analysis.packages {
+    for item in pkg.pub_items {
+      b.add_unit(
+        item.file,
+        @coverage.ScanUnit::new(
+          item.line,
+          item.has_doc,
+          name=item.name,
+          is_function=item.kind_category == "function",
+        ),
+        pkg=pkg.path,
+      )
+    }
+  }
+  b.to_coverage_report("indexion-plan-documentation", source_root)
+}
 
 ///|
 /// Convert documentation analysis to PlanDocument.

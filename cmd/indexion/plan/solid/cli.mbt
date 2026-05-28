@@ -224,7 +224,7 @@ pub fn command() -> @argparse.Command {
       @argparse.OptionArg("output", short='o', about=@help.output),
       @argparse.OptionArg(
         "format",
-        about="Output format: md, json, github-issue",
+        about="Output format: md, json, github-issue, lcov, cobertura",
         default_values=["md"],
       ),
       @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
@@ -255,6 +255,17 @@ pub fn run_to_string(config : SolidConfig) -> String? {
   let plan_json = build_plan_json(
     categorized, config, rules, func_matches, extraction_tasks,
   )
+  if @common.is_coverage_format(config.format) {
+    // Use the first --from directory as source_root so cobertura's
+    // <source> reflects where extraction starts.
+    let source_root = if config.from_dirs.length() > 0 {
+      config.from_dirs[0]
+    } else {
+      ""
+    }
+    let report = to_coverage_report(source_root, plan_json)
+    return @common.render_coverage_format(config.format, report)
+  }
   let doc = solid_to_plan_document(plan_json)
   let output = match config.format {
     "github-issue" => {
