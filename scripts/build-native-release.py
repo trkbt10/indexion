@@ -90,9 +90,15 @@ def find_dry_run_steps(moon_home: str) -> tuple[list[str], list[str]]:
         elif (
             final_cc_line is None
             and "indexion.exe" in line
-            and " -o " in line
             and not line.startswith("moonc")
         ):
+            # The final cc/cl step is the only non-moonc line that mentions
+            # indexion.exe (it is the executable output). Accept any
+            # compiler driver flag for the output:
+            #   - Unix `cc -o … indexion.exe`
+            #   - MSVC `cl.exe /Fe./…/indexion.exe`
+            # So a substring check on `indexion.exe` is sufficient and
+            # platform-independent.
             final_cc_line = line
     if link_line is None or final_cc_line is None:
         sys.stderr.write(
@@ -135,9 +141,10 @@ def recover_link_and_final_cc(link_argv: list[str], final_cc_argv: list[str]) ->
     if rc.returncode != 0:
         return rc.returncode
 
-    # 2) Final cc step: compile indexion.c + link stubs/runtime → indexion.exe.
+    # 2) Final cc/cl step: compile indexion.c + link stubs/runtime → indexion.exe.
+    cc_name = Path(final_cc_argv[0]).name
     print(
-        f"[build-native-release] {final_cc_argv[0]} -o … indexion.exe",
+        f"[build-native-release] {cc_name} … indexion.exe ({len(final_cc_argv)} tokens)",
         flush=True,
     )
     return subprocess.run(final_cc_argv).returncode
