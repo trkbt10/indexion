@@ -127,3 +127,50 @@ test "planner: empty groups produce no pages" {
   assert_eq(plan.proposals.length(), 0)
   assert_eq(plan.source_doc_count, 0)
 }
+
+///|
+fn temp_story_wiki_dir(label : String) -> String {
+  let dir = "/tmp/indexion-story-wiki/" + label + "-" + @env.now().to_string()
+  @config_paths.ensure_dir_recursive(dir)
+  dir
+}
+
+///|
+async test "builder: initial build creates wiki search index artifacts" {
+  let _unit = @async.with_task_group(_group => ())
+  let wiki_dir = temp_story_wiki_dir("initial-index")
+  let groups = @story.StoryGroups::new(
+    [
+      make_doc(
+        "spec/cast.md",
+        (
+          #|## Alice
+          #|
+          #|Alice is a protagonist connected to the archive garden.
+        ),
+      ),
+    ],
+    [],
+  )
+  let plan = plan_story_wiki(groups)
+  let result = match build_story_wiki(plan, wiki_dir, "test") {
+    Some(r) => r
+    None => panic()
+  }
+  assert_eq(result.written.length(), 1)
+  assert_true(@fs.path_exists(wiki_dir + "/" + @wiki_search.VECTORS_FILE))
+  assert_true(@fs.path_exists(wiki_dir + "/" + @wiki_search.SECTIONS_FILE))
+  assert_true(@fs.path_exists(wiki_dir + "/" + @wiki_search.VOCABULARY_FILE))
+  let idx = match @wiki_search.WikiSearchIndex::load(wiki_dir) {
+    Some(i) => i
+    None => panic()
+  }
+  assert_true(idx.sections.length() > 0)
+  let mut saw_content = false
+  for entry in idx.sections {
+    if entry.1.content.contains("archive garden") {
+      saw_content = true
+    }
+  }
+  assert_true(saw_content)
+}

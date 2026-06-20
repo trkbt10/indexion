@@ -15,6 +15,7 @@ import type { WikiNav } from "@indexion/api-client";
 export type WikiToWebview =
   | { readonly type: "navLoaded"; readonly nav: WikiNav }
   | { readonly type: "searchResults"; readonly results: ReadonlyArray<WikiSearchHit> }
+  | { readonly type: "searchUnavailable"; readonly message: string }
   | { readonly type: "loading"; readonly target: "nav" | "search" }
   | { readonly type: "error"; readonly message: string; readonly target: "nav" | "search" }
   | { readonly type: "serverStatus"; readonly ready: boolean };

@@ -24,6 +24,7 @@ export type Dict = {
   readonly search_wiki_placeholder: string;
   readonly search_code_placeholder: string;
   readonly search_no_results: string;
+  readonly search_wiki_unavailable: string;
   readonly search_group_wiki: string;
   readonly search_group_symbols: string;
   readonly search_group_purpose: string;

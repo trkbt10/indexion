@@ -168,6 +168,28 @@ describe("createWikiViewProvider", () => {
     }
   });
 
+  it("reports missing wiki search index without posting an error", async () => {
+    const client = mockClient({
+      nav: { pages: [] },
+      searchError: "Wiki search index not available",
+    });
+    const provider = createWikiViewProvider(extensionUri, () => client);
+    const { view, captured, sendFromWebview } = makeView();
+
+    provider.resolveWebviewView(view as unknown as import("vscode").WebviewView, {} as never, {} as never);
+    sendFromWebview({ type: "ready" });
+    await settle();
+
+    captured.length = 0;
+    sendFromWebview({ type: "search", query: "hello" });
+    await settle();
+
+    const unavailable = captured.find((m) => m.type === "searchUnavailable");
+    expect(unavailable).toBeDefined();
+    const err = captured.find((m) => m.type === "error");
+    expect(err).toBeUndefined();
+  });
+
   it("emits error when client is missing on search", async () => {
     const provider = createWikiViewProvider(extensionUri, () => undefined);
     const { view, captured, sendFromWebview } = makeView();

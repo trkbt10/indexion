@@ -23,6 +23,7 @@ import {
   type WikiNav,
 } from "@indexion/api-client";
 import { useDict } from "../../i18n/index.ts";
+import { cn } from "../../lib/utils.ts";
 
 type Props = {
   readonly open: boolean;
@@ -53,12 +54,20 @@ const detectScope = (pathname: string): Scope =>
 type SearchState = {
   readonly wikiResults: ReadonlyArray<WikiSearchHit>;
   readonly semanticResults: ReadonlyArray<DigestMatch>;
+  readonly notice: string | null;
+  readonly error: string | null;
 };
 
-const EMPTY_SEARCH: SearchState = { wikiResults: [], semanticResults: [] };
+const EMPTY_SEARCH: SearchState = {
+  wikiResults: [],
+  semanticResults: [],
+  notice: null,
+  error: null,
+};
 let searchState = EMPTY_SEARCH;
 const searchListeners = new Set<() => void>();
 let searchVersion = 0;
+const WIKI_SEARCH_INDEX_UNAVAILABLE = "wiki search index not available";
 
 function searchSubscribe(cb: () => void): () => void {
   searchListeners.add(cb);
@@ -84,6 +93,12 @@ function resetSearch(): void {
     cb();
   }
 }
+
+const isWikiSearchIndexUnavailable = (message: string): boolean =>
+  message.toLowerCase().includes(WIKI_SEARCH_INDEX_UNAVAILABLE);
+
+const errorMessage = (err: unknown): string =>
+  err instanceof Error ? err.message : "Search failed.";
 
 // ── Component ────────────────────────────────────────────
 
@@ -130,7 +145,7 @@ export const CommandPalette = ({
     searchGetSnapshot,
     searchGetSnapshot,
   );
-  const { wikiResults, semanticResults } = useMemo(() => {
+  const { wikiResults, semanticResults, notice, error } = useMemo(() => {
     void version;
     return searchState;
   }, [version]);
@@ -141,6 +156,7 @@ export const CommandPalette = ({
       resetSearch();
       return;
     }
+    updateSearch({ notice: null, error: null });
 
     // Static mode: client-side search only
     if (isStaticMode) {
@@ -167,7 +183,11 @@ export const CommandPalette = ({
           }
           return results;
         };
-        updateSearch({ wikiResults: flattenNav(wikiNav.pages).slice(0, 10) });
+        updateSearch({
+          wikiResults: flattenNav(wikiNav.pages).slice(0, 10),
+          notice: null,
+          error: null,
+        });
       }
       if (scope === "explorer" && digestIndex) {
         const matches = digestIndex
@@ -183,7 +203,7 @@ export const CommandPalette = ({
             score: 1,
             summary: fn.doc ?? fn.summary ?? "",
           }));
-        updateSearch({ semanticResults: matches });
+        updateSearch({ semanticResults: matches, notice: null, error: null });
       }
       return;
     }
@@ -194,34 +214,60 @@ export const CommandPalette = ({
         return;
       }
 
-      if (scope === "wiki") {
-        const wiki = await searchWiki(client, {
-          query: query.trim(),
-          topK: 10,
-        });
-        if (debounceRef.current !== id) {
-          return;
-        }
-        if (wiki.ok) {
-          updateSearch({
-            wikiResults: wiki.data as ReadonlyArray<WikiSearchHit>,
+      try {
+        if (scope === "wiki") {
+          const wiki = await searchWiki(client, {
+            query: query.trim(),
+            topK: 10,
           });
+          if (debounceRef.current !== id) {
+            return;
+          }
+          if (wiki.ok) {
+            updateSearch({
+              wikiResults: wiki.data as ReadonlyArray<WikiSearchHit>,
+              notice: null,
+              error: null,
+            });
+          } else if (isWikiSearchIndexUnavailable(wiki.error)) {
+            updateSearch({
+              wikiResults: [],
+              notice: d.search_wiki_unavailable,
+              error: null,
+            });
+          } else {
+            updateSearch({ wikiResults: [], notice: null, error: wiki.error });
+          }
+        } else {
+          const semantic = await queryDigest(client, {
+            purpose: query.trim(),
+            topK: 10,
+          });
+          if (debounceRef.current !== id) {
+            return;
+          }
+          if (semantic.ok) {
+            updateSearch({
+              semanticResults: semantic.data,
+              notice: null,
+              error: null,
+            });
+          } else {
+            updateSearch({
+              semanticResults: [],
+              notice: null,
+              error: semantic.error,
+            });
+          }
         }
-      } else {
-        const semantic = await queryDigest(client, {
-          purpose: query.trim(),
-          topK: 10,
-        });
-        if (debounceRef.current !== id) {
-          return;
-        }
-        if (semantic.ok) {
-          updateSearch({ semanticResults: semantic.data });
+      } catch (err) {
+        if (debounceRef.current === id) {
+          updateSearch({ notice: null, error: errorMessage(err) });
         }
       }
     }, DEBOUNCE_MS);
     return () => clearTimeout(timeout);
-  }, [query, scope, wikiNav, digestIndex]);
+  }, [query, scope, wikiNav, digestIndex, d.search_wiki_unavailable]);
 
   // Reset search store when palette closes
   useEffect(() => {
@@ -268,6 +314,7 @@ export const CommandPalette = ({
     symbolResults.length > 0 ||
     wikiResults.length > 0 ||
     semanticResults.length > 0;
+  const statusMessage = error ?? notice;
 
   return (
     <Command.Dialog
@@ -304,8 +351,13 @@ export const CommandPalette = ({
 
         <Command.List className="max-h-80 overflow-y-auto p-1">
           {query.trim() && !hasResults && (
-            <Command.Empty className="p-4 text-center text-sm text-muted-foreground">
-              {d.search_no_results}
+            <Command.Empty
+              className={cn(
+                "p-4 text-center text-sm",
+                error ? "text-destructive" : "text-muted-foreground",
+              )}
+            >
+              {statusMessage ?? d.search_no_results}
             </Command.Empty>
           )}
 

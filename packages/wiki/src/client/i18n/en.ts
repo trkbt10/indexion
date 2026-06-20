@@ -19,6 +19,8 @@ export const en: Dict = {
   search_wiki_placeholder: "Search wiki pages\u2026",
   search_code_placeholder: "Search symbols or by purpose\u2026",
   search_no_results: "No results found.",
+  search_wiki_unavailable:
+    "Wiki search is not available yet. The wiki pages are still browsable.",
   search_group_wiki: "Wiki Pages",
   search_group_symbols: "Symbols",
   search_group_purpose: "By Purpose",

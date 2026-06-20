@@ -264,10 +264,15 @@ pub fn extract_sections(
   let tokens = @kgf_features.tokenize_source(content, effective_path, registry)
   match tokens {
     Some(toks) =>
-      extract_sections_from_document(
-        @doc_structure.extract_document_sections(toks, content, spec~),
+      fallback_to_page_section(
+        extract_sections_from_document(
+          @doc_structure.extract_document_sections(toks, content, spec~),
+          page_id,
+          page_title,
+        ),
         page_id,
         page_title,
+        content,
       )
     None =>
       [
@@ -280,6 +285,19 @@ pub fn extract_sections(
         },
       ]
   }
+}
+
+///|
+fn fallback_to_page_section(
+  sections : Array[WikiSection],
+  page_id : String,
+  page_title : String,
+  content : String,
+) -> Array[WikiSection] {
+  if sections.length() > 0 {
+    return sections
+  }
+  [WikiSection::{ id: page_id, title: page_title, content, page_id, level: 1 }]
 }
 
 ///|

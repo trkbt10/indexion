@@ -21,7 +21,7 @@ pub fn command() -> @argparse.Command {
 }
 
 ///|
-pub fn dispatch(matches : @argparse.Matches) -> Unit {
+pub async fn dispatch(matches : @argparse.Matches) -> Unit {
   guard matches.subcommand is Some((name, sub)) else { return }
   match name {
     "plan" => @story_wiki_plan.run_matches(sub)

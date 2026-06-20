@@ -15,10 +15,11 @@
 ///|
 /// Apply a plan to disk. Returns the build summary or None on a wiki I/O
 /// failure (manifest could not be loaded).
-pub fn build_story_wiki(
+pub async fn build_story_wiki(
   plan : StoryWikiPlan,
   wiki_dir : String,
   actor : String,
+  specs_dir? : String = "kgfs",
 ) -> BuildResult? {
   let manifest = match @wiki_manifest.load_manifest(wiki_dir) {
     Some(m) => m
@@ -75,6 +76,9 @@ pub fn build_story_wiki(
     )
     log.save(wiki_dir)
   }
+  if written.length() > 0 || !@wiki_search.exists(wiki_dir) {
+    rebuild_story_wiki_search_index(wiki_dir, specs_dir)
+  }
   Some({ written, skipped })
 }
 
@@ -86,4 +90,38 @@ fn manifest_contains(manifest : @wiki_types.WikiManifest, id : String) -> Bool {
     }
   }
   false
+}
+
+///|
+async fn rebuild_story_wiki_search_index(
+  wiki_dir : String,
+  specs_dir : String,
+) -> Unit {
+  let provider = @embed_config.TfIdf(@embed_config.DEFAULT_TFIDF_DIM)
+  let result = @wiki_workspace.update_search_index(
+    wiki_dir, specs_dir, provider,
+  ) catch {
+    @embed.ParseError(msg) => {
+      println("Warning: wiki search index not built: " + msg)
+      return
+    }
+    @embed.ApiError(code, msg) => {
+      println(
+        "Warning: wiki search index not built (API " +
+        code.to_string() +
+        "): " +
+        msg,
+      )
+      return
+    }
+    @embed.NoResult => {
+      println("Warning: wiki search index not built: no embedding result")
+      return
+    }
+  }
+  match result {
+    Some(_) => ()
+    None =>
+      println("Warning: wiki search index not built: wiki could not be loaded")
+  }
 }

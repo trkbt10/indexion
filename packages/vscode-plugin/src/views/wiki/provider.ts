@@ -18,6 +18,13 @@ import { resolveCodiconsUri } from "../../extension-host/codicons.ts";
 
 type Log = { readonly appendLine: (msg: string) => void };
 
+const WIKI_SEARCH_INDEX_UNAVAILABLE = "wiki search index not available";
+const WIKI_SEARCH_UNAVAILABLE_MESSAGE =
+  "Wiki search is not available yet. The wiki pages are still browsable.";
+
+const isWikiSearchIndexUnavailable = (message: string): boolean =>
+  message.toLowerCase().includes(WIKI_SEARCH_INDEX_UNAVAILABLE);
+
 /** Create the wiki sidebar WebviewViewProvider. */
 export const createWikiViewProvider = (
   extensionUri: vscode.Uri,
@@ -53,15 +60,29 @@ export const createWikiViewProvider = (
       return;
     }
     bridge.post({ type: "loading", target: "search" });
-    const result = await searchWiki(client, { query, topK: 20 });
-    if (!result.ok) {
-      log?.appendLine(`[wiki] search failed: ${result.error}`);
-      bridge.post({ type: "error", target: "search", message: result.error });
-      return;
+    try {
+      const result = await searchWiki(client, { query, topK: 20 });
+      if (!result.ok) {
+        if (isWikiSearchIndexUnavailable(result.error)) {
+          log?.appendLine("[wiki] search skipped: search index unavailable");
+          bridge.post({
+            type: "searchUnavailable",
+            message: WIKI_SEARCH_UNAVAILABLE_MESSAGE,
+          });
+          return;
+        }
+        log?.appendLine(`[wiki] search failed: ${result.error}`);
+        bridge.post({ type: "error", target: "search", message: result.error });
+        return;
+      }
+      const hits = toWikiSearchHits(result.data as ReadonlyArray<Record<string, unknown>>);
+      log?.appendLine(`[wiki] search "${query}" → ${hits.length} hits`);
+      bridge.post({ type: "searchResults", results: hits });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      log?.appendLine(`[wiki] search failed: ${message}`);
+      bridge.post({ type: "error", target: "search", message });
     }
-    const hits = toWikiSearchHits(result.data as ReadonlyArray<Record<string, unknown>>);
-    log?.appendLine(`[wiki] search "${query}" → ${hits.length} hits`);
-    bridge.post({ type: "searchResults", results: hits });
   };
 
   return {

@@ -31,6 +31,7 @@ type WikiState = {
   readonly searching: boolean;
   readonly navLoading: boolean;
   readonly error: string | null;
+  readonly notice: string | null;
   readonly serverReady: boolean;
 };
 
@@ -41,6 +42,7 @@ const initialState: WikiState = {
   searching: false,
   navLoading: false,
   error: null,
+  notice: null,
   serverReady: false,
 };
 
@@ -52,18 +54,21 @@ type WikiAction =
 const wikiReducer = (state: WikiState, action: WikiAction): WikiState => {
   switch (action.type) {
     case "navLoaded":
-      return { ...state, nav: action.nav, navLoading: false, error: null };
+      return { ...state, nav: action.nav, navLoading: false, error: null, notice: null };
     case "searchResults":
-      return { ...state, results: action.results, searching: false, error: null };
+      return { ...state, results: action.results, searching: false, error: null, notice: null };
+    case "searchUnavailable":
+      return { ...state, results: [], searching: false, error: null, notice: action.message };
     case "loading":
       if (action.target === "nav") {
-        return { ...state, navLoading: true, error: null };
+        return { ...state, navLoading: true, error: null, notice: null };
       }
-      return { ...state, searching: true, error: null };
+      return { ...state, searching: true, error: null, notice: null };
     case "error":
       return {
         ...state,
         error: action.message,
+        notice: null,
         searching: action.target === "search" ? false : state.searching,
         navLoading: action.target === "nav" ? false : state.navLoading,
       };
@@ -73,11 +78,11 @@ const wikiReducer = (state: WikiState, action: WikiAction): WikiState => {
       // Clear stale results as soon as the query becomes empty — the mental
       // model is "query = active filter".
       if (action.value.length === 0) {
-        return { ...state, query: "", results: null, error: null };
+        return { ...state, query: "", results: null, error: null, notice: null };
       }
-      return { ...state, query: action.value };
+      return { ...state, query: action.value, notice: null };
     case "clearSearch":
-      return { ...state, query: "", results: null, error: null };
+      return { ...state, query: "", results: null, error: null, notice: null };
     default:
       return state;
   }
@@ -106,7 +111,7 @@ const NavTree = ({ items }: { readonly items: ReadonlyArray<WikiNavItem> }): Rea
 export const WikiSidebarApp = (): React.JSX.Element => {
   const postMessage = usePostMessage<WikiFromWebview>();
   const [state, dispatch] = useWebviewReducer(wikiReducer, initialState);
-  const { nav, query, results, searching, navLoading, error, serverReady } = state;
+  const { nav, query, results, searching, navLoading, error, notice, serverReady } = state;
 
   const trimmed = query.trim();
   const isFilterActive = trimmed.length > 0;
@@ -188,6 +193,7 @@ export const WikiSidebarApp = (): React.JSX.Element => {
 
       {!serverReady && <StatusMsg>Waiting for indexion server…</StatusMsg>}
       {error && <StatusMsg error>{error}</StatusMsg>}
+      {notice && <StatusMsg>{notice}</StatusMsg>}
 
       {!isFilterActive && (
         <>
@@ -204,7 +210,7 @@ export const WikiSidebarApp = (): React.JSX.Element => {
       {isFilterActive && (
         <>
           {awaitingSearch && <StatusMsg>Press Enter to search the wiki.</StatusMsg>}
-          {!searching && !error && results !== null && !hasResults && (
+          {!searching && !error && !notice && results !== null && !hasResults && (
             <StatusMsg>No matches for "{trimmed}".</StatusMsg>
           )}
           {hasResults && (
