@@ -36,14 +36,23 @@ pub fn WikiLogEntry::new(
 }
 
 ///|
-impl @json.FromJson for WikiLogEntry with from_json(json, path) {
+fn decode_timestamp(json : Json) -> UInt64 {
+  match json {
+    String(s) => @string.parse_uint64(s) catch { _ => 0UL }
+    Number(n, ..) => n.to_uint64()
+    _ => 0UL
+  }
+}
+
+///|
+impl @json.FromJson for WikiLogEntry with fn from_json(json, path) {
   guard json is Object(obj) else {
     raise @json.JsonDecodeError(
       (path, "WikiLogEntry::from_json: expected object"),
     )
   }
   let timestamp : UInt64 = match obj.get("timestamp") {
-    Some(Number(n, ..)) => n.to_uint64()
+    Some(value) => decode_timestamp(value)
     _ => 0UL
   }
   let operation = match obj.get("operation") {
