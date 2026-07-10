@@ -1,3 +1,36 @@
+# v0.17.0
+
+## Highlights
+
+- **Rust analysis actually works now.** The Rust KGF spec was silently dropping almost every declaration on real-world code. On a 150-file Rust project, extracted declarations went from ~near-zero to complete (482 across 162 files). Fixes span references (`&str`, `&self`), raw pointers (`*const`), nested generics (`Vec<Option<T>>`), doc-commented and attributed struct fields / enum variants / trait methods (in either order), lifetimes and associated-type bindings in generic arguments (`<'a>`, `<Item = T>`), multi-line `use { … }` groups, and identifiers named after prelude types (`pub type Result<T>`, an enum variant literally named `None`).
+- **Regex-engine correctness fix (all languages).** An optional element immediately followed by a literal — e.g. `ab?c` against `"ac"` — was wrongly rejected by the matcher's fast paths and the parser's first-char filter. Fixed once in the shared engine behind a single `quantifier_requires_one` rule, so every KGF spec benefits (it surfaced as Rust `#[…]` attributes aborting the file parse).
+
+## Bug Fixes
+
+### Rust KGF spec
+
+- `Operator` token no longer shadows the dedicated `&` / `*` / `=` tokens — reference types, raw pointers, and `const`/`type`/`static` declarations parse.
+- `>>` is no longer lexed as one right-shift token, so nested generics close correctly.
+- Struct fields, enum variants, and trait items accept a doc comment and `#[attr]` in either order, each on its own line, without dropping the enclosing item.
+- Generic arguments accept lifetimes and associated-type bindings.
+- Prelude type/value names are ordinary identifiers, so declarations named after them parse.
+
+### Regex engine
+
+- An optional element before a literal no longer causes a false non-match in the matcher fast paths or the parser's first-char filter.
+
+## Build / Infrastructure
+
+- Migrated to the new MoonBit manifest format (`moon.mod.json` → `moon.mod` TOML, `moon.pkg` updates, `with fn` impl syntax) for the current toolchain; `sync-version.sh` and the CI/release workflows read the version from `moon.mod`.
+- Dedicated Windows-only build test; `cl.exe /Fe<path>` accepted for the final cc step.
+
+## Other
+
+- doc graph: sprawlens `Snapshot` JSON export.
+- story: `multilang-prose` grammar restructured into blocks / headings / paragraphs.
+
+---
+
 # v0.16.0
 
 ## Highlights
