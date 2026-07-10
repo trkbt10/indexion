@@ -1,12 +1,12 @@
 ///|
 /// Current version of indexion.
-/// SoT is moon.mod.json "version" field.
+/// SoT is the `moon.mod` "version" field.
 /// Auto-synced by scripts/sync-version.sh (runs in CI and before local builds).
 pub let current_version : String = "0.17.0"
 
 ///|
 /// GitHub repository owner/name.
-/// NOTE: SoT is moon.mod.json "repository" field.
+/// NOTE: SoT is the `moon.mod` "repository" field.
 let repo : String = "trkbt10/indexion"
 
 ///|

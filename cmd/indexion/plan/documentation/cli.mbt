@@ -17,7 +17,7 @@
 /// | `--style=STYLE` | Output style: coverage, full | full |
 /// | `--format=FORMAT` | Output format: md, json, github-issue, lcov, cobertura | md |
 /// | `--template=FILE` | GitHub Issue Form template (.yml) | - |
-/// | `--name=NAME` | Project name (auto-detect from moon.mod.json) | - |
+/// | `--name=NAME` | Project name (auto-detect from project manifest) | - |
 /// | `--specs-dir=DIR` | KGF specs directory | kgfs |
 
 ///|
@@ -101,7 +101,7 @@ pub fn command() -> @argparse.Command {
       @argparse.OptionArg("template", about="GitHub Issue Form template (.yml)"),
       @argparse.OptionArg(
         "name",
-        about="Project name (auto-detect from moon.mod.json)",
+        about="Project name (auto-detect from project manifest)",
       ),
       @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
@@ -119,7 +119,10 @@ pub fn run_to_string(config : DocPlanConfig) -> String? {
   if config.target_dir.length() == 0 {
     return None
   }
-  let project_info = load_project_info(config.target_dir)
+  let project_info = load_project_info(
+    config.target_dir,
+    specs_dir=config.specs_dir,
+  )
   let project_name = if config.project_name.length() > 0 {
     config.project_name
   } else {

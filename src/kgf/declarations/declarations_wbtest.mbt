@@ -27,6 +27,46 @@ fn extract_test_declarations(
 }
 
 ///|
+/// The manifest-metadata reader is format-agnostic: it works for the current
+/// MoonBit TOML manifest (`moon.mod`) and the legacy JSON one (`moon.mod.json`)
+/// through their respective KGF specs, with no format knowledge in the caller.
+test "declarations: extract_project_manifest_info reads moon.mod (TOML)" {
+  let toml =
+    #|name = "example/widget"
+    #|version = "0.3.0"
+    #|import {
+    #|  "moonbitlang/x@0.4.41",
+    #|  "example/core@1.0.0",
+    #|}
+    #|license = "Apache-2.0"
+    #|repository = "https://github.com/example/widget"
+    #|keywords = [
+    #|  "widget",
+    #|  "ui",
+    #|]
+    #|description = "An example module"
+  guard extract_project_manifest_info(toml, "moon.mod", Some(registry()))
+    is Some(m)
+  assert_eq(m.name, "example/widget")
+  assert_eq(m.version, "0.3.0")
+  assert_eq(m.license, "Apache-2.0")
+  assert_eq(m.repository, "https://github.com/example/widget")
+  assert_eq(m.description, "An example module")
+  assert_eq(m.keywords.length(), 2)
+}
+
+///|
+test "declarations: extract_project_manifest_info reads moon.mod.json (JSON)" {
+  let json =
+    #|{ "name": "example/legacy", "version": "1.2.3", "keywords": ["a", "b"] }
+  guard extract_project_manifest_info(json, "moon.mod.json", Some(registry()))
+    is Some(m)
+  assert_eq(m.name, "example/legacy")
+  assert_eq(m.version, "1.2.3")
+  assert_eq(m.keywords.length(), 2)
+}
+
+///|
 fn programming_langs_from_kgfs() -> Map[String, Bool] {
   let langs : Map[String, Bool] = {}
   let entries = @fs.read_dir("kgfs/programming") catch { _ => [] }

@@ -275,6 +275,74 @@ test "project: moonbit tests" {
 }
 
 ///|
+/// Test moon.mod parsing (current MoonBit TOML manifest format).
+test "project: moonbit moon.mod TOML tests" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let fixtures = get_fixtures_dir()
+
+  let spec = registry.get_spec("moon-mod-toml").unwrap()
+  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let source = @fs.read_file_to_string(fixtures + "/project/moonbit-toml/moon.mod") catch {
+    _ => ""
+  }
+  if source.length() > 0 {
+    let tokens = lexer.tokenize(source)
+    assert_true(tokens.iter().any(fn(t) { t.kind == "KW_name" }))
+    assert_true(tokens.iter().any(fn(t) { t.kind == "KW_import" }))
+
+    let result = run_pipeline_with_registry(
+      registry, "moon-mod-toml", source, "moon.mod",
+    )
+    assert_true(result.parse_ok)
+
+    // name / version strings
+    let name = result.edges
+      .iter()
+      .find_first(fn(e) { edge_kind_is(e.kind, "projectName") })
+      .map(fn(e) { e.to })
+    assert_eq(name, Some("example/widget"))
+    let version = result.edges
+      .iter()
+      .find_first(fn(e) { edge_kind_is(e.kind, "projectVersion") })
+      .map(fn(e) { e.to })
+    assert_eq(version, Some("0.3.0"))
+
+    // keywords array spanning multiple lines
+    let keywords = result.edges
+      .iter()
+      .filter(fn(e) { edge_kind_is(e.kind, "projectKeyword") })
+      .collect()
+    assert_eq(keywords.length(), 3)
+
+    // import { } deps: @version pin stripped, pkg: prefix (matches moon-mod.kgf)
+    let deps = result.edges
+      .iter()
+      .filter(fn(e) {
+        edge_kind_is(e.kind, "dependsOn") && e.to.has_prefix("pkg:")
+      })
+      .collect()
+    assert_eq(deps.length(), 3)
+    assert_true(deps.iter().any(fn(e) { e.to == "pkg:moonbitlang/x" }))
+    assert_true(deps.iter().any(fn(e) { e.to == "pkg:example/core" }))
+
+    // license / repository / description
+    assert_true(
+      result.edges
+      .iter()
+      .any(fn(e) { edge_kind_is(e.kind, "projectLicense") && e.to == "Apache-2.0" }),
+    )
+    assert_true(
+      result.edges.iter().any(fn(e) { edge_kind_is(e.kind, "projectRepository") }),
+    )
+    assert_true(
+      result.edges
+      .iter()
+      .any(fn(e) { edge_kind_is(e.kind, "projectDescription") }),
+    )
+  }
+}
+
+///|
 /// Test pyproject.toml parsing.
 test "project: python tests" {
   let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
@@ -485,6 +553,7 @@ test "project: registry detection" {
   assert_true(registry.is_file_supported("Cargo.toml"))
   assert_true(registry.is_file_supported("go.mod"))
   assert_true(registry.is_file_supported("moon.mod.json"))
+  assert_true(registry.is_file_supported("moon.mod"))
   assert_true(registry.is_file_supported("pyproject.toml"))
   assert_true(registry.is_file_supported("deno.json"))
   assert_true(registry.is_file_supported("deno.jsonc"))
@@ -497,6 +566,9 @@ test "project: registry detection" {
   assert_eq(registry.detect_from_path("Cargo.toml"), Some("cargo-toml"))
   assert_eq(registry.detect_from_path("go.mod"), Some("go-mod"))
   assert_eq(registry.detect_from_path("moon.mod.json"), Some("moon-mod"))
+  // The TOML manifest must not be mis-detected as the JSON one, nor as go.mod
+  // (both moon.mod and go.mod share the `.mod` extension — exact filename wins).
+  assert_eq(registry.detect_from_path("moon.mod"), Some("moon-mod-toml"))
 
   // get_external_prefixes
   let prefixes = registry.get_external_prefixes()

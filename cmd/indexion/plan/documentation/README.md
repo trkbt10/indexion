@@ -19,7 +19,7 @@ indexion plan documentation [options] [directory]
 | `--style=STYLE` | Output style: `coverage`, `full` | `full` |
 | `--format=FORMAT` | Output format: `md`, `json`, `github-issue` | `md` |
 | `--template=FILE` | GitHub Issue Form template (.yml) | -- |
-| `--name=NAME` | Project name (auto-detect from moon.mod.json) | auto |
+| `--name=NAME` | Project name (auto-detect from project manifest) | auto |
 | `-o, --output=FILE` | Output file path | stdout |
 | `--specs-dir=DIR` | KGF specs directory | `kgfs` |
 

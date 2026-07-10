@@ -182,6 +182,37 @@ fn parse_source(
 }
 
 ///|
+/// Shared semantics step: parse a file then evaluate its rule semantics into a
+/// fresh single-module graph. Returns the parsed source (for span/token access)
+/// alongside the populated graph, or None when parsing fails. Every consumer
+/// that needs semantics-produced edges (declarations, manifest metadata, ...)
+/// funnels through here so the parse+eval preamble lives in one place.
+fn parse_and_eval_semantics(
+  content : String,
+  path : String,
+  registry : @kgf_registry.KGFRegistry?,
+) -> (ParsedSource, @graph.CodeGraph)? {
+  let parsed = match parse_source(content, path, registry) {
+    Some(result) => result
+    None => return None
+  }
+  let graph = @graph.CodeGraph::new()
+  let _ = graph.get_or_add_module(path, file=Some(path))
+  let ctx = @kgf_semantics.SemEvalCtx::new(
+    parsed.spec,
+    graph,
+    path,
+    "",
+    parsed.spec.get_language(),
+    fn(_) { false },
+  )
+  for event in parsed.events {
+    @kgf_semantics.eval_rule_semantics(event.0, event.1, ctx)
+  }
+  Some((parsed, graph))
+}
+
+///|
 /// Extract declarations from source code.
 ///
 /// `visibility`:
@@ -220,22 +251,9 @@ fn extract_pub_declarations_via_semantics(
   path : String,
   registry : @kgf_registry.KGFRegistry?,
 ) -> (Array[PubDeclaration], Map[Int, String]) {
-  let parsed = match parse_source(content, path, registry) {
-    Some(result) => result
+  let (parsed, graph) = match parse_and_eval_semantics(content, path, registry) {
+    Some(pair) => pair
     None => return ([], {})
-  }
-  let graph = @graph.CodeGraph::new()
-  let _ = graph.get_or_add_module(path, file=Some(path))
-  let ctx = @kgf_semantics.SemEvalCtx::new(
-    parsed.spec,
-    graph,
-    path,
-    "",
-    parsed.spec.get_language(),
-    fn(_) { false },
-  )
-  for event in parsed.events {
-    @kgf_semantics.eval_rule_semantics(event.0, event.1, ctx)
   }
   let declarations : Array[PubDeclaration] = []
   let doc_map : Map[Int, String] = {}
@@ -320,6 +338,56 @@ fn extract_pub_declarations_via_semantics(
     }
   }
   (declarations, doc_map)
+}
+
+///|
+/// Project metadata declared by a manifest file, read from the shared
+/// `project*` edge vocabulary that every manifest KGF spec emits
+/// (moon.mod, moon.mod.json, Cargo.toml, package.json, ...). Language-agnostic:
+/// the caller does not need to know the manifest format.
+pub struct ProjectManifestInfo {
+  name : String
+  version : String
+  description : String
+  license : String
+  repository : String
+  keywords : Array[String]
+}
+
+///|
+/// Parse a manifest file through its KGF spec and collect the project metadata
+/// it declares via semantics (projectName / projectVersion / ...).
+///
+/// Returns None when `path` has no manifest spec or fails to parse. A `Some`
+/// with an empty `name` means the spec parsed but declared no project identity
+/// (e.g. a manifest missing its name field).
+pub fn extract_project_manifest_info(
+  content : String,
+  path : String,
+  registry : @kgf_registry.KGFRegistry?,
+) -> ProjectManifestInfo? {
+  let (_, graph) = match parse_and_eval_semantics(content, path, registry) {
+    Some(pair) => pair
+    None => return None
+  }
+  let mut name = ""
+  let mut version = ""
+  let mut description = ""
+  let mut license = ""
+  let mut repository = ""
+  let keywords : Array[String] = []
+  for edge in graph.get_edges() {
+    match edge.kind.to_string() {
+      "projectName" => name = edge.to
+      "projectVersion" => version = edge.to
+      "projectDescription" => description = edge.to
+      "projectLicense" => license = edge.to
+      "projectRepository" => repository = edge.to
+      "projectKeyword" => keywords.push(edge.to)
+      _ => ()
+    }
+  }
+  Some({ name, version, description, license, repository, keywords })
 }
 
 ///|

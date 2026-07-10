@@ -47,7 +47,7 @@ let dir = "/tmp/indexion_par_"     // → @config.get_global_cache_dir() SoTを�
    - 解析対象ファイルから得られた情報を基準にする
 
 3. **設定ファイルから読み取る**
-   - `moon.mod.json` → プロジェクト名、依存関係
+   - `moon.mod`（TOML。旧形式は `moon.mod.json`） → プロジェクト名、依存関係
    - `moon.pkg` → パッケージ依存関係
 
 ### 判定ロジックの原則

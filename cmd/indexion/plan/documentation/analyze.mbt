@@ -2,7 +2,7 @@
 /// Documentation analysis - extract doc coverage from MoonBit files.
 
 ///|
-/// Project info from moon.mod.json.
+/// Project info read from a project manifest (format-agnostic).
 pub struct ProjectInfo {
   name : String
   version : String
@@ -58,37 +58,89 @@ pub struct DocAnalysis {
 }
 
 ///|
-/// Load project info from moon.mod.json.
-pub fn load_project_info(dir : String) -> ProjectInfo {
-  let path = @common.normalize_path(dir) + "/moon.mod.json"
-  try {
-    let content = @fs.read_file_to_string(path)
-    parse_moon_mod_json(content)
+/// Load project info from the project's manifest, whatever its format.
+///
+/// Language-agnostic and KGF-driven: instead of hard-coding a manifest
+/// filename, it scans `dir` for a file the KGF registry recognises as a
+/// manifest (any spec that declares a `manifest_role` feature — moon.mod,
+/// moon.mod.json, Cargo.toml, package.json, ...), parses it through that spec,
+/// and reads the `project*` metadata edges the spec emits. An umbrella
+/// `project`-role manifest wins over a `package`-role one. Falls back to
+/// `ProjectInfo::default()` when no manifest is present.
+pub fn load_project_info(
+  dir : String,
+  specs_dir? : String = "kgfs",
+) -> ProjectInfo {
+  let normalized = @common.normalize_path(dir)
+  let registry = match
+    @kgf_features.load_registry(specs_dir~, target_dir=normalized) {
+    Some(reg) => reg
+    None => return ProjectInfo::default()
+  }
+  let entries = try {
+    @fs.read_dir(normalized)
   } catch {
-    _ => ProjectInfo::default()
+    _ => return ProjectInfo::default()
+  }
+  // Pick a top-level manifest, preferring an umbrella `project` manifest over a
+  // single `package` one so multi-manifest roots resolve deterministically.
+  let mut project_manifest : String? = None
+  let mut package_manifest : String? = None
+  for entry in entries {
+    let spec = match registry.detect_from_path(entry) {
+      Some(spec_name) =>
+        match registry.get_spec(spec_name) {
+          Some(s) => s
+          None => continue
+        }
+      None => continue
+    }
+    let role = match spec.get_feature("manifest_role") {
+      Some(arr) => if arr.length() > 0 { arr[0] } else { "" }
+      None => ""
+    }
+    match role {
+      "project" => if project_manifest is None { project_manifest = Some(entry) }
+      "package" => if package_manifest is None { package_manifest = Some(entry) }
+      _ => ()
+    }
+  }
+  let manifest_entry = match project_manifest {
+    Some(entry) => entry
+    None =>
+      match package_manifest {
+        Some(entry) => entry
+        None => return ProjectInfo::default()
+      }
+  }
+  let path = normalized + "/" + manifest_entry
+  let content = try {
+    @fs.read_file_to_string(path)
+  } catch {
+    _ => return ProjectInfo::default()
+  }
+  match
+    @kgf_declarations.extract_project_manifest_info(
+      content,
+      path,
+      Some(registry),
+    ) {
+    Some(info) =>
+      if info.name.length() > 0 {
+        {
+          name: info.name,
+          version: info.version,
+          description: info.description,
+          repository: info.repository,
+          license: info.license,
+          keywords: info.keywords,
+        }
+      } else {
+        ProjectInfo::default()
+      }
+    None => ProjectInfo::default()
   }
 }
-
-///|
-fn parse_moon_mod_json(content : String) -> ProjectInfo {
-  let mut info = ProjectInfo::default()
-  // Simple JSON parsing for specific fields
-  info = { ..info, name: @common.extract_json_string(content, "name") }
-  info = { ..info, version: @common.extract_json_string(content, "version") }
-  info = {
-    ..info,
-    description: @common.extract_json_string(content, "description"),
-  }
-  info = {
-    ..info,
-    repository: @common.extract_json_string(content, "repository"),
-  }
-  info = { ..info, license: @common.extract_json_string(content, "license") }
-  info = { ..info, keywords: @common.extract_json_array(content, "keywords") }
-  info
-}
-
-// extract_json_string, extract_json_array: use @common (SoT)
 
 ///|
 /// Analyze documentation coverage in directory.
