@@ -8,11 +8,11 @@ description: Release process for indexion. Use when the user asks to release, de
 ## Prerequisites
 
 - `.gitmodules` has `pushRecurseSubmodules = on-demand` for all submodules
-- `scripts/sync-version.sh` exists and syncs `moon.mod.json` → `version.mbt` + `marketplace.json` + `plugin.json`
+- `scripts/sync-version.sh` exists and syncs `moon.mod` → `version.mbt` + `marketplace.json` + `plugin.json`
 
 ## Version Convention
 
-- SoT: `moon.mod.json` → `"version"` field
+- SoT: `moon.mod` → `version` field (TOML)
 - Semver: `MAJOR.MINOR.PATCH`
 - Tags: `v{VERSION}` (e.g. `v0.8.0`)
 - Propagation targets:
@@ -89,9 +89,9 @@ bun run test
 bun run lint
 ```
 
-### 4. Bump version in moon.mod.json
+### 4. Bump version in moon.mod
 
-Edit `moon.mod.json` and change the `"version"` field:
+Edit `moon.mod` and change the `version` field (TOML: `version = "x.y.z"`):
 - `+0.0.1` for patches (bug fixes)
 - `+0.1.0` for minor (new features, backward compatible)
 - `+1.0.0` for major (breaking changes)
@@ -115,7 +115,7 @@ cd skills && git add .claude-plugin/marketplace.json .claude-plugin/plugin.json 
 ### 7. Create release commit (WITHOUT tag)
 
 ```bash
-git add moon.mod.json src/update/version.mbt skills RELEASE_NOTES.md
+git add moon.mod src/update/version.mbt skills RELEASE_NOTES.md
 git commit -m "release: vX.Y.Z"
 ```
 
@@ -165,7 +165,7 @@ git tag --sort=-v:refname | head -1  # should be vX.Y.Z
 git submodule status  # no + prefix = clean
 
 # Version is consistent across all targets
-grep '"version"' moon.mod.json
+grep '^version' moon.mod
 grep 'current_version' src/update/version.mbt
 grep '"version"' skills/.claude-plugin/marketplace.json
 grep '"version"' skills/.claude-plugin/plugin.json

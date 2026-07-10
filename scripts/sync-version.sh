@@ -1,5 +1,5 @@
 #!/bin/sh
-# Sync version from moon.mod.json (SoT) to all version references.
+# Sync version from moon.mod (SoT) to all version references.
 # Run this before building to ensure version consistency.
 #
 # Targets:
@@ -12,16 +12,17 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-MOD_JSON="$ROOT/moon.mod.json"
+MOD_FILE="$ROOT/moon.mod"
 VERSION_MBT="$ROOT/src/update/version.mbt"
 MARKETPLACE_JSON="$ROOT/skills/.claude-plugin/marketplace.json"
 PLUGIN_JSON="$ROOT/skills/.claude-plugin/plugin.json"
 
-# Extract version from moon.mod.json (SoT)
-VERSION=$(grep '"version"' "$MOD_JSON" | head -1 | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+# Extract version from moon.mod (SoT). The manifest is TOML, so the version
+# line reads: version = "x.y.z"
+VERSION=$(grep -E '^[[:space:]]*version[[:space:]]*=' "$MOD_FILE" | head -1 | sed 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/')
 
 if [ -z "$VERSION" ]; then
-  echo "Error: Could not extract version from $MOD_JSON" >&2
+  echo "Error: Could not extract version from $MOD_FILE" >&2
   exit 1
 fi
 

@@ -48,11 +48,11 @@ jobs:
         working-directory: C:\s
         run: moon update
 
-      - name: Sync version from moon.mod.json
+      - name: Sync version from moon.mod
         shell: pwsh
         working-directory: C:\s
         run: |
-          $version = (Get-Content moon.mod.json | ConvertFrom-Json).version
+          $version = ((Get-Content moon.mod) -match '^\s*version\s*=' | Select-Object -First 1) -replace '^\s*version\s*=\s*"([^"]+)".*', '$1'
           $file = "src/update/version.mbt"
           (Get-Content $file) -replace 'pub let current_version : String = ".*"', "pub let current_version : String = `"$version`"" | Set-Content $file
 

@@ -25,7 +25,7 @@ jobs:
       - name: Moon update
         run: moon update
 
-      - name: Sync version from moon.mod.json
+      - name: Sync version from moon.mod
         run: ./scripts/sync-version.sh
 
       - name: Check
