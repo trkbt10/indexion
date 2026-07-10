@@ -1,5 +1,5 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
+  "moonbitlang/core/argparse",
   "moonbitlang/async",
   "trkbt10/indexion/cmd/indexion/check" @check_cli,
   "trkbt10/indexion/cmd/indexion/explore" @explore_cli,
@@ -11,7 +11,7 @@ import {
   "trkbt10/indexion/cmd/indexion/kgf" @kgf_cli,
   "trkbt10/indexion/cmd/indexion/init" @init_cli,
   "trkbt10/indexion/cmd/indexion/update" @update_cli,
-  "trkbt10/indexion/src/update" @update,
+  "trkbt10/indexion/src/update",
   "trkbt10/indexion/cmd/indexion/digest" @digest_cli,
   "trkbt10/indexion/cmd/indexion/serve" @serve_cli,
   "trkbt10/indexion/cmd/indexion/grep" @grep_cli,

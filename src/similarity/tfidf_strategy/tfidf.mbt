@@ -17,7 +17,7 @@ pub fn TfidfStrategy::new() -> TfidfStrategy {
 }
 
 ///|
-pub impl @types.SimilarityStrategy for TfidfStrategy with name(self) {
+pub impl @types.SimilarityStrategy for TfidfStrategy with fn name(self) {
   ignore(self)
   "tfidf"
 }
@@ -25,7 +25,11 @@ pub impl @types.SimilarityStrategy for TfidfStrategy with name(self) {
 ///|
 /// String-based distance is not supported after KGF migration.
 /// Use TfidfBatch::from_tokens for proper tokenization.
-pub impl @types.SimilarityStrategy for TfidfStrategy with distance(self, a, b) {
+pub impl @types.SimilarityStrategy for TfidfStrategy with fn distance(
+  self,
+  a,
+  b,
+) {
   ignore(self)
   ignore(a)
   ignore(b)
@@ -34,7 +38,11 @@ pub impl @types.SimilarityStrategy for TfidfStrategy with distance(self, a, b) {
 }
 
 ///|
-pub impl @types.SimilarityStrategy for TfidfStrategy with similarity(self, a, b) {
+pub impl @types.SimilarityStrategy for TfidfStrategy with fn similarity(
+  self,
+  a,
+  b,
+) {
   1.0 - self.distance(a, b)
 }
 

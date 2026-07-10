@@ -7,7 +7,7 @@ pub enum ModulePathStyle {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for ModulePathStyle with output(self, logger) {
+pub impl Show for ModulePathStyle with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 

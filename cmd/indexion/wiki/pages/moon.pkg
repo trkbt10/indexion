@@ -1,5 +1,5 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
+  "moonbitlang/core/argparse",
   "trkbt10/indexion/cmd/indexion/wiki/pages/plan" @wiki_plan,
   "trkbt10/indexion/cmd/indexion/wiki/pages/add" @wiki_add_page,
   "trkbt10/indexion/cmd/indexion/wiki/pages/update" @wiki_update_page,

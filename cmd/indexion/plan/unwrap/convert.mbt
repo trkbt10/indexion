@@ -56,7 +56,10 @@ pub fn to_coverage_report(
       b.add_unit(
         path,
         @coverage.ScanUnit::new(
-          d.line, !is_wrapper, name=d.name, is_function=true,
+          d.line,
+          !is_wrapper,
+          name=d.name,
+          is_function=true,
         ),
       )
     }

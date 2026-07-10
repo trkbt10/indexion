@@ -164,7 +164,10 @@ test "bench: PEG-style AST comparison" {
   })
   // 5 nodes, 1 rename (Sym:b→Sym:c), dist=1
   // old: 1-1/10=0.9, tsed(finalize): 1-1/5=0.8, tsed(no finalize): 1-1/5=0.8
-  debug_inspect((old_sim, tsed_sim, tsed_no_finalize), content="(0.9, 0.8, 0.8)")
+  debug_inspect(
+    (old_sim, tsed_sim, tsed_no_finalize),
+    content="(0.9, 0.8, 0.8)",
+  )
 }
 
 // ============================================================

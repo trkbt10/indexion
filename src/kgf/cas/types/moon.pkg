@@ -1,6 +1,6 @@
 import {
-  "trkbt10/indexion/src/core/graph" @graph,
-  "moonbitlang/core/json" @json,
+  "trkbt10/indexion/src/core/graph",
+  "moonbitlang/core/json",
 }
 
 supported_targets = "native"

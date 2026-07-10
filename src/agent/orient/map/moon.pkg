@@ -1,8 +1,8 @@
 import {
-  "moonbitlang/core/json" @json,
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/src/agent/orient/matching" @matching,
-  "trkbt10/indexion/src/agent/orient/types" @types,
+  "moonbitlang/core/json",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/src/agent/orient/matching",
+  "trkbt10/indexion/src/agent/orient/types",
   "trkbt10/indexion/src/config" @config_paths,
   "trkbt10/indexion/src/kgf/cas/hash" @cas_hash,
 }

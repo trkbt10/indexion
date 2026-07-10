@@ -1,14 +1,14 @@
 import {
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/src/config" @config,
-  "trkbt10/indexion/src/kgf/types" @types,
-  "trkbt10/indexion/src/kgf/parser" @parser,
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/src/config",
+  "trkbt10/indexion/src/kgf/types",
+  "trkbt10/indexion/src/kgf/parser",
 }
 
 import {
-  "moonbitlang/core/test" @test,
-  "trkbt10/indexion/src/kgf/lexer" @lexer,
-  "trkbt10/indexion/src/kgf/peg" @peg,
+  "moonbitlang/core/test",
+  "trkbt10/indexion/src/kgf/lexer",
+  "trkbt10/indexion/src/kgf/peg",
   "trkbt10/indexion/src/kgf/fixtures" @kgf_fixtures,
 } for "wbtest"
 

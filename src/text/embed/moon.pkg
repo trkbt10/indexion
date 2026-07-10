@@ -1,8 +1,8 @@
 import {
-  "moonbitlang/core/json" @json,
-  "moonbitlang/core/math" @math,
-  "trkbt10/indexion/src/text/tfidf" @tfidf,
-  "trkbt10/indexion/src/text/tokenizer" @tokenizer,
+  "moonbitlang/core/json",
+  "moonbitlang/core/math",
+  "trkbt10/indexion/src/text/tfidf",
+  "trkbt10/indexion/src/text/tokenizer",
 }
 
 supported_targets = "native"

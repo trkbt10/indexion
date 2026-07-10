@@ -1,6 +1,7 @@
 ///|
 using @test {assert_eq}
 
+///|
 test "global_config: parse_global_toml_config parses global section" {
   let input =
     #|[global]

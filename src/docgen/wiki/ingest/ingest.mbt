@@ -39,7 +39,7 @@ pub struct PageSourceState {
 } derive(ToJson)
 
 ///|
-impl @json.FromJson for PageSourceState with from_json(json, path) {
+impl @json.FromJson for PageSourceState with fn from_json(json, path) {
   guard json is Object(obj) else {
     raise @json.JsonDecodeError(
       (path, "PageSourceState::from_json: expected object"),
@@ -71,7 +71,7 @@ pub struct IngestManifest {
 } derive(ToJson)
 
 ///|
-impl @json.FromJson for IngestManifest with from_json(json, path) {
+impl @json.FromJson for IngestManifest with fn from_json(json, path) {
   guard json is Object(obj) else {
     raise @json.JsonDecodeError(
       (path, "IngestManifest::from_json: expected object"),

@@ -1,7 +1,7 @@
 import {
-  "moonbitlang/core/math" @math,
+  "moonbitlang/core/math",
   "trkbt10/indexion/src/kgf/types" @kgf_types,
-  "trkbt10/indexion/src/kgf/registry" @registry,
+  "trkbt10/indexion/src/kgf/registry",
   "trkbt10/indexion/src/document/structure" @doc_structure,
 }
 

@@ -102,7 +102,7 @@ pub fn DriftAction::label(self : DriftAction) -> String {
 ///|
 /// Custom ToJson: emit the kebab-case label so JSON consumers see the
 /// same string as the text-format rationale prefix.
-pub impl ToJson for DriftAction with to_json(self) {
+pub impl ToJson for DriftAction with fn to_json(self) {
   self.label().to_json()
 }
 

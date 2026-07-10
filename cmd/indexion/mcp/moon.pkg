@@ -1,8 +1,8 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
+  "moonbitlang/core/argparse",
   "moonbitlang/async/stdio" @async_stdio,
-  "trkbt10/indexion/cmd/indexion/common" @common,
-  "trkbt10/indexion/cmd/indexion/help" @help,
+  "trkbt10/indexion/cmd/indexion/common",
+  "trkbt10/indexion/cmd/indexion/help",
   "trkbt10/indexion/cmd/indexion/explore" @explore_cli,
   "trkbt10/indexion/cmd/indexion/kgf" @kgf_cli,
   "trkbt10/indexion/cmd/indexion/doc/graph" @doc_graph_cli,
@@ -13,9 +13,9 @@ import {
   "trkbt10/indexion/cmd/indexion/plan/unwrap" @plan_unwrap,
   "trkbt10/indexion/cmd/indexion/plan/readme" @plan_readme,
   "trkbt10/indexion/cmd/indexion/spec/align" @spec_align_cli,
-  "trkbt10/indexion/src/config" @config,
+  "trkbt10/indexion/src/config",
   "trkbt10/indexion/src/spec/align" @spec_align,
-  "trkbt10/indexion/src/update" @update,
+  "trkbt10/indexion/src/update",
   "trkbt10/indexion/src/docgen/wiki/reader" @wiki_reader,
   "trkbt10/indexion/src/docgen/wiki/lint" @wiki_lint,
   "trkbt10/indexion/src/docgen/wiki/ingest" @wiki_ingest,
@@ -24,8 +24,10 @@ import {
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/mcp/server" @mcp_server,
   "trkbt10/indexion/src/mcp/types" @mcp_types,
-  "trkbt10/indexion/src/mcp/transport" @transport,
+  "trkbt10/indexion/src/mcp/transport",
 }
+
+supported_targets = "native"
 
 options(
   targets: {
@@ -33,5 +35,3 @@ options(
     "stdio_js.mbt": [ "js", "wasm", "wasm-gc" ],
   },
 )
-
-supported_targets = "native"

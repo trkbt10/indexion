@@ -462,9 +462,7 @@ pub let parse_semantics_lazy : Ref[(String) -> Map[String, Array[SemOnBlock]]?] 
 
 ///|
 /// Callback: parse preprocess section text → preprocess directives.
-pub let parse_preprocess_lazy : Ref[(String) -> Array[String]?] = Ref(fn(
-  _s,
-) {
+pub let parse_preprocess_lazy : Ref[(String) -> Array[String]?] = Ref(fn(_s) {
   None
 })
 
@@ -479,8 +477,6 @@ pub let parse_preprocess_fst_lazy : Ref[(String) -> Array[PreprocessFstSpec]?] =
 
 ///|
 /// Callback: parse classify section text → trained classify model.
-pub let parse_classify_lazy : Ref[(String) -> ClassifyModel?] = Ref(fn(
-  _s,
-) {
+pub let parse_classify_lazy : Ref[(String) -> ClassifyModel?] = Ref(fn(_s) {
   None
 })

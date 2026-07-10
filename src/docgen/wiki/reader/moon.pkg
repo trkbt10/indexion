@@ -1,10 +1,10 @@
 import {
-  "moonbitlang/core/json" @json,
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/cmd/indexion/common" @common,
-  "trkbt10/indexion/src/config" @config,
+  "moonbitlang/core/json",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/cmd/indexion/common",
+  "trkbt10/indexion/src/config",
   "trkbt10/indexion/src/document/structure" @doc_structure,
-  "trkbt10/indexion/src/docgen/wiki/types" @types,
+  "trkbt10/indexion/src/docgen/wiki/types",
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
 }

@@ -1,6 +1,7 @@
 ///|
 using @test {assert_eq}
 
+///|
 test "parse_pattern treats plain words as normalized text matchers" {
   let parsed = parse_pattern("version")
   assert_eq(parsed.length(), 1)

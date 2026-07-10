@@ -53,7 +53,7 @@ pub(all) enum SegmentType {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for SegmentType with output(self, logger) {
+pub impl Show for SegmentType with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 
@@ -213,10 +213,10 @@ pub fn segment_points_to_text_segments(
 /// Each strategy implements this trait to provide a consistent API.
 pub(open) trait SegmentationStrategy {
   /// Get the name of this strategy.
-  name(Self) -> String
+  fn name(Self) -> String
 
   /// Segment text and return an array of segment points.
-  segment(Self, String) -> Array[SegmentPoint]
+  fn segment(Self, String) -> Array[SegmentPoint]
 }
 
 ///|

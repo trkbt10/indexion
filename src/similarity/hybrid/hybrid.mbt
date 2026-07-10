@@ -31,14 +31,18 @@ pub fn HybridStrategy::get_config(self : HybridStrategy) -> @types.HybridConfig 
 }
 
 ///|
-pub impl @types.SimilarityStrategy for HybridStrategy with name(self) {
+pub impl @types.SimilarityStrategy for HybridStrategy with fn name(self) {
   ignore(self)
   "hybrid"
 }
 
 ///|
 /// String-based distance uses NCD only (TF-IDF requires KGF tokenization).
-pub impl @types.SimilarityStrategy for HybridStrategy with distance(self, a, b) {
+pub impl @types.SimilarityStrategy for HybridStrategy with fn distance(
+  self,
+  a,
+  b,
+) {
   ignore(self)
   // After KGF migration, string-based TF-IDF is not available.
   // Use NCD only for fallback.
@@ -46,7 +50,7 @@ pub impl @types.SimilarityStrategy for HybridStrategy with distance(self, a, b) 
 }
 
 ///|
-pub impl @types.SimilarityStrategy for HybridStrategy with similarity(
+pub impl @types.SimilarityStrategy for HybridStrategy with fn similarity(
   self,
   a,
   b,

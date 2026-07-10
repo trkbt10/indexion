@@ -1,7 +1,7 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
-  "trkbt10/indexion/cmd/indexion/common" @common,
-  "trkbt10/indexion/cmd/indexion/help" @help,
+  "moonbitlang/core/argparse",
+  "trkbt10/indexion/cmd/indexion/common",
+  "trkbt10/indexion/cmd/indexion/help",
   "trkbt10/indexion/src/spec/draft" @spec_draft,
 }
 

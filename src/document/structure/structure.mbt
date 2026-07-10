@@ -29,7 +29,7 @@ pub struct DocumentTablePair {
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
-pub impl Show for DocumentTablePair with output(self, logger) {
+pub impl Show for DocumentTablePair with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 

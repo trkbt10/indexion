@@ -11,7 +11,7 @@ pub struct ModuleNode {
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
-pub impl Show for ModuleNode with output(self, logger) {
+pub impl Show for ModuleNode with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 
@@ -33,7 +33,7 @@ pub(all) struct SymbolNode {
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
-pub impl Show for SymbolNode with output(self, logger) {
+pub impl Show for SymbolNode with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 
@@ -61,7 +61,7 @@ pub enum EdgeKind {
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
-pub impl Show for EdgeKind with output(self, logger) {
+pub impl Show for EdgeKind with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 

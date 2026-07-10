@@ -1,10 +1,10 @@
 import {
-  "trkbt10/indexion/src/kgf/cas/types" @types,
-  "trkbt10/indexion/src/kgf/cas/store" @store,
+  "trkbt10/indexion/src/kgf/cas/types",
+  "trkbt10/indexion/src/kgf/cas/store",
 }
 
 import {
-  "trkbt10/indexion/src/core/graph" @graph,
+  "trkbt10/indexion/src/core/graph",
 } for "wbtest"
 
 supported_targets = "native"

@@ -3,14 +3,14 @@ import {
 }
 
 import {
-  "moonbitlang/core/test" @test,
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/src/core/graph" @graph,
-  "trkbt10/indexion/src/kgf/lexer" @lexer,
-  "trkbt10/indexion/src/kgf/peg" @peg,
-  "trkbt10/indexion/src/kgf/registry" @registry,
-  "trkbt10/indexion/src/kgf/semantics" @semantics,
-  "trkbt10/indexion/src/kgf/features" @features,
+  "moonbitlang/core/test",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/src/core/graph",
+  "trkbt10/indexion/src/kgf/lexer",
+  "trkbt10/indexion/src/kgf/peg",
+  "trkbt10/indexion/src/kgf/registry",
+  "trkbt10/indexion/src/kgf/semantics",
+  "trkbt10/indexion/src/kgf/features",
   "trkbt10/indexion/src/pipeline/comparison" @batch,
 } for "wbtest"
 

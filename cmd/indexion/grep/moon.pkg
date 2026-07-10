@@ -1,19 +1,19 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
-  "trkbt10/indexion/cmd/indexion/common" @common,
+  "moonbitlang/core/argparse",
+  "trkbt10/indexion/cmd/indexion/common",
   "trkbt10/indexion/src/kgf/declarations" @kgf_declarations,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
-  "trkbt10/indexion/src/config" @config,
-  "trkbt10/indexion/src/regexp" @regexp,
-  "trkbt10/indexion/src/search" @search,
+  "trkbt10/indexion/src/config",
+  "trkbt10/indexion/src/regexp",
+  "trkbt10/indexion/src/search",
 }
 
 import {
-  "moonbitlang/core/test" @test,
-  "moonbitlang/core/env" @env,
-  "moonbitlang/x/fs" @fs,
+  "moonbitlang/core/test",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
 } for "wbtest"
 
 supported_targets = "native"

@@ -141,7 +141,7 @@ pub fn NameAction::label(self : NameAction) -> String {
 ///|
 /// Custom ToJson: emit the kebab-case label so JSON consumers see the
 /// same string as the rationale prefix.
-pub impl ToJson for NameAction with to_json(self) {
+pub impl ToJson for NameAction with fn to_json(self) {
   self.label().to_json()
 }
 

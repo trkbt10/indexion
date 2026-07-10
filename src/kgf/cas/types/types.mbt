@@ -9,7 +9,7 @@ pub struct ContentHash {
 } derive(Eq, Debug, ToJson, @json.FromJson, Hash)
 
 ///|
-pub impl Show for ContentHash with output(self, logger) {
+pub impl Show for ContentHash with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 

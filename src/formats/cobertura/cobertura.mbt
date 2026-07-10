@@ -57,7 +57,10 @@ pub fn render_cobertura(report : @coverage.CoverageReport) -> String {
 fn coverage_element(report : @coverage.CoverageReport) -> @xml.XmlElement {
   let totals = report.totals()
   let line_rate = @coverage.coverage_rate(totals.lines_hit, totals.lines_found)
-  let branch_rate = @coverage.coverage_rate(totals.branches_hit, totals.branches_found)
+  let branch_rate = @coverage.coverage_rate(
+    totals.branches_hit,
+    totals.branches_found,
+  )
   @xml.element(
     "coverage",
     attributes=[
@@ -80,14 +83,11 @@ fn coverage_element(report : @coverage.CoverageReport) -> @xml.XmlElement {
 
 ///|
 fn sources_element(source_root : String) -> @xml.XmlElement {
-  @xml.element(
-    "sources",
-    children=[
-      @xml.node_element(
-        @xml.element("source", children=[@xml.node_text(source_root)]),
-      ),
-    ],
-  )
+  @xml.element("sources", children=[
+    @xml.node_element(
+      @xml.element("source", children=[@xml.node_text(source_root)]),
+    ),
+  ])
 }
 
 ///|
@@ -107,7 +107,10 @@ fn package_element(
 ) -> @xml.XmlElement {
   let totals = @coverage.aggregate_totals(files)
   let line_rate = @coverage.coverage_rate(totals.lines_hit, totals.lines_found)
-  let branch_rate = @coverage.coverage_rate(totals.branches_hit, totals.branches_found)
+  let branch_rate = @coverage.coverage_rate(
+    totals.branches_hit,
+    totals.branches_found,
+  )
   let class_children : Array[@xml.XmlNode] = []
   for file in files {
     class_children.push(@xml.node_element(class_element(file)))
@@ -130,7 +133,10 @@ fn package_element(
 fn class_element(file : @coverage.FileCoverage) -> @xml.XmlElement {
   let totals = file.totals()
   let line_rate = @coverage.coverage_rate(totals.lines_hit, totals.lines_found)
-  let branch_rate = @coverage.coverage_rate(totals.branches_hit, totals.branches_found)
+  let branch_rate = @coverage.coverage_rate(
+    totals.branches_hit,
+    totals.branches_found,
+  )
   @xml.element(
     "class",
     attributes=[
@@ -156,21 +162,15 @@ fn methods_element(functions : Array[@coverage.FunctionHit]) -> @xml.XmlElement 
   let children : Array[@xml.XmlNode] = []
   for f in funcs {
     let rate = if f.hits > 0 { 1.0 } else { 0.0 }
-    let method_lines = @xml.element(
-      "lines",
-      children=[
-        @xml.node_element(
-          @xml.element(
-            "line",
-            attributes=[
-              @xml.attr("number", f.line.to_string()),
-              @xml.attr("hits", f.hits.to_string()),
-              @xml.attr("branch", "false"),
-            ],
-          ),
-        ),
-      ],
-    )
+    let method_lines = @xml.element("lines", children=[
+      @xml.node_element(
+        @xml.element("line", attributes=[
+          @xml.attr("number", f.line.to_string()),
+          @xml.attr("hits", f.hits.to_string()),
+          @xml.attr("branch", "false"),
+        ]),
+      ),
+    ])
     children.push(
       @xml.node_element(
         @xml.element(
@@ -186,7 +186,7 @@ fn methods_element(functions : Array[@coverage.FunctionHit]) -> @xml.XmlElement 
       ),
     )
   }
-  @xml.element("methods", children=children)
+  @xml.element("methods", children~)
 }
 
 ///|
@@ -201,9 +201,11 @@ fn lines_element(
   let sorted = @coverage.sort_lines(lines)
   let children : Array[@xml.XmlNode] = []
   for l in sorted {
-    children.push(@xml.node_element(line_element(l, branches_by_line.get(l.line))))
+    children.push(
+      @xml.node_element(line_element(l, branches_by_line.get(l.line))),
+    )
   }
-  @xml.element("lines", children=children)
+  @xml.element("lines", children~)
 }
 
 ///|
@@ -326,13 +328,7 @@ fn class_name_from_path(path : String) -> String {
 /// `1.0000`. We avoid `Double::to_string()` because its scientific
 /// notation breaks the DTD's numeric pattern.
 fn format_rate(rate : Double) -> String {
-  let clamped = if rate < 0.0 {
-    0.0
-  } else if rate > 1.0 {
-    1.0
-  } else {
-    rate
-  }
+  let clamped = if rate < 0.0 { 0.0 } else if rate > 1.0 { 1.0 } else { rate }
   // Scale to 10000 and round to nearest integer, then format manually.
   let scaled = (clamped * 10000.0 + 0.5).to_int()
   let int_part = scaled / 10000

@@ -15,7 +15,7 @@ pub enum Node {
 } derive(Debug, Eq, Hash)
 
 ///|
-pub impl Show for Node with output(self, logger) {
+pub impl Show for Node with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 

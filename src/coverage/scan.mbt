@@ -272,10 +272,7 @@ pub fn ScanResult::to_coverage_report(self : ScanResult) -> CoverageReport {
     for u in sf.units {
       let hits = if u.passed { 1 } else { 0 }
       match line_hits.get(u.line) {
-        Some(existing) =>
-          if hits > existing {
-            line_hits.set(u.line, hits)
-          }
+        Some(existing) => if hits > existing { line_hits.set(u.line, hits) }
         None => {
           line_hits.set(u.line, hits)
           line_order.push(u.line)
@@ -289,13 +286,7 @@ pub fn ScanResult::to_coverage_report(self : ScanResult) -> CoverageReport {
     for line in line_order {
       lines.push({ line, hits: line_hits.get(line).unwrap_or(0) })
     }
-    files.push({
-      path: sf.path,
-      pkg: sf.pkg,
-      lines,
-      functions,
-      branches: [],
-    })
+    files.push({ path: sf.path, pkg: sf.pkg, lines, functions, branches: [] })
   }
   CoverageReport::new(
     files,

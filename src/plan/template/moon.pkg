@@ -1,8 +1,8 @@
 import {
-  "trkbt10/indexion/src/plan/types" @types,
-  "trkbt10/indexion/src/plan/render" @render,
-  "trkbt10/indexion/src/config" @config,
-  "moonbitlang/x/fs" @fs,
+  "trkbt10/indexion/src/plan/types",
+  "trkbt10/indexion/src/plan/render",
+  "trkbt10/indexion/src/config",
+  "moonbitlang/x/fs",
 }
 
 supported_targets = "native"

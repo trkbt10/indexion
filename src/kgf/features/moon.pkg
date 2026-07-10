@@ -1,15 +1,15 @@
 import {
-  "trkbt10/indexion/src/config" @config,
+  "trkbt10/indexion/src/config",
   "trkbt10/indexion/src/kgf/types" @kgf_types,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/kgf/toolkit" @kgf_toolkit,
   "trkbt10/indexion/src/kgf/declarations" @kgf_declarations,
-  "trkbt10/indexion/src/similarity/apted" @apted,
+  "trkbt10/indexion/src/similarity/apted",
   "trkbt10/indexion/src/text/ops" @text_ops,
 }
 
 import {
-  "moonbitlang/core/test" @test,
+  "moonbitlang/core/test",
 } for "wbtest"
 
 supported_targets = "native"

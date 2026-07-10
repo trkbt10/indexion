@@ -8,11 +8,17 @@ pub fn get_installed_kgfs_dir() -> String? {
 /// List all installed specs with metadata.
 /// Category is derived from the subdirectory name (not hardcoded).
 pub fn list_installed_specs() -> Array[KgfSpecInfo] {
-  let specs : Array[KgfSpecInfo] = []
   let kgfs_dir = match get_installed_kgfs_dir() {
     Some(dir) => dir
-    None => return specs
+    None => return []
   }
+  list_specs_from_dir(kgfs_dir)
+}
+
+///|
+/// List specs from a resolved kgfs directory.
+pub fn list_specs_from_dir(kgfs_dir : String) -> Array[KgfSpecInfo] {
+  let specs : Array[KgfSpecInfo] = []
   collect_specs_recursive(kgfs_dir, kgfs_dir, specs)
   sort_specs(specs)
   specs

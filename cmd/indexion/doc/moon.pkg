@@ -1,8 +1,8 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
-  "trkbt10/indexion/cmd/indexion/doc/init" @init,
-  "trkbt10/indexion/cmd/indexion/doc/graph" @graph,
-  "trkbt10/indexion/cmd/indexion/doc/readme" @readme,
+  "moonbitlang/core/argparse",
+  "trkbt10/indexion/cmd/indexion/doc/init",
+  "trkbt10/indexion/cmd/indexion/doc/graph",
+  "trkbt10/indexion/cmd/indexion/doc/readme",
 }
 
 supported_targets = "native"

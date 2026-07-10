@@ -1,15 +1,15 @@
 import {
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/cmd/indexion/common" @common,
-  "trkbt10/indexion/src/config" @config,
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/cmd/indexion/common",
+  "trkbt10/indexion/src/config",
   "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
   "trkbt10/indexion/src/kgf/toolkit" @kgf_toolkit,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
   "trkbt10/indexion/src/kgf/peg" @kgf_peg,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
-  "trkbt10/indexion/src/docgen/wiki/types" @types,
-  "trkbt10/indexion/src/docgen/wiki/reader" @reader,
+  "trkbt10/indexion/src/docgen/wiki/types",
+  "trkbt10/indexion/src/docgen/wiki/reader",
 }
 
 supported_targets = "native"

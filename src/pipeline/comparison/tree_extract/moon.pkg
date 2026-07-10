@@ -1,5 +1,5 @@
 import {
-  "trkbt10/indexion/src/similarity/apted" @apted,
+  "trkbt10/indexion/src/similarity/apted",
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/kgf/toolkit" @kgf_toolkit,

@@ -1,6 +1,6 @@
 import {
-  "moonbitlang/core/json" @json,
-  "trkbt10/indexion/src/agent/orient/model" @model,
+  "moonbitlang/core/json",
+  "trkbt10/indexion/src/agent/orient/model",
 }
 
 supported_targets = "native"

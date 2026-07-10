@@ -170,7 +170,7 @@ pub enum FilterResult {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for FilterResult with output(self, logger) {
+pub impl Show for FilterResult with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 

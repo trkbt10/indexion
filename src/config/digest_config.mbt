@@ -8,7 +8,7 @@ pub struct DigestFileConfig {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for DigestFileConfig with output(self, logger) {
+pub impl Show for DigestFileConfig with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 

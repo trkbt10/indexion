@@ -232,8 +232,7 @@ fn render_template(
       // Find matching `}}`.
       let key_start = i + 2
       let mut j = key_start
-      while j + 1 < chars.length() &&
-            !(chars[j] == '}' && chars[j + 1] == '}') {
+      while j + 1 < chars.length() && !(chars[j] == '}' && chars[j + 1] == '}') {
         j = j + 1
       }
       if j + 1 >= chars.length() {
@@ -1171,10 +1170,7 @@ fn find_innermost_open(text : String, open : String, close : String) -> Int? {
     if text[i:i + open.length()].to_owned() == open {
       // Is there a close BEFORE the next open in the remainder?
       let after = i + open.length()
-      let next_open = find_substring(
-        text[after:text.length()].to_owned(),
-        open,
-      )
+      let next_open = find_substring(text[after:text.length()].to_owned(), open)
       let next_close = find_substring(
         text[after:text.length()].to_owned(),
         close,

@@ -16,19 +16,23 @@ pub fn NCDStrategy::new() -> NCDStrategy {
 }
 
 ///|
-pub impl @types.SimilarityStrategy for NCDStrategy with name(self) {
+pub impl @types.SimilarityStrategy for NCDStrategy with fn name(self) {
   ignore(self)
   "ncd"
 }
 
 ///|
-pub impl @types.SimilarityStrategy for NCDStrategy with distance(self, a, b) {
+pub impl @types.SimilarityStrategy for NCDStrategy with fn distance(self, a, b) {
   ignore(self)
   @utils.ncd(a, b)
 }
 
 ///|
-pub impl @types.SimilarityStrategy for NCDStrategy with similarity(self, a, b) {
+pub impl @types.SimilarityStrategy for NCDStrategy with fn similarity(
+  self,
+  a,
+  b,
+) {
   1.0 - self.distance(a, b)
 }
 

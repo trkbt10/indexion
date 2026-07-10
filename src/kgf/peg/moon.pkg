@@ -3,13 +3,13 @@ import {
   "moonbitlang/core/builtin",
   "moonbitlang/core/hashset",
   "moonbitlang/core/json",
-  "trkbt10/indexion/src/kgf/charclass" @charclass,
+  "trkbt10/indexion/src/kgf/charclass",
   "trkbt10/indexion/src/kgf/types",
 }
 
 import {
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/src/core/graph" @graph,
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/src/core/graph",
   "trkbt10/indexion/src/kgf/lexer",
   "trkbt10/indexion/src/kgf/parser",
   "trkbt10/indexion/src/kgf/semantics",

@@ -1,5 +1,5 @@
 import {
-  "moonbitlang/core/json" @json,
+  "moonbitlang/core/json",
 }
 
 supported_targets = "native"

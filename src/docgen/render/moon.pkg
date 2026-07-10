@@ -1,7 +1,7 @@
 import {
-  "trkbt10/indexion/src/core/graph" @graph,
-  "trkbt10/indexion/src/docgen/query" @query,
-  "trkbt10/indexion/src/docgen/diagram" @diagram,
+  "trkbt10/indexion/src/core/graph",
+  "trkbt10/indexion/src/docgen/query",
+  "trkbt10/indexion/src/docgen/diagram",
 }
 
 supported_targets = "native"

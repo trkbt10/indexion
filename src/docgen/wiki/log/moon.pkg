@@ -1,14 +1,14 @@
 import {
-  "moonbitlang/core/json" @json,
-  "moonbitlang/core/string" @string,
-  "moonbitlang/x/fs" @fs,
+  "moonbitlang/core/json",
+  "moonbitlang/core/string",
+  "moonbitlang/x/fs",
   "trkbt10/indexion/src/docgen/wiki/types" @wiki_types,
-  "trkbt10/indexion/src/config" @config,
+  "trkbt10/indexion/src/config",
 }
 
 import {
-  "moonbitlang/core/env" @env,
-  "moonbitlang/core/test" @test,
+  "moonbitlang/core/env",
+  "moonbitlang/core/test",
 } for "wbtest"
 
 supported_targets = "native"

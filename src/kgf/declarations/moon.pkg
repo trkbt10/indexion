@@ -1,5 +1,5 @@
 import {
-  "trkbt10/indexion/src/core/graph" @graph,
+  "trkbt10/indexion/src/core/graph",
   "trkbt10/indexion/src/kgf/peg" @kgf_peg,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/kgf/semantics" @kgf_semantics,
@@ -8,7 +8,7 @@ import {
 }
 
 import {
-  "moonbitlang/x/fs" @fs,
+  "moonbitlang/x/fs",
 } for "wbtest"
 
 supported_targets = "native"

@@ -3,7 +3,8 @@
 fn render_output(report : VerifyReport, format : String) -> String {
   if @common.is_coverage_format(format) {
     let coverage_report = verify_to_coverage_report(
-      report.config.target_dir, report,
+      report.config.target_dir,
+      report,
     )
     match @common.render_coverage_format(format, coverage_report) {
       Some(s) => return s

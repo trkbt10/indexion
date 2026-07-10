@@ -28,7 +28,7 @@ pub struct WikiSourceRef {
 
 ///|
 /// Custom ToJson: { file, lines: [start, end] } for frontend.
-pub impl ToJson for WikiSourceRef with to_json(self) {
+pub impl ToJson for WikiSourceRef with fn to_json(self) {
   let m : Map[String, Json] = {}
   m["file"] = self.file.to_json()
   m["lines"] = [self.start_line.to_json(), self.end_line.to_json()]
@@ -171,12 +171,12 @@ pub struct ManifestPage {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub impl Show for ManifestPage with output(self, logger) {
+pub impl Show for ManifestPage with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 
 ///|
-pub impl @json.FromJson for ManifestPage with from_json(json, path) {
+pub impl @json.FromJson for ManifestPage with fn from_json(json, path) {
   guard json is Object(obj) else {
     raise @json.JsonDecodeError(
       (path, "ManifestPage::from_json: expected object"),
@@ -288,12 +288,12 @@ pub struct WikiManifest {
 } derive(Eq, Debug, ToJson)
 
 ///|
-pub impl Show for WikiManifest with output(self, logger) {
+pub impl Show for WikiManifest with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 
 ///|
-pub impl @json.FromJson for WikiManifest with from_json(json, path) {
+pub impl @json.FromJson for WikiManifest with fn from_json(json, path) {
   guard json is Object(obj) else {
     raise @json.JsonDecodeError(
       (path, "WikiManifest::from_json: expected object"),

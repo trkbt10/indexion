@@ -4,15 +4,15 @@
 /// Chunk store trait for reading/writing module chunks.
 pub trait ChunkStore {
   /// Read a chunk by its hash.
-  get(Self, @types.ContentHash) -> @types.ModuleChunk?
+  fn get(Self, @types.ContentHash) -> @types.ModuleChunk?
   /// Write a chunk (stores using its hash).
-  put(Self, @types.ModuleChunk) -> Unit
+  fn put(Self, @types.ModuleChunk) -> Unit
   /// Check if a chunk exists.
-  has(Self, @types.ContentHash) -> Bool
+  fn has(Self, @types.ContentHash) -> Bool
   /// Delete a chunk.
-  delete(Self, @types.ContentHash) -> Bool
+  fn delete(Self, @types.ContentHash) -> Bool
   /// List all chunk hashes.
-  list(Self) -> Array[@types.ContentHash]
+  fn list(Self) -> Array[@types.ContentHash]
 }
 
 ///|

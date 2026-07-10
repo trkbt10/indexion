@@ -1,16 +1,18 @@
 import {
-  "trkbt10/indexion/src/zip" @zip,
+  "trkbt10/indexion/src/zip",
   "trkbt10/indexion/src/kgf/types" @kgf_types,
 }
 
 import {
-  "moonbitlang/core/test" @test,
-  "hustcer/fzip" @fzip,
-  "moonbitlang/core/env" @env,
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/src/glob" @glob,
-  "trkbt10/indexion/src/config" @config,
+  "moonbitlang/core/test",
+  "hustcer/fzip",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/src/glob",
+  "trkbt10/indexion/src/config",
 } for "wbtest"
+
+supported_targets = "native"
 
 options(
   targets: {
@@ -19,5 +21,3 @@ options(
     "xlsx_wbtest.mbt": [ "native" ],
   },
 )
-
-supported_targets = "native"

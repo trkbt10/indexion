@@ -1,16 +1,17 @@
 import {
-  "moonbitlang/core/json" @json,
-  "trkbt10/indexion/src/scope" @scope,
-  "trkbt10/indexion/src/platform" @platform,
-  "trkbt10/indexion/src/ignorefile" @ignorefile,
-  "moonbitlang/x/fs" @fs,
-  "mizchi/x/sys" @sys,
+  "moonbitlang/core/json",
+  "trkbt10/indexion/src/scope",
+  "trkbt10/indexion/src/platform",
+  "trkbt10/indexion/src/ignorefile",
+  "moonbitlang/x/fs",
+  "mizchi/x/sys",
   "trkbt10/osenv/platform" @osenv_platform,
   "trkbt10/osenv/dirs" @osenv_dirs,
   "trkbt10/osenv/path" @osenv_path,
 }
 
 import {
-  "moonbitlang/core/test" @test,
+  "moonbitlang/core/test",
 } for "wbtest"
+
 supported_targets = "native"

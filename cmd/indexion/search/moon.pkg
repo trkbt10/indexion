@@ -1,19 +1,19 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/cmd/indexion/common" @common,
-  "trkbt10/indexion/cmd/indexion/help" @help,
-  "trkbt10/indexion/cmd/indexion/grep" @grep,
+  "moonbitlang/core/argparse",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/cmd/indexion/common",
+  "trkbt10/indexion/cmd/indexion/help",
+  "trkbt10/indexion/cmd/indexion/grep",
   "trkbt10/indexion/cmd/indexion/digest" @digest_cli,
-  "trkbt10/indexion/src/config" @config,
-  "trkbt10/indexion/src/digest/index" @index,
+  "trkbt10/indexion/src/config",
+  "trkbt10/indexion/src/digest/index",
   "trkbt10/indexion/src/digest/config" @dconfig,
   "trkbt10/indexion/src/digest/workspace" @digest_workspace,
   "trkbt10/indexion/src/document/structure" @doc_structure,
   "trkbt10/indexion/src/embedding/config" @embed_config,
   "trkbt10/indexion/src/search" @search_engine,
-  "trkbt10/indexion/src/digest/embed" @embed,
-  "trkbt10/indexion/src/pipeline" @pipeline,
+  "trkbt10/indexion/src/digest/embed",
+  "trkbt10/indexion/src/pipeline",
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/docgen/wiki/interop" @wiki_interop,
@@ -24,9 +24,9 @@ import {
 }
 
 import {
-  "moonbitlang/core/test" @test,
-  "moonbitlang/core/env" @env,
-  "moonbitlang/async" @async,
+  "moonbitlang/core/test",
+  "moonbitlang/core/env",
+  "moonbitlang/async",
 } for "wbtest"
 
 supported_targets = "native"

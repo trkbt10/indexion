@@ -1,15 +1,15 @@
 import {
-  "mizchi/x/process" @process,
-  "moonbitlang/core/argparse" @argparse,
-  "trkbt10/indexion/cmd/indexion/common" @common,
-  "trkbt10/indexion/cmd/indexion/help" @help,
-  "trkbt10/indexion/src/parallel" @parallel,
+  "mizchi/x/process",
+  "moonbitlang/core/argparse",
+  "trkbt10/indexion/cmd/indexion/common",
+  "trkbt10/indexion/cmd/indexion/help",
+  "trkbt10/indexion/src/parallel",
   "trkbt10/indexion/src/spec/align" @spec_align,
 }
 
 import {
-  "moonbitlang/core/env" @env,
-  "moonbitlang/x/fs" @fs,
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
   "moonbitlang/async",
 } for "wbtest"
 

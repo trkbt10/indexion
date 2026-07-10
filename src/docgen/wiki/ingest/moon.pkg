@@ -1,10 +1,10 @@
 import {
-  "moonbitlang/core/json" @json,
-  "moonbitlang/x/fs" @fs,
+  "moonbitlang/core/json",
+  "moonbitlang/x/fs",
   "trkbt10/indexion/src/docgen/wiki/types" @wiki_types,
   "trkbt10/indexion/src/kgf/cas/hash" @cas_hash,
   "trkbt10/indexion/src/plan/types" @plan_types,
-  "trkbt10/indexion/src/config" @config,
+  "trkbt10/indexion/src/config",
 }
 
 supported_targets = "native"

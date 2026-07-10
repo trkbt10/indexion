@@ -1,10 +1,10 @@
 import {
-  "moonbitlang/core/math" @math,
-  "trkbt10/indexion/src/text/tfidf" @tfidf,
+  "moonbitlang/core/math",
+  "trkbt10/indexion/src/text/tfidf",
   "trkbt10/indexion/src/kgf/features" @kgf_features,
-  "trkbt10/indexion/src/similarity/apted" @apted,
-  "trkbt10/indexion/src/pipeline/comparison/candidates" @candidates,
-  "trkbt10/indexion/src/pipeline/comparison/tree_extract" @tree_extract,
+  "trkbt10/indexion/src/similarity/apted",
+  "trkbt10/indexion/src/pipeline/comparison/candidates",
+  "trkbt10/indexion/src/pipeline/comparison/tree_extract",
 }
 
 supported_targets = "native"

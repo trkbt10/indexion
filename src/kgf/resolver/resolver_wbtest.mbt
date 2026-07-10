@@ -19,7 +19,7 @@ fn MockFileResolver::with_contents(
 }
 
 ///|
-impl FileResolver for MockFileResolver with file_exists(self, path) {
+impl FileResolver for MockFileResolver with fn file_exists(self, path) {
   for file in self.existing_files {
     if file == path {
       return true
@@ -29,7 +29,7 @@ impl FileResolver for MockFileResolver with file_exists(self, path) {
 }
 
 ///|
-impl FileResolver for MockFileResolver with read_file(self, path) {
+impl FileResolver for MockFileResolver with fn read_file(self, path) {
   self.file_contents.get(path)
 }
 

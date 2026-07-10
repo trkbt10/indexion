@@ -1,12 +1,12 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/cmd/indexion/common" @common,
+  "moonbitlang/core/argparse",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/cmd/indexion/common",
   "trkbt10/indexion/cmd/indexion/wiki/common" @wiki_cli_common,
   "trkbt10/indexion/src/docgen/wiki/types" @wiki_types,
   "trkbt10/indexion/src/docgen/wiki/interop" @wiki_interop,
   "trkbt10/indexion/src/docgen/wiki/workspace" @wiki_workspace,
-  "trkbt10/indexion/src/config" @config,
+  "trkbt10/indexion/src/config",
 }
 
 supported_targets = "native"

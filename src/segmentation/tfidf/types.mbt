@@ -21,7 +21,7 @@ pub struct TfidfConfig {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for TfidfConfig with output(self, logger) {
+pub impl Show for TfidfConfig with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 

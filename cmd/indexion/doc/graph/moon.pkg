@@ -1,14 +1,24 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
-  "trkbt10/indexion/cmd/indexion/help" @help,
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/cmd/indexion/common" @common,
+  "moonbitlang/core/argparse",
+  "moonbitlang/core/env",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/string",
+  "trkbt10/indexion/cmd/indexion/help",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/cmd/indexion/common",
+  "trkbt10/indexion/src/config",
+  "trkbt10/indexion/src/core/graph" @core_graph,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
-  "trkbt10/indexion/src/docgen/build" @build,
-  "trkbt10/indexion/src/docgen/diagram" @diagram,
-  "trkbt10/indexion/src/docgen/query" @query,
-  "trkbt10/indexion/src/docgen/render" @render,
-  "trkbt10/indexion/src/pipeline" @pipeline,
+  "trkbt10/indexion/src/docgen/build",
+  "trkbt10/indexion/src/docgen/diagram",
+  "trkbt10/indexion/src/docgen/query",
+  "trkbt10/indexion/src/docgen/render",
+  "trkbt10/indexion/src/pipeline",
 }
+
+import {
+  "moonbitlang/core/json",
+  "moonbitlang/core/test",
+} for "wbtest"
 
 supported_targets = "native"

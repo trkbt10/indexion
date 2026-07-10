@@ -166,13 +166,16 @@ fn default_segment_config() -> SegmentConfig {
 
 ///|
 /// Implement SegmentationStrategy trait for WindowStrategy.
-pub impl @types.SegmentationStrategy for WindowStrategy with name(self) {
+pub impl @types.SegmentationStrategy for WindowStrategy with fn name(self) {
   ignore(self)
   "window"
 }
 
 ///|
-pub impl @types.SegmentationStrategy for WindowStrategy with segment(self, text) {
+pub impl @types.SegmentationStrategy for WindowStrategy with fn segment(
+  self,
+  text,
+) {
   segment_by_divergence(text, self.config)
 }
 

@@ -1,11 +1,11 @@
 import {
-  "moonbitlang/core/json" @json,
-  "trkbt10/indexion/src/kgf/charclass" @charclass,
+  "moonbitlang/core/json",
+  "trkbt10/indexion/src/kgf/charclass",
   "trkbt10/indexion/src/kgf/types",
 }
 
 import {
-  "moonbitlang/core/test" @test,
+  "moonbitlang/core/test",
   "trkbt10/indexion/src/regexp",
   "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
 } for "wbtest"

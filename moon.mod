@@ -1,0 +1,28 @@
+name = "trkbt10/indexion"
+
+version = "0.16.0"
+
+import {
+  "moonbitlang/x@0.4.41",
+  "trkbt10/vcdb@0.3.0",
+  "moonbitlang/async@0.16.7",
+  "mizchi/x@0.1.7",
+  "trkbt10/osenv@0.1.0",
+  "hustcer/fzip@0.5.8",
+}
+
+readme = "README.mbt.md"
+
+repository = "https://github.com/trkbt10/indexion"
+
+license = "Apache-2.0"
+
+keywords = [
+  "code-analysis",
+  "dependency-graph",
+  "documentation",
+  "similarity",
+  "refactoring",
+]
+
+description = "Source code exploration and documentation tool with similarity analysis and refactoring support"

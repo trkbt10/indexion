@@ -146,12 +146,15 @@ pub fn segment(text : String) -> Array[@types.SegmentPoint] {
 
 ///|
 /// Implement SegmentationStrategy trait for TfidfStrategy.
-pub impl @types.SegmentationStrategy for TfidfStrategy with name(self) {
+pub impl @types.SegmentationStrategy for TfidfStrategy with fn name(self) {
   ignore(self)
   "tfidf"
 }
 
 ///|
-pub impl @types.SegmentationStrategy for TfidfStrategy with segment(self, text) {
+pub impl @types.SegmentationStrategy for TfidfStrategy with fn segment(
+  self,
+  text,
+) {
   segment_by_tfidf(text, self.config)
 }

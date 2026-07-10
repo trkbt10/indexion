@@ -1,6 +1,6 @@
 import {
   "trkbt10/indexion/src/similarity" @sim,
-  "trkbt10/indexion/cmd/indexion/common" @common,
+  "trkbt10/indexion/cmd/indexion/common",
   "moonbitlang/core/argparse",
 }
 

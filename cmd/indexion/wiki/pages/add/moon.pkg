@@ -1,8 +1,8 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
-  "moonbitlang/core/env" @env,
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/cmd/indexion/common" @common,
+  "moonbitlang/core/argparse",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/cmd/indexion/common",
   "trkbt10/indexion/cmd/indexion/wiki/common" @wiki_cli_common,
   "trkbt10/indexion/src/docgen/wiki/types" @wiki_types,
   "trkbt10/indexion/src/docgen/wiki/manifest" @wiki_manifest,

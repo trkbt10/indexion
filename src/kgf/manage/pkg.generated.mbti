@@ -12,6 +12,8 @@ pub async fn install_single_kgf(String, Bytes) -> Unit raise KgfManageError
 
 pub fn list_installed_specs() -> Array[KgfSpecInfo]
 
+pub fn list_specs_from_dir(String) -> Array[KgfSpecInfo]
+
 pub async fn update_kgfs() -> Unit raise KgfManageError
 
 // Errors
@@ -33,4 +35,3 @@ pub struct KgfSpecInfo {
 // Type aliases
 
 // Traits
-

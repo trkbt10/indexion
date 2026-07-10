@@ -4,8 +4,8 @@ import {
 }
 
 import {
-  "moonbitlang/core/test" @test,
-  "moonbitlang/core/debug" @debug,
+  "moonbitlang/core/test",
+  "moonbitlang/core/debug",
 } for "wbtest"
 
 supported_targets = "native"

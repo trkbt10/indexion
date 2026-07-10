@@ -1,10 +1,10 @@
 import {
-  "trkbt10/indexion/src/config" @config,
-  "trkbt10/indexion/src/platform" @platform,
+  "trkbt10/indexion/src/config",
+  "trkbt10/indexion/src/platform",
   "trkbt10/indexion/src/kgf/manage" @kgf_manage,
-  "trkbt10/indexion/src/http" @http,
-  "moonbitlang/core/json" @json,
-  "moonbitlang/x/crypto" @crypto,
+  "trkbt10/indexion/src/http",
+  "moonbitlang/core/json",
+  "moonbitlang/x/crypto",
 }
 
 supported_targets = "native"

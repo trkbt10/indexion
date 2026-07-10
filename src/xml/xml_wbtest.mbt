@@ -6,11 +6,15 @@ test "render: empty element renders as self-closing tag" {
 
 ///|
 test "render: attributes preserve insertion order and are quoted" {
-  let el = element(
-    "input",
-    attributes=[attr("type", "text"), attr("name", "x"), attr("value", "1")],
+  let el = element("input", attributes=[
+    attr("type", "text"),
+    attr("name", "x"),
+    attr("value", "1"),
+  ])
+  assert_eq(
+    render_element(el),
+    "<input type=\"text\" name=\"x\" value=\"1\"/>\n",
   )
-  assert_eq(render_element(el), "<input type=\"text\" name=\"x\" value=\"1\"/>\n")
 }
 
 ///|
@@ -22,10 +26,7 @@ test "render: single text child renders inline" {
 ///|
 test "render: nested elements are indented" {
   let inner = element("b", children=[node_text("bold")])
-  let outer = element(
-    "p",
-    children=[node_text("hi"), node_element(inner)],
-  )
+  let outer = element("p", children=[node_text("hi"), node_element(inner)])
   // Mixed-content element: every child goes on its own line.
   let want =
     #|<p>
@@ -38,10 +39,10 @@ test "render: nested elements are indented" {
 
 ///|
 test "render: attribute values are escaped against all five entities" {
-  let el = element(
-    "a",
-    attributes=[attr("href", "x?y=1&z=2"), attr("title", "she said \"hi\" & '")],
-  )
+  let el = element("a", attributes=[
+    attr("href", "x?y=1&z=2"),
+    attr("title", "she said \"hi\" & '"),
+  ])
   let out = render_element(el)
   assert_true(out.contains("href=\"x?y=1&amp;z=2\""))
   assert_true(out.contains("title=\"she said &quot;hi&quot; &amp; &apos;\""))
@@ -73,10 +74,7 @@ test "render: document adds declaration and optional DOCTYPE" {
 
 ///|
 test "render: comment renders with -- collapsed to - -" {
-  let el = element(
-    "root",
-    children=[node_comment(" generated -- by tool ")],
-  )
+  let el = element("root", children=[node_comment(" generated -- by tool ")])
   let out = render_element(el)
   assert_true(out.contains("<!-- generated - - by tool -->"))
 }

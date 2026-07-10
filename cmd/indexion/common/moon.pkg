@@ -1,20 +1,20 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
-  "moonbitlang/core/env" @env,
-  "moonbitlang/x/fs" @fs,
+  "moonbitlang/core/argparse",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
   "trkbt10/indexion/src/config" @config_paths,
-  "trkbt10/indexion/src/pipeline" @pipeline,
+  "trkbt10/indexion/src/pipeline",
   "trkbt10/indexion/src/text/format" @text_format,
   "trkbt10/indexion/src/text/ops" @text_ops,
-  "trkbt10/indexion/src/vfs" @vfs,
-  "trkbt10/indexion/src/kgf/registry" @registry,
-  "trkbt10/indexion/src/coverage" @coverage,
-  "trkbt10/indexion/src/formats/lcov" @lcov,
-  "trkbt10/indexion/src/formats/cobertura" @cobertura,
+  "trkbt10/indexion/src/vfs",
+  "trkbt10/indexion/src/kgf/registry",
+  "trkbt10/indexion/src/coverage",
+  "trkbt10/indexion/src/formats/lcov",
+  "trkbt10/indexion/src/formats/cobertura",
 }
 
 import {
-  "moonbitlang/core/test" @test,
+  "moonbitlang/core/test",
 } for "wbtest"
 
 supported_targets = "native"

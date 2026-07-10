@@ -1,7 +1,7 @@
 import {
-  "moonbitlang/core/json" @json,
+  "moonbitlang/core/json",
   "trkbt10/indexion/src/kgf/cas/hash" @cas_hash,
-  "trkbt10/indexion/src/vcs/git" @git,
+  "trkbt10/indexion/src/vcs/git",
 }
 
 supported_targets = "native"

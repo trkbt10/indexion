@@ -1,19 +1,19 @@
 import {
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/src/core/graph" @graph,
-  "trkbt10/indexion/src/digest/types" @types,
-  "trkbt10/indexion/src/digest/hash" @hash,
-  "trkbt10/indexion/src/digest/extract" @extract,
-  "trkbt10/indexion/src/digest/manifest" @manifest,
-  "trkbt10/indexion/src/digest/embed" @embed,
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/src/core/graph",
+  "trkbt10/indexion/src/digest/types",
+  "trkbt10/indexion/src/digest/hash",
+  "trkbt10/indexion/src/digest/extract",
+  "trkbt10/indexion/src/digest/manifest",
+  "trkbt10/indexion/src/digest/embed",
   "trkbt10/indexion/src/config" @app_config,
-  "trkbt10/indexion/src/digest/config" @config,
+  "trkbt10/indexion/src/digest/config",
   "trkbt10/indexion/src/text/embed" @text_embed,
   "trkbt10/indexion/src/kgf/cas/types" @cas_types,
   "trkbt10/vcdb/core/types" @vcdb_core,
   "trkbt10/vcdb/core/filter" @vcdb_filter,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
-  "trkbt10/indexion/src/search" @search,
+  "trkbt10/indexion/src/search",
 }
 
 supported_targets = "native"

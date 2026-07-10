@@ -2,9 +2,9 @@
 /// FileResolver trait for checking file existence and reading files.
 /// Implementations should provide the actual file system access.
 pub trait FileResolver {
-  file_exists(Self, String) -> Bool
+  fn file_exists(Self, String) -> Bool
   /// Read a file's content. Returns None if the file doesn't exist or can't be read.
-  read_file(Self, String) -> String?
+  fn read_file(Self, String) -> String?
 }
 
 ///|
@@ -728,12 +728,12 @@ priv struct FnFileResolver {
 }
 
 ///|
-impl FileResolver for FnFileResolver with file_exists(self, path : String) -> Bool {
+impl FileResolver for FnFileResolver with fn file_exists(self, path : String) -> Bool {
   (self.check)(path)
 }
 
 ///|
-impl FileResolver for FnFileResolver with read_file(self, path : String) -> String? {
+impl FileResolver for FnFileResolver with fn read_file(self, path : String) -> String? {
   (self.read)(path)
 }
 

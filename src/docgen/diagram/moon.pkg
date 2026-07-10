@@ -1,10 +1,10 @@
 import {
-  "trkbt10/indexion/src/docgen/query" @query,
-  "trkbt10/indexion/src/core/graph" @graph,
+  "trkbt10/indexion/src/docgen/query",
+  "trkbt10/indexion/src/core/graph",
 }
 
 import {
-  "moonbitlang/core/test" @test,
+  "moonbitlang/core/test",
 } for "wbtest"
 
 supported_targets = "native"

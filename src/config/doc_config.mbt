@@ -12,7 +12,7 @@ pub struct DocConfig {
 } derive(Eq, Debug)
 
 ///|
-pub impl ToJson for DocConfig with to_json(self) {
+pub impl ToJson for DocConfig with fn to_json(self) {
   let m : Map[String, Json] = {}
   m["root"] = self.root.to_json()
   let pkg_arr : Array[Json] = self.packages.map(fn(p) { p.to_json() })
@@ -46,7 +46,7 @@ pub struct DocRootConfig {
 } derive(Eq, Debug)
 
 ///|
-pub impl ToJson for DocRootConfig with to_json(self) {
+pub impl ToJson for DocRootConfig with fn to_json(self) {
   let m : Map[String, Json] = {}
   if self.template.length() > 0 {
     m["template"] = self.template.to_json()
@@ -65,7 +65,7 @@ pub enum DocRootSection {
 } derive(Eq, Debug)
 
 ///|
-pub impl ToJson for DocRootSection with to_json(self) {
+pub impl ToJson for DocRootSection with fn to_json(self) {
   let m : Map[String, Json] = {}
   match self {
     Static(file) => {

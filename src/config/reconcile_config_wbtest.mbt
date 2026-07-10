@@ -1,5 +1,4 @@
 ///|
-
 fn temp_config_dir(prefix : String) -> String {
   let base = match get_global_cache_dir() {
     Some(dir) => dir + "/indexion-test"
@@ -157,6 +156,28 @@ test "config: find_kgfs_dir scans target dirs in order" {
   remove_dir_if_exists(target2)
   remove_dir_if_exists(target1)
   remove_dir_if_exists(dir)
+}
+
+///|
+test "config: find_kgfs_dir honors cwd-relative explicit dir" {
+  assert_eq(
+    find_kgfs_dir(
+      explicit_path="kgfs/story",
+      target_dir="fixtures/story/dorian-gray/README.md",
+    ),
+    Some(normalize_path("kgfs/story")),
+  )
+}
+
+///|
+test "config: find_kgfs_dir does not fall back when explicit dir is missing" {
+  assert_eq(
+    find_kgfs_dir(
+      explicit_path="kgfs/__missing__",
+      target_dir="fixtures/story/dorian-gray/README.md",
+    ),
+    None,
+  )
 }
 
 ///|

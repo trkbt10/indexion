@@ -1,9 +1,9 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
-  "moonbitlang/core/env" @env,
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/cmd/indexion/common" @common,
-  "trkbt10/indexion/cmd/indexion/help" @help,
+  "moonbitlang/core/argparse",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/cmd/indexion/common",
+  "trkbt10/indexion/cmd/indexion/help",
   "trkbt10/indexion/cmd/indexion/wiki/common" @wiki_cli_common,
   "trkbt10/indexion/src/docgen/wiki/reader" @wiki_reader,
   "trkbt10/indexion/src/docgen/wiki/types" @wiki_types,
@@ -12,7 +12,7 @@ import {
   "trkbt10/indexion/src/docgen/wiki/workspace" @wiki_workspace,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/embedding/config" @embed_config,
-  "trkbt10/indexion/src/digest/embed" @embed,
+  "trkbt10/indexion/src/digest/embed",
 }
 
 supported_targets = "native"

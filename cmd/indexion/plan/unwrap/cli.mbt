@@ -238,7 +238,10 @@ pub fn run_to_string(config : UnwrapConfig) -> String? {
   }
   if @common.is_coverage_format(config.format) {
     let report = to_coverage_report(
-      config.target_dir, files, wrappers, registry,
+      config.target_dir,
+      files,
+      wrappers,
+      registry,
     )
     return @common.render_coverage_format(config.format, report)
   }

@@ -41,15 +41,15 @@ pub fn SimilarityResult::get_similarity(self : SimilarityResult) -> Double {
 /// Each strategy implements this trait to provide a consistent API.
 pub(open) trait SimilarityStrategy {
   /// Get the name of this strategy.
-  name(Self) -> String
+  fn name(Self) -> String
 
   /// Calculate distance between two texts.
   /// Returns normalized distance in [0, 1] where 0 = identical.
-  distance(Self, String, String) -> Double
+  fn distance(Self, String, String) -> Double
 
   /// Calculate similarity between two texts.
   /// Returns normalized similarity in [0, 1] where 1 = identical.
-  similarity(Self, String, String) -> Double
+  fn similarity(Self, String, String) -> Double
 }
 
 ///|

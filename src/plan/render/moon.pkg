@@ -1,6 +1,6 @@
 import {
-  "trkbt10/indexion/src/plan/types" @types,
-  "trkbt10/indexion/src/kgf/parser" @parser,
+  "trkbt10/indexion/src/plan/types",
+  "trkbt10/indexion/src/kgf/parser",
 }
 
 supported_targets = "native"

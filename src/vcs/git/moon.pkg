@@ -1,16 +1,16 @@
 import {
   "trkbt10/indexion/src/config" @config_paths,
-  "trkbt10/indexion/src/ignorefile" @ignorefile,
-  "trkbt10/indexion/src/platform" @platform,
+  "trkbt10/indexion/src/ignorefile",
+  "trkbt10/indexion/src/platform",
   "moonbitlang/async/fs" @async_fs,
   "moonbitlang/async/process" @async_process,
 }
 
 import {
-  "moonbitlang/core/test" @test,
+  "moonbitlang/core/test",
   "moonbitlang/async",
-  "moonbitlang/core/env" @env,
-  "moonbitlang/x/fs" @fs,
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
 } for "wbtest"
 
 supported_targets = "native"

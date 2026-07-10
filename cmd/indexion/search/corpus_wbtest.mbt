@@ -1,6 +1,7 @@
 ///|
 using @test {assert_eq}
 
+///|
 fn temp_dir(label : String) -> String {
   let dir = "/tmp/indexion-search/" + label + "-" + @env.now().to_string()
   @config.ensure_dir_recursive(dir)

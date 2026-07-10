@@ -1,12 +1,12 @@
 import {
-  "trkbt10/indexion/src/glob" @glob,
-  "trkbt10/indexion/src/ignorefile" @ignorefile,
-  "trkbt10/indexion/src/kgf/parser" @parser,
+  "trkbt10/indexion/src/glob",
+  "trkbt10/indexion/src/ignorefile",
+  "trkbt10/indexion/src/kgf/parser",
 }
 
 import {
   "trkbt10/indexion/src/vcs/git" @vcs_git,
-  "trkbt10/indexion/src/config" @config,
+  "trkbt10/indexion/src/config",
 } for "wbtest"
 
 supported_targets = "native"

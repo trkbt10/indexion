@@ -271,7 +271,7 @@ pub fn command() -> @argparse.Command {
 pub async fn run_matches(matches : @argparse.Matches) -> Unit {
   let config = KgfConfig::from_matches(matches)
   match config.subcommand {
-    "list" => run_list()
+    "list" => run_list(config.kgf_dir)
     "update" => run_kgf_update()
     "add" => {
       if config.file_path.length() == 0 {
@@ -367,13 +367,23 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
 
 ///|
 /// List installed KGF specs.
-fn run_list() -> Unit {
-  let specs = @kgf_manage.list_installed_specs()
+fn run_list(kgf_dir : String) -> Unit {
+  let explicit = if kgf_dir != "kgfs" { kgf_dir } else { "" }
+  let resolved_dir = @config.find_kgfs_dir(explicit_path=explicit)
+  let specs = match resolved_dir {
+    Some(dir) => @kgf_manage.list_specs_from_dir(dir)
+    None => []
+  }
   if specs.length() == 0 {
     println("No KGF specs installed.")
-    match @kgf_manage.get_installed_kgfs_dir() {
+    match resolved_dir {
       Some(dir) => println("Searched: " + dir)
-      None => println("No kgfs directory found.")
+      None =>
+        if kgf_dir.length() > 0 {
+          println("Searched: " + kgf_dir)
+        } else {
+          println("No kgfs directory found.")
+        }
     }
     return
   }

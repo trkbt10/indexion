@@ -1,23 +1,23 @@
 import {
   "moonbitlang/core/bench",
-  "moonbitlang/core/encoding/utf8" @utf8,
-  "moonbitlang/core/env" @env,
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/src/filter" @filter,
-  "trkbt10/indexion/src/config" @config,
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/src/filter",
+  "trkbt10/indexion/src/config",
   "trkbt10/indexion/src/vcs/git" @vcs_git,
-  "trkbt10/indexion/src/glob" @glob,
+  "trkbt10/indexion/src/glob",
   "trkbt10/indexion/src/kgf/parser" @kgf_parser,
-  "trkbt10/indexion/src/kgf/registry" @registry,
+  "trkbt10/indexion/src/kgf/registry",
   "trkbt10/indexion/src/kgf/types" @kgf_types,
-  "trkbt10/indexion/src/vfs" @vfs,
+  "trkbt10/indexion/src/vfs",
 }
 
 import {
-  "moonbitlang/core/test" @test,
+  "moonbitlang/core/test",
   "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
   "trkbt10/indexion/src/kgf/peg" @kgf_peg,
-  "hustcer/fzip" @fzip,
+  "hustcer/fzip",
   "trkbt10/indexion/src/kgf/features" @kgf_features,
 } for "wbtest"
 

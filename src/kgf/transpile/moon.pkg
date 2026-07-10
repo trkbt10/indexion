@@ -1,11 +1,11 @@
 import {
-  "moonbitlang/core/json" @json,
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/src/config" @config,
-  "trkbt10/indexion/src/kgf/lexer" @lexer,
-  "trkbt10/indexion/src/kgf/peg" @peg,
-  "trkbt10/indexion/src/kgf/registry" @registry,
-  "trkbt10/indexion/src/regexp" @regexp,
+  "moonbitlang/core/json",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/src/config",
+  "trkbt10/indexion/src/kgf/lexer",
+  "trkbt10/indexion/src/kgf/peg",
+  "trkbt10/indexion/src/kgf/registry",
+  "trkbt10/indexion/src/regexp",
 }
 
 supported_targets = "native"

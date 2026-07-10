@@ -1,11 +1,11 @@
 import {
-  "mizchi/x/process" @process,
-  "moonbitlang/core/json" @json,
-  "moonbitlang/x/fs" @fs,
-  "moonbitlang/x/sys" @sys,
-  "trkbt10/indexion/src/config" @config,
+  "mizchi/x/process",
+  "moonbitlang/core/json",
+  "moonbitlang/x/fs",
+  "moonbitlang/x/sys",
+  "trkbt10/indexion/src/config",
   "trkbt10/indexion/src/kgf/check" @kgf_check,
-  "trkbt10/indexion/src/kgf/registry" @registry,
+  "trkbt10/indexion/src/kgf/registry",
   "trkbt10/indexion/src/kgf/transpile" @kgf_transpile,
 }
 

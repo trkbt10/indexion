@@ -135,7 +135,7 @@ pub struct CostConfig {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for CostConfig with output(self, logger) {
+pub impl Show for CostConfig with fn output(self, logger) {
   to_repr(self).output(logger)
 }
 

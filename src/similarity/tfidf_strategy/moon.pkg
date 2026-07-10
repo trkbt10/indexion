@@ -1,6 +1,6 @@
 import {
-  "trkbt10/indexion/src/text/tfidf" @tfidf,
-  "trkbt10/indexion/src/similarity/types" @types,
+  "trkbt10/indexion/src/text/tfidf",
+  "trkbt10/indexion/src/similarity/types",
 }
 
 supported_targets = "native"

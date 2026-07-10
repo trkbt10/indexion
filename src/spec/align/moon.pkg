@@ -1,28 +1,28 @@
 import {
-  "moonbitlang/core/env" @env,
-  "moonbitlang/core/json" @json,
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/cmd/indexion/common" @common,
-  "trkbt10/indexion/src/config" @config,
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/cmd/indexion/common",
+  "trkbt10/indexion/src/config",
   "trkbt10/indexion/src/document/structure" @doc_structure,
   "trkbt10/indexion/src/kgf/cas/hash" @cas_hash,
   "trkbt10/indexion/src/kgf/declarations" @kgf_declarations,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
-  "trkbt10/indexion/src/kgf/registry" @registry,
+  "trkbt10/indexion/src/kgf/registry",
   "trkbt10/indexion/src/kgf/types" @kgf_types,
-  "trkbt10/indexion/src/pipeline" @pipeline,
+  "trkbt10/indexion/src/pipeline",
   "trkbt10/indexion/src/reconcile/tracking" @reconcile_tracking,
   "trkbt10/indexion/src/reconcile/store" @reconcile_store,
-  "trkbt10/indexion/src/similarity/ncd" @ncd,
+  "trkbt10/indexion/src/similarity/ncd",
   "trkbt10/indexion/src/text/ops" @text_ops,
-  "trkbt10/indexion/src/text/tfidf" @tfidf,
-  "trkbt10/indexion/src/text/tokenizer" @tokenizer,
-  "trkbt10/indexion/src/vcs/git" @git,
+  "trkbt10/indexion/src/text/tfidf",
+  "trkbt10/indexion/src/text/tokenizer",
+  "trkbt10/indexion/src/vcs/git",
 }
 
 import {
   "moonbitlang/async",
-  "mizchi/x/process" @process,
+  "mizchi/x/process",
 } for "wbtest"
 
 supported_targets = "native"

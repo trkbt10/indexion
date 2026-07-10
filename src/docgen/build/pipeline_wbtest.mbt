@@ -68,6 +68,59 @@ test "DocConfig::new: creates config with defaults" {
 }
 
 ///|
+test "build_graph_only: story-prose preserves semantic graph edges" {
+  let registry = @registry.KGFRegistry::load_from_dir("kgfs/story")
+  let specs = registry.to_specs_map()
+  let content =
+    #|# Chapter One
+    #|
+    #|The studio was filled with roses.
+    #|
+    #|宋金花は十字架を見上げた。
+  let files = [("story.md", content)]
+  let graph = build_graph_only(DocConfig::new(files, specs))
+  assert_eq(graph.module_count(), 1)
+  assert_true(graph.edge_count() >= 5)
+  assert_true(
+    graph
+    .get_edges()
+    .iter()
+    .any(fn(edge) {
+      edge.kind is @graph.Declares && edge.attrs.get("kind") == Some("Heading")
+    }),
+  )
+  assert_true(
+    graph
+    .get_edges()
+    .iter()
+    .any(fn(edge) {
+      edge.kind is @graph.Declares &&
+      edge.attrs.get("kind") == Some("Paragraph")
+    }),
+  )
+}
+
+///|
+test "build_graph_only: story-prose fixture readme preserves semantic edges" {
+  let registry = @registry.KGFRegistry::load_from_dir("kgfs/story")
+  let specs = registry.to_specs_map()
+  let path = "fixtures/story/dorian-gray/README.md"
+  let content = @fs.read_file_to_string(path) catch { _ => "" }
+  assert_true(content.length() > 0)
+  let graph = build_graph_only(DocConfig::new([(path, content)], specs))
+  assert_eq(graph.module_count(), 1)
+  assert_true(graph.edge_count() > 0)
+  assert_true(
+    graph
+    .get_edges()
+    .iter()
+    .any(fn(edge) {
+      edge.kind is @graph.Declares && edge.attrs.get("kind") == Some("Heading")
+    }),
+  )
+}
+
+///|
 test "generate_markdown: produces output from AnalysisResult" {
   let result = @analyze.AnalysisResult::new()
   let graph = @graph.CodeGraph::new()

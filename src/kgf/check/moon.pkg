@@ -1,18 +1,18 @@
 import {
-  "moonbitlang/core/json" @json,
-  "trkbt10/indexion/src/kgf/charclass" @charclass,
+  "moonbitlang/core/json",
+  "trkbt10/indexion/src/kgf/charclass",
   "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
   "trkbt10/indexion/src/kgf/peg" @kgf_peg,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
   "trkbt10/indexion/src/kgf/semantics" @kgf_semantics,
-  "trkbt10/indexion/src/regexp" @regexp,
+  "trkbt10/indexion/src/regexp",
 }
 
 import {
-  "moonbitlang/x/fs" @fs,
+  "moonbitlang/x/fs",
   "trkbt10/indexion/src/kgf/fixtures" @kgf_fixtures,
-  "trkbt10/indexion/src/kgf/registry" @registry,
-  "moonbitlang/core/test" @test,
+  "trkbt10/indexion/src/kgf/registry",
+  "moonbitlang/core/test",
 } for "wbtest"
 
 supported_targets = "native"

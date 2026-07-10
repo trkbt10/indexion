@@ -384,6 +384,22 @@ fn find_substring_from(text : String, needle : String, start : Int) -> Int {
 }
 
 ///|
+fn find_explicit_kgfs_candidate(
+  base_dir : String,
+  explicit_path : String,
+) -> String? {
+  if is_valid_dir(explicit_path) {
+    return Some(normalize_path(explicit_path))
+  }
+  let resolved = resolve_path(resolve_to_existing_dir(base_dir), explicit_path)
+  if is_valid_dir(resolved) {
+    Some(resolved)
+  } else {
+    None
+  }
+}
+
+///|
 /// Find kgfs directory.
 /// Priority:
 /// 1. Explicit path (--kgfs-dir CLI option)
@@ -399,15 +415,8 @@ pub fn find_kgfs_dir(
 ) -> String? {
   let search_dirs = normalize_kgfs_target_dirs(target_dir, target_dirs)
   let base_dir = if search_dirs.length() > 0 { search_dirs[0] } else { "." }
-  let explicit_candidate = if explicit_path.length() > 0 {
-    let resolved = resolve_path(base_dir, explicit_path)
-    if is_valid_dir(resolved) {
-      Some(resolved)
-    } else {
-      None
-    }
-  } else {
-    None
+  if explicit_path.length() > 0 {
+    return find_explicit_kgfs_candidate(base_dir, explicit_path)
   }
   let env_candidate = match @sys.get_env_var("INDEXION_KGFS_DIR") {
     Some(dir) =>
@@ -440,7 +449,11 @@ pub fn find_kgfs_dir(
     None => None
   }
   select_kgfs_dir_candidate(
-    explicit_candidate, env_candidate, global_candidate, project_candidate, cwd_candidate,
+    None,
+    env_candidate,
+    global_candidate,
+    project_candidate,
+    cwd_candidate,
     data_candidate,
   )
 }

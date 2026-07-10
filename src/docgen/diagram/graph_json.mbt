@@ -243,13 +243,7 @@ pub fn build_graph_from_deps(
         } else {
           name
         }
-        result.nodes.push({
-          id: node_id,
-          label,
-          kind,
-          file,
-          metadata: Map([]),
-        })
+        result.nodes.push({ id: node_id, label, kind, file, metadata: Map([]) })
       }
     }
   }
@@ -271,13 +265,7 @@ pub fn build_graph_from_deps(
         } else {
           name
         }
-        result.nodes.push({
-          id: node_id,
-          label,
-          kind,
-          file,
-          metadata: Map([]),
-        })
+        result.nodes.push({ id: node_id, label, kind, file, metadata: Map([]) })
       }
     }
   }

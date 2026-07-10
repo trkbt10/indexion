@@ -149,13 +149,13 @@ pub fn segment(text : String) -> Array[@types.SegmentPoint] {
 
 ///|
 /// Implement SegmentationStrategy trait for PunctuationStrategy.
-pub impl @types.SegmentationStrategy for PunctuationStrategy with name(self) {
+pub impl @types.SegmentationStrategy for PunctuationStrategy with fn name(self) {
   ignore(self)
   "punctuation"
 }
 
 ///|
-pub impl @types.SegmentationStrategy for PunctuationStrategy with segment(
+pub impl @types.SegmentationStrategy for PunctuationStrategy with fn segment(
   self,
   text,
 ) {

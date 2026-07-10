@@ -14,7 +14,7 @@ pub(all) enum VCS {
 
 ///|
 /// Display a VCS variant as a human-readable string.
-pub impl Show for VCS with output(self, logger) {
+pub impl Show for VCS with fn output(self, logger) {
   match self {
     Git => logger.write_string("Git")
     Jujutsu => logger.write_string("Jujutsu")

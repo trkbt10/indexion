@@ -1,4 +1,4 @@
 import {
-  "moonbitlang/core/bench" @bench,
-  "moonbitlang/core/test" @test,
+  "moonbitlang/core/bench",
+  "moonbitlang/core/test",
 } for "wbtest"

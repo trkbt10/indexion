@@ -1,20 +1,21 @@
 import {
   "trkbt10/indexion/src/config" @config_paths,
-  "trkbt10/indexion/src/core/graph" @graph,
-  "trkbt10/indexion/src/docgen/build" @build,
-  "trkbt10/indexion/src/docgen/render" @render,
+  "trkbt10/indexion/src/core/graph",
+  "trkbt10/indexion/src/docgen/build",
+  "trkbt10/indexion/src/docgen/render",
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/kgf/tokenize" @kgf_tokenize,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
-  "trkbt10/indexion/src/pipeline" @pipeline,
+  "trkbt10/indexion/src/pipeline",
   "trkbt10/indexion/src/text/format" @text_format,
   "trkbt10/indexion/src/text/ops" @text_ops,
-  "trkbt10/indexion/src/text/tfidf" @tfidf,
-  "trkbt10/indexion/src/text/tokenizer" @tokenizer,
+  "trkbt10/indexion/src/text/tfidf",
+  "trkbt10/indexion/src/text/tokenizer",
 }
 
 import {
-  "moonbitlang/core/test" @test,
+  "moonbitlang/core/test",
 } for "wbtest"
+
 supported_targets = "native"

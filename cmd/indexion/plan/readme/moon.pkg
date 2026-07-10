@@ -1,16 +1,16 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
-  "trkbt10/indexion/cmd/indexion/help" @help,
-  "moonbitlang/x/fs" @fs,
-  "trkbt10/indexion/cmd/indexion/common" @common,
-  "trkbt10/indexion/src/filter" @filter,
-  "trkbt10/indexion/src/pipeline" @pipeline,
+  "moonbitlang/core/argparse",
+  "trkbt10/indexion/cmd/indexion/help",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/cmd/indexion/common",
+  "trkbt10/indexion/src/filter",
+  "trkbt10/indexion/src/pipeline",
   "trkbt10/indexion/src/vcs/git" @vcs_git,
   "trkbt10/indexion/src/kgf/declarations" @kgf_declarations,
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
   "trkbt10/indexion/src/kgf/types" @kgf_types,
-  "trkbt10/indexion/src/config" @config,
+  "trkbt10/indexion/src/config",
 }
 
 supported_targets = "native"

@@ -1,12 +1,12 @@
 import {
-  "moonbitlang/x/fs" @fs,
+  "moonbitlang/x/fs",
   "trkbt10/indexion/src/config" @config_paths,
   "trkbt10/indexion/src/document/structure" @doc_structure,
   "trkbt10/indexion/src/kgf/registry" @kgf_registry,
-  "trkbt10/indexion/src/story" @story,
+  "trkbt10/indexion/src/story",
   "trkbt10/indexion/src/text/format" @text_format,
   "trkbt10/indexion/src/text/ops" @text_ops,
-  "trkbt10/indexion/src/text/tfidf" @tfidf,
+  "trkbt10/indexion/src/text/tfidf",
 }
 
 supported_targets = "native"

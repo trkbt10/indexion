@@ -1,6 +1,6 @@
 import {
-  "trkbt10/indexion/src/agent/orient" @orient,
-  "trkbt10/indexion/src/agent/orient/model" @model,
+  "trkbt10/indexion/src/agent/orient",
+  "trkbt10/indexion/src/agent/orient/model",
 }
 
 supported_targets = "native"

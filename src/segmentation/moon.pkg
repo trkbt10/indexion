@@ -1,8 +1,8 @@
 import {
-  "trkbt10/indexion/src/segmentation/types" @types,
-  "trkbt10/indexion/src/segmentation/punctuation" @punctuation,
-  "trkbt10/indexion/src/segmentation/tfidf" @tfidf,
-  "trkbt10/indexion/src/segmentation/window" @window,
+  "trkbt10/indexion/src/segmentation/types",
+  "trkbt10/indexion/src/segmentation/punctuation",
+  "trkbt10/indexion/src/segmentation/tfidf",
+  "trkbt10/indexion/src/segmentation/window",
 }
 
 supported_targets = "native"

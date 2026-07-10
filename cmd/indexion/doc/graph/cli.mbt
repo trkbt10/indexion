@@ -16,7 +16,7 @@
 /// | `--output=FILE` | Output file | stdout |
 /// | `--specs-dir=DIR` | KGF specs directory | kgfs |
 /// | `--title=TEXT` | Diagram title | Module Dependencies |
-/// | `--format=FORMAT` | Output format: mermaid, json, dot, d2, text | mermaid |
+/// | `--format=FORMAT` | Output format: mermaid, json, codegraph, sprawlens, dot, d2, text | mermaid |
 ///
 /// ## Examples
 ///
@@ -95,7 +95,7 @@ pub fn command() -> @argparse.Command {
       ]),
       @argparse.OptionArg(
         "format",
-        about="Output format: mermaid, json, dot, d2, text",
+        about="Output format: mermaid, json, codegraph, sprawlens, dot, d2, text",
         default_values=["mermaid"],
       ),
     ],
@@ -203,6 +203,13 @@ pub fn run_to_string(config : GraphConfig) -> String? {
     generate_json_output(deps, circulars)
   } else if config.format == "codegraph" {
     graph.to_json_string()
+  } else if config.format == "sprawlens" {
+    render_sprawlens_snapshot(
+      graph,
+      files,
+      @pipeline.root_dir_from_paths(config.input_paths),
+      config.title,
+    )
   } else if config.format == "dot" {
     @diagram.render_dot(graph_json)
   } else if config.format == "d2" {

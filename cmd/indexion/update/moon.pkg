@@ -3,11 +3,11 @@ import {
   "moonbitlang/core/argparse",
 }
 
+supported_targets = "native"
+
 options(
   targets: {
     "cli.mbt": [ "native" ],
     "cli_stub.mbt": [ "wasm", "wasm-gc", "js" ],
   },
 )
-
-supported_targets = "native"

@@ -6,11 +6,11 @@
 /// Implementations handle the actual embedding generation.
 pub(open) trait EmbeddingProvider {
   /// Generate embedding vector for a single text.
-  embed(Self, String) -> Array[Double]
+  fn embed(Self, String) -> Array[Double]
   /// Get the embedding dimension.
-  dim(Self) -> Int
+  fn dim(Self) -> Int
   /// Batch embedding for efficiency (default: sequential).
-  embed_batch(Self, Array[String]) -> Array[Array[Double]]
+  fn embed_batch(Self, Array[String]) -> Array[Array[Double]]
 }
 
 ///|

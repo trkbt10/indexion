@@ -1,6 +1,7 @@
 ///|
 using @test {assert_eq}
 
+///|
 fn test_registry() -> @kgf_registry.KGFRegistry {
   @kgf_registry.KGFRegistry::load_from_dir("kgfs")
 }

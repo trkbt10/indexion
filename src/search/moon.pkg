@@ -1,9 +1,9 @@
 import {
-  "moonbitlang/core/cmp" @cmp,
+  "moonbitlang/core/cmp",
   "trkbt10/indexion/src/text/embed" @text_embed,
   "trkbt10/indexion/src/embedding/config" @embed_config,
-  "trkbt10/indexion/src/digest/embed" @embed,
-  "trkbt10/vcdb" @vcdb,
+  "trkbt10/indexion/src/digest/embed",
+  "trkbt10/vcdb",
   "trkbt10/vcdb/core/types" @vcdb_core,
   "trkbt10/vcdb/core/filter" @vcdb_filter,
 }

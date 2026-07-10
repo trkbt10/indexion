@@ -1,7 +1,7 @@
 import {
-  "trkbt10/indexion/src/config" @config,
+  "trkbt10/indexion/src/config",
   "trkbt10/indexion/src/core/graph",
-  "trkbt10/indexion/src/kgf/registry" @registry,
+  "trkbt10/indexion/src/kgf/registry",
 }
 
 supported_targets = "native"

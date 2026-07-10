@@ -1,12 +1,12 @@
 import {
-  "trkbt10/indexion/src/mcp/protocol" @protocol,
-  "trkbt10/indexion/src/mcp/types" @types,
+  "trkbt10/indexion/src/mcp/protocol",
+  "trkbt10/indexion/src/mcp/types",
 }
 
 import {
-  "moonbitlang/core/test" @test,
+  "moonbitlang/core/test",
   "moonbitlang/async",
-  "moonbitlang/core/json" @json,
+  "moonbitlang/core/json",
 } for "wbtest"
 
 supported_targets = "native"

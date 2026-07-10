@@ -1,6 +1,6 @@
 import {
-  "moonbitlang/core/json" @json,
-  "trkbt10/indexion/src/config" @config,
+  "moonbitlang/core/json",
+  "trkbt10/indexion/src/config",
   "trkbt10/indexion/src/kgf/types",
 }
 

@@ -1,7 +1,7 @@
 import {
-  "moonbitlang/x/fs" @fs,
-  "hustcer/fzip" @fzip,
-  "trkbt10/indexion/src/glob" @glob,
+  "moonbitlang/x/fs",
+  "hustcer/fzip",
+  "trkbt10/indexion/src/glob",
 }
 
 supported_targets = "native"

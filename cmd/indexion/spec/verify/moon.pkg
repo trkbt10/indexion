@@ -1,15 +1,15 @@
 import {
-  "moonbitlang/core/argparse" @argparse,
-  "moonbitlang/core/json" @json,
-  "trkbt10/indexion/cmd/indexion/help" @help,
-  "trkbt10/indexion/cmd/indexion/common" @common,
-  "trkbt10/indexion/src/glob" @glob,
+  "moonbitlang/core/argparse",
+  "moonbitlang/core/json",
+  "trkbt10/indexion/cmd/indexion/help",
+  "trkbt10/indexion/cmd/indexion/common",
+  "trkbt10/indexion/src/glob",
   "trkbt10/indexion/src/kgf/features" @kgf_features,
   "trkbt10/indexion/src/kgf/tokenize" @kgf_tokenize,
-  "trkbt10/indexion/src/kgf/registry" @registry,
-  "trkbt10/indexion/src/pipeline" @pipeline,
+  "trkbt10/indexion/src/kgf/registry",
+  "trkbt10/indexion/src/pipeline",
   "trkbt10/indexion/src/pipeline/vocabulary" @vocab,
-  "trkbt10/indexion/src/coverage" @coverage,
+  "trkbt10/indexion/src/coverage",
 }
 
 import {
