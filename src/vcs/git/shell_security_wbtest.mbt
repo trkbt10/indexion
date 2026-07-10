@@ -44,7 +44,7 @@ async fn current_repo_root() -> String? {
 async test "vcs/git: native helpers resolve the current repository" {
   guard current_repo_root() is Some(root)
   assert_true(is_repo(root))
-  assert_true(last_commit_seconds(root, "moon.mod.json") is Some(_))
+  assert_true(last_commit_seconds(root, "moon.mod") is Some(_))
 }
 
 ///|
@@ -64,13 +64,13 @@ async test "vcs/git: native helpers do not interpret path shell payloads" {
   let marker = temp_git_dir("vcs-git-shell-path-marker-")
   remove_file_if_exists(marker)
   let payloads = [
-    "moon.mod.json; touch " + marker,
-    "moon.mod.json $(touch " + marker + ")",
-    "moon.mod.json `touch " + marker + "`",
-    "moon.mod.json & touch " + marker,
-    "moon.mod.json ' touch " + marker,
-    "moon.mod.json \" touch " + marker,
-    "moon.mod.json\n touch " + marker,
+    "moon.mod; touch " + marker,
+    "moon.mod $(touch " + marker + ")",
+    "moon.mod `touch " + marker + "`",
+    "moon.mod & touch " + marker,
+    "moon.mod ' touch " + marker,
+    "moon.mod \" touch " + marker,
+    "moon.mod\n touch " + marker,
   ]
   for payload in payloads {
     assert_eq(last_commit_seconds(root, payload), None)
