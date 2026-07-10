@@ -141,6 +141,147 @@ test "declares: rust pub fn and pub struct" {
   assert_true(!names.contains("private_fn"))
 }
 
+///|
+/// Regression test for real-world Rust that exercises the constructs the
+/// lexer/grammar previously mishandled: an outer `#[derive(...)]` attribute
+/// (which used to abort the whole parse), `&self` receivers, reference
+/// parameters/returns (`&str`, `&[u8]`), a raw-pointer parameter (`*const`),
+/// and `pub const` / `pub type` declarations whose `=` was shadowed by the
+/// generic `Operator` token. Before the fix, most of these items were
+/// silently dropped from the graph.
+test "declares: rust attributes, references, const and type alias" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let source =
+    #|//! Module documentation.
+    #|use std::fmt;
+    #|
+    #|/// An absolute path, stored as raw bytes.
+    #|#[derive(Clone, PartialEq, Eq, Hash)]
+    #|pub struct RemotePath(Vec<u8>);
+    #|
+    #|pub const MAX_LEN: usize = 4096;
+    #|
+    #|pub type Bytes = Vec<u8>;
+    #|
+    #|impl RemotePath {
+    #|    pub fn root() -> Self {
+    #|        RemotePath(Vec::new())
+    #|    }
+    #|
+    #|    pub fn as_bytes(&self) -> &[u8] {
+    #|        &self.0
+    #|    }
+    #|
+    #|    pub fn from_str(s: &str) -> Self {
+    #|        RemotePath(s.as_bytes().to_vec())
+    #|    }
+    #|
+    #|    pub unsafe fn from_raw(p: *const u8) -> Self {
+    #|        RemotePath(Vec::new())
+    #|    }
+    #|}
+  let (fn_count, type_count, names) = count_declares(
+    registry, "rust", source, "path.rs",
+  )
+  // Four methods survive the whole impl body now that references parse.
+  assert_eq(fn_count, 4)
+  // Struct + const + type alias.
+  assert_eq(type_count, 3)
+  assert_true(names.get("RemotePath") == Some("struct"))
+  assert_true(names.get("MAX_LEN") == Some("const"))
+  assert_true(names.get("Bytes") == Some("type"))
+  assert_true(names.get("root") == Some("function"))
+  assert_true(names.get("as_bytes") == Some("function"))
+  assert_true(names.get("from_str") == Some("function"))
+  assert_true(names.get("from_raw") == Some("function"))
+}
+
+///|
+/// Regression test for Rust generic/lexer corner cases: nested generics that
+/// close with adjacent `>` (`Vec<Option<f32>>`), a lifetime used as a generic
+/// argument (`Ctx<'a>`), doc comments and `#[attr]`s on struct fields in
+/// either order, and an enum whose variant is literally named `None` (a
+/// prelude value constructor, not a type). Each of these used to abort the
+/// parse and drop the enclosing item.
+test "declares: rust nested generics, lifetimes, doc-fields, None variant" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let source =
+    #|use std::collections::{
+    #|    HashMap,
+    #|    BTreeMap,
+    #|};
+    #|
+    #|/// Aggregated per-core stats.
+    #|#[derive(Debug, Clone, Default)]
+    #|pub struct Stats {
+    #|    /// Busy percentage per core.
+    #|    pub per_core: Vec<Option<f32>>,
+    #|    #[serde(default)]
+    #|    /// Attribute precedes the doc here.
+    #|    pub table: HashMap<String, Vec<u32>>,
+    #|}
+    #|
+    #|impl Stats {
+    #|    pub fn view<'a>(&'a self, ctx: &Ctx<'a>) -> &'a [u8] {
+    #|        &self.raw
+    #|    }
+    #|}
+    #|
+    #|/// Which splits are allowed.
+    #|#[derive(Copy, Clone)]
+    #|pub enum Allowed {
+    #|    #[default]
+    #|    /// No restriction.
+    #|    All = 0b11,
+    #|    /// Nothing is allowed.
+    #|    None = 0b00,
+    #|}
+  let (fn_count, type_count, names) = count_declares(
+    registry, "rust", source, "stats.rs",
+  )
+  assert_eq(fn_count, 1) // view
+  assert_eq(type_count, 2) // Stats + Allowed
+  assert_true(names.get("Stats") == Some("struct"))
+  assert_true(names.get("view") == Some("function"))
+  assert_true(names.get("Allowed") == Some("enum"))
+}
+
+///|
+/// Regression test for two real-world idioms that used to silently drop the
+/// enclosing declaration: (1) the conventional member ordering where a `///`
+/// doc comment PRECEDES an `#[attr]` on its own line, and (2) declarations
+/// named after prelude type words — the near-universal `pub type Result<T>`
+/// alias and an enum whose variant/field is named `String`. The whole
+/// struct/enum/alias was lost before, so this asserts they all appear.
+test "declares: rust doc-before-attr member and type-word identifiers" {
+  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let source =
+    #|pub type Result<T> = std::result::Result<T, Error>;
+    #|
+    #|/// Configuration.
+    #|pub struct Config {
+    #|    /// The name.
+    #|    #[serde(default)]
+    #|    pub name: String,
+    #|}
+    #|
+    #|/// A JSON value.
+    #|pub enum Value {
+    #|    /// A string payload.
+    #|    #[serde(rename = "str")]
+    #|    String(String),
+    #|    Number(f64),
+    #|}
+  let (fn_count, type_count, names) = count_declares(
+    registry, "rust", source, "json.rs",
+  )
+  ignore(fn_count)
+  assert_eq(type_count, 3) // Result alias + Config struct + Value enum
+  assert_true(names.get("Result") == Some("type"))
+  assert_true(names.get("Config") == Some("struct"))
+  assert_true(names.get("Value") == Some("enum"))
+}
+
 // ─── Go ─────────────────────────────────────────────────────
 
 ///|

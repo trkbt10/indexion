@@ -81,10 +81,10 @@
     }
   ],
   "stats": {
-    "symbols": 6,
-    "edges": 17,
+    "symbols": 25,
+    "edges": 22,
     "edgesByKind": {
-      "declares": 2,
+      "declares": 7,
       "projectName": 3,
       "module_depends_on": 12
     },

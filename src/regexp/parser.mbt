@@ -504,11 +504,14 @@ fn extract_first_char_ranges(
     Some(qe) => qe
     None => return None
   }
-  // Only optimize if quantifier requires at least one match
-  match first.quantifier {
-    One | OneOrMore | Exactly(_) | AtLeast(_) | Between(_, _) => ()
-    _ => return None
-  }
+  // Only seed the first-char filter when the first consuming element is
+  // guaranteed to occur. A zero-minimum quantifier (`?`, `*`, `{0}`, `{0,}`,
+  // `{0,m}`) may match empty, so that element need not appear at `pos` and its
+  // literal must not constrain the filter — otherwise a valid match with the
+  // element absent is wrongly rejected before matching even starts. This shares
+  // the exact "requires at least one occurrence" rule the matcher fast paths
+  // use, so the two cannot drift.
+  guard quantifier_requires_one(first.quantifier) else { return None }
   match first.element {
     Literal(c) =>
       if case_insensitive {

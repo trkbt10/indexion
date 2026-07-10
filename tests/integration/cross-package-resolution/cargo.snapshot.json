@@ -64,10 +64,10 @@
     }
   ],
   "stats": {
-    "symbols": 3,
-    "edges": 25,
+    "symbols": 20,
+    "edges": 34,
     "edgesByKind": {
-      "declares": 3,
+      "declares": 12,
       "dependsOn": 4,
       "projectName": 1,
       "projectKeyword": 3,

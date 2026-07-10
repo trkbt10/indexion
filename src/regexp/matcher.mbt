@@ -768,6 +768,48 @@ fn count_simple_matches(
 }
 
 ///|
+/// Whether a quantifier requires its element to occur at least once.
+///
+/// The literal look-ahead fast paths in `match_elements_backtrack` skip the
+/// current element straight to input positions where the *next* element's
+/// literal character occurs. That shortcut is only sound when the next
+/// element is guaranteed to consume that literal as its first matched
+/// character — i.e. its minimum repetition count is at least one. For `?`,
+/// `*`, `{0,m}` the next element may match the empty string, so the boundary
+/// character need not be the literal; scanning only for the literal would
+/// wrongly reject valid matches (e.g. `a b? c` against "ac", or the Rust
+/// attribute lexer's `#!?\[...` against `#[...]`).
+fn quantifier_requires_one(q : Quantifier) -> Bool {
+  match q {
+    One | OneOrMore => true
+    Exactly(n) | AtLeast(n) => n >= 1
+    Between(n, _) => n >= 1
+    ZeroOrMore | ZeroOrOne => false
+  }
+}
+
+///|
+/// The single literal character that the element at `idx + 1` is guaranteed
+/// to consume as its first matched character, if any.
+///
+/// Returns `None` when there is no next element, when the next element is not
+/// a single-character literal or escape, or when its quantifier permits zero
+/// occurrences (so the literal need not appear at the boundary). Both the
+/// greedy and lazy fast paths in `match_elements_backtrack` use this shared
+/// predicate to skip directly to candidate boundary positions, so the
+/// "which char must come next" rule lives in exactly one place.
+fn next_required_literal(elements : Array[QuantifiedElement], idx : Int) -> Char? {
+  guard idx + 1 < elements.length() else { return None }
+  let next = elements[idx + 1]
+  guard quantifier_requires_one(next.quantifier) else { return None }
+  match next.element {
+    Literal(c) => Some(c)
+    Escape(escape_char) => escape_literal_char(escape_char)
+    _ => None
+  }
+}
+
+///|
 /// Returns quantifier min/max bounds. max_possible is the number of chars that
 /// actually match the element starting from the current position.
 fn quantifier_bounds(q : Quantifier, max_possible : Int) -> (Int, Int)? {
@@ -914,18 +956,11 @@ fn match_elements_backtrack(
     None => return None
     Some((lo, hi)) =>
       if qe.lazy_ {
-        // Fast path for lazy quantifier: if the next element is a Literal,
-        // scan ahead for it instead of trying every position.
-        let next_literal = if idx + 1 < elements.length() {
-          match elements[idx + 1].element {
-            Literal(c) => Some(c)
-            Escape(escape_char) => escape_literal_char(escape_char)
-            _ => None
-          }
-        } else {
-          None
-        }
-        match next_literal {
+        // Fast path for lazy quantifier: if the next element is a literal that
+        // must occur, scan ahead for it instead of trying every position.
+        // `next_required_literal` returns None for optional next elements, so
+        // we fall through to the generic backtracking path in those cases.
+        match next_required_literal(elements, idx) {
           Some(target_char) => {
             // Skip ahead: only try positions where target_char occurs
             let ci = case_insensitive
@@ -982,18 +1017,11 @@ fn match_elements_backtrack(
             }
         }
       } else {
-        // Fast path for greedy quantifier: if the next element is a Literal,
-        // scan backward for it instead of trying every position.
-        let next_literal_greedy = if idx + 1 < elements.length() {
-          match elements[idx + 1].element {
-            Literal(c) => Some(c)
-            Escape(escape_char) => escape_literal_char(escape_char)
-            _ => None
-          }
-        } else {
-          None
-        }
-        match next_literal_greedy {
+        // Fast path for greedy quantifier: if the next element is a literal
+        // that must occur, scan backward for it instead of trying every
+        // position. `next_required_literal` returns None for optional next
+        // elements, so we fall through to the generic backtracking path.
+        match next_required_literal(elements, idx) {
           Some(target_char) => {
             // Only try positions where target_char occurs
             let ci = case_insensitive
