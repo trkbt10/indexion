@@ -34,7 +34,7 @@ pub fn ReconcileCliConfig::from_matches(
 
 ///|
 pub fn command() -> @argparse.Command {
-  @argparse.Command::new(
+  @argparse.Command(
     "reconcile",
     about="Reconcile acts extracted from --spec docs against --impl docs",
     options=[
@@ -48,30 +48,30 @@ pub fn command() -> @argparse.Command {
         action=Append,
         about="Glob pattern for impl-side documents (repeatable)",
       ),
-      @argparse.OptionArg::new("format", about="Output format: text | json", default_values=[
+      @argparse.OptionArg("format", about="Output format: text | json", default_values=[
         "text",
       ]),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "output",
         about="Output file path (- or empty = stdout)",
         default_values=[""],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "similarity-floor",
         about="Minimum BM25 similarity for an impl doc to count as a match",
         default_values=["0.15"],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "runner-up-margin",
         about="Margin under best similarity within which runner-ups are reported",
         default_values=["0.05"],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "max-terms",
         about="Maximum missing/extra terms reported per candidate",
         default_values=["8"],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "registry-root",
         about="Root for kgfs/story spec discovery (default: CWD)",
         default_values=[""],

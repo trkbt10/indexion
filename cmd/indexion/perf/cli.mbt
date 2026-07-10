@@ -1,24 +1,22 @@
 ///|
 /// Define the perf command with kgf subcommand for argparse.
 pub fn command() -> @argparse.Command {
-  @argparse.Command::new(
+  @argparse.Command(
     "perf",
     about="Performance benchmark commands",
     subcommand_required=true,
     subcommands=[
-      @argparse.Command::new("kgf", about="KGF parse benchmark", options=[
-        @argparse.OptionArg::new("spec", about="KGF spec file", default_values=[
+      @argparse.Command("kgf", about="KGF parse benchmark", options=[
+        @argparse.OptionArg("spec", about="KGF spec file", default_values=[
           "kgfs/moonbit.kgf",
         ]),
-        @argparse.OptionArg::new("input", about="Input source file", default_values=[
+        @argparse.OptionArg("input", about="Input source file", default_values=[
           "src/docgen/build/pipeline.mbt",
         ]),
-        @argparse.OptionArg::new(
-          "iterations",
-          about="Iterations per benchmark",
-          default_values=["20"],
-        ),
-        @argparse.OptionArg::new("warmup", about="Warmup iterations", default_values=[
+        @argparse.OptionArg("iterations", about="Iterations per benchmark", default_values=[
+          "20",
+        ]),
+        @argparse.OptionArg("warmup", about="Warmup iterations", default_values=[
           "3",
         ]),
       ]),

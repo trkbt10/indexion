@@ -29,11 +29,11 @@ fn audit_command() -> @argparse.Command {
     "audit",
     about="Detect file/folder/symbol name drift against code content",
     flags=[
-      @argparse.FlagArg::new(
+      @argparse.FlagArg(
         "no-symbols",
         about="Skip function/type/variable symbol identity checks",
       ),
-      @argparse.FlagArg::new(
+      @argparse.FlagArg(
         "no-folders",
         about="Skip aggregate folder identity checks",
       ),
@@ -42,22 +42,22 @@ fn audit_command() -> @argparse.Command {
       @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "format",
         about="Output format: text, json, lcov, cobertura",
         default_values=["text"],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "output",
         about="Output file path (- or empty = stdout)",
         default_values=[""],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "threshold",
         about="Minimum divergence to show as review candidate",
         default_values=["0.62"],
       ),
-      @argparse.OptionArg::new("limit", about="Maximum candidates to render", default_values=[
+      @argparse.OptionArg("limit", about="Maximum candidates to render", default_values=[
         "50",
       ]),
     ],
@@ -121,12 +121,7 @@ fn audit_to_coverage_report(
   let b = @coverage.ScanBuilder::new()
   for candidate in report.candidates {
     let is_symbol_kind = candidate.kind == "symbol"
-    b.record(
-      candidate.path,
-      1,
-      name=candidate.name,
-      is_function=is_symbol_kind,
-    )
+    b.record(candidate.path, 1, name=candidate.name, is_function=is_symbol_kind)
   }
   b.to_coverage_report("indexion-identity-audit", source_root)
 }

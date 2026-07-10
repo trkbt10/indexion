@@ -124,16 +124,16 @@ pub fn GrepConfig::from_matches(matches : @argparse.Matches) -> GrepConfig {
 
 ///|
 pub fn command() -> @argparse.Command {
-  @argparse.Command::new(
+  @argparse.Command(
     "grep",
     about="KGF-aware token pattern search",
     flags=[
-      @argparse.FlagArg::new(
+      @argparse.FlagArg(
         "undocumented",
         about="Find pub declarations without doc comments",
       ),
-      @argparse.FlagArg::new("count", about="Show match count per file only"),
-      @argparse.FlagArg::new("files", about="Show matching file paths only"),
+      @argparse.FlagArg("count", about="Show match count per file only"),
+      @argparse.FlagArg("files", about="Show matching file paths only"),
     ],
     options=[
       @argparse.OptionArg(

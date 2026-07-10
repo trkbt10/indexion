@@ -61,7 +61,7 @@ fn TextRope::push_chunk(self : TextRope, s : String) -> Unit {
 
 ///|
 /// Appends every chunk of `other` to `self` in place — O(|other|).
-fn TextRope::extend(self : TextRope, other : TextRope) -> Unit {
+fn TextRope::append_rope(self : TextRope, other : TextRope) -> Unit {
   for c in other.chunks {
     self.chunks.push(c)
   }
@@ -145,7 +145,7 @@ fn LabelsMap::extend_primary_text(self : LabelsMap, other : TextRope) -> Unit {
   if other.is_empty() {
     return
   }
-  self.text.extend(other)
+  self.text.append_rope(other)
 }
 
 ///|
@@ -157,7 +157,7 @@ fn LabelsMap::extend_extra_text(
   if other.is_empty() {
     return
   }
-  self.get_extra_rope(key).extend(other)
+  self.get_extra_rope(key).append_rope(other)
 }
 
 ///|
@@ -395,7 +395,7 @@ fn strip_named_labels(labels : LabelsMap) -> LabelsMap {
     }
   }
   if !labels.text.is_empty() {
-    out.text.extend(labels.text)
+    out.text.append_rope(labels.text)
   }
   out
 }

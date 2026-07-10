@@ -29,7 +29,7 @@ fn common_options() -> Array[@argparse.OptionArg] {
 ///|
 fn common_flags() -> Array[@argparse.FlagArg] {
   [
-    @argparse.FlagArg::new(
+    @argparse.FlagArg(
       "incremental",
       about="Restrict results to files changed from git base",
     ),

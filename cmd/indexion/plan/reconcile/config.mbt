@@ -336,19 +336,16 @@ pub fn command() -> @argparse.Command {
       ),
     ],
     flags=[
-      @argparse.FlagArg::new(
+      @argparse.FlagArg(
         "no-file-fallback",
         about="Disable basename/file-path fallback matching",
       ),
-      @argparse.FlagArg::new(
-        "git",
-        about="Prefer git timestamps over file mtimes",
-      ),
-      @argparse.FlagArg::new(
+      @argparse.FlagArg("git", about="Prefer git timestamps over file mtimes"),
+      @argparse.FlagArg(
         "mtime-only",
         about="Skip git timestamps and rely on file mtimes",
       ),
-      @argparse.FlagArg::new("no-parallel", about="Disable parallel processing"),
+      @argparse.FlagArg("no-parallel", about="Disable parallel processing"),
     ],
     positionals=[
       @argparse.PositionArg(

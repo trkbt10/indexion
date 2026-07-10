@@ -77,69 +77,59 @@ pub fn SegmentConfig::from_matches(
 ///|
 /// Define the segment command for argparse.
 pub fn command() -> @argparse.Command {
-  @argparse.Command::new(
+  @argparse.Command(
     "segment",
     about="Split text into contextual segments",
     flags=[
-      @argparse.FlagArg::new(
+      @argparse.FlagArg(
         "adaptive",
         about="Use adaptive threshold mode (default)",
       ),
-      @argparse.FlagArg::new(
+      @argparse.FlagArg(
         "hybrid",
         about="Use NCD+TF-IDF hybrid mode (best quality)",
       ),
     ],
     options=[
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "strategy",
         about="Strategy: window, tfidf, punctuation",
         default_values=["window"],
       ),
-      @argparse.OptionArg::new(
-        "min-size",
-        about="Minimum segment size in chars",
-        default_values=["100"],
-      ),
-      @argparse.OptionArg::new(
-        "max-size",
-        about="Maximum segment size in chars",
-        default_values=["2000"],
-      ),
-      @argparse.OptionArg::new(
-        "target-size",
-        about="Target segment size in chars",
-        default_values=["500"],
-      ),
-      @argparse.OptionArg::new("threshold", about="Divergence threshold", default_values=[
+      @argparse.OptionArg("min-size", about="Minimum segment size in chars", default_values=[
+        "100",
+      ]),
+      @argparse.OptionArg("max-size", about="Maximum segment size in chars", default_values=[
+        "2000",
+      ]),
+      @argparse.OptionArg("target-size", about="Target segment size in chars", default_values=[
+        "500",
+      ]),
+      @argparse.OptionArg("threshold", about="Divergence threshold", default_values=[
         "0.42",
       ]),
-      @argparse.OptionArg::new(
-        "window-size",
-        about="Window size for divergence",
-        default_values=["3"],
-      ),
-      @argparse.OptionArg::new(
-        "ncd-weight",
-        about="NCD weight in hybrid mode",
-        default_values=["0.5"],
-      ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg("window-size", about="Window size for divergence", default_values=[
+        "3",
+      ]),
+      @argparse.OptionArg("ncd-weight", about="NCD weight in hybrid mode", default_values=[
+        "0.5",
+      ]),
+      @argparse.OptionArg(
         "tfidf-weight",
         about="TF-IDF weight in hybrid mode",
         default_values=["0.5"],
       ),
-      @argparse.OptionArg::new("prefix", about="Output file prefix", default_values=[
+      @argparse.OptionArg("prefix", about="Output file prefix", default_values=[
         "segment",
       ]),
     ],
     positionals=[
-      @argparse.PositionArg::new(
+      @argparse.PositionArg(
         "input-file",
         about="Input text file",
         num_args=@argparse.ValueRange::single(),
       ),
-      @argparse.PositionArg::new(
+      @argparse.PositionArg(
         "output-dir",
         about="Output directory",
         num_args=@argparse.ValueRange::single(),

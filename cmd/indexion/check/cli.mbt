@@ -84,11 +84,11 @@ fn CheckConfig::from_matches(matches : @argparse.Matches) -> CheckConfig {
 ///|
 /// Defines the `indexion check` command.
 pub fn command() -> @argparse.Command {
-  @argparse.Command::new(
+  @argparse.Command(
     "check",
     about="Validate source files against KGF specs",
     flags=[
-      @argparse.FlagArg::new(
+      @argparse.FlagArg(
         "quiet",
         short='q',
         about="Only output errors, suppress warnings",
@@ -169,7 +169,11 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   }
   let exit_code = if has_errors { 1 } else { 0 }
   if @common.is_coverage_format(config.format) {
-    let source_root = if config.paths.length() > 0 { config.paths[0] } else { "." }
+    let source_root = if config.paths.length() > 0 {
+      config.paths[0]
+    } else {
+      "."
+    }
     let report = diagnostics_to_coverage_report(
       source_root,
       diagnostics,

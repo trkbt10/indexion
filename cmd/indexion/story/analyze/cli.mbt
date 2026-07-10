@@ -35,7 +35,7 @@ pub fn AnalyzeConfig::from_matches(
 
 ///|
 pub fn command() -> @argparse.Command {
-  @argparse.Command::new(
+  @argparse.Command(
     "analyze",
     about="Report n:m vocabulary divergence between a --spec group and an --impl group",
     options=[
@@ -49,25 +49,25 @@ pub fn command() -> @argparse.Command {
         action=Append,
         about="Glob pattern for impl-side documents (repeatable)",
       ),
-      @argparse.OptionArg::new("format", about="Output format: text | json", default_values=[
+      @argparse.OptionArg("format", about="Output format: text | json", default_values=[
         "text",
       ]),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "output",
         about="Output file path (- or empty = stdout)",
         default_values=[""],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "max-terms",
         about="Maximum divergence terms per side",
         default_values=["20"],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "min-value-length",
         about="Minimum length for divergence term values",
         default_values=["2"],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "registry-root",
         about="Root for kgfs/story spec discovery (default: CWD)",
         default_values=[""],

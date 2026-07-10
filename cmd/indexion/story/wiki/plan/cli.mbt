@@ -20,7 +20,7 @@ pub fn PlanConfig::from_matches(matches : @argparse.Matches) -> PlanConfig {
 
 ///|
 pub fn command() -> @argparse.Command {
-  @argparse.Command::new(
+  @argparse.Command(
     "plan",
     about="Propose story wiki pages from --spec documents",
     options=[
@@ -29,12 +29,10 @@ pub fn command() -> @argparse.Command {
         action=Append,
         about="Glob pattern for spec-side documents (repeatable)",
       ),
-      @argparse.OptionArg::new(
-        "format",
-        about="Output format: text | md | json",
-        default_values=["text"],
-      ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg("format", about="Output format: text | md | json", default_values=[
+        "text",
+      ]),
+      @argparse.OptionArg(
         "output",
         about="Output file path (- or empty = stdout)",
         default_values=[""],

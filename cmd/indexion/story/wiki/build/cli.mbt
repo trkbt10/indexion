@@ -25,7 +25,7 @@ pub fn BuildConfig::from_matches(matches : @argparse.Matches) -> BuildConfig {
 
 ///|
 pub fn command() -> @argparse.Command {
-  @argparse.Command::new(
+  @argparse.Command(
     "build",
     about="Build story wiki pages from --spec docs into --wiki-dir",
     options=[
@@ -34,17 +34,17 @@ pub fn command() -> @argparse.Command {
         action=Append,
         about="Glob pattern for spec-side documents (repeatable)",
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "wiki-dir",
         about="Wiki directory (e.g. .indexion/story-wiki)",
         default_values=[""],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "actor",
         about="Who is building: indexion, agent:<name>, user",
         default_values=["indexion"],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "specs-dir",
         about="KGF specs directory used when building the wiki search index",
         default_values=["kgfs"],

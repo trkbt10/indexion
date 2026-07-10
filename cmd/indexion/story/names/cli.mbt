@@ -30,7 +30,7 @@ pub fn NamesConfig::from_matches(matches : @argparse.Matches) -> NamesConfig {
 
 ///|
 pub fn command() -> @argparse.Command {
-  @argparse.Command::new(
+  @argparse.Command(
     "names",
     about="Report name ↔ content drift for every heading in --spec docs",
     options=[
@@ -39,10 +39,10 @@ pub fn command() -> @argparse.Command {
         action=Append,
         about="Glob pattern for spec-side documents (repeatable)",
       ),
-      @argparse.OptionArg::new("format", about="Output format: text | json", default_values=[
+      @argparse.OptionArg("format", about="Output format: text | json", default_values=[
         "text",
       ]),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "output",
         about="Output file path (- or empty = stdout)",
         default_values=[""],

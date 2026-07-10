@@ -78,13 +78,13 @@ pub fn SearchConfig::from_matches(matches : @argparse.Matches) -> SearchConfig {
 
 ///|
 pub fn command() -> @argparse.Command {
-  @argparse.Command::new(
+  @argparse.Command(
     "search",
     about="Semantic search across code, wiki, and documentation",
     flags=[
-      @argparse.FlagArg::new("files", about="Show matching file paths only"),
-      @argparse.FlagArg::new("json", about="Output as JSON"),
-      @argparse.FlagArg::new(
+      @argparse.FlagArg("files", about="Show matching file paths only"),
+      @argparse.FlagArg("json", about="Output as JSON"),
+      @argparse.FlagArg(
         "no-update",
         about="Skip automatic digest index update before searching",
       ),

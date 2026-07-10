@@ -5,15 +5,15 @@ fn orient_command() -> @argparse.Command {
     "orient",
     about="Build a pre-edit structure brief for coding agents",
     flags=[
-      @argparse.FlagArg::new(
+      @argparse.FlagArg(
         "no-update",
         about="Use the saved orientation map without refreshing changed files",
       ),
-      @argparse.FlagArg::new(
+      @argparse.FlagArg(
         "quiet",
         about="Suppress per-stage progress diagnostics on stderr",
       ),
-      @argparse.FlagArg::new(
+      @argparse.FlagArg(
         "rescan",
         about="Force a full filesystem walk to pick up newly created files",
       ),
@@ -22,35 +22,35 @@ fn orient_command() -> @argparse.Command {
       @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
         "kgfs",
       ]),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "cache-dir",
         about="Directory for the prebuilt agent orientation map",
         default_values=[".indexion/cache/agent"],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "wiki-dir",
         about="Wiki directory used as curated project knowledge",
         default_values=[".indexion/wiki"],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "task",
         about="Task description text. Use --task-file for longer prompts.",
         default_values=[""],
       ),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "task-file",
         about="Path to a file containing the task description.",
         default_values=[""],
       ),
-      @argparse.OptionArg::new("format", about="Output format: md | json", default_values=[
+      @argparse.OptionArg("format", about="Output format: md | json", default_values=[
         "md",
       ]),
-      @argparse.OptionArg::new(
+      @argparse.OptionArg(
         "output",
         about="Output file path (- or empty = stdout)",
         default_values=[""],
       ),
-      @argparse.OptionArg::new("limit", about="Maximum entries per section", default_values=[
+      @argparse.OptionArg("limit", about="Maximum entries per section", default_values=[
         "12",
       ]),
     ],
