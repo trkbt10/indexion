@@ -267,11 +267,7 @@ fn match_fragment(
 
 ///|
 fn temp_reconcile_dir(prefix : String) -> String {
-  let base = match @config_paths.get_global_cache_dir() {
-    Some(dir) => dir + "/indexion-test"
-    None => "/tmp/indexion-test"
-  }
-  let dir = base + "/" + prefix + @env.now().to_string()
+  let dir = "/tmp/indexion-reconcile-test/" + prefix + @env.now().to_string()
   // Create .git marker so resolve_project_indexion_dir finds project root
   @config_paths.ensure_dir_recursive(dir + "/.git")
   dir

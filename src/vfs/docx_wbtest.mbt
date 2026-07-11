@@ -6,11 +6,7 @@
 ///|
 /// Build a unique temp directory path for test artifacts.
 fn docx_temp_dir(label : String) -> String {
-  let base = match @config.get_global_cache_dir() {
-    Some(dir) => dir + "/indexion-test"
-    None => "/tmp/indexion-test"
-  }
-  base + "/docx-" + label + "-" + @env.now().to_string()
+  "/tmp/indexion-vfs-docx/" + label + "-" + @env.now().to_string()
 }
 
 ///|
@@ -623,7 +619,7 @@ fn expected_excluded_parts() -> Array[String] {
 ///|
 test "docx: expand_archive includes all document-relevant parts" {
   let dir = docx_temp_dir("includes")
-  @fs.create_dir(dir)
+  @config.ensure_dir_recursive(dir)
   let docx_path = dir + "/test.docx"
   let fixture = build_docx_fixture()
   write_fixture_to_disk(docx_path, fixture)
@@ -653,7 +649,7 @@ test "docx: expand_archive includes all document-relevant parts" {
 ///|
 test "docx: expand_archive excludes structural and binary parts" {
   let dir = docx_temp_dir("excludes")
-  @fs.create_dir(dir)
+  @config.ensure_dir_recursive(dir)
   let docx_path = dir + "/test.docx"
   let fixture = build_docx_fixture()
   write_fixture_to_disk(docx_path, fixture)
@@ -680,7 +676,7 @@ test "docx: expand_archive excludes structural and binary parts" {
 ///|
 test "docx: expand_archive returns correct entry count" {
   let dir = docx_temp_dir("count")
-  @fs.create_dir(dir)
+  @config.ensure_dir_recursive(dir)
   let docx_path = dir + "/test.docx"
   let fixture = build_docx_fixture()
   write_fixture_to_disk(docx_path, fixture)
@@ -696,7 +692,7 @@ test "docx: expand_archive returns correct entry count" {
 ///|
 test "docx: all text entries are UTF-8 decodable" {
   let dir = docx_temp_dir("utf8")
-  @fs.create_dir(dir)
+  @config.ensure_dir_recursive(dir)
   let docx_path = dir + "/test.docx"
   let fixture = build_docx_fixture()
   write_fixture_to_disk(docx_path, fixture)
@@ -727,7 +723,7 @@ test "docx: all text entries are UTF-8 decodable" {
 ///|
 test "docx: virtual paths use archive separator" {
   let dir = docx_temp_dir("vpath")
-  @fs.create_dir(dir)
+  @config.ensure_dir_recursive(dir)
   let docx_path = dir + "/test.docx"
   let fixture = build_docx_fixture()
   write_fixture_to_disk(docx_path, fixture)
@@ -773,7 +769,7 @@ test "docx: virtual paths use archive separator" {
 ///|
 test "docx: document.xml contains expected paragraph text" {
   let dir = docx_temp_dir("content")
-  @fs.create_dir(dir)
+  @config.ensure_dir_recursive(dir)
   let docx_path = dir + "/test.docx"
   let fixture = build_docx_fixture()
   write_fixture_to_disk(docx_path, fixture)
@@ -798,7 +794,7 @@ test "docx: document.xml contains expected paragraph text" {
 ///|
 test "docx: header and footer content is accessible" {
   let dir = docx_temp_dir("hdrftr")
-  @fs.create_dir(dir)
+  @config.ensure_dir_recursive(dir)
   let docx_path = dir + "/test.docx"
   let fixture = build_docx_fixture()
   write_fixture_to_disk(docx_path, fixture)
@@ -829,7 +825,7 @@ test "docx: header and footer content is accessible" {
 ///|
 test "docx: comments and notes are included with content" {
   let dir = docx_temp_dir("notes")
-  @fs.create_dir(dir)
+  @config.ensure_dir_recursive(dir)
   let docx_path = dir + "/test.docx"
   let fixture = build_docx_fixture()
   write_fixture_to_disk(docx_path, fixture)
@@ -871,7 +867,7 @@ test "docx: comments and notes are included with content" {
 ///|
 test "docx: numbering and styles definitions are included" {
   let dir = docx_temp_dir("defs")
-  @fs.create_dir(dir)
+  @config.ensure_dir_recursive(dir)
   let docx_path = dir + "/test.docx"
   let fixture = build_docx_fixture()
   write_fixture_to_disk(docx_path, fixture)
@@ -902,7 +898,7 @@ test "docx: numbering and styles definitions are included" {
 ///|
 test "docx: glossary document is included" {
   let dir = docx_temp_dir("glossary")
-  @fs.create_dir(dir)
+  @config.ensure_dir_recursive(dir)
   let docx_path = dir + "/test.docx"
   let fixture = build_docx_fixture()
   write_fixture_to_disk(docx_path, fixture)
@@ -928,7 +924,7 @@ test "docx: glossary document is included" {
 ///|
 test "docx: all three docProps parts are included" {
   let dir = docx_temp_dir("props")
-  @fs.create_dir(dir)
+  @config.ensure_dir_recursive(dir)
   let docx_path = dir + "/test.docx"
   let fixture = build_docx_fixture()
   write_fixture_to_disk(docx_path, fixture)
@@ -964,7 +960,7 @@ test "docx: all three docProps parts are included" {
 ///|
 test "docx: glossary _rels are excluded" {
   let dir = docx_temp_dir("glossary-rels")
-  @fs.create_dir(dir)
+  @config.ensure_dir_recursive(dir)
   let docx_path = dir + "/test.docx"
   let fixture = build_docx_fixture()
   write_fixture_to_disk(docx_path, fixture)

@@ -267,8 +267,15 @@ pub fn find_nearest_marker_dir(
   }
   let normalized_root = normalize_path(root_dir)
   let mut current = normalize_path(path)
-  if !is_valid_dir(current) {
-    current = dirname(current)
+  while !is_valid_dir(current) {
+    if current == normalized_root || current == "." {
+      return None
+    }
+    let parent = dirname(current)
+    if parent == current {
+      return None
+    }
+    current = parent
   }
   while true {
     if has_matching_marker(current, markers) {

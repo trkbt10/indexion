@@ -14,11 +14,7 @@ fn string_to_bytes(s : String) -> FixedArray[Byte] {
 ///|
 /// Build a temporary directory path for test fixtures.
 fn pptx_test_dir(suffix : String) -> String {
-  let base = match @config.get_global_cache_dir() {
-    Some(dir) => dir + "/indexion-test"
-    None => "/tmp/indexion-test"
-  }
-  base + "/pptx-" + suffix
+  "/tmp/indexion-vfs-pptx/" + suffix
 }
 
 ///|
@@ -548,10 +544,8 @@ fn write_fixture_to_file(
 
 ///|
 /// Ensure a directory exists, creating it recursively if needed.
-fn ensure_dir(path : String) -> Unit raise Error {
-  if !@fs.path_exists(path) {
-    @fs.create_dir(path)
-  }
+fn ensure_dir(path : String) -> Unit {
+  @config.ensure_dir_recursive(path)
 }
 
 ///|
