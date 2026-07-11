@@ -51,9 +51,7 @@ fn count_matches_for_pattern(
   root : String,
   pattern : String,
 ) -> Map[String, Int] {
-  let registry = @kgf_features.load_registry_or_empty(specs_dir="kgfs", target_dirs=[
-    root,
-  ])
+  let registry = shared_test_registry
   let files = collect_search_files([root], GrepConfig::default(), registry)
   let matchers = parse_pattern(pattern)
   let counts : Map[String, Int] = {}
@@ -79,9 +77,7 @@ fn count_matches_for_pattern(
 ///|
 test "collect_search_files honors registry support for versioning metadata files" {
   let root = fixture_root()
-  let registry = @kgf_features.load_registry_or_empty(specs_dir="kgfs", target_dirs=[
-    root,
-  ])
+  let registry = shared_test_registry
   let files = collect_search_files([root], GrepConfig::default(), registry)
   // collect_files returns relative display names
   assert_true(contains_file(files, "moon.mod.json"))

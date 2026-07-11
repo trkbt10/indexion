@@ -5,6 +5,7 @@ import {
   "trkbt10/indexion/src/docgen/build",
   "trkbt10/indexion/src/docgen/render",
   "trkbt10/indexion/src/kgf/features" @kgf_features,
+  "trkbt10/indexion/src/kgf/registry",
   "trkbt10/indexion/src/pipeline",
 }
 

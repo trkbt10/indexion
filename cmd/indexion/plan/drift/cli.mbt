@@ -30,6 +30,20 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
 /// Build a `DriftReport` from a config. Exposed for integration tests; the
 /// CLI dispatch routes through `run_matches`.
 pub fn build_report(config : DriftConfig) -> DriftReport? {
+  let registry = match config.specs_dir {
+    Some(dir) =>
+      @kgf_features.load_registry_or_empty(specs_dir=dir, target_dir=".")
+    None => @kgf_features.load_registry_or_empty(target_dir=".")
+  }
+  build_report_with_registry(config, registry)
+}
+
+///|
+/// Build a report with a caller-owned registry for batch comparisons.
+pub fn build_report_with_registry(
+  config : DriftConfig,
+  registry : @kgf_registry.KGFRegistry,
+) -> DriftReport? {
   let content_a = @fs.read_file_to_string(config.file_a) catch {
     _ => {
       println("Error: cannot read file: " + config.file_a)
@@ -41,11 +55,6 @@ pub fn build_report(config : DriftConfig) -> DriftReport? {
       println("Error: cannot read file: " + config.file_b)
       return None
     }
-  }
-  let registry = match config.specs_dir {
-    Some(dir) =>
-      @kgf_features.load_registry_or_empty(specs_dir=dir, target_dir=".")
-    None => @kgf_features.load_registry_or_empty(target_dir=".")
   }
   if registry.get_languages().length() == 0 {
     println(

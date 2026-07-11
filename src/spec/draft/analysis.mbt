@@ -251,6 +251,14 @@ fn build_report(config : DraftConfig) -> DraftReport? {
     specs_dir=config.specs_dir,
     target_dir=root,
   )
+  build_report_with_registry(config, registry)
+}
+
+///|
+fn build_report_with_registry(
+  config : DraftConfig,
+  registry : @registry.KGFRegistry,
+) -> DraftReport? {
   let source_files = collect_document_paths(config, registry)
   if source_files.length() == 0 {
     return None

@@ -13,6 +13,12 @@ fn fixture(rel : String) -> String {
 }
 
 ///|
+let shared_test_registry : @registry.KGFRegistry = @kgf_features.load_registry_or_empty(
+  specs_dir="kgfs",
+  target_dir=".",
+)
+
+///|
 fn run_pair(a : String, b : String) -> @drift.DriftReport raise {
   let config : @drift.DriftConfig = {
     ..@drift.DriftConfig::default(),
@@ -20,7 +26,7 @@ fn run_pair(a : String, b : String) -> @drift.DriftReport raise {
     file_b: b,
     top: 0,
   }
-  match @drift.build_report(config) {
+  match @drift.build_report_with_registry(config, shared_test_registry) {
     Some(r) => r
     None => fail("build_report returned None for " + a + " vs " + b)
   }
@@ -131,7 +137,8 @@ test "threshold gate: reports passed=true when distance <= threshold" {
     file_b: fixture("identical/README-b.md"),
     vocab_threshold: Some(0.1),
   }
-  let report = match @drift.build_report(config) {
+  let report = match
+    @drift.build_report_with_registry(config, shared_test_registry) {
     Some(r) => r
     None => return fail("build_report returned None")
   }
@@ -147,7 +154,8 @@ test "threshold gate: reports passed=false when distance > threshold" {
     file_b: fixture("unrelated/README-ja.md"),
     vocab_threshold: Some(0.1),
   }
-  let report = match @drift.build_report(config) {
+  let report = match
+    @drift.build_report_with_registry(config, shared_test_registry) {
     Some(r) => r
     None => return fail("build_report returned None")
   }

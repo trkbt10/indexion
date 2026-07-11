@@ -1712,11 +1712,8 @@ fn build_summary(
 async fn build_snapshot(
   config : SpecAlignConfig,
   previous : AlignSnapshot?,
+  registry : @registry.KGFRegistry,
 ) -> AlignSnapshot? {
-  let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
-    target_dir=config.impl_path,
-  )
   let (requirements, scenarios, used_spec_formats, spec_hashes, spec_file_states
   ) = collect_spec_data(config, registry)
   let (
@@ -2323,6 +2320,18 @@ fn file_hashes_match(
 
 ///|
 async fn snapshot_for_config_async(config : SpecAlignConfig) -> AlignSnapshot? {
+  let registry = @kgf_features.load_registry_or_empty(
+    specs_dir=config.specs_dir,
+    target_dir=config.impl_path,
+  )
+  snapshot_for_config_with_registry_async(config, registry)
+}
+
+///|
+async fn snapshot_for_config_with_registry_async(
+  config : SpecAlignConfig,
+  registry : @registry.KGFRegistry,
+) -> AlignSnapshot? {
   let cache_dir = match resolve_cache_dir(config) {
     Some(value) => value
     None => return None
@@ -2355,10 +2364,6 @@ async fn snapshot_for_config_async(config : SpecAlignConfig) -> AlignSnapshot? {
       if cached.config.algorithm == config.algorithm &&
         cached.config.threshold == config.threshold &&
         cached.config.spec_format == config.spec_format {
-        let registry = @kgf_features.load_registry_or_empty(
-          specs_dir=config.specs_dir,
-          target_dir=config.impl_path,
-        )
         let hash_match = match load_signatures(cache_dir) {
           Some(sidecar) => {
             let fresh = discover_signatures_for_align(
@@ -2393,7 +2398,7 @@ async fn snapshot_for_config_async(config : SpecAlignConfig) -> AlignSnapshot? {
       }
     None => ()
   }
-  let snapshot = match build_snapshot(effective_config, previous) {
+  let snapshot = match build_snapshot(effective_config, previous, registry) {
     Some(value) => value
     None => return None
   }
@@ -2406,14 +2411,8 @@ async fn snapshot_for_config_async(config : SpecAlignConfig) -> AlignSnapshot? {
   // so the sidecar key set always equals `snapshot.file_hashes` keys.
   // Failures are non-fatal — worst case the next run falls back to the
   // content-hash path.
-  {
-    let registry = @kgf_features.load_registry_or_empty(
-      specs_dir=effective_config.specs_dir,
-      target_dir=effective_config.impl_path,
-    )
-    let sigs = discover_signatures_for_align(effective_config, registry)
-    let _ = save_signatures(cache_dir, sigs)
-  }
+  let sigs = discover_signatures_for_align(effective_config, registry)
+  let _ = save_signatures(cache_dir, sigs)
   let snapshot = match load_snapshot(cache_dir) {
     Some(value) => value
     None => return None
@@ -2434,6 +2433,15 @@ pub async fn watch_probe_async(config : SpecAlignConfig) -> String? {
     specs_dir=config.specs_dir,
     target_dir=config.impl_path,
   )
+  watch_probe_with_registry_async(config, registry)
+}
+
+///|
+/// Probe watched inputs with a caller-owned registry.
+pub async fn watch_probe_with_registry_async(
+  config : SpecAlignConfig,
+  registry : @registry.KGFRegistry,
+) -> String? {
   let spec_files = discover_spec_files(config.spec_path, registry)
   let impl_files = discover_impl_files(config.impl_path, registry)
   if spec_files.length() == 0 && impl_files.length() == 0 {
@@ -2466,8 +2474,32 @@ pub async fn diff_report_async(config : SpecAlignConfig) -> AlignDiffReport? {
 }
 
 ///|
+/// Build a diff report with a caller-owned registry for batch analysis.
+pub async fn diff_report_with_registry_async(
+  config : SpecAlignConfig,
+  registry : @registry.KGFRegistry,
+) -> AlignDiffReport? {
+  match snapshot_for_config_with_registry_async(config, registry) {
+    Some(snapshot) => Some(build_diff_report(snapshot))
+    None => None
+  }
+}
+
+///|
 pub async fn trace_report_async(config : SpecAlignConfig) -> AlignTraceReport? {
   match snapshot_for_config_async(config) {
+    Some(snapshot) => Some(build_trace_report(snapshot))
+    None => None
+  }
+}
+
+///|
+/// Build a trace report with a caller-owned registry for batch analysis.
+pub async fn trace_report_with_registry_async(
+  config : SpecAlignConfig,
+  registry : @registry.KGFRegistry,
+) -> AlignTraceReport? {
+  match snapshot_for_config_with_registry_async(config, registry) {
     Some(snapshot) => Some(build_trace_report(snapshot))
     None => None
   }
@@ -2484,10 +2516,34 @@ pub async fn suggest_report_async(
 }
 
 ///|
+/// Build suggestions with a caller-owned registry for batch analysis.
+pub async fn suggest_report_with_registry_async(
+  config : SpecAlignConfig,
+  registry : @registry.KGFRegistry,
+) -> AlignSuggestReport? {
+  match snapshot_for_config_with_registry_async(config, registry) {
+    Some(snapshot) => Some(build_suggest_report(snapshot))
+    None => None
+  }
+}
+
+///|
 pub async fn status_report_async(
   config : SpecAlignConfig,
 ) -> AlignStatusReport? {
   match snapshot_for_config_async(config) {
+    Some(snapshot) => Some(build_status_report(snapshot))
+    None => None
+  }
+}
+
+///|
+/// Build status with a caller-owned registry for batch analysis.
+pub async fn status_report_with_registry_async(
+  config : SpecAlignConfig,
+  registry : @registry.KGFRegistry,
+) -> AlignStatusReport? {
+  match snapshot_for_config_with_registry_async(config, registry) {
     Some(snapshot) => Some(build_status_report(snapshot))
     None => None
   }

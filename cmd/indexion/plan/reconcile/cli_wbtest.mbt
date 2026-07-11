@@ -278,8 +278,13 @@ fn temp_reconcile_dir(prefix : String) -> String {
 }
 
 ///|
+let shared_test_registry : @kgf_registry.KGFRegistry = @kgf_features.load_registry_or_empty(
+  target_dir=".",
+)
+
+///|
 fn load_test_registry() -> @kgf_registry.KGFRegistry {
-  @kgf_features.load_registry_or_empty(target_dir=".")
+  shared_test_registry
 }
 
 ///|

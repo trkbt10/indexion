@@ -9,6 +9,17 @@ fn fixture_specs_dir() -> String {
 }
 
 ///|
+let shared_test_registry : @kgf_registry.KGFRegistry = @kgf_features.load_registry_or_empty(
+  specs_dir=fixture_specs_dir(),
+  target_dir=fixture_root(),
+)
+
+///|
+fn test_build_report(config : VocabularyConfig) -> VocabularyReport? {
+  build_report_with_registry(config, shared_test_registry)
+}
+
+///|
 fn fixture_config(target_name : String) -> VocabularyConfig {
   {
     ..VocabularyConfig::default(),
@@ -20,7 +31,7 @@ fn fixture_config(target_name : String) -> VocabularyConfig {
 
 ///|
 test "spec-vocabulary: WebIDL fixture preserves conformance semantics" {
-  let report = build_report(fixture_config("conformance.mbt")).unwrap()
+  let report = test_build_report(fixture_config("conformance.mbt")).unwrap()
   assert_true(report.passed)
   assert_eq(report.source_required_count, 4)
   assert_eq(report.missing_source_terms.length(), 0)
@@ -29,7 +40,7 @@ test "spec-vocabulary: WebIDL fixture preserves conformance semantics" {
 
 ///|
 test "spec-vocabulary: reports untracked interfaces and invented members" {
-  let report = build_report(fixture_config("conformance_drift.mbt")).unwrap()
+  let report = test_build_report(fixture_config("conformance_drift.mbt")).unwrap()
   assert_false(report.passed)
   assert_true(
     report.missing_source_terms.any(fn(term) {
@@ -43,7 +54,7 @@ test "spec-vocabulary: reports untracked interfaces and invented members" {
 
 ///|
 test "spec-vocabulary: EBNF source can be checked against MoonBit targets" {
-  let report = build_report({
+  let report = test_build_report({
     ..VocabularyConfig::default(),
     source_paths: [fixture_root() + "/spec/xpath.ebnf"],
     target_paths: [fixture_root() + "/src/xpath_lexer.mbt"],
@@ -61,7 +72,7 @@ test "spec-vocabulary: EBNF source can be checked against MoonBit targets" {
 
 ///|
 test "spec-vocabulary: generic KGF features cover markdown sources" {
-  let report = build_report({
+  let report = test_build_report({
     ..VocabularyConfig::default(),
     source_paths: [fixture_root() + "/spec/terms.md"],
     target_paths: [fixture_root() + "/src/terms.md"],
@@ -81,7 +92,7 @@ test "spec-vocabulary: generic KGF features cover markdown sources" {
 
 ///|
 test "spec-vocabulary: assessments separate raw miss from report precision" {
-  let report = build_report({
+  let report = test_build_report({
     ..VocabularyConfig::default(),
     source_paths: [fixture_root() + "/spec/trace.ebnf"],
     target_paths: [fixture_root() + "/src/trace.mbt"],
@@ -101,7 +112,7 @@ test "spec-vocabulary: assessments separate raw miss from report precision" {
 
 ///|
 test "spec-vocabulary: renderer output is generic" {
-  let report = build_report(fixture_config("conformance.mbt")).unwrap()
+  let report = test_build_report(fixture_config("conformance.mbt")).unwrap()
   let text = render_output(report, "text")
   assert_true(text.contains("VOCABULARY CHECK: PASS"))
   let json = render_output(report, output_format_json)

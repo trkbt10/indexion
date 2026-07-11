@@ -2,6 +2,12 @@
 using @test {assert_eq}
 
 ///|
+let shared_test_registry : @kgf_registry.KGFRegistry = @kgf_features.load_registry_or_empty(
+  specs_dir="kgfs",
+  target_dir=".",
+)
+
+///|
 test "parse_pattern treats plain words as normalized text matchers" {
   let parsed = parse_pattern("version")
   assert_eq(parsed.length(), 1)
@@ -40,8 +46,7 @@ test "parse_pattern preserves quotes in plain text patterns" {
 /// Resolve a representative spec from the loaded registry for tests that
 /// need a non-empty KGFSpec input.
 fn moonbit_spec() -> @kgf_types.KGFSpec? {
-  let registry = @kgf_features.load_registry_or_empty(specs_dir="kgfs")
-  registry.get_spec("moonbit")
+  shared_test_registry.get_spec("moonbit")
 }
 
 ///|
@@ -142,7 +147,7 @@ test "parse_pattern_for_path resolves aliases per file's language" {
   // `KW_pub` for a MoonBit file (where the spec defines that keyword)
   // and fall back to a Text matcher when the file has no matching spec
   // (or the matching spec doesn't define `pub` as a keyword).
-  let registry = Some(@kgf_features.load_registry_or_empty(specs_dir="kgfs"))
+  let registry = Some(shared_test_registry)
   let moonbit_matchers = parse_pattern_for_path("pub", "demo.mbt", registry)
   assert_eq(moonbit_matchers.length(), 1)
   match moonbit_matchers[0] {
@@ -172,7 +177,7 @@ test "find_matches line tracking advances through multi-line tokens" {
   // multi-line strings, and Python's `NL_INDENT`. Counting actual `\n`
   // characters in each token's text instead is KGF-agnostic and reports
   // correct line numbers for matches that follow such tokens.
-  let registry = @kgf_features.load_registry_or_empty(specs_dir="kgfs")
+  let registry = shared_test_registry
   let content =
     #|fn first() -> Int { 1 }
     #|/* block

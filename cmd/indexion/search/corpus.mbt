@@ -12,8 +12,20 @@ pub fn build_corpus(
   paths : Array[String],
   config : SearchConfig,
 ) -> Array[@search_engine.SearchDocument] {
-  let documents : Array[@search_engine.SearchDocument] = []
-  // 1. Detect wiki directories among paths (contain wiki.json)
+  let (wiki_paths, file_paths) = partition_corpus_paths(paths)
+  let all_target_dirs = if file_paths.length() > 0 { file_paths } else { ["."] }
+  let registry = @kgf_features.load_registry(
+    specs_dir=config.specs_dir,
+    target_dirs=all_target_dirs,
+  )
+  build_corpus_from_partitioned_paths(file_paths, wiki_paths, config, registry)
+}
+
+///|
+fn partition_corpus_paths(
+  paths : Array[String],
+) -> (Array[String], Array[String]) {
+  // Detect wiki directories among paths (contain wiki.json).
   let wiki_paths : Array[String] = []
   let file_paths : Array[String] = []
   for path in paths {
@@ -27,12 +39,17 @@ pub fn build_corpus(
       None => file_paths.push(path)
     }
   }
-  // 2. Load KGF registry (shared by wiki and file corpus)
-  let all_target_dirs = if file_paths.length() > 0 { file_paths } else { ["."] }
-  let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
-    target_dirs=all_target_dirs,
-  )
+  (wiki_paths, file_paths)
+}
+
+///|
+fn build_corpus_from_partitioned_paths(
+  file_paths : Array[String],
+  wiki_paths : Array[String],
+  config : SearchConfig,
+  registry : @kgf_registry.KGFRegistry?,
+) -> Array[@search_engine.SearchDocument] {
+  let documents : Array[@search_engine.SearchDocument] = []
   // 3. Build wiki corpus
   for wiki_dir in wiki_paths {
     extract_wiki_documents(wiki_dir, registry, documents)

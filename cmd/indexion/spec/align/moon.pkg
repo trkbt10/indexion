@@ -4,6 +4,8 @@ import {
   "trkbt10/indexion/cmd/indexion/common",
   "trkbt10/indexion/cmd/indexion/help",
   "trkbt10/indexion/src/parallel",
+  "trkbt10/indexion/src/kgf/features" @kgf_features,
+  "trkbt10/indexion/src/kgf/registry",
   "trkbt10/indexion/src/spec/align" @spec_align,
 }
 

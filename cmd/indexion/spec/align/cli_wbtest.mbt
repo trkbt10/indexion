@@ -9,6 +9,12 @@ fn fixture_impl_dir() -> String {
 }
 
 ///|
+let shared_test_registry : @registry.KGFRegistry = @kgf_features.load_registry_or_empty(
+  specs_dir="kgfs",
+  target_dir=".",
+)
+
+///|
 fn task_render_config(agent : String) -> @spec_align.SpecAlignConfig {
   {
     ..@spec_align.SpecAlignConfig::default(),
@@ -24,7 +30,11 @@ fn task_render_config(agent : String) -> @spec_align.SpecAlignConfig {
 
 ///|
 async test "spec align cli: claude task format is structured" {
-  let rendered = match run_to_string(task_render_config("claude")) {
+  let rendered = match
+    run_to_string_with_registry(
+      task_render_config("claude"),
+      shared_test_registry,
+    ) {
     Some(value) => value
     None => fail("expected rendered task output")
   }
@@ -34,7 +44,11 @@ async test "spec align cli: claude task format is structured" {
 
 ///|
 async test "spec align cli: copilot task format is checklist based" {
-  let rendered = match run_to_string(task_render_config("copilot")) {
+  let rendered = match
+    run_to_string_with_registry(
+      task_render_config("copilot"),
+      shared_test_registry,
+    ) {
     Some(value) => value
     None => fail("expected rendered task output")
   }

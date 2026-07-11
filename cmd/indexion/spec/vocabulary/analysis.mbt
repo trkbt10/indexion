@@ -28,6 +28,14 @@ fn build_report(config : VocabularyConfig) -> VocabularyReport? {
       @kgf_features.load_registry_or_empty(specs_dir=dir, target_dirs=all_paths)
     None => @kgf_features.load_registry_or_empty(target_dirs=all_paths)
   }
+  build_report_with_registry(config, registry)
+}
+
+///|
+fn build_report_with_registry(
+  config : VocabularyConfig,
+  registry : @kgf_registry.KGFRegistry,
+) -> VocabularyReport? {
   if registry.get_languages().length() == 0 {
     println(
       "Error: no KGF specs were loaded. Run from a directory whose ancestry " +

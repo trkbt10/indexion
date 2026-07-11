@@ -4,6 +4,44 @@ fn fixture_specs_dir() -> String {
 }
 
 ///|
+let shared_test_registry : @registry.KGFRegistry = @kgf_features.load_registry_or_empty(
+  specs_dir=fixture_specs_dir(),
+  target_dir=".",
+)
+
+///|
+async fn test_diff_report_async(config : SpecAlignConfig) -> AlignDiffReport? {
+  diff_report_with_registry_async(config, shared_test_registry)
+}
+
+///|
+async fn test_trace_report_async(config : SpecAlignConfig) -> AlignTraceReport? {
+  trace_report_with_registry_async(config, shared_test_registry)
+}
+
+///|
+async fn test_suggest_report_async(
+  config : SpecAlignConfig,
+) -> AlignSuggestReport? {
+  suggest_report_with_registry_async(config, shared_test_registry)
+}
+
+///|
+async fn test_status_report_async(
+  config : SpecAlignConfig,
+) -> AlignStatusReport? {
+  status_report_with_registry_async(config, shared_test_registry)
+}
+
+///|
+async fn test_build_snapshot(
+  config : SpecAlignConfig,
+  previous : AlignSnapshot?,
+) -> AlignSnapshot? {
+  build_snapshot(config, previous, shared_test_registry)
+}
+
+///|
 fn temp_test_dir(label : String) -> String {
   let dir = "/tmp/indexion-spec-align/" + label + "-" + @env.now().to_string()
   @config.ensure_dir_recursive(dir)
@@ -245,7 +283,7 @@ fn _has_impl_only_item(
 async test "spec-align/moonbit: diff classifies matched drifted spec-only and impl-only" {
   let root = temp_test_dir("moonbit-diff")
   let config = fixture_config("moonbit", root)
-  let report = match diff_report_async(config) {
+  let report = match test_diff_report_async(config) {
     Some(value) => value
     None => fail("expected diff report")
   }
@@ -267,7 +305,7 @@ async test "spec-align/moonbit: diff classifies matched drifted spec-only and im
 async test "spec-align/moonbit: trace keeps login requirement mapped to login_success" {
   let root = temp_test_dir("moonbit-trace")
   let config = fixture_config("moonbit", root)
-  let report = match trace_report_async(config) {
+  let report = match test_trace_report_async(config) {
     Some(value) => value
     None => fail("expected trace report")
   }
@@ -287,7 +325,7 @@ async test "spec-align/moonbit: trace keeps login requirement mapped to login_su
 async test "spec-align/moonbit: diff writes manifest trace and report stores" {
   let root = temp_test_dir("moonbit-cache")
   let config = fixture_config("moonbit", root)
-  let _ = match diff_report_async(config) {
+  let _ = match test_diff_report_async(config) {
     Some(value) => value
     None => fail("expected diff report")
   }
@@ -300,14 +338,14 @@ async test "spec-align/moonbit: diff writes manifest trace and report stores" {
 async test "spec-align/moonbit: corrupt cache is purged and rebuilt" {
   let root = temp_test_dir("moonbit-corrupt-cache")
   let config = fixture_config("moonbit", root)
-  let _ = match diff_report_async(config) {
+  let _ = match test_diff_report_async(config) {
     Some(value) => value
     None => fail("expected initial diff report")
   }
   @fs.write_string_to_file(config.cache_dir + "/manifest.json", "{\n}\n}") catch {
     _ => panic()
   }
-  let report = match diff_report_async(config) {
+  let report = match test_diff_report_async(config) {
     Some(value) => value
     None => fail("expected rebuilt diff report")
   }
@@ -323,7 +361,7 @@ async test "spec-align/moonbit: corrupt cache is purged and rebuilt" {
 async test "spec-align/moonbit: unsupported current spec does not fall back to stale cache" {
   let root = temp_test_dir("moonbit-no-stale-cache")
   let config = fixture_config("moonbit", root)
-  let _ = match diff_report_async(config) {
+  let _ = match test_diff_report_async(config) {
     Some(value) => value
     None => fail("expected initial diff report")
   }
@@ -333,7 +371,7 @@ async test "spec-align/moonbit: unsupported current spec does not fall back to s
   ) catch {
     _ => panic()
   }
-  let report = match diff_report_async(config) {
+  let report = match test_diff_report_async(config) {
     Some(value) => value
     None => fail("expected unsupported-spec diff report")
   }
@@ -355,14 +393,14 @@ async test "spec-align/moonbit: cache save failure fails the report" {
     ..fixture_config("moonbit", root),
     cache_dir: invalid_cache_dir,
   }
-  assert_true(diff_report_async(config) is None)
+  assert_true(test_diff_report_async(config) is None)
 }
 
 ///|
 async test "spec-align/typescript: diff discovers matched implementation" {
   let root = temp_test_dir("typescript-diff")
   let config = fixture_config("typescript", root)
-  let report = match diff_report_async(config) {
+  let report = match test_diff_report_async(config) {
     Some(value) => value
     None => fail("expected diff report")
   }
@@ -374,7 +412,7 @@ async test "spec-align/typescript: diff discovers matched implementation" {
 async test "spec-align/user-story: diff parses user stories via KGF sections" {
   let root = temp_test_dir("user-story-diff")
   let config = user_story_config(root)
-  let report = match diff_report_async(config) {
+  let report = match test_diff_report_async(config) {
     Some(value) => value
     None => fail("expected diff report")
   }
@@ -427,7 +465,7 @@ test "spec-align: section references match numbered headings generically" {
 async test "spec-align/moonbit: suggest emits both directions for drift" {
   let root = temp_test_dir("moonbit-suggest")
   let config = fixture_config("moonbit", root)
-  let report = match suggest_report_async(config) {
+  let report = match test_suggest_report_async(config) {
     Some(value) => value
     None => fail("expected suggest report")
   }
@@ -449,7 +487,7 @@ async test "spec-align/moonbit: suggest emits both directions for drift" {
 async test "spec-align/moonbit: status respects fail_on drifted" {
   let root = temp_test_dir("moonbit-status")
   let config = { ..fixture_config("moonbit", root), fail_on: "drifted" }
-  let report = match status_report_async(config) {
+  let report = match test_status_report_async(config) {
     Some(value) => value
     None => fail("expected status report")
   }
@@ -469,7 +507,7 @@ async test "spec-align/git: trace history records successive committed snapshots
   git_ok(root, ["config", "user.name", "Align Test"][:])
   git_ok(root, ["add", "."][:])
   git_ok(root, ["commit", "-m", "initial"][:])
-  let first = match trace_report_async(config) {
+  let first = match test_trace_report_async(config) {
     Some(value) => value
     None => fail("expected first trace report")
   }
@@ -497,7 +535,7 @@ async test "spec-align/git: trace history records successive committed snapshots
   }
   git_ok(root, ["add", "."][:])
   git_ok(root, ["commit", "-m", "update-session-timeout"][:])
-  let second = match trace_report_async(config) {
+  let second = match test_trace_report_async(config) {
     Some(value) => value
     None => fail("expected second trace report")
   }
@@ -524,7 +562,7 @@ async test "spec-align/git: trace history records successive committed snapshots
 async test "spec-align/incremental: changed-file filter narrows report to affected items" {
   let root = temp_test_dir("incremental")
   let config = incremental_config(root)
-  let snapshot = match build_snapshot(config, None) {
+  let snapshot = match test_build_snapshot(config, None) {
     Some(value) => value
     None => fail("expected full snapshot")
   }

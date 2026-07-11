@@ -44,6 +44,53 @@ fn rfc2795_impl_path() -> String {
 }
 
 ///|
+let shared_test_registry : @registry.KGFRegistry = @kgf_features.load_registry_or_empty(
+  specs_dir="kgfs",
+  target_dir=".",
+)
+
+///|
+fn test_run_to_string(config : DraftConfig) -> String? {
+  match build_report_with_registry(config, shared_test_registry) {
+    Some(report) => Some(render_report(report, config.format))
+    None => None
+  }
+}
+
+///|
+fn test_report(config : DraftConfig) -> DraftReport? {
+  build_report_with_registry(config, shared_test_registry)
+}
+
+///|
+async fn test_align_diff_report_async(
+  config : @spec_align.SpecAlignConfig,
+) -> @spec_align.AlignDiffReport? {
+  @spec_align.diff_report_with_registry_async(config, shared_test_registry)
+}
+
+///|
+async fn test_align_trace_report_async(
+  config : @spec_align.SpecAlignConfig,
+) -> @spec_align.AlignTraceReport? {
+  @spec_align.trace_report_with_registry_async(config, shared_test_registry)
+}
+
+///|
+async fn test_align_suggest_report_async(
+  config : @spec_align.SpecAlignConfig,
+) -> @spec_align.AlignSuggestReport? {
+  @spec_align.suggest_report_with_registry_async(config, shared_test_registry)
+}
+
+///|
+async fn test_align_status_report_async(
+  config : @spec_align.SpecAlignConfig,
+) -> @spec_align.AlignStatusReport? {
+  @spec_align.status_report_with_registry_async(config, shared_test_registry)
+}
+
+///|
 fn copy_file(from : String, to : String) -> Unit {
   let content = @fs.read_file_to_string(from) catch { _ => panic() }
   @fs.write_string_to_file(to, content) catch {
@@ -120,7 +167,11 @@ test "spec-draft: bullet list yields numbered requirements" {
   let root = temp_dir("fixture")
   let path = fixture_doc(root)
   let report = match
-    report({ ..DraftConfig::default(), source_path: path, specs_dir: "kgfs" }) {
+    test_report({
+      ..DraftConfig::default(),
+      source_path: path,
+      specs_dir: "kgfs",
+    }) {
     Some(value) => value
     None => fail("expected draft report")
   }
@@ -134,7 +185,7 @@ test "spec-draft: render markdown emits requirement headings" {
   let root = temp_dir("render")
   let path = fixture_doc(root)
   let rendered = match
-    run_to_string({
+    test_run_to_string({
       ..DraftConfig::default(),
       source_path: path,
       specs_dir: "kgfs",
@@ -152,7 +203,7 @@ async test "spec-draft: RFC 3492 fixture drafts and aligns under current benchma
   let draft_dir = temp_dir("rfc3492")
   let draft_path = draft_dir + "/draft.md"
   let rendered = match
-    run_to_string({
+    test_run_to_string({
       ..DraftConfig::default(),
       source_path: rfc3492_spec_path(),
       specs_dir: "kgfs",
@@ -167,7 +218,7 @@ async test "spec-draft: RFC 3492 fixture drafts and aligns under current benchma
   assert_false(rendered.contains("## Requirement 17: 7.1 Sample strings"))
   assert_false(rendered.contains("## Requirement 21: 9.1 Normative References"))
   let diff = match
-    @spec_align.diff_report_async({
+    test_align_diff_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       spec_path: draft_path,
       impl_path: rfc3492_impl_path(),
@@ -199,7 +250,7 @@ async test "spec-draft: RFC 3492 fixture drafts and aligns under current benchma
     }),
   )
   let status = match
-    @spec_align.status_report_async({
+    test_align_status_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       subcommand: "status",
       spec_path: draft_path,
@@ -214,7 +265,7 @@ async test "spec-draft: RFC 3492 fixture drafts and aligns under current benchma
   }
   assert_false(status.should_fail)
   let suggest = match
-    @spec_align.suggest_report_async({
+    test_align_suggest_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       subcommand: "suggest",
       spec_path: draft_path,
@@ -236,7 +287,7 @@ async test "spec-draft: RFC 2795 fixture drafts and produces drift on code table
   let draft_dir = temp_dir("rfc2795")
   let draft_path = draft_dir + "/draft.md"
   let rendered = match
-    run_to_string({
+    test_run_to_string({
       ..DraftConfig::default(),
       source_path: rfc2795_spec_path(),
       specs_dir: "kgfs",
@@ -252,7 +303,7 @@ async test "spec-draft: RFC 2795 fixture drafts and produces drift on code table
   assert_false(rendered.contains("Acknowledgements"))
   assert_false(rendered.contains("Example ZOO-to-CRITIC Session using PAN"))
   let diff = match
-    @spec_align.diff_report_async({
+    test_align_diff_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       spec_path: draft_path,
       impl_path: rfc2795_impl_path(),
@@ -300,7 +351,7 @@ async test "spec-draft: RFC 3492 mutated implementation is detected as drift" {
   let root = temp_dir("rfc3492-drift")
   let draft_path = root + "/draft.md"
   let rendered = match
-    run_to_string({
+    test_run_to_string({
       ..DraftConfig::default(),
       source_path: rfc3492_spec_path(),
       specs_dir: "kgfs",
@@ -313,7 +364,7 @@ async test "spec-draft: RFC 3492 mutated implementation is detected as drift" {
   }
   let impl_path = write_mutated_rfc3492_impl(root)
   let diff = match
-    @spec_align.diff_report_async({
+    test_align_diff_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       spec_path: draft_path,
       impl_path,
@@ -330,7 +381,7 @@ async test "spec-draft: RFC 3492 mutated implementation is detected as drift" {
     diff.summary.spec_only > 0
   assert_true(structural_drift_detected)
   let status = match
-    @spec_align.status_report_async({
+    test_align_status_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       subcommand: "status",
       spec_path: draft_path,
@@ -345,7 +396,7 @@ async test "spec-draft: RFC 3492 mutated implementation is detected as drift" {
   }
   assert_true(status.should_fail)
   let suggest = match
-    @spec_align.suggest_report_async({
+    test_align_suggest_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       subcommand: "suggest",
       spec_path: draft_path,
@@ -366,7 +417,7 @@ async test "spec-draft: RFC 2795 mutated implementation is detected as drift" {
   let root = temp_dir("rfc2795-drift")
   let draft_path = root + "/draft.md"
   let rendered = match
-    run_to_string({
+    test_run_to_string({
       ..DraftConfig::default(),
       source_path: rfc2795_spec_path(),
       specs_dir: "kgfs",
@@ -379,7 +430,7 @@ async test "spec-draft: RFC 2795 mutated implementation is detected as drift" {
   }
   let impl_path = write_mutated_rfc2795_impl(root)
   let diff = match
-    @spec_align.diff_report_async({
+    test_align_diff_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       spec_path: draft_path,
       impl_path,
@@ -400,7 +451,7 @@ async test "spec-draft: RFC 2795 mutated implementation is detected as drift" {
     }),
   )
   let status = match
-    @spec_align.status_report_async({
+    test_align_status_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       subcommand: "status",
       spec_path: draft_path,
@@ -415,7 +466,7 @@ async test "spec-draft: RFC 2795 mutated implementation is detected as drift" {
   }
   assert_true(status.should_fail)
   let suggest = match
-    @spec_align.suggest_report_async({
+    test_align_suggest_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       subcommand: "suggest",
       spec_path: draft_path,
@@ -436,7 +487,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
   let draft_dir = temp_dir("dogfood")
   let draft_path = draft_dir + "/draft.md"
   let rendered = match
-    run_to_string({
+    test_run_to_string({
       ..DraftConfig::default(),
       source_path: "cmd/indexion/spec/align/README.md",
       specs_dir: "kgfs",
@@ -448,7 +499,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
     _ => panic()
   }
   let report = match
-    @spec_align.diff_report_async({
+    test_align_diff_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       spec_path: draft_path,
       impl_path: "cmd/indexion/spec",
@@ -462,7 +513,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
   assert_true(report.summary.total_requirements > 0)
   assert_eq(report.summary.drifted, 0)
   let trace = match
-    @spec_align.trace_report_async({
+    test_align_trace_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       spec_path: draft_path,
       impl_path: "cmd/indexion/spec",
@@ -476,7 +527,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
   }
   assert_true(trace.edges.length() > 0)
   let suggest = match
-    @spec_align.suggest_report_async({
+    test_align_suggest_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       subcommand: "suggest",
       spec_path: draft_path,
@@ -504,19 +555,25 @@ async test "spec-draft: repo README can be drafted and aligned" {
     format: "tasks",
   }
   let claude_tasks = match
-    @align_cli.run_to_string({ ..task_config, agent: "claude" }) {
+    @align_cli.run_to_string_with_registry(
+      { ..task_config, agent: "claude" },
+      shared_test_registry,
+    ) {
     Some(value) => value
     None => fail("expected claude tasks")
   }
   assert_true(claude_tasks.contains("# Claude Tasks"))
   let generic_tasks = match
-    @align_cli.run_to_string({ ..task_config, agent: "generic" }) {
+    @align_cli.run_to_string_with_registry(
+      { ..task_config, agent: "generic" },
+      shared_test_registry,
+    ) {
     Some(value) => value
     None => fail("expected generic tasks")
   }
   assert_true(generic_tasks.contains("# Spec Align Tasks"))
   let status = match
-    @spec_align.status_report_async({
+    test_align_status_report_async({
       ..@spec_align.SpecAlignConfig::default(),
       subcommand: "status",
       spec_path: draft_path,

@@ -301,24 +301,36 @@ fn resolve_config(
 
 ///|
 async fn render_subcommand(config : @spec_align.SpecAlignConfig) -> String? {
+  let registry = @kgf_features.load_registry_or_empty(
+    specs_dir=config.specs_dir,
+    target_dir=config.impl_path,
+  )
+  render_subcommand_with_registry(config, registry)
+}
+
+///|
+async fn render_subcommand_with_registry(
+  config : @spec_align.SpecAlignConfig,
+  registry : @registry.KGFRegistry,
+) -> String? {
   match config.subcommand {
     "diff" =>
-      match @spec_align.diff_report_async(config) {
+      match @spec_align.diff_report_with_registry_async(config, registry) {
         Some(report) => Some(render_diff(report, config.format))
         None => None
       }
     "trace" =>
-      match @spec_align.trace_report_async(config) {
+      match @spec_align.trace_report_with_registry_async(config, registry) {
         Some(report) => Some(render_trace(report, config.format))
         None => None
       }
     "suggest" =>
-      match @spec_align.suggest_report_async(config) {
+      match @spec_align.suggest_report_with_registry_async(config, registry) {
         Some(report) => Some(render_suggest(report, config.format))
         None => None
       }
     "status" =>
-      match @spec_align.status_report_async(config) {
+      match @spec_align.status_report_with_registry_async(config, registry) {
         Some(report) => Some(render_status(report, config.format))
         None => None
       }
@@ -329,11 +341,12 @@ async fn render_subcommand(config : @spec_align.SpecAlignConfig) -> String? {
 ///|
 async fn render_watch_target(
   config : @spec_align.SpecAlignConfig,
+  registry : @registry.KGFRegistry,
 ) -> (String, String, Bool)? {
   let target = { ..config, subcommand: config.watch_mode }
   match config.watch_mode {
     "diff" =>
-      match @spec_align.diff_report_async(target) {
+      match @spec_align.diff_report_with_registry_async(target, registry) {
         Some(report) =>
           Some(
             (
@@ -345,7 +358,7 @@ async fn render_watch_target(
         None => None
       }
     "trace" =>
-      match @spec_align.trace_report_async(target) {
+      match @spec_align.trace_report_with_registry_async(target, registry) {
         Some(report) =>
           Some(
             (
@@ -357,7 +370,7 @@ async fn render_watch_target(
         None => None
       }
     "suggest" =>
-      match @spec_align.suggest_report_async(target) {
+      match @spec_align.suggest_report_with_registry_async(target, registry) {
         Some(report) =>
           Some(
             (
@@ -369,7 +382,7 @@ async fn render_watch_target(
         None => None
       }
     "status" =>
-      match @spec_align.status_report_async(target) {
+      match @spec_align.status_report_with_registry_async(target, registry) {
         Some(report) =>
           Some(
             (
@@ -410,8 +423,13 @@ async fn run_watch(matches : @argparse.Matches) -> Unit {
   let mut last_fingerprint = ""
   let mut last_probe = ""
   let mut emitted = 0
+  let registry = @kgf_features.load_registry_or_empty(
+    specs_dir=config.specs_dir,
+    target_dir=config.impl_path,
+  )
   while true {
-    let probe = match @spec_align.watch_probe_async(config) {
+    let probe = match
+      @spec_align.watch_probe_with_registry_async(config, registry) {
       Some(value) => value
       None => {
         println("No alignment data found.")
@@ -425,7 +443,7 @@ async fn run_watch(matches : @argparse.Matches) -> Unit {
       continue
     }
     last_probe = probe
-    match render_watch_target(config) {
+    match render_watch_target(config, registry) {
       Some((rendered, fingerprint, should_fail)) =>
         if fingerprint != last_fingerprint {
           last_fingerprint = fingerprint
@@ -501,4 +519,13 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
 ///|
 pub async fn run_to_string(config : @spec_align.SpecAlignConfig) -> String? {
   render_subcommand(config)
+}
+
+///|
+/// Render a subcommand with a caller-owned registry for batch use.
+pub async fn run_to_string_with_registry(
+  config : @spec_align.SpecAlignConfig,
+  registry : @registry.KGFRegistry,
+) -> String? {
+  render_subcommand_with_registry(config, registry)
 }

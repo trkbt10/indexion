@@ -16,6 +16,12 @@
 // snapshot file from the current analyzer output.
 
 ///|
+let shared_test_registry : @registry.KGFRegistry = @kgf_features.load_registry_or_empty(
+  specs_dir="kgfs",
+  target_dir=".",
+)
+
+///|
 /// Analyze a fixture directory and return the resulting CodeGraph. The test
 /// caller passes the relative path to the fixture from the repo root; the
 /// analyzer is invoked identically to the `doc graph` CLI.
@@ -24,12 +30,8 @@ pub fn analyze_fixture(fixture_dir : String) -> @graph.CodeGraph raise {
   if !exists {
     fail("fixture directory not found: " + fixture_dir)
   }
-  let specs_dir = "kgfs"
   let input_paths = [fixture_dir]
-  let registry = @kgf_features.load_registry_or_empty(
-    specs_dir~,
-    target_dirs=input_paths,
-  )
+  let registry = shared_test_registry
   let kgf_ignore = registry.collect_ignore_patterns()
   let discover_opts = @pipeline.DiscoverOptions::new(
     root_dir=@pipeline.root_dir_from_paths(input_paths),

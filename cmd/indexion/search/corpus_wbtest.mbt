@@ -2,6 +2,26 @@
 using @test {assert_eq}
 
 ///|
+let shared_test_registry : @kgf_registry.KGFRegistry = @kgf_features.load_registry_or_empty(
+  specs_dir="kgfs",
+  target_dir=".",
+)
+
+///|
+fn test_build_corpus(
+  paths : Array[String],
+  config : SearchConfig,
+) -> Array[@search_engine.SearchDocument] {
+  let (wiki_paths, file_paths) = partition_corpus_paths(paths)
+  build_corpus_from_partitioned_paths(
+    file_paths,
+    wiki_paths,
+    config,
+    Some(shared_test_registry),
+  )
+}
+
+///|
 fn temp_dir(label : String) -> String {
   let dir = "/tmp/indexion-search/" + label + "-" + @env.now().to_string()
   @config.ensure_dir_recursive(dir)
@@ -121,7 +141,7 @@ fn has_hit_source(
 ///|
 test "build_corpus indexes config, workflow, shell, and gitmodules files" {
   let root = fixture_root()
-  let docs = build_corpus([root], search_config())
+  let docs = test_build_corpus([root], search_config())
   let moon_mod = root + "/moon.mod.json"
   let workflow = root + "/.github/workflows/release.yml"
   let script = root + "/scripts/sync-version.sh"
@@ -146,7 +166,7 @@ test "build_corpus indexes config, workflow, shell, and gitmodules files" {
 ///|
 test "build_corpus indexes explicit versioning metadata file lists" {
   let root = fixture_root()
-  let docs = build_corpus(
+  let docs = test_build_corpus(
     [
       root + "/moon.mod.json",
       root + "/scripts/sync-version.sh",
@@ -172,7 +192,7 @@ test "build_corpus does not rewrite normal project paths to default wiki" {
     "{\"title\":\"Docs\",\"pages\":[]}\n",
   )
   write_file(root + "/src/main.mbt", "///|\npub fn main_value() -> Int { 1 }\n")
-  let docs = build_corpus([root + "/src"], search_config())
+  let docs = test_build_corpus([root + "/src"], search_config())
   assert_true(has_document_for_source(docs, root + "/src/main.mbt"))
   assert_false(
     has_document_for_source(docs, root + "/.indexion/wiki/wiki.json"),
@@ -183,7 +203,7 @@ test "build_corpus does not rewrite normal project paths to default wiki" {
 async test "search self-host retrieval finds versioning metadata chain" {
   let _unit = @async.with_task_group(_group => ())
   let root = fixture_root()
-  let docs = build_corpus([root], search_config())
+  let docs = test_build_corpus([root], search_config())
   let provider = @embed_config.TfIdf(@embed_config.DEFAULT_TFIDF_DIM)
   let engine = @search_engine.build_index(docs, provider) catch { _ => panic() }
   let hits = @search_engine.search_index(
@@ -201,7 +221,7 @@ async test "search self-host retrieval finds versioning metadata chain" {
 async test "search retrieval follows code-side version SoT context" {
   let _unit = @async.with_task_group(_group => ())
   let root = code_fixture_root()
-  let docs = build_corpus([root], search_config())
+  let docs = test_build_corpus([root], search_config())
   let provider = @embed_config.TfIdf(@embed_config.DEFAULT_TFIDF_DIM)
   let engine = @search_engine.build_index(docs, provider) catch { _ => panic() }
   let hits = @search_engine.search_index(
@@ -216,7 +236,7 @@ async test "search retrieval follows code-side version SoT context" {
 async test "search retrieval keeps code-side version SoT with explicit file lists" {
   let _unit = @async.with_task_group(_group => ())
   let root = code_fixture_root()
-  let docs = build_corpus(
+  let docs = test_build_corpus(
     [
       root + "/src/update/version.mbt",
       root + "/moon.mod.json",
@@ -244,7 +264,7 @@ test "build_corpus excludes files matched by .indexionignore" {
   write_file(root + "/node_modules/dep.mbt", "fn dep() {}\n")
   write_file(root + "/fixtures/sample.mbt", "fn sample() {}\n")
   write_file(root + "/.indexionignore", "_build/\nnode_modules/\nfixtures/\n")
-  let docs = build_corpus([root], search_config())
+  let docs = test_build_corpus([root], search_config())
   // Included
   assert_true(has_document_for_source(docs, root + "/src/main.mbt"))
   // Excluded by .indexionignore
@@ -259,7 +279,7 @@ test "build_corpus excludes files matched by .gitignore" {
   write_file(root + "/src/app.mbt", "fn app() {}\n")
   write_file(root + "/dist/bundle.js", "var x = 1;\n")
   write_file(root + "/.gitignore", "dist/\n")
-  let docs = build_corpus([root], search_config())
+  let docs = test_build_corpus([root], search_config())
   assert_true(has_document_for_source(docs, root + "/src/app.mbt"))
   assert_false(has_document_for_source(docs, root + "/dist/bundle.js"))
 }
