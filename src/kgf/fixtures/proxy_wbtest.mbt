@@ -3,7 +3,7 @@
 
 ///|
 test "proxy: detects simple package delegation" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
   let source = @fs.read_file_to_string(
     fixtures + "/proxy/moonbit/simple_proxy.mbt",
@@ -28,7 +28,7 @@ test "proxy: detects simple package delegation" {
 
 ///|
 test "proxy: detects Type::method delegation" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
   let source = @fs.read_file_to_string(
     fixtures + "/proxy/moonbit/simple_proxy.mbt",
@@ -50,7 +50,7 @@ test "proxy: detects Type::method delegation" {
 
 ///|
 test "proxy: detects zero-arg proxy" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
   let source = @fs.read_file_to_string(
     fixtures + "/proxy/moonbit/simple_proxy.mbt",
@@ -74,7 +74,7 @@ test "proxy: detects zero-arg proxy" {
 
 ///|
 test "proxy: detects multi-param forwarding" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
   let source = @fs.read_file_to_string(
     fixtures + "/proxy/moonbit/simple_proxy.mbt",
@@ -97,7 +97,7 @@ test "proxy: detects multi-param forwarding" {
 
 ///|
 test "proxy: rejects non-proxy functions" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
   let source = @fs.read_file_to_string(
     fixtures + "/proxy/moonbit/not_proxy.mbt",
@@ -117,7 +117,7 @@ test "proxy: rejects non-proxy functions" {
 
 ///|
 test "proxy: def_start_line includes doc comment" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
   let source = @fs.read_file_to_string(
     fixtures + "/proxy/moonbit/simple_proxy.mbt",
@@ -141,7 +141,7 @@ test "proxy: def_start_line includes doc comment" {
 
 ///|
 test "proxy: find_call_sites detects calls in caller file" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
   let source = @fs.read_file_to_string(fixtures + "/proxy/moonbit/caller.mbt") catch {
     _ => ""

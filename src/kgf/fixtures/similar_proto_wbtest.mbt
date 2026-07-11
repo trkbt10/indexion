@@ -48,7 +48,7 @@ test "similar-code: protobuf vs typescript not similar" {
 
 ///|
 test "similar-code: protobuf tokenization produces expected token kinds" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
   let source = @fs.read_file_to_string(fixtures + "/similar-code/a.proto") catch {
     _ => ""
@@ -75,7 +75,7 @@ test "similar-code: protobuf tokenization produces expected token kinds" {
 
 ///|
 test "similar-code: protobuf pair declares same structure" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
   let a_source = @fs.read_file_to_string(fixtures + "/similar-code/a.proto") catch {
     _ => ""

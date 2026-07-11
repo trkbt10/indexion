@@ -3,7 +3,7 @@ using @test {fail}
 
 ///|
 test "story-prose: declares headings and paragraphs" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir() + "/story")
+  let registry = get_story_fixture_registry()
   let source =
     #|# Chapter One
     #|
@@ -42,7 +42,7 @@ test "story-prose: declares headings and paragraphs" {
 
 ///|
 test "story-prose: filtered parser keeps semantic block events" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir() + "/story")
+  let registry = get_story_fixture_registry()
   let spec = registry.get_spec("story-prose").unwrap()
   let source =
     #|# Chapter One
@@ -70,7 +70,7 @@ test "story-prose: filtered parser keeps semantic block events" {
 
 ///|
 test "story-prose: filtered parser keeps events on fixture readme" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir() + "/story")
+  let registry = get_story_fixture_registry()
   let spec = registry.get_spec("story-prose").unwrap()
   let path = get_fixtures_dir() + "/story/dorian-gray/README.md"
   let source_result = Some(@fs.read_file_to_string(path)) catch { _ => None }

@@ -15,6 +15,16 @@ fn run_analysis(config : VerifyConfig) -> VerifyReport {
     specs_dir=config.specs_dir,
     target_dir=config.target_dir,
   )
+  run_analysis_with_registry(config, registry)
+}
+
+///|
+/// Run the analysis with an already loaded registry. Repeated analyses in this
+/// package can reuse read-only KGF definitions instead of reparsing every spec.
+fn run_analysis_with_registry(
+  config : VerifyConfig,
+  registry : @registry.KGFRegistry,
+) -> VerifyReport {
   let spec_paths = expand_spec_patterns(config.spec_patterns)
   let spec_files = collect_spec_files(spec_paths, registry)
   if spec_files.length() == 0 {

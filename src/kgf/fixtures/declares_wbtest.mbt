@@ -85,7 +85,7 @@ test "declares: semantics coverage includes every programming kgf" {
 
 ///|
 test "declares: moonbit pub fn and pub struct" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|pub struct ParsedValue {
     #|  value : Int
@@ -117,7 +117,7 @@ test "declares: moonbit pub fn and pub struct" {
 
 ///|
 test "declares: rust pub fn and pub struct" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|/// Application configuration.
     #|pub struct Config {
@@ -150,7 +150,7 @@ test "declares: rust pub fn and pub struct" {
 /// generic `Operator` token. Before the fix, most of these items were
 /// silently dropped from the graph.
 test "declares: rust attributes, references, const and type alias" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|//! Module documentation.
     #|use std::fmt;
@@ -204,7 +204,7 @@ test "declares: rust attributes, references, const and type alias" {
 /// prelude value constructor, not a type). Each of these used to abort the
 /// parse and drop the enclosing item.
 test "declares: rust nested generics, lifetimes, doc-fields, None variant" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|use std::collections::{
     #|    HashMap,
@@ -254,7 +254,7 @@ test "declares: rust nested generics, lifetimes, doc-fields, None variant" {
 /// alias and an enum whose variant/field is named `String`. The whole
 /// struct/enum/alias was lost before, so this asserts they all appear.
 test "declares: rust doc-before-attr member and type-word identifiers" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|pub type Result<T> = std::result::Result<T, Error>;
     #|
@@ -286,7 +286,7 @@ test "declares: rust doc-before-attr member and type-word identifiers" {
 
 ///|
 test "declares: go exported func and type" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|package server
     #|
@@ -319,7 +319,7 @@ test "declares: go exported func and type" {
 
 ///|
 test "declares: typescript function and interface" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|export function formatClassName(base: string, variant: string): string {
     #|  return `${base}-${variant}`;
@@ -346,7 +346,7 @@ test "declares: typescript function and interface" {
 
 ///|
 test "declares: typescript-jsx jsx component and interface" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|export interface Props {
     #|  title: string;
@@ -366,7 +366,7 @@ test "declares: typescript-jsx jsx component and interface" {
 
 ///|
 test "declares: javascript-jsx function component and class" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|function App() {
     #|  return <Box />;
@@ -384,7 +384,7 @@ test "declares: javascript-jsx function component and class" {
 
 ///|
 test "declares: clojure def defn defmacro" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|(def visible-value 1)
     #|(defn visible-fn [name]
@@ -402,7 +402,7 @@ test "declares: clojure def defn defmacro" {
 
 ///|
 test "declares: clojure protocol record type multimethod method" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|(defprotocol VisibleProtocol)
     #|(defrecord VisibleRecord)
@@ -425,7 +425,7 @@ test "declares: clojure protocol record type multimethod method" {
 
 ///|
 test "declares: python def and class" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|class User:
     #|    name: str
@@ -450,7 +450,7 @@ test "declares: python def and class" {
 
 ///|
 test "declares: java public class and method" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|public class Service {
     #|    public String process(String input) {
@@ -475,7 +475,7 @@ test "declares: java public class and method" {
 
 ///|
 test "declares: csharp public class, interface, method" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|public class User
     #|{
@@ -507,7 +507,7 @@ test "declares: csharp public class, interface, method" {
 
 ///|
 test "declares: swift public struct, protocol, func" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|public struct User {
     #|    public let name: String
@@ -534,7 +534,7 @@ test "declares: swift public struct, protocol, func" {
 
 ///|
 test "declares: ruby class, module, public methods" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|module Calculator
     #|  class Basic
@@ -561,7 +561,7 @@ test "declares: ruby class, module, public methods" {
 
 ///|
 test "declares: php class and function" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|<?php
     #|class UserService
@@ -583,7 +583,7 @@ test "declares: php class and function" {
 
 ///|
 test "declares: kotlin class and fun" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|class UserService {
     #|    fun findById(id: Int): String? = null
@@ -604,7 +604,7 @@ test "declares: kotlin class and fun" {
 
 ///|
 test "declares: scala class, trait, def" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|class UserService {
     #|  def findById(id: Int): Option[String] = None
@@ -623,7 +623,7 @@ test "declares: scala class, trait, def" {
 
 ///|
 test "declares: zig pub fn" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|pub fn load() void {
     #|    return;
@@ -643,7 +643,7 @@ test "declares: zig pub fn" {
 
 ///|
 test "declares: javascript function" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|function greet(name) {
     #|  return "Hello";
@@ -663,7 +663,7 @@ test "declares: javascript function" {
 
 ///|
 test "declares: c struct and function" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|struct Point {
     #|    int x;
@@ -682,7 +682,7 @@ test "declares: c struct and function" {
 
 ///|
 test "declares: cpp class, namespace, function" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|namespace app {
     #|
@@ -701,7 +701,7 @@ test "declares: cpp class, namespace, function" {
 
 ///|
 test "declares: haskell data and function" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|data Color = Red | Green | Blue
     #|
@@ -716,7 +716,7 @@ test "declares: haskell data and function" {
 
 ///|
 test "declares: elixir tokenize and parse" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   // Basic parsing test — Elixir's def/defp visibility filtering
   // uses vis:( KW_def / KW_defp ) label with eq($vis, "def") condition
   let spec = registry.get_spec("elixir").unwrap()
@@ -732,7 +732,7 @@ test "declares: elixir tokenize and parse" {
 
 ///|
 test "declares: lua global function" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|function greet(name)
     #|  return "Hello, " .. name
@@ -751,7 +751,7 @@ test "declares: lua global function" {
 
 ///|
 test "declares: dart task fixture class" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let path = "fixtures/programming/dart/task.dart"
   let source = @fs.read_file_to_string(path)
   let (_, _, names) = count_declares(registry, "dart", source, path)
@@ -762,7 +762,7 @@ test "declares: dart task fixture class" {
 
 ///|
 test "declares: ocaml task store fixture values and types" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|type status = Pending | Done
   let (_, _, names) = count_declares(registry, "ocaml", source, "task_store.ml")
@@ -773,7 +773,7 @@ test "declares: ocaml task store fixture values and types" {
 
 ///|
 test "declares: protobuf message, enum, service, rpc" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|syntax = "proto3";
     #|
@@ -834,7 +834,7 @@ test "declares: protobuf message, enum, service, rpc" {
 
 ///|
 test "declares: protobuf keyword as field name" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|syntax = "proto3";
     #|
@@ -856,7 +856,7 @@ test "declares: protobuf keyword as field name" {
 
 ///|
 test "declares: julia task store fixture module and function" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let source =
     #|struct Task
     #|    id::Int

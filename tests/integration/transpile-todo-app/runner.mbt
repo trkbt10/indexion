@@ -26,6 +26,19 @@
 let ts_src_root : String = "fixtures/transpile/todo-app/cli/typescript/src"
 
 ///|
+/// The target snapshots only read KGF definitions. Keep one registry for the
+/// complete batch instead of loading every spec twice per emitted file.
+let shared_kgf_registry : @registry.KGFRegistry = load_shared_kgf_registry()
+
+///|
+fn load_shared_kgf_registry() -> @registry.KGFRegistry {
+  match @config.find_kgfs_dir() {
+    Some(dir) => @registry.KGFRegistry::load_from_dir(dir)
+    None => @registry.KGFRegistry::new()
+  }
+}
+
+///|
 /// One per-file drift entry in the snapshot.
 priv struct FileDrift {
   file : String
@@ -241,7 +254,10 @@ async fn build_target_snapshot(target : String) -> TargetSnapshot {
   // output dir is a valid project for the target compiler.
   bootstrap_project(target, output_dir)
   for f in files {
-    let json_str = match @kgf_transpile.transpile_file_json(f, target, "kgfs") {
+    let json_str = match
+      @kgf_transpile.transpile_file_json_with_registry(
+        f, target, shared_kgf_registry,
+      ) {
       Some(s) => s
       None => fail("transpile_file_json returned None for " + f)
     }
@@ -281,7 +297,7 @@ async fn build_target_snapshot(target : String) -> TargetSnapshot {
     } else {
       f
     }
-    let emit_parse_errors = check_emit_parses(code, target)
+    let emit_parse_errors = check_emit_parses(code, target, shared_kgf_registry)
     // Persist transpiled code to disk so users can inspect / hand-compile.
     let stem = rel[:rel.length() - 3].to_owned() // strip ".ts"
     let out_path = output_dir + "/" + stem + target_extension(target)
@@ -660,12 +676,11 @@ fn which(cmd : String) -> String {
 /// Run `check_source` on the emitted code under the target language's KGF
 /// spec. Returns the count of error-severity diagnostics. Used to verify
 /// the transpile produced something the target's KGF accepts.
-fn check_emit_parses(code : String, target_lang : String) -> Int {
-  let dir = match @config.find_kgfs_dir() {
-    Some(d) => d
-    None => return -1
-  }
-  let registry = @registry.KGFRegistry::load_from_dir(dir)
+fn check_emit_parses(
+  code : String,
+  target_lang : String,
+  registry : @registry.KGFRegistry,
+) -> Int {
   let spec = match registry.get_spec(target_lang) {
     Some(s) => s
     None => return -1

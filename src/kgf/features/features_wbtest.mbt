@@ -2,8 +2,14 @@
 using @test {assert_eq}
 
 ///|
+let shared_test_registry : @kgf_registry.KGFRegistry = load_registry_or_empty(
+  specs_dir="kgfs",
+  target_dir=".",
+)
+
+///|
 fn test_registry() -> @kgf_registry.KGFRegistry {
-  load_registry_or_empty(specs_dir="kgfs", target_dir=".")
+  shared_test_registry
 }
 
 ///|

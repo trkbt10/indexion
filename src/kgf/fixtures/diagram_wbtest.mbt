@@ -4,7 +4,7 @@
 
 ///|
 test "diagram: tokenize mermaid flowchart" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let spec = registry.get_spec("mermaid").unwrap()
   let lexer = @lexer.Lexer::new(spec.get_tokens())
   let fixtures = get_fixtures_dir()
@@ -24,7 +24,7 @@ test "diagram: tokenize mermaid flowchart" {
 
 ///|
 test "diagram: tokenize mermaid sequence diagram" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let spec = registry.get_spec("mermaid").unwrap()
   let lexer = @lexer.Lexer::new(spec.get_tokens())
   let fixtures = get_fixtures_dir()
@@ -42,7 +42,7 @@ test "diagram: tokenize mermaid sequence diagram" {
 
 ///|
 test "diagram: tokenize mermaid class diagram" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let spec = registry.get_spec("mermaid").unwrap()
   let lexer = @lexer.Lexer::new(spec.get_tokens())
   let fixtures = get_fixtures_dir()
@@ -65,7 +65,7 @@ test "diagram: tokenize mermaid class diagram" {
 
 ///|
 test "diagram: tokenize mermaid er diagram" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let spec = registry.get_spec("mermaid").unwrap()
   let lexer = @lexer.Lexer::new(spec.get_tokens())
   let fixtures = get_fixtures_dir()
@@ -87,7 +87,7 @@ test "diagram: tokenize mermaid er diagram" {
 
 ///|
 test "diagram: tokenize mermaid gantt chart" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let spec = registry.get_spec("mermaid").unwrap()
   let lexer = @lexer.Lexer::new(spec.get_tokens())
   let fixtures = get_fixtures_dir()
@@ -106,7 +106,7 @@ test "diagram: tokenize mermaid gantt chart" {
 
 ///|
 test "diagram: tokenize mermaid state diagram" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let spec = registry.get_spec("mermaid").unwrap()
   let lexer = @lexer.Lexer::new(spec.get_tokens())
   let fixtures = get_fixtures_dir()
@@ -129,7 +129,7 @@ test "diagram: tokenize mermaid state diagram" {
 
 ///|
 test "diagram: mermaid spec registry lookup by extension" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let lang_mmd = registry.detect_from_path("diagram.mmd")
   assert_true(lang_mmd is Some(_))
   assert_eq(lang_mmd.unwrap(), "mermaid")

@@ -22,6 +22,14 @@ fn fixture_specs_dir() -> String {
 }
 
 ///|
+/// All fixture analyses are read-only, so avoid reparsing the complete KGF
+/// registry for every language/spec-format assertion.
+let fixture_registry : @registry.KGFRegistry = @kgf_features.load_registry_or_empty(
+  specs_dir=fixture_specs_dir(),
+  target_dir=fixture_root(),
+)
+
+///|
 /// Build a VerifyConfig for a given language project against the markdown spec.
 /// Uses empty root_dir to bypass .indexionignore (fixtures/ would be excluded).
 fn fixture_config_for(lang_dir : String) -> VerifyConfig {
@@ -51,7 +59,7 @@ fn fixture_config_html(lang_dir : String) -> VerifyConfig {
 ///|
 test "spec-verify/moonbit: markdown spec produces vocabulary analysis" {
   let config = fixture_config_for("moonbit")
-  let report = run_analysis(config)
+  let report = run_analysis_with_registry(config, fixture_registry)
   assert_true(
     report.summary.cosine_distance > 0.0,
     msg="cosine distance should be > 0 (spec and impl differ)",
@@ -62,7 +70,7 @@ test "spec-verify/moonbit: markdown spec produces vocabulary analysis" {
 ///|
 test "spec-verify/typescript: markdown spec produces gap terms" {
   let config = fixture_config_for("typescript")
-  let report = run_analysis(config)
+  let report = run_analysis_with_registry(config, fixture_registry)
   assert_true(report.summary.impl_files > 0, msg="no .ts files found")
   assert_true(
     report.summary.cosine_distance > 0.0,
@@ -73,7 +81,7 @@ test "spec-verify/typescript: markdown spec produces gap terms" {
 ///|
 test "spec-verify/python: markdown spec produces gap terms" {
   let config = fixture_config_for("python")
-  let report = run_analysis(config)
+  let report = run_analysis_with_registry(config, fixture_registry)
   assert_true(report.summary.impl_files > 0, msg="no .py files found")
   assert_true(
     report.summary.cosine_distance > 0.0,
@@ -86,7 +94,7 @@ test "spec-verify/python: markdown spec produces gap terms" {
 ///|
 test "spec-verify/moonbit: HTML RFC spec produces report" {
   let config = fixture_config_html("moonbit")
-  let report = run_analysis(config)
+  let report = run_analysis_with_registry(config, fixture_registry)
   assert_true(report.summary.spec_files == 1, msg="expected 1 HTML spec file")
   assert_true(report.summary.impl_files > 0, msg="no impl files discovered")
   assert_true(
@@ -98,7 +106,7 @@ test "spec-verify/moonbit: HTML RFC spec produces report" {
 ///|
 test "spec-verify/typescript: HTML RFC spec produces report" {
   let config = fixture_config_html("typescript")
-  let report = run_analysis(config)
+  let report = run_analysis_with_registry(config, fixture_registry)
   assert_true(report.summary.impl_files > 0, msg="no .ts files found")
   assert_true(report.summary.spec_symbols > 0, msg="no spec symbols from HTML")
 }
@@ -106,7 +114,7 @@ test "spec-verify/typescript: HTML RFC spec produces report" {
 ///|
 test "spec-verify/python: HTML RFC spec produces report" {
   let config = fixture_config_html("python")
-  let report = run_analysis(config)
+  let report = run_analysis_with_registry(config, fixture_registry)
   assert_true(report.summary.impl_files > 0, msg="no .py files found")
   assert_true(report.summary.spec_symbols > 0, msg="no spec symbols from HTML")
 }
@@ -116,7 +124,7 @@ test "spec-verify/python: HTML RFC spec produces report" {
 ///|
 test "spec-verify: summary fields are consistent" {
   let config = fixture_config_for("moonbit")
-  let report = run_analysis(config)
+  let report = run_analysis_with_registry(config, fixture_registry)
   assert_eq(report.summary.gap_count, report.items.length())
   assert_eq(report.summary.missing, report.items.length())
 }
@@ -124,7 +132,7 @@ test "spec-verify: summary fields are consistent" {
 ///|
 test "spec-verify: renderers produce valid output" {
   let config = fixture_config_for("moonbit")
-  let report = run_analysis(config)
+  let report = run_analysis_with_registry(config, fixture_registry)
   let md = render_output(report, "md")
   assert_true(md.contains("# Spec Verify Report"))
   assert_true(md.contains("Vocabulary distance"))

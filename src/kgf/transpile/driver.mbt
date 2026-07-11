@@ -12,6 +12,18 @@ pub fn transpile_file_json(
   kgf_dir : String,
 ) -> String? {
   let registry = load_registry(kgf_dir)
+  transpile_file_json_with_registry(file_path, target_lang, registry)
+}
+
+///|
+/// File-level transpile entry using a registry loaded by the caller.
+/// Reuse this for batch work to avoid rescanning and reparsing every KGF spec
+/// for each source file.
+pub fn transpile_file_json_with_registry(
+  file_path : String,
+  target_lang : String,
+  registry : @registry.KGFRegistry,
+) -> String? {
   let source_lang = match registry.detect_from_path(file_path) {
     Some(s) => s
     None => return None

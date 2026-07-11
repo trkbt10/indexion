@@ -58,7 +58,7 @@ fn run_pipeline_with_registry(
 ///|
 /// Test all npm/package.json project types.
 test "project: npm package.json tests" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
 
   // Tokenize package.json
@@ -143,7 +143,7 @@ test "project: npm package.json tests" {
 ///|
 /// Test Cargo.toml parsing.
 test "project: cargo tests" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
 
   // Tokenize
@@ -210,7 +210,7 @@ test "project: cargo tests" {
 ///|
 /// Test go.mod parsing.
 test "project: go mod tests" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
 
   let spec = registry.get_spec("go-mod").unwrap()
@@ -242,7 +242,7 @@ test "project: go mod tests" {
 ///|
 /// Test moon.mod.json parsing.
 test "project: moonbit tests" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
 
   let spec = registry.get_spec("moon-mod").unwrap()
@@ -277,12 +277,14 @@ test "project: moonbit tests" {
 ///|
 /// Test moon.mod parsing (current MoonBit TOML manifest format).
 test "project: moonbit moon.mod TOML tests" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
 
   let spec = registry.get_spec("moon-mod-toml").unwrap()
   let lexer = @lexer.Lexer::new(spec.get_tokens())
-  let source = @fs.read_file_to_string(fixtures + "/project/moonbit-toml/moon.mod") catch {
+  let source = @fs.read_file_to_string(
+    fixtures + "/project/moonbit-toml/moon.mod",
+  ) catch {
     _ => ""
   }
   if source.length() > 0 {
@@ -329,10 +331,14 @@ test "project: moonbit moon.mod TOML tests" {
     assert_true(
       result.edges
       .iter()
-      .any(fn(e) { edge_kind_is(e.kind, "projectLicense") && e.to == "Apache-2.0" }),
+      .any(fn(e) {
+        edge_kind_is(e.kind, "projectLicense") && e.to == "Apache-2.0"
+      }),
     )
     assert_true(
-      result.edges.iter().any(fn(e) { edge_kind_is(e.kind, "projectRepository") }),
+      result.edges
+      .iter()
+      .any(fn(e) { edge_kind_is(e.kind, "projectRepository") }),
     )
     assert_true(
       result.edges
@@ -345,7 +351,7 @@ test "project: moonbit moon.mod TOML tests" {
 ///|
 /// Test pyproject.toml parsing.
 test "project: python tests" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
 
   let spec = registry.get_spec("pyproject-toml").unwrap()
@@ -377,7 +383,7 @@ test "project: python tests" {
 ///|
 /// Test deno.json parsing.
 test "project: deno tests" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
 
   let spec = registry.get_spec("deno-json").unwrap()
@@ -404,7 +410,7 @@ test "project: deno tests" {
 ///|
 /// Test other project types (vcpkg, csproj, swift, maven, gradle, ruby, php).
 test "project: other languages" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
 
   // vcpkg (C++)
@@ -545,7 +551,7 @@ test "project: other languages" {
 ///|
 /// Test registry detection functions.
 test "project: registry detection" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
 
   // is_file_supported
   assert_true(registry.is_file_supported("package.json"))

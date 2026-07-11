@@ -16,10 +16,15 @@ fn has_token_kind(tokens : Array[@types.Tok], kind : String) -> Bool {
 }
 
 ///|
+/// Registry tests only read specs, so share the expensive recursive load.
+let shared_test_registry : KGFRegistry = KGFRegistry::load_from_dir(
+  @kgf_fixtures.get_kgfs_dir(),
+)
+
+///|
 /// Main registry test - loads registry once and runs all validations.
 test "registry: comprehensive validation" {
-  let dir = @kgf_fixtures.get_kgfs_dir()
-  let registry = KGFRegistry::load_from_dir(dir)
+  let registry = shared_test_registry
 
   // Test 1: Should have loaded multiple specs
   assert_true(registry.spec_count() > 0)
@@ -168,8 +173,7 @@ test "registry: comprehensive validation" {
 ///|
 /// Tokenization and parsing tests - loads registry once for all language tests.
 test "registry: tokenize and parse examples" {
-  let dir = @kgf_fixtures.get_kgfs_dir()
-  let registry = KGFRegistry::load_from_dir(dir)
+  let registry = shared_test_registry
   let fixtures_dir = @kgf_fixtures.get_fixtures_dir()
 
   // TypeScript tokenization
@@ -268,8 +272,7 @@ test "registry: tokenize and parse examples" {
 ///|
 /// Markup and DSL parsing tests.
 test "registry: parse markup and dsl" {
-  let dir = @kgf_fixtures.get_kgfs_dir()
-  let registry = KGFRegistry::load_from_dir(dir)
+  let registry = shared_test_registry
   let fixtures_dir = @kgf_fixtures.get_fixtures_dir()
 
   // HTML
@@ -358,8 +361,7 @@ test "registry: parse markup and dsl" {
 ///|
 /// Natural language tokenization tests.
 test "registry: tokenize natural languages" {
-  let dir = @kgf_fixtures.get_kgfs_dir()
-  let registry = KGFRegistry::load_from_dir(dir)
+  let registry = shared_test_registry
   let fixtures_dir = @kgf_fixtures.get_fixtures_dir()
 
   let natural_tests = [

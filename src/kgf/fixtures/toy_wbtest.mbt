@@ -4,7 +4,7 @@
 
 ///|
 test "toy: tokenize b64, reltext, jpeg-hex, japanese-law" {
-  let registry = @registry.KGFRegistry::load_from_dir(get_kgfs_dir())
+  let registry = get_fixture_registry()
   let fixtures = get_fixtures_dir()
 
   // Base64 PNG
