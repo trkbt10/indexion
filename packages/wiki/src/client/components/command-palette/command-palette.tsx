@@ -97,6 +97,25 @@ function resetSearch(): void {
 const isWikiSearchIndexUnavailable = (message: string): boolean =>
   message.toLowerCase().includes(WIKI_SEARCH_INDEX_UNAVAILABLE);
 
+type WikiSearchResult = Awaited<ReturnType<typeof searchWiki>>;
+
+const resolveWikiSearchUpdate = (
+  wiki: WikiSearchResult,
+  unavailableNotice: string,
+): Partial<SearchState> => {
+  if (wiki.ok) {
+    return {
+      wikiResults: wiki.data as ReadonlyArray<WikiSearchHit>,
+      notice: null,
+      error: null,
+    };
+  }
+  if (isWikiSearchIndexUnavailable(wiki.error)) {
+    return { wikiResults: [], notice: unavailableNotice, error: null };
+  }
+  return { wikiResults: [], notice: null, error: wiki.error };
+};
+
 const errorMessage = (err: unknown): string =>
   err instanceof Error ? err.message : "Search failed.";
 
@@ -223,21 +242,9 @@ export const CommandPalette = ({
           if (debounceRef.current !== id) {
             return;
           }
-          if (wiki.ok) {
-            updateSearch({
-              wikiResults: wiki.data as ReadonlyArray<WikiSearchHit>,
-              notice: null,
-              error: null,
-            });
-          } else if (isWikiSearchIndexUnavailable(wiki.error)) {
-            updateSearch({
-              wikiResults: [],
-              notice: d.search_wiki_unavailable,
-              error: null,
-            });
-          } else {
-            updateSearch({ wikiResults: [], notice: null, error: wiki.error });
-          }
+          updateSearch(
+            resolveWikiSearchUpdate(wiki, d.search_wiki_unavailable),
+          );
         } else {
           const semantic = await queryDigest(client, {
             purpose: query.trim(),

@@ -19,8 +19,7 @@ import { resolveCodiconsUri } from "../../extension-host/codicons.ts";
 type Log = { readonly appendLine: (msg: string) => void };
 
 const WIKI_SEARCH_INDEX_UNAVAILABLE = "wiki search index not available";
-const WIKI_SEARCH_UNAVAILABLE_MESSAGE =
-  "Wiki search is not available yet. The wiki pages are still browsable.";
+const WIKI_SEARCH_UNAVAILABLE_MESSAGE = "Wiki search is not available yet. The wiki pages are still browsable.";
 
 const isWikiSearchIndexUnavailable = (message: string): boolean =>
   message.toLowerCase().includes(WIKI_SEARCH_INDEX_UNAVAILABLE);
