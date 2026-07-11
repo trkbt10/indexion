@@ -1,3 +1,21 @@
+# v0.17.1
+
+## Highlights
+
+- **`moon.mod` (TOML) manifests are read through KGF.** `plan documentation` and other project-metadata consumers now parse the current MoonBit `moon.mod` TOML manifest and obtain project name / dependency metadata via KGF edges, rather than ad-hoc manifest parsing.
+- **Registries are reused across analysis batches.** KGF registry construction is now shared across batched analysis and test runs instead of being rebuilt per file, cutting redundant spec loading in `spec align`, `spec draft`, `spec verify`, `grep`, `search`, and the integration/transpile test suites.
+
+## Improvements
+
+- KGF registries are reused across analysis batches and test batches, reducing repeated spec-loading overhead.
+- `spec align` / `spec draft` / `spec verify` analysis and vocabulary paths thread a shared registry through their batch runs.
+
+## Bug Fixes
+
+- Native test fixtures are kept in temporary storage so runs no longer leak fixture files into the working tree.
+
+---
+
 # v0.17.0
 
 ## Highlights
