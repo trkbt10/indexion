@@ -1,5 +1,6 @@
 import {
   "trkbt10/indexion/src/digest/http",
+  "trkbt10/indexion/src/http" @indexion_http,
   "trkbt10/indexion/src/digest/types",
   "trkbt10/indexion/src/digest/config",
   "moonbitlang/core/json",

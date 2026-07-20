@@ -1,5 +1,5 @@
 import {
-  "mizchi/x/process",
+  "moonbitlang/async/process",
   "moonbitlang/core/argparse",
   "trkbt10/indexion/cmd/indexion/common",
   "trkbt10/indexion/cmd/indexion/help",

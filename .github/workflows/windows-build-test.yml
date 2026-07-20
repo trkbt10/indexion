@@ -4,8 +4,17 @@ name: Windows Build Test
 # Triggers far faster than the full Release matrix workflow because it
 # runs only the windows-latest leg and skips frontend/wiki/artifact-upload.
 #
-# Auto-runs on changes to the build script or this workflow file, and
-# can be triggered manually via "Run workflow" in the GitHub UI.
+# Auto-runs on changes to the build script, this workflow file, or the
+# dependency manifest, and can be triggered manually via "Run workflow"
+# in the GitHub UI.
+#
+# `moon.mod` is watched because dependencies are the main source of
+# Windows-only build breakage: platform-conditional APIs (for example
+# `@fs.chmod`, which async marks `#cfg(not(platform="windows"))`, and the
+# `Fd` type, which is an opaque handle on Windows but `Int` elsewhere)
+# compile fine on macOS/Linux CI and only fail here. Without this trigger
+# such a break is not caught until the tag-triggered Release workflow runs,
+# which is after the release commit is already published.
 
 on:
   workflow_dispatch:
@@ -13,6 +22,7 @@ on:
     paths:
       - 'scripts/build-native-release.py'
       - '.github/workflows/windows-build-test.yml'
+      - 'moon.mod'
 
 jobs:
   build:

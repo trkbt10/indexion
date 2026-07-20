@@ -6,17 +6,6 @@
 /// Supports live rebuild via POST /api/digest/rebuild.
 
 ///|
-/// Extract a human-readable message from an HttpError.
-fn http_error_message(err : @mhttp.HttpError) -> String {
-  match err {
-    NetworkError(msg) => msg
-    InvalidUrl(msg) => msg
-    TimeoutError => "timeout"
-    NotSupported => "not supported"
-  }
-}
-
-///|
 pub struct ServeConfig {
   port : Int
   host : String
@@ -357,17 +346,18 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
   // Build GET route table (SoT for API paths)
   let get_routes = build_get_routes(state, config)
   // Start HTTP server
-  let server = @mhttp.Server::new(
-    host=config.host,
-    port=config.port,
+  let server = @async_http.Server(
+    @socket.Addr::parse("\{config.host}:\{config.port}"),
     reuse_addr=true,
   ) catch {
     err => {
-      @digest_cli.log_error("Server init failed: " + http_error_message(err))
+      @digest_cli.log_error(
+        "Server init failed: " + @indexion_http.http_error_message(err),
+      )
       return
     }
   }
-  let listen_port = server.port()
+  let listen_port = server.addr().port()
   println("Serving on http://" + config.host + ":" + listen_port.to_string())
   if config.watch_stdin {
     println("Watching stdin — will exit on EOF.")
@@ -379,13 +369,13 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
       let path = strip_query_string(req.path)
       let cors_enabled = config.cors
       // CORS preflight
-      if req.meth == @mhttp.Options && path.has_prefix("/api/") {
+      if req.meth == @async_http.Options && path.has_prefix("/api/") {
         conn.skip_request_body()
         send_cors_preflight(conn, cors_enabled)
         return
       }
       // GET API routes — served from the route table (SoT)
-      if req.meth == @mhttp.Get && path.has_prefix("/api/") {
+      if req.meth == @async_http.Get && path.has_prefix("/api/") {
         conn.skip_request_body()
         match get_routes.get(path) {
           Some(data) => {
@@ -397,14 +387,14 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         // Not in route table — fall through to POST handlers / static / 404
       }
       // POST endpoints (not in route table — these are dynamic)
-      if req.meth == @mhttp.Post && path == "/api/digest/rebuild" {
+      if req.meth == @async_http.Post && path == "/api/digest/rebuild" {
         conn.skip_request_body()
         handle_rebuild(
           conn, state, config, digest_cli_config, digest_config, cors_enabled, get_routes,
         )
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/digest/query" {
+      if req.meth == @async_http.Post && path == "/api/digest/query" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_digest_query(
@@ -416,53 +406,53 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         )
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/wiki/search" {
+      if req.meth == @async_http.Post && path == "/api/wiki/search" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_wiki_search(conn, body_text, state.wiki_search, cors_enabled)
         return
       }
       // Search endpoint
-      if req.meth == @mhttp.Post && path == "/api/search" {
+      if req.meth == @async_http.Post && path == "/api/search" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_search(conn, body_text, state, cors_enabled)
         return
       }
       // Grep endpoint
-      if req.meth == @mhttp.Post && path == "/api/grep" {
+      if req.meth == @async_http.Post && path == "/api/grep" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_grep(conn, body_text, config, cors_enabled)
         return
       }
       // Explore endpoint
-      if req.meth == @mhttp.Post && path == "/api/explore" {
+      if req.meth == @async_http.Post && path == "/api/explore" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_explore(conn, body_text, config, cors_enabled)
         return
       }
       // SSE streaming endpoints
-      if req.meth == @mhttp.Post && path == "/api/search/stream" {
+      if req.meth == @async_http.Post && path == "/api/search/stream" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_search_stream(conn, body_text, state, cors_enabled)
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/grep/stream" {
+      if req.meth == @async_http.Post && path == "/api/grep/stream" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_grep_stream(conn, body_text, config, cors_enabled)
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/explore/stream" {
+      if req.meth == @async_http.Post && path == "/api/explore/stream" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_explore_stream(conn, body_text, config, cors_enabled)
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/digest/query/stream" {
+      if req.meth == @async_http.Post && path == "/api/digest/query/stream" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_digest_query_stream(
@@ -475,51 +465,51 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         return
       }
       // KGF POST endpoints
-      if req.meth == @mhttp.Post && path == "/api/kgf/tokens" {
+      if req.meth == @async_http.Post && path == "/api/kgf/tokens" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_kgf_tokens(conn, body_text, config, cors_enabled)
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/kgf/edges" {
+      if req.meth == @async_http.Post && path == "/api/kgf/edges" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_kgf_edges(conn, body_text, config, cors_enabled)
         return
       }
       // Doc graph endpoint
-      if req.meth == @mhttp.Post && path == "/api/doc/graph" {
+      if req.meth == @async_http.Post && path == "/api/doc/graph" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_doc_graph(conn, body_text, config, cors_enabled)
         return
       }
       // Plan endpoints
-      if req.meth == @mhttp.Post && path == "/api/plan/refactor" {
+      if req.meth == @async_http.Post && path == "/api/plan/refactor" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_plan_refactor(conn, body_text, config, cors_enabled)
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/plan/documentation" {
+      if req.meth == @async_http.Post && path == "/api/plan/documentation" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_plan_documentation(conn, body_text, config, cors_enabled)
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/plan/reconcile" {
+      if req.meth == @async_http.Post && path == "/api/plan/reconcile" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_plan_reconcile(conn, body_text, config, cors_enabled)
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/spec/align/diff" {
+      if req.meth == @async_http.Post && path == "/api/spec/align/diff" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_spec_align(conn, body_text, config, cors_enabled, "diff", "json")
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/spec/align/trace" {
+      if req.meth == @async_http.Post && path == "/api/spec/align/trace" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_spec_align(
@@ -527,7 +517,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         )
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/spec/align/suggest" {
+      if req.meth == @async_http.Post && path == "/api/spec/align/suggest" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_spec_align(
@@ -535,7 +525,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         )
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/spec/align/status" {
+      if req.meth == @async_http.Post && path == "/api/spec/align/status" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_spec_align(
@@ -543,26 +533,26 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         )
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/plan/solid" {
+      if req.meth == @async_http.Post && path == "/api/plan/solid" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_plan_solid(conn, body_text, config, cors_enabled)
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/plan/unwrap" {
+      if req.meth == @async_http.Post && path == "/api/plan/unwrap" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_plan_unwrap(conn, body_text, config, cors_enabled)
         return
       }
-      if req.meth == @mhttp.Post && path == "/api/plan/readme" {
+      if req.meth == @async_http.Post && path == "/api/plan/readme" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_plan_readme(conn, body_text, config, cors_enabled)
         return
       }
       // Wiki assets — serve files from .indexion/wiki/assets/
-      if req.meth == @mhttp.Get && path.has_prefix("/api/wiki/assets/") {
+      if req.meth == @async_http.Get && path.has_prefix("/api/wiki/assets/") {
         conn.skip_request_body()
         let asset_path = @config.substring_from(
           path,
@@ -594,7 +584,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         }
       }
       if effective_static_dir != "" &&
-        req.meth == @mhttp.Get &&
+        req.meth == @async_http.Get &&
         !path.has_prefix("/api/") {
         conn.skip_request_body()
         serve_static(conn, effective_static_dir, path)
@@ -606,7 +596,10 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
     },
     allow_failure=true,
   ) catch {
-    err => @digest_cli.log_error("Server failed: " + http_error_message(err))
+    err =>
+      @digest_cli.log_error(
+        "Server failed: " + @indexion_http.http_error_message(err),
+      )
   }
 }
 
@@ -744,7 +737,7 @@ async fn do_build(
 
 ///|
 async fn handle_rebuild(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   state : ServerState,
   config : ServeConfig,
   digest_cli_config : @digest_cli.CliConfig,
@@ -797,7 +790,7 @@ fn json_headers(cors : Bool) -> Map[String, String] {
 
 ///|
 async fn send_json_ok(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   data_json : String,
   cors : Bool,
 ) -> Unit {
@@ -805,7 +798,7 @@ async fn send_json_ok(
   conn.send_response(200, "OK", extra_headers=json_headers(cors)) catch {
     _ => return
   }
-  conn.write(response)
+  conn.write_string(response)
   conn.end_response() catch {
     _ => ()
   }
@@ -813,7 +806,7 @@ async fn send_json_ok(
 
 ///|
 async fn send_json_error(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   code : Int,
   msg : String,
   cors : Bool,
@@ -830,7 +823,7 @@ async fn send_json_error(
   conn.send_response(code, reason, extra_headers=json_headers(cors)) catch {
     _ => return
   }
-  conn.write(response)
+  conn.write_string(response)
   conn.end_response() catch {
     _ => ()
   }
@@ -838,7 +831,7 @@ async fn send_json_error(
 
 ///|
 async fn send_cors_preflight(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   cors : Bool,
 ) -> Unit {
   let headers = json_headers(cors)
@@ -852,7 +845,7 @@ async fn send_cors_preflight(
 
 ///|
 async fn handle_digest_query(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   index : @index.DigestIndex,
   digest_config : @dconfig.DigestConfig,
@@ -1055,7 +1048,7 @@ fn get_extension(path : String) -> String {
 
 ///|
 async fn serve_static(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   static_dir : String,
   path : String,
 ) -> Unit {
@@ -1112,7 +1105,7 @@ async fn serve_static(
 
 ///|
 async fn send_static_error(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   code : Int,
   msg : String,
 ) -> Unit {
@@ -1124,7 +1117,7 @@ async fn send_static_error(
   conn.send_response(code, reason) catch {
     _ => return
   }
-  conn.write(msg)
+  conn.write_string(msg)
   conn.end_response() catch {
     _ => ()
   }

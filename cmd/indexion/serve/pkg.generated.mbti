@@ -31,6 +31,7 @@ pub struct ServeConfig {
   api_base_url : String
   model : String
   watch_stdin : Bool
+  wiki_config : @config.WikiFileConfig
 }
 pub fn ServeConfig::apply_embedding_file_config(Self, @config.EmbeddingFileConfig) -> Self
 pub fn ServeConfig::default() -> Self

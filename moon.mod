@@ -6,7 +6,6 @@ import {
   "moonbitlang/x@0.4.41",
   "trkbt10/vcdb@0.3.2",
   "moonbitlang/async@0.19.4",
-  "mizchi/x@0.4.0",
   "trkbt10/osenv@0.1.0",
   "hustcer/fzip@0.5.8",
 }

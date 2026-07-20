@@ -73,7 +73,7 @@ fn json_bool(json : Json, key : String, default : Bool) -> Bool {
 
 ///|
 async fn handle_explore(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,
@@ -114,7 +114,7 @@ async fn handle_explore(
 
 ///|
 async fn handle_kgf_tokens(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,
@@ -139,7 +139,7 @@ async fn handle_kgf_tokens(
 
 ///|
 async fn handle_kgf_edges(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,
@@ -164,7 +164,7 @@ async fn handle_kgf_edges(
 
 ///|
 async fn handle_doc_graph(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,
@@ -209,7 +209,7 @@ async fn handle_doc_graph(
 
 ///|
 async fn handle_plan_refactor(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,
@@ -246,7 +246,7 @@ async fn handle_plan_refactor(
 
 ///|
 async fn handle_plan_documentation(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,
@@ -279,7 +279,7 @@ async fn handle_plan_documentation(
 
 ///|
 async fn handle_plan_reconcile(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,
@@ -350,7 +350,7 @@ fn build_spec_align_config(
 
 ///|
 async fn handle_spec_align(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,
@@ -386,7 +386,7 @@ async fn handle_spec_align(
 
 ///|
 async fn handle_plan_solid(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,
@@ -429,7 +429,7 @@ async fn handle_plan_solid(
 
 ///|
 async fn handle_plan_unwrap(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,
@@ -465,7 +465,7 @@ async fn handle_plan_unwrap(
 
 ///|
 async fn handle_plan_readme(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,
@@ -515,7 +515,7 @@ async fn handle_plan_readme(
 
 ///|
 async fn handle_search(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   state : ServerState,
   cors : Bool,
@@ -546,7 +546,7 @@ async fn handle_search(
 
 ///|
 async fn handle_grep(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,

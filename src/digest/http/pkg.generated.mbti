@@ -2,6 +2,8 @@
 package "trkbt10/indexion/src/digest/http"
 
 // Values
+pub fn http_error_message(@mizchi/x/http.HttpError) -> String
+
 pub async fn http_get(String, Map[String, String]) -> (Int, String) raise @mizchi/x/http.HttpError
 
 pub async fn post_json(String, String, Map[String, String]) -> (Int, String) raise @mizchi/x/http.HttpError

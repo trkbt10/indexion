@@ -1,15 +1,4 @@
 ///|
-/// Extract a human-readable message from an HttpError.
-fn http_error_message(err : @mhttp.HttpError) -> String {
-  match err {
-    NetworkError(msg) => msg
-    InvalidUrl(msg) => msg
-    TimeoutError => "timeout"
-    NotSupported => "not supported"
-  }
-}
-
-///|
 /// # MCP Streamable HTTP transport
 ///
 /// Serves MCP over HTTP using the Streamable HTTP transport defined
@@ -30,13 +19,18 @@ pub async fn run_http(
   host? : String = "127.0.0.1",
   port? : Int = 3741,
 ) -> Unit {
-  let http_server = @mhttp.Server::new(host~, port~, reuse_addr=true) catch {
+  let http_server = @async_http.Server(
+    @socket.Addr::parse("\{host}:\{port}"),
+    reuse_addr=true,
+  ) catch {
     err => {
-      println("MCP HTTP server init failed: " + http_error_message(err))
+      println(
+        "MCP HTTP server init failed: " + @indexion_http.http_error_message(err),
+      )
       return
     }
   }
-  let listen_port = http_server.port()
+  let listen_port = http_server.addr().port()
   // Log to stderr so stdout remains clean for any future stdio needs
   eprintln(
     "MCP server listening on http://" +
@@ -49,26 +43,26 @@ pub async fn run_http(
     async fn(req, body, conn) {
       let path = strip_query_string(req.path)
       // CORS preflight
-      if req.meth == @mhttp.Options && path == "/mcp" {
+      if req.meth == @async_http.Options && path == "/mcp" {
         send_cors_preflight(conn)
         return
       }
       // MCP endpoint
-      if req.meth == @mhttp.Post && path == "/mcp" {
+      if req.meth == @async_http.Post && path == "/mcp" {
         let body_data = body.read_all()
         let body_text = body_data.text()
         handle_mcp_post(server, conn, body_text)
         return
       }
       // Health check
-      if req.meth == @mhttp.Get && path == "/health" {
+      if req.meth == @async_http.Get && path == "/health" {
         conn.skip_request_body()
         let headers : Map[String, String] = {}
         headers["content-type"] = "application/json"
         conn.send_response(200, "OK", extra_headers=headers) catch {
           _ => return
         }
-        conn.write("{\"status\":\"ok\"}")
+        conn.write_string("{\"status\":\"ok\"}")
         conn.end_response() catch {
           _ => ()
         }
@@ -81,21 +75,24 @@ pub async fn run_http(
       conn.send_response(404, "Not Found", extra_headers=headers) catch {
         _ => return
       }
-      conn.write("{\"error\":\"Not Found\"}")
+      conn.write_string("{\"error\":\"Not Found\"}")
       conn.end_response() catch {
         _ => ()
       }
     },
     allow_failure=true,
   ) catch {
-    err => eprintln("MCP HTTP server failed: " + http_error_message(err))
+    err =>
+      eprintln(
+        "MCP HTTP server failed: " + @indexion_http.http_error_message(err),
+      )
   }
 }
 
 ///|
 async fn handle_mcp_post(
   server : @server.McpServer,
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
 ) -> Unit {
   match server.handle_message(body_text) {
@@ -108,7 +105,7 @@ async fn handle_mcp_post(
       conn.send_response(200, "OK", extra_headers=headers) catch {
         _ => return
       }
-      conn.write(response)
+      conn.write_string(response)
       conn.end_response() catch {
         _ => ()
       }
@@ -128,7 +125,7 @@ async fn handle_mcp_post(
 }
 
 ///|
-async fn send_cors_preflight(conn : @mhttp.ServerConnection) -> Unit {
+async fn send_cors_preflight(conn : @async_http.ServerConnection) -> Unit {
   let headers : Map[String, String] = {}
   headers["access-control-allow-origin"] = "*"
   headers["access-control-allow-methods"] = "POST, OPTIONS"

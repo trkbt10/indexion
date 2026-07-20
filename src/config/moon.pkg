@@ -4,7 +4,7 @@ import {
   "trkbt10/indexion/src/platform",
   "trkbt10/indexion/src/ignorefile",
   "moonbitlang/x/fs",
-  "mizchi/x/sys",
+  "moonbitlang/x/sys",
   "trkbt10/osenv/platform" @osenv_platform,
   "trkbt10/osenv/dirs" @osenv_dirs,
   "trkbt10/osenv/path" @osenv_path,
