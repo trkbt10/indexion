@@ -1,0 +1,22 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/kgf/charclass"
+
+// Values
+pub fn is_digit(Char) -> Bool
+
+pub fn is_hex_char(Char) -> Bool
+
+pub fn is_ident_char(Char) -> Bool
+
+pub fn is_ident_start(Char) -> Bool
+
+pub fn is_whitespace(Char) -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

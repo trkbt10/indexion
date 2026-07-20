@@ -111,7 +111,7 @@ async test "orient cache update: applies new changed deleted and skips unchanged
   guard handle.lookup_path(changed_current.path) is Some(changed_after) else {
     fail("expected changed record after update")
   }
-  assert_eq(changed_after.vector_id, changed_before.vector_id)
+  assert_true(changed_after.vector_id == changed_before.vector_id)
   assert_eq(changed_after.source_hash, "hash-changed-v2")
   assert_eq(
     changed_after.summary_preview,

@@ -53,10 +53,10 @@ test "orient vcdb schema: vector id is stable for normalized path" {
   let first = vector_id_for_path(path)
   let second = vector_id_for_path(path)
   let other = vector_id_for_path("src/agent/orient/cache/other.mbt")
-  assert_eq(first, second)
+  assert_true(first == second)
   assert_true(first != other)
   assert_true(first.as_int64() is Some(_))
-  assert_eq(first, vector_id_for_path(path))
+  assert_true(first == vector_id_for_path(path))
 }
 
 ///|
@@ -204,7 +204,7 @@ test "orient vcdb schema: record projection preserves flat cached file fields" {
   guard record_to_cached_file(id, record) is Some(cached) else {
     fail("expected cached file projection")
   }
-  assert_eq(cached.vector_id, id)
+  assert_true(cached.vector_id == id)
   assert_eq(cached.path, brief.path)
   assert_eq(cached.role, "documentation")
   assert_eq(cached.owner, "README.mbt.md")

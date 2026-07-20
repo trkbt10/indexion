@@ -414,7 +414,7 @@ pub async fn DigestIndex::query_api(
   let hits = engine.search_vector(vector, top_k)
   let results : Array[@types.QueryHit] = []
   for hit in hits {
-    let vid = hit.id.to_int64()
+    guard hit.id.as_int64() is Some(vid) else { continue }
     match reverse.get(vid) {
       Some(fid) =>
         match self.units.get(fid) {

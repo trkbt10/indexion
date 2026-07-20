@@ -10,6 +10,8 @@ pub fn char_at(String, Int) -> Char
 
 pub fn find_char(String, Int, Char) -> Int
 
+pub fn find_line_start_substring(String, String) -> Int
+
 pub fn find_substring(String, String) -> Int
 
 pub fn is_digit(Char) -> Bool
@@ -21,6 +23,8 @@ pub fn is_ident_start(Char) -> Bool
 pub fn is_whitespace(Char) -> Bool
 
 pub fn parse_attrs(String) -> Map[String, Array[@types.AttrAction]]
+
+pub fn parse_classify(String) -> @types.ClassifyModel?
 
 pub fn parse_kgf(String) -> @types.KGFSpec?
 
@@ -41,8 +45,6 @@ pub fn parse_rules(String) -> Map[String, @types.RuleDef]
 pub fn parse_semantics(String) -> Map[String, Array[@types.SemOnBlock]]?
 
 pub fn split_lines(String) -> Array[String]
-
-pub fn starts_with(String, String) -> Bool
 
 pub fn starts_with_at(String, Int, String) -> Bool
 

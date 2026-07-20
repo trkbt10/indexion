@@ -72,7 +72,7 @@ async test "orient cache store: create reopen query update remove and checkpoint
   guard handle.lookup_path(implementation.path) is Some(cached_impl) else {
     fail("expected implementation record lookup by path")
   }
-  assert_eq(cached_impl.vector_id, vector_id_for_path(implementation.path))
+  assert_true(cached_impl.vector_id == vector_id_for_path(implementation.path))
   assert_eq(cached_impl.source_hash, "hash-implementation-v1")
   let updated_implementation = orient_store_test_brief(
     implementation.path,
@@ -85,7 +85,7 @@ async test "orient cache store: create reopen query update remove and checkpoint
   guard handle.lookup_path(implementation.path) is Some(updated_impl) else {
     fail("expected implementation record update by path")
   }
-  assert_eq(updated_impl.vector_id, cached_impl.vector_id)
+  assert_true(updated_impl.vector_id == cached_impl.vector_id)
   assert_eq(updated_impl.source_hash, "hash-implementation-v2")
   assert_eq(
     updated_impl.summary_preview,

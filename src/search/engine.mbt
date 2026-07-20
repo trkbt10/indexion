@@ -172,7 +172,8 @@ pub fn SearchEngine::resolve_hits(
     if hit.score < min_score {
       continue
     }
-    let vid = hit.id.to_int64().to_int()
+    guard hit.id.as_int64() is Some(vid64) else { continue }
+    let vid = vid64.to_int()
     match self.id_map.get(vid) {
       Some(doc_id) =>
         match self.documents.get(doc_id) {

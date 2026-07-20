@@ -251,7 +251,8 @@ fn extract_pub_declarations_via_semantics(
   path : String,
   registry : @kgf_registry.KGFRegistry?,
 ) -> (Array[PubDeclaration], Map[Int, String]) {
-  let (parsed, graph) = match parse_and_eval_semantics(content, path, registry) {
+  let (parsed, graph) = match
+    parse_and_eval_semantics(content, path, registry) {
     Some(pair) => pair
     None => return ([], {})
   }

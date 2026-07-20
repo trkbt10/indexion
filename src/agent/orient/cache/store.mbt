@@ -317,7 +317,11 @@ pub fn Handle::scan(
   offset? : Int64? = None,
   limit? : Int = 100,
 ) -> Array[CachedFile] raise CacheError {
-  let entries = self.db.scroll_filtered(expr=filter, offset~, limit~)
+  let offset_id : @vcdb_types.VectorId? = match offset {
+    Some(v) => Some(@vcdb_types.VectorId::from_int64(v))
+    None => None
+  }
+  let entries = self.db.scroll_filtered(expr=filter, offset=offset_id, limit~)
   let files : Array[CachedFile] = []
   for entry in entries {
     let (_, record) = entry

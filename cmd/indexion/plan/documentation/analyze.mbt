@@ -77,9 +77,7 @@ pub fn load_project_info(
     Some(reg) => reg
     None => return ProjectInfo::default()
   }
-  let entries = try {
-    @fs.read_dir(normalized)
-  } catch {
+  let entries = @fs.read_dir(normalized) catch {
     _ => return ProjectInfo::default()
   }
   // Pick a top-level manifest, preferring an umbrella `project` manifest over a
@@ -100,8 +98,14 @@ pub fn load_project_info(
       None => ""
     }
     match role {
-      "project" => if project_manifest is None { project_manifest = Some(entry) }
-      "package" => if package_manifest is None { package_manifest = Some(entry) }
+      "project" =>
+        if project_manifest is None {
+          project_manifest = Some(entry)
+        }
+      "package" =>
+        if package_manifest is None {
+          package_manifest = Some(entry)
+        }
       _ => ()
     }
   }
@@ -114,9 +118,7 @@ pub fn load_project_info(
       }
   }
   let path = normalized + "/" + manifest_entry
-  let content = try {
-    @fs.read_file_to_string(path)
-  } catch {
+  let content = @fs.read_file_to_string(path) catch {
     _ => return ProjectInfo::default()
   }
   match

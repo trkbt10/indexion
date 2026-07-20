@@ -798,7 +798,10 @@ fn quantifier_requires_one(q : Quantifier) -> Bool {
 /// greedy and lazy fast paths in `match_elements_backtrack` use this shared
 /// predicate to skip directly to candidate boundary positions, so the
 /// "which char must come next" rule lives in exactly one place.
-fn next_required_literal(elements : Array[QuantifiedElement], idx : Int) -> Char? {
+fn next_required_literal(
+  elements : Array[QuantifiedElement],
+  idx : Int,
+) -> Char? {
   guard idx + 1 < elements.length() else { return None }
   let next = elements[idx + 1]
   guard quantifier_requires_one(next.quantifier) else { return None }

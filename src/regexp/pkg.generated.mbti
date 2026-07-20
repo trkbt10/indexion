@@ -1,0 +1,53 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/regexp"
+
+// Values
+pub fn build_input_chars(String) -> Array[Char]
+
+pub fn compile_pattern(String, case_insensitive? : Bool) -> CompiledPattern?
+
+pub fn find_pattern_captures(String, String, case_insensitive? : Bool) -> Array[CapturedMatch]
+
+pub fn match_compiled_end_pos_with_chars(CompiledPattern, Array[Char], Int, captures? : CaptureState?) -> Int?
+
+pub fn match_pattern(String, String, Int, case_insensitive? : Bool) -> MatchResult
+
+pub fn matches_at(String, String, Int, case_insensitive? : Bool) -> Bool
+
+// Errors
+
+// Types and methods
+pub struct CaptureState {
+  groups : Array[(Int, Int)]
+  count : Int
+}
+pub fn CaptureState::get_group_text(Self, Int, Array[Char]) -> String?
+pub fn CaptureState::new(Int) -> Self
+pub fn CaptureState::reset(Self, Int) -> Unit
+pub fn CaptureState::set(Self, Int, Int, Int) -> Unit
+
+pub struct CapturedMatch {
+  start_pos : Int
+  end_pos : Int
+  text : String
+  captures : Array[String]
+}
+
+pub(all) struct CompiledPattern {
+  // private fields
+}
+pub fn CompiledPattern::get_capture_count(Self) -> Int
+pub fn CompiledPattern::literal_text(Self) -> String?
+
+pub struct MatchResult {
+  matched : Bool
+  end_pos : Int
+  text : String
+}
+pub fn MatchResult::failure() -> Self
+pub fn MatchResult::success(Int, String) -> Self
+
+// Type aliases
+
+// Traits
+
