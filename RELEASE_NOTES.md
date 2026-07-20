@@ -32,8 +32,14 @@ Everything is data-driven per the project's no-hardcoding rule: external package
 
 ## Bug Fixes
 
-- **Restored the build on current MoonBit tooling.** `moonbitlang/async` is updated 0.16.7 → 0.19.4 (0.16.7 referenced core types removed from the current prelude; 0.20.x is deliberately avoided because its `/dev/null` process redirect aborts at runtime on macOS) and `mizchi/x` 0.1.7 → 0.4.0.
+- **Restored the build on current MoonBit tooling.** `moonbitlang/async` is updated 0.16.7 → 0.19.4 (0.16.7 referenced core types removed from the current prelude; 0.20.x is deliberately avoided because its `/dev/null` process redirect aborts at runtime on macOS).
 - **Tracked `trkbt10/vcdb` 0.3.2** and adapted to its VectorId SoT API: the removed `VectorId::to_int64()` is replaced by guarded `as_int64()` lookups (behavior-preserving — ids that are not `Int64`-representable could never match the `Int64`-keyed reverse maps), and `scroll_filtered`'s `VectorId?` offset is converted internally so `Handle::scan` keeps its public signature.
+- **Windows builds again — `mizchi/x` is gone.** Its socket package declares `Tcp::fd(self) -> Int`, but `moonbitlang/async`'s `Tcp::fd` returns `Fd`, which is `Int` only on Unix and an opaque handle on Windows; 0.4.0 also calls `@fs.chmod` unguarded although async marks it `#cfg(not(platform="windows"))`. Both defects exist in every `mizchi/x` release that builds on the current toolchain, and indexion pulled the broken packages in transitively. Since the wrapper added nothing we relied on — `Server::new` ignores all of its extra options and `mizchi/x/sys` is an API-identical passthrough — the layer was removed rather than pinned around: HTTP now goes to `moonbitlang/async/http`, subprocesses to `moonbitlang/async/process`, and env access to `moonbitlang/x/sys`.
+
+## Internal
+
+- `http_error_message` had been copy-pasted into four packages; it is now a single SoT in `src/http`.
+- The Windows build test also runs on `moon.mod` changes. Windows was previously validated only by the tag-triggered Release workflow, so dependency breakage of exactly the kind above could pass branch CI and surface only after a release commit was tagged.
 
 ---
 
