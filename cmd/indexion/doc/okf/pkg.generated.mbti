@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/cmd/indexion/doc/okf"
+
+import {
+  "moonbitlang/core/argparse",
+}
+
+// Values
+pub fn command() -> @argparse.Command
+
+pub fn run_matches(@argparse.Matches) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct OkfConfig {
+  paths : Array[String]
+  specs_dir : String
+  includes : Array[String]
+  excludes : Array[String]
+  recursive : Bool
+  output : String
+  title : String
+}
+pub fn OkfConfig::default() -> Self
+pub fn OkfConfig::from_matches(@argparse.Matches) -> Self
+
+// Type aliases
+
+// Traits
+

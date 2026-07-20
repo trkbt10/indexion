@@ -1,8 +1,65 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/src/kgf/types"
 
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/ref",
+}
+
 // Values
+pub const FEATURE_COVERAGE_TOKEN_KINDS : String = "coverage_token_kinds"
+
+pub const FEATURE_DOCUMENT_SYMBOL_KINDS : String = "document_symbol_kinds"
+
+pub const FEATURE_EMBEDDED_CODE_FENCE : String = "embedded_code_fence"
+
+pub const FEATURE_EMBEDDED_CONTENT_TOKEN : String = "embedded_content_token"
+
+pub const FEATURE_HEADING_TEXT_TOKENS : String = "heading_text_tokens"
+
+pub const FEATURE_IDENTIFIER_KINDS : String = "identifier_kinds"
+
+pub const FEATURE_REFERENCE_TOKEN_KINDS : String = "reference_token_kinds"
+
+pub const FEATURE_SECTION_TOKEN : String = "section_token"
+
+pub const FEATURE_VOCABULARY_TOKEN_KINDS : String = "vocabulary_token_kinds"
+
+pub const META_END_TOK : String = "_end_tok"
+
+pub const META_LAST : String = "_last"
+
+pub const META_LAST_LEN : String = "_last_len"
+
+pub const META_LAST_POS : String = "_last_pos"
+
+pub const META_LEN_SUFFIX : String = "_len"
+
+pub const META_POS_SUFFIX : String = "_pos"
+
+pub const META_START_TOK : String = "_start_tok"
+
+pub const META_TEXT : String = "_text"
+
+pub const META_TEXT_SUFFIX : String = "_text"
+
 pub let circular_sentinel_prefix : String
+
+pub let parse_attrs_lazy : @ref.Ref[(String) -> Map[String, Array[AttrAction]]]
+
+pub let parse_classify_lazy : @ref.Ref[(String) -> ClassifyModel?]
+
+pub let parse_grammar_lazy : @ref.Ref[(String) -> Map[String, RuleDef]]
+
+pub let parse_lex_lazy : @ref.Ref[(String) -> (Array[TokenDef], Map[String, Bool])]
+
+pub let parse_preprocess_fst_lazy : @ref.Ref[(String) -> Array[PreprocessFstSpec]?]
+
+pub let parse_preprocess_lazy : @ref.Ref[(String) -> Array[String]?]
+
+pub let parse_semantics_lazy : @ref.Ref[(String) -> Map[String, Array[SemOnBlock]]?]
+
+pub fn token_referencing_feature_names() -> Array[String]
 
 // Errors
 
@@ -15,6 +72,28 @@ pub fn AttrAction::get_kind(Self) -> String
 pub fn AttrAction::get_param(Self, String) -> String?
 pub fn AttrAction::get_params(Self) -> Map[String, String]
 pub fn AttrAction::new(String, params? : Map[String, String]) -> Self
+
+pub struct ClassifyClass {
+  prior : Double
+  vocab : Map[String, Double]
+}
+pub fn ClassifyClass::get_prior(Self) -> Double
+pub fn ClassifyClass::get_vocab(Self) -> Map[String, Double]
+pub fn ClassifyClass::new(Double, Map[String, Double]) -> Self
+pub fn ClassifyClass::term_weight(Self, String) -> Double
+
+pub struct ClassifyModel {
+  metadata : Map[String, String]
+  classes : Map[String, ClassifyClass]
+}
+pub fn ClassifyModel::classify(Self, Array[String]) -> Array[(String, Double)]
+pub fn ClassifyModel::get_class(Self, String) -> ClassifyClass?
+pub fn ClassifyModel::get_class_names(Self) -> Array[String]
+pub fn ClassifyModel::get_meta(Self, String) -> String?
+pub fn ClassifyModel::get_metadata(Self) -> Map[String, String]
+pub fn ClassifyModel::is_empty(Self) -> Bool
+pub fn ClassifyModel::new(Map[String, String], Map[String, ClassifyClass]) -> Self
+pub fn ClassifyModel::predict(Self, Array[String]) -> String?
 
 pub enum FstAction {
   EmitInput
@@ -39,19 +118,28 @@ pub fn FstTransition::new(String, String, Array[FstAction]) -> Self
 
 pub struct KGFSpec {
   language : String
-  tokens : Array[TokenDef]
-  keyword_kinds : Map[String, Bool]
-  rules : Map[String, RuleDef]
-  attrs : Map[String, Array[AttrAction]]
   resolver : ResolverSpec
   features : Map[String, Array[String]]?
-  semantics : Map[String, Array[SemOnBlock]]?
-  preprocess : Array[String]?
-  preprocess_fst : Array[PreprocessFstSpec]?
   ignore : Array[String]?
+  mut lex_source : String?
+  mut grammar_source : String?
+  mut attrs_source : String?
+  mut semantics_source : String?
+  mut preprocess_source : String?
+  mut preprocess_fst_source : String?
+  mut classify_source : String?
+  mut tokens_cache : Array[TokenDef]?
+  mut keyword_kinds_cache : Map[String, Bool]?
+  mut rules_cache : Map[String, RuleDef]?
+  mut attrs_cache : Map[String, Array[AttrAction]]?
+  mut semantics_cache : Map[String, Array[SemOnBlock]]??
+  mut preprocess_cache : Array[String]??
+  mut preprocess_fst_cache : Array[PreprocessFstSpec]??
+  mut classify_cache : ClassifyModel??
 }
 pub fn KGFSpec::get_attr(Self, String) -> Array[AttrAction]?
 pub fn KGFSpec::get_attrs(Self) -> Map[String, Array[AttrAction]]
+pub fn KGFSpec::get_classify(Self) -> ClassifyModel?
 pub fn KGFSpec::get_feature(Self, String) -> Array[String]?
 pub fn KGFSpec::get_features(Self) -> Map[String, Array[String]]?
 pub fn KGFSpec::get_ignore(Self) -> Array[String]?
@@ -67,15 +155,17 @@ pub fn KGFSpec::get_semantics(Self) -> Map[String, Array[SemOnBlock]]?
 pub fn KGFSpec::get_start_rule(Self) -> String
 pub fn KGFSpec::get_tokens(Self) -> Array[TokenDef]
 pub fn KGFSpec::is_keyword(Self, String) -> Bool
-pub fn KGFSpec::new(String, tokens? : Array[TokenDef], keyword_kinds? : Map[String, Bool], rules? : Map[String, RuleDef], attrs? : Map[String, Array[AttrAction]], resolver? : ResolverSpec, features? : Map[String, Array[String]]?, semantics? : Map[String, Array[SemOnBlock]]?, preprocess? : Array[String]?, preprocess_fst? : Array[PreprocessFstSpec]?, ignore? : Array[String]?) -> Self
+pub fn KGFSpec::new(String, tokens? : Array[TokenDef], keyword_kinds? : Map[String, Bool], rules? : Map[String, RuleDef], attrs? : Map[String, Array[AttrAction]], resolver? : ResolverSpec, features? : Map[String, Array[String]]?, semantics? : Map[String, Array[SemOnBlock]]?, preprocess? : Array[String]?, preprocess_fst? : Array[PreprocessFstSpec]?, ignore? : Array[String]?, classify? : ClassifyModel?) -> Self
+pub fn KGFSpec::new_lazy(String, ResolverSpec, Map[String, Array[String]]?, Array[String]?, String, String, String, String, String, String, String) -> Self
 
 pub enum ModulePathStyle {
   Slash
   Dot
   ColonColon
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ModulePathStyle::as_string(Self) -> String
 pub fn ModulePathStyle::from_string(String) -> Self?
+pub impl Show for ModulePathStyle
 
 pub struct PreprocessFstSpec {
   name : String
@@ -117,7 +207,7 @@ pub struct ResolutionStats {
   mut cache_misses : Int
   mut file_checks : Int
   mut circular_detected : Int
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ResolutionStats::new() -> Self
 
 pub struct ResolveStep {
@@ -143,6 +233,7 @@ pub fn ResolveStep::index(Array[String]) -> Self
 pub fn ResolveStep::manifest(String, String, when_condition? : String) -> Self
 pub fn ResolveStep::marker(Array[String]) -> Self
 pub fn ResolveStep::new(ResolveStepType, file? : String, query? : String, files? : Array[String], prefix? : String, when_condition? : String) -> Self
+pub fn ResolveStep::progressive() -> Self
 pub fn ResolveStep::sibling(Array[String]) -> Self
 
 pub(all) enum ResolveStepType {
@@ -153,8 +244,9 @@ pub(all) enum ResolveStepType {
   Ext
   Sibling
   Ancestors
+  Progressive
   Fallback
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ResolveStepType::as_string(Self) -> String
 pub fn ResolveStepType::from_string(String) -> Self?
 

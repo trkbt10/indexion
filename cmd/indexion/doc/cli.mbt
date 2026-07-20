@@ -8,15 +8,21 @@
 /// - `init` - Initialize documentation templates (README.md)
 /// - `graph` - Generate dependency graph in Mermaid format
 /// - `readme` - Generate README.md from source doc comments (with template support)
+/// - `okf` - Export analyzed knowledge as an Open Knowledge Format (OKF) bundle
 
 ///|
 /// Build the argparse Command for the doc subcommand.
 pub fn command() -> @argparse.Command {
   @argparse.Command(
     "doc",
-    about="Documentation commands (graph, readme, init)",
+    about="Documentation commands (graph, readme, init, okf)",
     subcommand_required=true,
-    subcommands=[@init.command(), @graph.command(), @readme.command()],
+    subcommands=[
+      @init.command(),
+      @graph.command(),
+      @readme.command(),
+      @okf.command(),
+    ],
   )
 }
 
@@ -28,6 +34,7 @@ pub fn dispatch(matches : @argparse.Matches) -> Unit {
     "init" => @init.run_matches(sub)
     "graph" => @graph.run_matches(sub)
     "readme" => @readme.run_matches(sub)
+    "okf" => @okf.run_matches(sub)
     _ => ()
   }
 }

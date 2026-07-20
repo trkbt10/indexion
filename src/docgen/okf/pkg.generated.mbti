@@ -1,0 +1,66 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/indexion/src/docgen/okf"
+
+// Values
+pub const OKF_DEPENDENCIES_DIR : String = "dependencies"
+
+pub const OKF_INDEX_FILE : String = "index.md"
+
+pub const OKF_LOG_FILE : String = "log.md"
+
+pub const OKF_PACKAGES_DIR : String = "packages"
+
+pub const OKF_ROOT_CONCEPT : String = "root"
+
+pub const OKF_TYPE_EXTERNAL : String = "External Package"
+
+pub const OKF_TYPE_PACKAGE : String = "Package"
+
+pub fn build_bundle(Array[OkfPackageConcept], OkfBundleOptions) -> Array[(String, String)]
+
+pub fn normalize_package_path(String) -> String
+
+pub fn render_frontmatter(Array[(String, OkfValue)]) -> String
+
+pub fn sanitize_bundle_path(String) -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct OkfBundleOptions {
+  title : String
+  timestamp : String?
+}
+
+pub(all) struct OkfDeclaration {
+  name : String
+  kind : String
+  doc : String
+} derive(Eq)
+
+pub(all) struct OkfDepRef {
+  target : String
+  internal : Bool
+  via : String?
+} derive(Eq)
+
+pub(all) struct OkfPackageConcept {
+  path : String
+  name : String
+  overview : String
+  description : String
+  languages : Array[String]
+  files : Array[String]
+  declarations : Array[OkfDeclaration]
+  depends_on : Array[OkfDepRef]
+}
+
+pub(all) enum OkfValue {
+  Str(String)
+  List(Array[String])
+}
+
+// Type aliases
+
+// Traits
+

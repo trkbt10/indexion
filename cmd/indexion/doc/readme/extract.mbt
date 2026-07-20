@@ -52,7 +52,7 @@ pub fn extract_package_doc(
   )
   let (output, graph) = @build.build_with_graph(config)
   // Build kind filter from KGF document_symbol_kinds feature
-  let kind_filter = build_kind_filter(pkg.files, specs)
+  let kind_filter = @kgf_features.document_symbol_kind_filter(pkg.files, specs)
   // Extract module-level documentation from graph
   let doc_content = extract_module_docs(graph, pkg.path, kind_filter)
   if doc_content.length() > 0 {
@@ -155,40 +155,6 @@ fn extract_module_docs(
     }
   }
   @common.trim_ascii_spaces(buf.to_string())
-}
-
-///|
-/// Build a kind filter from KGF document_symbol_kinds feature.
-/// Detects the language from the first file's extension, then reads the feature.
-fn build_kind_filter(
-  files : Array[String],
-  specs : Map[String, @kgf_types.KGFSpec],
-) -> Map[String, Bool]? {
-  for file in files {
-    let ext = @doc_config.extension(file)
-    if ext.length() == 0 {
-      continue
-    }
-    // Find the spec whose source extensions match this file
-    for entry in specs {
-      let spec = entry.1
-      for src_ext in spec.get_resolver().get_sources() {
-        if src_ext == ext {
-          match spec.get_feature("document_symbol_kinds") {
-            Some(kinds) => {
-              let m : Map[String, Bool] = {}
-              for kind in kinds {
-                m.set(@kgf_features.to_lower_str(kind), true)
-              }
-              return Some(m)
-            }
-            None => return None
-          }
-        }
-      }
-    }
-  }
-  None
 }
 
 ///|

@@ -309,6 +309,12 @@ pub const FEATURE_EMBEDDED_CODE_FENCE : String = "embedded_code_fence"
 ///|
 pub const FEATURE_EMBEDDED_CONTENT_TOKEN : String = "embedded_content_token"
 
+///|
+/// Symbol kinds that belong in generated documentation (values are symbol
+/// kind names, not token kinds — hence not in
+/// `token_referencing_feature_names`).
+pub const FEATURE_DOCUMENT_SYMBOL_KINDS : String = "document_symbol_kinds"
+
 // ── Lazy parsing helpers ──────────────────────────
 
 ///|

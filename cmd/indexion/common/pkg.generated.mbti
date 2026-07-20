@@ -3,6 +3,7 @@ package "trkbt10/indexion/cmd/indexion/common"
 
 import {
   "moonbitlang/core/argparse",
+  "trkbt10/indexion/src/coverage",
   "trkbt10/indexion/src/kgf/registry",
 }
 
@@ -25,7 +26,11 @@ pub fn collect_files(Array[String], includes? : Array[String], excludes? : Array
 
 pub fn count_lines(String) -> Int
 
+pub let coverage_format_names : Array[String]
+
 pub fn elapsed_ms(UInt64) -> UInt64
+
+pub fn exit_with_code(Int) -> Unit
 
 pub fn extract_dirname(String) -> String
 
@@ -47,7 +52,11 @@ pub fn get_option(@argparse.Matches, String, String) -> String
 
 pub fn get_relative_part(String) -> String
 
+pub fn is_coverage_format(String) -> Bool
+
 pub fn is_directory(String) -> Bool
+
+pub fn iso8601_utc_from_ms(UInt64) -> String?
 
 pub fn join_lines(Array[String]) -> String
 
@@ -57,6 +66,8 @@ pub fn make_relative_path(String, String) -> String
 
 pub fn normalize_path(String) -> String
 
+pub fn now_iso8601_utc() -> String?
+
 pub fn parent_dir(String) -> String
 
 pub fn parse_comma_list(String) -> Array[String]
@@ -64,6 +75,8 @@ pub fn parse_comma_list(String) -> Array[String]
 pub fn parse_double(String) -> Double
 
 pub fn parse_int(String) -> Int
+
+pub fn render_coverage_format(String, @coverage.CoverageReport) -> String?
 
 pub fn render_inline_code_list(StringBuilder, String, Array[String]) -> Unit
 

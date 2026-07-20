@@ -3,6 +3,7 @@ package "trkbt10/indexion/src/kgf/features"
 
 import {
   "trkbt10/indexion/src/kgf/registry",
+  "trkbt10/indexion/src/kgf/toolkit",
   "trkbt10/indexion/src/kgf/types",
   "trkbt10/indexion/src/similarity/apted",
 }
@@ -14,6 +15,8 @@ pub fn build_coverage_token_set(spec~ : @types.KGFSpec) -> Map[String, Bool]
 
 pub fn build_identifier_set(spec~ : @types.KGFSpec) -> Map[String, Bool]
 
+pub fn build_insignificant_token_set(spec? : @types.KGFSpec?) -> Map[String, Bool]
+
 pub fn build_line_func_map(String, String, @registry.KGFRegistry?) -> Map[Int, String]
 
 pub fn build_vocabulary_token_set(spec~ : @types.KGFSpec) -> Map[String, Bool]
@@ -24,13 +27,15 @@ pub fn content_type_for_spec(@types.KGFSpec) -> String?
 
 pub fn delete_lines(String, Int, Int) -> String
 
-pub fn detect_proxy_functions(Array[@types.Tok], String, include_self_delegation? : Bool, include_bare_constructors? : Bool, spec~ : @types.KGFSpec) -> Array[ProxyFunction]
+pub fn detect_proxy_functions(String, String, @registry.KGFRegistry?, include_self_delegation? : Bool, include_bare_constructors? : Bool, spec~ : @types.KGFSpec) -> Array[ProxyFunction]
 
 pub fn detect_proxy_functions_from_file(String, String, @registry.KGFRegistry?, include_self_delegation? : Bool, include_bare_constructors? : Bool) -> Array[ProxyFunction]
 
-pub fn extract_function_trees(Array[@types.Tok], String, spec~ : @types.KGFSpec) -> Array[(ExtractedFunction, @apted.TreeNode)]
+pub fn document_symbol_kind_filter(Array[String], Map[String, @types.KGFSpec]) -> Map[String, Bool]?
 
-pub fn extract_functions(Array[@types.Tok], String, spec~ : @types.KGFSpec) -> Array[ExtractedFunction]
+pub fn extract_function_trees(String, String, Array[@types.Tok], @registry.KGFRegistry?, spec~ : @types.KGFSpec) -> Array[(ExtractedFunction, @apted.TreeNode)]
+
+pub fn extract_functions(String, String, @registry.KGFRegistry?) -> Array[ExtractedFunction]
 
 pub fn find_call_sites(String, String, Array[@types.Tok], String, spec~ : @types.KGFSpec) -> Array[UnwrapEdit]
 
@@ -63,6 +68,8 @@ pub fn tokenize_files_with_kgf(Array[(String, String)], @registry.KGFRegistry?) 
 pub fn tokenize_source(String, String, @registry.KGFRegistry?) -> Array[@types.Tok]?
 
 pub fn tokenize_with_kgf(String, @types.KGFSpec) -> Array[String]
+
+pub fn tokenize_with_toolkit(String, @toolkit.LanguageToolkit) -> Array[String]
 
 pub fn tokens_to_tree_node(Array[@types.Tok], Int, Int, spec~ : @types.KGFSpec) -> @apted.TreeNode
 
@@ -108,3 +115,4 @@ pub fn UnwrapEdit::new(String, Int, Int, String, String, Int) -> Self
 // Type aliases
 
 // Traits
+

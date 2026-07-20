@@ -3,6 +3,7 @@ import {
   "trkbt10/indexion/cmd/indexion/doc/init",
   "trkbt10/indexion/cmd/indexion/doc/graph",
   "trkbt10/indexion/cmd/indexion/doc/readme",
+  "trkbt10/indexion/cmd/indexion/doc/okf",
 }
 
 supported_targets = "native"

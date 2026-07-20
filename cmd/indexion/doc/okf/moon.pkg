@@ -1,0 +1,21 @@
+import {
+  "moonbitlang/core/argparse",
+  "moonbitlang/x/fs",
+  "trkbt10/indexion/cmd/indexion/common",
+  "trkbt10/indexion/cmd/indexion/help",
+  "trkbt10/indexion/cmd/indexion/doc/readme",
+  "trkbt10/indexion/src/config" @doc_config,
+  "trkbt10/indexion/src/core/graph",
+  "trkbt10/indexion/src/docgen/build",
+  "trkbt10/indexion/src/docgen/okf" @okf_bundle,
+  "trkbt10/indexion/src/kgf/features" @kgf_features,
+  "trkbt10/indexion/src/kgf/registry",
+  "trkbt10/indexion/src/kgf/types" @kgf_types,
+  "trkbt10/indexion/src/pipeline",
+}
+
+import {
+  "moonbitlang/core/test",
+} for "wbtest"
+
+supported_targets = "native"
