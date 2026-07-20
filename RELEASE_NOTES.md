@@ -1,3 +1,42 @@
+# v0.18.0
+
+## Highlights
+
+- **Knowledge export in Open Knowledge Format (OKF).** The new `doc okf` command exports indexion's analyzed knowledge graph as an [Open Knowledge Format](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md) v0.1 bundle — a portable directory of markdown concept documents with YAML frontmatter that both humans and AI agents can consume, and that any OKF-aware system (including Google Cloud Knowledge Catalog) can ingest.
+- **Builds again on the current MoonBit toolchain.** The previously pinned dependency set no longer compiled on moon 0.1.20260713+. Dependencies are updated and adapted, so a fresh clone builds and tests cleanly.
+
+## New Features
+
+### `doc okf` — Open Knowledge Format bundle export
+
+```bash
+indexion doc okf --output=okf-bundle --title=myproject src/ cmd/
+```
+
+Produces a self-contained OKF v0.1 bundle:
+
+- **One concept document per analyzed package** (`packages/<path>.md`) carrying frontmatter (`type`, `title`, `description`, `tags`, `source`, `timestamp`), an overview drawn from the package's own documentation, a `# Schema` table of public declarations, and `# Dependencies` / `# Dependents` / `# Files` sections.
+- **One concept document per external dependency** (`dependencies/<import path>.md`) with backlinks to the packages that use it.
+- **`index.md` listings in every directory** for progressive disclosure, so a consuming agent can navigate one level at a time instead of loading the whole bundle into context.
+- **`log.md`** recording each generation at the bundle root.
+- **Relationships as ordinary markdown links** (bundle-absolute), so the bundle doubles as a browsable knowledge graph in Obsidian, MkDocs, or a plain file server.
+
+Options: `--output` (required), `--title`, `--specs-dir`, `--include` / `--exclude`, `--recursive` / `--no-recursive`.
+
+Everything is data-driven per the project's no-hardcoding rule: external package prefixes come from the KGF resolver, languages from registry detection, documented symbol kinds from the `document_symbol_kinds` feature, and internal/external classification from the graph plus the analyzed package set — so the exporter works for every language indexion can analyze, not just MoonBit.
+
+## Improvements
+
+- New `@kgf_features.document_symbol_kind_filter` is the single source of truth for the KGF `document_symbol_kinds` feature; `doc readme` now delegates to it instead of carrying its own copy, and the feature name joins the `@kgf_types` constant SoT as `FEATURE_DOCUMENT_SYMBOL_KINDS`.
+- New `@common.now_iso8601_utc` / `iso8601_utc_from_ms` provide wall-clock ISO 8601 timestamps for CLI output.
+
+## Bug Fixes
+
+- **Restored the build on current MoonBit tooling.** `moonbitlang/async` is updated 0.16.7 → 0.19.4 (0.16.7 referenced core types removed from the current prelude; 0.20.x is deliberately avoided because its `/dev/null` process redirect aborts at runtime on macOS) and `mizchi/x` 0.1.7 → 0.4.0.
+- **Tracked `trkbt10/vcdb` 0.3.2** and adapted to its VectorId SoT API: the removed `VectorId::to_int64()` is replaced by guarded `as_int64()` lookups (behavior-preserving — ids that are not `Int64`-representable could never match the `Int64`-keyed reverse maps), and `scroll_filtered`'s `VectorId?` offset is converted internally so `Handle::scan` keeps its public signature.
+
+---
+
 # v0.17.1
 
 ## Highlights
