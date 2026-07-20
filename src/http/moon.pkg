@@ -1,5 +1,5 @@
 import {
-  "mizchi/x/http" @mhttp,
+  "moonbitlang/async/http" @async_http,
 }
 
 supported_targets = "native"

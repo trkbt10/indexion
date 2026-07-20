@@ -1,5 +1,5 @@
 import {
-  "mizchi/x/process",
+  "moonbitlang/async/process",
   "moonbitlang/core/json",
   "moonbitlang/x/fs",
   "moonbitlang/x/sys",

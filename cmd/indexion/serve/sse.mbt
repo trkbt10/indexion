@@ -28,15 +28,15 @@ fn sse_headers(cors : Bool) -> Map[String, String] {
 }
 
 ///|
-async fn sse_start(conn : @mhttp.ServerConnection, cors : Bool) -> Unit {
+async fn sse_start(conn : @async_http.ServerConnection, cors : Bool) -> Unit {
   conn.send_response(200, "OK", extra_headers=sse_headers(cors)) catch {
     _ => return
   }
 }
 
 ///|
-async fn sse_event(conn : @mhttp.ServerConnection, data : String) -> Unit {
-  conn.write("data: " + data + "\n\n")
+async fn sse_event(conn : @async_http.ServerConnection, data : String) -> Unit {
+  conn.write_string("data: " + data + "\n\n")
   conn.flush() catch {
     _ => ()
   }
@@ -44,7 +44,7 @@ async fn sse_event(conn : @mhttp.ServerConnection, data : String) -> Unit {
 
 ///|
 async fn sse_progress(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   phase : String,
   detail : String,
 ) -> Unit {
@@ -56,7 +56,7 @@ async fn sse_progress(
 }
 
 ///|
-async fn sse_item(conn : @mhttp.ServerConnection, item : Json) -> Unit {
+async fn sse_item(conn : @async_http.ServerConnection, item : Json) -> Unit {
   let obj : Map[String, Json] = {}
   obj["type"] = "item".to_json()
   obj["data"] = item
@@ -64,7 +64,7 @@ async fn sse_item(conn : @mhttp.ServerConnection, item : Json) -> Unit {
 }
 
 ///|
-async fn _sse_items(conn : @mhttp.ServerConnection, items : Json) -> Unit {
+async fn _sse_items(conn : @async_http.ServerConnection, items : Json) -> Unit {
   let obj : Map[String, Json] = {}
   obj["type"] = "items".to_json()
   obj["data"] = items
@@ -72,7 +72,7 @@ async fn _sse_items(conn : @mhttp.ServerConnection, items : Json) -> Unit {
 }
 
 ///|
-async fn sse_result(conn : @mhttp.ServerConnection, data : Json) -> Unit {
+async fn sse_result(conn : @async_http.ServerConnection, data : Json) -> Unit {
   let obj : Map[String, Json] = {}
   obj["type"] = "result".to_json()
   obj["data"] = data
@@ -80,7 +80,7 @@ async fn sse_result(conn : @mhttp.ServerConnection, data : Json) -> Unit {
 }
 
 ///|
-async fn sse_done(conn : @mhttp.ServerConnection, total : Int) -> Unit {
+async fn sse_done(conn : @async_http.ServerConnection, total : Int) -> Unit {
   let obj : Map[String, Json] = {}
   obj["type"] = "done".to_json()
   obj["total"] = total.to_json()
@@ -91,7 +91,10 @@ async fn sse_done(conn : @mhttp.ServerConnection, total : Int) -> Unit {
 }
 
 ///|
-async fn sse_error(conn : @mhttp.ServerConnection, message : String) -> Unit {
+async fn sse_error(
+  conn : @async_http.ServerConnection,
+  message : String,
+) -> Unit {
   let obj : Map[String, Json] = {}
   obj["type"] = "error".to_json()
   obj["message"] = message.to_json()
@@ -105,7 +108,7 @@ async fn sse_error(conn : @mhttp.ServerConnection, message : String) -> Unit {
 
 ///|
 async fn handle_grep_stream(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,
@@ -186,7 +189,7 @@ async fn handle_grep_stream(
 
 ///|
 async fn handle_search_stream(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   state : ServerState,
   cors : Bool,
@@ -227,7 +230,7 @@ async fn handle_search_stream(
 
 ///|
 async fn handle_explore_stream(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   config : ServeConfig,
   cors : Bool,
@@ -288,7 +291,7 @@ async fn handle_explore_stream(
 
 ///|
 async fn handle_digest_query_stream(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   index : @index.DigestIndex,
   digest_config : @dconfig.DigestConfig,

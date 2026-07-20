@@ -2,6 +2,7 @@
 package "trkbt10/indexion/src/digest/embed"
 
 import {
+  "moonbitlang/core/debug",
   "trkbt10/indexion/src/digest/config",
   "trkbt10/indexion/src/digest/types",
 }
@@ -31,7 +32,7 @@ pub(all) struct OpenAIConfig {
   api_key : String
   model : String
   base_url : String
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn OpenAIConfig::default(String) -> Self
 
 // Type aliases

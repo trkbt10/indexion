@@ -1,12 +1,12 @@
 ///|
-/// Extract a human-readable message from an HttpError.
-fn http_error_message(err : @mhttp.HttpError) -> String {
-  match err {
-    NetworkError(msg) => msg
-    InvalidUrl(msg) => msg
-    TimeoutError => "timeout"
-    NotSupported => "not supported"
-  }
+/// Extract a human-readable message from an HTTP error.
+///
+/// SoT for HTTP error rendering across indexion. `moonbitlang/async/http`
+/// raises several distinct error types (protocol, proxy, URI parse, body
+/// length) rather than one union, so callers stringify through this helper
+/// instead of matching each variant at every call site.
+pub fn http_error_message(err : Error) -> String {
+  err.to_string()
 }
 
 ///|
@@ -29,7 +29,7 @@ async fn resolve_redirect_url(
   let mut current_url = url
   for i = 0; i < max_redirects; i = i + 1 {
     let req_headers = copy_headers(headers)
-    let (response, _) = @mhttp.get(current_url, headers=req_headers) catch {
+    let (response, _) = @async_http.get(current_url, headers=req_headers) catch {
       err => raise FetchError(http_error_message(err))
     }
     if response.code >= 200 && response.code < 300 {
@@ -56,7 +56,7 @@ pub async fn fetch_bytes(
 ) -> Bytes raise FetchError {
   let final_url = resolve_redirect_url(url, headers)
   let req_headers = copy_headers(headers)
-  let (_, body_data) = @mhttp.get(final_url, headers=req_headers) catch {
+  let (_, body_data) = @async_http.get(final_url, headers=req_headers) catch {
     err => raise FetchError(http_error_message(err))
   }
   body_data.binary()
@@ -70,7 +70,7 @@ pub async fn fetch_text(
 ) -> String raise FetchError {
   let final_url = resolve_redirect_url(url, headers)
   let req_headers = copy_headers(headers)
-  let (_, body_data) = @mhttp.get(final_url, headers=req_headers) catch {
+  let (_, body_data) = @async_http.get(final_url, headers=req_headers) catch {
     err => raise FetchError(http_error_message(err))
   }
   body_data.text() catch {

@@ -22,7 +22,7 @@ import {
 
 import {
   "moonbitlang/async",
-  "mizchi/x/process",
+  "moonbitlang/async/process",
 } for "wbtest"
 
 supported_targets = "native"

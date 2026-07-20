@@ -84,7 +84,7 @@ async fn load_wiki_pages(
 
 ///|
 async fn handle_wiki_search(
-  conn : @mhttp.ServerConnection,
+  conn : @async_http.ServerConnection,
   body_text : String,
   search_index : @wiki_search.WikiSearchIndex?,
   cors : Bool,

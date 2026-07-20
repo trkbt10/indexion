@@ -1,6 +1,8 @@
 import {
   "moonbitlang/async/io",
-  "mizchi/x/http" @mhttp,
+  "moonbitlang/async/http" @async_http,
+  "moonbitlang/async/socket",
+  "trkbt10/indexion/src/http" @indexion_http,
   "trkbt10/indexion/src/mcp/server",
 }
 
