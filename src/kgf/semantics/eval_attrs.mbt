@@ -292,11 +292,6 @@ fn eval_attr_scope(
     Some(_) => ctx.pop_scope()
     None => ()
   }
-  // Also check for simple "pop" as a kind
-  if action.get_kind() == "scope" && params.length() == 0 {
-    // Implicit pop
-    ()
-  }
 }
 
 ///|

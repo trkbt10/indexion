@@ -647,7 +647,7 @@ fn has_relative_prefix(module_path : String, prefixes : Array[String]) -> Bool {
 }
 
 ///|
-/// Gets the head part of a module (before first . or :: or /).
+/// Gets the head part of a module (before the first `.`, `::`, `/` or `\`).
 fn get_module_head(module_str : String) -> String {
   let mut end = module_str.length()
   let dot_pos = find_char_pos(module_str, '.')
@@ -657,6 +657,10 @@ fn get_module_head(module_str : String) -> String {
   let slash_pos = find_char_pos(module_str, '/')
   if slash_pos >= 0 && slash_pos < end {
     end = slash_pos
+  }
+  let backslash_pos = find_char_pos(module_str, '\\')
+  if backslash_pos >= 0 && backslash_pos < end {
+    end = backslash_pos
   }
   // Handle :: by checking for first :
   let colon_pos = find_char_pos(module_str, ':')

@@ -2,6 +2,7 @@
 /// Converts a module identifier to a filesystem path according to the style.
 /// - Dot style: "a.b.c" -> "a/b/c"
 /// - ColonColon style: "a::b::c" -> "a/b/c"
+/// - Backslash style: "a\b\c" -> "a/b/c"
 /// - Slash style: "a/b/c" -> "a/b/c" (no change)
 ///
 /// A leading run of the spec's `relative_prefixes` (e.g. "./", "../") is the
@@ -20,6 +21,7 @@ pub fn module_to_path(
   let converted = match style {
     Dot => replace_all(rest, ".", "/")
     ColonColon => replace_all(rest, "::", "/")
+    Backslash => replace_all(rest, "\\", "/")
     Slash => rest
   }
   prefix + converted

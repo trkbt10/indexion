@@ -167,11 +167,15 @@ fn parse_single_action(text : String) -> @types.AttrAction {
           // For "def" action, implicit param is "id"
           // For "ref" action, implicit param is "name"
           // For "call" action, implicit param is "callee"
+          // For "scope", the bare word IS the operation: `scope push` and
+          // `scope pop` set the "push"/"pop" param the evaluator looks for,
+          // exactly like the `push=<frame>` / `pop=<frame>` spellings.
           let param_name = match kind {
             "def" => "id"
             "ref" => "name"
             "call" => "callee"
             "import" | "reexport" => "module"
+            "scope" => part
             _ => "id"
           }
           params.set(param_name, part)

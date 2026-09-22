@@ -4,6 +4,7 @@ pub enum ModulePathStyle {
   Slash // "slash" - path/to/module
   Dot // "dot" - path.to.module
   ColonColon // "coloncol" - path::to::module
+  Backslash // "backslash" - path\to\module
 } derive(Eq, Debug)
 
 ///|
@@ -18,6 +19,7 @@ pub fn ModulePathStyle::from_string(s : String) -> ModulePathStyle? {
     "slash" => Some(Slash)
     "dot" => Some(Dot)
     "coloncol" => Some(ColonColon)
+    "backslash" => Some(Backslash)
     _ => None
   }
 }
@@ -29,6 +31,7 @@ pub fn ModulePathStyle::as_string(self : ModulePathStyle) -> String {
     Slash => "slash"
     Dot => "dot"
     ColonColon => "coloncol"
+    Backslash => "backslash"
   }
 }
 

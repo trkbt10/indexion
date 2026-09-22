@@ -1381,3 +1381,34 @@ test "parse_lex: LAYOUT referenced and synthetic kinds" {
   ])
   assert_eq(layout.synthetic_kinds(), ["INDENT", "DEDENT"])
 }
+
+///|
+/// A bare `scope push` / `scope pop` attrs line names its operation as the
+/// positional word, so it sets the same param as `push=<frame>` / `pop=<frame>`.
+test "parse_attrs: bare scope push and pop set the operation param" {
+  let text =
+    #|kgf 0.6
+    #|language: t
+    #|sources: .t
+    #|
+    #|=== lex
+    #|TOKEN A /a/
+    #|
+    #|=== grammar
+    #|Doc -> Head Tail
+    #|Head -> A
+    #|Tail -> A
+    #|
+    #|=== attrs
+    #|on Head: scope push
+    #|on Tail: scope pop
+    #|on Doc: scope push=block
+  let spec = parse_kgf(text).unwrap()
+  let attrs = spec.get_attrs()
+  assert_true(attrs.get("Head").unwrap()[0].get_params().contains("push"))
+  assert_true(attrs.get("Tail").unwrap()[0].get_params().contains("pop"))
+  assert_eq(
+    attrs.get("Doc").unwrap()[0].get_params().get("push"),
+    Some("block"),
+  )
+}

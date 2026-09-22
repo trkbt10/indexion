@@ -2168,3 +2168,25 @@ test "resolve_module dot style resolves the current package index" {
   )
   assert_eq(result, "pkg/__init__.py")
 }
+
+///|
+test "module_to_path backslash style" {
+  let style = @types.ModulePathStyle::from_string("backslash").unwrap()
+  assert_eq(module_to_path("App\\Model\\User", style), "App/Model/User")
+  assert_eq(module_to_path("User", style), "User")
+}
+
+///|
+test "resolve_module backslash style module resolves to a file" {
+  let spec = @types.ResolverSpec::new(
+    exts=[".php"],
+    relative_prefixes=["./", "../"],
+    module_path_style=@types.ModulePathStyle::from_string("backslash").unwrap(),
+  )
+  let resolver = MockFileResolver::new(["/project/App/Model/User.php"])
+  let result = resolve_module(
+    spec, "php", "/project/App/Http/Controller.php", "App\\Model\\User", "/project",
+    resolver,
+  )
+  assert_eq(result, "App/Model/User.php")
+}
