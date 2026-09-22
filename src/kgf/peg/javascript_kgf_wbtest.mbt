@@ -10,10 +10,14 @@ fn load_javascript_kgf() -> String {
 }
 
 ///|
-fn load_javascript_jsx_kgf() -> String {
-  @fs.read_file_to_string("kgfs/programming/javascript-jsx.kgf") catch {
+/// javascript-jsx extends javascript, so the raw file lacks the inherited
+/// sections; resolve the inheritance the way the registry does.
+fn load_javascript_jsx_spec() -> @types.KGFSpec {
+  let jsx = @fs.read_file_to_string("kgfs/programming/javascript-jsx.kgf") catch {
     _ => panic()
   }
+  let base = @parser.parse_kgf_source(load_javascript_kgf())
+  @parser.parse_kgf_source(jsx).merge_onto(base).to_spec()
 }
 
 ///|
@@ -23,7 +27,7 @@ fn run_javascript_pipeline(source : String) -> @graph.CodeGraph {
 
 ///|
 fn run_javascript_jsx_pipeline(source : String) -> @graph.CodeGraph {
-  run_full_pipeline(load_javascript_jsx_kgf(), source, "test.jsx")
+  run_full_pipeline_spec(load_javascript_jsx_spec(), source, "test.jsx")
 }
 
 ///|

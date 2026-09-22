@@ -8,8 +8,20 @@ fn run_full_pipeline(
   source_code : String,
   file_path : String,
 ) -> @graph.CodeGraph {
-  // Parse spec
-  let spec = @parser.parse_kgf(spec_text).unwrap()
+  run_full_pipeline_spec(
+    @parser.parse_kgf(spec_text).unwrap(),
+    source_code,
+    file_path,
+  )
+}
+
+///|
+/// Same pipeline for an already-constructed (e.g. extends-resolved) spec.
+fn run_full_pipeline_spec(
+  spec : @types.KGFSpec,
+  source_code : String,
+  file_path : String,
+) -> @graph.CodeGraph {
   // Create lexer and tokenize
   let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize(source_code)
