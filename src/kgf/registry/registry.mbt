@@ -197,19 +197,23 @@ pub fn KGFRegistry::register_spec(
   let resolver = spec.get_resolver()
   let sources = resolver.get_sources()
   for ext in sources {
-    // Record the claim before resolving it. Every spec that declares the
-    // pattern is kept, whether or not it ends up owning it, so callers can
-    // report the conflict rather than only seeing the winner.
-    let claims = match self.source_claims.get(ext) {
-      Some(existing) => existing
-      None => {
-        let fresh : Array[String] = []
-        self.source_claims.set(ext, fresh)
-        fresh
+    // Record the claim before resolving it. Every general-purpose spec that
+    // declares the pattern is kept, whether or not it ends up owning it, so
+    // callers can report the conflict rather than only seeing the winner.
+    // Domain-specific specs (overlays, wiki flavours) are selected by their
+    // own commands and never compete for a pattern, so they are not claims.
+    if !is_domain_specific {
+      let claims = match self.source_claims.get(ext) {
+        Some(existing) => existing
+        None => {
+          let fresh : Array[String] = []
+          self.source_claims.set(ext, fresh)
+          fresh
+        }
       }
-    }
-    if !contains_string(claims, lang) {
-      claims.push(lang)
+      if !contains_string(claims, lang) {
+        claims.push(lang)
+      }
     }
     // sources contains extensions like ".ts", ".tsx"
     match self.ext_to_lang.get(ext) {
