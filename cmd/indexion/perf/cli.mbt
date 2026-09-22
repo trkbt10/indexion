@@ -86,7 +86,7 @@ fn run_kgf_matches(matches : @argparse.Matches) -> Unit {
     }
   }
 
-  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+  let lexer = @kgf_lexer.Lexer::for_spec(spec)
   let start_rule = spec.get_start_rule()
   let active_rules = @kgf_peg.collect_active_rules(spec)
   let tokens = lexer.tokenize(source_text)
@@ -190,7 +190,7 @@ fn run_full_pipeline_rebuild_lexer(
   start_rule : String,
   active_rules : @hashset.HashSet[String],
 ) -> Int {
-  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+  let lexer = @kgf_lexer.Lexer::for_spec(spec)
   run_full_pipeline_reuse_lexer(
     spec, peg, lexer, source_text, input_path, file_exists, start_rule, active_rules,
   )
@@ -236,6 +236,6 @@ fn tokenize_with_rebuild(
   spec : @kgf_types.KGFSpec,
   source_text : String,
 ) -> Int {
-  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+  let lexer = @kgf_lexer.Lexer::for_spec(spec)
   lexer.tokenize(source_text).length()
 }

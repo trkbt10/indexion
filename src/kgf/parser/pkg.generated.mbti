@@ -67,8 +67,10 @@ pub fn KGFHeader::get_sources(Self) -> Array[String]
 pub struct LexResult {
   tokens : Array[@types.TokenDef]
   keyword_kinds : Map[String, Bool]
+  layout : @types.LayoutSpec?
 }
 pub fn LexResult::get_keyword_kinds(Self) -> Map[String, Bool]
+pub fn LexResult::get_layout(Self) -> @types.LayoutSpec?
 pub fn LexResult::get_tokens(Self) -> Array[@types.TokenDef]
 
 // Type aliases

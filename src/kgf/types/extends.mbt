@@ -59,3 +59,18 @@ pub extend ResolveStepType with Eq::{not_equal}
 #deprecated("Use `==` instead")
 #doc(hidden)
 pub extend ResolveStepType with Eq::{equal}
+
+///|
+#deprecated("Use `Repr(x)` instead")
+#doc(hidden)
+pub extend LayoutSpec with Debug::{to_repr}
+
+///|
+#deprecated("Use `!=` instead")
+#doc(hidden)
+pub extend LayoutSpec with Eq::{not_equal}
+
+///|
+#deprecated("Use `==` instead")
+#doc(hidden)
+pub extend LayoutSpec with Eq::{equal}

@@ -483,7 +483,7 @@ test "lexer integration: tokenize typescript with spec" {
   let s = spec.unwrap()
 
   // Create lexer from spec tokens
-  let lexer = @kgf_lexer.Lexer::new(s.get_tokens())
+  let lexer = @kgf_lexer.Lexer::for_spec(s)
 
   // Tokenize sample TypeScript code
   let code = "import { foo, bar } from \"module\";"
@@ -531,7 +531,7 @@ test "lexer integration: complex alternation patterns do not overflow" {
   let s = spec.unwrap()
 
   // Create lexer from spec tokens
-  let lexer = @kgf_lexer.Lexer::new(s.get_tokens())
+  let lexer = @kgf_lexer.Lexer::for_spec(s)
 
   // Tokenize simple code (tests that tokenization works without stack overflow)
   let code = "foo bar baz"

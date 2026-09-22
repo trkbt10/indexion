@@ -9,7 +9,7 @@ test "programming: tokenize all languages" {
 
   // TypeScript
   let ts_spec = registry.get_spec("typescript").unwrap()
-  let ts_lexer = @lexer.Lexer::new(ts_spec.get_tokens())
+  let ts_lexer = @lexer.Lexer::for_spec(ts_spec)
   let ts_source = @fs.read_file_to_string(
     fixtures + "/programming/typescript/src/main.ts",
   ) catch {
@@ -23,7 +23,7 @@ test "programming: tokenize all languages" {
 
   // JavaScript
   let js_spec = registry.get_spec("javascript").unwrap()
-  let js_lexer = @lexer.Lexer::new(js_spec.get_tokens())
+  let js_lexer = @lexer.Lexer::for_spec(js_spec)
   let js_source = @fs.read_file_to_string(
     fixtures + "/programming/javascript/src/app.js",
   ) catch {
@@ -36,7 +36,7 @@ test "programming: tokenize all languages" {
 
   // Python
   let py_spec = registry.get_spec("python").unwrap()
-  let py_lexer = @lexer.Lexer::new(py_spec.get_tokens())
+  let py_lexer = @lexer.Lexer::for_spec(py_spec)
   let py_source = @fs.read_file_to_string(
     fixtures + "/programming/python/main.py",
   ) catch {
@@ -51,7 +51,7 @@ test "programming: tokenize all languages" {
 
   // Go
   let go_spec = registry.get_spec("go").unwrap()
-  let go_lexer = @lexer.Lexer::new(go_spec.get_tokens())
+  let go_lexer = @lexer.Lexer::for_spec(go_spec)
   let go_source = @fs.read_file_to_string(fixtures + "/programming/go/main.go") catch {
     _ => ""
   }
@@ -64,7 +64,7 @@ test "programming: tokenize all languages" {
 
   // Rust
   let rs_spec = registry.get_spec("rust").unwrap()
-  let rs_lexer = @lexer.Lexer::new(rs_spec.get_tokens())
+  let rs_lexer = @lexer.Lexer::for_spec(rs_spec)
   let rs_source = @fs.read_file_to_string(
     fixtures + "/programming/rust/main.rs",
   ) catch {

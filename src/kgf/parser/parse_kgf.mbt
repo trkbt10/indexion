@@ -219,7 +219,7 @@ pub fn parse_kgf(text : String) -> @types.KGFSpec? {
 fn init {
   @types.parse_lex_lazy.val = fn(source) {
     let result = parse_lex(source)
-    (result.get_tokens(), result.get_keyword_kinds())
+    (result.get_tokens(), result.get_keyword_kinds(), result.get_layout())
   }
   @types.parse_grammar_lazy.val = fn(source) { parse_rules(source) }
   @types.parse_attrs_lazy.val = fn(source) { parse_attrs(source) }

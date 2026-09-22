@@ -20,7 +20,7 @@ fn typed_oop_graph(
   path : String,
 ) -> @graph.CodeGraph? {
   let spec = registry.get_spec(lang).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize(source)
   let peg = @peg.build_peg(spec) catch { _ => return None }
   let start_rule = spec.get_start_rule()
@@ -49,7 +49,7 @@ fn typed_oop_parses_fully(
   source : String,
 ) -> Bool {
   let spec = registry.get_spec(lang).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize(source)
   let peg = @peg.build_peg(spec) catch { _ => return false }
   let start_rule = spec.get_start_rule()
@@ -198,7 +198,7 @@ fn typed_oop_imports_with_files(
 ) -> Array[(String, String)] {
   let result : Array[(String, String)] = []
   let spec = registry.get_spec(lang).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize(source)
   let peg = @peg.build_peg(spec) catch { _ => return result }
   let start_rule = spec.get_start_rule()

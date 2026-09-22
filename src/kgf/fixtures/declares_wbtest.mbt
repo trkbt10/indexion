@@ -13,7 +13,7 @@ fn eval_source_graph(
   path : String,
 ) -> @graph.CodeGraph? {
   let spec = registry.get_spec(lang).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize(source)
   let peg = @peg.build_peg(spec) catch { _ => return None }
   let start_rule = spec.get_start_rule()
@@ -774,6 +774,244 @@ test "declares: python import forms produce one edge each" {
   assert_eq(via, [".", ".models", "..pkg.core", "...top", "httpx"])
 }
 
+///|
+/// Indentation is what nests a Python body, and the layout pass turns it into
+/// INDENT/DEDENT tokens the grammar brackets a suite with. This is what the
+/// depth-blind tokenizer could not do: a `def` nested inside a method used to
+/// be indistinguishable from a sibling method of the class.
+///
+/// Here `nested_helper` sits inside `alpha`'s body, one level deeper than the
+/// methods. It must not be declared at all — a local function is not part of
+/// the class's or the module's surface — and `beta`, which follows it, must
+/// still be a method of `Outer`.
+test "declares: python a def nested in a method is not a method" {
+  let registry = get_fixture_registry()
+  let source =
+    #|class Outer:
+    #|    """Outer doc."""
+    #|
+    #|    def alpha(self):
+    #|        """Alpha doc."""
+    #|        def nested_helper(v):
+    #|            return v
+    #|
+    #|        return nested_helper(1)
+    #|
+    #|    def beta(self):
+    #|        return 3
+  let decls = declares_of(registry, "python", source, "app.py")
+  let by_name : Map[String, (String, String, String)] = Map([])
+  for decl in decls {
+    by_name.set(decl.1, (decl.0, decl.2, decl.3))
+  }
+  assert_eq(decls.length(), 3)
+  assert_eq(by_name.get("Outer"), Some(("app.py", "Class", "Outer doc.")))
+  assert_eq(
+    by_name.get("alpha"),
+    Some(("app.py::Outer", "Method", "Alpha doc.")),
+  )
+  assert_eq(by_name.get("beta"), Some(("app.py::Outer", "Method", "")))
+  assert_true(!by_name.contains("nested_helper"))
+}
+
+///|
+/// A class nested in a class body used to swallow every member that followed
+/// it, because a depth-blind body ended only at the first non-indented line.
+/// With exact suites the nested class owns exactly its own members and the
+/// methods after it go back to the outer class.
+test "declares: python a nested class does not swallow later methods" {
+  let registry = get_fixture_registry()
+  let source =
+    #|class Outer:
+    #|    """Outer doc."""
+    #|
+    #|    def alpha(self):
+    #|        return 1
+    #|
+    #|    class Inner:
+    #|        """Inner doc."""
+    #|
+    #|        def inner_method(self):
+    #|            return 2
+    #|
+    #|    def beta(self):
+    #|        return 3
+  let decls = declares_of(registry, "python", source, "app.py")
+  let by_name : Map[String, (String, String, String)] = Map([])
+  for decl in decls {
+    by_name.set(decl.1, (decl.0, decl.2, decl.3))
+  }
+  assert_eq(decls.length(), 5)
+  assert_eq(by_name.get("Outer"), Some(("app.py", "Class", "Outer doc.")))
+  assert_eq(by_name.get("alpha"), Some(("app.py::Outer", "Method", "")))
+  // The nested class belongs to its parent, and so do its own methods.
+  assert_eq(
+    by_name.get("Inner"),
+    Some(("app.py::Outer", "Class", "Inner doc.")),
+  )
+  assert_eq(
+    by_name.get("inner_method"),
+    Some(("app.py::Outer.Inner", "Method", "")),
+  )
+  // The method AFTER the nested class is the outer class's again.
+  assert_eq(by_name.get("beta"), Some(("app.py::Outer", "Method", "")))
+}
+
+///|
+/// Nesting is exact at any depth, not only one level: a class inside a class
+/// inside a class each owns its own members, and each level restores the one
+/// above it for the members that follow.
+test "declares: python class nesting is exact at three levels" {
+  let registry = get_fixture_registry()
+  let source =
+    #|class A:
+    #|    class B:
+    #|        class C:
+    #|            def c_method(self):
+    #|                return 3
+    #|
+    #|        def b_method(self):
+    #|            return 2
+    #|
+    #|    def a_method(self):
+    #|        return 1
+  let decls = declares_of(registry, "python", source, "app.py")
+  let by_name : Map[String, (String, String, String)] = Map([])
+  for decl in decls {
+    by_name.set(decl.1, (decl.0, decl.2, decl.3))
+  }
+  assert_eq(by_name.get("A"), Some(("app.py", "Class", "")))
+  assert_eq(by_name.get("B"), Some(("app.py::A", "Class", "")))
+  assert_eq(by_name.get("C"), Some(("app.py::A.B", "Class", "")))
+  assert_eq(by_name.get("c_method"), Some(("app.py::A.B.C", "Method", "")))
+  assert_eq(by_name.get("b_method"), Some(("app.py::A.B", "Method", "")))
+  assert_eq(by_name.get("a_method"), Some(("app.py::A", "Method", "")))
+}
+
+///|
+/// A body whose statements are compound (`if`, `for`, `with`, `try`) opens
+/// further levels the layout pass closes again; the method after them is
+/// still a member of the class, and a def nested inside a compound statement
+/// is still not.
+test "declares: python compound statements inside a method body" {
+  let registry = get_fixture_registry()
+  let source =
+    #|class Store:
+    #|    def run(self, items):
+    #|        for item in items:
+    #|            if item:
+    #|                def transform(v):
+    #|                    return v
+    #|
+    #|                item = transform(item)
+    #|            else:
+    #|                continue
+    #|        with open("f") as handle:
+    #|            handle.write("x")
+    #|        return items
+    #|
+    #|    def done(self):
+    #|        return True
+  let (fn_count, type_count, names) = count_declares(
+    registry, "python", source, "store.py",
+  )
+  assert_eq(fn_count, 2)
+  assert_eq(type_count, 1)
+  assert_true(names.get("run") == Some("method"))
+  assert_true(names.get("done") == Some("method"))
+  assert_true(names.get("Store") == Some("class"))
+  assert_true(!names.contains("transform"))
+}
+
+///|
+/// A one-line body (`class E: pass`, `def f(): return 1`) opens no block at
+/// all, so it has no INDENT — the declaration still has to be produced.
+test "declares: python one-line class and function bodies" {
+  let registry = get_fixture_registry()
+  let source =
+    #|class Empty: pass
+    #|
+    #|
+    #|class Holder:
+    #|    class InnerEmpty: pass
+    #|
+    #|    def m(self): return 1
+    #|
+    #|
+    #|def one_liner(): return 0
+  let decls = declares_of(registry, "python", source, "app.py")
+  let by_name : Map[String, (String, String, String)] = Map([])
+  for decl in decls {
+    by_name.set(decl.1, (decl.0, decl.2, decl.3))
+  }
+  assert_eq(decls.length(), 5)
+  assert_eq(by_name.get("Empty"), Some(("app.py", "Class", "")))
+  assert_eq(by_name.get("Holder"), Some(("app.py", "Class", "")))
+  assert_eq(by_name.get("InnerEmpty"), Some(("app.py::Holder", "Class", "")))
+  assert_eq(by_name.get("m"), Some(("app.py::Holder", "Method", "")))
+  assert_eq(by_name.get("one_liner"), Some(("app.py", "Function", "")))
+}
+
+///|
+/// A comment may sit at any column in Python, so a comment-only line must not
+/// be read as opening or closing a block — including one flush with the left
+/// margin in the middle of a class body, and one deeper than the code around
+/// it.
+test "declares: python comment lines at odd columns do not break a body" {
+  let registry = get_fixture_registry()
+  let source =
+    #|class Padded:
+    #|    # a comment at the member column
+    #|    def first(self):
+    #|            # a comment deeper than the body
+    #|        return 1
+    #|
+    #|# a comment flush with the left margin
+    #|    def second(self):
+    #|        return 2
+  let (fn_count, type_count, names) = count_declares(
+    registry, "python", source, "padded.py",
+  )
+  assert_eq(fn_count, 2)
+  assert_eq(type_count, 1)
+  assert_true(names.get("first") == Some("method"))
+  assert_true(names.get("second") == Some("method"))
+  assert_true(names.get("Padded") == Some("class"))
+}
+
+///|
+/// Indentation is not significant inside brackets: a parameter list or a
+/// collection literal may be laid out at any column without opening a block,
+/// and the body that follows the closing bracket is measured from the header's
+/// own column.
+test "declares: python multi-line brackets do not open a block" {
+  let registry = get_fixture_registry()
+  let source =
+    #|class Config:
+    #|    DEFAULTS = {
+    #|        "a": 1,
+    #|            "b": 2,
+    #|    }
+    #|
+    #|    def build(
+    #|        self,
+    #|            name: str,
+    #|        *args,
+    #|    ) -> dict:
+    #|        return {"name": name}
+    #|
+    #|    def other(self):
+    #|        return 1
+  let (fn_count, type_count, names) = count_declares(
+    registry, "python", source, "config.py",
+  )
+  assert_eq(fn_count, 2)
+  assert_eq(type_count, 1)
+  assert_true(names.get("build") == Some("method"))
+  assert_true(names.get("other") == Some("method"))
+  assert_true(names.get("Config") == Some("class"))
+}
+
 // ─── Java ───────────────────────────────────────────────────
 
 ///|
@@ -1057,7 +1295,7 @@ test "declares: elixir tokenize and parse" {
   // uses vis:( KW_def / KW_defp ) label with eq($vis, "def") condition
   let spec = registry.get_spec("elixir").unwrap()
   let source = "def add(a, b) do\n  a + b\nend\n"
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize(source)
   assert_true(tokens.length() > 0)
   assert_true(tokens.iter().any(fn(t) { t.kind == "KW_def" }))

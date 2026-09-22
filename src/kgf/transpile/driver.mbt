@@ -58,7 +58,7 @@ pub fn transpile_file_json_with_registry(
   } else {
     source_text + "\n"
   }
-  let lex = @lexer.Lexer::new(kgf_spec.get_tokens())
+  let lex = @lexer.Lexer::for_spec(kgf_spec)
   let tokens = lex.tokenize(source)
   let peg = @peg.build_peg(kgf_spec) catch { _ => return None }
   let start_rule = kgf_spec.get_start_rule()

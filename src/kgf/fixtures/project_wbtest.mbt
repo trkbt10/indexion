@@ -54,7 +54,7 @@ fn run_pipeline_with_registry(
     Some(s) => s
     None => return empty
   }
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let (tokens, lex_diags) = lexer.tokenize_with_diagnostics(source)
   let lex_errors = lex_diags.length()
   let total = tokens.length()
@@ -98,7 +98,7 @@ test "project: npm package.json tests" {
 
   // Tokenize package.json
   let spec = registry.get_spec("package-json").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let source = @fs.read_file_to_string(fixtures + "/project/npm/package.json") catch {
     _ => ""
   }
@@ -183,7 +183,7 @@ test "project: cargo tests" {
 
   // Tokenize
   let spec = registry.get_spec("cargo-toml").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let source = @fs.read_file_to_string(fixtures + "/project/cargo/Cargo.toml") catch {
     _ => ""
   }
@@ -255,7 +255,7 @@ test "project: go mod tests" {
   let fixtures = get_fixtures_dir()
 
   let spec = registry.get_spec("go-mod").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let source = @fs.read_file_to_string(fixtures + "/project/go/go.mod") catch {
     _ => ""
   }
@@ -287,7 +287,7 @@ test "project: moonbit tests" {
   let fixtures = get_fixtures_dir()
 
   let spec = registry.get_spec("moon-mod").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let source = @fs.read_file_to_string(
     fixtures + "/project/moonbit/moon.mod.json",
   ) catch {
@@ -322,7 +322,7 @@ test "project: moonbit moon.mod TOML tests" {
   let fixtures = get_fixtures_dir()
 
   let spec = registry.get_spec("moon-mod-toml").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let source = @fs.read_file_to_string(
     fixtures + "/project/moonbit-toml/moon.mod",
   ) catch {
@@ -396,7 +396,7 @@ test "project: python tests" {
   let fixtures = get_fixtures_dir()
 
   let spec = registry.get_spec("pyproject-toml").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let source = @fs.read_file_to_string(
     fixtures + "/project/python/pyproject.toml",
   ) catch {
@@ -434,7 +434,7 @@ test "project: deno tests" {
   let fixtures = get_fixtures_dir()
 
   let spec = registry.get_spec("deno-json").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let source = @fs.read_file_to_string(fixtures + "/project/deno/deno.json") catch {
     _ => ""
   }

@@ -6,7 +6,7 @@
 /// Benchmark tokenizing (baseline comparison).
 test "tokenize_large" (b : @bench.T) {
   let spec = @parser.parse_kgf(moonbit_kgf_content()).unwrap()
-  let lexer_inst = @lexer.Lexer::new(spec.get_tokens())
+  let lexer_inst = @lexer.Lexer::for_spec(spec)
   let src = large_source()
   b.bench(name="tokenize", fn() { b.keep(lexer_inst.tokenize(src)) })
 }
@@ -15,7 +15,7 @@ test "tokenize_large" (b : @bench.T) {
 /// Benchmark PEG parsing (small file).
 test "peg_parse_small" (b : @bench.T) {
   let spec = @parser.parse_kgf(moonbit_kgf_content()).unwrap()
-  let lexer_inst = @lexer.Lexer::new(spec.get_tokens())
+  let lexer_inst = @lexer.Lexer::for_spec(spec)
   let peg = build_peg(spec) catch { _ => PEG::new() }
   let active_rules = collect_active_rules(spec)
   let tokens = lexer_inst.tokenize(small_source())
@@ -29,7 +29,7 @@ test "peg_parse_small" (b : @bench.T) {
 /// Benchmark PEG parsing (large file).
 test "peg_parse_large" (b : @bench.T) {
   let spec = @parser.parse_kgf(moonbit_kgf_content()).unwrap()
-  let lexer_inst = @lexer.Lexer::new(spec.get_tokens())
+  let lexer_inst = @lexer.Lexer::for_spec(spec)
   let peg = build_peg(spec) catch { _ => PEG::new() }
   let active_rules = collect_active_rules(spec)
   let tokens = lexer_inst.tokenize(large_source())

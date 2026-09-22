@@ -48,7 +48,7 @@ test "story-prose: filtered parser keeps semantic block events" {
     #|# Chapter One
     #|
     #|The studio was filled with roses.
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize(source)
   let peg_result = Some(@peg.build_peg(spec)) catch { _ => None }
   guard peg_result is Some(peg) else { fail("failed to build story-prose PEG") }
@@ -77,7 +77,7 @@ test "story-prose: filtered parser keeps events on fixture readme" {
   guard source_result is Some(source) else {
     fail("failed to read Dorian Gray story fixture")
   }
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize(source)
   let peg_result = Some(@peg.build_peg(spec)) catch { _ => None }
   guard peg_result is Some(peg) else { fail("failed to build story-prose PEG") }

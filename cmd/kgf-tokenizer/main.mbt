@@ -10,7 +10,7 @@ pub fn tokenize(spec_text : String, source : String) -> String {
     Some(s) => s
     None => return "[]"
   }
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let toks = lexer.tokenize(source)
   let arr : Array[Json] = toks
     .iter()

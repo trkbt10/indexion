@@ -6,7 +6,7 @@
 test "diagram: tokenize mermaid flowchart" {
   let registry = get_fixture_registry()
   let spec = registry.get_spec("mermaid").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let fixtures = get_fixtures_dir()
   let src = @fs.read_file_to_string(fixtures + "/diagram/mermaid/flowchart.mmd") catch {
     _ => ""
@@ -26,7 +26,7 @@ test "diagram: tokenize mermaid flowchart" {
 test "diagram: tokenize mermaid sequence diagram" {
   let registry = get_fixture_registry()
   let spec = registry.get_spec("mermaid").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let fixtures = get_fixtures_dir()
   let src = @fs.read_file_to_string(fixtures + "/diagram/mermaid/sequence.mmd") catch {
     _ => ""
@@ -44,7 +44,7 @@ test "diagram: tokenize mermaid sequence diagram" {
 test "diagram: tokenize mermaid class diagram" {
   let registry = get_fixture_registry()
   let spec = registry.get_spec("mermaid").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let fixtures = get_fixtures_dir()
   let src = @fs.read_file_to_string(fixtures + "/diagram/mermaid/class.mmd") catch {
     _ => ""
@@ -67,7 +67,7 @@ test "diagram: tokenize mermaid class diagram" {
 test "diagram: tokenize mermaid er diagram" {
   let registry = get_fixture_registry()
   let spec = registry.get_spec("mermaid").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let fixtures = get_fixtures_dir()
   let src = @fs.read_file_to_string(fixtures + "/diagram/mermaid/er.mmd") catch {
     _ => ""
@@ -89,7 +89,7 @@ test "diagram: tokenize mermaid er diagram" {
 test "diagram: tokenize mermaid gantt chart" {
   let registry = get_fixture_registry()
   let spec = registry.get_spec("mermaid").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let fixtures = get_fixtures_dir()
   let src = @fs.read_file_to_string(fixtures + "/diagram/mermaid/gantt.mmd") catch {
     _ => ""
@@ -108,7 +108,7 @@ test "diagram: tokenize mermaid gantt chart" {
 test "diagram: tokenize mermaid state diagram" {
   let registry = get_fixture_registry()
   let spec = registry.get_spec("mermaid").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let fixtures = get_fixtures_dir()
   let src = @fs.read_file_to_string(fixtures + "/diagram/mermaid/state.mmd") catch {
     _ => ""

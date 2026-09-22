@@ -24,7 +24,7 @@ pub struct LanguageToolkit {
 /// All derived artifacts are computed eagerly at construction time, so
 /// subsequent access is zero-cost.
 pub fn LanguageToolkit::from_spec(spec : @types.KGFSpec) -> LanguageToolkit {
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let identifier_set = build_set_from_feature(spec, "identifier_kinds")
   let identifier_set = if identifier_set.is_empty() {
     // Default fallback when spec has no identifier_kinds feature

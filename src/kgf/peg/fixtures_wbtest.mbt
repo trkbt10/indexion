@@ -75,7 +75,7 @@ fn typescript_spec_for_fixtures() -> String {
 ///|
 test "fixtures: typescript import tokenization" {
   let spec = @parser.parse_kgf(typescript_spec_for_fixtures()).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let code = typescript_import_example()
   let tokens = lexer.tokenize(code)
   // Verify first line tokens: import { foo as f } from './utils';
@@ -103,7 +103,7 @@ test "fixtures: typescript import tokenization" {
 ///|
 test "fixtures: typescript import parsing" {
   let spec = @parser.parse_kgf(typescript_spec_for_fixtures()).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let code = typescript_import_example()
   let tokens = lexer.tokenize(code)
   let peg = build_peg(spec)
@@ -172,7 +172,7 @@ fn javascript_spec_for_fixtures() -> String {
 ///|
 test "fixtures: javascript import tokenization" {
   let spec = @parser.parse_kgf(javascript_spec_for_fixtures()).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let code = javascript_import_example()
   let tokens = lexer.tokenize(code)
   // Verify first line tokens: import { double } from './util.js';
@@ -189,7 +189,7 @@ test "fixtures: javascript import tokenization" {
 ///|
 test "fixtures: javascript import parsing" {
   let spec = @parser.parse_kgf(javascript_spec_for_fixtures()).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let code = javascript_import_example()
   let tokens = lexer.tokenize(code)
   let peg = build_peg(spec)
@@ -259,7 +259,7 @@ fn python_spec_for_fixtures() -> String {
 ///|
 test "fixtures: python import tokenization" {
   let spec = @parser.parse_kgf(python_spec_for_fixtures()).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let code = python_import_example()
   let tokens = lexer.tokenize(code)
   // Verify first line tokens: import pkg.util, os
@@ -285,7 +285,7 @@ test "fixtures: python import tokenization" {
 ///|
 test "fixtures: python import parsing" {
   let spec = @parser.parse_kgf(python_spec_for_fixtures()).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let code = python_import_example()
   let tokens = lexer.tokenize(code)
   let peg = build_peg(spec)
@@ -327,7 +327,7 @@ test "fixtures: markdown tokenization" {
     #|Element -> Heading | Bold | Italic | Text | NL
     #|
   let spec = @parser.parse_kgf(spec_text).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let code = markdown_example()
   let tokens = lexer.tokenize(code)
   // Verify heading

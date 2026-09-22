@@ -315,3 +315,166 @@ test "check: let shadowing a built-in variable is a warning" {
   assert_true(any_message_contains(messages, "`let root` shadows"))
   assert_false(any_message_contains(messages, "`let proj`"))
 }
+
+// ── LAYOUT directive validation ──────────────────
+
+///|
+/// Builds a spec whose grammar brackets a body with the synthetic INDENT and
+/// DEDENT kinds, with the LAYOUT declaration and lex tokens supplied by the
+/// caller so each test can break exactly one rule.
+fn layout_spec(
+  layout : @kgf_types.LayoutSpec?,
+  extra_tokens : Array[@kgf_types.TokenDef],
+  rules : Map[String, @kgf_types.RuleDef],
+) -> @kgf_types.KGFSpec {
+  let tokens = [
+    @kgf_types.TokenDef::new("NL", "\\r?\\n"),
+    @kgf_types.TokenDef::new("Comment", "#[^\\n]*"),
+    @kgf_types.TokenDef::new("LPAREN", "\\("),
+    @kgf_types.TokenDef::new("RPAREN", "\\)"),
+    @kgf_types.TokenDef::new("Ident", "[a-z]+"),
+  ]
+  for token in extra_tokens {
+    tokens.push(token)
+  }
+  @kgf_types.KGFSpec::new("layout", tokens~, layout~, rules~)
+}
+
+///|
+/// The grammar every valid-layout test uses: a body is exactly one
+/// INDENT…DEDENT pair, which is what the directive exists to make possible.
+fn layout_rules() -> Map[String, @kgf_types.RuleDef] {
+  {
+    "Doc": @kgf_types.RuleDef::new("Doc", "Item*"),
+    "Item": @kgf_types.RuleDef::new(
+      "Item", "NL / Comment / LPAREN / RPAREN / Decl / Ident",
+    ),
+    "Decl": @kgf_types.RuleDef::new("Decl", "Ident NL INDENT Item* DEDENT"),
+  }
+}
+
+///|
+fn errors_in(
+  diagnostics : Array[Diagnostic],
+  section : String,
+) -> Array[String] {
+  let out : Array[String] = []
+  for d in diagnostics {
+    if d.get_section() == section && d.get_severity() == "error" {
+      out.push(d.get_message())
+    }
+  }
+  out
+}
+
+///|
+/// A well-formed directive passes: the synthetic kinds are accepted as
+/// grammar symbols even though no lex TOKEN defines them.
+test "check: a well-formed LAYOUT directive produces no diagnostic" {
+  let spec = layout_spec(
+    Some(
+      @kgf_types.LayoutSpec::new(
+        ["NL"],
+        "INDENT",
+        "DEDENT",
+        comment=Some("Comment"),
+        open=["LPAREN"],
+        close=["RPAREN"],
+      ),
+    ),
+    [],
+    layout_rules(),
+  )
+  assert_eq(errors_in(check(spec), "lex"), [])
+  assert_eq(errors_in(check(spec), "grammar"), [])
+  assert_eq(warnings_in(check(spec), "grammar"), [])
+}
+
+///|
+/// Without the directive the same grammar is wrong: INDENT and DEDENT are
+/// then symbols nothing defines. This is what makes the acceptance above a
+/// consequence of the directive rather than of a blanket exemption.
+test "check: INDENT is undefined without a LAYOUT directive" {
+  let spec = layout_spec(None, [], layout_rules())
+  let messages = errors_in(check(spec), "grammar")
+  assert_true(any_message_contains(messages, "undefined symbol 'INDENT'"))
+  assert_true(any_message_contains(messages, "undefined symbol 'DEDENT'"))
+}
+
+///|
+test "check: LAYOUT naming an undefined token kind is an error" {
+  let spec = layout_spec(
+    Some(
+      @kgf_types.LayoutSpec::new(
+        ["NEWLINE"],
+        "INDENT",
+        "DEDENT",
+        comment=Some("Remark"),
+        open=["LBRACE"],
+        close=["RBRACE"],
+      ),
+    ),
+    [],
+    layout_rules(),
+  )
+  let messages = errors_in(check(spec), "lex")
+  assert_true(any_message_contains(messages, "'NEWLINE'"))
+  assert_true(any_message_contains(messages, "'Remark'"))
+  assert_true(any_message_contains(messages, "'LBRACE'"))
+  assert_true(any_message_contains(messages, "'RBRACE'"))
+}
+
+///|
+/// A synthetic kind that the lex section also defines as a TOKEN would be
+/// emitted from source text as well as by the pass, and the grammar could no
+/// longer tell the two apart.
+test "check: a synthetic kind defined as a lex TOKEN is an error" {
+  let spec = layout_spec(
+    Some(@kgf_types.LayoutSpec::new(["NL"], "INDENT", "DEDENT")),
+    [@kgf_types.TokenDef::new("INDENT", ">>")],
+    layout_rules(),
+  )
+  let messages = errors_in(check(spec), "lex")
+  assert_true(any_message_contains(messages, "also defines it as a TOKEN"))
+  assert_true(any_message_contains(messages, "'INDENT'"))
+}
+
+///|
+test "check: the same kind for indent and dedent is an error" {
+  let spec = layout_spec(
+    Some(@kgf_types.LayoutSpec::new(["NL"], "LAYOUT_MARK", "LAYOUT_MARK")),
+    [],
+    {
+      "Doc": @kgf_types.RuleDef::new("Doc", "Item*"),
+      "Item": @kgf_types.RuleDef::new(
+        "Item", "NL / Comment / LPAREN / RPAREN / LAYOUT_MARK / Ident",
+      ),
+    },
+  )
+  let messages = errors_in(check(spec), "lex")
+  assert_true(any_message_contains(messages, "indent and dedent"))
+}
+
+///|
+/// The synthetic kinds go through the same unreachable-token check as the lex
+/// tokens: the pass injects them into every stream, so a grammar that ignores
+/// them stops at the first indented line.
+test "check: a synthetic kind no grammar rule consumes is a warning" {
+  let spec = layout_spec(
+    Some(@kgf_types.LayoutSpec::new(["NL"], "INDENT", "DEDENT")),
+    [],
+    {
+      "Doc": @kgf_types.RuleDef::new("Doc", "Item*"),
+      "Item": @kgf_types.RuleDef::new(
+        "Item", "NL / Comment / LPAREN / RPAREN / Ident",
+      ),
+    },
+  )
+  let messages = warnings_in(check(spec), "grammar")
+  assert_true(
+    any_message_contains(messages, "'INDENT' is synthesized by the LAYOUT"),
+  )
+  assert_true(
+    any_message_contains(messages, "'DEDENT' is synthesized by the LAYOUT"),
+  )
+}

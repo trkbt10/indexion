@@ -9,7 +9,7 @@ test "natural: tokenize japanese, english, korean, chinese" {
 
   // Japanese
   let ja_spec = registry.get_spec("japanese").unwrap()
-  let ja_lexer = @lexer.Lexer::new(ja_spec.get_tokens())
+  let ja_lexer = @lexer.Lexer::for_spec(ja_spec)
   let ja_src = @fs.read_file_to_string(
     fixtures + "/natural/japanese/simple.txt",
   ) catch {
@@ -29,7 +29,7 @@ test "natural: tokenize japanese, english, korean, chinese" {
 
   // English
   let en_spec = registry.get_spec("english").unwrap()
-  let en_lexer = @lexer.Lexer::new(en_spec.get_tokens())
+  let en_lexer = @lexer.Lexer::for_spec(en_spec)
   let en_src = @fs.read_file_to_string(fixtures + "/natural/english/sample.txt") catch {
     _ => ""
   }
@@ -40,7 +40,7 @@ test "natural: tokenize japanese, english, korean, chinese" {
 
   // Korean
   let ko_spec = registry.get_spec("korean").unwrap()
-  let ko_lexer = @lexer.Lexer::new(ko_spec.get_tokens())
+  let ko_lexer = @lexer.Lexer::for_spec(ko_spec)
   let ko_src = @fs.read_file_to_string(fixtures + "/natural/korean/sample.txt") catch {
     _ => ""
   }
@@ -51,7 +51,7 @@ test "natural: tokenize japanese, english, korean, chinese" {
 
   // Chinese
   let zh_spec = registry.get_spec("chinese").unwrap()
-  let zh_lexer = @lexer.Lexer::new(zh_spec.get_tokens())
+  let zh_lexer = @lexer.Lexer::for_spec(zh_spec)
   let zh_src = @fs.read_file_to_string(fixtures + "/natural/chinese/sample.txt") catch {
     _ => ""
   }
@@ -88,7 +88,7 @@ test "natural: japanese parses whole texts including particles and brackets" {
 test "natural: japanese reads cjk numerals as numbers" {
   let registry = get_fixture_registry()
   let spec = registry.get_spec("japanese").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let source = "彼は三十分待った。でも、誰も来なかった。"
   let tokens = lexer.tokenize(source)
   assert_true(tokens.iter().any(fn(t) { t.kind == "CjkNumber" }))

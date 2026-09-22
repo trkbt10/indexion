@@ -22,7 +22,7 @@ fn sys_eval_source_graph(
   path : String,
 ) -> @graph.CodeGraph? {
   let spec = registry.get_spec(lang).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize(source)
   let peg = @peg.build_peg(spec) catch { _ => return None }
   let start_rule = spec.get_start_rule()
@@ -103,7 +103,7 @@ fn sys_lexes_cleanly(
   source : String,
 ) -> Bool {
   let spec = registry.get_spec(lang).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let (_, diagnostics) = lexer.tokenize_with_diagnostics(source)
   diagnostics.length() == 0
 }

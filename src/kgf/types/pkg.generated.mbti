@@ -51,7 +51,7 @@ pub let parse_classify_lazy : @ref.Ref[(String) -> ClassifyModel?]
 
 pub let parse_grammar_lazy : @ref.Ref[(String) -> Map[String, RuleDef]]
 
-pub let parse_lex_lazy : @ref.Ref[(String) -> (Array[TokenDef], Map[String, Bool])]
+pub let parse_lex_lazy : @ref.Ref[(String) -> (Array[TokenDef], Map[String, Bool], LayoutSpec?)]
 
 pub let parse_preprocess_fst_lazy : @ref.Ref[(String) -> Array[PreprocessFstSpec]?]
 
@@ -130,6 +130,7 @@ pub struct KGFSpec {
   mut classify_source : String?
   mut tokens_cache : Array[TokenDef]?
   mut keyword_kinds_cache : Map[String, Bool]?
+  mut layout_cache : LayoutSpec??
   mut rules_cache : Map[String, RuleDef]?
   mut attrs_cache : Map[String, Array[AttrAction]]?
   mut semantics_cache : Map[String, Array[SemOnBlock]]??
@@ -145,6 +146,7 @@ pub fn KGFSpec::get_features(Self) -> Map[String, Array[String]]?
 pub fn KGFSpec::get_ignore(Self) -> Array[String]?
 pub fn KGFSpec::get_keyword_kinds(Self) -> Map[String, Bool]
 pub fn KGFSpec::get_language(Self) -> String
+pub fn KGFSpec::get_layout(Self) -> LayoutSpec?
 pub fn KGFSpec::get_preprocess(Self) -> Array[String]?
 pub fn KGFSpec::get_preprocess_fst(Self) -> Array[PreprocessFstSpec]?
 pub fn KGFSpec::get_resolver(Self) -> ResolverSpec
@@ -155,8 +157,26 @@ pub fn KGFSpec::get_semantics(Self) -> Map[String, Array[SemOnBlock]]?
 pub fn KGFSpec::get_start_rule(Self) -> String
 pub fn KGFSpec::get_tokens(Self) -> Array[TokenDef]
 pub fn KGFSpec::is_keyword(Self, String) -> Bool
-pub fn KGFSpec::new(String, tokens? : Array[TokenDef], keyword_kinds? : Map[String, Bool], rules? : Map[String, RuleDef], attrs? : Map[String, Array[AttrAction]], resolver? : ResolverSpec, features? : Map[String, Array[String]]?, semantics? : Map[String, Array[SemOnBlock]]?, preprocess? : Array[String]?, preprocess_fst? : Array[PreprocessFstSpec]?, ignore? : Array[String]?, classify? : ClassifyModel?) -> Self
+pub fn KGFSpec::new(String, tokens? : Array[TokenDef], keyword_kinds? : Map[String, Bool], layout? : LayoutSpec?, rules? : Map[String, RuleDef], attrs? : Map[String, Array[AttrAction]], resolver? : ResolverSpec, features? : Map[String, Array[String]]?, semantics? : Map[String, Array[SemOnBlock]]?, preprocess? : Array[String]?, preprocess_fst? : Array[PreprocessFstSpec]?, ignore? : Array[String]?, classify? : ClassifyModel?) -> Self
 pub fn KGFSpec::new_lazy(String, ResolverSpec, Map[String, Array[String]]?, Array[String]?, String, String, String, String, String, String, String) -> Self
+
+pub struct LayoutSpec {
+  newline : Array[String]
+  indent : String
+  dedent : String
+  comment : String?
+  open : Array[String]
+  close : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn LayoutSpec::get_close(Self) -> Array[String]
+pub fn LayoutSpec::get_comment(Self) -> String?
+pub fn LayoutSpec::get_dedent(Self) -> String
+pub fn LayoutSpec::get_indent(Self) -> String
+pub fn LayoutSpec::get_newline(Self) -> Array[String]
+pub fn LayoutSpec::get_open(Self) -> Array[String]
+pub fn LayoutSpec::new(Array[String], String, String, comment? : String?, open? : Array[String], close? : Array[String]) -> Self
+pub fn LayoutSpec::referenced_kinds(Self) -> Array[String]
+pub fn LayoutSpec::synthetic_kinds(Self) -> Array[String]
 
 pub enum ModulePathStyle {
   Slash

@@ -178,7 +178,7 @@ test "registry: tokenize and parse examples" {
 
   // TypeScript tokenization
   let ts_spec = registry.get_spec("typescript").unwrap()
-  let ts_lexer = @lexer.Lexer::new(ts_spec.get_tokens())
+  let ts_lexer = @lexer.Lexer::for_spec(ts_spec)
   let ts_source = @fs.read_file_to_string(
     fixtures_dir + "/programming/typescript/src/main.ts",
   ) catch {
@@ -197,7 +197,7 @@ test "registry: tokenize and parse examples" {
 
   // JavaScript tokenization and parsing
   let js_spec = registry.get_spec("javascript").unwrap()
-  let js_lexer = @lexer.Lexer::new(js_spec.get_tokens())
+  let js_lexer = @lexer.Lexer::for_spec(js_spec)
   let js_source = @fs.read_file_to_string(
     fixtures_dir + "/programming/javascript/src/app.js",
   ) catch {
@@ -214,7 +214,7 @@ test "registry: tokenize and parse examples" {
 
   // Python tokenization and parsing
   let py_spec = registry.get_spec("python").unwrap()
-  let py_lexer = @lexer.Lexer::new(py_spec.get_tokens())
+  let py_lexer = @lexer.Lexer::for_spec(py_spec)
   let py_source = @fs.read_file_to_string(
     fixtures_dir + "/programming/python/main.py",
   ) catch {
@@ -233,7 +233,7 @@ test "registry: tokenize and parse examples" {
 
   // Go tokenization and parsing
   let go_spec = registry.get_spec("go").unwrap()
-  let go_lexer = @lexer.Lexer::new(go_spec.get_tokens())
+  let go_lexer = @lexer.Lexer::for_spec(go_spec)
   let go_source = @fs.read_file_to_string(
     fixtures_dir + "/programming/go/main.go",
   ) catch {
@@ -252,7 +252,7 @@ test "registry: tokenize and parse examples" {
 
   // Rust tokenization and parsing
   let rs_spec = registry.get_spec("rust").unwrap()
-  let rs_lexer = @lexer.Lexer::new(rs_spec.get_tokens())
+  let rs_lexer = @lexer.Lexer::for_spec(rs_spec)
   let rs_source = @fs.read_file_to_string(
     fixtures_dir + "/programming/rust/main.rs",
   ) catch {
@@ -278,7 +278,7 @@ test "registry: parse markup and dsl" {
   // HTML
   let html_spec = registry.get_spec("html").unwrap()
   let html_peg = @peg.build_peg(html_spec)
-  let html_lexer = @lexer.Lexer::new(html_spec.get_tokens())
+  let html_lexer = @lexer.Lexer::for_spec(html_spec)
   let html_source = @fs.read_file_to_string(
     fixtures_dir + "/dsl/html/index.html",
   ) catch {
@@ -294,7 +294,7 @@ test "registry: parse markup and dsl" {
   // Markdown
   let md_spec = registry.get_spec("markdown").unwrap()
   let md_peg = @peg.build_peg(md_spec)
-  let md_lexer = @lexer.Lexer::new(md_spec.get_tokens())
+  let md_lexer = @lexer.Lexer::for_spec(md_spec)
   let md_source = @fs.read_file_to_string(
     fixtures_dir + "/dsl/markdown/README.md",
   ) catch {
@@ -310,7 +310,7 @@ test "registry: parse markup and dsl" {
   // SQL DDL
   let sql_spec = registry.get_spec("sql-ddl").unwrap()
   let sql_peg = @peg.build_peg(sql_spec)
-  let sql_lexer = @lexer.Lexer::new(sql_spec.get_tokens())
+  let sql_lexer = @lexer.Lexer::for_spec(sql_spec)
   let sql_source = @fs.read_file_to_string(
     fixtures_dir + "/dsl/sql-ddl/schema.sql",
   ) catch {
@@ -326,7 +326,7 @@ test "registry: parse markup and dsl" {
   // YAML
   let yaml_spec = registry.get_spec("yaml").unwrap()
   let yaml_peg = @peg.build_peg(yaml_spec)
-  let yaml_lexer = @lexer.Lexer::new(yaml_spec.get_tokens())
+  let yaml_lexer = @lexer.Lexer::for_spec(yaml_spec)
   let yaml_source = "name: release\non:\n  push:\n    tags:\n      - v*\n"
   let yaml_tokens = yaml_lexer.tokenize(yaml_source)
   let yaml_result = @peg.run_parse(yaml_peg, yaml_spec, "Doc", yaml_tokens)
@@ -336,7 +336,7 @@ test "registry: parse markup and dsl" {
   // Shell
   let shell_spec = registry.get_spec("shell").unwrap()
   let shell_peg = @peg.build_peg(shell_spec)
-  let shell_lexer = @lexer.Lexer::new(shell_spec.get_tokens())
+  let shell_lexer = @lexer.Lexer::for_spec(shell_spec)
   let shell_source = "#!/bin/sh\nVERSION=\"$1\"\necho sync-version\n"
   let shell_tokens = shell_lexer.tokenize(shell_source)
   let shell_result = @peg.run_parse(
@@ -348,7 +348,7 @@ test "registry: parse markup and dsl" {
   // .gitmodules
   let gitmodules_spec = registry.get_spec("gitmodules").unwrap()
   let gitmodules_peg = @peg.build_peg(gitmodules_spec)
-  let gitmodules_lexer = @lexer.Lexer::new(gitmodules_spec.get_tokens())
+  let gitmodules_lexer = @lexer.Lexer::for_spec(gitmodules_spec)
   let gitmodules_source = "[submodule \"kgfs\"]\n  path = kgfs\n  url = https://example.com/kgfs.git\n"
   let gitmodules_tokens = gitmodules_lexer.tokenize(gitmodules_source)
   let gitmodules_result = @peg.run_parse(
@@ -374,7 +374,7 @@ test "registry: tokenize natural languages" {
   for test_case in natural_tests {
     let (lang, path) = test_case
     let spec = registry.get_spec(lang).unwrap()
-    let lexer = @lexer.Lexer::new(spec.get_tokens())
+    let lexer = @lexer.Lexer::for_spec(spec)
     let source = @fs.read_file_to_string(fixtures_dir + path) catch { _ => "" }
     if source.length() > 0 {
       let tokens = lexer.tokenize(source)

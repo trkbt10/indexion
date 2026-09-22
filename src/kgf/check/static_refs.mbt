@@ -13,7 +13,9 @@
 ///   `=== lex` that no grammar rule ever references. The lexer still emits it,
 ///   but no rule can consume it, so the start rule stops in front of it and
 ///   the remainder of the file is silently dropped from events, semantics and
-///   edges.
+///   edges. The synthetic kinds a `LAYOUT` directive introduces are checked
+///   the same way: the layout pass injects them into every stream, so a
+///   grammar that ignores them stops at the first indented line.
 ///
 /// Both are reported as warnings: a spec can be intentionally partial while it
 /// is being developed, and neither condition prevents the engine from running.
@@ -379,11 +381,13 @@ fn check_attrs_label_refs(
 }
 
 ///|
-/// Report non-SKIP token kinds that no grammar rule references.
+/// Report token kinds appearing in the stream that no grammar rule references:
+/// the non-SKIP lex TOKEN/KEYWORD kinds, plus the synthetic INDENT/DEDENT
+/// kinds a `LAYOUT` directive makes the layout pass inject.
 ///
-/// Such a token is still produced by the lexer, but nothing can consume it, so
-/// the start rule stops in front of the first occurrence and the rest of the
-/// file never reaches events, semantics or edges.
+/// Such a token is still produced, but nothing can consume it, so the start
+/// rule stops in front of the first occurrence and the rest of the file never
+/// reaches events, semantics or edges.
 fn check_unreachable_tokens(
   spec : @kgf_types.KGFSpec,
   diagnostics : Array[Diagnostic],
@@ -422,5 +426,24 @@ fn check_unreachable_tokens(
         ),
       )
     }
+  }
+  match spec.get_layout() {
+    Some(layout) =>
+      for name in layout.synthetic_kinds() {
+        if reported.contains(name) || referenced.contains(name) {
+          continue
+        }
+        reported.set(name, true)
+        diagnostics.push(
+          Diagnostic::new(
+            "grammar",
+            "warning",
+            "Token kind '" +
+            name +
+            "' is synthesized by the LAYOUT directive but no grammar rule consumes it; an indented file stops the parse early",
+          ),
+        )
+      }
+    None => ()
   }
 }

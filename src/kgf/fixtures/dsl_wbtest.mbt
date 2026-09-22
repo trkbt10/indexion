@@ -9,7 +9,7 @@ test "dsl: tokenize sql, html, markdown" {
 
   // SQL DDL
   let sql_spec = registry.get_spec("sql-ddl").unwrap()
-  let sql_lexer = @lexer.Lexer::new(sql_spec.get_tokens())
+  let sql_lexer = @lexer.Lexer::for_spec(sql_spec)
   let sql_src = @fs.read_file_to_string(fixtures + "/dsl/sql-ddl/schema.sql") catch {
     _ => ""
   }
@@ -21,7 +21,7 @@ test "dsl: tokenize sql, html, markdown" {
 
   // HTML
   let html_spec = registry.get_spec("html").unwrap()
-  let html_lexer = @lexer.Lexer::new(html_spec.get_tokens())
+  let html_lexer = @lexer.Lexer::for_spec(html_spec)
   let html_src = @fs.read_file_to_string(fixtures + "/dsl/html/index.html") catch {
     _ => ""
   }
@@ -32,7 +32,7 @@ test "dsl: tokenize sql, html, markdown" {
 
   // Markdown
   let md_spec = registry.get_spec("markdown").unwrap()
-  let md_lexer = @lexer.Lexer::new(md_spec.get_tokens())
+  let md_lexer = @lexer.Lexer::for_spec(md_spec)
   let md_src = @fs.read_file_to_string(fixtures + "/dsl/markdown/README.md") catch {
     _ => ""
   }
@@ -191,7 +191,7 @@ test "dsl: markdown treats embedded html as tags, not links" {
     #|# Title
   let registry = get_fixture_registry()
   let spec = registry.get_spec("markdown").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize(source)
   assert_true(tokens.iter().any(fn(t) { t.kind == "TAG_OPEN" }))
   let result = run_pipeline_with_registry(registry, "markdown", source, "p.md")
@@ -266,7 +266,7 @@ test "dsl: sql-ddl lexes qualified names and unterminated statements" {
   )
   let registry = get_fixture_registry()
   let spec = registry.get_spec("sql-ddl").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize("SELECT u.id, u.* FROM users u")
   assert_true(tokens.iter().any(fn(t) { t.kind == "DOT" }))
 
@@ -485,7 +485,7 @@ test "dsl: wiki specs bind the metadata comment payload" {
   for spec_name in ["github-wiki", "gitlab-wiki"] {
     let registry = get_fixture_registry()
     let spec = registry.get_spec(spec_name).unwrap()
-    let lexer = @lexer.Lexer::new(spec.get_tokens())
+    let lexer = @lexer.Lexer::for_spec(spec)
     let tokens = lexer.tokenize(source)
     assert_true(tokens.iter().any(fn(t) { t.kind == "META_COMMENT" }))
     let result = run_pipeline_with_registry(

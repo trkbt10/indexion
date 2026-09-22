@@ -48,7 +48,7 @@ fn selfspec_lex(source : String) -> Array[(String, String)] {
     Some(s) => s
     None => return out
   }
-  for token in @lexer.Lexer::new(spec.get_tokens()).tokenize(source) {
+  for token in @lexer.Lexer::for_spec(spec).tokenize(source) {
     out.push((token.kind, token.text))
   }
   out

@@ -9,7 +9,7 @@
 /// Phase 1 (eager, at registry load):
 ///   language, resolver, features, ignore
 /// Phase 2 (lazy, on first access):
-///   tokens, keyword_kinds        — lex section (pattern compilation is heavy)
+///   tokens, keyword_kinds, layout — lex section (pattern compilation is heavy)
 ///   rules, attrs                 — grammar + attrs sections
 ///   semantics                    — semantics section
 ///   preprocess, preprocess_fst   — preprocess sections
@@ -31,6 +31,7 @@ pub struct KGFSpec {
   // ── Memoized caches ─────────────────────────────
   mut tokens_cache : Array[TokenDef]?
   mut keyword_kinds_cache : Map[String, Bool]?
+  mut layout_cache : LayoutSpec??
   mut rules_cache : Map[String, RuleDef]?
   mut attrs_cache : Map[String, Array[AttrAction]]?
   mut semantics_cache : Map[String, Array[SemOnBlock]]??
@@ -46,6 +47,7 @@ pub fn KGFSpec::new(
   language : String,
   tokens? : Array[TokenDef] = [],
   keyword_kinds? : Map[String, Bool] = {},
+  layout? : LayoutSpec? = None,
   rules? : Map[String, RuleDef] = Map([]),
   attrs? : Map[String, Array[AttrAction]] = Map([]),
   resolver? : ResolverSpec = ResolverSpec::new(),
@@ -71,6 +73,7 @@ pub fn KGFSpec::new(
     classify_source: None,
     tokens_cache: Some(tokens),
     keyword_kinds_cache: Some(keyword_kinds),
+    layout_cache: Some(layout),
     rules_cache: Some(rules),
     attrs_cache: Some(attrs),
     semantics_cache: Some(semantics),
@@ -111,6 +114,7 @@ pub fn KGFSpec::new_lazy(
     classify_source: Some(classify_source),
     tokens_cache: None,
     keyword_kinds_cache: None,
+    layout_cache: None,
     rules_cache: None,
     attrs_cache: None,
     semantics_cache: None,
@@ -138,6 +142,17 @@ pub fn KGFSpec::get_tokens(self : KGFSpec) -> Array[TokenDef] {
 pub fn KGFSpec::get_keyword_kinds(self : KGFSpec) -> Map[String, Bool] {
   self.ensure_lex_parsed()
   self.keyword_kinds_cache.unwrap_or({})
+}
+
+///|
+/// Returns the indentation layout declaration, when the lex section has a
+/// `LAYOUT` directive (lazy: parses lex section on first call).
+///
+/// A spec without the directive returns None and is tokenized unchanged; the
+/// layout pass is a no-op for it.
+pub fn KGFSpec::get_layout(self : KGFSpec) -> LayoutSpec? {
+  self.ensure_lex_parsed()
+  self.layout_cache.unwrap_or(None)
 }
 
 ///|
@@ -326,14 +341,16 @@ fn KGFSpec::ensure_lex_parsed(self : KGFSpec) -> Unit {
   }
   match self.lex_source {
     Some(source) => {
-      let (tokens, keyword_kinds) = (parse_lex_lazy.val)(source)
+      let (tokens, keyword_kinds, layout) = (parse_lex_lazy.val)(source)
       self.tokens_cache = Some(tokens)
       self.keyword_kinds_cache = Some(keyword_kinds)
+      self.layout_cache = Some(layout)
       self.lex_source = None // Free memory
     }
     None => {
       self.tokens_cache = Some([])
       self.keyword_kinds_cache = Some({})
+      self.layout_cache = Some(None)
     }
   }
 }
@@ -431,14 +448,11 @@ fn KGFSpec::ensure_classify_parsed(self : KGFSpec) -> Unit {
 // ── Parser callbacks (set by the parser package to avoid circular deps) ──
 
 ///|
-/// Callback: parse lex section text → (tokens, keyword_kinds).
+/// Callback: parse lex section text → (tokens, keyword_kinds, layout).
 /// Set by the parser package at init time.
-pub let parse_lex_lazy : Ref[(String) -> (Array[TokenDef], Map[String, Bool])] = Ref(fn(
-    _s,
-  ) {
-    ([], {})
-  },
-)
+pub let parse_lex_lazy : Ref[
+  (String) -> (Array[TokenDef], Map[String, Bool], LayoutSpec?),
+] = Ref(fn(_s) { ([], {}, None) })
 
 ///|
 /// Callback: parse grammar section text → rules.

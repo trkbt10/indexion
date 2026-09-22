@@ -8,10 +8,16 @@
 ///
 /// ```ebnf
 /// LexSection   ::= LexRule*
-/// LexRule      ::= SkipRule | TokenRule | KeywordRule | Comment | BlankLine
+/// LexRule      ::= SkipRule | TokenRule | KeywordRule | LayoutRule
+///                | Comment | BlankLine
 /// SkipRule     ::= "SKIP" Pattern
 /// TokenRule    ::= "TOKEN" TokenName Pattern Flags?
 /// KeywordRule  ::= "KEYWORD" TokenName Pattern Flags?
+/// LayoutRule   ::= "LAYOUT" LayoutField+
+/// LayoutField  ::= LayoutKey "=" KindList
+/// LayoutKey    ::= "newline" | "indent" | "dedent" | "comment"
+///                | "open" | "close"
+/// KindList     ::= TokenName ( "," TokenName )*
 /// TokenName    ::= UPPER_IDENT           (* e.g., "Ident", "KW_fn" *)
 /// Pattern      ::= "/" RegexBody "/"     (* JavaScript-style regex *)
 /// Flags        ::= [gimsuy]+             (* Optional regex flags *)
@@ -29,6 +35,41 @@
 /// `KEYWORD` produces the same TokenDef as `TOKEN` but additionally registers
 /// the token name in `LexResult.keyword_kinds`, making the classification
 /// queryable without relying on naming conventions.
+///
+/// ## LAYOUT — indentation-sensitive languages
+///
+/// A regex cannot compare one line's indentation with the previous line's, so
+/// a lexer alone cannot tell nesting depth in Python, YAML, Haskell or any
+/// other layout-sensitive language. `LAYOUT` declares how the engine should
+/// derive depth from the token stream after lexing. A post-lex pass
+/// (`@lexer.apply_layout`) then maintains an indentation stack and injects
+/// zero-width `indent` / `dedent` tokens, so grammar rules can bracket a body
+/// exactly:
+///
+/// ```kgf
+/// === lex
+/// TOKEN NL_INDENT /\r?\n[ \t]+/
+/// TOKEN NL        /\r?\n/
+/// TOKEN Comment   /#[^\r\n]*/
+/// TOKEN LPAREN    /\(/
+/// ...
+/// LAYOUT newline=NL_INDENT,NL indent=INDENT dedent=DEDENT comment=Comment \
+///        open=LPAREN,LBRACKET,LBRACE close=RPAREN,RBRACKET,RBRACE
+/// ```
+///
+/// (written on one line; the continuation above is only for this comment).
+///
+/// | Field | Required | Meaning |
+/// |-------|----------|---------|
+/// | `newline` | yes | token kind(s) whose text is a line break plus the *next* line's leading whitespace. Everything after the line break character(s) in the token's text is that line's indentation. Several kinds may be listed when a spec splits indented and column-0 line breaks into different tokens |
+/// | `indent` | yes | synthetic kind emitted when a line is indented deeper than the enclosing one |
+/// | `dedent` | yes | synthetic kind emitted once per level closed when a line is indented less |
+/// | `comment` | no | comment token kind. A line whose first token is a comment carries no layout, matching Python and YAML |
+/// | `open` / `close` | no | bracket kinds. While a bracket is open, layout is suppressed: flow collections span lines freely |
+///
+/// The `indent` and `dedent` kinds are *synthetic*: they must NOT have a
+/// `TOKEN` definition (nothing in the source text matches them) but they are
+/// valid grammar symbols. `kgf check` enforces both halves of that rule.
 ///
 /// ## Pattern Syntax
 ///
@@ -65,6 +106,7 @@
 pub struct LexResult {
   tokens : Array[@types.TokenDef]
   keyword_kinds : Map[String, Bool]
+  layout : @types.LayoutSpec?
 }
 
 ///|
@@ -78,20 +120,38 @@ pub fn LexResult::get_keyword_kinds(self : LexResult) -> Map[String, Bool] {
 }
 
 ///|
+/// The `LAYOUT` directive of this lex section, when it declares one.
+pub fn LexResult::get_layout(self : LexResult) -> @types.LayoutSpec? {
+  self.layout
+}
+
+///|
 /// Parses the lex section into token definitions and keyword classification.
 ///
 /// Syntax:
 ///   SKIP /pattern/
 ///   TOKEN NAME /pattern/[flags]
 ///   KEYWORD NAME /pattern/[flags]
+///   LAYOUT newline=NL indent=INDENT dedent=DEDENT [comment=C] [open=..] [close=..]
 pub fn parse_lex(text : String) -> LexResult {
   let lines = split_lines(text)
   let tokens : Array[@types.TokenDef] = []
   let keyword_kinds : Map[String, Bool] = Map([])
+  let mut layout : @types.LayoutSpec? = None
   for line in lines {
     let ln = trim_str(line)
     // Skip empty lines and comments
     if ln.length() == 0 || ln.has_prefix("#") {
+      continue
+    }
+    // Parse the LAYOUT directive. A section declaring it more than once keeps
+    // the last one, the same way a repeated TOKEN name lets the later rule
+    // shadow the earlier one.
+    if ln.has_prefix(LAYOUT_KEYWORD) {
+      match parse_layout_rule(ln) {
+        Some(spec) => layout = Some(spec)
+        None => ()
+      }
       continue
     }
     // Parse SKIP rules
@@ -121,7 +181,83 @@ pub fn parse_lex(text : String) -> LexResult {
       }
     }
   }
-  { tokens, keyword_kinds, }
+  { tokens, keyword_kinds, layout, }
+}
+
+///|
+/// The directive keyword that introduces an indentation layout declaration.
+const LAYOUT_KEYWORD : String = "LAYOUT"
+
+///|
+/// Field names of the `LAYOUT` directive. They are the wire format of the
+/// directive, so they live here beside the parser that reads them.
+const LAYOUT_FIELD_NEWLINE : String = "newline"
+
+///|
+const LAYOUT_FIELD_INDENT : String = "indent"
+
+///|
+const LAYOUT_FIELD_DEDENT : String = "dedent"
+
+///|
+const LAYOUT_FIELD_COMMENT : String = "comment"
+
+///|
+const LAYOUT_FIELD_OPEN : String = "open"
+
+///|
+const LAYOUT_FIELD_CLOSE : String = "close"
+
+///|
+/// Parses a LAYOUT directive:
+///   LAYOUT newline=NL_INDENT indent=INDENT dedent=DEDENT comment=Comment
+///          open=LPAREN,LBRACKET close=RPAREN,RBRACKET
+///
+/// Fields may appear in any order; `newline`, `indent` and `dedent` are
+/// required and a directive missing any of them is ignored (the spec is then
+/// tokenized without layout, and `kgf check` reports the incomplete
+/// directive). Unknown field names are ignored so a future field does not
+/// make an older engine reject the whole directive.
+fn parse_layout_rule(line : String) -> @types.LayoutSpec? {
+  let fields : Map[String, Array[String]] = Map([])
+  for
+    part in split_by_space(trim_str(substr_from(line, LAYOUT_KEYWORD.length()))) {
+    let eq = find_char(part, 0, '=')
+    if eq <= 0 {
+      continue
+    }
+    let key = substr(part, 0, eq)
+    // `parse_comma_list` is the section parsers' shared comma splitter: it
+    // trims each item and drops the empty ones, which is what a trailing or
+    // doubled comma in a field value should mean.
+    fields[key] = parse_comma_list(substr_from(part, eq + 1))
+  }
+  let newline = fields.get(LAYOUT_FIELD_NEWLINE).unwrap_or([])
+  let indent = single_field(fields, LAYOUT_FIELD_INDENT)
+  let dedent = single_field(fields, LAYOUT_FIELD_DEDENT)
+  guard newline.length() > 0 else { return None }
+  guard indent is Some(indent_kind) else { return None }
+  guard dedent is Some(dedent_kind) else { return None }
+  Some(
+    @types.LayoutSpec::new(
+      newline,
+      indent_kind,
+      dedent_kind,
+      comment=single_field(fields, LAYOUT_FIELD_COMMENT),
+      open=fields.get(LAYOUT_FIELD_OPEN).unwrap_or([]),
+      close=fields.get(LAYOUT_FIELD_CLOSE).unwrap_or([]),
+    ),
+  )
+}
+
+///|
+/// The first value of a LAYOUT field, or None when the field is absent or
+/// empty.
+fn single_field(fields : Map[String, Array[String]], key : String) -> String? {
+  match fields.get(key) {
+    Some(values) => if values.length() > 0 { Some(values[0]) } else { None }
+    None => None
+  }
 }
 
 ///|

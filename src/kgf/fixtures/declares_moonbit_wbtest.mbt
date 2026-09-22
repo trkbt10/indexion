@@ -28,7 +28,7 @@ fn mbt_tokens_of(
   source : String,
 ) -> Array[(String, String)] {
   let spec = registry.get_spec("moonbit").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let result : Array[(String, String)] = []
   for token in lexer.tokenize(source) {
     result.push((token.kind, token.text))
@@ -42,7 +42,7 @@ fn mbt_tokens_of(
 /// direct assertion for every root cause below.
 fn mbt_lexes_cleanly(registry : @registry.KGFRegistry, source : String) -> Bool {
   let spec = registry.get_spec("moonbit").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let (_, diagnostics) = lexer.tokenize_with_diagnostics(source)
   diagnostics.length() == 0
 }

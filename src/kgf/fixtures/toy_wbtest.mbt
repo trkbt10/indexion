@@ -9,7 +9,7 @@ test "toy: tokenize b64, reltext, jpeg-hex, japanese-law" {
 
   // Base64 PNG
   let b64_spec = registry.get_spec("b64-png").unwrap()
-  let b64_lexer = @lexer.Lexer::new(b64_spec.get_tokens())
+  let b64_lexer = @lexer.Lexer::for_spec(b64_spec)
   let b64_src = @fs.read_file_to_string(fixtures + "/toy/b64-png/logo.png.b64") catch {
     _ => ""
   }
@@ -20,7 +20,7 @@ test "toy: tokenize b64, reltext, jpeg-hex, japanese-law" {
 
   // Reltext
   let rel_spec = registry.get_spec("reltext").unwrap()
-  let rel_lexer = @lexer.Lexer::new(rel_spec.get_tokens())
+  let rel_lexer = @lexer.Lexer::for_spec(rel_spec)
   let rel_src = @fs.read_file_to_string(fixtures + "/toy/reltext/graph.rel") catch {
     _ => ""
   }
@@ -31,7 +31,7 @@ test "toy: tokenize b64, reltext, jpeg-hex, japanese-law" {
 
   // JPEG hex
   let hex_spec = registry.get_spec("jpeg-hex").unwrap()
-  let hex_lexer = @lexer.Lexer::new(hex_spec.get_tokens())
+  let hex_lexer = @lexer.Lexer::for_spec(hex_spec)
   let hex_src = @fs.read_file_to_string(fixtures + "/toy/jpeg/logo.jpg.hex") catch {
     _ => ""
   }
@@ -44,7 +44,7 @@ test "toy: tokenize b64, reltext, jpeg-hex, japanese-law" {
   match registry.get_spec("japanese-law") {
     Some(law_spec) => {
       assert_true(law_spec.get_tokens().length() > 0)
-      let law_lexer = @lexer.Lexer::new(law_spec.get_tokens())
+      let law_lexer = @lexer.Lexer::for_spec(law_spec)
       let law_src = @fs.read_file_to_string(
         fixtures + "/toy/japanese-law/ja_law/048_excerpt.txt",
       ) catch {
