@@ -16,6 +16,13 @@
 pub struct KGFSpec {
   language : String
   // ── Eager fields (Phase 1) ──────────────────────
+  /// Name of the base spec this spec inherits sections from (`extends:` in
+  /// the header), or `None` for a standalone spec. Inheritance itself is
+  /// resolved by the registry once every spec of a directory is loaded; a
+  /// spec handed out by a registry is always fully resolved, and this field
+  /// is kept only as provenance (what `kgf list` reports, what `kgf check`
+  /// validates).
+  extends : String?
   resolver : ResolverSpec
   features : Map[String, Array[String]]?
   ignore : Array[String]?
@@ -55,9 +62,11 @@ pub fn KGFSpec::new(
   preprocess_fst? : Array[PreprocessFstSpec]? = None,
   ignore? : Array[String]? = None,
   classify? : ClassifyModel? = None,
+  extends? : String? = None,
 ) -> KGFSpec {
   {
     language,
+    extends,
     resolver,
     features,
     ignore,
@@ -96,9 +105,11 @@ pub fn KGFSpec::new_lazy(
   preprocess_source : String,
   preprocess_fst_source : String,
   classify_source : String,
+  extends? : String? = None,
 ) -> KGFSpec {
   {
     language,
+    extends,
     resolver,
     features,
     ignore,
@@ -124,6 +135,17 @@ pub fn KGFSpec::new_lazy(
 /// Returns the language name.
 pub fn KGFSpec::get_language(self : KGFSpec) -> String {
   self.language
+}
+
+///|
+/// Returns the name of the base spec declared with `extends:` in the header,
+/// or `None` when this spec is standalone.
+///
+/// The value is the *declared* base, not a resolution result: a spec obtained
+/// from a `KGFRegistry` already has the inherited sections merged in, so this
+/// is provenance only.
+pub fn KGFSpec::get_extends(self : KGFSpec) -> String? {
+  self.extends
 }
 
 ///|

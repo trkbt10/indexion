@@ -23,4 +23,7 @@ pub struct KgfSpecInfo {
   category : String
   sources : Array[String]
   path : String
+  /// `language` of the base spec this one inherits sections from
+  /// (`extends:` in the header), or `None` when the spec is standalone.
+  extends : String?
 }

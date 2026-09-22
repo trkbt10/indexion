@@ -21,15 +21,27 @@ pub fn KGFRegistry::new() -> KGFRegistry {
 
 ///|
 /// Load all KGF specs from a directory (recursively including subdirectories).
+///
+/// Loading is two-phase because of `extends:`. A derived spec's base may live
+/// in a sibling subdirectory that has not been traversed yet, so phase one
+/// only splits each `.kgf` file into its raw sections, and phase two resolves
+/// inheritance and registers the fully merged specs. Every spec handed out by
+/// the registry is therefore already resolved — no consumer has to know that
+/// `extends:` exists.
 pub fn KGFRegistry::load_from_dir(dir : String) -> KGFRegistry {
   let registry = KGFRegistry::new()
-  load_specs_recursive(registry, dir)
+  let sources : Array[@parser.KGFSpecSource] = []
+  collect_spec_sources(sources, dir)
+  registry.register_spec_sources(sources)
   registry
 }
 
 ///|
-/// Recursively load KGF specs from a directory.
-fn load_specs_recursive(registry : KGFRegistry, dir : String) -> Unit {
+/// Recursively split every `.kgf` file under `dir` into its raw sections.
+fn collect_spec_sources(
+  sources : Array[@parser.KGFSpecSource],
+  dir : String,
+) -> Unit {
   try {
     if !@fs.is_dir(dir) {
       return
@@ -47,20 +59,109 @@ fn load_specs_recursive(registry : KGFRegistry, dir : String) -> Unit {
     for entry in entries {
       let path = dir + "/" + entry
       if entry.has_suffix(".kgf") {
-        // Load KGF spec file
         let content = @fs.read_file_to_string(path)
-        match @parser.parse_kgf(content) {
-          Some(spec) => registry.register_spec(spec)
-          None => ()
-        }
+        sources.push(@parser.parse_kgf_source(content))
       } else if @fs.is_dir(path) && !entry.has_prefix(".") {
         // Recurse into subdirectory
-        load_specs_recursive(registry, path)
+        collect_spec_sources(sources, path)
       }
     }
   } catch {
     _ => ()
   }
+}
+
+///|
+/// Resolve `extends:` across a whole set of spec sources and register the
+/// resulting specs, preserving the order the sources were collected in.
+///
+/// A spec whose `extends:` names a missing base, or takes part in a cycle, is
+/// registered with its own sections only. Loading cannot report diagnostics —
+/// it is on the hot path of every command — so reporting is left to
+/// `kgf check`, which re-runs the same resolution through
+/// `resolve_spec_source` and names the problem.
+pub fn KGFRegistry::register_spec_sources(
+  self : KGFRegistry,
+  sources : Array[@parser.KGFSpecSource],
+) -> Unit {
+  let by_language : Map[String, @parser.KGFSpecSource] = Map([])
+  for source in sources {
+    by_language.set(source.get_language(), source)
+  }
+  for source in sources {
+    let (resolved, _) = resolve_spec_source(source, by_language)
+    self.register_spec(resolved.to_spec())
+  }
+}
+
+///|
+/// Why a spec's `extends:` chain could not be followed to the end.
+pub enum ExtendsError {
+  /// `extends:` names a spec that is not in the set. Carries the deriving
+  /// spec's language and the missing base name.
+  UnknownBase(String, String)
+  /// Following `extends:` revisits a spec. Carries the chain, starting at the
+  /// spec being resolved and ending at the repeated one.
+  Cycle(Array[String])
+  /// `extends:` is declared with an empty value. Carries the spec's language.
+  EmptyBase(String)
+} derive(Eq, Debug)
+
+///|
+/// Renders the error as the message `kgf check` reports.
+pub fn ExtendsError::message(self : ExtendsError) -> String {
+  match self {
+    UnknownBase(lang, base) =>
+      "Spec '" + lang + "' extends unknown spec '" + base + "'"
+    Cycle(chain) => "Spec inheritance cycle: " + chain.join(" -> ")
+    EmptyBase(lang) => "Spec '" + lang + "' declares 'extends:' with no value"
+  }
+}
+
+///|
+/// Merge a spec source with every ancestor named by `extends:`.
+///
+/// Walks the chain from the derived spec upwards, applying
+/// `KGFSpecSource::merge_onto` at each step, so a section is taken from the
+/// nearest ancestor that declares it. Returns the merged source together with
+/// the first error that stopped the walk, if any; on error the merge keeps
+/// whatever was resolved up to that point, which for an unknown base or an
+/// empty `extends:` is the spec's own sections.
+pub fn resolve_spec_source(
+  source : @parser.KGFSpecSource,
+  by_language : Map[String, @parser.KGFSpecSource],
+) -> (@parser.KGFSpecSource, ExtendsError?) {
+  let chain = [source.get_language()]
+  let seen : Map[String, Bool] = Map([])
+  seen.set(source.get_language(), true)
+  let mut merged = source
+  let mut current = source
+  // The chain visits each spec at most once (`seen` stops a revisit), so the
+  // number of specs bounds the walk; the count is the loop's termination
+  // proof, not a tuning knob.
+  for _ in 0..<(by_language.length() + 1) {
+    let base_name = match current.get_extends() {
+      Some(name) => name
+      None => return (merged, None)
+    }
+    if base_name.length() == 0 {
+      return (merged, Some(EmptyBase(current.get_language())))
+    }
+    if seen.contains(base_name) {
+      chain.push(base_name)
+      return (merged, Some(Cycle(chain)))
+    }
+    let base = match by_language.get(base_name) {
+      Some(base) => base
+      None =>
+        return (merged, Some(UnknownBase(current.get_language(), base_name)))
+    }
+    chain.push(base_name)
+    seen.set(base_name, true)
+    merged = merged.merge_onto(base)
+    current = base
+  }
+  (merged, None)
 }
 
 ///|

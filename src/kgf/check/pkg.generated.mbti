@@ -4,15 +4,22 @@ package "trkbt10/indexion/src/kgf/check"
 import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
+  "trkbt10/indexion/src/kgf/parser",
   "trkbt10/indexion/src/kgf/types",
 }
 
 // Values
 pub fn check(@types.KGFSpec) -> Array[Diagnostic]
 
+pub fn check_extends(@parser.KGFSpecSource, Map[String, @parser.KGFSpecSource]) -> Array[Diagnostic]
+
+pub fn check_extends_all(Map[String, @parser.KGFSpecSource]) -> Array[Diagnostic]
+
 pub fn check_source(String, String, @types.KGFSpec) -> Array[CheckDiagnostic]
 
 pub fn diagnostics_to_json(Array[CheckDiagnostic]) -> String
+
+pub fn load_spec_sources(String) -> Map[String, @parser.KGFSpecSource]
 
 // Errors
 
@@ -34,6 +41,7 @@ pub fn CheckDiagnostic::get_message(Self) -> String
 pub fn CheckDiagnostic::get_severity(Self) -> String
 pub fn CheckDiagnostic::get_source(Self) -> String
 pub fn CheckDiagnostic::new(String, Int, Int, String, String, String) -> Self
+pub fn CheckDiagnostic::to_json(Self) -> Json
 
 pub struct Diagnostic {
   section : String

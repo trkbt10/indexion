@@ -2,14 +2,24 @@
 package "trkbt10/indexion/src/kgf/registry"
 
 import {
+  "moonbitlang/core/debug",
+  "trkbt10/indexion/src/kgf/parser",
   "trkbt10/indexion/src/kgf/types",
 }
 
 // Values
+pub fn resolve_spec_source(@parser.KGFSpecSource, Map[String, @parser.KGFSpecSource]) -> (@parser.KGFSpecSource, ExtendsError?)
 
 // Errors
 
 // Types and methods
+pub enum ExtendsError {
+  UnknownBase(String, String)
+  Cycle(Array[String])
+  EmptyBase(String)
+} derive(Eq, @debug.Debug)
+pub fn ExtendsError::message(Self) -> String
+
 pub struct KGFRegistry {
   specs : Map[String, @types.KGFSpec]
   ext_to_lang : Map[String, String]
@@ -28,6 +38,7 @@ pub fn KGFRegistry::is_file_supported(Self, String) -> Bool
 pub fn KGFRegistry::load_from_dir(String) -> Self
 pub fn KGFRegistry::new() -> Self
 pub fn KGFRegistry::register_spec(Self, @types.KGFSpec) -> Unit
+pub fn KGFRegistry::register_spec_sources(Self, Array[@parser.KGFSpecSource]) -> Unit
 pub fn KGFRegistry::spec_count(Self) -> Int
 pub fn KGFRegistry::supports_ext(Self, String) -> Bool
 pub fn KGFRegistry::to_specs_map(Self) -> Map[String, @types.KGFSpec]
@@ -35,4 +46,3 @@ pub fn KGFRegistry::to_specs_map(Self) -> Map[String, @types.KGFSpec]
 // Type aliases
 
 // Traits
-

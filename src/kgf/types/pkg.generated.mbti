@@ -118,6 +118,7 @@ pub fn FstTransition::new(String, String, Array[FstAction]) -> Self
 
 pub struct KGFSpec {
   language : String
+  extends : String?
   resolver : ResolverSpec
   features : Map[String, Array[String]]?
   ignore : Array[String]?
@@ -140,6 +141,7 @@ pub struct KGFSpec {
 pub fn KGFSpec::get_attr(Self, String) -> Array[AttrAction]?
 pub fn KGFSpec::get_attrs(Self) -> Map[String, Array[AttrAction]]
 pub fn KGFSpec::get_classify(Self) -> ClassifyModel?
+pub fn KGFSpec::get_extends(Self) -> String?
 pub fn KGFSpec::get_feature(Self, String) -> Array[String]?
 pub fn KGFSpec::get_features(Self) -> Map[String, Array[String]]?
 pub fn KGFSpec::get_ignore(Self) -> Array[String]?
@@ -155,8 +157,8 @@ pub fn KGFSpec::get_semantics(Self) -> Map[String, Array[SemOnBlock]]?
 pub fn KGFSpec::get_start_rule(Self) -> String
 pub fn KGFSpec::get_tokens(Self) -> Array[TokenDef]
 pub fn KGFSpec::is_keyword(Self, String) -> Bool
-pub fn KGFSpec::new(String, tokens? : Array[TokenDef], keyword_kinds? : Map[String, Bool], rules? : Map[String, RuleDef], attrs? : Map[String, Array[AttrAction]], resolver? : ResolverSpec, features? : Map[String, Array[String]]?, semantics? : Map[String, Array[SemOnBlock]]?, preprocess? : Array[String]?, preprocess_fst? : Array[PreprocessFstSpec]?, ignore? : Array[String]?, classify? : ClassifyModel?) -> Self
-pub fn KGFSpec::new_lazy(String, ResolverSpec, Map[String, Array[String]]?, Array[String]?, String, String, String, String, String, String, String) -> Self
+pub fn KGFSpec::new(String, tokens? : Array[TokenDef], keyword_kinds? : Map[String, Bool], rules? : Map[String, RuleDef], attrs? : Map[String, Array[AttrAction]], resolver? : ResolverSpec, features? : Map[String, Array[String]]?, semantics? : Map[String, Array[SemOnBlock]]?, preprocess? : Array[String]?, preprocess_fst? : Array[PreprocessFstSpec]?, ignore? : Array[String]?, classify? : ClassifyModel?, extends? : String?) -> Self
+pub fn KGFSpec::new_lazy(String, ResolverSpec, Map[String, Array[String]]?, Array[String]?, String, String, String, String, String, String, String, extends? : String?) -> Self
 
 pub enum ModulePathStyle {
   Slash
