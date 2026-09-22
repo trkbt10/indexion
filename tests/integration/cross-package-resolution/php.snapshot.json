@@ -1,35 +1,34 @@
 {
   "modules": [
-    "vendor/App\\Services",
     "vendor/GuzzleHttp\\Client",
     "fixtures/project/php/composer.json",
     "fixtures/project/php/src/helpers.php",
     "fixtures/project/php/src/Dto/UserDto.php",
-    "fixtures/project/php/src/UserService.php",
-    "fixtures/project/php/src/UserService.php::UserService::create",
+    "fixtures/project/php/src/Services/UserService.php",
     "fixtures/project/php/src/Dto/UserDto.php::UserDto::__construct",
-    "fixtures/project/php/src/UserService.php::UserService::findById",
-    "fixtures/project/php/src/UserService.php::UserService::validate",
-    "fixtures/project/php/src/UserService.php::UserService::__construct"
+    "fixtures/project/php/src/Services/UserService.php::UserService::create",
+    "fixtures/project/php/src/Services/UserService.php::UserService::findById",
+    "fixtures/project/php/src/Services/UserService.php::UserService::validate",
+    "fixtures/project/php/src/Services/UserService.php::UserService::__construct"
   ],
   "moduleDependsOn": [
-    {
-      "from": "fixtures/project/php/src/helpers.php",
-      "to": "vendor/App\\Services",
-      "via": "App\\Services\\UserService"
-    },
     {
       "from": "fixtures/project/php/src/helpers.php",
       "to": "fixtures/project/php/src/Dto/UserDto.php",
       "via": "App\\Dto\\UserDto"
     },
     {
-      "from": "fixtures/project/php/src/UserService.php",
+      "from": "fixtures/project/php/src/helpers.php",
+      "to": "fixtures/project/php/src/Services/UserService.php",
+      "via": "App\\Services\\UserService"
+    },
+    {
+      "from": "fixtures/project/php/src/Services/UserService.php",
       "to": "vendor/GuzzleHttp\\Client",
       "via": "GuzzleHttp\\Client"
     },
     {
-      "from": "fixtures/project/php/src/UserService.php",
+      "from": "fixtures/project/php/src/Services/UserService.php",
       "to": "fixtures/project/php/src/Dto/UserDto.php",
       "via": "App\\Dto\\UserDto"
     }
