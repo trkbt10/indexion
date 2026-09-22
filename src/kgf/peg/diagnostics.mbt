@@ -67,48 +67,48 @@ fn token_at(tokens : Array[@types.Tok], pos : Int) -> @types.Tok? {
 
 ///|
 /// Runs iterative PEG parse and keeps diagnostic tracking state.
+///
+/// Shares the evaluator's single delivery point (`run_iter_to_completion`),
+/// so a diagnostic run sees exactly the events a plain run would: those of
+/// the final derivation, in post-order, once each.
 fn run_parse_diag_iter_internal(
   peg : PEG,
   tokens : Array[@types.Tok],
   start_rule : String,
-  on_rule_match : (String, Map[String, Json], Int, Int) -> Unit,
   emit_filter : @hashset.HashSet[String]?,
-) -> (FastEvalResult, Map[String, Json], Int, Array[String]) {
+) -> (
+  FastEvalResult,
+  Map[String, Json],
+  Array[(String, Map[String, Json])],
+  Int,
+  Array[String],
+) {
   let ctx = IterEvalContext::new(
     peg,
     tokens,
-    on_rule_match,
     emit_filter~,
     diagnostics_enabled=true,
   )
   match peg.get_fast_rule_body_id(start_rule) {
     None =>
-      (
-        { ok: false, end_pos: 0, labels: empty_labels(), },
-        Map([]),
-        ctx.furthest_pos,
-        ctx.furthest_expected,
-      )
+      (fail_result(0), Map([]), [], ctx.furthest_pos, ctx.furthest_expected)
     Some(body_node_id) => {
-      ctx.work.push(Eval(body_node_id, 0))
-      eval_iter_loop(ctx)
-      let result = ctx.results
-        .pop()
-        .unwrap_or({ ok: false, end_pos: 0, labels: empty_labels(), })
-      if result.ok && should_emit_rule_iter(ctx, start_rule) {
-        let labels_map = materialize(result.labels, ctx.tokens)
-        labels_map.set(@types.META_START_TOK, (0).to_json())
-        labels_map.set(@types.META_END_TOK, result.end_pos.to_json())
-        (ctx.on_rule_match)(start_rule, labels_map, 0, result.end_pos)
-      }
-      let final_labels = materialize(result.labels, ctx.tokens)
-      (result, final_labels, ctx.furthest_pos, ctx.furthest_expected)
+      let (result, final_labels, events) = run_iter_to_completion(
+        ctx, start_rule, body_node_id,
+      )
+      (result, final_labels, events, ctx.furthest_pos, ctx.furthest_expected)
     }
   }
 }
 
 ///|
 /// Runs a PEG parse and returns parse diagnostics.
+///
+/// The returned `EvalResult` carries the events of the final derivation,
+/// delivered once at the end — the same guarantee `run_parse_filtered`
+/// provides. When the parse stops short of the input's end, the events of
+/// the prefix that was consumed are still delivered; the diagnostic then
+/// reports where it stopped.
 pub fn run_parse_with_diagnostics(
   peg : PEG,
   spec : @types.KGFSpec,
@@ -119,20 +119,10 @@ pub fn run_parse_with_diagnostics(
   for name, _ in spec.get_rules() {
     active_rules.add(name)
   }
-  let events : Array[(String, Map[String, Json])] = []
-  let callback = fn(
-    rule_name : String,
-    labels : Map[String, Json],
-    _start_pos : Int,
-    _end_pos : Int,
-  ) {
-    events.push((rule_name, labels))
-  }
-  let (fast_result, final_labels, furthest_pos, expected_kinds) = run_parse_diag_iter_internal(
+  let (fast_result, final_labels, events, furthest_pos, expected_kinds) = run_parse_diag_iter_internal(
     peg,
     tokens,
     start_rule,
-    callback,
     Some(active_rules),
   )
   let result = if fast_result.ok {

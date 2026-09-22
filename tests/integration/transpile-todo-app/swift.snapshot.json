@@ -3,7 +3,7 @@
   "source_lang": "typescript",
   "totals": {
     "files": 6,
-    "ir_events": 2931,
+    "ir_events": 2923,
     "unresolved": 1,
     "emit_parse_errors": 0,
     "compile_failures": 5,
@@ -67,10 +67,6 @@
       18
     ],
     [
-      "MemberName",
-      16
-    ],
-    [
       "Atom",
       14
     ],
@@ -93,6 +89,10 @@
     [
       "ImportSpecList",
       10
+    ],
+    [
+      "MemberName",
+      8
     ],
     [
       "IRStructField",
@@ -126,7 +126,7 @@
   "files": [
     {
       "file": "cli.ts",
-      "ir_event_count": 1112,
+      "ir_event_count": 1110,
       "unresolved_total": 1,
       "unresolved_kinds": [
         [
@@ -147,7 +147,7 @@
     },
     {
       "file": "types.ts",
-      "ir_event_count": 110,
+      "ir_event_count": 104,
       "unresolved_total": 0,
       "unresolved_kinds": [],
       "emit_parse_errors": 0,

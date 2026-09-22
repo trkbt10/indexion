@@ -8,25 +8,28 @@
 ///|
 /// Work item for the evaluation stack.
 /// Uses Labels for lazy label evaluation.
+/// The continuations that accumulate across children (`Seq`, `Star`,
+/// `Plus`) also carry the event handle of the children accepted so far, so
+/// that abandoning the continuation abandons their events too.
 priv enum WorkItem {
   /// Evaluate a node and push result
   Eval(Int, Int) // node_id, pos
-  /// Continue Seq: node_id, elem_index, start_pos, current_pos, labels
-  SeqCont(Int, Int, Int, Int, Labels)
+  /// Continue Seq: node_id, elem_index, start_pos, current_pos, labels, events
+  SeqCont(Int, Int, Int, Int, Labels, Int)
   /// Continue Choice: node_id, alt_index, pos
   ChoiceCont(Int, Int, Int)
-  /// Continue Star: child_id, start_pos, current_pos, labels
-  StarCont(Int, Int, Int, Labels)
+  /// Continue Star: child_id, start_pos, current_pos, labels, events
+  StarCont(Int, Int, Int, Labels, Int)
   /// Continue Plus first: child_id, node_id, start_pos
   PlusFirst(Int, Int, Int)
-  /// Continue Plus rest: child_id, start_pos, current_pos, labels
-  PlusRest(Int, Int, Int, Labels)
+  /// Continue Plus rest: child_id, start_pos, current_pos, labels, events
+  PlusRest(Int, Int, Int, Labels, Int)
   /// Continue Optional: node_id, pos
   OptionalCont(Int, Int)
   /// Continue Label: label_name
   LabelCont(String)
-  /// Continue RuleRef: rule_name, target_is_rule_ref, start_pos
-  RuleRefCont(String, Bool, Int)
+  /// Continue RuleRef: rule_name, start_pos
+  RuleRefCont(String, Int)
   /// Continue And-predicate: node_id, pos (for memoization)
   AndCont(Int, Int)
   /// Continue Not-predicate: node_id, pos (for memoization)
@@ -42,7 +45,9 @@ priv struct IterEvalContext {
   token_names : Array[String]
   memo : Array[MemoState]
   num_positions : Int
-  on_rule_match : (String, Map[String, Json], Int, Int) -> Unit
+  /// Arena of pending rule-match events. Nothing here is delivered until the
+  /// parse finishes; see the transactional-delivery note in `eval_common.mbt`.
+  event_log : EventLog
   emit_filter : @hashset.HashSet[String]?
   diagnostics_enabled : Bool
   mut furthest_pos : Int
@@ -57,7 +62,6 @@ priv struct IterEvalContext {
 fn IterEvalContext::new(
   peg : PEG,
   tokens : Array[@types.Tok],
-  on_rule_match : (String, Map[String, Json], Int, Int) -> Unit,
   emit_filter? : @hashset.HashSet[String]? = None,
   diagnostics_enabled? : Bool = false,
 ) -> IterEvalContext {
@@ -73,7 +77,7 @@ fn IterEvalContext::new(
     token_names,
     memo,
     num_positions,
-    on_rule_match,
+    event_log: EventLog::new(),
     emit_filter,
     diagnostics_enabled,
     furthest_pos: 0,
@@ -126,20 +130,22 @@ fn eval_iter_loop(ctx : IterEvalContext) -> Unit {
     let item = ctx.work.pop().unwrap()
     match item {
       Eval(node_id, pos) => process_eval(ctx, node_id, pos)
-      SeqCont(node_id, idx, start_pos, current_pos, labels) =>
-        process_seq_cont(ctx, node_id, idx, start_pos, current_pos, labels)
+      SeqCont(node_id, idx, start_pos, current_pos, labels, events) =>
+        process_seq_cont(
+          ctx, node_id, idx, start_pos, current_pos, labels, events,
+        )
       ChoiceCont(node_id, idx, pos) =>
         process_choice_cont(ctx, node_id, idx, pos)
-      StarCont(child_id, start_pos, current_pos, labels) =>
-        process_star_cont(ctx, child_id, start_pos, current_pos, labels)
+      StarCont(child_id, start_pos, current_pos, labels, events) =>
+        process_star_cont(ctx, child_id, start_pos, current_pos, labels, events)
       PlusFirst(child_id, node_id, start_pos) =>
         process_plus_first(ctx, child_id, node_id, start_pos)
-      PlusRest(child_id, start_pos, current_pos, labels) =>
-        process_plus_rest(ctx, child_id, start_pos, current_pos, labels)
+      PlusRest(child_id, start_pos, current_pos, labels, events) =>
+        process_plus_rest(ctx, child_id, start_pos, current_pos, labels, events)
       OptionalCont(node_id, pos) => process_optional_cont(ctx, node_id, pos)
       LabelCont(label_name) => process_label_cont(ctx, label_name)
-      RuleRefCont(rule_name, target_is_rule_ref, start_pos) =>
-        process_rule_ref_cont(ctx, rule_name, target_is_rule_ref, start_pos)
+      RuleRefCont(rule_name, start_pos) =>
+        process_rule_ref_cont(ctx, rule_name, start_pos)
       AndCont(node_id, pos) => process_predicate_cont(ctx, node_id, pos, false)
       NotCont(node_id, pos) => process_predicate_cont(ctx, node_id, pos, true)
     }
@@ -151,13 +157,16 @@ fn eval_iter_loop(ctx : IterEvalContext) -> Unit {
 fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
   let memo_idx = node_id * ctx.num_positions + pos
   match ctx.memo[memo_idx] {
-    Succeeded(end_pos, labels) => {
+    Succeeded(end_pos, labels, events) => {
+      // The event handle is an immutable index, so reusing a memo entry
+      // replays exactly the events of the subtree it recorded — and emits
+      // nothing while the entry is merely probed.
       let cloned = clone_labels(labels)
-      ctx.results.push({ ok: true, end_pos, labels: cloned, })
+      ctx.results.push({ ok: true, end_pos, labels: cloned, events, })
       return
     }
     Failed => {
-      ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels(), })
+      ctx.results.push(fail_result(pos))
       return
     }
     Unknown => ()
@@ -166,51 +175,55 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
   match compiled {
     FEmpty => {
       let labels = empty_labels()
-      ctx.memo[memo_idx] = Succeeded(pos, labels)
-      ctx.results.push({ ok: true, end_pos: pos, labels, })
+      ctx.memo[memo_idx] = Succeeded(pos, labels, EVENTS_NIL)
+      ctx.results.push({ ok: true, end_pos: pos, labels, events: EVENTS_NIL, })
     }
     FFail => {
       ctx.memo[memo_idx] = Failed
-      ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels(), })
+      ctx.results.push(fail_result(pos))
     }
     FToken(expected_id) =>
       if pos < ctx.tokens.length() && ctx.token_ids[pos] == expected_id {
         // Use token reference - defer Map creation
         let labels = token_labels(pos)
-        ctx.memo[memo_idx] = Succeeded(pos + 1, labels)
-        ctx.results.push({ ok: true, end_pos: pos + 1, labels, })
+        ctx.memo[memo_idx] = Succeeded(pos + 1, labels, EVENTS_NIL)
+        ctx.results.push({
+          ok: true,
+          end_pos: pos + 1,
+          labels,
+          events: EVENTS_NIL,
+        })
       } else {
         record_token_failure(ctx, pos, expected_id)
         ctx.memo[memo_idx] = Failed
-        ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels(), })
+        ctx.results.push(fail_result(pos))
       }
+    // Pure indirection: the definition node it jumps to owns the event, so
+    // no continuation is needed — the child's result is this node's result.
+    FRuleCall(rule_def_id) => ctx.work.push(Eval(rule_def_id, pos))
     FRuleRef(rule_node_id, name) => {
-      let target_is_rule_ref = match ctx.peg.fast_nodes.get(rule_node_id) {
-        Some(FRuleRef(_, _)) => true
-        _ => false
-      }
-      ctx.work.push(RuleRefCont(name, target_is_rule_ref, pos))
+      ctx.work.push(RuleRefCont(name, pos))
       ctx.work.push(Eval(rule_node_id, pos))
     }
     FSeq(elems) =>
       if elems.length() == 0 {
         let labels = empty_labels()
-        ctx.memo[memo_idx] = Succeeded(pos, labels)
-        ctx.results.push({ ok: true, end_pos: pos, labels, })
+        ctx.memo[memo_idx] = Succeeded(pos, labels, EVENTS_NIL)
+        ctx.results.push({ ok: true, end_pos: pos, labels, events: EVENTS_NIL, })
       } else {
-        ctx.work.push(SeqCont(node_id, 0, pos, pos, empty_labels()))
+        ctx.work.push(SeqCont(node_id, 0, pos, pos, empty_labels(), EVENTS_NIL))
         ctx.work.push(Eval(elems[0], pos))
       }
     FChoice(alts) =>
       if alts.length() == 0 {
         ctx.memo[memo_idx] = Failed
-        ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels(), })
+        ctx.results.push(fail_result(pos))
       } else {
         ctx.work.push(ChoiceCont(node_id, 0, pos))
         ctx.work.push(Eval(alts[0], pos))
       }
     FStar(child) => {
-      ctx.work.push(StarCont(child, pos, pos, empty_labels()))
+      ctx.work.push(StarCont(child, pos, pos, empty_labels(), EVENTS_NIL))
       ctx.work.push(Eval(child, pos))
     }
     FPlus(child) => {
@@ -245,15 +258,20 @@ fn process_seq_cont(
   start_pos : Int,
   _current_pos : Int,
   labels : Labels,
+  events : Int,
 ) -> Unit {
   let result = ctx.results.pop().unwrap()
   if !result.ok {
+    // The sequence backtracks: `events` names the already-matched prefix's
+    // rule instances, which are not part of the parse. Dropping the handle
+    // drops them — nothing downstream can reach those arena nodes again.
     let memo_idx = node_id * ctx.num_positions + start_pos
     ctx.memo[memo_idx] = Failed
-    ctx.results.push({ ok: false, end_pos: start_pos, labels: empty_labels(), })
+    ctx.results.push(fail_result(start_pos))
     return
   }
   let merged = merge_labels(labels, result.labels, ctx.tokens)
+  let merged_events = ctx.event_log.concat(events, result.events)
   let new_pos = result.end_pos
   let elems = match ctx.peg.fast_nodes[node_id] {
     FSeq(e) => e
@@ -265,10 +283,18 @@ fn process_seq_cont(
     // memo and the downstream result must not share a mutable accumulator:
     // whichever consumer fires next would otherwise see state mutated by
     // the other. The memo entry must survive future `merge_labels` calls.
-    ctx.memo[memo_idx] = Succeeded(new_pos, clone_labels(merged))
-    ctx.results.push({ ok: true, end_pos: new_pos, labels: merged, })
+    // The event handle is immutable, so it is shared as-is.
+    ctx.memo[memo_idx] = Succeeded(new_pos, clone_labels(merged), merged_events)
+    ctx.results.push({
+      ok: true,
+      end_pos: new_pos,
+      labels: merged,
+      events: merged_events,
+    })
   } else {
-    ctx.work.push(SeqCont(node_id, next_idx, start_pos, new_pos, merged))
+    ctx.work.push(
+      SeqCont(node_id, next_idx, start_pos, new_pos, merged, merged_events),
+    )
     ctx.work.push(Eval(elems[next_idx], new_pos))
   }
 }
@@ -283,8 +309,14 @@ fn process_choice_cont(
 ) -> Unit {
   let result = ctx.results.pop().unwrap()
   if result.ok {
+    // Only the winning alternative's events survive; a rejected alternative
+    // pushed a failure carrying EVENTS_NIL, so its events are already gone.
     let memo_idx = node_id * ctx.num_positions + pos
-    ctx.memo[memo_idx] = Succeeded(result.end_pos, clone_labels(result.labels))
+    ctx.memo[memo_idx] = Succeeded(
+      result.end_pos,
+      clone_labels(result.labels),
+      result.events,
+    )
     ctx.results.push(result)
     return
   }
@@ -296,7 +328,7 @@ fn process_choice_cont(
   if next_idx >= alts.length() {
     let memo_idx = node_id * ctx.num_positions + pos
     ctx.memo[memo_idx] = Failed
-    ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels(), })
+    ctx.results.push(fail_result(pos))
   } else {
     ctx.work.push(ChoiceCont(node_id, next_idx, pos))
     ctx.work.push(Eval(alts[next_idx], pos))
@@ -317,16 +349,20 @@ fn repetition_cont(
   child_id : Int,
   current_pos : Int,
   labels : Labels,
-  schedule_next : (Int, Int, Labels) -> WorkItem,
+  events : Int,
+  schedule_next : (Int, Int, Labels, Int) -> WorkItem,
 ) -> Unit {
   let result = ctx.results.pop().unwrap()
   if !result.ok || result.end_pos == current_pos {
-    ctx.results.push({ ok: true, end_pos: current_pos, labels, })
+    // The iteration that failed (or made no progress) is not part of the
+    // match; only the events of the accepted iterations are kept.
+    ctx.results.push({ ok: true, end_pos: current_pos, labels, events, })
     return
   }
   let merged = merge_labels(labels, result.labels, ctx.tokens)
+  let merged_events = ctx.event_log.concat(events, result.events)
   let new_pos = result.end_pos
-  ctx.work.push(schedule_next(child_id, new_pos, merged))
+  ctx.work.push(schedule_next(child_id, new_pos, merged, merged_events))
   ctx.work.push(Eval(child_id, new_pos))
 }
 
@@ -338,9 +374,10 @@ fn process_star_cont(
   start_pos : Int,
   current_pos : Int,
   labels : Labels,
+  events : Int,
 ) -> Unit {
-  repetition_cont(ctx, child_id, current_pos, labels, fn(c, p, l) {
-    StarCont(c, start_pos, p, l)
+  repetition_cont(ctx, child_id, current_pos, labels, events, fn(c, p, l, e) {
+    StarCont(c, start_pos, p, l, e)
   })
 }
 
@@ -356,11 +393,13 @@ fn process_plus_first(
   if !result.ok {
     let memo_idx = node_id * ctx.num_positions + start_pos
     ctx.memo[memo_idx] = Failed
-    ctx.results.push({ ok: false, end_pos: start_pos, labels: empty_labels(), })
+    ctx.results.push(fail_result(start_pos))
     return
   }
   let current_pos = result.end_pos
-  ctx.work.push(PlusRest(child_id, start_pos, current_pos, result.labels))
+  ctx.work.push(
+    PlusRest(child_id, start_pos, current_pos, result.labels, result.events),
+  )
   ctx.work.push(Eval(child_id, current_pos))
 }
 
@@ -372,9 +411,10 @@ fn process_plus_rest(
   start_pos : Int,
   current_pos : Int,
   labels : Labels,
+  events : Int,
 ) -> Unit {
-  repetition_cont(ctx, child_id, current_pos, labels, fn(c, p, l) {
-    PlusRest(c, start_pos, p, l)
+  repetition_cont(ctx, child_id, current_pos, labels, events, fn(c, p, l, e) {
+    PlusRest(c, start_pos, p, l, e)
   })
 }
 
@@ -388,13 +428,18 @@ fn process_optional_cont(
   let result = ctx.results.pop().unwrap()
   if result.ok {
     let memo_idx = node_id * ctx.num_positions + pos
-    ctx.memo[memo_idx] = Succeeded(result.end_pos, clone_labels(result.labels))
+    ctx.memo[memo_idx] = Succeeded(
+      result.end_pos,
+      clone_labels(result.labels),
+      result.events,
+    )
     ctx.results.push(result)
   } else {
+    // The absent branch matched: the failed attempt contributed EVENTS_NIL.
     let memo_idx = node_id * ctx.num_positions + pos
     let labels = empty_labels()
-    ctx.memo[memo_idx] = Succeeded(pos, labels)
-    ctx.results.push({ ok: true, end_pos: pos, labels, })
+    ctx.memo[memo_idx] = Succeeded(pos, labels, EVENTS_NIL)
+    ctx.results.push({ ok: true, end_pos: pos, labels, events: EVENTS_NIL, })
   }
 }
 
@@ -421,6 +466,7 @@ fn process_label_cont(ctx : IterEvalContext, label_name : String) -> Unit {
       ok: true,
       end_pos: result.end_pos,
       labels: full_labels(labels),
+      events: result.events,
     })
   } else {
     ctx.results.push(result)
@@ -432,31 +478,45 @@ fn process_label_cont(ctx : IterEvalContext, label_name : String) -> Unit {
 fn process_rule_ref_cont(
   ctx : IterEvalContext,
   rule_name : String,
-  target_is_rule_ref : Bool,
   start_pos : Int,
 ) -> Unit {
   let result = ctx.results.pop().unwrap()
-  if result.ok && !target_is_rule_ref && should_emit_rule_iter(ctx, rule_name) {
+  if !result.ok {
+    ctx.results.push(result)
+    return
+  }
+  // Record this rule's own event *after* its body's events, keeping the
+  // accumulated order post-order. An alias rule (`Outer -> Inner`) records
+  // here like any other rule: its body already recorded `Inner`, so the
+  // handle reads `Inner, Outer`. Nothing is delivered yet — the event only
+  // becomes observable if an ancestor keeps this handle.
+  let events = if should_emit_rule_iter(ctx, rule_name) {
     let labels_map = materialize(result.labels, ctx.tokens)
     labels_map.set(@types.META_START_TOK, start_pos.to_json())
     labels_map.set(@types.META_END_TOK, result.end_pos.to_json())
-    (ctx.on_rule_match)(rule_name, labels_map, start_pos, result.end_pos)
-  }
-  if result.ok {
-    // Named labels defined inside the rule must not leak to its caller.
-    match result.labels {
-      Labels::TokRef(_) | Labels::NoLabels => ctx.results.push(result)
-      Labels::Full(map) => {
-        let clean = strip_named_labels(map)
-        ctx.results.push({
-          ok: true,
-          end_pos: result.end_pos,
-          labels: full_labels(clean),
-        })
-      }
-    }
+    let leaf = ctx.event_log.leaf(rule_name, labels_map)
+    ctx.event_log.concat(result.events, leaf)
   } else {
-    ctx.results.push(result)
+    result.events
+  }
+  // Named labels defined inside the rule must not leak to its caller.
+  match result.labels {
+    Labels::TokRef(_) | Labels::NoLabels =>
+      ctx.results.push({
+        ok: true,
+        end_pos: result.end_pos,
+        labels: result.labels,
+        events,
+      })
+    Labels::Full(map) => {
+      let clean = strip_named_labels(map)
+      ctx.results.push({
+        ok: true,
+        end_pos: result.end_pos,
+        labels: full_labels(clean),
+        events,
+      })
+    }
   }
 }
 
@@ -472,14 +532,48 @@ fn process_predicate_cont(
   let result = ctx.results.pop().unwrap()
   let memo_idx = node_id * ctx.num_positions + pos
   let matched = if negate { !result.ok } else { result.ok }
+  // A lookahead consumes no input and contributes no events: its
+  // sub-derivation is a probe, never part of the parse tree.
   if matched {
     let labels = empty_labels()
-    ctx.memo[memo_idx] = Succeeded(pos, labels)
-    ctx.results.push({ ok: true, end_pos: pos, labels, })
+    ctx.memo[memo_idx] = Succeeded(pos, labels, EVENTS_NIL)
+    ctx.results.push({ ok: true, end_pos: pos, labels, events: EVENTS_NIL, })
   } else {
     ctx.memo[memo_idx] = Failed
-    ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels(), })
+    ctx.results.push(fail_result(pos))
   }
+}
+
+///|
+/// Drives the work loop to completion and returns the start rule's result
+/// together with the events of the final derivation.
+///
+/// This is the single delivery point of the iterative evaluator: the events
+/// are read out of the arena exactly once, by walking the handle the
+/// surviving derivation ended up holding. Attempts that were backtracked
+/// over left their arena nodes unreachable, so they are never walked. A
+/// partial parse (`end_pos < tokens.length()`) still yields the events of
+/// the prefix it did consume.
+fn run_iter_to_completion(
+  ctx : IterEvalContext,
+  start_rule : String,
+  body_node_id : Int,
+) -> (FastEvalResult, Map[String, Json], Array[(String, Map[String, Json])]) {
+  ctx.work.push(Eval(body_node_id, 0))
+  eval_iter_loop(ctx)
+  let result = ctx.results.pop().unwrap_or(fail_result(0))
+  let mut events_handle = result.events
+  if result.ok && should_emit_rule_iter(ctx, start_rule) {
+    let labels_map = materialize(result.labels, ctx.tokens)
+    labels_map.set(@types.META_START_TOK, (0).to_json())
+    labels_map.set(@types.META_END_TOK, result.end_pos.to_json())
+    let leaf = ctx.event_log.leaf(start_rule, labels_map)
+    events_handle = ctx.event_log.concat(events_handle, leaf)
+  }
+  let events : Array[(String, Map[String, Json])] = []
+  ctx.event_log.collect(events_handle, events)
+  let final_labels = materialize(result.labels, ctx.tokens)
+  (result, final_labels, events)
 }
 
 ///|
@@ -488,32 +582,28 @@ fn run_parse_iter_internal(
   peg : PEG,
   tokens : Array[@types.Tok],
   start_rule : String,
-  on_rule_match : (String, Map[String, Json], Int, Int) -> Unit,
   emit_filter : @hashset.HashSet[String]?,
-) -> (Bool, Map[String, Json]) {
-  let ctx = IterEvalContext::new(peg, tokens, on_rule_match, emit_filter~)
+) -> (Bool, Map[String, Json], Array[(String, Map[String, Json])]) {
+  let ctx = IterEvalContext::new(peg, tokens, emit_filter~)
   match peg.get_fast_rule_body_id(start_rule) {
-    None => (false, Map([]))
+    None => (false, Map([]), [])
     Some(body_node_id) => {
-      ctx.work.push(Eval(body_node_id, 0))
-      eval_iter_loop(ctx)
-      let result = ctx.results
-        .pop()
-        .unwrap_or({ ok: false, end_pos: 0, labels: empty_labels(), })
-      if result.ok && should_emit_rule_iter(ctx, start_rule) {
-        let labels_map = materialize(result.labels, ctx.tokens)
-        labels_map.set(@types.META_START_TOK, (0).to_json())
-        labels_map.set(@types.META_END_TOK, result.end_pos.to_json())
-        (ctx.on_rule_match)(start_rule, labels_map, 0, result.end_pos)
-      }
-      let final_labels = materialize(result.labels, ctx.tokens)
-      (result.ok, final_labels)
+      let (result, final_labels, events) = run_iter_to_completion(
+        ctx, start_rule, body_node_id,
+      )
+      (result.ok, final_labels, events)
     }
   }
 }
 
 ///|
-/// Runs iterative PEG parse with callback-based event emission.
+/// Runs iterative PEG parse, handing every event of the final derivation to
+/// `on_rule_match`.
+///
+/// The callback is invoked once per surviving rule instance, in post-order,
+/// after parsing completes — not while the parser is still exploring. A rule
+/// that matched inside an alternative the parser later rejected is never
+/// reported.
 pub fn run_parse_iter(
   peg : PEG,
   _spec : @types.KGFSpec,
@@ -522,13 +612,13 @@ pub fn run_parse_iter(
   active_rules : @hashset.HashSet[String],
   on_rule_match : (String, Map[String, Json], Int, Int) -> Unit,
 ) -> Bool {
-  let (ok, _) = run_parse_iter_internal(
+  let (ok, _, events) = run_parse_iter_internal(
     peg,
     tokens,
     start_rule,
-    on_rule_match,
     Some(active_rules),
   )
+  deliver_events(events, on_rule_match)
   ok
 }
 
@@ -541,20 +631,10 @@ pub fn run_parse_filtered_iter(
   tokens : Array[@types.Tok],
   active_rules : @hashset.HashSet[String],
 ) -> EvalResult? {
-  let events : Array[(String, Map[String, Json])] = []
-  let callback = fn(
-    rule_name : String,
-    labels : Map[String, Json],
-    _start_pos : Int,
-    _end_pos : Int,
-  ) {
-    events.push((rule_name, labels))
-  }
-  let (ok, final_labels) = run_parse_iter_internal(
+  let (ok, final_labels, events) = run_parse_iter_internal(
     peg,
     tokens,
     start_rule,
-    callback,
     Some(active_rules),
   )
   if ok {
