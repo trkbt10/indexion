@@ -132,6 +132,20 @@ git push
 2. `skills` submodule is pushed second
 3. Parent is pushed last
 
+Then verify that every submodule commit actually reached its remote — `on-demand`
+has been observed to push only one of the two submodules, and CI then fails at
+checkout with "Fetched in submodule path 'kgfs', but it did not contain ...":
+
+```bash
+git -C kgfs fetch -q origin && git -C kgfs log origin/main..HEAD --oneline   # must be empty
+git -C skills fetch -q origin && git -C skills log origin/main..HEAD --oneline # must be empty
+# if not empty: git -C kgfs push origin main   (resp. skills)
+```
+
+A failed run cannot be re-run without admin rights on the repository, so a
+missed submodule push costs an extra commit on main to retrigger CI. Check
+before pushing the parent, not after.
+
 **Wait for CI to pass on GitHub Actions.** Check the workflow status before proceeding.
 
 ### 9. Create and push tag (after CI passes)
