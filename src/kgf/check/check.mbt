@@ -50,6 +50,7 @@ pub fn check(spec : @kgf_types.KGFSpec) -> Array[Diagnostic] {
   let all_symbols = merge_symbol_sets(token_names, rule_names)
   check_attrs(spec, rule_names, diagnostics)
   check_semantics(spec, rule_names, all_symbols, diagnostics)
+  check_scope_balance(spec, diagnostics)
   check_features(spec, token_names, diagnostics)
   check_classify(spec, diagnostics)
   diagnostics
@@ -418,6 +419,72 @@ fn check_sem_stmts(
           None => ()
         }
       }
+      // Frame operations carry no expressions to validate; their spec-wide
+      // balance is checked separately by check_scope_balance.
+      @kgf_types.ScopePush | @kgf_types.ScopePop => ()
+    }
+  }
+}
+
+///|
+/// Counts of `scope push` / `scope pop` statements across a spec.
+priv struct ScopeBalance {
+  mut pushes : Int
+  mut pops : Int
+}
+
+///|
+/// Cheap spec-wide balance hint for lexical scoping: a spec that opens frames
+/// but never closes them (or closes frames it never opens) is almost certainly
+/// missing a statement. Per-block balance is *not* required — the intended
+/// pattern splits push and pop across a header rule and its enclosing
+/// declaration rule — so only the spec-wide totals are inspected.
+fn check_scope_balance(
+  spec : @kgf_types.KGFSpec,
+  diagnostics : Array[Diagnostic],
+) -> Unit {
+  let semantics = match spec.get_semantics() {
+    Some(sem) => sem
+    None => return
+  }
+  let balance = { pushes: 0, pops: 0, }
+  for entry in semantics {
+    for block in entry.1 {
+      count_scope_stmts(block.get_then_stmts(), balance)
+      match block.get_else_stmts() {
+        Some(stmts) => count_scope_stmts(stmts, balance)
+        None => ()
+      }
+    }
+  }
+  if balance.pushes > 0 && balance.pops == 0 {
+    diagnostics.push(
+      Diagnostic::new(
+        "semantics", "warning", "Spec uses 'scope push' but never 'scope pop'; nested declarations will keep inheriting the innermost frame",
+      ),
+    )
+  }
+  if balance.pops > 0 && balance.pushes == 0 {
+    diagnostics.push(
+      Diagnostic::new(
+        "semantics", "warning", "Spec uses 'scope pop' but never 'scope push'; the pops are no-ops on the root frame",
+      ),
+    )
+  }
+}
+
+///|
+/// Accumulates `scope push` / `scope pop` counts, descending into for bodies.
+fn count_scope_stmts(
+  stmts : Array[@kgf_types.SemStmt],
+  balance : ScopeBalance,
+) -> Unit {
+  for stmt in stmts {
+    match stmt {
+      @kgf_types.ScopePush => balance.pushes = balance.pushes + 1
+      @kgf_types.ScopePop => balance.pops = balance.pops + 1
+      @kgf_types.For(body~, ..) => count_scope_stmts(body, balance)
+      _ => ()
     }
   }
 }

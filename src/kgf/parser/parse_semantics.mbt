@@ -16,6 +16,7 @@
 /// ElseClause ::= "else" "{" Statement* "}"
 ///
 /// Statement  ::= EdgeStmt | BindStmt | LetStmt | NoteStmt | ModuleStmt
+///              | ScopeStmt
 ///
 /// EdgeStmt   ::= "edge" EdgeKind "from" Expr "to" Expr AttrsClause?
 /// EdgeKind   ::= IDENTIFIER           (* e.g., "declares", "calls", "imports" *)
@@ -33,6 +34,8 @@
 /// ModuleStmt ::= "module" Expr FileClause?
 /// FileClause ::= "file" Expr
 ///
+/// ScopeStmt  ::= "scope" ( "push" | "pop" )
+///
 /// Expr       ::= Literal | Variable | FuncCall | BuiltinCall
 /// Literal    ::= STRING | NUMBER | "true" | "false" | "null"
 /// Variable   ::= "$" IDENTIFIER | IDENTIFIER
@@ -47,9 +50,62 @@
 /// |----------|-------------|
 /// | `$file` | Current file path |
 /// | `$resolve(path)` | Resolve module path |
-/// | `$scope(ns, name)` | Get scoped binding |
+/// | `$scope(ns, name)` | Get scoped binding (searches frames innermost-first) |
 /// | `concat(a, b, ...)` | String concatenation |
 /// | `obj(k1, v1, ...)` | Create object/map |
+///
+/// ## Lexical Scoping (`scope push` / `scope pop`)
+///
+/// `bind` writes into the *innermost* scope frame, and `$scope(ns, name)`
+/// searches frames from innermost to outermost. Without any frame management
+/// every spec shares one flat frame, so a nested declaration permanently
+/// clobbers its parent's bindings — after `class Outer { class Inner {} fn m() }`
+/// the binding for `current_class` still points at `Inner` when `m` fires, and
+/// `m` is attributed to the wrong parent.
+///
+/// `scope push` opens a new frame and `scope pop` closes it. `scope pop` on the
+/// root frame is a no-op, so an unbalanced spec degrades to the old flat
+/// behaviour instead of corrupting the stack.
+///
+/// ### The push/pop pattern
+///
+/// Semantics events fire **bottom-up**: a rule's `on` block runs only after its
+/// entire body has been parsed, so children fire before their enclosing
+/// declaration. The frame must therefore be opened by a sub-rule that completes
+/// *before* the body (the declaration header) and closed by the enclosing
+/// declaration rule itself:
+///
+/// 1. A **header** sub-rule (e.g. `ClassHeader -> "class" id:Ident`) fires
+///    first: `scope push` then `bind` the context for the members to read.
+/// 2. **Member** rules fire next, inside that frame, and read it via `$scope`.
+/// 3. The **enclosing declaration** rule (e.g. `ClassDecl -> ClassHeader Body`)
+///    fires last: it emits its own edges — still inside the frame, so it can
+///    read its own binding — and then ends with `scope pop`.
+///
+/// Statements run in source order within a block, so a block may freely read
+/// the frame before popping it. Put `scope pop` last.
+///
+/// ```kgf
+/// on ClassHeader {
+///   scope push
+///   bind ns "value" name "current_class" to concat($file, "::", $id)
+/// }
+///
+/// on Method when $scope("value", "current_class") {
+///   edge declares from $scope("value", "current_class") to concat($scope("value", "current_class"), ".", $id)
+/// }
+///
+/// on ClassDecl {
+///   # still inside the frame opened by ClassHeader
+///   edge declares from $file to $scope("value", "current_class")
+///   scope pop
+/// }
+/// ```
+///
+/// Symbols registered by `attrs def` also land in the innermost frame, so a
+/// member symbol stops being resolvable by bare name once its class frame is
+/// popped — which is exactly the lexical-visibility semantics intended. The
+/// symbol node itself stays in the graph; only the name binding is scoped.
 ///
 /// ## Edge Kinds
 ///
@@ -300,7 +356,34 @@ fn parse_stmt(ln : String) -> @types.SemStmt? {
   if ln.has_prefix("module ") {
     return parse_module_stmt(ln)
   }
+  if ln.has_prefix("scope") {
+    return parse_scope_stmt(ln)
+  }
   None
+}
+
+///|
+/// Parses: scope push | scope pop
+/// Any other operand is rejected so typos surface as an unparsed statement
+/// rather than silently becoming a no-op frame operation.
+fn parse_scope_stmt(ln : String) -> @types.SemStmt? {
+  let arr = ln.to_array()
+  // Skip "scope"
+  let (kw, after_kw) = read_ident_at(ln, arr, 0)
+  if kw != "scope" {
+    return None
+  }
+  let pos = skip_ws(arr, after_kw)
+  let (op, after_op) = read_ident_at(ln, arr, pos)
+  // Nothing may follow the operand
+  if skip_ws(arr, after_op) < arr.length() {
+    return None
+  }
+  match op {
+    "push" => Some(@types.SemStmt::scope_push())
+    "pop" => Some(@types.SemStmt::scope_pop())
+    _ => None
+  }
 }
 
 ///|

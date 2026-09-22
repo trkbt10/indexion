@@ -333,6 +333,8 @@ pub enum SemStmt {
   Let(id~ : String, value~ : SemExpr)
   For(id~ : String, iter~ : SemExpr, body~ : Array[SemStmt])
   Module(id~ : SemExpr, file~ : SemExpr?)
+  ScopePush
+  ScopePop
 }
 pub fn SemStmt::bind(SemExpr, SemExpr, SemExpr) -> Self
 pub fn SemStmt::edge(String, SemExpr, SemExpr, attrs? : SemExpr?) -> Self
@@ -340,6 +342,8 @@ pub fn SemStmt::for_(String, SemExpr, Array[Self]) -> Self
 pub fn SemStmt::let_(String, SemExpr) -> Self
 pub fn SemStmt::mod_(SemExpr, file? : SemExpr?) -> Self
 pub fn SemStmt::note(String, payload? : SemExpr?) -> Self
+pub fn SemStmt::scope_pop() -> Self
+pub fn SemStmt::scope_push() -> Self
 
 pub struct Tok {
   kind : String

@@ -125,7 +125,7 @@ on ImportDecl {
 }
 ```
 
-The semantics DSL supports six statement types `[src/kgf/semantics/eval_stmt.mbt:3-13]`:
+The semantics DSL supports eight statement types `[src/kgf/semantics/eval_stmt.mbt:3-15]`:
 
 | Statement | Purpose |
 |-----------|---------|
@@ -135,8 +135,42 @@ The semantics DSL supports six statement types `[src/kgf/semantics/eval_stmt.mbt
 | `note type payload expr` | Emit metadata events (e.g., module documentation) |
 | `for var in expr { ... }` | Iterate over arrays |
 | `module id file expr` | Register a module node |
+| `scope push` | Open a new lexical scope frame |
+| `scope pop` | Close the innermost lexical scope frame |
 
-Built-in functions like `$file` (current file path), `$resolve(path)` (module resolution), `$scope(ns, name)` (scope lookup), and `concat(...)` / `obj(...)` allow specs to construct node IDs and edge attributes without any language-specific code in the engine. The evaluation context (`SemEvalCtx`) maintains a scope stack for nested declarations -- a struct's fields can reference their parent struct through `$scope` `[src/kgf/semantics/context.mbt:75-91]`.
+Built-in functions like `$file` (current file path), `$resolve(path)` (module resolution), `$scope(ns, name)` (scope lookup), and `concat(...)` / `obj(...)` allow specs to construct node IDs and edge attributes without any language-specific code in the engine. The evaluation context (`SemEvalCtx`) maintains a stack of scope frames: `bind` writes into the innermost frame and `$scope` searches frames innermost-first, so a struct's fields can reference their parent struct `[src/kgf/semantics/context.mbt:75-91]`.
+
+#### Lexical scoping with `scope push` / `scope pop`
+
+Without explicit frame management every `bind` in a spec shares one flat frame, so a nested declaration permanently clobbers its parent's bindings. After `class Outer { class Inner { ... } fn m() }`, `current_class` would still point at `Inner` when `m` fires, and `m` would be attributed to the wrong class. `scope push` and `scope pop` fix this by bracketing a declaration's members in their own frame. `scope pop` on the root frame is a no-op, so an unbalanced spec degrades to the old flat behaviour rather than corrupting the stack.
+
+Semantics events fire **bottom-up**: a rule's `on` block runs only after its entire body has been parsed, so children fire before their enclosing declaration. The frame must therefore be opened by a sub-rule that completes *before* the body — the declaration header — and closed by the enclosing declaration rule itself:
+
+1. A **header** sub-rule (e.g. `ClassHeader -> KW_class id:Ident`) fires first: `scope push`, then `bind` the context the members will read.
+2. **Member** rules fire next, inside that frame, and read it via `$scope`.
+3. The **enclosing declaration** rule (e.g. `ClassDecl -> ClassHeader Body`) fires last: it emits its own edges — still inside the frame, so it can read its own binding — and ends with `scope pop`.
+
+Statements run in source order within a block, so a block may freely read the frame before popping it; put `scope pop` last.
+
+```kgf
+on ClassHeader {
+  scope push
+  bind ns "value" name "current_class" to concat($file, "::", $id)
+}
+
+on Method when $scope("value", "current_class") {
+  edge declares from $scope("value", "current_class") to concat($scope("value", "current_class"), ".", $id)
+}
+
+on ClassDecl {
+  edge declares from $file to $scope("value", "current_class")
+  scope pop
+}
+```
+
+Symbols registered by `attrs def` also land in the innermost frame, so a member stops being resolvable by bare name once its class frame is popped — the intended lexical-visibility semantics. The symbol node itself is permanent: it lives in the graph, and only the name binding is scoped.
+
+`kgf check` reports a warning when a spec uses `scope push` but never `scope pop` anywhere (or vice versa). The balance is checked spec-wide rather than per block, because the intended pattern deliberately splits the two halves across a header rule and its enclosing declaration rule `[src/kgf/check/check.mbt]`.
 
 ### === resolver (Module Resolution)
 

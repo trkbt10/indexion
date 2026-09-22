@@ -9,6 +9,8 @@ pub fn eval_stmt(stmt : @types.SemStmt, env : Env, ctx : SemEvalCtx) -> Unit {
     Let(id~, value~) => eval_stmt_let(id, value, env, ctx)
     For(id~, iter~, body~) => eval_stmt_for(id, iter, body, env, ctx)
     Module(id~, file~) => eval_stmt_module(id, file, env, ctx)
+    ScopePush => ctx.push_scope()
+    ScopePop => ctx.pop_scope()
   }
 }
 
@@ -44,6 +46,8 @@ fn eval_stmt_edge(
 
 ///|
 /// Evaluates a bind statement.
+/// Writes into the innermost scope frame, so a `scope push` before the bind
+/// makes it visible only until the matching `scope pop`.
 fn eval_stmt_bind(
   ns : @types.SemExpr,
   name : @types.SemExpr,
