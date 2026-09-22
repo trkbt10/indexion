@@ -38,7 +38,37 @@ sources: .ts, .d.ts
 ...file patterns to skip...
 ```
 
-The header declares the language name and the file extensions it covers. When the registry loads specs, it uses `sources` to build the extension-to-language mapping that drives automatic language detection `[src/kgf/registry/registry.mbt:73-78]`.
+The header declares the language name and the file extensions it covers. When the registry loads specs, it uses `sources` to build the extension-to-language mapping that drives automatic language detection `[src/kgf/registry/registry.mbt]`.
+
+### Spec Inheritance (`extends:`)
+
+Several specs describe a dialect of another: `Cargo.toml` and `pyproject.toml` are TOML, a wiki page is Markdown, TSX is TypeScript. Before `extends:` these were maintained as copies of their base, which meant every lexer or grammar bug had to be fixed once per copy. The optional `extends:` header field lets a spec inherit instead.
+
+```kgf
+kgf 0.6
+language: sdd-user-story
+sources: .md
+extends: markdown
+
+=== semantics
+...only what differs from markdown...
+```
+
+`extends:` names the base by its `language`, not by a file path, so the base may live in any subdirectory of the same spec set. Merging is **section-level override**: for every `=== section`, the derived spec's text wins whole if the derived spec declares that section at all, and the base's is used otherwise. Nothing is merged *within* a section — a derived `=== grammar` replaces the base grammar entirely rather than adding rules to it, and a derived `=== semantics` replaces every `on` block of the base, not just the ones with the same rule name. A section declared with an empty body is still a declaration, and overrides the inherited one with nothing.
+
+`language:` and `sources:` are never inherited: they identify the derived spec and decide which files it claims. Chains (`A extends B extends C`) are allowed, and each section is taken from the nearest ancestor that declares it.
+
+Because a base may live in a subdirectory the loader has not walked yet, inheritance is resolved by the registry **after** the whole spec directory is loaded, not by the parser `[src/kgf/registry/registry.mbt]`. Loading splits each file into its raw section texts (`KGFSpecSource`), merges them along the `extends:` chain, and only then constructs the `KGFSpec`. Every spec the registry hands out is therefore fully resolved, so no consumer — toolkit, features, check, CLI — has to know that `extends:` exists. Merging the raw section texts rather than the parsed sections also keeps `KGFSpec`'s lazy parsing intact: a resolved spec still compiles its lexer patterns only on first use.
+
+A missing base or an `extends:` cycle cannot fail the load — it runs on the hot path of every command — so loading falls back to the spec's own sections and `indexion kgf check <name>` reports the problem:
+
+```
+$ indexion kgf check cycle-a
+cycle-a: 1 error(s), 0 warning(s)
+  ERROR [extends] Spec inheritance cycle: cycle-a -> cycle-b -> cycle-a
+```
+
+`kgf check` on a derived spec validates the **resolved** spec, so a semantics block written against the inherited grammar checks clean, while a genuinely unbound reference in that same block is still reported. `indexion kgf list` shows each spec's base in an `Extends` column.
 
 ### === lex (Lexical Analysis)
 

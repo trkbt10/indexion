@@ -368,8 +368,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
 ///|
 /// List installed KGF specs.
 fn run_list(kgf_dir : String) -> Unit {
-  let explicit = if kgf_dir != "kgfs" { kgf_dir } else { "" }
-  let resolved_dir = @config.find_kgfs_dir(explicit_path=explicit)
+  let resolved_dir = resolve_kgfs_dir(kgf_dir)
   let specs = match resolved_dir {
     Some(dir) => @kgf_manage.list_specs_from_dir(dir)
     None => []
@@ -387,11 +386,19 @@ fn run_list(kgf_dir : String) -> Unit {
     }
     return
   }
-  // Print table header
-  println(pad_right("Category", 14) + pad_right("Name", 22) + "Sources")
+  // Print table header. The Extends column names the base a derived spec
+  // inherits its undeclared sections from, so a reader can tell at a glance
+  // which specs are not self-contained.
+  println(
+    pad_right("Category", 14) +
+    pad_right("Name", 22) +
+    pad_right("Extends", 18) +
+    "Sources",
+  )
   println(
     pad_right("─".repeat(12), 14) +
     pad_right("─".repeat(20), 22) +
+    pad_right("─".repeat(16), 18) +
     "─".repeat(20),
   )
   for spec in specs {
@@ -405,7 +412,16 @@ fn run_list(kgf_dir : String) -> Unit {
     } else {
       "(root)"
     }
-    println(pad_right(category, 14) + pad_right(spec.name, 22) + sources)
+    let extends = match spec.extends {
+      Some(base) if base.length() > 0 => base
+      _ => "-"
+    }
+    println(
+      pad_right(category, 14) +
+      pad_right(spec.name, 22) +
+      pad_right(extends, 18) +
+      sources,
+    )
   }
   println("")
   println("Total: \{specs.length()} specs")
@@ -452,9 +468,20 @@ fn pad_right(s : String, width : Int) -> String {
 /// When `kgf_dir` is the default "kgfs", uses `@config.find_kgfs_dir()` to
 /// search environment variables, global config, project-local, and OS-standard
 /// data directories. An explicit non-default value is treated as a literal path.
-fn load_registry(kgf_dir : String) -> @registry.KGFRegistry {
+/// Resolve the spec directory a `--kgf-dir` value names.
+///
+/// The default `"kgfs"` is not a path but a request to auto-detect, so it is
+/// passed on as "no explicit path"; anything else is the user's own location.
+/// Shared by every kgf subcommand that needs the directory rather than a
+/// loaded registry.
+fn resolve_kgfs_dir(kgf_dir : String) -> String? {
   let explicit = if kgf_dir != "kgfs" { kgf_dir } else { "" }
-  match @config.find_kgfs_dir(explicit_path=explicit) {
+  @config.find_kgfs_dir(explicit_path=explicit)
+}
+
+///|
+fn load_registry(kgf_dir : String) -> @registry.KGFRegistry {
+  match resolve_kgfs_dir(kgf_dir) {
     Some(dir) => @registry.KGFRegistry::load_from_dir(dir)
     None => @registry.KGFRegistry::new()
   }
@@ -756,6 +783,10 @@ pub fn list_specs_json() -> String {
         "sources",
         Json::array(spec.sources.iter().map(fn(s) { s.to_json() }).collect()),
       )
+      match spec.extends {
+        Some(base) if base.length() > 0 => obj.set("extends", base.to_json())
+        _ => ()
+      }
       Json::object(obj)
     })
     .collect()
@@ -1228,12 +1259,20 @@ fn run_check(kgf_dir : String, matches : @argparse.Matches) -> Unit {
     println("Error: No spec or file specified")
     return
   }
-  let registry = load_registry(kgf_dir)
+  // `extends:` is resolved against every spec of the directory, so a check
+  // needs the whole set even when a single spec was named. The spec that is
+  // then validated is the *resolved* one: an inherited grammar has to be
+  // judged against the deriving spec's own semantics, or a semantics block
+  // referring to a rule the base does not define would go unreported.
+  let by_language = match resolve_kgfs_dir(kgf_dir) {
+    Some(dir) => @kgf_check.load_spec_sources(dir)
+    None => Map([])
+  }
   let mut total_errors = 0
   let mut total_warnings = 0
   for target in targets {
     // Try as spec name first, then as file path
-    let spec = match registry.get_spec(target) {
+    let source = match by_language.get(target) {
       Some(s) => s
       None => {
         // Try reading as .kgf file
@@ -1247,16 +1286,15 @@ fn run_check(kgf_dir : String, matches : @argparse.Matches) -> Unit {
             continue
           }
         }
-        match @kgf_parser.parse_kgf(content) {
-          Some(s) => s
-          None => {
-            println("Error: Failed to parse '" + target + "' as KGF spec")
-            continue
-          }
-        }
+        @kgf_parser.parse_kgf_source(content)
       }
     }
-    let diagnostics = @kgf_check.check(spec)
+    let (resolved, _) = @registry.resolve_spec_source(source, by_language)
+    let spec = resolved.to_spec()
+    let diagnostics = @kgf_check.check_extends(source, by_language)
+    for d in @kgf_check.check(spec) {
+      diagnostics.push(d)
+    }
     let mut errors = 0
     let mut warnings = 0
     for d in diagnostics {

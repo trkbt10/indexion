@@ -30,6 +30,8 @@ pub fn parse_kgf(String) -> @types.KGFSpec?
 
 pub fn parse_kgf_header(String) -> KGFHeader
 
+pub fn parse_kgf_source(String) -> KGFSpecSource
+
 pub fn parse_lex(String) -> LexResult
 
 pub fn parse_list(String) -> Array[String]
@@ -43,6 +45,8 @@ pub fn parse_resolver_with_sources(String, Array[String]) -> @types.ResolverSpec
 pub fn parse_rules(String) -> Map[String, @types.RuleDef]
 
 pub fn parse_semantics(String) -> Map[String, Array[@types.SemOnBlock]]?
+
+pub fn section_names() -> Array[String]
 
 pub fn split_lines(String) -> Array[String]
 
@@ -60,9 +64,24 @@ pub fn trim_str(String) -> String
 pub struct KGFHeader {
   language : String
   sources : Array[String]
+  extends : String?
 }
+pub fn KGFHeader::get_extends(Self) -> String?
 pub fn KGFHeader::get_language(Self) -> String
 pub fn KGFHeader::get_sources(Self) -> Array[String]
+
+pub struct KGFSpecSource {
+  language : String
+  sources : Array[String]
+  extends : String?
+  sections : Map[String, String]
+}
+pub fn KGFSpecSource::get_extends(Self) -> String?
+pub fn KGFSpecSource::get_language(Self) -> String
+pub fn KGFSpecSource::get_section(Self, String) -> String?
+pub fn KGFSpecSource::get_sources(Self) -> Array[String]
+pub fn KGFSpecSource::merge_onto(Self, Self) -> Self
+pub fn KGFSpecSource::to_spec(Self) -> @types.KGFSpec
 
 pub struct LexResult {
   tokens : Array[@types.TokenDef]

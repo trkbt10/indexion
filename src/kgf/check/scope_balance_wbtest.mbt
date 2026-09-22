@@ -5,7 +5,7 @@
 /// Builds a spec whose single grammar rule carries the given semantics block.
 fn spec_with_semantics(body : String) -> @kgf_types.KGFSpec {
   let text = "on Decl {\n" + body + "\n}\n"
-  let semantics = @kgf_parser.parse_semantics(text)
+  let semantics = @parser.parse_semantics(text)
   @kgf_types.KGFSpec::new(
     "test",
     tokens=[@kgf_types.TokenDef::new("IDENT", "[a-z]+")],
@@ -72,7 +72,7 @@ test "check: balance is spec-wide, not per block" {
       "Decl": @kgf_types.RuleDef::new("Decl", "Header IDENT"),
       "Header": @kgf_types.RuleDef::new("Header", "IDENT"),
     },
-    semantics=@kgf_parser.parse_semantics(text),
+    semantics=@parser.parse_semantics(text),
   )
   assert_eq(scope_diagnostics(spec).length(), 0)
 }

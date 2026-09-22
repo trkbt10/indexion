@@ -89,19 +89,77 @@ pub fn load_registry_from_index(
   signals : Map[String, Bool],
 ) -> @registry.KGFRegistry {
   let registry = @registry.KGFRegistry::new()
-  let kgf_paths = get_matching_kgf_paths(index, signals)
-  for path in kgf_paths {
+  let sources = read_spec_sources(get_matching_kgf_paths(index, signals))
+  add_extends_bases(sources, index.all_files)
+  registry.register_spec_sources(sources)
+  registry
+}
+
+///|
+/// Split each `.kgf` file at `paths` into its raw sections, skipping files
+/// that cannot be read.
+fn read_spec_sources(paths : Array[String]) -> Array[@kgf_parser.KGFSpecSource] {
+  let sources : Array[@kgf_parser.KGFSpecSource] = []
+  for path in paths {
     try {
       let content = @fs.read_file_to_string(path)
-      match @kgf_parser.parse_kgf(content) {
-        Some(spec) => registry.register_spec(spec)
-        None => ()
-      }
+      sources.push(@kgf_parser.parse_kgf_source(content))
     } catch {
       _ => ()
     }
   }
-  registry
+  sources
+}
+
+///|
+/// Extend a selected subset of specs with the bases their `extends:` chains
+/// name, reading them from `candidate_paths`.
+///
+/// Spec selection filters by `sources:`, but a base spec exists to be
+/// inherited from and need not claim any extension of its own, so it can be
+/// filtered out while a spec that needs it is kept. Without this step a
+/// derived spec would silently load with its own sections only — the very
+/// N-times-fixed-bug situation `extends:` is meant to end. Resolution itself
+/// stays in the registry; this only makes sure the base is in the set.
+fn add_extends_bases(
+  sources : Array[@kgf_parser.KGFSpecSource],
+  candidate_paths : Array[String],
+) -> Unit {
+  let have : Map[String, Bool] = Map([])
+  for source in sources {
+    have.set(source.get_language(), true)
+  }
+  // Each pass can pull in a base that itself extends another, so repeat until
+  // no source is missing its base. Every pass adds at least one spec, so the
+  // number of candidates bounds the passes.
+  for _ in 0..<(candidate_paths.length() + 1) {
+    let wanted : Map[String, Bool] = Map([])
+    for source in sources {
+      match source.get_extends() {
+        Some(base) =>
+          if base.length() > 0 && !have.contains(base) {
+            wanted.set(base, true)
+          }
+        None => ()
+      }
+    }
+    if wanted.is_empty() {
+      return
+    }
+    let mut added = false
+    for path in candidate_paths {
+      let content = @fs.read_file_to_string(path) catch { _ => continue }
+      let header = @kgf_parser.parse_kgf_header(content)
+      if wanted.contains(header.get_language()) {
+        sources.push(@kgf_parser.parse_kgf_source(content))
+        have.set(header.get_language(), true)
+        added = true
+      }
+    }
+    if !added {
+      return
+    }
+  }
 }
 
 ///|
@@ -137,6 +195,8 @@ pub fn load_registry_for_paths(
 ) -> @registry.KGFRegistry {
   let registry = @registry.KGFRegistry::new()
   let signals = build_path_signals(file_paths)
+  let selected : Array[@kgf_parser.KGFSpecSource] = []
+  let all_paths : Array[String] = []
   try {
     if !@fs.is_dir(specs_dir) {
       return registry
@@ -145,21 +205,21 @@ pub fn load_registry_for_paths(
     for entry in entries {
       if entry.has_suffix(".kgf") {
         let spec_path = specs_dir + "/" + entry
+        all_paths.push(spec_path)
         let content = @fs.read_file_to_string(spec_path)
         // Fast header-only parse to check sources
         let header = @kgf_parser.parse_kgf_header(content)
         if sources_match_signals(header.get_sources(), signals) {
-          // Full parse using same content (no re-read)
-          match @kgf_parser.parse_kgf(content) {
-            Some(spec) => registry.register_spec(spec)
-            None => ()
-          }
+          // Full split using same content (no re-read)
+          selected.push(@kgf_parser.parse_kgf_source(content))
         }
       }
     }
   } catch {
     _ => ()
   }
+  add_extends_bases(selected, all_paths)
+  registry.register_spec_sources(selected)
   registry
 }
 
