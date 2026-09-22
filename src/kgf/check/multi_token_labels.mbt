@@ -426,6 +426,8 @@ fn report_multi_token_stmts(
           None => ()
         }
       }
+      // Frame management reads no labels.
+      @kgf_types.ScopePush | @kgf_types.ScopePop => ()
     }
   }
 }
