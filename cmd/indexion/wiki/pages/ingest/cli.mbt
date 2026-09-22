@@ -24,9 +24,7 @@ pub fn command() -> @argparse.Command {
         default_values=["md"],
       ),
       @argparse.OptionArg("output", short='o', about="Output file path"),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
     ],
   )
 }
@@ -48,16 +46,13 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     Some(arr) => if arr.length() > 0 { arr[0] } else { "" }
     _ => ""
   }
-  let specs_dir = match matches.values.get("specs-dir") {
-    Some(arr) => if arr.length() > 0 { arr[0] } else { "kgfs" }
-    _ => "kgfs"
-  }
+  let specs_dirs = @common.arg_specs_dirs(matches)
   let dry_run = match matches.flags.get("dry-run") {
     Some(v) => v
     _ => false
   }
   // Load wiki
-  let registry = @kgf_features.load_registry(specs_dir~, target_dir=".")
+  let registry = @kgf_features.load_registry(specs_dirs~, target_dir=".")
   let wiki = match @wiki_reader.load_wiki(wiki_dir_resolved, registry~) {
     Some(w) => w
     None => {

@@ -104,7 +104,7 @@ async fn handle_explore(
     extensions: json_string_array(json, "extensions"),
     includes: json_string_array(json, "includes"),
     excludes: json_string_array(json, "excludes"),
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
   }
   match @explore_cli.run_to_json(explore_config) {
     Some(result) => send_json_ok(conn, result, cors)
@@ -131,7 +131,7 @@ async fn handle_kgf_tokens(
     return
   }
   let spec = json_string(json, "spec", "")
-  match @kgf_cli.tokenize_json(file, spec, config.specs_dir) {
+  match @kgf_cli.tokenize_json(file, spec, config.specs_dirs) {
     Some(result) => send_json_ok(conn, result, cors)
     None => send_json_error(conn, 404, "Failed to tokenize file", cors)
   }
@@ -156,7 +156,7 @@ async fn handle_kgf_edges(
     return
   }
   let spec = json_string(json, "spec", "")
-  match @kgf_cli.edges_json(file, spec, config.specs_dir) {
+  match @kgf_cli.edges_json(file, spec, config.specs_dirs) {
     Some(result) => send_json_ok(conn, result, cors)
     None => send_json_error(conn, 404, "Failed to extract edges", cors)
   }
@@ -188,7 +188,7 @@ async fn handle_doc_graph(
   }
   let graph_config : @doc_graph_cli.GraphConfig = {
     output: "",
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
     title: json_string(json, "title", "Module Dependencies"),
     format: json_string(json, "format", "mermaid"),
     input_paths,
@@ -236,7 +236,7 @@ async fn handle_plan_refactor(
     format: json_string(json, "format", "md"),
     style: json_string(json, "style", "raw"),
     project_name: json_string(json, "projectName", ""),
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
   }
   match @plan_refactor.run_to_string(refactor_config) {
     Some(result) => send_json_ok(conn, Json::string(result).stringify(), cors)
@@ -269,7 +269,7 @@ async fn handle_plan_documentation(
     format: json_string(json, "format", "md"),
     template: json_string(json, "template", ""),
     project_name: json_string(json, "projectName", ""),
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
   }
   match @plan_doc.run_to_string(doc_config) {
     Some(result) => send_json_ok(conn, Json::string(result).stringify(), cors)
@@ -299,7 +299,7 @@ async fn handle_plan_reconcile(
     ..@plan_reconcile.ReconcileConfig::default(),
     target_dir,
     format: json_string(json, "format", "json"),
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
   }
   match @plan_reconcile.run_to_string(reconcile_config) {
     Some(result) => {
@@ -334,7 +334,7 @@ fn build_spec_align_config(
     subcommand,
     spec_path,
     impl_path,
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
     format: json_string(json, "format", default_format),
     spec_format: json_string(json, "specFormat", "auto"),
     algorithm: json_string(json, "algorithm", "hybrid"),
@@ -419,7 +419,7 @@ async fn handle_plan_solid(
     excludes: json_string_array(json, "excludes"),
     output: "",
     format: json_string(json, "format", "md"),
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
   }
   match @plan_solid.run_to_string(solid_config) {
     Some(result) => send_json_ok(conn, Json::string(result).stringify(), cors)
@@ -455,7 +455,7 @@ async fn handle_plan_unwrap(
     include_bare: json_bool(json, "includeBare", false),
     // Only report mode is supported via API (dry-run/fix mutate files)
     mode: "report",
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
   }
   match @plan_unwrap.run_to_string(unwrap_config) {
     Some(result) => send_json_ok(conn, Json::string(result).stringify(), cors)
@@ -490,7 +490,7 @@ async fn handle_plan_readme(
     target_dir,
     output: "",
     format: json_string(json, "format", "md"),
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
     template,
     plans_dir: {
       let v = json_string(json, "plansDir", "")
@@ -575,7 +575,7 @@ async fn handle_grep(
     },
     includes: json_string_array(json, "includes"),
     excludes: json_string_array(json, "excludes"),
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
     semantic: json_string(json, "semantic", ""),
     undocumented: json_bool(json, "undocumented", false),
     context_lines: 0,
@@ -594,7 +594,7 @@ async fn handle_grep(
 fn build_config_json(config : ServeConfig) -> String {
   let obj : Map[String, Json] = Map([])
   obj.set("workspaceDir", config.workspace_dir.to_json())
-  obj.set("specsDir", config.specs_dir.to_json())
+  obj.set("specsDirs", config.specs_dirs.to_json())
   obj.set("indexDir", config.index_dir.to_json())
   obj.set(
     "configDir",

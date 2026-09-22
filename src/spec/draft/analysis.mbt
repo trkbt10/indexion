@@ -248,7 +248,7 @@ fn load_profile_facts(
 fn build_report(config : DraftConfig) -> DraftReport? {
   let root = root_dir_for(config.source_path)
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir=root,
   )
   build_report_with_registry(config, registry)

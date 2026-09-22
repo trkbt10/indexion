@@ -25,6 +25,8 @@ pub struct KGFRegistry {
   ext_to_lang : Map[String, String]
   lang_to_doc_spec : Map[String, String]
   source_claims : Map[String, Array[String]]
+  spec_origins : Map[String, String]
+  layer_roots : Array[String]
 }
 pub fn KGFRegistry::collect_ignore_patterns(Self) -> Array[(String, String)]
 pub fn KGFRegistry::detect_from_path(Self, String) -> String?
@@ -33,13 +35,16 @@ pub fn KGFRegistry::get_extensions(Self) -> Array[String]
 pub fn KGFRegistry::get_external_prefixes(Self) -> Array[String]
 pub fn KGFRegistry::get_lang_from_ext(Self, String) -> String?
 pub fn KGFRegistry::get_languages(Self) -> Array[String]
+pub fn KGFRegistry::get_layer_roots(Self) -> Array[String]
 pub fn KGFRegistry::get_project_markers(Self) -> Array[String]
 pub fn KGFRegistry::get_source_conflicts(Self) -> Array[SourceConflict]
 pub fn KGFRegistry::get_spec(Self, String) -> @types.KGFSpec?
+pub fn KGFRegistry::get_spec_origin(Self, String) -> String?
 pub fn KGFRegistry::is_file_supported(Self, String) -> Bool
 pub fn KGFRegistry::load_from_dir(String) -> Self
+pub fn KGFRegistry::load_from_dirs(Array[String]) -> Self
 pub fn KGFRegistry::new() -> Self
-pub fn KGFRegistry::register_spec(Self, @types.KGFSpec) -> Unit
+pub fn KGFRegistry::register_spec(Self, @types.KGFSpec, origin? : String) -> Unit
 pub fn KGFRegistry::register_spec_sources(Self, Array[@parser.KGFSpecSource]) -> Unit
 pub fn KGFRegistry::spec_count(Self) -> Int
 pub fn KGFRegistry::supports_ext(Self, String) -> Bool

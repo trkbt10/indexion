@@ -1,16 +1,28 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/cmd/indexion/help"
 
+import {
+  "moonbitlang/core/argparse",
+}
+
 // Values
+pub const SPECS_DIR_ARG : String = "specs-dir"
+
+pub const SPECS_DIR_AUTO : String = "kgfs"
+
 pub let dir_required : String
 
 pub let exclude_pattern : String
 
 pub let include_pattern : String
 
+pub let no_specs_loaded : String
+
 pub let output : String
 
 pub let specs_dir : String
+
+pub fn specs_dir_option(name? : String, global? : Bool) -> @argparse.OptionArg
 
 // Errors
 
@@ -19,4 +31,3 @@ pub let specs_dir : String
 // Type aliases
 
 // Traits
-

@@ -23,7 +23,7 @@ priv struct PathNameModel {
 ///|
 pub fn audit_code_identity(config : IdentityAuditConfig) -> IdentityAuditReport {
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dirs=config.paths,
   )
   let discovered = discover_supported_files(config, registry)

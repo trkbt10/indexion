@@ -29,7 +29,7 @@ pub(all) struct DocPlanConfig {
   format : String // "md", "json", "github-issue"
   template : String // path to GitHub Issue Form template
   project_name : String
-  specs_dir : String // KGF specs directory
+  specs_dirs : Array[String] // KGF specs directory
 }
 
 ///|
@@ -42,7 +42,7 @@ pub fn DocPlanConfig::default() -> DocPlanConfig {
     format: "md",
     template: "",
     project_name: "",
-    specs_dir: "kgfs",
+    specs_dirs: [],
   }
 }
 
@@ -71,15 +71,12 @@ pub fn DocPlanConfig::from_matches(
     Some(arr) => if arr.length() > 0 { arr[0] } else { "" }
     _ => ""
   }
-  let specs_dir = match matches.values.get("specs-dir") {
-    Some(arr) => if arr.length() > 0 { arr[0] } else { "kgfs" }
-    _ => "kgfs"
-  }
+  let specs_dirs = @common.arg_specs_dirs(matches)
   let target_dir = match matches.values.get("directory") {
     Some(arr) => if arr.length() > 0 { arr[0] } else { "" }
     _ => ""
   }
-  { target_dir, output, style, format, template, project_name, specs_dir, }
+  { target_dir, output, style, format, template, project_name, specs_dirs, }
 }
 
 ///|
@@ -103,9 +100,7 @@ pub fn command() -> @argparse.Command {
         "name",
         about="Project name (auto-detect from project manifest)",
       ),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
     ],
     positionals=[
       @argparse.PositionArg("directory", about="Target directory to analyze"),
@@ -121,7 +116,7 @@ pub fn run_to_string(config : DocPlanConfig) -> String? {
   }
   let project_info = load_project_info(
     config.target_dir,
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
   )
   let project_name = if config.project_name.length() > 0 {
     config.project_name
@@ -130,7 +125,7 @@ pub fn run_to_string(config : DocPlanConfig) -> String? {
   }
   let analysis = analyze_documentation(
     config.target_dir,
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
   )
   Some(render_output(config, analysis, project_info, project_name))
 }

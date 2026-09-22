@@ -1,48 +1,148 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "trkbt10/indexion/src/kgf/transpile"
 
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "trkbt10/indexion/src/kgf/registry",
+}
+
 // Values
-pub fn find_spec(String, String, String) -> String?
+pub fn find_spec(String) -> LanguageSpec?
 
-pub fn load_spec(String) -> TranspileSpec?
+pub fn lift_events(Array[(String, Map[String, Json])], LiftSpec) -> Array[(String, Map[String, Json])]
 
-pub fn rewrite_events(
-  Array[(String, Map[String, Json])],
-  TranspileSpec
-) -> Array[(String, Map[String, Json])]
+pub fn lift_type_text(String, LiftSpec) -> String
 
-pub fn rewrite_events_json(
-  Array[(String, Map[String, Json])],
-  TranspileSpec
-) -> String
+pub fn load_language_spec(String) -> LanguageSpec?
 
-pub fn rewrite_type_text(String, TranspileSpec) -> String
+pub fn lower_to_code(Array[(String, Map[String, Json])], Array[(String, Map[String, Json])], String, String, String, LiftSpec, LowerSpec) -> String
 
-pub fn transpile_file_json(String, String, String) -> String?
+pub fn transpile_file_json(String, String, Array[String]) -> String?
+
+pub fn transpile_file_json_with_registry(String, String, @registry.KGFRegistry) -> String?
 
 // Errors
 
 // Types and methods
-pub struct TranspileSpec {
-  // ...
-}
-fn TranspileSpec::source(Self) -> String
-fn TranspileSpec::target(Self) -> String
-fn TranspileSpec::scalars(Self) -> Map[String, String]
-fn TranspileSpec::type_wraps(Self) -> Array[TypeWrap]
-fn TranspileSpec::rule_renames(Self) -> Map[String, String]
-fn TranspileSpec::unresolved_marker(Self) -> String
-impl Show for TranspileSpec
+pub struct CollectInnerAs {
+  rule : String
+  label : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct ConditionalLift {
+  predicate : String
+  lift_to : String
+  split_label_capitalized : String?
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct ExtractText {
+  label : String
+  after : String
+  before : String
+  trim : Bool
+  simplify_unions : Bool?
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct LanguageSpec {
+  language : String
+  lift : LiftSpec?
+  lower : LowerSpec?
+  limits : TranspileLimits?
+} derive(ToJson, @debug.Debug, @json.FromJson)
+pub fn LanguageSpec::language(Self) -> String
+pub fn LanguageSpec::lift(Self) -> LiftSpec?
+pub fn LanguageSpec::lower(Self) -> LowerSpec?
+pub fn LanguageSpec::unresolved_marker(Self) -> String
+
+pub struct LiftSpec {
+  scalars : Map[String, String]
+  type_wraps : Array[TypeWrap]
+  rule_lifts : Map[String, String]
+  structural_rules : Map[String, StructuralRule]?
+  module_aliases : Map[String, String]?
+  symbol_aliases : Map[String, String]?
+  body_delimiters : Array[String]?
+  regex_replace : Array[RegexReplace]?
+} derive(ToJson, @debug.Debug, @json.FromJson)
+pub fn LiftSpec::body_delimiter_chars(Self) -> (Char, Char)?
+pub fn LiftSpec::module_aliases(Self) -> Map[String, String]
+pub fn LiftSpec::regex_replace(Self) -> Array[RegexReplace]
+pub fn LiftSpec::rule_lifts(Self) -> Map[String, String]
+pub fn LiftSpec::scalars(Self) -> Map[String, String]
+pub fn LiftSpec::structural_rules(Self) -> Map[String, StructuralRule]
+pub fn LiftSpec::symbol_aliases(Self) -> Map[String, String]
+pub fn LiftSpec::type_wraps(Self) -> Array[TypeWrap]
+
+pub struct LowerSpec {
+  scalars : Map[String, String]
+  type_wraps : Array[TypeWrap]
+  emit_templates : Map[String, String]
+  emit_order : Array[String]
+  comment_prefix : String
+  preamble_template : String
+  no_template_template : String
+  default_body : String?
+  text_replace : Array[TextReplace]?
+  text_replace_pairs : Array[TextReplacePair]?
+  regex_replace : Array[RegexReplace]?
+  collect_separators : Map[String, String]?
+  module_aliases : Map[String, String]?
+  variant_case_style : String?
+  symbol_aliases : Map[String, String]?
+} derive(ToJson, @debug.Debug, @json.FromJson)
+pub fn LowerSpec::collect_separators(Self) -> Map[String, String]
+pub fn LowerSpec::comment_prefix(Self) -> String
+pub fn LowerSpec::default_body(Self) -> String?
+pub fn LowerSpec::emit_order(Self) -> Array[String]
+pub fn LowerSpec::emit_templates(Self) -> Map[String, String]
+pub fn LowerSpec::module_aliases(Self) -> Map[String, String]
+pub fn LowerSpec::no_template_template(Self) -> String
+pub fn LowerSpec::preamble_template(Self) -> String
+pub fn LowerSpec::regex_replace(Self) -> Array[RegexReplace]
+pub fn LowerSpec::scalars(Self) -> Map[String, String]
+pub fn LowerSpec::symbol_aliases(Self) -> Map[String, String]
+pub fn LowerSpec::text_replace(Self) -> Array[TextReplace]
+pub fn LowerSpec::text_replace_pairs(Self) -> Array[TextReplacePair]
+pub fn LowerSpec::type_wraps(Self) -> Array[TypeWrap]
+pub fn LowerSpec::variant_case_style(Self) -> String
+
+pub struct RegexReplace {
+  pattern : String
+  replacement : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct StructuralRule {
+  id_from : String?
+  collect_inner_as : Array[CollectInnerAs]?
+  extract_text : Array[ExtractText]?
+  conditional_lifts : Array[ConditionalLift]?
+  source_intent_comment : String?
+} derive(ToJson, @debug.Debug, @json.FromJson)
+
+pub struct TextReplace {
+  from : String
+  to : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct TextReplacePair {
+  open : String
+  close : String
+  template : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct TranspileLimits {
+  comment : String?
+  unresolved_marker : String?
+} derive(ToJson, @debug.Debug, @json.FromJson)
 
 pub struct TypeWrap {
-  // ...
-}
-fn TypeWrap::source_suffix(Self) -> String
-fn TypeWrap::target_template(Self) -> String
-impl Eq for TypeWrap
-impl Show for TypeWrap
+  source_suffix : String
+  target_template : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn TypeWrap::source_suffix(Self) -> String
+pub fn TypeWrap::target_template(Self) -> String
 
 // Type aliases
 
 // Traits
-

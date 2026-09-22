@@ -9,7 +9,9 @@ import {
 }
 
 // Values
-pub fn build_alias_table(@registry.KGFRegistry?) -> Map[String, String]
+pub fn build_alias_table(@types.KGFSpec?) -> Map[String, String]
+
+pub fn build_kind_set(@types.KGFSpec?) -> Map[String, Bool]
 
 pub fn command() -> @argparse.Command
 
@@ -17,31 +19,43 @@ pub fn extract_code_documents(Array[(String, String)], @registry.KGFRegistry?) -
 
 pub fn find_matches(Array[@types.Tok], Array[TokenMatcher], String, String, spec? : @types.KGFSpec?) -> Array[GrepMatch]
 
+pub fn grep_single_file(String, String, String, @registry.KGFRegistry?) -> Array[Json]
+
 pub fn parse_pattern(String) -> Array[TokenMatcher]
 
-pub fn parse_pattern_with_aliases(String, Map[String, String]) -> Array[TokenMatcher]
+pub fn parse_pattern_for_path(String, String, @registry.KGFRegistry?) -> Array[TokenMatcher]
+
+pub fn parse_pattern_with_aliases(String, Map[String, String], kinds? : Map[String, Bool]) -> Array[TokenMatcher]
 
 pub fn parse_semantic_query(String) -> SemanticQuery?
 
+pub fn prepare_pattern_search(Array[String], GrepConfig) -> (@registry.KGFRegistry?, Array[(String, String)])?
+
 pub fn run_matches(@argparse.Matches) -> Unit
 
-pub fn run_pattern_search(Array[String], Array[TokenMatcher], GrepConfig) -> Unit
+pub fn run_pattern_search(Array[String], String, GrepConfig) -> Unit
+
+pub fn run_pattern_search_json(Array[String], String, GrepConfig) -> String?
 
 pub fn run_semantic_query_on_file(SemanticQuery, Array[@types.Tok], String, String, @registry.KGFRegistry?) -> Array[SemanticMatch]
 
 pub fn run_semantic_search(Array[String], SemanticQuery, GrepConfig) -> Unit
 
+pub fn run_semantic_search_json(Array[String], SemanticQuery, GrepConfig) -> String?
+
 pub fn run_similar_search(Array[String], String, Int, GrepConfig) -> Unit
+
+pub fn run_to_json(GrepConfig) -> String?
 
 // Errors
 
 // Types and methods
-pub struct GrepConfig {
+pub(all) struct GrepConfig {
   pattern : String
   paths : Array[String]
   includes : Array[String]
   excludes : Array[String]
-  specs_dir : String
+  specs_dirs : Array[String]
   semantic : String
   undocumented : Bool
   context_lines : Int
@@ -89,4 +103,3 @@ pub enum TokenMatcher {
 // Type aliases
 
 // Traits
-

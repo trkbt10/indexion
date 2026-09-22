@@ -47,18 +47,28 @@ pub fn ReconcileFileConfig::empty() -> ReconcileFileConfig {
 }
 
 ///|
-/// Resolve the KGF specs directory for reconcile, using explicit path or auto-detection.
-pub fn resolve_reconcile_specs_dir(
+/// Resolve the layered KGF spec directories for reconcile.
+///
+/// Delegates to `resolve_kgfs_dirs`, the SoT for spec-set composition, so
+/// reconcile picks up the project-local `.indexion/kgfs/` overlay on the same
+/// terms as every other command. `explicit_specs_dirs` carries the repeated
+/// `--specs-dir` chain (first entry base, rest overlays); passing one entry is
+/// the historical single-directory behavior. When nothing resolves, the chain
+/// falls back to the literal `kgfs` so downstream error messages keep naming a
+/// directory the user can create.
+pub fn resolve_reconcile_specs_dirs(
   target_dir : String,
-  explicit_specs_dir? : String = "",
-) -> String {
-  if explicit_specs_dir.length() > 0 {
-    resolve_path(target_dir, explicit_specs_dir)
+  explicit_specs_dirs? : Array[String] = [],
+) -> Array[String] {
+  let dirs = resolve_kgfs_dirs(
+    explicit_paths=explicit_specs_dirs,
+    target_dir~,
+    target_dirs=[target_dir],
+  )
+  if dirs.length() > 0 {
+    dirs
   } else {
-    match find_kgfs_dir(target_dir~) {
-      Some(dir) => dir
-      None => normalize_path("kgfs")
-    }
+    [normalize_path("kgfs")]
   }
 }
 

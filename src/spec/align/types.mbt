@@ -3,7 +3,7 @@ pub(all) struct SpecAlignConfig {
   subcommand : String
   spec_path : String
   impl_path : String
-  specs_dir : String
+  specs_dirs : Array[String]
   cache_dir : String
   output : String
   format : String
@@ -26,7 +26,7 @@ pub fn SpecAlignConfig::default() -> SpecAlignConfig {
     subcommand: "diff",
     spec_path: "",
     impl_path: "",
-    specs_dir: "",
+    specs_dirs: [],
     cache_dir: "",
     output: "",
     format: "markdown",

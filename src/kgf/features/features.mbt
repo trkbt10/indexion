@@ -271,15 +271,29 @@ pub fn build_line_func_map(
 }
 
 ///|
-/// Load KGF registry from kgfs directory if available.
-/// `specs_dir` is the CLI --specs-dir value. The default "kgfs" triggers
-/// auto-detection; any other value is treated as an explicit path.
-pub fn load_registry(
+/// Resolve the ordered, layered list of KGF spec directories for a target.
+/// Delegates to `@config.resolve_kgfs_dirs`, the SoT for spec-set composition.
+///
+/// `specs_dir` is the single-value CLI `--specs-dir` form; `specs_dirs` is the
+/// repeated form. The default single value `"kgfs"` means "not specified" and
+/// triggers auto-detection, matching the historical CLI default.
+pub fn resolve_specs_dirs(
   specs_dir? : String = "kgfs",
+  specs_dirs? : Array[String] = [],
   explicit_path? : String = "",
   target_dir? : String = ".",
   target_dirs? : Array[String] = [],
-) -> @kgf_registry.KGFRegistry? {
+) -> Array[String] {
+  // `specs_dirs` already carries the whole chain the user asked for, so when
+  // it is populated the single-value form is the same option's first entry and
+  // must not be appended again.
+  if specs_dirs.length() > 0 {
+    return @config.resolve_kgfs_dirs(
+      explicit_paths=specs_dirs,
+      target_dir~,
+      target_dirs~,
+    )
+  }
   let resolved_explicit = if explicit_path.length() > 0 {
     explicit_path
   } else if specs_dir != "kgfs" {
@@ -287,17 +301,45 @@ pub fn load_registry(
   } else {
     ""
   }
-  match
-    find_kgfs_dir(explicit_path=resolved_explicit, target_dir~, target_dirs~) {
-    Some(dir) => {
-      let reg = @kgf_registry.KGFRegistry::load_from_dir(dir)
-      if reg.spec_count() > 0 {
-        Some(reg)
-      } else {
-        None
-      }
-    }
-    None => None
+  @config.resolve_kgfs_dirs(
+    explicit_path=resolved_explicit,
+    target_dir~,
+    target_dirs~,
+  )
+}
+
+///|
+/// Load KGF registry from the resolved kgfs directories if any are available.
+///
+/// `specs_dir` is the CLI --specs-dir value. The default "kgfs" triggers
+/// auto-detection; any other value is treated as an explicit path. `specs_dirs`
+/// carries the repeated `--specs-dir` form, where the first entry is the base
+/// set and each following entry is an overlay applied on top of it.
+///
+/// When no explicit path is given, the analysed project's `.indexion/kgfs/`
+/// overlay is layered over the auto-detected base set.
+pub fn load_registry(
+  specs_dir? : String = "kgfs",
+  specs_dirs? : Array[String] = [],
+  explicit_path? : String = "",
+  target_dir? : String = ".",
+  target_dirs? : Array[String] = [],
+) -> @kgf_registry.KGFRegistry? {
+  let dirs = resolve_specs_dirs(
+    specs_dir~,
+    specs_dirs~,
+    explicit_path~,
+    target_dir~,
+    target_dirs~,
+  )
+  if dirs.length() == 0 {
+    return None
+  }
+  let reg = @kgf_registry.KGFRegistry::load_from_dirs(dirs)
+  if reg.spec_count() > 0 {
+    Some(reg)
+  } else {
+    None
   }
 }
 
@@ -306,10 +348,11 @@ pub fn load_registry(
 /// Convenience wrapper over `load_registry` for commands that always need a registry.
 pub fn load_registry_or_empty(
   specs_dir? : String = "kgfs",
+  specs_dirs? : Array[String] = [],
   target_dir? : String = ".",
   target_dirs? : Array[String] = [],
 ) -> @kgf_registry.KGFRegistry {
-  match load_registry(specs_dir~, target_dir~, target_dirs~) {
+  match load_registry(specs_dir~, specs_dirs~, target_dir~, target_dirs~) {
     Some(r) => r
     None => @kgf_registry.KGFRegistry::new()
   }

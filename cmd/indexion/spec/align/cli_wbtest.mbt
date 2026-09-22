@@ -10,7 +10,7 @@ fn fixture_impl_dir() -> String {
 
 ///|
 let shared_test_registry : @registry.KGFRegistry = @kgf_features.load_registry_or_empty(
-  specs_dir="kgfs",
+  specs_dirs=[],
   target_dir=".",
 )
 
@@ -21,7 +21,7 @@ fn task_render_config(agent : String) -> @spec_align.SpecAlignConfig {
     subcommand: "suggest",
     spec_path: fixture_spec_dir(),
     impl_path: fixture_impl_dir(),
-    specs_dir: "kgfs",
+    specs_dirs: [],
     format: "tasks",
     agent,
     threshold: 0.35,

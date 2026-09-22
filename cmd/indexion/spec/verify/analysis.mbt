@@ -12,7 +12,7 @@
 /// Run the full analysis pipeline. Returns the verify report.
 fn run_analysis(config : VerifyConfig) -> VerifyReport {
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir=config.target_dir,
   )
   run_analysis_with_registry(config, registry)

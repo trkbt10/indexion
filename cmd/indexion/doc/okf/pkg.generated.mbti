@@ -15,7 +15,7 @@ pub fn run_matches(@argparse.Matches) -> Unit
 // Types and methods
 pub struct OkfConfig {
   paths : Array[String]
-  specs_dir : String
+  specs_dirs : Array[String]
   includes : Array[String]
   excludes : Array[String]
   recursive : Bool
@@ -28,4 +28,3 @@ pub fn OkfConfig::from_matches(@argparse.Matches) -> Self
 // Type aliases
 
 // Traits
-

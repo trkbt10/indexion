@@ -3,7 +3,7 @@
 pub(all) struct VocabularyConfig {
   source_paths : Array[String]
   target_paths : Array[String]
-  specs_dir : String?
+  specs_dirs : Array[String]
   direction : String
   format : String
   output : String
@@ -14,7 +14,7 @@ pub fn VocabularyConfig::default() -> VocabularyConfig {
   {
     source_paths: [],
     target_paths: [],
-    specs_dir: None,
+    specs_dirs: [],
     direction: direction_both,
     format: output_format_text,
     output: "",

@@ -6,7 +6,7 @@ pub(all) struct VerifyConfig {
   /// Root directory for .indexionignore resolution.
   /// None = use target_dir; Some("") = disable ignore file loading.
   root_dir : String?
-  specs_dir : String
+  specs_dirs : Array[String]
   format : String
   focus : String
   max_candidates : Int
@@ -20,7 +20,7 @@ pub fn VerifyConfig::default() -> VerifyConfig {
     spec_patterns: [],
     target_dir: "",
     root_dir: None,
-    specs_dir: "",
+    specs_dirs: [],
     format: "json",
     focus: "all",
     max_candidates: 200,

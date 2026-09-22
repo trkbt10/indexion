@@ -40,7 +40,7 @@ pub fn command() -> @argparse.Command {
       @argparse.OptionArg("max-candidates", about="Maximum items in output", default_values=[
         "200",
       ]),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir),
+      @help.specs_dir_option(),
       @argparse.OptionArg("output", short='o', about=@help.output),
     ],
     positionals=[
@@ -76,13 +76,7 @@ fn resolve_config_from_matches(matches : @argparse.Matches) -> VerifyConfig {
       }
     _ => ()
   }
-  match matches.values.get("specs-dir") {
-    Some(arr) =>
-      if arr.length() > 0 {
-        config = { ..config, specs_dir: arr[0], }
-      }
-    _ => ()
-  }
+  config = { ..config, specs_dirs: @common.arg_specs_dirs(matches), }
   match matches.values.get("output") {
     Some(arr) => if arr.length() > 0 { config = { ..config, output: arr[0], } }
     _ => ()

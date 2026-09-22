@@ -1,5 +1,6 @@
 import {
   "moonbitlang/core/argparse",
+  "trkbt10/indexion/cmd/indexion/help",
   "moonbitlang/core/env",
   "moonbitlang/x/fs",
   "moonbitlang/x/time",

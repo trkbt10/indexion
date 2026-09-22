@@ -52,7 +52,7 @@
 /// Configuration for README generation.
 pub struct ReadmeConfig {
   paths : Array[String]
-  specs_dir : String
+  specs_dirs : Array[String]
   includes : Array[String]
   excludes : Array[String]
   recursive : Bool
@@ -68,7 +68,7 @@ pub struct ReadmeConfig {
 pub fn ReadmeConfig::default() -> ReadmeConfig {
   {
     paths: [],
-    specs_dir: "kgfs",
+    specs_dirs: [],
     includes: [],
     excludes: [],
     recursive: true,
@@ -83,10 +83,7 @@ pub fn ReadmeConfig::default() -> ReadmeConfig {
 ///|
 /// Create ReadmeConfig from argparse matches.
 pub fn ReadmeConfig::from_matches(matches : @argparse.Matches) -> ReadmeConfig {
-  let specs_dir = match matches.values.get("specs-dir") {
-    Some(arr) => if arr.length() > 0 { arr[0] } else { "kgfs" }
-    _ => "kgfs"
-  }
+  let specs_dirs = @common.arg_specs_dirs(matches)
   let includes = matches.values.get("include").unwrap_or([])
   let excludes = matches.values.get("exclude").unwrap_or([])
   let recursive = matches.flags.get("recursive").unwrap_or(true)
@@ -113,7 +110,7 @@ pub fn ReadmeConfig::from_matches(matches : @argparse.Matches) -> ReadmeConfig {
   }
   {
     paths,
-    specs_dir,
+    specs_dirs,
     includes,
     excludes,
     recursive,
@@ -132,9 +129,7 @@ pub fn command() -> @argparse.Command {
     "readme",
     about="Extract documentation from source files and generate README files",
     options=[
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
       @argparse.OptionArg(
         "include",
         action=Append,
@@ -225,7 +220,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   // Stage 1: Load KGF specs to get ignore patterns.
   log_progress("[1/4] Loading KGF specs...")
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dirs=config.paths,
   )
   if registry.spec_count() > 0 {

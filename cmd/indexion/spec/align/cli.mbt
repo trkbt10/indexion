@@ -18,7 +18,7 @@ fn common_options() -> Array[@argparse.OptionArg] {
     @argparse.OptionArg("git-base", about="Git base ref for incremental mode", default_values=[
       "HEAD",
     ]),
-    @argparse.OptionArg("specs-dir", about=@help.specs_dir),
+    @help.specs_dir_option(),
     @argparse.OptionArg(
       "cache-dir",
       about="Cache directory (default: .indexion/cache/spec/align)",
@@ -240,13 +240,7 @@ fn resolve_config(
       }
     None => ()
   }
-  match matches.values.get("specs-dir") {
-    Some(values) =>
-      if values.length() > 0 {
-        config = { ..config, specs_dir: values[0], }
-      }
-    None => ()
-  }
+  config = { ..config, specs_dirs: @common.arg_specs_dirs(matches), }
   match matches.values.get("cache-dir") {
     Some(values) =>
       if values.length() > 0 {
@@ -302,7 +296,7 @@ fn resolve_config(
 ///|
 async fn render_subcommand(config : @spec_align.SpecAlignConfig) -> String? {
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir=config.impl_path,
   )
   render_subcommand_with_registry(config, registry)
@@ -424,7 +418,7 @@ async fn run_watch(matches : @argparse.Matches) -> Unit {
   let mut last_probe = ""
   let mut emitted = 0
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir=config.impl_path,
   )
   while true {

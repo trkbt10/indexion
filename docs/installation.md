@@ -53,13 +53,58 @@ Binary output: `_build/native/release/build/cmd/indexion/indexion.exe`
 
 ### KGF Specs Location
 
-indexion searches for KGF specs in this order:
-1. Explicit specs directory CLI option for the command
-2. `INDEXION_KGFS_DIR` environment variable
-3. `[global].kgfs_dir` in global config
-4. `kgfs/` in the target project directory
-5. `kgfs/` in the current working directory
-6. OS-standard data directory `.../kgfs/` when non-empty
+The resolved spec set is **layered**: a base set, plus any overlays applied on
+top of it. A spec whose `language:` header matches one already loaded replaces
+it — matched by language name, not by filename or category directory.
+
+**Base set.** indexion searches for the base set in this order:
+1. `INDEXION_KGFS_DIR` environment variable
+2. `[global].kgfs_dir` in global config
+3. `kgfs/` in the target project directory (walking up to the project root)
+4. `kgfs/` in the current working directory
+5. OS-standard data directory `.../kgfs/` when non-empty
+
+**Project-local overlay.** If the analysed project has a `.indexion/kgfs/`
+directory, it is layered on top of the base set. That is the way to patch one
+spec without copying the installed set:
+
+```
+my-project/
+├── .indexion/
+│   └── kgfs/
+│       └── programming/
+│           └── rust.kgf   ← replaces the installed rust spec
+└── src/
+```
+
+The directory may mirror the installed layout (`programming/`, `dsl/`, …) or be
+flat — only the `language:` header decides what a file replaces. Every spec the
+overlay does not redefine keeps coming from the base set.
+
+**Explicit chain.** `--specs-dir` is repeatable. The first occurrence is the
+base set and each later one is an overlay layered on top of it:
+
+```bash
+# Single value: use this directory as the whole spec set (as before).
+indexion search "query" src/ --specs-dir=/opt/kgfs
+
+# Chain: /opt/kgfs as the base, ./team-kgfs layered over it.
+indexion search "query" src/ --specs-dir=/opt/kgfs --specs-dir=./team-kgfs
+```
+
+Passing `--specs-dir` at all replaces the whole chain: auto-detection and the
+implicit `.indexion/kgfs/` overlay are not added on top. The same option is
+spelled `--kgf-dir` on `indexion kgf` and `--specs` on `indexion digest`.
+
+**Seeing which file won.** `indexion kgf list` prints the layers it resolved and
+the origin of every spec, naming the file each overlay replaced:
+
+```bash
+indexion kgf list
+```
+
+`indexion kgf check` with no spec name validates the whole resolved set, so a
+project can check its overlay together with the specs it layers over.
 
 ### Claude Code Skills
 

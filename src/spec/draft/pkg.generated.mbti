@@ -2,6 +2,7 @@
 package "trkbt10/indexion/src/spec/draft"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
 }
 
@@ -17,12 +18,12 @@ pub fn run_to_string(DraftConfig) -> String?
 // Types and methods
 pub(all) struct DraftConfig {
   source_path : String
-  specs_dir : String
+  specs_dirs : Array[String]
   output : String
   format : String
   profile : String
   max_requirements : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub fn DraftConfig::default() -> Self
 
 pub struct DraftReport {
@@ -31,7 +32,8 @@ pub struct DraftReport {
   config : DraftConfig
   source_files : Array[String]
   requirements : Array[DraftRequirement]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn DraftReport::to_json(Self) -> Json
 
 pub struct DraftRequirement {
   id : String
@@ -40,9 +42,9 @@ pub struct DraftRequirement {
   criteria : Array[String]
   source_file : String
   source_line : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+  level : Int
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 // Type aliases
 
 // Traits
-

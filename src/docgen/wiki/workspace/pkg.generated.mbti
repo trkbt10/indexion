@@ -21,9 +21,9 @@ pub fn resolve_project_wiki_dir(String) -> String?
 
 pub fn resolve_wiki_dir(String) -> String?
 
-pub async fn update_search_index(String, String, @config.EmbeddingProvider) -> SearchUpdateResult? raise @embed.EmbedError
+pub async fn update_search_index(String, Array[String], @config.EmbeddingProvider) -> SearchUpdateResult? raise @embed.EmbedError
 
-pub async fn update_search_index_if_stale(String, String, @config.EmbeddingProvider) -> SearchUpdateResult?
+pub async fn update_search_index_if_stale(String, Array[String], @config.EmbeddingProvider) -> SearchUpdateResult?
 
 pub fn wiki_content_paths(String) -> Array[String]?
 
@@ -38,4 +38,3 @@ pub struct SearchUpdateResult {
 // Type aliases
 
 // Traits
-

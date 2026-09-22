@@ -30,11 +30,10 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
 /// Build a `DriftReport` from a config. Exposed for integration tests; the
 /// CLI dispatch routes through `run_matches`.
 pub fn build_report(config : DriftConfig) -> DriftReport? {
-  let registry = match config.specs_dir {
-    Some(dir) =>
-      @kgf_features.load_registry_or_empty(specs_dir=dir, target_dir=".")
-    None => @kgf_features.load_registry_or_empty(target_dir=".")
-  }
+  let registry = @kgf_features.load_registry_or_empty(
+    specs_dirs=config.specs_dirs,
+    target_dir=".",
+  )
   build_report_with_registry(config, registry)
 }
 
@@ -57,10 +56,7 @@ pub fn build_report_with_registry(
     }
   }
   if registry.get_languages().length() == 0 {
-    println(
-      "Error: no KGF specs were loaded. Run from a directory whose ancestry " +
-      "contains a `kgfs/` directory, or pass --specs-dir.",
-    )
+    println(@help.no_specs_loaded)
     return None
   }
   let lang_a = registry.detect_from_path(config.file_a)

@@ -17,4 +17,3 @@ pub fn run_matches(@argparse.Matches) -> Unit
 // Type aliases
 
 // Traits
-

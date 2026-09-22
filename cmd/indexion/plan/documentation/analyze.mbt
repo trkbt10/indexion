@@ -69,11 +69,11 @@ pub struct DocAnalysis {
 /// `ProjectInfo::default()` when no manifest is present.
 pub fn load_project_info(
   dir : String,
-  specs_dir? : String = "kgfs",
+  specs_dirs? : Array[String] = [],
 ) -> ProjectInfo {
   let normalized = @common.normalize_path(dir)
   let registry = match
-    @kgf_features.load_registry(specs_dir~, target_dir=normalized) {
+    @kgf_features.load_registry(specs_dirs~, target_dir=normalized) {
     Some(reg) => reg
     None => return ProjectInfo::default()
   }
@@ -151,12 +151,12 @@ pub fn load_project_info(
 /// discover_packages_from_files.
 pub fn analyze_documentation(
   dir : String,
-  specs_dir? : String = "kgfs",
+  specs_dirs? : Array[String] = [],
 ) -> DocAnalysis {
   let all_items : Array[PubItem] = []
   let normalized_dir = @common.normalize_path(dir)
   let registry = @kgf_features.load_registry(
-    specs_dir~,
+    specs_dirs~,
     target_dir=normalized_dir,
   )
   // Collect KGF ignore patterns for discover_files

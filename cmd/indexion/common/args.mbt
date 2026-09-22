@@ -57,6 +57,44 @@ pub fn arg_list(matches : @argparse.Matches, key : String) -> Array[String] {
 }
 
 ///|
+/// Read the repeatable `--specs-dir` option as an ordered spec-directory chain.
+///
+/// The first entry is the base spec set and every later entry is an overlay
+/// layered on top of it. When the option was not given, argparse leaves the
+/// auto-detect sentinel in place and this returns an empty array, which tells
+/// `@kgf_features.load_registry` to auto-detect the base set and layer the
+/// project-local overlay. SoT for turning `Matches` into that chain — commands
+/// must not re-derive it.
+pub fn arg_specs_dirs(
+  matches : @argparse.Matches,
+  key? : String = @help.SPECS_DIR_ARG,
+) -> Array[String] {
+  let dirs : Array[String] = []
+  for value in arg_list(matches, key) {
+    if value.length() > 0 && value != @help.SPECS_DIR_AUTO {
+      dirs.push(value)
+    }
+  }
+  dirs
+}
+
+///|
+/// Turn a single spec-directory value into a spec-directory chain.
+///
+/// The empty string and the auto-detect sentinel both mean "not specified" and
+/// map to an empty chain, which leaves auto-detection plus the project-local
+/// overlay in charge. Used by callers that still carry one `--specs-dir`-shaped
+/// string (a `.indexion.toml` value, an MCP tool parameter) and need to hand it
+/// to an API that takes a chain.
+pub fn specs_dirs_of(specs_dir : String) -> Array[String] {
+  if specs_dir.length() == 0 || specs_dir == @help.SPECS_DIR_AUTO {
+    []
+  } else {
+    [specs_dir]
+  }
+}
+
+///|
 /// Read a flag (boolean) option from `argparse.Matches`.
 pub fn arg_flag(
   matches : @argparse.Matches,

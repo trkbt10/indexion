@@ -2,7 +2,7 @@
 fn report_config(config : ReconcileConfig) -> ReconcileReportConfig {
   {
     target_dir: config.target_dir,
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
     index_dir: config.index_dir,
     review_results_path: config.review_results_path,
     doc_scope: config.documents.scope_name,
@@ -169,7 +169,7 @@ async fn run_analysis(config : ReconcileConfig) -> AnalysisResult? {
     db
   }
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir=config.target_dir,
   )
   let kgf_ignore = registry.collect_ignore_patterns()

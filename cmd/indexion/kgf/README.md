@@ -13,7 +13,14 @@ indexion kgf [options] <command>
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--spec=NAME` | Specify KGF spec name (auto-detect if omitted) | auto |
-| `--kgf-dir=DIR` | KGF specs directory | `kgfs` |
+| `--kgf-dir=DIR` | KGF specs directory (repeatable: first is the base set, each later one is an overlay) | auto-detect + `.indexion/kgfs/` |
+
+Spec resolution is layered. With no `--kgf-dir`, the base set is auto-detected
+and the analysed project's `.indexion/kgfs/` is layered on top; a spec whose
+`language:` header matches one already loaded replaces it. Repeating
+`--kgf-dir` replaces that chain with the directories given, in order. See
+[Installation → KGF Specs Location](../../../docs/installation.md) for the
+full resolution order.
 
 ## Subcommands
 
@@ -26,14 +33,20 @@ indexion kgf [options] <command>
 | `tokens` | Show tokenization only |
 | `events` | Show parse events only |
 | `edges` | Show generated edges only |
-| `check` | Validate KGF spec structure (see [Validation](#validation-kgf-check)) |
+| `check` | Validate spec structure; with no name, checks the whole resolved set (see [Validation](#validation-kgf-check)) |
 | `classify train` | Train a Naive Bayes section classifier from labeled documents |
 
 ## Examples
 
 ```bash
-# List installed specs
+# List the resolved specs, showing each one's origin layer and file
 indexion kgf list
+
+# Validate every spec in the resolved set, overlay included
+indexion kgf check
+
+# Layer a local spec directory over the installed set
+indexion kgf list --kgf-dir=/opt/kgfs --kgf-dir=./team-kgfs
 
 # Inspect a file (auto-detect language)
 indexion kgf inspect src/config/app.mbt
@@ -58,8 +71,11 @@ indexion kgf classify train --spec=technical-document --min-weight=3.5 /path/to/
 indexion kgf check rust
 indexion kgf check kgfs/programming/rust.kgf
 
-# Every spec in the KGF directory, plus the cross-spec source-pattern report
+# Every spec in the resolved chain, plus the cross-spec source-pattern report.
+# Naming nothing means the same thing, so a project can check its overlay
+# together with the specs it layers over.
 indexion kgf check --all
+indexion kgf check
 ```
 
 Every run ends with a summary line:
@@ -68,9 +84,12 @@ Every run ends with a summary line:
 Checked 83 spec(s): 0 error(s), 284 warning(s)
 ```
 
-`--all` takes no positional argument. It validates each registered spec in
-name order and then adds the registry-level `[sources]` report, which is the
-only diagnostic that needs more than one spec to detect.
+`--all` takes no positional argument, and is implied when none is given. It
+validates each registered spec in name order and then adds the registry-level
+`[sources]` report, which is the only diagnostic that needs more than one spec
+to detect. The set checked is the resolved chain — base plus overlays — and
+`extends:` is resolved against that same flattened set, so a spec may extend a
+base another layer provides.
 
 ### Errors
 

@@ -3,7 +3,7 @@ priv struct ParsedArgsState {
   config : ReconcileConfig
   explicit_format : Bool
   explicit_doc_scope : Bool
-  explicit_specs_dir : Bool
+  explicit_specs_dirs : Bool
   explicit_index_dir : Bool
   explicit_review_results_path : Bool
   explicit_threshold_seconds : Bool
@@ -56,10 +56,13 @@ fn replace_document_specs(
 }
 
 ///|
-fn resolve_specs_dir(target_dir : String, specs_dir? : String = "") -> String {
-  @config_paths.resolve_reconcile_specs_dir(
+fn resolve_specs_dirs(
+  target_dir : String,
+  specs_dirs? : Array[String] = [],
+) -> Array[String] {
+  @config_paths.resolve_reconcile_specs_dirs(
     target_dir,
-    explicit_specs_dir=specs_dir,
+    explicit_specs_dirs=specs_dirs,
   )
 }
 
@@ -180,7 +183,7 @@ fn merge_file_config(
 ///|
 fn apply_doc_scope(config : ReconcileConfig) -> ReconcileConfig {
   let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir=config.target_dir,
   )
   let (index_patterns, wildcard_patterns) = collect_document_patterns(registry)
@@ -290,10 +293,7 @@ pub fn command() -> @argparse.Command {
         "scope",
         about="Doc scope preset: custom, package-docs, tree-docs",
       ),
-      @argparse.OptionArg(
-        "specs-dir",
-        about="KGF specs directory (default: auto-detect)",
-      ),
+      @help.specs_dir_option(),
       @argparse.OptionArg(
         "index-dir",
         about="Cache directory (default: .indexion/cache/reconcile)",
@@ -388,14 +388,7 @@ fn parse_args_state_from_matches(
       }
     _ => ()
   }
-  // specs-dir
-  match matches.values.get("specs-dir") {
-    Some(arr) =>
-      if arr.length() > 0 {
-        config = { ..config, specs_dir: arr[0], }
-      }
-    _ => ()
-  }
+  config = { ..config, specs_dirs: @common.arg_specs_dirs(matches), }
   // index-dir
   match matches.values.get("index-dir") {
     Some(arr) =>
@@ -502,7 +495,7 @@ fn parse_args_state_from_matches(
     config,
     explicit_format: is_from_argv(matches, "format"),
     explicit_doc_scope: is_from_argv(matches, "scope"),
-    explicit_specs_dir: is_from_argv(matches, "specs-dir"),
+    explicit_specs_dirs: is_from_argv(matches, @help.SPECS_DIR_ARG),
     explicit_index_dir: is_from_argv(matches, "index-dir"),
     explicit_review_results_path: is_from_argv(matches, "review-results"),
     explicit_threshold_seconds: is_from_argv(matches, "threshold-seconds"),
@@ -541,7 +534,7 @@ pub fn resolve_config_from_matches(
     ..cli,
     target_dir,
     config_path,
-    specs_dir: resolve_specs_dir(target_dir, specs_dir=cli.specs_dir),
+    specs_dirs: resolve_specs_dirs(target_dir, specs_dirs=cli.specs_dirs),
   }
   let merged0 = merge_file_config({ ..parsed, config: base, }, file_config)
   let merged = if (parsed.explicit_doc_paths || parsed.explicit_doc_specs) &&
@@ -578,10 +571,10 @@ pub fn resolve_config_from_matches(
         "",
       )
     },
-    specs_dir: if parsed.explicit_specs_dir {
-      @config_paths.resolve_path(target_dir, merged.specs_dir)
+    specs_dirs: if parsed.explicit_specs_dirs {
+      resolve_specs_dirs(target_dir, specs_dirs=merged.specs_dirs)
     } else {
-      resolve_specs_dir(target_dir)
+      resolve_specs_dirs(target_dir)
     },
   })
 }

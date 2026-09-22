@@ -6,10 +6,11 @@ import {
   "trkbt10/indexion/src/digest/config",
   "trkbt10/indexion/src/digest/index",
   "trkbt10/indexion/src/kgf/cas/types",
+  "trkbt10/indexion/src/pipeline",
 }
 
 // Values
-pub fn build_graph_from_source(String, String, progress? : ((Int, Int, String)) -> Unit) -> GraphBuildResult?
+pub fn build_graph_from_source(String, Array[String], progress? : ((Int, Int, String)) -> Unit) -> GraphBuildResult?
 
 pub fn has_relevant_changed_path(Array[String]) -> Bool
 
@@ -21,6 +22,8 @@ pub fn load_graph(String) -> @graph.CodeGraph?
 
 pub fn load_index_with_graph(String, @config.DigestConfig) -> @index.DigestIndex?
 
+pub fn load_signatures(String) -> SignaturesFile?
+
 pub async fn may_be_stale(String, String) -> Bool
 
 pub fn resolve_index_dir(String) -> String?
@@ -29,9 +32,15 @@ pub fn resolve_source_dir_for_index(String, String) -> String
 
 pub fn resolve_workspace_dir(String) -> String
 
-pub async fn update_index(String, String, String, @config.DigestConfig, progress? : ((Int, Int, String)) -> Unit) -> UpdateResult?
+pub fn save_signatures(String, Array[@pipeline.FileSignature]) -> Bool
 
-pub async fn update_index_if_stale(String, String, String, @config.DigestConfig, progress? : ((Int, Int, String)) -> Unit) -> UpdateResult?
+pub fn signatures_match_disk(SignaturesFile) -> Bool
+
+pub fn signatures_path(String) -> String
+
+pub async fn update_index(String, String, Array[String], @config.DigestConfig, progress? : ((Int, Int, String)) -> Unit) -> UpdateResult?
+
+pub async fn update_index_if_stale(String, String, Array[String], @config.DigestConfig, progress? : ((Int, Int, String)) -> Unit) -> UpdateResult?
 
 // Errors
 
@@ -39,6 +48,11 @@ pub async fn update_index_if_stale(String, String, String, @config.DigestConfig,
 pub struct GraphBuildResult {
   graph : @graph.CodeGraph
   file_hashes : Map[String, @types.ContentHash]
+  signatures : Array[@pipeline.FileSignature]
+}
+
+pub struct SignaturesFile {
+  signatures : Map[String, @pipeline.FileSignature]
 }
 
 pub struct UpdateResult {
@@ -52,4 +66,3 @@ pub struct UpdateResult {
 // Type aliases
 
 // Traits
-

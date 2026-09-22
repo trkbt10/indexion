@@ -63,7 +63,7 @@ pub(all) struct ExploreConfig {
   extensions : Array[String] // file extensions to include
   includes : Array[String] // glob patterns to include
   excludes : Array[String] // glob patterns to exclude
-  specs_dir : String
+  specs_dirs : Array[String]
 }
 
 ///|
@@ -78,7 +78,7 @@ pub fn ExploreConfig::default() -> ExploreConfig {
     extensions: [],
     includes: [],
     excludes: [],
-    specs_dir: "kgfs",
+    specs_dirs: [],
   }
 }
 
@@ -120,10 +120,7 @@ pub fn ExploreConfig::from_matches(
     Some(arr) => arr
     _ => []
   }
-  let specs_dir = match matches.values.get("specs-dir") {
-    Some(arr) => if arr.length() > 0 { arr[0] } else { "kgfs" }
-    _ => "kgfs"
-  }
+  let specs_dirs = @common.arg_specs_dirs(matches)
   let fdr = match matches.values.get("fdr") {
     Some(arr) =>
       if arr.length() > 0 {
@@ -142,7 +139,7 @@ pub fn ExploreConfig::from_matches(
     extensions,
     includes,
     excludes,
-    specs_dir,
+    specs_dirs,
   }
 }
 
@@ -180,9 +177,7 @@ pub fn command() -> @argparse.Command {
         about="FDR correction level (0=disabled, 0.05=5% false discovery rate)",
         default_values=["0"],
       ),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
     ],
     positionals=[
       @argparse.PositionArg(
@@ -436,7 +431,7 @@ fn run_core(
     return None
   }
   let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dirs=config.target_dirs,
   )
   let files = @common.collect_files(

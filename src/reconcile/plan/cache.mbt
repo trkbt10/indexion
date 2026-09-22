@@ -125,7 +125,9 @@ pub fn cleanup_stale_index(index_dir : String) -> Unit {
 fn build_config_hash(config : ReconcileConfig) -> String {
   make_hash([
     config.target_dir,
-    config.specs_dir,
+    // The whole spec chain, so layering or removing an overlay invalidates
+    // the cache the same way changing the base directory does.
+    config.specs_dirs.join("\u0001"),
     config.index_dir,
     config.format,
     config.documents.scope_name,

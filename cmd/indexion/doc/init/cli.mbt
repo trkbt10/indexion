@@ -25,14 +25,14 @@
 /// Configuration for doc init command.
 pub struct InitConfig {
   target_dir : String
-  specs_dir : String // KGF specs directory
+  specs_dirs : Array[String] // KGF specs directory
   force : Bool // overwrite existing files
 }
 
 ///|
 /// Create default InitConfig.
 pub fn InitConfig::default() -> InitConfig {
-  { target_dir: ".", specs_dir: "kgfs", force: false, }
+  { target_dir: ".", specs_dirs: [], force: false, }
 }
 
 ///|
@@ -42,12 +42,9 @@ pub fn InitConfig::from_matches(matches : @argparse.Matches) -> InitConfig {
     Some(arr) => if arr.length() > 0 { arr[0] } else { "." }
     _ => "."
   }
-  let specs_dir = match matches.values.get("specs-dir") {
-    Some(arr) => if arr.length() > 0 { arr[0] } else { "kgfs" }
-    _ => "kgfs"
-  }
+  let specs_dirs = @common.arg_specs_dirs(matches)
   let force = matches.flags.get("force").unwrap_or(false)
-  { target_dir, specs_dir, force, }
+  { target_dir, specs_dirs, force, }
 }
 
 ///|
@@ -56,11 +53,7 @@ pub fn command() -> @argparse.Command {
   @argparse.Command(
     "init",
     about="Initialize documentation template structure",
-    options=[
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
-    ],
+    options=[@help.specs_dir_option()],
     flags=[
       @argparse.FlagArg("force", short='f', about="Overwrite existing files"),
     ],
@@ -81,7 +74,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   let target_dir = @common.normalize_path(config.target_dir)
   // Load KGF registry
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir~,
   )
   // Detect project type and load info

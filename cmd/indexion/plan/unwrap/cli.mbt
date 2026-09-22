@@ -34,7 +34,7 @@ pub(all) struct UnwrapConfig {
   include_self : Bool
   include_bare : Bool
   mode : String // "report", "dry-run", "fix"
-  specs_dir : String // KGF specs directory
+  specs_dirs : Array[String] // KGF specs directory
 }
 
 ///|
@@ -49,7 +49,7 @@ pub fn UnwrapConfig::default() -> UnwrapConfig {
     include_self: false,
     include_bare: false,
     mode: "report",
-    specs_dir: "kgfs",
+    specs_dirs: [],
   }
 }
 
@@ -72,10 +72,7 @@ pub fn UnwrapConfig::from_matches(matches : @argparse.Matches) -> UnwrapConfig {
     Some(arr) => if arr.length() > 0 { arr[0] } else { "md" }
     _ => "md"
   }
-  let specs_dir = match matches.values.get("specs-dir") {
-    Some(arr) => if arr.length() > 0 { arr[0] } else { "kgfs" }
-    _ => "kgfs"
-  }
+  let specs_dirs = @common.arg_specs_dirs(matches)
   let target_dir = match matches.values.get("directory") {
     Some(arr) => if arr.length() > 0 { arr[0] } else { "" }
     _ => ""
@@ -103,7 +100,7 @@ pub fn UnwrapConfig::from_matches(matches : @argparse.Matches) -> UnwrapConfig {
     include_self,
     include_bare,
     mode,
-    specs_dir,
+    specs_dirs,
   }
 }
 
@@ -122,9 +119,7 @@ pub fn command() -> @argparse.Command {
         about="Output format: md, json, text, lcov, cobertura",
         default_values=["md"],
       ),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
     ],
     flags=[
       @argparse.FlagArg(
@@ -168,7 +163,7 @@ fn collect_wrappers(
     return None
   }
   let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir=config.target_dir,
   )
   let files = @common.collect_files(

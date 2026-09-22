@@ -160,12 +160,12 @@ pub async fn may_be_stale(workspace_dir : String, index_dir : String) -> Bool {
 ///|
 pub fn build_graph_from_source(
   source_dir : String,
-  specs_dir : String,
+  specs_dirs : Array[String],
   progress? : ((Int, Int, String)) -> Unit = fn(_info) { () },
 ) -> GraphBuildResult? {
   let t = @pipeline.now_ms()
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir~,
+    specs_dirs~,
     target_dir=source_dir,
   )
   @pipeline.stage("[digest] load registry", "", @pipeline.elapsed_ms(t))
@@ -226,14 +226,14 @@ pub fn build_graph_from_source(
 pub async fn update_index(
   workspace_dir : String,
   index_dir : String,
-  specs_dir : String,
+  specs_dirs : Array[String],
   digest_config : @dconfig.DigestConfig,
   progress? : ((Int, Int, String)) -> Unit = fn(_info) { () },
 ) -> UpdateResult? {
   let total_start = @pipeline.now_ms()
   @pipeline.stage("[digest] update_index start", "", 0UL)
   let build_result = match
-    build_graph_from_source(workspace_dir, specs_dir, progress~) {
+    build_graph_from_source(workspace_dir, specs_dirs, progress~) {
     Some(r) => r
     None => return None
   }
@@ -289,7 +289,7 @@ pub async fn update_index(
 pub async fn update_index_if_stale(
   workspace_dir : String,
   index_dir : String,
-  specs_dir : String,
+  specs_dirs : Array[String],
   digest_config : @dconfig.DigestConfig,
   progress? : ((Int, Int, String)) -> Unit = fn(_info) { () },
 ) -> UpdateResult? {
@@ -318,5 +318,5 @@ pub async fn update_index_if_stale(
       }
     None => ()
   }
-  update_index(workspace_dir, index_dir, specs_dir, digest_config, progress~)
+  update_index(workspace_dir, index_dir, specs_dirs, digest_config, progress~)
 }

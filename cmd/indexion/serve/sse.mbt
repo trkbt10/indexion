@@ -137,7 +137,7 @@ async fn handle_grep_stream(
     },
     includes: json_string_array(json, "includes"),
     excludes: json_string_array(json, "excludes"),
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
     semantic: json_string(json, "semantic", ""),
     undocumented: json_bool(json, "undocumented", false),
     context_lines: 0,
@@ -264,7 +264,7 @@ async fn handle_explore_stream(
     extensions: json_string_array(json, "extensions"),
     includes: json_string_array(json, "includes"),
     excludes: json_string_array(json, "excludes"),
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
   }
   sse_progress(conn, "comparing", "Analyzing similarity...")
   @async.sleep(0)

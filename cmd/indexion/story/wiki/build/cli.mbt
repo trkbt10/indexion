@@ -10,7 +10,7 @@ pub struct BuildConfig {
   spec : Array[String]
   wiki_dir : String
   actor : String
-  specs_dir : String
+  specs_dirs : Array[String]
 }
 
 ///|
@@ -19,7 +19,7 @@ pub fn BuildConfig::from_matches(matches : @argparse.Matches) -> BuildConfig {
     spec: @common.arg_list(matches, "spec"),
     wiki_dir: @common.arg_str(matches, "wiki-dir", ""),
     actor: @common.arg_str(matches, "actor", "indexion"),
-    specs_dir: @common.arg_str(matches, "specs-dir", "kgfs"),
+    specs_dirs: @common.arg_specs_dirs(matches),
   }
 }
 
@@ -44,11 +44,7 @@ pub fn command() -> @argparse.Command {
         about="Who is building: indexion, agent:<name>, user",
         default_values=["indexion"],
       ),
-      @argparse.OptionArg(
-        "specs-dir",
-        about="KGF specs directory used when building the wiki search index",
-        default_values=["kgfs"],
-      ),
+      @help.specs_dir_option(),
     ],
   )
 }
@@ -79,7 +75,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
       plan,
       config.wiki_dir,
       config.actor,
-      specs_dir=config.specs_dir,
+      specs_dirs=config.specs_dirs,
     ) {
     None => println("Error: failed to build story wiki at " + config.wiki_dir)
     Some(result) => {

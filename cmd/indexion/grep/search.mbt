@@ -8,7 +8,7 @@ fn load_registry_and_files(
   config : GrepConfig,
 ) -> (@kgf_registry.KGFRegistry?, Array[(String, String)])? {
   let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dirs=paths,
   )
   match registry {
@@ -227,7 +227,7 @@ pub fn prepare_pattern_search(
     return None
   }
   let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dirs=paths,
   )
   let files = collect_search_files(
@@ -237,7 +237,7 @@ pub fn prepare_pattern_search(
       Some(r) => r
       None =>
         @kgf_features.load_registry_or_empty(
-          specs_dir=config.specs_dir,
+          specs_dirs=config.specs_dirs,
           target_dirs=paths,
         )
     },

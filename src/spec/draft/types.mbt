@@ -1,7 +1,7 @@
 ///|
 pub(all) struct DraftConfig {
   source_path : String
-  specs_dir : String
+  specs_dirs : Array[String]
   output : String
   format : String
   profile : String
@@ -12,7 +12,7 @@ pub(all) struct DraftConfig {
 pub fn DraftConfig::default() -> DraftConfig {
   {
     source_path: "",
-    specs_dir: "",
+    specs_dirs: [],
     output: "",
     format: "markdown",
     profile: "sdd-requirement",

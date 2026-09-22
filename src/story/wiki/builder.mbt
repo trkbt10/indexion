@@ -19,7 +19,7 @@ pub async fn build_story_wiki(
   plan : StoryWikiPlan,
   wiki_dir : String,
   actor : String,
-  specs_dir? : String = "kgfs",
+  specs_dirs? : Array[String] = [],
 ) -> BuildResult? {
   let manifest = match @wiki_manifest.load_manifest(wiki_dir) {
     Some(m) => m
@@ -77,7 +77,7 @@ pub async fn build_story_wiki(
     log.save(wiki_dir)
   }
   if written.length() > 0 || !@wiki_search.exists(wiki_dir) {
-    rebuild_story_wiki_search_index(wiki_dir, specs_dir)
+    rebuild_story_wiki_search_index(wiki_dir, specs_dirs)
   }
   Some({ written, skipped, })
 }
@@ -95,11 +95,11 @@ fn manifest_contains(manifest : @wiki_types.WikiManifest, id : String) -> Bool {
 ///|
 async fn rebuild_story_wiki_search_index(
   wiki_dir : String,
-  specs_dir : String,
+  specs_dirs : Array[String],
 ) -> Unit {
   let provider = @embed_config.TfIdf(@embed_config.DEFAULT_TFIDF_DIM)
   let result = @wiki_workspace.update_search_index(
-    wiki_dir, specs_dir, provider,
+    wiki_dir, specs_dirs, provider,
   ) catch {
     @embed.ParseError(msg) => {
       println("Warning: wiki search index not built: " + msg)

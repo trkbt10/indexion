@@ -22,7 +22,7 @@ pub(all) struct SearchConfig {
   min_score : Double
   includes : Array[String]
   excludes : Array[String]
-  specs_dir : String
+  specs_dirs : Array[String]
   files_only : Bool
   json_output : Bool
   filter_str : String
@@ -61,7 +61,7 @@ pub fn SearchConfig::from_matches(matches : @argparse.Matches) -> SearchConfig {
     min_score: @common.parse_double(get_str("min-score", "0.05")),
     includes: get_all("include"),
     excludes: get_all("exclude"),
-    specs_dir: get_str("specs-dir", "kgfs"),
+    specs_dirs: @common.arg_specs_dirs(matches),
     files_only: get_flag("files"),
     json_output: get_flag("json"),
     filter_str: get_str("filter", ""),
@@ -103,9 +103,7 @@ pub fn command() -> @argparse.Command {
       ),
       @argparse.OptionArg("include", action=Append, about=@help.include_pattern),
       @argparse.OptionArg("exclude", action=Append, about=@help.exclude_pattern),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
       @argparse.OptionArg(
         "filter",
         short='f',
@@ -160,7 +158,7 @@ fn load_digest_index(workspace_dir : String) -> @index.DigestIndex? {
       provider: "auto",
       dim: @dconfig.DEFAULT_TFIDF_DIM,
       strategy: "hnsw",
-      specs_dir: "kgfs",
+      specs_dirs: [],
       api_key_env: @dconfig.DEFAULT_API_KEY_ENV,
       api_base_url: @dconfig.DEFAULT_API_BASE_URL,
       model: @dconfig.DEFAULT_EMBEDDING_MODEL,
@@ -197,7 +195,7 @@ fn build_digest_cli_config(
     strategy: "hnsw",
     top_k: search_config.top_k,
     min_score: search_config.min_score,
-    specs_dir: search_config.specs_dir,
+    specs_dirs: search_config.specs_dirs,
     api_key_env: search_config.api_key_env,
     api_base_url: search_config.base_url,
     model: search_config.model,
@@ -234,7 +232,7 @@ async fn update_digest_index_if_stale(
     @digest_workspace.update_index_if_stale(
       workspace_dir,
       index_dir,
-      config.specs_dir,
+      config.specs_dirs,
       digest_config,
     ) {
     Some(result) =>
@@ -311,7 +309,7 @@ async fn update_wiki_index_if_stale(
   match
     @wiki_workspace.update_search_index_if_stale(
       wiki_dir,
-      config.specs_dir,
+      config.specs_dirs,
       provider,
     ) {
     Some(result) =>

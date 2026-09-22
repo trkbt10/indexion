@@ -466,6 +466,131 @@ pub fn find_kgfs_dir(
 }
 
 ///|
+/// Subdirectory name under `.indexion/` holding project-local KGF specs.
+/// Mirrors the layout of the installed spec set, so a project can place
+/// `.indexion/kgfs/programming/rust.kgf` — or just `.indexion/kgfs/rust.kgf` —
+/// to replace one installed spec without copying the rest.
+pub const KGFS_OVERLAY_SUBDIR : String = "kgfs"
+
+///|
+/// Relative path of the project-local KGF overlay directory from the project
+/// root. Used in user-facing messages and documentation.
+pub fn kgfs_overlay_relative() -> String {
+  ".indexion/" + KGFS_OVERLAY_SUBDIR
+}
+
+///|
+/// Find the project-local KGF spec overlay directory for the analysed target.
+///
+/// Walks up from each target directory to the nearest project root (the same
+/// markers `find_project_root_from` uses) and returns `<root>/.indexion/kgfs`
+/// when it exists. Targets that resolve to the same overlay contribute it once.
+pub fn find_kgfs_overlay_dirs(
+  target_dir? : String = ".",
+  target_dirs? : Array[String] = [],
+) -> Array[String] {
+  let search_dirs = normalize_kgfs_target_dirs(target_dir, target_dirs)
+  let overlays : Array[String] = []
+  for dir in search_dirs {
+    let start = resolve_to_existing_dir(dir)
+    match resolve_project_indexion_dir(start, KGFS_OVERLAY_SUBDIR) {
+      Some(candidate) => {
+        let normalized = normalize_path(candidate)
+        if is_valid_dir(normalized) && !contains_path(overlays, normalized) {
+          overlays.push(normalized)
+        }
+      }
+      None => ()
+    }
+  }
+  overlays
+}
+
+///|
+/// Resolve the full, ordered list of KGF spec directories to load.
+///
+/// This is the SoT for spec-set composition. The result is layered: index 0 is
+/// the base set resolved exactly as `find_kgfs_dir` does today, and every
+/// following entry is an overlay applied on top of it, so a spec found later
+/// replaces an earlier one of the same language name.
+///
+/// Layering rules:
+/// - `explicit_paths` (repeated `--specs-dir`) replaces the whole chain: the
+///   first entry is the base, the rest are overlays, and no implicit overlay
+///   is added. Giving the option once therefore behaves exactly as before.
+/// - Otherwise the base comes from `find_kgfs_dir`, and the analysed project's
+///   `.indexion/kgfs/` is layered on top when present.
+/// - A directory already in the chain is never added twice. This matters for
+///   this repository, whose own `kgfs/` submodule *is* the base set: resolving
+///   it as base and then again as an overlay would load it twice.
+///
+/// Returns an empty array when no base set can be found and no overlay exists.
+pub fn resolve_kgfs_dirs(
+  explicit_paths? : Array[String] = [],
+  explicit_path? : String = "",
+  target_dir? : String = ".",
+  target_dirs? : Array[String] = [],
+) -> Array[String] {
+  let requested = collect_explicit_kgfs_paths(explicit_paths, explicit_path)
+  let dirs : Array[String] = []
+  if requested.length() > 0 {
+    let search_dirs = normalize_kgfs_target_dirs(target_dir, target_dirs)
+    let base_dir = if search_dirs.length() > 0 { search_dirs[0] } else { "." }
+    for path in requested {
+      match find_explicit_kgfs_candidate(base_dir, path) {
+        Some(resolved) => push_unique_path(dirs, resolved)
+        None => ()
+      }
+    }
+    return dirs
+  }
+  match find_kgfs_dir(target_dir~, target_dirs~) {
+    Some(base) => push_unique_path(dirs, base)
+    None => ()
+  }
+  for overlay in find_kgfs_overlay_dirs(target_dir~, target_dirs~) {
+    push_unique_path(dirs, overlay)
+  }
+  dirs
+}
+
+///|
+/// Merge the repeated `--specs-dir` values with the single-value form used by
+/// callers that have not been migrated, dropping empty entries.
+fn collect_explicit_kgfs_paths(
+  explicit_paths : Array[String],
+  explicit_path : String,
+) -> Array[String] {
+  let requested : Array[String] = []
+  for path in explicit_paths {
+    if path.length() > 0 {
+      push_unique_path(requested, path)
+    }
+  }
+  if explicit_path.length() > 0 {
+    push_unique_path(requested, explicit_path)
+  }
+  requested
+}
+
+///|
+fn contains_path(paths : Array[String], path : String) -> Bool {
+  for existing in paths {
+    if existing == path {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn push_unique_path(paths : Array[String], path : String) -> Unit {
+  if !contains_path(paths, path) {
+    paths.push(path)
+  }
+}
+
+///|
 /// Resolve the directory containing KGF transpile specs (`<src>-to-<tgt>.json`).
 ///
 /// Transpile specs are mappings between two KGFs and live at

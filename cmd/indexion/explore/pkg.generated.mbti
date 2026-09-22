@@ -24,7 +24,7 @@ pub(all) struct ExploreConfig {
   extensions : Array[String]
   includes : Array[String]
   excludes : Array[String]
-  specs_dir : String
+  specs_dirs : Array[String]
 }
 pub fn ExploreConfig::default() -> Self
 pub fn ExploreConfig::from_matches(@argparse.Matches) -> Self
@@ -32,4 +32,3 @@ pub fn ExploreConfig::from_matches(@argparse.Matches) -> Self
 // Type aliases
 
 // Traits
-

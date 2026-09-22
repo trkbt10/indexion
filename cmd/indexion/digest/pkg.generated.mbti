@@ -10,7 +10,7 @@ import {
 // Values
 pub fn build_digest_config(CliConfig, file_providers? : Array[@trkbt10/indexion/src/config.ProviderFileEntry]) -> @trkbt10/indexion/src/digest/config.DigestConfig
 
-pub fn build_graph_from_source(String, String, quiet? : Bool) -> @workspace.GraphBuildResult?
+pub fn build_graph_from_source(String, Array[String], quiet? : Bool) -> @workspace.GraphBuildResult?
 
 pub fn build_hint() -> String
 
@@ -45,7 +45,7 @@ pub(all) struct CliConfig {
   strategy : String
   top_k : Int
   min_score : Double
-  specs_dir : String
+  specs_dirs : Array[String]
   api_key_env : String
   api_base_url : String
   model : String
@@ -61,4 +61,3 @@ pub fn CliConfig::from_matches(@argparse.Matches) -> Self
 pub using @workspace {type GraphBuildResult}
 
 // Traits
-

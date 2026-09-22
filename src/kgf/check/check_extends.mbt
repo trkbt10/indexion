@@ -43,8 +43,27 @@ pub fn check_extends(
 /// This is the set both the registry and `check_extends` resolve `extends:`
 /// against, so `kgf check` and a normal load agree on what a base name means.
 pub fn load_spec_sources(dir : String) -> Map[String, @parser.KGFSpecSource] {
+  load_spec_sources_from_dirs([dir])
+}
+
+///|
+/// Split every `.kgf` file under a layered chain of directories into raw
+/// sections, keyed by the `language:` each one declares.
+///
+/// `dirs[0]` is the base set and each later entry is an overlay layered on
+/// top, so a spec whose language repeats replaces the earlier one. Because the
+/// map is keyed by language and filled in chain order, flattening and
+/// overriding fall out of the fill itself — which is exactly what
+/// `KGFRegistry::load_from_dirs` does before it resolves `extends:`, so
+/// `kgf check` and a normal load agree on what a base name means even when an
+/// overlay replaced the spec that name refers to.
+pub fn load_spec_sources_from_dirs(
+  dirs : Array[String],
+) -> Map[String, @parser.KGFSpecSource] {
   let by_language : Map[String, @parser.KGFSpecSource] = Map([])
-  collect_sources(dir, by_language)
+  for dir in dirs {
+    collect_sources(dir, by_language)
+  }
   by_language
 }
 

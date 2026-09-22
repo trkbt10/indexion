@@ -31,7 +31,7 @@ pub(all) struct SearchConfig {
   min_score : Double
   includes : Array[String]
   excludes : Array[String]
-  specs_dir : String
+  specs_dirs : Array[String]
   files_only : Bool
   json_output : Bool
   filter_str : String
@@ -47,4 +47,3 @@ pub fn SearchConfig::from_matches(@argparse.Matches) -> Self
 // Type aliases
 
 // Traits
-

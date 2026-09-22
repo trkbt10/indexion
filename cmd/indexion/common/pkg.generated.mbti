@@ -18,6 +18,8 @@ pub fn arg_int(@argparse.Matches, String, Int) -> Int
 
 pub fn arg_list(@argparse.Matches, String) -> Array[String]
 
+pub fn arg_specs_dirs(@argparse.Matches, key? : String) -> Array[String]
+
 pub fn arg_str(@argparse.Matches, String, String) -> String
 
 pub fn capitalize(String) -> String
@@ -82,6 +84,8 @@ pub fn render_inline_code_list(StringBuilder, String, Array[String]) -> Unit
 
 pub fn slugify(String) -> String
 
+pub fn specs_dirs_of(String) -> Array[String]
+
 pub fn split_by_char(String, Char) -> Array[String]
 
 pub fn split_by_slash(String) -> Array[String]
@@ -105,4 +109,3 @@ pub fn write_output(String, String, label? : String) -> Unit
 // Type aliases
 
 // Traits
-
