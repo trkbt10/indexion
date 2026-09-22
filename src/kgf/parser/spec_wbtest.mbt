@@ -1412,3 +1412,125 @@ test "parse_attrs: bare scope push and pop set the operation param" {
     Some("block"),
   )
 }
+
+// ============================================================
+// namespace_map / source_roots parser tests
+// ============================================================
+
+///|
+test "parse_resolver namespace_map single-line: file @ query" {
+  let text =
+    #|sources: .php
+    #|resolve:
+    #|  - namespace_map: composer.json @ autoload.psr-4
+    #|  - ext: .php
+  let resolver = parse_resolver(text)
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 2)
+  assert_eq(chain[0].get_step_type().as_string(), "namespace_map")
+  assert_eq(chain[0].get_file(), "composer.json")
+  assert_eq(chain[0].get_query(), "autoload.psr-4")
+  // No `+` part: the map's values are relative to the manifest itself.
+  assert_eq(chain[0].get_base_query(), "")
+}
+
+///|
+test "parse_resolver namespace_map single-line with base query" {
+  let text =
+    #|resolve:
+    #|  - namespace_map: tsconfig.json @ compilerOptions.paths + compilerOptions.baseUrl
+  let resolver = parse_resolver(text)
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 1)
+  assert_eq(chain[0].get_step_type().as_string(), "namespace_map")
+  assert_eq(chain[0].get_file(), "tsconfig.json")
+  assert_eq(chain[0].get_query(), "compilerOptions.paths")
+  assert_eq(chain[0].get_base_query(), "compilerOptions.baseUrl")
+}
+
+///|
+test "parse_resolver namespace_map keeps query alternatives and condition" {
+  let text =
+    #|resolve:
+    #|  - namespace_map: tsconfig.json @ compilerOptions.paths | paths + baseUrl ? type
+  let resolver = parse_resolver(text)
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 1)
+  assert_eq(chain[0].get_file(), "tsconfig.json")
+  assert_eq(chain[0].get_query(), "compilerOptions.paths | paths")
+  assert_eq(chain[0].get_base_query(), "baseUrl")
+  assert_eq(chain[0].get_when_condition(), "type")
+}
+
+///|
+test "parse_resolver namespace_map multi-line form" {
+  let text =
+    #|resolve:
+    #|  -
+    #|    type: namespace_map
+    #|    file: tsconfig.json
+    #|    query: compilerOptions.paths
+    #|    base_query: compilerOptions.baseUrl
+  let resolver = parse_resolver(text)
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 1)
+  assert_eq(chain[0].get_step_type().as_string(), "namespace_map")
+  assert_eq(chain[0].get_file(), "tsconfig.json")
+  assert_eq(chain[0].get_query(), "compilerOptions.paths")
+  assert_eq(chain[0].get_base_query(), "compilerOptions.baseUrl")
+}
+
+///|
+test "parse_resolver namespace_map without a query is not a step" {
+  // A map step with nothing to read is meaningless, so it is dropped rather
+  // than silently matching every module.
+  let text =
+    #|resolve:
+    #|  - namespace_map: composer.json
+    #|  - ext: .php
+  let resolver = parse_resolver(text)
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 1)
+  assert_eq(chain[0].get_step_type().as_string(), "ext")
+}
+
+///|
+test "parse_resolver source_roots single-line with markers" {
+  let text =
+    #|resolve:
+    #|  - source_roots: src/main/java, src/main/kotlin @ pom.xml, build.gradle
+    #|  - ext: .java
+  let resolver = parse_resolver(text)
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 2)
+  assert_eq(chain[0].get_step_type().as_string(), "source_roots")
+  let roots = chain[0].get_files()
+  assert_eq(roots.length(), 2)
+  assert_eq(roots[0], "src/main/java")
+  assert_eq(roots[1], "src/main/kotlin")
+  assert_eq(chain[0].get_file(), "pom.xml, build.gradle")
+}
+
+///|
+test "parse_resolver source_roots without markers anchors at the root" {
+  let text =
+    #|resolve:
+    #|  - source_roots: src/main/java
+  let resolver = parse_resolver(text)
+  let chain = resolver.get_resolve_chain()
+  assert_eq(chain.length(), 1)
+  assert_eq(chain[0].get_files().length(), 1)
+  assert_eq(chain[0].get_files()[0], "src/main/java")
+  assert_eq(chain[0].get_file(), "")
+}
+
+///|
+test "ResolveStepType round-trips the mapping step names" {
+  for name in ["namespace_map", "source_roots"] {
+    let parsed = @types.ResolveStepType::from_string(name)
+    match parsed {
+      Some(t) => assert_eq(t.as_string(), name)
+      None => fail("unknown resolve step type: " + name)
+    }
+  }
+}

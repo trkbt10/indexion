@@ -2190,3 +2190,406 @@ test "resolve_module backslash style module resolves to a file" {
   )
   assert_eq(result, "App/Model/User.php")
 }
+
+// ---------------------------------------------------------------------------
+// Manifest-driven namespace/path mapping (namespace_map, source_roots)
+// ---------------------------------------------------------------------------
+
+///|
+/// A backslash-style spec whose chain maps composer's psr-4 autoload map onto
+/// the tree before probing for files.
+fn psr4_spec() -> @types.ResolverSpec {
+  @types.ResolverSpec::new(
+    relative_prefixes=["./", "../"],
+    module_path_style=@types.ModulePathStyle::from_string("backslash").unwrap(),
+    ns_prefix=Some("vendor/"),
+    ns_segments=2,
+    resolve_chain=[
+      @types.ResolveStep::namespace_map("composer.json", "autoload.psr-4"),
+      @types.ResolveStep::ext([".php"]),
+      @types.ResolveStep::fallback("composer:"),
+    ],
+  )
+}
+
+///|
+test "namespace_map psr-4 maps a namespace prefix onto its directory" {
+  let composer =
+    #|{"autoload": {"psr-4": {"App\\": "src/"}}}
+  let resolver = MockFileResolver::with_contents(
+    ["/project/src/Dto/UserDto.php", "/project/composer.json"],
+    { "/project/composer.json": composer },
+  )
+  let result = resolve_module(
+    psr4_spec(),
+    "php",
+    "/project/src/UserService.php",
+    "App\\Dto\\UserDto",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "src/Dto/UserDto.php")
+}
+
+///|
+test "namespace_map prefers the longest matching namespace prefix" {
+  // Both keys match `App\Dto\UserDto`; the more specific one must win, even
+  // though it is declared second and a file exists behind BOTH mappings.
+  let composer =
+    #|{"autoload": {"psr-4": {"App\\": "src/", "App\\Dto\\": "custom/dto/"}}}
+  let resolver = MockFileResolver::with_contents(
+    [
+      "/project/src/Dto/UserDto.php", "/project/custom/dto/UserDto.php", "/project/composer.json",
+    ],
+    { "/project/composer.json": composer },
+  )
+  let result = resolve_module(
+    psr4_spec(),
+    "php",
+    "/project/src/UserService.php",
+    "App\\Dto\\UserDto",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "custom/dto/UserDto.php")
+}
+
+///|
+test "namespace_map falls through when no key matches" {
+  // `GuzzleHttp\Client` matches no psr-4 key, so the step contributes nothing
+  // and the chain runs on — landing on the ns_prefix fallback, which names the
+  // package the class belongs to.
+  let composer =
+    #|{"autoload": {"psr-4": {"App\\": "src/"}}}
+  let resolver = MockFileResolver::with_contents(["/project/composer.json"], {
+    "/project/composer.json": composer,
+  })
+  let result = resolve_module(
+    psr4_spec(),
+    "php",
+    "/project/src/UserService.php",
+    "GuzzleHttp\\Client",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "vendor/GuzzleHttp\\Client")
+}
+
+///|
+test "namespace_map falls through when the mapped file is absent" {
+  // The key matches, but nothing is behind it: the module is still external.
+  let composer =
+    #|{"autoload": {"psr-4": {"App\\": "src/"}}}
+  let resolver = MockFileResolver::with_contents(["/project/composer.json"], {
+    "/project/composer.json": composer,
+  })
+  let result = resolve_module(
+    psr4_spec(),
+    "php",
+    "/project/src/UserService.php",
+    "App\\Missing\\Thing",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "vendor/App\\Missing")
+}
+
+///|
+test "ns_prefix fallback fires only after file probing" {
+  // The regression this ordering exists for: with the fallback decided up
+  // front, ANY backslash id was declared external before a file was looked
+  // at, so a project's own classes could never resolve.
+  let composer =
+    #|{"autoload": {"psr-4": {"App\\": "src/"}}}
+  let resolver = MockFileResolver::with_contents(
+    ["/project/src/Dto/UserDto.php", "/project/composer.json"],
+    { "/project/composer.json": composer },
+  )
+  let spec = psr4_spec()
+  assert_eq(spec.get_ns_prefix(), Some("vendor/"))
+  let result = resolve_module(
+    spec, "php", "/project/src/UserService.php", "App\\Dto\\UserDto", "/project",
+    resolver,
+  )
+  assert_true(result != "vendor/App\\Dto")
+  assert_eq(result, "src/Dto/UserDto.php")
+}
+
+///|
+test "namespace_map uses the NEAREST ancestor manifest" {
+  // Two manifests; the importing file sits under the inner package, whose own
+  // mapping must be the one that applies.
+  let outer =
+    #|{"autoload": {"psr-4": {"App\\": "outer/"}}}
+  let inner =
+    #|{"autoload": {"psr-4": {"App\\": "lib/"}}}
+  let resolver = MockFileResolver::with_contents(
+    [
+      "/project/composer.json", "/project/packages/a/composer.json", "/project/outer/Thing.php",
+      "/project/packages/a/lib/Thing.php",
+    ],
+    {
+      "/project/composer.json": outer,
+      "/project/packages/a/composer.json": inner,
+    },
+  )
+  let result = resolve_module(
+    psr4_spec(),
+    "php",
+    "/project/packages/a/lib/Entry.php",
+    "App\\Thing",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "packages/a/lib/Thing.php")
+}
+
+///|
+/// A slash-style spec that maps tsconfig `paths` (wildcard keys, array values,
+/// stated relative to `baseUrl`) onto the tree.
+fn tspaths_spec() -> @types.ResolverSpec {
+  @types.ResolverSpec::new(
+    relative_prefixes=["./", "../", "/"],
+    module_path_style=get_slash_style(),
+    resolve_chain=[
+      @types.ResolveStep::namespace_map(
+        "tsconfig.json",
+        "compilerOptions.paths",
+        base_query="compilerOptions.baseUrl",
+      ),
+      @types.ResolveStep::index(["/index.ts"]),
+      @types.ResolveStep::ext([".ts"]),
+      @types.ResolveStep::fallback("npm:"),
+    ],
+  )
+}
+
+///|
+test "namespace_map tsconfig paths maps a wildcard alias" {
+  let tsconfig =
+    #|{"compilerOptions": {"baseUrl": ".", "paths": {"@app/*": ["src/*"]}}}
+  let resolver = MockFileResolver::with_contents(
+    ["/project/src/models/user.ts", "/project/tsconfig.json"],
+    { "/project/tsconfig.json": tsconfig },
+  )
+  let result = resolve_module(
+    tspaths_spec(),
+    "typescript",
+    "/project/src/index.ts",
+    "@app/models/user",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "src/models/user.ts")
+}
+
+///|
+test "namespace_map tsconfig paths honours baseUrl" {
+  // The same map, but the values are stated relative to a baseUrl that is not
+  // the manifest's own directory.
+  let tsconfig =
+    #|{"compilerOptions": {"baseUrl": "./packages", "paths": {"@app/*": ["core/src/*"]}}}
+  let resolver = MockFileResolver::with_contents(
+    ["/project/packages/core/src/util.ts", "/project/tsconfig.json"],
+    { "/project/tsconfig.json": tsconfig },
+  )
+  let result = resolve_module(
+    tspaths_spec(),
+    "typescript",
+    "/project/src/index.ts",
+    "@app/util",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "packages/core/src/util.ts")
+}
+
+///|
+test "namespace_map tries every directory an alias lists, in order" {
+  // A tsconfig alias may name several directories; they are the manifest's
+  // own preference order and must be probed in that order.
+  let tsconfig =
+    #|{"compilerOptions": {"paths": {"@app/*": ["missing/*", "src/*"]}}}
+  let resolver = MockFileResolver::with_contents(
+    ["/project/src/thing.ts", "/project/tsconfig.json"],
+    { "/project/tsconfig.json": tsconfig },
+  )
+  let result = resolve_module(
+    tspaths_spec(),
+    "typescript",
+    "/project/src/index.ts",
+    "@app/thing",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "src/thing.ts")
+}
+
+///|
+test "namespace_map with no matching alias falls through to the bare prefix" {
+  let tsconfig =
+    #|{"compilerOptions": {"paths": {"@app/*": ["src/*"]}}}
+  let resolver = MockFileResolver::with_contents(["/project/tsconfig.json"], {
+    "/project/tsconfig.json": tsconfig,
+  })
+  let result = resolve_module(
+    tspaths_spec(),
+    "typescript",
+    "/project/src/index.ts",
+    "lodash",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "npm:lodash")
+}
+
+///|
+test "namespace_map is inert when the manifest is absent" {
+  // No tsconfig anywhere: the step contributes nothing and ordinary
+  // resolution proceeds untouched.
+  let resolver = MockFileResolver::new(["/project/src/thing.ts"])
+  let result = resolve_module(
+    tspaths_spec(),
+    "typescript",
+    "/project/src/index.ts",
+    "./thing",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "src/thing.ts")
+}
+
+///|
+/// A dot-style spec that anchors resolution at conventional source roots.
+fn source_roots_spec(roots : Array[String]) -> @types.ResolverSpec {
+  @types.ResolverSpec::new(
+    relative_prefixes=["./", "../"],
+    module_path_style=get_dot_style(),
+    resolve_chain=[
+      @types.ResolveStep::source_roots(roots, file="pom.xml, build.gradle.kts"),
+      @types.ResolveStep::ext([".java", ".kt"]),
+      @types.ResolveStep::fallback("maven:"),
+    ],
+  )
+}
+
+///|
+test "source_roots resolves a dotted package path from the source root" {
+  let resolver = MockFileResolver::with_contents(
+    ["/project/pom.xml", "/project/src/main/java/com/example/model/User.java"],
+    { "/project/pom.xml": "<project/>" },
+  )
+  let result = resolve_module(
+    source_roots_spec(["src/main/java"]),
+    "java",
+    "/project/src/main/java/com/example/web/UserController.java",
+    "com.example.model.User",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "src/main/java/com/example/model/User.java")
+}
+
+///|
+test "source_roots probes the declared roots in order" {
+  let resolver = MockFileResolver::with_contents(
+    ["/project/build.gradle.kts", "/project/src/main/java/com/example/App.java"],
+    { "/project/build.gradle.kts": "plugins {}" },
+  )
+  // The Kotlin root is listed first but holds nothing; the Java root answers.
+  let result = resolve_module(
+    source_roots_spec(["src/main/kotlin", "src/main/java"]),
+    "kotlin",
+    "/project/src/main/kotlin/com/example/Application.kt",
+    "com.example.App",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "src/main/java/com/example/App.java")
+}
+
+///|
+test "source_roots anchors at the nearest module manifest" {
+  // A multi-module build: the importing file's OWN module's source root must
+  // be used, not the repository root's.
+  let resolver = MockFileResolver::with_contents(
+    [
+      "/project/build.gradle.kts", "/project/mod-a/build.gradle.kts", "/project/src/main/java/com/example/Outer.java",
+      "/project/mod-a/src/main/java/com/example/Inner.java",
+    ],
+    {
+      "/project/build.gradle.kts": "plugins {}",
+      "/project/mod-a/build.gradle.kts": "plugins {}",
+    },
+  )
+  let result = resolve_module(
+    source_roots_spec(["src/main/java"]),
+    "java",
+    "/project/mod-a/src/main/java/com/example/Entry.java",
+    "com.example.Inner",
+    "/project",
+    resolver,
+  )
+  assert_eq(result, "mod-a/src/main/java/com/example/Inner.java")
+}
+
+///|
+test "source_roots falls through for a module no root holds" {
+  let resolver = MockFileResolver::with_contents(["/project/pom.xml"], {
+    "/project/pom.xml": "<project/>",
+  })
+  let result = resolve_module(
+    source_roots_spec(["src/main/java"]),
+    "java",
+    "/project/src/main/java/com/example/App.java",
+    "java.util.Optional",
+    "/project",
+    resolver,
+  )
+  // No source root holds it, so the chain's own fallback names it whole —
+  // which is what a Java project's external dependencies look like.
+  assert_eq(result, "maven:java.util.Optional")
+}
+
+///|
+test "namespace_map works under the docgen pipeline's empty project root" {
+  // The docgen pipeline resolves with root = "" and file paths exactly as the
+  // user spelled them on the command line — which may be absolute. The
+  // manifest walk has to work in that shape too, not only with a root set.
+  let tsconfig =
+    #|{"compilerOptions": {"baseUrl": ".", "paths": {"@app/*": ["src/*"]}}}
+  let resolver = MockFileResolver::with_contents(
+    ["/abs/proj/src/models/user.ts", "/abs/proj/tsconfig.json"],
+    { "/abs/proj/tsconfig.json": tsconfig },
+  )
+  let result = resolve_module(
+    tspaths_spec(),
+    "typescript",
+    "/abs/proj/src/index.ts",
+    "@app/models/user",
+    "",
+    resolver,
+  )
+  // The result is reported relative to the (empty) project root, exactly as
+  // every other step reports its hits.
+  assert_eq(result, "abs/proj/src/models/user.ts")
+}
+
+///|
+test "namespace_map works with a relative file path and empty root" {
+  let tsconfig =
+    #|{"compilerOptions": {"paths": {"@app/*": ["src/*"]}}}
+  let resolver = MockFileResolver::with_contents(
+    ["proj/src/models/user.ts", "proj/tsconfig.json"],
+    { "proj/tsconfig.json": tsconfig },
+  )
+  let result = resolve_module(
+    tspaths_spec(),
+    "typescript",
+    "proj/src/index.ts",
+    "@app/models/user",
+    "",
+    resolver,
+  )
+  assert_eq(result, "proj/src/models/user.ts")
+}

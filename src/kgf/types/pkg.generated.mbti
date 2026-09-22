@@ -184,6 +184,7 @@ pub enum ModulePathStyle {
   Slash
   Dot
   ColonColon
+  Backslash
 } derive(Eq, @debug.Debug)
 pub fn ModulePathStyle::as_string(Self) -> String
 pub fn ModulePathStyle::from_string(String) -> Self?
@@ -239,11 +240,13 @@ pub struct ResolveStep {
   files : Array[String]
   prefix : String
   when_condition : String
+  base_query : String
 }
 pub fn ResolveStep::ancestors(Array[String]) -> Self
 pub fn ResolveStep::exact() -> Self
 pub fn ResolveStep::ext(Array[String]) -> Self
 pub fn ResolveStep::fallback(String) -> Self
+pub fn ResolveStep::get_base_query(Self) -> String
 pub fn ResolveStep::get_file(Self) -> String
 pub fn ResolveStep::get_files(Self) -> Array[String]
 pub fn ResolveStep::get_prefix(Self) -> String
@@ -254,9 +257,11 @@ pub fn ResolveStep::has_condition(Self) -> Bool
 pub fn ResolveStep::index(Array[String]) -> Self
 pub fn ResolveStep::manifest(String, String, when_condition? : String) -> Self
 pub fn ResolveStep::marker(Array[String]) -> Self
-pub fn ResolveStep::new(ResolveStepType, file? : String, query? : String, files? : Array[String], prefix? : String, when_condition? : String) -> Self
+pub fn ResolveStep::namespace_map(String, String, base_query? : String, when_condition? : String) -> Self
+pub fn ResolveStep::new(ResolveStepType, file? : String, query? : String, files? : Array[String], prefix? : String, when_condition? : String, base_query? : String) -> Self
 pub fn ResolveStep::progressive() -> Self
 pub fn ResolveStep::sibling(Array[String]) -> Self
+pub fn ResolveStep::source_roots(Array[String], file? : String) -> Self
 
 pub(all) enum ResolveStepType {
   Exact
@@ -267,6 +272,8 @@ pub(all) enum ResolveStepType {
   Sibling
   Ancestors
   Progressive
+  NamespaceMap
+  SourceRoots
   Fallback
 } derive(Eq, @debug.Debug)
 pub fn ResolveStepType::as_string(Self) -> String

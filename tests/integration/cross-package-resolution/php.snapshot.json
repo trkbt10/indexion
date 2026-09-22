@@ -1,6 +1,5 @@
 {
   "modules": [
-    "vendor/App\\Dto",
     "vendor/App\\Services",
     "vendor/GuzzleHttp\\Client",
     "fixtures/project/php/composer.json",
@@ -16,23 +15,23 @@
   "moduleDependsOn": [
     {
       "from": "fixtures/project/php/src/helpers.php",
-      "to": "vendor/App\\Dto",
-      "via": "App\\Dto\\UserDto"
-    },
-    {
-      "from": "fixtures/project/php/src/helpers.php",
       "to": "vendor/App\\Services",
       "via": "App\\Services\\UserService"
     },
     {
-      "from": "fixtures/project/php/src/UserService.php",
-      "to": "vendor/App\\Dto",
+      "from": "fixtures/project/php/src/helpers.php",
+      "to": "fixtures/project/php/src/Dto/UserDto.php",
       "via": "App\\Dto\\UserDto"
     },
     {
       "from": "fixtures/project/php/src/UserService.php",
       "to": "vendor/GuzzleHttp\\Client",
       "via": "GuzzleHttp\\Client"
+    },
+    {
+      "from": "fixtures/project/php/src/UserService.php",
+      "to": "fixtures/project/php/src/Dto/UserDto.php",
+      "via": "App\\Dto\\UserDto"
     }
   ],
   "stats": {

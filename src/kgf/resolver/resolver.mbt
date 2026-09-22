@@ -24,27 +24,7 @@ pub fn resolve_module(
   let _ = language
   // Step 1: Apply aliases
   let module0 = apply_aliases(module_path, spec.get_aliases())
-  // Step 2: Handle namespaced (composer-like) resolution
-  let ns_prefix = spec.get_ns_prefix()
-  let has_ns_prefix = match ns_prefix {
-    Some(prefix) => prefix.length() > 0
-    None => false
-  }
-  let is_namespaced = contains_char(module0, '\\')
-  let is_relative_prefixed = has_relative_prefix(
-    module0,
-    spec.get_relative_prefixes(),
-  )
-  if has_ns_prefix && is_namespaced && !is_relative_prefixed {
-    let parts = split_by_backslash(module0)
-    let take = min_int(spec.get_ns_segments(), parts.length())
-    let key = join_with_backslash(parts, take)
-    match ns_prefix {
-      Some(prefix) => return prefix + key
-      None => ()
-    }
-  }
-  // Step 3: Determine base path for resolution
+  // Step 2: Determine base path for resolution
   let is_relative = has_relative_prefix(module0, spec.get_relative_prefixes())
   let (base_path, mod_clean) = if is_relative {
     let module0_chars = module0.to_array()
@@ -58,7 +38,7 @@ pub fn resolve_module(
   } else {
     (project_root, module0)
   }
-  // Step 4: Use resolve_chain if defined
+  // Step 3: Use resolve_chain if defined
   if spec.has_resolve_chain() {
     let result = resolve_with_chain(
       spec, base_path, mod_clean, from_file, project_root, file_resolver,
@@ -67,7 +47,13 @@ pub fn resolve_module(
       Some(path) => return path
       None => ()
     }
-    // Fallback to bare_prefix if chain didn't resolve
+    // Nothing on disk answered the module. Only now do the prefix fallbacks
+    // apply: a namespaced id that no file backs is an EXTERNAL package, and
+    // the vendor-style prefix names its distribution.
+    match namespace_fallback(spec, module0) {
+      Some(id) => return id
+      None => ()
+    }
     let bare_prefix = spec.get_bare_prefix()
     if bare_prefix.length() > 0 {
       return bare_prefix + get_module_head(module0)
@@ -79,6 +65,10 @@ pub fn resolve_module(
     let hit = try_local(spec, base_path, mod_clean, project_root, file_resolver)
     match hit {
       Some(path) => return path
+      None => ()
+    }
+    match namespace_fallback(spec, module0) {
+      Some(id) => return id
       None => ()
     }
     return spec.get_bare_prefix() + module0
@@ -104,13 +94,51 @@ pub fn resolve_module(
       return normalize_relative_result(project_root, p)
     }
   }
-  // Fallback with bare_prefix
+  // Nothing matched on disk — fall back to the prefixes, namespace first.
+  match namespace_fallback(spec, module0) {
+    Some(id) => return id
+    None => ()
+  }
   let head = get_module_head(module0)
   let bare_prefix = spec.get_bare_prefix()
   if bare_prefix.length() > 0 {
     return bare_prefix + head
   }
   module0
+}
+
+///|
+/// The namespaced-package fallback: for a spec that declares an `ns_prefix`,
+/// a backslash-namespaced identifier that no file backs names a package in the
+/// ecosystem's vendor tree, identified by its first `ns_segments` segments
+/// (`Vendor\Package\Thing` → `vendor/Vendor\Package`).
+///
+/// This runs only AFTER every file probe has missed. Deciding it up front —
+/// as the resolver once did — meant that any identifier containing a
+/// backslash was declared external before a single file was looked at, so a
+/// project's own namespaced classes could never resolve to their files.
+///
+/// A relative specifier is exempt: it is navigation syntax, not a namespace.
+fn namespace_fallback(
+  spec : @types.ResolverSpec,
+  module_str : String,
+) -> String? {
+  let prefix = match spec.get_ns_prefix() {
+    Some(p) => p
+    None => return None
+  }
+  if prefix.length() == 0 {
+    return None
+  }
+  if !contains_char(module_str, '\\') {
+    return None
+  }
+  if has_relative_prefix(module_str, spec.get_relative_prefixes()) {
+    return None
+  }
+  let parts = split_by_backslash(module_str)
+  let take = min_int(spec.get_ns_segments(), parts.length())
+  Some(prefix + join_with_backslash(parts, take))
 }
 
 ///|
@@ -182,6 +210,32 @@ fn resolve_with_chain(
       )
       match result {
         Some(path) => return Some(path)
+        None => continue
+      }
+    }
+    if t == @types.ResolveStepType::Fallback {
+      // Every file probe has now missed, so the module is external and only
+      // its NAME is left to report. A spec that declares an `ns_prefix` has
+      // said how a namespaced id names its package in that ecosystem's vendor
+      // tree, and that is more specific than the generic prefix — so it is
+      // consulted first. Both are prefix fallbacks; neither may run before
+      // the probes, which is why this sits at the Fallback step rather than
+      // at the top of resolve_module.
+      match namespace_fallback(spec, module_str) {
+        Some(id) => return Some(id)
+        None => ()
+      }
+    }
+    if t == @types.ResolveStepType::NamespaceMap ||
+      t == @types.ResolveStepType::SourceRoots {
+      let result = resolve_mapped_bases(
+        spec, step, module_str, from_file, project_root, file_resolver,
+      )
+      match result {
+        Some(path) => return Some(path)
+        // No mapping matched (or the mapped file is absent): fall through to
+        // the chain's remaining steps, which resolve the module the ordinary
+        // way. A declared mapping narrows resolution; it never blocks it.
         None => continue
       }
     }
@@ -374,6 +428,11 @@ fn execute_resolve_step(
       // which replays the prefix steps with successively shorter targets. It
       // never fires as a standalone per-step operation.
       None
+    @types.ResolveStepType::NamespaceMap
+    | @types.ResolveStepType::SourceRoots =>
+      // Both rewrite the base directory and then replay the chain's own file
+      // probes, which resolve_with_chain drives; neither is a per-step probe.
+      None
     @types.ResolveStepType::Fallback => {
       // Fallback step returns the prefixed module path
       let prefix = step.get_prefix()
@@ -437,6 +496,19 @@ fn query_json_simple(content : String, path : String) -> String? {
 /// Resolve a dot/bracket path against a parsed JSON value.
 /// Supports: "main", "exports[\".\"].import", "exports[\".\"]"
 fn resolve_json_path(json : Json, path : String) -> String? {
+  match descend_json_path(json, path) {
+    // Terminal value must be a string
+    Some(String(s)) => Some(s)
+    _ => None
+  }
+}
+
+///|
+/// Walk a dot/bracket path into a parsed JSON value and return whatever node
+/// sits at the end, without demanding a particular shape. The string-valued
+/// and object-valued manifest queries are both built on this so a query like
+/// `autoload.psr-4` is parsed exactly once, by the same path grammar.
+fn descend_json_path(json : Json, path : String) -> Json? {
   let segments = split_json_path(path)
   let mut current = json
   for seg in segments {
@@ -449,11 +521,61 @@ fn resolve_json_path(json : Json, path : String) -> String? {
       _ => return None
     }
   }
-  // Terminal value must be a string
-  match current {
-    String(s) => Some(s)
-    _ => None
+  Some(current)
+}
+
+///|
+/// Query a manifest for an OBJECT-valued field — a namespace/alias map such
+/// as composer's `autoload.psr-4` (`{"App\\": "src/"}`) or tsconfig's
+/// `compilerOptions.paths` (`{"@app/*": ["src/*"]}`).
+///
+/// Each entry is returned as a (key, directory) pair. A value may be either a
+/// plain string or an array of strings; an array contributes one pair per
+/// element, in declaration order, so a caller that probes the pairs in order
+/// tries the manifest's own preference order. Entries whose value is neither
+/// a string nor a list of strings are skipped rather than failing the query —
+/// a manifest may legitimately carry shapes this step has no use for.
+///
+/// Alternatives (`a | b`, `a, b`) are supported exactly as in the
+/// string-valued `query_manifest`: the first query that yields a non-empty
+/// map wins.
+fn query_manifest_map(
+  content : String,
+  query : String,
+) -> Array[(String, String)]? {
+  let json : Json = @json.parse(content) catch { _ => return None }
+  for alt in split_by_char(query, ',') {
+    for part in split_by_char(trim_string(alt), '|') {
+      let part_trimmed = trim_string(part)
+      if part_trimmed.length() == 0 {
+        continue
+      }
+      match descend_json_path(json, part_trimmed) {
+        Some(Object(obj)) => {
+          let pairs : Array[(String, String)] = []
+          for entry in obj {
+            let key = entry.0
+            match entry.1 {
+              String(v) => pairs.push((key, v))
+              Array(items) =>
+                for item in items {
+                  match item {
+                    String(v) => pairs.push((key, v))
+                    _ => ()
+                  }
+                }
+              _ => ()
+            }
+          }
+          if pairs.length() > 0 {
+            return Some(pairs)
+          }
+        }
+        _ => ()
+      }
+    }
   }
+  None
 }
 
 ///|
