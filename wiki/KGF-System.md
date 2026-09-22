@@ -260,13 +260,73 @@ aliases:
     replace: src/\1
 
 resolve:
+  - namespace_map: tsconfig.json @ compilerOptions.paths + compilerOptions.baseUrl
   - manifest: package.json @ dependencies
   - ext: .ts, .tsx
   - index: index.ts
   - fallback: npm:
 ```
 
-The `resolve:` block defines a chain of resolution steps tried in order. The resolver implementation `[src/kgf/resolver/resolver.mbt:16-60]` applies aliases first, handles namespace prefixes, determines whether the import is relative or bare, and then walks the resolve chain. This means language ecosystems with very different module systems (npm, pip, Go modules, MoonBit packages) are all handled by the same engine configured through data.
+The `resolve:` block defines a chain of resolution steps tried in order. The resolver implementation `[src/kgf/resolver/resolver.mbt]` applies aliases first, determines whether the import is relative or bare, walks the resolve chain, and only when every file probe has missed applies the prefix fallbacks. This means language ecosystems with very different module systems (npm, pip, Go modules, MoonBit packages) are all handled by the same engine configured through data.
+
+#### Namespace and path mapping
+
+A module path rarely maps onto the directory tree one-to-one from a single
+base. Real projects **declare** the mapping in their manifest, and two step
+types read that declaration instead of building the knowledge into the engine:
+
+| Step | Value | Meaning |
+|------|-------|---------|
+| `namespace_map` | `file @ query [+ base_query] [? cond]` | Read an *object* field out of the nearest ancestor `file` and treat it as a map from a namespace/alias prefix to a directory |
+| `source_roots` | `dir, dir [@ marker, marker]` | Use fixed, spec-declared source roots, anchored at the nearest ancestor directory holding one of the markers |
+
+Both are evaluated relative to the **nearest ancestor manifest of the importing
+file**, not the project root, so each package of a monorepo follows its own
+mapping. Both end by running the chain's own `exact`/`index`/`ext`/`sibling`
+probes against the rewritten path, so a mapping changes only *where* the
+resolver looks, never *how* it decides a file is there.
+
+For `namespace_map`, the **longest matching key wins**: with
+`{"App\\": "src/", "App\\Dto\\": "custom/dto/"}` an `App\Dto\UserDto` takes the
+second entry. A key may carry a `*` wildcard (`@app/*`), in which case the text
+the wildcard stands for is appended to the value's own pre-wildcard directory
+(`src/*` → `src/`); a key without one is a plain prefix, which is what PSR-4
+uses. A value may be a string or an array of strings, and an array is probed in
+the order the manifest lists it. `+ base_query` names a second manifest field
+the values are themselves relative to — tsconfig's `baseUrl`.
+
+When **no mapping matches** — or a mapping matches but no file is behind it —
+the step contributes nothing and the chain simply continues. A declared mapping
+narrows resolution; it never blocks it.
+
+The object-valued read goes through the same manifest query helpers as the
+string-valued `manifest` step, so `autoload.psr-4` and `exports["."].types` are
+parsed by one path grammar.
+
+```kgf
+# composer: `{"App\\": "src/"}` makes App\Dto\UserDto into src/Dto/UserDto.php
+- namespace_map: composer.json @ autoload.psr-4
+
+# tsconfig: `{"@app/*": ["src/*"]}`, values relative to baseUrl
+- namespace_map: tsconfig.json @ compilerOptions.paths + compilerOptions.baseUrl
+
+# Java/Kotlin: the layout is conventional rather than declared
+- source_roots: src/main/kotlin, src/main/java @ build.gradle.kts, build.gradle
+```
+
+#### Prefix fallbacks come last
+
+`bare_prefix` and `ns_prefix` name a module that resolution could **not** find
+on disk, so both are consulted only after every probe in the chain has missed.
+`ns_prefix` is the more specific of the two — for a spec that declares it, a
+backslash-namespaced identifier names a package in the ecosystem's vendor tree,
+identified by its first `ns_segments` segments (`Vendor\Package\Thing` →
+`vendor/Vendor\Package`) — so it is tried before `bare_prefix`.
+
+Ordering matters here: deciding `ns_prefix` up front, as the resolver once did,
+meant any identifier containing a backslash was declared external before a
+single file was looked at, so a project's own namespaced classes could never
+resolve to their files.
 
 ### === ignore
 

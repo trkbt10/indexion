@@ -1,8 +1,7 @@
 {
   "modules": [
-    "composer:Client",
-    "composer:UserDto",
-    "composer:UserService",
+    "vendor/App\\Services",
+    "vendor/GuzzleHttp\\Client",
     "fixtures/project/php/composer.json",
     "fixtures/project/php/src/helpers.php",
     "fixtures/project/php/src/Dto/UserDto.php",
@@ -16,43 +15,23 @@
   "moduleDependsOn": [
     {
       "from": "fixtures/project/php/src/helpers.php",
-      "to": "composer:UserDto",
-      "via": "UserDto"
+      "to": "vendor/App\\Services",
+      "via": "App\\Services\\UserService"
     },
     {
       "from": "fixtures/project/php/src/helpers.php",
-      "to": "composer:UserDto",
-      "via": "UserDto"
-    },
-    {
-      "from": "fixtures/project/php/src/helpers.php",
-      "to": "composer:UserService",
-      "via": "UserService"
-    },
-    {
-      "from": "fixtures/project/php/src/helpers.php",
-      "to": "composer:UserService",
-      "via": "UserService"
+      "to": "fixtures/project/php/src/Dto/UserDto.php",
+      "via": "App\\Dto\\UserDto"
     },
     {
       "from": "fixtures/project/php/src/UserService.php",
-      "to": "composer:Client",
-      "via": "Client"
+      "to": "vendor/GuzzleHttp\\Client",
+      "via": "GuzzleHttp\\Client"
     },
     {
       "from": "fixtures/project/php/src/UserService.php",
-      "to": "composer:Client",
-      "via": "Client"
-    },
-    {
-      "from": "fixtures/project/php/src/UserService.php",
-      "to": "composer:UserDto",
-      "via": "UserDto"
-    },
-    {
-      "from": "fixtures/project/php/src/UserService.php",
-      "to": "composer:UserDto",
-      "via": "UserDto"
+      "to": "fixtures/project/php/src/Dto/UserDto.php",
+      "via": "App\\Dto\\UserDto"
     }
   ],
   "stats": {

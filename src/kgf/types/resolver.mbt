@@ -58,6 +58,17 @@ pub(all) enum ResolveStepType {
   /// Python (`from pkg.submod import Thing` where `Thing` is a class), etc.
   /// — need this so the resolver can land on the containing module's file.
   Progressive
+  /// Rewrite the module path through a namespace→directory map declared in a
+  /// project manifest (composer `autoload.psr-4`, tsconfig `compilerOptions.paths`).
+  /// The map is read from the nearest ancestor manifest of the importing file;
+  /// the longest matching key wins and is replaced by its directory, after
+  /// which the chain's own file probes (ext/index/sibling) run against the
+  /// rewritten path.
+  NamespaceMap
+  /// Rewrite the module path relative to fixed source roots declared in the
+  /// spec (`src/main/java`, `src/main/kotlin`), anchored at the nearest
+  /// ancestor manifest of the importing file.
+  SourceRoots
   /// Apply fallback prefix for unresolved modules (npm:, pip:)
   Fallback
 } derive(Eq, Debug)
@@ -74,6 +85,8 @@ pub fn ResolveStepType::from_string(s : String) -> ResolveStepType? {
     "sibling" => Some(Sibling)
     "ancestors" => Some(Ancestors)
     "progressive" => Some(Progressive)
+    "namespace_map" => Some(NamespaceMap)
+    "source_roots" => Some(SourceRoots)
     "fallback" => Some(Fallback)
     _ => None
   }
@@ -91,6 +104,8 @@ pub fn ResolveStepType::as_string(self : ResolveStepType) -> String {
     Sibling => "sibling"
     Ancestors => "ancestors"
     Progressive => "progressive"
+    NamespaceMap => "namespace_map"
+    SourceRoots => "source_roots"
     Fallback => "fallback"
   }
 }
@@ -110,6 +125,11 @@ pub struct ResolveStep {
   prefix : String
   /// Optional condition (type, value, browser, node)
   when_condition : String
+  /// For NamespaceMap: an additional manifest query naming a directory that
+  /// the map's values are themselves relative to (tsconfig's
+  /// `compilerOptions.baseUrl`). Empty when the values are relative to the
+  /// manifest's own directory (composer's psr-4).
+  base_query : String
 }
 
 ///|
@@ -121,8 +141,9 @@ pub fn ResolveStep::new(
   files? : Array[String] = [],
   prefix? : String = "",
   when_condition? : String = "",
+  base_query? : String = "",
 ) -> ResolveStep {
-  { step_type, file, query, files, prefix, when_condition, }
+  { step_type, file, query, files, prefix, when_condition, base_query, }
 }
 
 ///|
@@ -181,6 +202,32 @@ pub fn ResolveStep::progressive() -> ResolveStep {
 }
 
 ///|
+/// Creates a NamespaceMap resolve step — a manifest-declared
+/// namespace/alias → directory map. `file` names the manifest, `query`
+/// selects the map inside it, and `base_query` optionally names a second
+/// field the map's values are relative to (tsconfig's `baseUrl`).
+pub fn ResolveStep::namespace_map(
+  file : String,
+  query : String,
+  base_query? : String = "",
+  when_condition? : String = "",
+) -> ResolveStep {
+  ResolveStep::new(NamespaceMap, file~, query~, base_query~, when_condition~)
+}
+
+///|
+/// Creates a SourceRoots resolve step — fixed, spec-declared source roots
+/// (`src/main/java`) anchored at the nearest ancestor manifest. `files`
+/// holds the roots in priority order; `query` holds the comma-separated
+/// manifest markers that identify the anchor directory.
+pub fn ResolveStep::source_roots(
+  roots : Array[String],
+  file? : String = "",
+) -> ResolveStep {
+  ResolveStep::new(SourceRoots, files=roots, file~)
+}
+
+///|
 /// Creates a Fallback resolve step.
 pub fn ResolveStep::fallback(prefix : String) -> ResolveStep {
   ResolveStep::new(Fallback, prefix~)
@@ -202,6 +249,12 @@ pub fn ResolveStep::get_file(self : ResolveStep) -> String {
 /// Returns the query string.
 pub fn ResolveStep::get_query(self : ResolveStep) -> String {
   self.query
+}
+
+///|
+/// Returns the base-directory query (NamespaceMap only).
+pub fn ResolveStep::get_base_query(self : ResolveStep) -> String {
+  self.base_query
 }
 
 ///|

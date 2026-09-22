@@ -23,12 +23,16 @@
 /// ResolveBlock ::= "resolve:" NL ResolveStep+
 /// ResolveStep  ::= INDENT "-" StepSpec NL | INDENT "-" NL StepFields
 /// StepSpec     ::= StepType ":" StepValue
-/// StepType     ::= "manifest" | "marker" | "index" | "ext" | "sibling" | "fallback"
-/// StepValue    ::= ManifestSpec | FileList | Prefix
+/// StepType     ::= "manifest" | "marker" | "index" | "ext" | "sibling"
+///                | "namespace_map" | "source_roots" | "fallback"
+/// StepValue    ::= ManifestSpec | NsMapSpec | SourceRootsSpec | FileList | Prefix
 /// ManifestSpec ::= FileName "@" Query ( "?" Condition )?
+/// NsMapSpec    ::= FileName "@" Query ( "+" Query )? ( "?" Condition )?
+/// SourceRootsSpec ::= DirList ( "@" MarkerList )?
 /// StepFields   ::= ( INDENT2 StepField NL )+
 /// StepField    ::= "type:" StepType | "file:" FileName | "query:" Query
 ///                | "files:" FileList | "prefix:" Prefix | "when:" Condition
+///                | "base_query:" Query
 /// ```
 ///
 /// ## Configuration Keys
@@ -48,12 +52,39 @@
 ///
 /// | Type | Description | Value Format |
 /// |------|-------------|--------------|
-/// | `manifest` | Read from manifest file | `file @ query` |
+/// | `manifest` | Read an entry point from a manifest file | `file @ query` |
 /// | `marker` | Check marker file exists | file list |
 /// | `index` | Try index files in directory | file list |
 /// | `ext` | Try adding extensions | extension list |
 /// | `sibling` | Try sibling file | file list |
+/// | `namespace_map` | Rewrite the module through a manifest-declared namespace→directory map | `file @ query [+ base_query]` |
+/// | `source_roots` | Rewrite the module relative to fixed source roots | `dir list [@ markers]` |
 /// | `fallback` | Apply fallback prefix | prefix string |
+///
+/// ### `namespace_map`
+///
+/// Reads an OBJECT field out of the nearest ancestor manifest of the
+/// importing file and treats it as a map from a namespace (or alias) prefix
+/// to a directory. The longest matching key wins; its prefix is replaced by
+/// the mapped directory and the chain's own `ext`/`index`/`sibling` probes run
+/// against the result. A key may carry a `*` wildcard, in which case the text
+/// it stands for is appended to the value's own pre-wildcard directory.
+/// `+ base_query` names a second manifest field the values are relative to.
+///
+/// ```kgf
+/// - namespace_map: composer.json @ autoload.psr-4
+/// - namespace_map: tsconfig.json @ compilerOptions.paths + compilerOptions.baseUrl
+/// ```
+///
+/// ### `source_roots`
+///
+/// The same rewrite for ecosystems whose layout is fixed by convention rather
+/// than declared: each listed directory, anchored at the nearest ancestor
+/// directory holding one of the `@` markers, is tried as a base.
+///
+/// ```kgf
+/// - source_roots: src/main/java @ pom.xml, build.gradle, build.gradle.kts
+/// ```
 ///
 /// ## Examples
 ///
@@ -321,6 +352,41 @@ fn parse_single_line_resolve_step(line : String) -> @types.ResolveStep? {
       Some(@types.ResolveStep::ancestors(parse_list(value)))
     Some(@types.ResolveStepType::Progressive) =>
       Some(@types.ResolveStep::progressive())
+    Some(@types.ResolveStepType::NamespaceMap) => {
+      // "manifest @ query" plus an optional "+ base_query" naming the field
+      // the map's values are relative to (tsconfig's baseUrl).
+      let (file, query, base_query, when_cond) = parse_namespace_map_value(
+        value,
+      )
+      if file.length() > 0 && query.length() > 0 {
+        Some(
+          @types.ResolveStep::namespace_map(
+            file,
+            query,
+            base_query~,
+            when_condition=when_cond,
+          ),
+        )
+      } else {
+        None
+      }
+    }
+    Some(@types.ResolveStepType::SourceRoots) => {
+      // "root, root @ marker, marker" — the roots, and optionally the
+      // manifest markers that identify the directory they hang off.
+      let at_pos = find_char(value, 0, '@')
+      let (roots_part, markers) = if at_pos >= 0 {
+        (substr(value, 0, at_pos), trim_str(substr_from(value, at_pos + 1)))
+      } else {
+        (value, "")
+      }
+      let roots = parse_list(roots_part)
+      if roots.length() > 0 {
+        Some(@types.ResolveStep::source_roots(roots, file=markers))
+      } else {
+        None
+      }
+    }
     Some(@types.ResolveStepType::Fallback) =>
       Some(@types.ResolveStep::fallback(value))
     None => None
@@ -350,6 +416,41 @@ fn parse_manifest_value(value : String) -> (String, String, String) {
     file = value_without_cond
   }
   (file, query, when_cond)
+}
+
+///|
+/// Parses a namespace_map value: "file @ query + base_query ? condition".
+///
+/// The `+ base_query` part is optional and names a SECOND manifest field that
+/// the map's values are stated relative to — tsconfig writes its `paths`
+/// relative to `compilerOptions.baseUrl`, composer writes its psr-4
+/// directories relative to composer.json itself and so omits it. Everything
+/// else is the `manifest: file @ query ? cond` form already in use, so the
+/// base is split off first and the remainder handed to that same parser.
+fn parse_namespace_map_value(
+  value : String,
+) -> (String, String, String, String) {
+  // The condition is split off first, so a '+' inside it is left alone.
+  let question_pos = find_char(value, 0, '?')
+  let (head, when_cond) = if question_pos >= 0 {
+    (
+      trim_str(substr(value, 0, question_pos)),
+      trim_str(substr_from(value, question_pos + 1)),
+    )
+  } else {
+    (value, "")
+  }
+  let plus_pos = find_char(head, 0, '+')
+  let (manifest_part, base_query) = if plus_pos >= 0 {
+    (
+      trim_str(substr(head, 0, plus_pos)),
+      trim_str(substr_from(head, plus_pos + 1)),
+    )
+  } else {
+    (head, "")
+  }
+  let (file, query, _) = parse_manifest_value(manifest_part)
+  (file, query, base_query, when_cond)
 }
 
 ///|
@@ -413,6 +514,10 @@ fn build_resolve_step_from_kv(kv : Map[String, String]) -> @types.ResolveStep? {
     Some(w) => w
     None => ""
   }
+  let base_query = match kv.get("base_query") {
+    Some(b) => b
+    None => ""
+  }
   Some(
     @types.ResolveStep::new(
       step_type,
@@ -421,6 +526,7 @@ fn build_resolve_step_from_kv(kv : Map[String, String]) -> @types.ResolveStep? {
       files~,
       prefix~,
       when_condition=when_cond,
+      base_query~,
     ),
   )
 }

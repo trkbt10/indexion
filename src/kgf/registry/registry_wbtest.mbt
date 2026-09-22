@@ -96,9 +96,20 @@ test "registry: comprehensive validation" {
     Some(spec) => {
       let chain = spec.get_resolver().get_resolve_chain()
       assert_true(chain.length() >= 4)
+      // The chain begins by taking the path as written, and somewhere in it
+      // reads package.json for an entry point. Both are asserted as
+      // PROPERTIES rather than by index: steps are legitimately inserted
+      // between them (the tsconfig `namespace_map` steps, for one), and
+      // pinning positions makes every such change look like a regression.
       assert_eq(chain[0].get_step_type().as_string(), "exact")
-      assert_eq(chain[1].get_step_type().as_string(), "manifest")
-      assert_eq(chain[1].get_file(), "package.json")
+      let mut has_package_manifest = false
+      for step in chain {
+        if step.get_step_type().as_string() == "manifest" &&
+          step.get_file() == "package.json" {
+          has_package_manifest = true
+        }
+      }
+      assert_true(has_package_manifest)
     }
     None => assert_true(false)
   }
