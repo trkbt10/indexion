@@ -172,7 +172,9 @@ fn compile_fast_node(
         FToken(tid)
       } else {
         match rule_ids.get(name) {
-          Some(rid) => FRuleRef(rid, name)
+          // A call site, not the rule itself: the definition node it jumps
+          // to is what emits the rule's event.
+          Some(rid) => FRuleCall(rid)
           None => FFail // Undefined symbol — always fails to match
         }
       }

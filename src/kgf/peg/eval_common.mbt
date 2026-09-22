@@ -172,18 +172,64 @@ priv enum Labels {
 
 ///|
 /// Memo entry states for memoization.
+///
+/// A memoized success stores the event handle of the subtree it matched, so
+/// reusing the entry replays exactly the events that derivation produced —
+/// see the "Transactional event delivery" note below.
 priv enum MemoState {
   Unknown
   Failed
-  Succeeded(Int, Labels) // (end_pos, labels)
+  Succeeded(Int, Labels, Int) // (end_pos, labels, events)
 }
 
 ///|
 /// FastEvalResult holds evaluation result with lazy labels.
+///
+/// `events` is a handle into the evaluator's `EventLog` naming the events
+/// this (sub)derivation produced. It travels with the result: merged when a
+/// sequence or repetition accepts a child, dropped when an alternative is
+/// rejected, and delivered only from the start rule's final result.
 priv struct FastEvalResult {
   ok : Bool
   end_pos : Int
   labels : Labels
+  events : Int
+}
+
+///|
+/// Reads a token-position meta label back out of a delivered event's labels.
+/// Positions are recorded there (`_start_tok` / `_end_tok`) when the event
+/// is created, which keeps the arena leaves narrow.
+fn event_pos(labels : Map[String, Json], key : String) -> Int {
+  match labels.get(key) {
+    Some(Json::Number(n, ..)) => n.to_int()
+    _ => 0
+  }
+}
+
+///|
+/// Hands every event of a completed parse to a `(name, labels, start, end)`
+/// callback, in the order the event tree produced them.
+fn deliver_events(
+  events : Array[(String, Map[String, Json])],
+  on_rule_match : (String, Map[String, Json], Int, Int) -> Unit,
+) -> Unit {
+  for event in events {
+    let (name, labels) = event
+    on_rule_match(
+      name,
+      labels,
+      event_pos(labels, @types.META_START_TOK),
+      event_pos(labels, @types.META_END_TOK),
+    )
+  }
+}
+
+///|
+/// The canonical failure result: no labels, and no events — a failed
+/// derivation never contributes to the delivered event stream.
+fn fail_result(pos : Int) -> FastEvalResult {
+  { ok: false, end_pos: pos, labels: empty_labels(), events: EVENTS_NIL, }
 }
 
 ///|
@@ -431,4 +477,119 @@ fn compute_token_names(peg : PEG) -> Array[String] {
 fn create_memo(num_nodes : Int, num_positions : Int) -> Array[MemoState] {
   let memo_size = num_nodes * num_positions
   Array::make(memo_size, Unknown)
+}
+
+///|
+/// ## Transactional event delivery
+///
+/// A rule match is an *event*. The guarantee the evaluators provide is:
+/// an event is delivered if and only if the rule instance that produced it
+/// belongs to the final successful derivation, exactly once per instance,
+/// in post-order (children before their parent).
+///
+/// A PEG backtracks: a rule can succeed inside an alternative that the
+/// enclosing sequence later rejects. Emitting at the moment a rule succeeds
+/// would therefore fire events for derivations that are not in the parse —
+/// running `bind`/`scope push` semantics actions and registering symbols for
+/// phantom matches.
+///
+/// So events are not emitted during evaluation; they are *accumulated* into
+/// the evaluation result and delivered once, at the end, from the start
+/// rule's accumulator.
+///
+/// The accumulator must be cheap: it is merged on every sequence element and
+/// every repetition step, and it is cloned out of the memo on every hit.
+/// Eagerly concatenating arrays there would be O(n^2). Instead every result
+/// carries an `Events` *handle*: an index into an append-only arena
+/// (`EventLog`) of immutable nodes. `ENil` is the empty handle, `ELeaf` is a
+/// single pending rule match, and `EConcat` joins two handles in O(1).
+///
+/// The result is a persistent event tree, mirroring the `TextRope` idea used
+/// for `_text`:
+///   - merging two results is one arena push — O(1), no copying;
+///   - a failed sequence/alternative simply drops its children's handle,
+///     and the arena nodes it abandoned are never walked;
+///   - a memoized success replays its whole subtree by handing back the same
+///     handle, so reuse costs nothing and emits nothing while merely probed;
+///   - delivery walks the final handle once, in post-order, at the end.
+priv enum EventNode {
+  ENil
+  /// A single pending rule match. Token positions are not repeated here:
+  /// they are already in the labels as `_start_tok` / `_end_tok`.
+  ELeaf(String, Map[String, Json]) // rule name, labels
+  EConcat(Int, Int) // left handle, right handle
+}
+
+///|
+/// An append-only arena of event-tree nodes. Handles are indices into
+/// `nodes`; handle 0 is always `ENil`, so an empty accumulator costs nothing.
+priv struct EventLog {
+  nodes : Array[EventNode]
+}
+
+///|
+/// The handle of the empty event accumulator.
+const EVENTS_NIL : Int = 0
+
+///|
+fn EventLog::new() -> EventLog {
+  { nodes: [ENil], }
+}
+
+///|
+/// Appends a leaf event and returns its handle.
+fn EventLog::leaf(
+  self : EventLog,
+  name : String,
+  labels : Map[String, Json],
+) -> Int {
+  let handle = self.nodes.length()
+  self.nodes.push(ELeaf(name, labels))
+  handle
+}
+
+///|
+/// Joins two event handles in post-order (`left` before `right`) — O(1).
+/// Joining with the empty handle is free, which keeps the common
+/// "nothing emitted yet" path allocation-free.
+fn EventLog::concat(self : EventLog, left : Int, right : Int) -> Int {
+  if left == EVENTS_NIL {
+    return right
+  }
+  if right == EVENTS_NIL {
+    return left
+  }
+  let handle = self.nodes.length()
+  self.nodes.push(EConcat(left, right))
+  handle
+}
+
+///|
+/// Walks an event tree in post-order and appends every event to `out`.
+///
+/// The walk is iterative: an event tree built from a deeply right-leaning
+/// `Item*` over a large file is as deep as the file is long, so a recursive
+/// walk would overflow the stack — exactly the failure mode the iterative
+/// evaluator exists to avoid.
+fn EventLog::collect(
+  self : EventLog,
+  handle : Int,
+  out : Array[(String, Map[String, Json])],
+) -> Unit {
+  if handle == EVENTS_NIL {
+    return
+  }
+  let stack : Array[Int] = [handle]
+  while stack.length() > 0 {
+    let current = stack.pop().unwrap()
+    match self.nodes[current] {
+      ENil => ()
+      ELeaf(name, labels) => out.push((name, labels))
+      // Push right first so the left subtree is popped (and emitted) first.
+      EConcat(left, right) => {
+        stack.push(right)
+        stack.push(left)
+      }
+    }
+  }
 }

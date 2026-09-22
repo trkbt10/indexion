@@ -42,7 +42,15 @@ enum FastCompiledNode {
   FEmpty
   FFail // Always fails to match (used for undefined symbol references)
   FToken(Int) // token_id only
-  FRuleRef(Int, String) // rule_node_id, rule_name (name needed for callback)
+  /// The *definition* node of a rule: the one node that stands for a rule
+  /// instance in the parse, and therefore the one that emits the rule's
+  /// event. `fast_rule_ids[name]` points here.
+  FRuleRef(Int, String) // body_node_id, rule_name (name needed for callback)
+  /// A *reference* to a rule from inside another rule's body. Pure
+  /// indirection: it re-dispatches to the rule's definition node, which is
+  /// what emits. Emitting here as well would report every rule instance
+  /// twice, once per hop.
+  FRuleCall(Int) // rule definition node id
   FSeq(Array[Int])
   FChoice(Array[Int])
   FStar(Int)
