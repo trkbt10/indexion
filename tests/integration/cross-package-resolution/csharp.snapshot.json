@@ -13,8 +13,11 @@
     "fixtures/project/csharp/src/Models.cs::User.GetDisplayName",
     "fixtures/project/csharp/src/Repositories/UserRepository.cs",
     "fixtures/project/csharp/src/Services/UserService.cs::UserService.Get",
+    "fixtures/project/csharp/src/Services/UserService.cs::UserService.Describe",
+    "fixtures/project/csharp/src/Services/UserService.cs::UserService.CachePath",
     "fixtures/project/csharp/src/Services/UserService.cs::UserService.Serialize",
     "fixtures/project/csharp/src/Services/UserService.cs::UserService.UserService",
+    "fixtures/project/csharp/src/Services/UserService.cs::UserService.EmptyPayload",
     "fixtures/project/csharp/src/Repositories/UserRepository.cs::UserRepository.Save",
     "fixtures/project/csharp/src/Repositories/UserRepository.cs::UserRepository.FindById",
     "fixtures/project/csharp/src/Repositories/UserRepository.cs::UserRepository.UserRepository"
@@ -52,10 +55,10 @@
     }
   ],
   "stats": {
-    "symbols": 25,
-    "edges": 27,
+    "symbols": 28,
+    "edges": 30,
     "edgesByKind": {
-      "declares": 14,
+      "declares": 17,
       "dependsOn": 3,
       "projectName": 1,
       "projectLicense": 1,

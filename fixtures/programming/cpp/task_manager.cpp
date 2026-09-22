@@ -59,3 +59,47 @@ public:
     /// Captures the current contents.
     Snapshot snapshot() const;
 };
+
+namespace tasks {
+
+/// A plain id/priority pair, named only by its typedef.
+typedef struct PriorityTag {
+    int id;
+    int weight;
+} Priority;
+
+/// Ordering policy shared by every manager in this namespace.
+class Scheduler {
+public:
+    /// Picks the next task id to run.
+    int next(const Priority& p);
+
+    /// Builds a scheduler with the default policy.
+    Scheduler();
+};
+
+Scheduler::Scheduler() {}
+
+int Scheduler::next(const Priority& p) {
+    return p.id;
+}
+
+}  // namespace tasks
+
+int TaskManager::add(std::string title) {
+    return next_id_++;
+}
+
+int TaskManager::pending_count() {
+    return 0;
+}
+
+extern "C" {
+
+/// C entry point for embedding the manager in a C host.
+int task_manager_pending(void* manager);
+
+/// Releases a manager created from C.
+void task_manager_free(void* manager);
+
+}

@@ -301,6 +301,12 @@ test "declares: cpp multi-word builtin type in a field" {
 /// An out-of-line member definition names its owner (`Config::load`). The name
 /// position accepted a bare identifier only, so these definitions never matched
 /// and the file stopped at the enclosing namespace's brace.
+///
+/// The kind is `Method`, not `Function`: the qualifier names the TYPE the
+/// definition belongs to, so it defines a member. It used to be published as a
+/// file-level `Function` with the qualifier and the enclosing namespace both
+/// discarded — the same symbol the class body had already declared appeared a
+/// second time, detached from its type.
 test "declares: cpp out-of-line member definition" {
   let registry = get_fixture_registry()
   let source =
@@ -316,13 +322,16 @@ test "declares: cpp out-of-line member definition" {
     #|
     #|}
   let names = sys_declared_names(registry, "cpp", source, "config.cpp")
-  assert_true(names.get("load") == Some("Function"))
-  assert_true(names.get("run") == Some("Function"))
+  assert_true(names.get("load") == Some("Method"))
+  assert_true(names.get("run") == Some("Method"))
 }
 
 ///|
 /// An out-of-line constructor has no return type, so it could not match the
 /// function rule at all.
+///
+/// `run` is a `Method` for the reason given on the test above: its qualifier
+/// names the type it is a member of.
 test "declares: cpp out-of-line constructor with initializer list" {
   let registry = get_fixture_registry()
   let source =
@@ -334,7 +343,10 @@ test "declares: cpp out-of-line constructor with initializer list" {
     #|
     #|}
   let names = sys_declared_names(registry, "cpp", source, "server.cpp")
-  assert_true(names.get("run") == Some("Function"))
+  assert_true(names.get("run") == Some("Method"))
+  // The constructor now produces an edge of its own, under the type it
+  // constructs.
+  assert_true(names.get("Server") == Some("Constructor"))
 }
 
 ///|

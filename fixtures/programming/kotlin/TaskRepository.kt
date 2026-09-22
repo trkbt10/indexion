@@ -25,6 +25,9 @@ class InMemoryTaskRepository : TaskRepository {
     data class Snapshot(val taken: Long, val tasks: List<Task>) {
         /** Whether the snapshot recorded no tasks at all. */
         fun isEmpty(): Boolean = tasks.isEmpty()
+
+        /** A one-line description, built with a string template. */
+        fun describe(): String = "snapshot@$taken holds ${tasks.size} task(s)"
     }
 
     override suspend fun getById(id: Long): Task? = store[id]
@@ -37,6 +40,18 @@ class InMemoryTaskRepository : TaskRepository {
 
     /** Captures the current contents as a [Snapshot]. */
     fun snapshot(): Snapshot = Snapshot(nextId, store.values.toList())
+
+    /** Looks a task's title up by id, quoting the map access inside a template. */
+    fun titleOf(id: Long): String = "task ${store[id]?.title ?: "unknown"}"
+
+    /** Renders the whole store as a raw string with templates inside it. */
+    fun report(): String = """
+        InMemoryTaskRepository
+        ======================
+        next id: $nextId
+        entries: ${store.size}
+        titles:  ${store.values.joinToString(", ") { it.title }}
+    """
 
     override fun findAll(): Flow<Task> = kotlinx.coroutines.flow.flow {
         store.values.forEach { emit(it) }

@@ -25,5 +25,23 @@ namespace Example.Services
         {
             return JsonConvert.SerializeObject(user);
         }
+
+        /// <summary>Renders a user for a log line.</summary>
+        public string Describe(User user)
+        {
+            return $"user {user.Id} <{user.Email}>";
+        }
+
+        /// <summary>The on-disk cache path for a user, as a verbatim string.</summary>
+        public string CachePath(int id)
+        {
+            return $@"cache\users\{id}.json";
+        }
+
+        /// <summary>A canned JSON payload, as a raw string literal.</summary>
+        public string EmptyPayload()
+        {
+            return """{"users": []}""";
+        }
     }
 }

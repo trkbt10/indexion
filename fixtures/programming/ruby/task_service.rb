@@ -68,4 +68,36 @@ class TaskService
   def pending
     @tasks.values.reject(&:done?)
   end
+
+  # Yields each pending task, or returns an enumerator without a block.
+  # @return [Enumerator, nil]
+  def each_pending
+    return to_enum(:each_pending) unless block_given?
+
+    pending.each { |task| yield task }
+  end
+
+  # The title of the most recently added task, if there is one.
+  # @return [String, nil]
+  def latest_title
+    @tasks.values.last&.title
+  end
+
+  # Renders the backlog as a block of text.
+  # @return [String]
+  def report
+    <<~REPORT
+      #{self.class.name} — #{pending.length} pending
+      #{pending.map { |t| "- #{t.title}" }.join("\n")}
+    REPORT
+  end
+
+  alias to_s report
+
+  # Builds a service preloaded with the given titles.
+  # @param titles [Array<String>]
+  # @return [TaskService]
+  def self.seeded(titles)
+    titles.each_with_object(new) { |title, service| service.add(title) }
+  end
 end

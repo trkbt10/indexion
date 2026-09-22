@@ -25,7 +25,7 @@ public class UserService
         public bool Cached { get; init; }
 
         /// <summary>Renders the outcome for a log line.</summary>
-        public override string ToString() => User is null ? "miss" : "hit:" + User.Id;
+        public override string ToString() => User is null ? "miss" : $"hit:{User.Id}";
     }
 
     /// <summary>Adds a user to the store.</summary>
@@ -50,6 +50,12 @@ public class UserService
     public IReadOnlyList<User> ListAll()
     {
         return _store.Values.OrderBy(u => u.Name).ToList();
+    }
+
+    /// <summary>Renders a one-line summary of the store.</summary>
+    public string Summary()
+    {
+        return $"{_store.Count} user(s), newest {_store.Values.LastOrDefault()?.Name ?? "none"}";
     }
 }
 

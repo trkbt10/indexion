@@ -1,5 +1,13 @@
 {
   "modules": [
+    "system:string",
+    "system:stddef.h",
+    "system:stdlib.h",
+    "system:string.h",
+    "system:fmt/core.h",
+    "system:boost/asio.hpp",
+    "system:spdlog/spdlog.h",
+    "system:nlohmann/json.hpp",
     "fixtures/project/vcpkg/vcpkg.json",
     "fixtures/project/vcpkg/src/buffer.c",
     "fixtures/project/vcpkg/src/main.cpp",
@@ -11,12 +19,19 @@
     "fixtures/project/vcpkg/include/server.hpp",
     "fixtures/project/vcpkg/include/session.hpp",
     "fixtures/project/vcpkg/src/session.cpp::app::net",
+    "fixtures/project/vcpkg/include/buffer.h::AppBuffer",
+    "fixtures/project/vcpkg/src/config.cpp::app::Config",
+    "fixtures/project/vcpkg/src/server.cpp::app::Server",
     "fixtures/project/vcpkg/include/session.hpp::app::net",
     "fixtures/project/vcpkg/include/config.hpp::app::Config",
     "fixtures/project/vcpkg/include/server.hpp::app::Server",
-    "fixtures/project/vcpkg/include/session.hpp::SessionStats",
+    "fixtures/project/vcpkg/src/server.cpp::app::Server::run",
+    "fixtures/project/vcpkg/src/config.cpp::app::Config::load",
+    "fixtures/project/vcpkg/src/session.cpp::app::net::Session",
+    "fixtures/project/vcpkg/src/server.cpp::app::Server::Server",
     "fixtures/project/vcpkg/include/server.hpp::app::Server::io_",
     "fixtures/project/vcpkg/include/server.hpp::app::Server::run",
+    "fixtures/project/vcpkg/src/config.cpp::app::Config::to_json",
     "fixtures/project/vcpkg/include/config.hpp::app::Config::load",
     "fixtures/project/vcpkg/include/config.hpp::app::Config::name",
     "fixtures/project/vcpkg/include/config.hpp::app::Config::port",
@@ -25,6 +40,10 @@
     "fixtures/project/vcpkg/include/server.hpp::app::Server::Server",
     "fixtures/project/vcpkg/include/config.hpp::app::Config::to_json",
     "fixtures/project/vcpkg/include/server.hpp::app::Server::config_",
+    "fixtures/project/vcpkg/src/session.cpp::app::net::Session::stats",
+    "fixtures/project/vcpkg/src/session.cpp::app::net::Session::write",
+    "fixtures/project/vcpkg/include/session.hpp::app::net::SessionStats",
+    "fixtures/project/vcpkg/src/session.cpp::app::net::Session::Session",
     "fixtures/project/vcpkg/include/session.hpp::app::net::Session::peer_",
     "fixtures/project/vcpkg/include/session.hpp::app::net::Session::stats",
     "fixtures/project/vcpkg/include/session.hpp::app::net::Session::write",
@@ -32,16 +51,128 @@
     "fixtures/project/vcpkg/include/session.hpp::app::net::Session::Session",
     "fixtures/project/vcpkg/include/session.hpp::app::net::Session::outbound_"
   ],
-  "moduleDependsOn": [],
+  "moduleDependsOn": [
+    {
+      "from": "fixtures/project/vcpkg/src/buffer.c",
+      "to": "system:stdlib.h",
+      "via": "stdlib.h"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/buffer.c",
+      "to": "system:string.h",
+      "via": "string.h"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/buffer.c",
+      "to": "fixtures/project/vcpkg/include/buffer.h",
+      "via": "buffer.h"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/main.cpp",
+      "to": "system:fmt/core.h",
+      "via": "fmt/core.h"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/main.cpp",
+      "to": "system:spdlog/spdlog.h",
+      "via": "spdlog/spdlog.h"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/main.cpp",
+      "to": "fixtures/project/vcpkg/include/buffer.h",
+      "via": "buffer.h"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/main.cpp",
+      "to": "fixtures/project/vcpkg/include/config.hpp",
+      "via": "config.hpp"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/main.cpp",
+      "to": "fixtures/project/vcpkg/include/server.hpp",
+      "via": "server.hpp"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/main.cpp",
+      "to": "fixtures/project/vcpkg/include/session.hpp",
+      "via": "session.hpp"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/config.cpp",
+      "to": "system:nlohmann/json.hpp",
+      "via": "nlohmann/json.hpp"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/config.cpp",
+      "to": "fixtures/project/vcpkg/include/config.hpp",
+      "via": "config.hpp"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/server.cpp",
+      "to": "system:spdlog/spdlog.h",
+      "via": "spdlog/spdlog.h"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/server.cpp",
+      "to": "fixtures/project/vcpkg/include/server.hpp",
+      "via": "server.hpp"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/session.cpp",
+      "to": "system:spdlog/spdlog.h",
+      "via": "spdlog/spdlog.h"
+    },
+    {
+      "from": "fixtures/project/vcpkg/src/session.cpp",
+      "to": "fixtures/project/vcpkg/include/session.hpp",
+      "via": "session.hpp"
+    },
+    {
+      "from": "fixtures/project/vcpkg/include/buffer.h",
+      "to": "system:stddef.h",
+      "via": "stddef.h"
+    },
+    {
+      "from": "fixtures/project/vcpkg/include/config.hpp",
+      "to": "system:string",
+      "via": "string"
+    },
+    {
+      "from": "fixtures/project/vcpkg/include/config.hpp",
+      "to": "system:nlohmann/json.hpp",
+      "via": "nlohmann/json.hpp"
+    },
+    {
+      "from": "fixtures/project/vcpkg/include/server.hpp",
+      "to": "system:boost/asio.hpp",
+      "via": "boost/asio.hpp"
+    },
+    {
+      "from": "fixtures/project/vcpkg/include/server.hpp",
+      "to": "fixtures/project/vcpkg/include/config.hpp",
+      "via": "config.hpp"
+    },
+    {
+      "from": "fixtures/project/vcpkg/include/session.hpp",
+      "to": "system:string",
+      "via": "string"
+    },
+    {
+      "from": "fixtures/project/vcpkg/include/session.hpp",
+      "to": "fixtures/project/vcpkg/include/buffer.h",
+      "via": "buffer.h"
+    }
+  ],
   "stats": {
-    "symbols": 47,
-    "edges": 44,
+    "symbols": 56,
+    "edges": 72,
     "edgesByKind": {
-      "declares": 36,
+      "declares": 42,
       "dependsOn": 4,
       "projectName": 1,
       "projectLicense": 1,
       "projectVersion": 1,
+      "module_depends_on": 22,
       "projectDescription": 1
     },
     "unresolved_structural_edges": 0

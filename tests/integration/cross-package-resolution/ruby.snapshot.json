@@ -7,6 +7,7 @@
     "fixtures/project/ruby/lib/calculator.rb",
     "fixtures/project/ruby/lib/calculator/history.rb",
     "fixtures/project/ruby/lib/calculator/formatter.rb",
+    "fixtures/project/ruby/lib/calculator/scientific.rb",
     "fixtures/project/ruby/lib/calculator.rb::Calculator::Basic",
     "fixtures/project/ruby/lib/calculator.rb::Calculator::Basic::add",
     "fixtures/project/ruby/lib/calculator.rb::Calculator::Basic::subtract",
@@ -14,10 +15,17 @@
     "fixtures/project/ruby/lib/calculator.rb::Calculator::Basic::initialize",
     "fixtures/project/ruby/lib/calculator/formatter.rb::Calculator::Formatter",
     "fixtures/project/ruby/lib/calculator/history.rb::Calculator::History::to_a",
+    "fixtures/project/ruby/lib/calculator/scientific.rb::Calculator::Scientific",
     "fixtures/project/ruby/lib/calculator/history.rb::Calculator::History::record",
     "fixtures/project/ruby/lib/calculator/history.rb::Calculator::History::to_json",
     "fixtures/project/ruby/lib/calculator/formatter.rb::Calculator::Formatter::format",
+    "fixtures/project/ruby/lib/calculator/formatter.rb::Calculator::Formatter::report",
     "fixtures/project/ruby/lib/calculator/history.rb::Calculator::History::initialize",
+    "fixtures/project/ruby/lib/calculator/scientific.rb::Calculator::Scientific::root",
+    "fixtures/project/ruby/lib/calculator/scientific.rb::Calculator::Scientific::power",
+    "fixtures/project/ruby/lib/calculator/scientific.rb::Calculator::Scientific::default",
+    "fixtures/project/ruby/lib/calculator/scientific.rb::Calculator::Scientific::describe",
+    "fixtures/project/ruby/lib/calculator/scientific.rb::Calculator::Scientific::initialize",
     "fixtures/project/ruby/lib/calculator/formatter.rb::Calculator::Formatter::format_history"
   ],
   "moduleDependsOn": [
@@ -56,16 +64,26 @@
       "from": "fixtures/project/ruby/lib/calculator.rb",
       "to": "gem:calculator/formatter",
       "via": "calculator/formatter"
+    },
+    {
+      "from": "fixtures/project/ruby/lib/calculator/scientific.rb",
+      "to": "fixtures/project/ruby/lib/calculator.rb",
+      "via": "../calculator"
+    },
+    {
+      "from": "fixtures/project/ruby/lib/calculator/scientific.rb",
+      "to": "fixtures/project/ruby/lib/calculator.rb",
+      "via": "../calculator"
     }
   ],
   "stats": {
-    "symbols": 26,
-    "edges": 31,
+    "symbols": 38,
+    "edges": 40,
     "edgesByKind": {
-      "declares": 15,
+      "declares": 23,
       "dependsOn": 12,
       "rubyVersion": 1,
-      "module_depends_on": 3
+      "module_depends_on": 4
     },
     "unresolved_structural_edges": 0
   }
