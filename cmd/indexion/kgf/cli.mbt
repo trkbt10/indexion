@@ -22,6 +22,7 @@
 /// | `tokens` | Show tokenization result only |
 /// | `events` | Show parse events only |
 /// | `edges` | Show generated edges only |
+/// | `check` | Validate spec structure; `--all` adds the cross-spec report |
 ///
 /// ## Examples
 ///
@@ -34,6 +35,9 @@
 ///
 /// # Specify spec explicitly
 /// indexion kgf inspect --spec=cargo-toml Cargo.toml
+///
+/// # Validate every installed spec and report contested source patterns
+/// indexion kgf check --all
 /// ```
 
 ///|
@@ -221,8 +225,14 @@ pub fn command() -> @argparse.Command {
         positionals=[
           @argparse.PositionArg(
             "spec-or-file",
-            about="KGF spec name or .kgf file path",
-            num_args=@argparse.ValueRange(lower=1),
+            about="KGF spec name or .kgf file path (omit with --all)",
+            num_args=@argparse.ValueRange(lower=0),
+          ),
+        ],
+        flags=[
+          @argparse.FlagArg(
+            "all",
+            about="Check every spec in the KGF directory and report source-pattern conflicts",
           ),
         ],
       ),
@@ -394,9 +404,18 @@ fn run_list(kgf_dir : String) -> Unit {
     pad_right("─".repeat(20), 22) +
     "─".repeat(20),
   )
+  // The listing shows each spec's declared sources, but declaring a pattern
+  // is not the same as owning it: when several specs claim one, the registry
+  // silently gives it to a single winner. Mark the contested patterns so the
+  // table does not read as if every claim were honoured.
+  let conflicts = load_registry(kgf_dir).get_source_conflicts()
+  let winner_of : Map[String, String] = Map([])
+  for conflict in conflicts {
+    winner_of.set(conflict.get_pattern(), conflict.get_winner())
+  }
   for spec in specs {
     let sources = if spec.sources.length() > 0 {
-      spec.sources.join(", ")
+      annotate_contested_sources(spec.sources, spec.name, winner_of).join(", ")
     } else {
       "(none)"
     }
@@ -409,6 +428,45 @@ fn run_list(kgf_dir : String) -> Unit {
   }
   println("")
   println("Total: \{specs.length()} specs")
+  if conflicts.length() > 0 {
+    println("")
+    println("Contested source patterns (only the winner analyses the files):")
+    for conflict in conflicts {
+      println(
+        "  " +
+        conflict.get_pattern() +
+        " -> " +
+        conflict.get_winner() +
+        " (shadows " +
+        conflict.get_losers().join(", ") +
+        ")",
+      )
+    }
+  }
+}
+
+///|
+/// Tags each of a spec's source patterns that another spec also claims: the
+/// winner keeps its pattern flagged with `(*)`, and every loser gets the
+/// winner named beside the pattern it does not actually own.
+fn annotate_contested_sources(
+  sources : Array[String],
+  lang : String,
+  winner_of : Map[String, String],
+) -> Array[String] {
+  let out : Array[String] = []
+  for source in sources {
+    match winner_of.get(source) {
+      Some(winner) =>
+        if winner == lang {
+          out.push(source + " (*)")
+        } else {
+          out.push(source + " (shadowed by " + winner + ")")
+        }
+      None => out.push(source)
+    }
+  }
+  out
 }
 
 ///|
@@ -1221,81 +1279,150 @@ fn run_classify_train(
 }
 
 ///|
+/// Running totals for a `kgf check` invocation.
+priv struct CheckTally {
+  mut specs : Int
+  mut errors : Int
+  mut warnings : Int
+}
+
+///|
+/// Resolves one `check` target to a spec: a registered spec name first, then
+/// a `.kgf` file path. Prints the reason and returns None when neither works.
+fn resolve_check_target(
+  registry : @registry.KGFRegistry,
+  target : String,
+) -> @kgf_types.KGFSpec? {
+  match registry.get_spec(target) {
+    Some(spec) => Some(spec)
+    None => {
+      let content = @fs.read_file_to_string(target) catch {
+        _ => {
+          println(
+            "Error: '" + target + "' is not a known spec name or readable file",
+          )
+          return None
+        }
+      }
+      match @kgf_parser.parse_kgf(content) {
+        Some(spec) => Some(spec)
+        None => {
+          println("Error: Failed to parse '" + target + "' as KGF spec")
+          None
+        }
+      }
+    }
+  }
+}
+
+///|
+/// Validates one spec, prints its diagnostics and folds the counts into
+/// `tally`.
+fn report_spec_check(spec : @kgf_types.KGFSpec, tally : CheckTally) -> Unit {
+  let diagnostics = @kgf_check.check(spec)
+  let mut errors = 0
+  let mut warnings = 0
+  for d in diagnostics {
+    match d.get_severity() {
+      "error" => errors += 1
+      _ => warnings += 1
+    }
+  }
+  tally.specs += 1
+  tally.errors += errors
+  tally.warnings += warnings
+  let name = spec.get_language()
+  if diagnostics.length() == 0 {
+    println(name + ": ok")
+    return
+  }
+  println(
+    name +
+    ": " +
+    errors.to_string() +
+    " error(s), " +
+    warnings.to_string() +
+    " warning(s)",
+  )
+  for d in diagnostics {
+    let prefix = if d.get_severity() == "error" { "  ERROR" } else { "  WARN " }
+    println(prefix + " [" + d.get_section() + "] " + d.get_message())
+  }
+}
+
+///|
+/// Prints one warning per source pattern that several specs claim.
+///
+/// The registry resolves such a collision silently — the last general-purpose
+/// spec to register keeps the pattern — so files matching it are never
+/// analysed with the specs that lost. Reporting does not change the outcome;
+/// it only makes the shadowing visible.
+fn report_source_conflicts(
+  registry : @registry.KGFRegistry,
+  tally : CheckTally,
+) -> Unit {
+  let conflicts = registry.get_source_conflicts()
+  if conflicts.length() == 0 {
+    return
+  }
+  for conflict in conflicts {
+    tally.warnings += 1
+    let losers = conflict.get_losers()
+    // "never sees" for one shadowed spec, "never see" for several.
+    let verb = if losers.length() == 1 { " never sees " } else { " never see " }
+    println(
+      "  WARN  [sources] '" +
+      conflict.get_pattern() +
+      "' is claimed by several specs; '" +
+      conflict.get_winner() +
+      "' wins and " +
+      losers.join(", ") +
+      verb +
+      "files matching it",
+    )
+  }
+}
+
+///|
 /// Run the `kgf check` subcommand.
 fn run_check(kgf_dir : String, matches : @argparse.Matches) -> Unit {
   let targets = matches.values.get("spec-or-file").unwrap_or([])
-  if targets.length() == 0 {
-    println("Error: No spec or file specified")
+  let check_all = matches.flags.get("all").unwrap_or(false)
+  if targets.length() == 0 && !check_all {
+    println("Error: No spec or file specified (use --all to check every spec)")
     return
   }
   let registry = load_registry(kgf_dir)
-  let mut total_errors = 0
-  let mut total_warnings = 0
+  let tally : CheckTally = { specs: 0, errors: 0, warnings: 0, }
+  if check_all {
+    // Every registered spec, in a stable order so the output can be diffed.
+    let languages = registry.get_languages()
+    languages.sort()
+    for lang in languages {
+      match registry.get_spec(lang) {
+        Some(spec) => report_spec_check(spec, tally)
+        None => ()
+      }
+    }
+    report_source_conflicts(registry, tally)
+  }
   for target in targets {
-    // Try as spec name first, then as file path
-    let spec = match registry.get_spec(target) {
-      Some(s) => s
-      None => {
-        // Try reading as .kgf file
-        let content = @fs.read_file_to_string(target) catch {
-          _ => {
-            println(
-              "Error: '" +
-              target +
-              "' is not a known spec name or readable file",
-            )
-            continue
-          }
-        }
-        match @kgf_parser.parse_kgf(content) {
-          Some(s) => s
-          None => {
-            println("Error: Failed to parse '" + target + "' as KGF spec")
-            continue
-          }
-        }
-      }
-    }
-    let diagnostics = @kgf_check.check(spec)
-    let mut errors = 0
-    let mut warnings = 0
-    for d in diagnostics {
-      match d.get_severity() {
-        "error" => errors += 1
-        _ => warnings += 1
-      }
-    }
-    total_errors += errors
-    total_warnings += warnings
-    let name = spec.get_language()
-    if diagnostics.length() == 0 {
-      println(name + ": ok")
-    } else {
-      println(
-        name +
-        ": " +
-        errors.to_string() +
-        " error(s), " +
-        warnings.to_string() +
-        " warning(s)",
-      )
-      for d in diagnostics {
-        let severity = d.get_severity()
-        let prefix = if severity == "error" { "  ERROR" } else { "  WARN " }
-        println(prefix + " [" + d.get_section() + "] " + d.get_message())
-      }
+    match resolve_check_target(registry, target) {
+      Some(spec) => report_spec_check(spec, tally)
+      None => ()
     }
   }
   println("")
-  if total_errors == 0 && total_warnings == 0 {
+  println(
+    "Checked " +
+    tally.specs.to_string() +
+    " spec(s): " +
+    tally.errors.to_string() +
+    " error(s), " +
+    tally.warnings.to_string() +
+    " warning(s)",
+  )
+  if tally.errors == 0 && tally.warnings == 0 {
     println("All checks passed.")
-  } else {
-    println(
-      "Total: " +
-      total_errors.to_string() +
-      " error(s), " +
-      total_warnings.to_string() +
-      " warning(s)",
-    )
   }
 }

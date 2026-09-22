@@ -230,19 +230,40 @@ test "check: lex-only spec reports no unreachable token kinds" {
 test "check: python and rust specs raise no label or token warnings" {
   // These two specs were rewritten against the real engine semantics and are
   // the reference for "correct": a warning here means the check is wrong.
+  //
+  // The one exception is pinned below. `rust` must stay completely silent —
+  // an earlier revision of the spec read `$doc` on `doc:DocBlock?` and lost
+  // every line of a doc comment but the last, so this is a regression guard
+  // for the multi-token check as much as for the spec.
   let registry = @registry.KGFRegistry::load_from_dir(
     @kgf_fixtures.get_kgfs_dir(),
   )
-  for name in ["python", "rust"] {
-    match registry.get_spec(name) {
-      Some(spec) => {
-        let diagnostics = check(spec)
-        assert_eq(warnings_in(diagnostics, "semantics").length(), 0)
-        assert_eq(warnings_in(diagnostics, "attrs").length(), 0)
-        assert_eq(warnings_in(diagnostics, "grammar").length(), 0)
-      }
-      None => ()
+  match registry.get_spec("rust") {
+    Some(spec) => {
+      let diagnostics = check(spec)
+      assert_eq(warnings_in(diagnostics, "semantics").length(), 0)
+      assert_eq(warnings_in(diagnostics, "attrs").length(), 0)
+      assert_eq(warnings_in(diagnostics, "grammar").length(), 0)
     }
+    None => ()
+  }
+  match registry.get_spec("python") {
+    Some(spec) => {
+      let diagnostics = check(spec)
+      assert_eq(warnings_in(diagnostics, "attrs").length(), 0)
+      assert_eq(warnings_in(diagnostics, "grammar").length(), 0)
+      // `MethodDef` binds `prop:PropertyDecoratorLine` inside a `*`, and the
+      // rule itself is a sequence, so `$prop` is genuinely truncated to its
+      // last token. The spec gets away with it because the only read is
+      // `cond($prop, "Property", "Method")`, which needs truthiness rather
+      // than the value — so this is a real finding that happens to be
+      // harmless, not a false positive.
+      let messages = warnings_in(diagnostics, "semantics")
+      assert_eq(messages.length(), 1)
+      assert_true(any_message_contains(messages, "'prop'"))
+      assert_true(any_message_contains(messages, "PropertyDecoratorLine"))
+    }
+    None => ()
   }
 }
 
