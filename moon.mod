@@ -1,6 +1,6 @@
 name = "trkbt10/indexion"
 
-version = "0.18.0"
+version = "0.19.0"
 
 import {
   "moonbitlang/x@0.5.5",

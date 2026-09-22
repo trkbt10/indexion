@@ -1,3 +1,60 @@
+# v0.19.0
+
+## Highlights
+
+- **KGF grew the capabilities its specs were missing.** Lexical scoping (`scope push` / `scope pop`), spec inheritance (`extends:`), indentation layout tokens (`LAYOUT`), a project-local spec overlay, manifest-driven namespace maps in the resolver, and transactional event delivery in the PEG engine. Every one of them replaces a class of per-language workaround with a declarative, language-agnostic mechanism.
+- **The whole spec set was re-verified against real code.** 50 of 83 specs were fixed: parses that silently stopped after the first unsupported construct, declarations dropped or mis-attributed, docs and import paths truncated to their last token, and duplicate dependency edges. `indexion check` over every fixture, the transpile corpus and this repository's own sources now reports nothing but an intentionally malformed diagram fixture and foreign characters in generated stubs.
+- **`kgf check` finds the bug classes statically.** Unbound label references, token kinds no rule can consume, multi-token captures read as `$label`, built-in shadowing, contested source patterns, `extends` cycles and `LAYOUT` mismatches are all reported before a spec ships.
+
+## New KGF capabilities
+
+### Lexical scoping: `scope push` / `scope pop`
+
+`bind` writes into the innermost scope frame and `$scope(ns, name)` searches frames innermost-first. A declaration header pushes a frame and binds the enclosing type; the enclosing declaration rule pops it. Nested types are declared under their parent (`Outer.Inner`) and members after a nested type attach to the outer type again, at any depth. 21 programming specs adopted it; the manual "type stack" workarounds are gone. `kgf check` warns on a spec-wide push/pop imbalance.
+
+### Spec inheritance: `extends:`
+
+A spec inherits every section it does not declare from a base spec named by `language:`; a declared section replaces the base's whole, `language:`/`sources:` are never inherited, chains are allowed, cycles and unknown bases are errors. Inheritance is resolved after the whole spec set (including overlays) is loaded, so a derived spec may extend a spec another layer provides. gitlab-wiki, sdd-requirement, sdd-user-story, typescript-jsx and javascript-jsx are now dialects of their bases (613 duplicated lines removed).
+
+### Indentation layout: `LAYOUT`
+
+A regex lexer cannot compare one line's indentation with the previous line's. `LAYOUT newline=... indent=INDENT dedent=DEDENT [comment=...] [open=... close=...]` declares how the engine synthesizes INDENT/DEDENT tokens (blank and comment-only lines ignored, brackets suppress layout, open levels closed at end of input), so a grammar brackets a body exactly. Python bodies are exact suites now — a def nested in a method is not a sibling method, a nested class no longer swallows the members after it — and YAML declares every key with its dotted path.
+
+### Project-local spec overlay
+
+The resolved spec set is a layered chain: the installed base set plus `<project>/.indexion/kgfs/` (or repeated `--specs-dir`) on top. A spec whose `language:` matches replaces the base one by name; everything else keeps coming from the base, and an overlay spec may `extends:` a base spec. `kgf list` shows each spec's origin and what it replaced; `kgf check` with no name validates the resolved chain.
+
+### Resolver: manifest-driven mapping
+
+`- namespace_map: composer.json @ autoload.psr-4` and `- namespace_map: tsconfig.json @ compilerOptions.paths + compilerOptions.baseUrl` read a prefix→directory map from the nearest manifest above the importing file (longest key wins, `*` wildcards, array values); `- source_roots: src/main/kotlin, src/main/java @ build.gradle.kts` does the same for fixed layouts. A new `backslash` module path style covers PHP namespaces, and the resolver keeps a spec's declared relative prefixes intact through dot-style conversion (`../a.b` → `../a/b`). Prefix fallbacks (`bare_prefix`, `ns_prefix`) now apply only after every file probe has missed. PHP, TypeScript/JavaScript, Java, Kotlin and Python intra-project imports resolve to files.
+
+### PEG engine: transactional events, alias rules
+
+Events are delivered once, in post-order, only for rules in the final derivation: a failed alternative drops its children's events and a memoized success replays its subtree. Every rule instance used to emit twice, and a failed alternative leaked its events (spurious binds, scope pushes and declarations). Alias rules (`Outer -> Inner`) now fire like any other rule. Lookahead bodies may be alternations (`(?=\s|>)`), a token's value is the first *participating* capture group (one group per alternative works), and the lexer applies a spec's `=== preprocess` steps on every path (`check`, `kgf inspect`).
+
+### `kgf check` diagnostics
+
+New static validations: `$label` references a rule never binds; token kinds no grammar rule consumes; `$label` reads of a capture that can span several tokens (use `$label_text`); a `let` shadowing `$file`/`$root`/`$language`; `extends` cycles and unknown bases; `LAYOUT` naming undefined kinds or synthetic kinds that are also tokens; source patterns claimed by several specs (`kgf check --all`, and `kgf list` marks the winner). `kgf inspect` reports `PARTIAL (consumed N of M tokens)` with the stop position instead of a bare SUCCESS, and lists lexer errors.
+
+## Spec fixes (indexion-kgf)
+
+- **Python** rewritten: docstrings captured on the declaration (they were never bound), bodies no longer stop the parse at `return`, `with ... as`, blank lines or multi-line parameter lists, methods and properties declared under their class, relative imports resolved, `import a as b` and parenthesised names.
+- **Rust**: `/// doc` followed by `#[attr]` no longer drops the declaration (or the whole `impl` block); multi-line docs kept whole; `mut self` / `self: Box<Self>` receivers; trait associated items.
+- **Go, Kotlin, Java, C#, Dart, Swift**: keyword tokens shadowing identifiers removed, members declared under their type, Swift `let`/`var` published (its visibility label was never bound), Java/Kotlin imports resolve through source roots.
+- **TypeScript, JavaScript (+JSX)**: regex literals and JSX text tokens, `%`, balanced fallback at module level, interface members declared, class-member docs bound on the member rules.
+- **C, C++, Zig, PHP, Clojure, Ruby**: `extern "C"` blocks transparent, out-of-line definitions attached to their owner, `#include` edges with a resolver chain, typedef'd tags, Zig `const Name = struct`, PHP promoted constructors and enum cases, Clojure forms and `:require`, Ruby bodies with `super`/`self`/`alias`/heredocs/interpolation (one `super` used to erase the class silently).
+- **Haskell, OCaml, Elixir, Scala, Julia, Lua, Protobuf**: bodies that never terminated, qualified names, `:`/`=` lexed as operators, duplicate import edges; each language gained a realistic fixture.
+- **MoonBit**: `#|` / `$|` string lines, `#attr` attributes, char/byte escapes and the full operator set — this repository's own sources went from 4,176 lexer/parse errors to zero.
+- **Project manifests**: Cargo.toml, pyproject.toml, Gemfile, build.gradle.kts, Package.swift, .gitmodules, deno.json and moon.pkg parse whole files (keyword tokens for key names made every generic key/value rule fail); pyproject's licence is read instead of a placeholder; `dep_kind` reflects the declaring table.
+- **Documents and DSLs**: markdown (and derived specs), mermaid, css, html, sql-ddl, yaml, shell, rfc-plaintext, plaintext (CRLF blank lines), japanese — start rules that could not consume their own tokens, link paths bound in sub-rules, FOREIGN KEY edges never emitted; kgf.kgf parses every spec file.
+- **Ownership**: `.h` → cpp, `.sql` → sql-ddl, `package.json` → project/package-json, `.txt`/`.text` → plaintext; toy specs and other overlays claim no pattern and are selected by name. Structural specs declare no documentable symbol kinds, so `plan documentation` no longer counts YAML keys or kgf tokens as public API.
+
+## Fixtures and tests
+
+New fixture projects pin every capability end to end (tsconfig paths, spec overlay, Gradle multi-module, YAML corpus, `.h` shared by C and C++, composer psr-4 with longest-prefix precedence, Python nesting and relative imports, nested declarations across ten languages, multi-line docs from real files, once-avoided constructs put back). Integration snapshots gain the edges that were missing (intra-project imports resolved, members attached, duplicates gone). The cross-package runner loads the registry per fixture so a fixture's own overlay applies. 2,181 tests.
+
+---
+
 # v0.18.0
 
 ## Highlights

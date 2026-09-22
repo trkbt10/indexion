@@ -2,7 +2,7 @@
 /// Current version of indexion.
 /// SoT is the `moon.mod` "version" field.
 /// Auto-synced by scripts/sync-version.sh (runs in CI and before local builds).
-pub let current_version : String = "0.18.0"
+pub let current_version : String = "0.19.0"
 
 ///|
 /// GitHub repository owner/name.
