@@ -507,3 +507,55 @@ test "dsl: wiki specs bind the metadata comment payload" {
     assert_true(md > 0)
   }
 }
+
+///|
+/// A blank line must not stop a plain-text document at its first paragraph.
+///
+/// `plaintext` is the spec every `.txt`, `.text`, `.rst` and `.adoc` file is
+/// read with. Its `NL` token was `/\r?\n+/`, which repeats only the `\n`: on
+/// a CRLF file a blank line (`\r\n\r\n`) matched the first pair and stopped
+/// at the second `\r`, so the grammar received two `NL` tokens in a row.
+/// `Block -> Text NL?` cannot match a bare `NL`, so `Doc -> Block*` ended
+/// there. Every paragraph after the first blank line was dropped — a
+/// 27,000-character chapter parsed 8 of its 920 tokens, and a LICENSE that
+/// opens with a blank line parsed 0 of 339 while still reporting no error.
+///
+/// Both halves are needed: collapsing the CRLF run is what stops the double
+/// token appearing, and the bare-`NL` alternative is what keeps a file that
+/// opens with a blank line from stopping at line 1.
+test "dsl: plaintext reads past blank lines in both LF and CRLF files" {
+  let registry = get_fixture_registry()
+  let lf = "First paragraph.\n\nSecond paragraph.\n"
+  let crlf = "First paragraph.\r\n\r\nSecond paragraph.\r\n"
+  let leading = "\n\nOpens with a blank line.\n"
+  for source in [lf, crlf, leading] {
+    let result = run_pipeline_with_registry(
+      registry, "plaintext", source, "notes.txt",
+    )
+    assert_true(result.parse_complete())
+    assert_eq(result.lex_errors, 0)
+  }
+
+  // A blank line is one token, not two, in either line ending.
+  let spec = registry.get_spec("plaintext").unwrap()
+  let lexer = @lexer.Lexer::for_spec(spec)
+  for source in [lf, crlf] {
+    let tokens = lexer.tokenize(source)
+    let mut text = 0
+    for tok in tokens {
+      if tok.kind == "Text" {
+        text = text + 1
+      }
+    }
+    assert_eq(text, 2)
+  }
+
+  // And the real prose fixtures, which are CRLF, parse to their last token.
+  for
+    rel in [
+      "/story/dorian-gray/prose/01-chapter.txt", "/story/dorian-gray/prose/02-chapter.txt",
+      "/story/dorian-gray/prose/03-chapter.txt",
+    ] {
+    assert_parses_whole_file("plaintext", rel, "fixtures" + rel)
+  }
+}
