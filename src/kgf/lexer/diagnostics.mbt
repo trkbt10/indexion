@@ -14,7 +14,7 @@ pub fn LexDiagnostic::new(
   length : Int,
   text : String,
 ) -> LexDiagnostic {
-  { pos, length, text }
+  { pos, length, text, }
 }
 
 ///|

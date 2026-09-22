@@ -28,7 +28,7 @@ pub struct TfidfVector {
 ///|
 /// Create a new empty TfidfVector.
 pub fn TfidfVector::new() -> TfidfVector {
-  { terms: {} }
+  { terms: {}, }
 }
 
 ///|

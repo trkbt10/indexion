@@ -58,39 +58,39 @@ pub fn command() -> @argparse.Command {
 fn resolve_config_from_matches(matches : @argparse.Matches) -> VerifyConfig {
   let mut config = VerifyConfig::default()
   match matches.values.get("spec") {
-    Some(arr) => config = { ..config, spec_patterns: arr.copy() }
+    Some(arr) => config = { ..config, spec_patterns: arr.copy(), }
     _ => ()
   }
   match matches.values.get("format") {
-    Some(arr) => if arr.length() > 0 { config = { ..config, format: arr[0] } }
+    Some(arr) => if arr.length() > 0 { config = { ..config, format: arr[0], } }
     _ => ()
   }
   match matches.values.get("focus") {
-    Some(arr) => if arr.length() > 0 { config = { ..config, focus: arr[0] } }
+    Some(arr) => if arr.length() > 0 { config = { ..config, focus: arr[0], } }
     _ => ()
   }
   match matches.values.get("max-candidates") {
     Some(arr) =>
       if arr.length() > 0 {
-        config = { ..config, max_candidates: @common.parse_int(arr[0]) }
+        config = { ..config, max_candidates: @common.parse_int(arr[0]), }
       }
     _ => ()
   }
   match matches.values.get("specs-dir") {
     Some(arr) =>
       if arr.length() > 0 {
-        config = { ..config, specs_dir: arr[0] }
+        config = { ..config, specs_dir: arr[0], }
       }
     _ => ()
   }
   match matches.values.get("output") {
-    Some(arr) => if arr.length() > 0 { config = { ..config, output: arr[0] } }
+    Some(arr) => if arr.length() > 0 { config = { ..config, output: arr[0], } }
     _ => ()
   }
   match matches.values.get("directory") {
     Some(arr) =>
       if arr.length() > 0 {
-        config = { ..config, target_dir: arr[0] }
+        config = { ..config, target_dir: arr[0], }
       }
     _ => ()
   }

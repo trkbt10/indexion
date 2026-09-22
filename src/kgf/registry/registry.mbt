@@ -16,7 +16,7 @@ pub struct KGFRegistry {
 ///|
 /// Create an empty registry.
 pub fn KGFRegistry::new() -> KGFRegistry {
-  { specs: {}, ext_to_lang: {}, lang_to_doc_spec: {} }
+  { specs: {}, ext_to_lang: {}, lang_to_doc_spec: {}, }
 }
 
 ///|
@@ -34,7 +34,7 @@ fn load_specs_recursive(registry : KGFRegistry, dir : String) -> Unit {
     if !@fs.is_dir(dir) {
       return
     }
-    let entries = @fs.read_dir(dir)
+    let entries = @fs.read_dir(dir).to_owned()
     // Sort entries alphabetically before iterating so spec registration order
     // is platform-independent. `@fs.read_dir` returns entries in filesystem
     // order, which differs between macOS APFS and Linux ext4. When multiple
@@ -250,7 +250,7 @@ pub fn KGFRegistry::spec_count(self : KGFRegistry) -> Int {
 pub fn KGFRegistry::to_specs_map(
   self : KGFRegistry,
 ) -> Map[String, @types.KGFSpec] {
-  let specs : Map[String, @types.KGFSpec] = {}
+  let specs : Map[String, @types.KGFSpec] = Map([])
   for entry in self.specs {
     specs.set(entry.0, entry.1)
   }

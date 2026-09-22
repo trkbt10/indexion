@@ -104,7 +104,11 @@ pub fn RefactorPlanJSON::new(config : ConfigSummary) -> RefactorPlanJSON {
     clusters: [],
     function_duplicates: [],
     magic_strings: [],
-    summary: { total_clusters: 0, total_files_analyzed: 0, max_similarity: 0.0 },
+    summary: {
+      total_clusters: 0,
+      total_files_analyzed: 0,
+      max_similarity: 0.0,
+    },
   }
 }
 
@@ -299,7 +303,7 @@ fn parse_config(cfg : Map[String, Json]) -> ConfigSummary {
   }
   let includes = parse_string_array(cfg.get("includes"))
   let excludes = parse_string_array(cfg.get("excludes"))
-  { target_dir, threshold, strategy, includes, excludes }
+  { target_dir, threshold, strategy, includes, excludes, }
 }
 
 ///|
@@ -354,7 +358,7 @@ fn parse_cluster(json : Json) -> ClusterJSON? {
                   Some(String(s)) => s
                   _ => ""
                 }
-                pairs.push({ file1, file2, similarity, preview1, preview2 })
+                pairs.push({ file1, file2, similarity, preview1, preview2, })
               }
               _ => ()
             }
@@ -424,11 +428,12 @@ fn parse_cluster(json : Json) -> ClusterJSON? {
           let affected_files = parse_string_array(
             sugg_obj.get("affected_files"),
           )
-          { shared_module, functions_to_extract, affected_files }
+          { shared_module, functions_to_extract, affected_files, }
         }
-        _ => { shared_module: "", functions_to_extract: [], affected_files: [] }
+        _ =>
+          { shared_module: "", functions_to_extract: [], affected_files: [], }
       }
-      Some({ group_id, files, pairs, duplicates, suggestions })
+      Some({ group_id, files, pairs, duplicates, suggestions, })
     }
     _ => None
   }
@@ -454,7 +459,7 @@ fn extract_preview(content : String, max_chars : Int) -> String {
     return trim_leading_whitespace(String::from_array(result))
   }
   // Collect sentences until we reach max_chars
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut total_len = 0
   for sentence in sentences {
     let sentence_len = sentence.to_array().length()
@@ -515,7 +520,7 @@ pub fn build_refactor_plan(
   }
   let plan = RefactorPlanJSON::new(plan_config)
   // Cache previews to avoid recomputing for the same file
-  let preview_cache : Map[String, String] = {}
+  let preview_cache : Map[String, String] = Map([])
   for i, cluster in clusters {
     let group_id = i + 1
     // Convert all pairs with cached previews (for JSON output)
@@ -557,9 +562,9 @@ pub fn build_refactor_plan(
     let duplicates : Array[DuplicateBlockJSON] = []
     let func_names : Array[String] = []
     let mut shared_module = ""
-    let seen_file_pairs : Map[String, Bool] = {}
+    let seen_file_pairs : Map[String, Bool] = Map([])
     // Cache line->func maps per file (built from KGF, language-agnostic)
-    let line_func_cache : Map[String, Map[Int, String]] = {}
+    let line_func_cache : Map[String, Map[Int, String]] = Map([])
     let max_dup_comparisons = 200
     let mut dup_count = 0
     for pair in cluster.pairs {

@@ -269,7 +269,7 @@ fn _build_package_section(
 fn build_package_summary_table(
   packages : Array[@doc_config.DocPackageEntry],
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("| Package | Description |\n")
   buf.write_string("|---------|-------------|\n")
   for entry in packages {

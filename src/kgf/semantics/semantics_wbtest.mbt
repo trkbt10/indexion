@@ -69,7 +69,7 @@ test "eval_expr with built-in variables" {
 ///|
 test "eval_expr with labels and locals" {
   let ctx = create_test_ctx()
-  let labels : Map[String, Json] = {}
+  let labels : Map[String, Json] = Map([])
   labels.set("Name", "myFunction".to_json())
   let env = Env::new(labels)
   // Label variable
@@ -212,7 +212,7 @@ test "eval_expr with stripQuotes function" {
 ///|
 test "eval_expr with first and last functions" {
   let ctx = create_test_ctx()
-  let labels : Map[String, Json] = {}
+  let labels : Map[String, Json] = Map([])
   labels.set(
     "items",
     Json::array(["a".to_json(), "b".to_json(), "c".to_json()]),
@@ -337,7 +337,7 @@ test "eval_stmt let" {
 ///|
 test "eval_stmt for" {
   let ctx = create_test_ctx()
-  let labels : Map[String, Json] = {}
+  let labels : Map[String, Json] = Map([])
   labels.set(
     "items",
     Json::array(["a".to_json(), "b".to_json(), "c".to_json()]),
@@ -403,7 +403,7 @@ test "eval_stmt note" {
 ///|
 test "eval_semantics with when condition" {
   let ctx = create_test_ctx()
-  let labels : Map[String, Json] = {}
+  let labels : Map[String, Json] = Map([])
   labels.set("Name", "testFunc".to_json())
   // Create block with when condition that is true
   let block = @types.SemOnBlock::new(
@@ -425,7 +425,7 @@ test "eval_semantics with when condition" {
 ///|
 test "eval_semantics with else branch" {
   let ctx = create_test_ctx()
-  let labels : Map[String, Json] = {}
+  let labels : Map[String, Json] = Map([])
   labels.set("Name", Json::null())
   // Create block with when condition that is false
   let block = @types.SemOnBlock::new(
@@ -475,13 +475,13 @@ test "scope stack operations" {
 test "collect_refs" {
   let ctx = create_test_ctx()
   // Add some events
-  let ref_payload1 : Map[String, Json] = {}
+  let ref_payload1 : Map[String, Json] = Map([])
   ref_payload1.set("target", "sym1".to_json())
   ctx.add_event("Ref", ref_payload1)
-  let note_payload : Map[String, Json] = {}
+  let note_payload : Map[String, Json] = Map([])
   note_payload.set("type", "Info".to_json())
   ctx.add_event("Note", note_payload)
-  let ref_payload2 : Map[String, Json] = {}
+  let ref_payload2 : Map[String, Json] = Map([])
   ref_payload2.set("target", "sym2".to_json())
   ctx.add_event("Ref", ref_payload2)
   // Collect refs

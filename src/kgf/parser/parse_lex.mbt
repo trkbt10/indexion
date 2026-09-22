@@ -87,7 +87,7 @@ pub fn LexResult::get_keyword_kinds(self : LexResult) -> Map[String, Bool] {
 pub fn parse_lex(text : String) -> LexResult {
   let lines = split_lines(text)
   let tokens : Array[@types.TokenDef] = []
-  let keyword_kinds : Map[String, Bool] = {}
+  let keyword_kinds : Map[String, Bool] = Map([])
   for line in lines {
     let ln = trim_str(line)
     // Skip empty lines and comments
@@ -121,7 +121,7 @@ pub fn parse_lex(text : String) -> LexResult {
       }
     }
   }
-  { tokens, keyword_kinds }
+  { tokens, keyword_kinds, }
 }
 
 ///|

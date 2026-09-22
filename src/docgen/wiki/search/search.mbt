@@ -70,7 +70,7 @@ pub async fn build_search_index(
   provider : @embed_config.EmbeddingProvider,
   registry? : @kgf_registry.KGFRegistry? = None,
 ) -> WikiSearchIndex raise @embed.EmbedError {
-  let sections : Map[String, WikiSection] = {}
+  let sections : Map[String, WikiSection] = Map([])
   let section_order : Array[WikiSection] = []
   for entry in pages {
     let page_id = entry.0
@@ -103,7 +103,7 @@ pub async fn build_search_index(
     dim~,
     strategy=@embed_config.BruteForce,
   ).with_tfidf(tfidf)
-  let section_to_vid : Map[String, Int64] = {}
+  let section_to_vid : Map[String, Int64] = Map([])
   let mut vid : Int64 = 1L
   for i, s in section_order {
     let attrs = @search_engine.empty_attrs()
@@ -117,7 +117,7 @@ pub async fn build_search_index(
     section_to_vid[s.id] = vid
     vid += 1L
   }
-  { engine, provider, sections, section_to_vid, next_vid: vid }
+  { engine, provider, sections, section_to_vid, next_vid: vid, }
 }
 
 ///|
@@ -148,7 +148,7 @@ pub async fn WikiSearchIndex::search(
       _ => continue
     }
     match self.sections.get(section_id) {
-      Some(section) => results.push({ section, score: hit.score })
+      Some(section) => results.push({ section, score: hit.score, })
       None => ()
     }
   }
@@ -297,7 +297,7 @@ fn fallback_to_page_section(
   if sections.length() > 0 {
     return sections
   }
-  [WikiSection::{ id: page_id, title: page_title, content, page_id, level: 1 }]
+  [WikiSection::{ id: page_id, title: page_title, content, page_id, level: 1, }]
 }
 
 ///|

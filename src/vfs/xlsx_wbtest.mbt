@@ -462,9 +462,7 @@ test "xlsx: document-relevant parts are included" {
   let dir = xlsx_test_dir()
   let xlsx_path = dir + "/test_fixture.xlsx"
   let zip_data = build_xlsx_fixture()
-  @fs.write_bytes_to_file(xlsx_path, fixed_to_bytes(zip_data)) catch {
-    e => raise e
-  }
+  @fs.write_bytes_to_file(xlsx_path, fixed_to_bytes(zip_data))
   let spec = ArchiveSpec::{
     inner_includes: [
       "xl/worksheets/sheet*.xml", "xl/sharedStrings.xml", "xl/workbook.xml", "xl/comments*.xml",
@@ -478,7 +476,7 @@ test "xlsx: document-relevant parts are included" {
       "xl/theme/*",
     ],
   }
-  let entries = expand_archive(xlsx_path, spec) catch { e => raise e }
+  let entries = expand_archive(xlsx_path, spec)
   let paths = collect_inner_paths(entries)
   // Worksheets
   assert_true(has_path(paths, "xl/worksheets/sheet1.xml"))
@@ -519,9 +517,7 @@ test "xlsx: structural parts are excluded" {
   let dir = xlsx_test_dir()
   let xlsx_path = dir + "/test_excluded.xlsx"
   let zip_data = build_xlsx_fixture()
-  @fs.write_bytes_to_file(xlsx_path, fixed_to_bytes(zip_data)) catch {
-    e => raise e
-  }
+  @fs.write_bytes_to_file(xlsx_path, fixed_to_bytes(zip_data))
   let spec = ArchiveSpec::{
     inner_includes: [
       "xl/worksheets/sheet*.xml", "xl/sharedStrings.xml", "xl/workbook.xml", "xl/comments*.xml",
@@ -535,7 +531,7 @@ test "xlsx: structural parts are excluded" {
       "xl/theme/*",
     ],
   }
-  let entries = expand_archive(xlsx_path, spec) catch { e => raise e }
+  let entries = expand_archive(xlsx_path, spec)
   let paths = collect_inner_paths(entries)
   // Content types must be excluded
   assert_false(has_path(paths, "[Content_Types].xml"))
@@ -557,9 +553,7 @@ test "xlsx: all included entries are UTF-8 text" {
   let dir = xlsx_test_dir()
   let xlsx_path = dir + "/test_utf8.xlsx"
   let zip_data = build_xlsx_fixture()
-  @fs.write_bytes_to_file(xlsx_path, fixed_to_bytes(zip_data)) catch {
-    e => raise e
-  }
+  @fs.write_bytes_to_file(xlsx_path, fixed_to_bytes(zip_data))
   let spec = ArchiveSpec::{
     inner_includes: [
       "xl/worksheets/sheet*.xml", "xl/sharedStrings.xml", "xl/workbook.xml", "xl/comments*.xml",
@@ -573,7 +567,7 @@ test "xlsx: all included entries are UTF-8 text" {
       "xl/theme/*",
     ],
   }
-  let entries = expand_archive(xlsx_path, spec) catch { e => raise e }
+  let entries = expand_archive(xlsx_path, spec)
   for entry in entries {
     // Every extracted entry should be text (XML), not binary
     assert_false(entry.is_binary)
@@ -588,9 +582,7 @@ test "xlsx: virtual paths use archive separator" {
   let dir = xlsx_test_dir()
   let xlsx_path = dir + "/test_vpath.xlsx"
   let zip_data = build_xlsx_fixture()
-  @fs.write_bytes_to_file(xlsx_path, fixed_to_bytes(zip_data)) catch {
-    e => raise e
-  }
+  @fs.write_bytes_to_file(xlsx_path, fixed_to_bytes(zip_data))
   let spec = ArchiveSpec::{
     inner_includes: [
       "xl/worksheets/sheet*.xml", "xl/sharedStrings.xml", "xl/workbook.xml", "xl/comments*.xml",
@@ -604,7 +596,7 @@ test "xlsx: virtual paths use archive separator" {
       "xl/theme/*",
     ],
   }
-  let entries = expand_archive(xlsx_path, spec) catch { e => raise e }
+  let entries = expand_archive(xlsx_path, spec)
   for entry in entries {
     // Virtual path must start with the archive path
     let (archive_part, inner_opt) = parse_virtual_path(entry.virtual_path)
@@ -623,9 +615,7 @@ test "xlsx: content contains expected text" {
   let dir = xlsx_test_dir()
   let xlsx_path = dir + "/test_content.xlsx"
   let zip_data = build_xlsx_fixture()
-  @fs.write_bytes_to_file(xlsx_path, fixed_to_bytes(zip_data)) catch {
-    e => raise e
-  }
+  @fs.write_bytes_to_file(xlsx_path, fixed_to_bytes(zip_data))
   let spec = ArchiveSpec::{
     inner_includes: [
       "xl/worksheets/sheet*.xml", "xl/sharedStrings.xml", "xl/workbook.xml", "xl/comments*.xml",
@@ -639,7 +629,7 @@ test "xlsx: content contains expected text" {
       "xl/theme/*",
     ],
   }
-  let entries = expand_archive(xlsx_path, spec) catch { e => raise e }
+  let entries = expand_archive(xlsx_path, spec)
   // Shared strings should contain our text values
   assert_true(has_text_content(entries, "xl/sharedStrings.xml"))
   // Workbook should contain sheet names
@@ -704,9 +694,7 @@ test "xlsx: correct entry count" {
   let dir = xlsx_test_dir()
   let xlsx_path = dir + "/test_count.xlsx"
   let zip_data = build_xlsx_fixture()
-  @fs.write_bytes_to_file(xlsx_path, fixed_to_bytes(zip_data)) catch {
-    e => raise e
-  }
+  @fs.write_bytes_to_file(xlsx_path, fixed_to_bytes(zip_data))
   let spec = ArchiveSpec::{
     inner_includes: [
       "xl/worksheets/sheet*.xml", "xl/sharedStrings.xml", "xl/workbook.xml", "xl/comments*.xml",
@@ -720,7 +708,7 @@ test "xlsx: correct entry count" {
       "xl/theme/*",
     ],
   }
-  let entries = expand_archive(xlsx_path, spec) catch { e => raise e }
+  let entries = expand_archive(xlsx_path, spec)
   // 16 document-relevant parts:
   // sheet1, sheet2, sharedStrings, workbook, comments1,
   // threadedComment1, table1, pivotTable1, pivotCacheDefinition1,

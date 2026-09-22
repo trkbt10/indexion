@@ -25,7 +25,7 @@ pub async fn check_latest_version() -> String raise UpdateError {
 pub async fn check_for_update() -> UpdateCheckResult raise UpdateError {
   let latest = check_latest_version()
   let has_update = compare_versions(latest, current_version) > 0
-  { current_version, latest_version: latest, has_update }
+  { current_version, latest_version: latest, has_update, }
 }
 
 ///|

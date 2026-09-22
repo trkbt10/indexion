@@ -30,7 +30,7 @@ pub fn extract_code_documents(
       } else {
         lines.length()
       }
-      let buf = StringBuilder::new()
+      let buf = StringBuilder()
       buf.write_string(func.get_name())
       buf.write_string(" ")
       let start_idx = start_line - 1
@@ -54,7 +54,7 @@ pub fn extract_code_documents(
         None => ""
       }
       let module_path = @common.parent_dir(path)
-      let doc_attrs : Map[String, String] = {}
+      let doc_attrs : Map[String, String] = Map([])
       doc_attrs["node_type"] = @kgf_features.node_type_code
       doc_attrs["node_kind"] = "fn"
       if lang.length() > 0 {

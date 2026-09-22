@@ -18,7 +18,7 @@ pub struct ComponentDoc {
 ///|
 /// Create a new ComponentDoc with required name.
 pub fn ComponentDoc::new(name : String) -> ComponentDoc {
-  { name, file_tag: None, description: None, example: None }
+  { name, file_tag: None, description: None, example: None, }
 }
 
 ///|
@@ -29,7 +29,7 @@ pub fn ComponentDoc::make(
   description : String?,
   example : String?,
 ) -> ComponentDoc {
-  { name, file_tag, description, example }
+  { name, file_tag, description, example, }
 }
 
 ///|
@@ -76,7 +76,7 @@ pub fn TokenInfo::new(
   css_var : String,
   description : String,
 ) -> TokenInfo {
-  { name, css_var, description, default_value: None }
+  { name, css_var, description, default_value: None, }
 }
 
 ///|
@@ -87,7 +87,7 @@ pub fn TokenInfo::with_default(
   description : String,
   default_value : String,
 ) -> TokenInfo {
-  { name, css_var, description, default_value: Some(default_value) }
+  { name, css_var, description, default_value: Some(default_value), }
 }
 
 ///|
@@ -128,7 +128,7 @@ pub struct TokenGroup {
 ///|
 /// Create a new TokenGroup.
 pub fn TokenGroup::new(name : String, description : String) -> TokenGroup {
-  { name, description, tokens: [] }
+  { name, description, tokens: [], }
 }
 
 ///|
@@ -138,7 +138,7 @@ pub fn TokenGroup::with_tokens(
   description : String,
   tokens : Array[TokenInfo],
 ) -> TokenGroup {
-  { name, description, tokens }
+  { name, description, tokens, }
 }
 
 ///|

@@ -13,7 +13,7 @@ fn temp_wiki_dir() -> String {
 fn make_pages(
   entries : Array[(String, String, String)],
 ) -> Map[String, @types.WikiPage] {
-  let pages : Map[String, @types.WikiPage] = {}
+  let pages : Map[String, @types.WikiPage] = Map([])
   for entry in entries {
     let (id, title, content) = entry
     pages[id] = @types.WikiPage::new(id~, title~, content~)

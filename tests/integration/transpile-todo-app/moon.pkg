@@ -2,7 +2,7 @@ import {
   "moonbitlang/async/process",
   "moonbitlang/core/json",
   "moonbitlang/x/fs",
-  "moonbitlang/x/sys",
+  "moonbitlang/core/env",
   "trkbt10/indexion/src/config",
   "trkbt10/indexion/src/kgf/check" @kgf_check,
   "trkbt10/indexion/src/kgf/registry",

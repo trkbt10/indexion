@@ -34,7 +34,7 @@ priv struct TextRope {
 
 ///|
 fn TextRope::empty() -> TextRope {
-  { chunks: [] }
+  { chunks: [], }
 }
 
 ///|
@@ -45,7 +45,7 @@ fn TextRope::clone(self : TextRope) -> TextRope {
   for c in self.chunks {
     copy.push(c)
   }
-  { chunks: copy }
+  { chunks: copy, }
 }
 
 ///|
@@ -74,7 +74,7 @@ fn TextRope::to_string(self : TextRope) -> String {
   for c in self.chunks {
     total = total + c.length()
   }
-  let buf = StringBuilder::new(size_hint=total)
+  let buf = StringBuilder(size_hint=total)
   for c in self.chunks {
     buf.write_string(c)
   }
@@ -98,7 +98,7 @@ priv struct LabelsMap {
 
 ///|
 fn LabelsMap::new() -> LabelsMap {
-  { text: TextRope::empty(), meta: Map([]), extra_texts: Map([]) }
+  { text: TextRope::empty(), meta: Map([]), extra_texts: Map([]), }
 }
 
 ///|
@@ -112,7 +112,7 @@ fn LabelsMap::clone(self : LabelsMap) -> LabelsMap {
   for k, v in self.extra_texts {
     extra_texts.set(k, v.clone())
   }
-  { text: self.text.clone(), meta, extra_texts }
+  { text: self.text.clone(), meta, extra_texts, }
 }
 
 ///|

@@ -452,7 +452,7 @@ fn resolve_json_path(json : Json, path : String) -> String? {
 /// Split a JSON path like `exports["."].import` into segments ["exports", ".", "import"].
 fn split_json_path(path : String) -> Array[String] {
   let segments : Array[String] = []
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut in_bracket = false
   for c in path {
     if c == '[' {
@@ -514,7 +514,7 @@ fn find_json_string_value(content : String, key : String) -> String? {
   guard i < chars.length() && chars[i] == '"' else { return None }
   i += 1
   // Read the string value
-  let value = StringBuilder::new()
+  let value = StringBuilder()
   while i < chars.length() && chars[i] != '"' {
     if chars[i] == '\\' && i + 1 < chars.length() {
       // Escape sequence
@@ -532,7 +532,7 @@ fn find_json_string_value(content : String, key : String) -> String? {
 /// Split a string by a character.
 fn split_by_char(s : String, c : Char) -> Array[String] {
   let result : Array[String] = []
-  let current = StringBuilder::new()
+  let current = StringBuilder()
   for ch in s {
     if ch == c {
       result.push(current.to_string())
@@ -561,7 +561,7 @@ fn trim_string(s : String) -> String {
   if start == 0 && end_idx == chars.length() {
     return s
   }
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   for i = start; i < end_idx; i = i + 1 {
     result.write_char(chars[i])
   }
@@ -612,7 +612,7 @@ fn normalize_relative_result(project_root : String, path : String) -> String {
 ///|
 /// Replaces backslashes with forward slashes.
 fn replace_backslashes(s : String) -> String {
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   for c in s {
     if c == '\\' {
       result.write_char('/')
@@ -669,7 +669,7 @@ fn contains_char(s : String, c : Char) -> Bool {
 /// Splits a string by backslash.
 fn split_by_backslash(s : String) -> Array[String] {
   let result : Array[String] = []
-  let current = StringBuilder::new()
+  let current = StringBuilder()
   for c in s {
     if c == '\\' {
       result.push(current.to_string())
@@ -689,7 +689,7 @@ fn join_with_backslash(parts : Array[String], count : Int) -> String {
     return ""
   }
   let take_count = if count > parts.length() { parts.length() } else { count }
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   result.write_string(parts[0])
   for i = 1; i < take_count; i = i + 1 {
     result.write_char('\\')
@@ -768,7 +768,7 @@ pub fn resolve_module_with_fns(
   file_exists_fn : (String) -> Bool,
   read_file_fn : (String) -> String?,
 ) -> String {
-  let resolver = FnFileResolver::{ check: file_exists_fn, read: read_file_fn }
+  let resolver = FnFileResolver::{ check: file_exists_fn, read: read_file_fn, }
   resolve_module(spec, language, from_file, module_path, project_root, resolver)
 }
 

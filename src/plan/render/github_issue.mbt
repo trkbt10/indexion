@@ -12,7 +12,7 @@ pub struct GitHubIssue {
 ///|
 /// Render PlanDocument as GitHub Issue.
 pub fn render_github_issue(doc : @types.PlanDocument) -> GitHubIssue {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let style = RenderStyle::github_issue()
   // Description as opening paragraph
   if doc.description.length() > 0 {
@@ -34,13 +34,13 @@ pub fn render_github_issue(doc : @types.PlanDocument) -> GitHubIssue {
     }
     None => ()
   }
-  { title: doc.title, body: buf.to_string(), labels }
+  { title: doc.title, body: buf.to_string(), labels, }
 }
 
 ///|
 /// Format GitHubIssue as a full Markdown document with title, labels, and body.
 pub fn GitHubIssue::format(self : GitHubIssue) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# ")
   buf.write_string(self.title)
   buf.write_string("\n\n")

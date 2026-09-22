@@ -152,7 +152,7 @@ fn section_roles_by_line(
   content : String,
   registry : @registry.KGFRegistry,
 ) -> Map[Int, String] {
-  let result : Map[Int, String] = {}
+  let result : Map[Int, String] = Map([])
   let language = match registry.detect_from_path(path) {
     Some(value) => value
     None => return result
@@ -300,7 +300,7 @@ fn build_report_with_registry(
 /// top-level requirement, producing the `N.M` IDs that cc-sdd design/tasks
 /// phases expect.
 fn render_markdown(report : DraftReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# SDD Draft\n\n")
   buf.write_string("Generated from:\n")
   for path in report.source_files {

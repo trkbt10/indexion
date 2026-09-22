@@ -212,7 +212,7 @@ fn build_summary(
 ///|
 fn expand_spec_patterns(patterns : Array[String]) -> Array[String] {
   let result : Array[String] = []
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for pattern in patterns {
     let paths = @glob.expand_glob(pattern)
     for path in paths {
@@ -230,7 +230,7 @@ fn collect_used_specs(
   spec_files : Array[@pipeline.SupportedFile],
   impl_files : Array[@pipeline.SupportedFile],
 ) -> Array[String] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let result : Array[String] = []
   let all_files = spec_files + impl_files
   for file in all_files {

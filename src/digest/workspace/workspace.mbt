@@ -195,7 +195,7 @@ pub fn build_graph_from_source(
     return None
   }
   let t = @pipeline.now_ms()
-  let file_hashes : Map[String, @cas_types.ContentHash] = {}
+  let file_hashes : Map[String, @cas_types.ContentHash] = Map([])
   let signatures : Array[@pipeline.FileSignature] = []
   for entry in files {
     let path = entry.0
@@ -219,7 +219,7 @@ pub fn build_graph_from_source(
     Some(progress_callback),
   )
   @pipeline.stage("[digest] build code graph", "", @pipeline.elapsed_ms(t))
-  Some({ graph, file_hashes, signatures })
+  Some({ graph, file_hashes, signatures, })
 }
 
 ///|

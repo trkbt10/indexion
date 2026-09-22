@@ -15,7 +15,7 @@ pub struct FileEntry {
 ///|
 /// Create a FileEntry.
 pub fn FileEntry::new(display_name : String, content : String) -> FileEntry {
-  { display_name, content }
+  { display_name, content, }
 }
 
 ///|
@@ -42,7 +42,7 @@ pub fn SimilarityMatch::new(
   file2 : String,
   similarity : Double,
 ) -> SimilarityMatch {
-  { index1, index2, file1, file2, similarity }
+  { index1, index2, file1, file2, similarity, }
 }
 
 ///|
@@ -57,7 +57,7 @@ pub struct BatchConfig {
 ///|
 /// Create a BatchConfig with defaults (hybrid, 0.8 threshold).
 pub fn BatchConfig::new() -> BatchConfig {
-  { threshold: 0.8, strategy: "hybrid" }
+  { threshold: 0.8, strategy: "hybrid", }
 }
 
 ///|
@@ -66,7 +66,7 @@ pub fn BatchConfig::create(
   threshold : Double,
   strategy : String,
 ) -> BatchConfig {
-  { threshold, strategy }
+  { threshold, strategy, }
 }
 
 ///|

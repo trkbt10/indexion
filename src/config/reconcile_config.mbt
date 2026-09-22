@@ -230,7 +230,10 @@ pub fn parse_reconcile_toml_config(content : String) -> ReconcileFileConfig {
       "reconcile" =>
         match key {
           "doc_scope" =>
-            file_config = { ..file_config, doc_scope: Some(trim_quotes(value)) }
+            file_config = {
+              ..file_config,
+              doc_scope: Some(trim_quotes(value)),
+            }
           "doc_paths" =>
             file_config = {
               ..file_config,
@@ -242,7 +245,10 @@ pub fn parse_reconcile_toml_config(content : String) -> ReconcileFileConfig {
               doc_specs: Some(parse_string_array_literal(value)),
             }
           "index_dir" =>
-            file_config = { ..file_config, index_dir: Some(trim_quotes(value)) }
+            file_config = {
+              ..file_config,
+              index_dir: Some(trim_quotes(value)),
+            }
           "review_results_path" =>
             file_config = {
               ..file_config,
@@ -264,23 +270,23 @@ pub fn parse_reconcile_toml_config(content : String) -> ReconcileFileConfig {
         if key == "allow_file_fallback" {
           match parse_bool_like(value) {
             Some(v) =>
-              file_config = { ..file_config, allow_file_fallback: Some(v) }
+              file_config = { ..file_config, allow_file_fallback: Some(v), }
             None => ()
           }
         }
       "reconcile.output" =>
         if key == "default_format" {
-          file_config = { ..file_config, format: Some(trim_quotes(value)) }
+          file_config = { ..file_config, format: Some(trim_quotes(value)), }
         }
       "reconcile.time" =>
         if key == "git_preferred" {
           match parse_bool_like(value) {
-            Some(v) => file_config = { ..file_config, git_preferred: Some(v) }
+            Some(v) => file_config = { ..file_config, git_preferred: Some(v), }
             None => ()
           }
         } else if key == "mtime_fallback" {
           match parse_bool_like(value) {
-            Some(v) => file_config = { ..file_config, mtime_fallback: Some(v) }
+            Some(v) => file_config = { ..file_config, mtime_fallback: Some(v), }
             None => ()
           }
         }
@@ -318,7 +324,7 @@ fn parse_reconcile_json_config(content : String) -> ReconcileFileConfig {
       match parse_json_string(value) {
         Some(parsed_value) =>
           if parsed_value.length() > 0 {
-            file_config = { ..file_config, doc_scope: Some(parsed_value) }
+            file_config = { ..file_config, doc_scope: Some(parsed_value), }
           }
         None => ()
       }
@@ -327,7 +333,8 @@ fn parse_reconcile_json_config(content : String) -> ReconcileFileConfig {
   match reconcile_obj.get("doc_paths") {
     Some(value) =>
       match parse_json_string_array(value) {
-        Some(values) => file_config = { ..file_config, doc_paths: Some(values) }
+        Some(values) =>
+          file_config = { ..file_config, doc_paths: Some(values), }
         None => ()
       }
     None => ()
@@ -335,7 +342,8 @@ fn parse_reconcile_json_config(content : String) -> ReconcileFileConfig {
   match reconcile_obj.get("doc_specs") {
     Some(value) =>
       match parse_json_string_array(value) {
-        Some(values) => file_config = { ..file_config, doc_specs: Some(values) }
+        Some(values) =>
+          file_config = { ..file_config, doc_specs: Some(values), }
         None => ()
       }
     None => ()
@@ -345,7 +353,7 @@ fn parse_reconcile_json_config(content : String) -> ReconcileFileConfig {
       match parse_json_string(value) {
         Some(parsed_value) =>
           if parsed_value.length() > 0 {
-            file_config = { ..file_config, index_dir: Some(parsed_value) }
+            file_config = { ..file_config, index_dir: Some(parsed_value), }
           }
         None => ()
       }
@@ -370,7 +378,7 @@ fn parse_reconcile_json_config(content : String) -> ReconcileFileConfig {
       match parse_json_int(value) {
         Some(parsed_value) =>
           if parsed_value > 0 {
-            file_config = { ..file_config, max_candidates: Some(parsed_value) }
+            file_config = { ..file_config, max_candidates: Some(parsed_value), }
           }
         None => ()
       }
@@ -419,7 +427,7 @@ fn parse_reconcile_json_config(content : String) -> ReconcileFileConfig {
               match parse_json_string(format_json) {
                 Some(parsed_value) =>
                   if parsed_value.length() > 0 {
-                    file_config = { ..file_config, format: Some(parsed_value) }
+                    file_config = { ..file_config, format: Some(parsed_value), }
                   }
                 None => ()
               }

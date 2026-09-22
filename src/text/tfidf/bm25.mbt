@@ -170,7 +170,7 @@ pub fn BM25Batch::all_pairs_above_threshold(
     return results
   }
   // Inverted index approach for threshold > 0
-  let postings : Map[String, Array[Int]] = {}
+  let postings : Map[String, Array[Int]] = Map([])
   let seen_candidates : Array[Int] = Array::make(n, -1)
   let candidates : Array[Int] = []
   for i = 0; i < n; i = i + 1 {

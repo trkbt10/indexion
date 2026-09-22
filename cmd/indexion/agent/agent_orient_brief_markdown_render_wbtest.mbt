@@ -4,7 +4,7 @@ fn orient_render_fixture_report() -> @agent_orient.AgentOrientReport {
     version: "agent-orient-vcdb-v1",
     task: "compose orient brief from vcdb query",
     likely_owners: [
-      { path: "src/agent/orient/map", reason: "owns vcdb cache lifecycle" },
+      { path: "src/agent/orient/map", reason: "owns vcdb cache lifecycle", },
     ],
     knowledge_sources: [
       {
@@ -25,7 +25,7 @@ fn orient_render_fixture_report() -> @agent_orient.AgentOrientReport {
       },
     ],
     required_preflight: [
-      { path: "src/agent/orient/source", reason: "discovers file briefs" },
+      { path: "src/agent/orient/source", reason: "discovers file briefs", },
     ],
     readiness_quiz: [
       {

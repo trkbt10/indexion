@@ -54,7 +54,7 @@ test "build_tfidf_vector creates vector from tokens" {
 
 ///|
 test "build_tfidf_vector handles empty tokens" {
-  let df : Map[String, Int] = {}
+  let df : Map[String, Int] = Map([])
   let tokens : Array[String] = []
   let vector = build_tfidf_vector(tokens, df, 2)
   assert_true(vector.is_empty())
@@ -165,7 +165,7 @@ test "calculate_adjacent_tfidf_distance_from_tokenized with empty array" {
 
 ///|
 test "TfidfVector from_terms creates vector with terms" {
-  let terms : Map[String, Double] = {}
+  let terms : Map[String, Double] = Map([])
   terms.set("a", 1.0)
   terms.set("b", 2.0)
   let vector = TfidfVector::from_terms(terms)

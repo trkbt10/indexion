@@ -29,7 +29,7 @@ pub struct EmbeddingConfig {
 ///|
 /// Create a TF-IDF embedding config.
 pub fn EmbeddingConfig::tfidf(dim : Int) -> EmbeddingConfig {
-  { provider_type: "tfidf", dim, endpoint: None, api_key: None }
+  { provider_type: "tfidf", dim, endpoint: None, api_key: None, }
 }
 
 ///|
@@ -39,7 +39,7 @@ pub fn EmbeddingConfig::remote(
   dim : Int,
   api_key? : String? = None,
 ) -> EmbeddingConfig {
-  { provider_type: "remote", dim, endpoint: Some(endpoint), api_key }
+  { provider_type: "remote", dim, endpoint: Some(endpoint), api_key, }
 }
 
 ///|

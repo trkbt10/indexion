@@ -32,7 +32,7 @@ pub fn FindBoundariesOptions::create(
   respect_japanese_quotes : Bool,
   quote_safe_max_length : Int,
 ) -> FindBoundariesOptions {
-  { include_closing_brackets, respect_japanese_quotes, quote_safe_max_length }
+  { include_closing_brackets, respect_japanese_quotes, quote_safe_max_length, }
 }
 
 ///|
@@ -71,7 +71,7 @@ pub struct QuoteStackEntry {
 ///|
 /// Create a new QuoteStackEntry.
 pub fn QuoteStackEntry::new(open : Char, start : Int) -> QuoteStackEntry {
-  { open, start }
+  { open, start, }
 }
 
 ///|

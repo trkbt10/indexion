@@ -31,7 +31,7 @@ pub struct LSHIndex {
 /// The total number of hash values used = bands × rows_per_band ≤ num_hashes.
 pub fn LSHIndex::new(target_threshold : Double) -> LSHIndex {
   let (bands, rows_per_band) = select_band_params(target_threshold)
-  { bands, rows_per_band, buckets: init_buckets(bands), signatures: [] }
+  { bands, rows_per_band, buckets: init_buckets(bands), signatures: [], }
 }
 
 ///|
@@ -66,7 +66,7 @@ pub fn LSHIndex::insert(self : LSHIndex, signature : MinHashSignature) -> Int {
 /// Query for candidate pairs: all (i, j) where i < j that share
 /// at least one LSH bucket. Returns deduplicated pairs.
 pub fn LSHIndex::candidate_pairs(self : LSHIndex) -> Array[(Int, Int)] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let pairs : Array[(Int, Int)] = []
   for band = 0; band < self.bands; band = band + 1 {
     for entry in self.buckets[band] {

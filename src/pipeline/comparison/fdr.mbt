@@ -117,7 +117,7 @@ pub fn apply_fdr_correction(
     }
   }
   // Reject all hypotheses with rank ≤ max_k (i.e., accept these matches)
-  let accepted_indices : Map[Int, Bool] = {}
+  let accepted_indices : Map[Int, Bool] = Map([])
   for k = 0; k < max_k; k = k + 1 {
     accepted_indices.set(p_values[k].0, true)
   }

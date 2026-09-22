@@ -50,4 +50,3 @@ pub fn MatchResult::success(Int, String) -> Self
 // Type aliases
 
 // Traits
-

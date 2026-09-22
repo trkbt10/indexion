@@ -29,7 +29,7 @@ pub struct McpServer {
 ///|
 /// Create a new MCP server with the given server info.
 pub fn McpServer::new(info : @types.ServerInfo) -> McpServer {
-  { info, tools: {}, initialized: false }
+  { info, tools: {}, initialized: false, }
 }
 
 ///|
@@ -39,7 +39,7 @@ pub fn McpServer::register_tool(
   definition : @types.ToolDefinition,
   handler : async (Json?) -> Json,
 ) -> Unit {
-  self.tools[definition.name] = { definition, handler: { invoke: handler } }
+  self.tools[definition.name] = { definition, handler: { invoke: handler, }, }
 }
 
 ///|
@@ -127,7 +127,7 @@ fn McpServer::handle_tools_list(
   self.tools.each(fn(_name, registered) {
     tool_jsons.push(registered.definition.to_json())
   })
-  let result : Map[String, Json] = {}
+  let result : Map[String, Json] = Map([])
   result["tools"] = Json::array(tool_jsons)
   @protocol.response_ok(request.id, Json::object(result))
 }

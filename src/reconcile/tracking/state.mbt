@@ -1,8 +1,8 @@
 ///|
-let timestamp_cache : Map[String, TimestampInfo] = {}
+let timestamp_cache : Map[String, TimestampInfo] = Map([])
 
 ///|
-let repo_check_cache : Map[String, Bool] = {}
+let repo_check_cache : Map[String, Bool] = Map([])
 
 ///|
 async fn is_repo_cached(root : String) -> Bool {

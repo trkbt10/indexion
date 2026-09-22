@@ -77,7 +77,7 @@ pub fn FileCoverage::new(
   pkg : String,
   lines : Array[LineHit],
 ) -> FileCoverage {
-  { path, pkg, lines, functions: [], branches: [] }
+  { path, pkg, lines, functions: [], branches: [], }
 }
 
 ///|
@@ -103,7 +103,7 @@ pub fn CoverageReport::new(
   source_root? : String = "",
   timestamp? : Int64 = 0L,
 ) -> CoverageReport {
-  { test_name, source_root, files, timestamp }
+  { test_name, source_root, files, timestamp, }
 }
 
 ///|

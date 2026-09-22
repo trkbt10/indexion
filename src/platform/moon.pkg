@@ -1,6 +1,6 @@
 import {
   "moonbitlang/x/fs" @sync_fs,
-  "moonbitlang/x/sys",
+  "moonbitlang/core/env",
   "moonbitlang/async/fs" @async_fs,
   "moonbitlang/async/process" @async_process,
   "trkbt10/osenv/platform" @osenv_platform,

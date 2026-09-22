@@ -1,6 +1,6 @@
 import {
   "moonbitlang/x/fs",
-  "moonbitlang/x/sys",
+  "moonbitlang/core/env",
   "trkbt10/indexion/src/core/graph",
   "trkbt10/indexion/src/docgen/build",
   "trkbt10/indexion/src/docgen/render",

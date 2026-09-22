@@ -41,7 +41,7 @@ fn apply_scalar_subs(text : String, scalars : Map[String, String]) -> String {
     return text
   }
   let chars = text.to_array()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut i = 0
   while i < chars.length() {
     if is_token_boundary(chars[i]) {
@@ -157,7 +157,7 @@ fn lift_event(
     Some(r) => r
     None => rule
   }
-  let new_labels : Map[String, Json] = {}
+  let new_labels : Map[String, Json] = Map([])
   for entry in labels {
     let key = entry.0
     let value = entry.1
@@ -223,7 +223,7 @@ fn render_template(
   labels : Map[String, Json],
   unresolved_marker : String,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let chars = template.to_array()
   let mut i = 0
   while i < chars.length() {
@@ -282,7 +282,7 @@ fn make_preamble_labels(
   unresolved_marker : String,
   comment_prefix : String,
 ) -> Map[String, Json] {
-  let m : Map[String, Json] = {}
+  let m : Map[String, Json] = Map([])
   m.set("comment_prefix", Json::string(comment_prefix))
   m.set("source_lang", Json::string(source_lang))
   m.set("target_lang", Json::string(target_lang))
@@ -313,7 +313,7 @@ pub fn lower_to_code(
   lift : LiftSpec,
   lower : LowerSpec,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let preamble_labels = make_preamble_labels(
     source_lang,
     target_lang,
@@ -323,7 +323,7 @@ pub fn lower_to_code(
   buf.write_string(
     render_template(lower.preamble_template, preamble_labels, unresolved_marker),
   )
-  let order_set : Map[String, Bool] = {}
+  let order_set : Map[String, Bool] = Map([])
   for r in lower.emit_order {
     order_set.set(r, true)
   }
@@ -339,7 +339,7 @@ pub fn lower_to_code(
     // duplicates like `std::std::string`. Structurally-derived labels
     // (rhs, type, fields, params, return) get their own lift+lower
     // inside `apply_extract_text` and `apply_collect_inner_as`.
-    let lowered_labels : Map[String, Json] = {}
+    let lowered_labels : Map[String, Json] = Map([])
     for entry in labels {
       lowered_labels.set(entry.0, entry.1)
     }
@@ -384,7 +384,7 @@ pub fn lower_to_code(
         }
       }
       None => {
-        let fallback_labels : Map[String, Json] = {}
+        let fallback_labels : Map[String, Json] = Map([])
         fallback_labels.set(
           "comment_prefix",
           Json::string(lower.comment_prefix),
@@ -431,7 +431,7 @@ fn emit_source_intent_comment(
   }
   match rule.source_intent_comment {
     Some(template) => {
-      let with_prefix : Map[String, Json] = {}
+      let with_prefix : Map[String, Json] = Map([])
       for entry in labels {
         with_prefix.set(entry.0, entry.1)
       }
@@ -607,7 +607,7 @@ fn apply_case_style(s : String, style : String) -> String {
 
 ///|
 fn to_ascii_lower(s : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in s {
     if c >= 'A' && c <= 'Z' {
       buf.write_char((c.to_int() + 32).unsafe_to_char())
@@ -620,7 +620,7 @@ fn to_ascii_lower(s : String) -> String {
 
 ///|
 fn to_ascii_upper(s : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in s {
     if c >= 'a' && c <= 'z' {
       buf.write_char((c.to_int() - 32).unsafe_to_char())
@@ -675,7 +675,7 @@ fn capitalize_first(s : String) -> String {
   } else {
     first
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_char(upper)
   buf.write_string(s[1:s.length()].to_owned())
   buf.to_string()
@@ -873,7 +873,7 @@ fn apply_collect_inner_as(
     // Lift this child event into IR.
     let lifted = lift_event(ev, lift)
     // Pass labels through unchanged — see lower_to_code for rationale.
-    let child_labels : Map[String, Json] = {}
+    let child_labels : Map[String, Json] = Map([])
     for entry in lifted.1 {
       child_labels.set(entry.0, entry.1)
     }
@@ -975,7 +975,7 @@ fn apply_text_replace_to_labels(
     regex_rules.length() == 0 {
     return labels
   }
-  let out : Map[String, Json] = {}
+  let out : Map[String, Json] = Map([])
   for entry in labels {
     let key = entry.0
     let value = entry.1
@@ -1033,7 +1033,7 @@ fn regex_replace_one(
     return text
   }
   // Splice out matches in source order.
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut cursor = 0
   for m in matches {
     if m.start_pos < cursor {
@@ -1053,7 +1053,7 @@ fn regex_replace_one(
 /// (e.g. `$3` when only one group was captured) emit empty.
 fn expand_replacement(template : String, captures : Array[String]) -> String {
   let chars = template.to_array()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut i = 0
   while i < chars.length() {
     let c = chars[i]
@@ -1196,7 +1196,7 @@ fn replace_all(text : String, from : String, to : String) -> String {
   if from.length() == 0 {
     return text
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut i = 0
   while i < text.length() {
     if i + from.length() <= text.length() &&

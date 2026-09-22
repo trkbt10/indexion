@@ -12,7 +12,7 @@ pub struct NCDStrategy {
 ///|
 /// Create a new NCDStrategy.
 pub fn NCDStrategy::new() -> NCDStrategy {
-  { _unused: () }
+  { _unused: (), }
 }
 
 ///|

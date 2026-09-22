@@ -60,7 +60,7 @@ fn collect_samples(
     // Interpret document to get facts (including document_section_role)
     let interpreted = @doc_structure.interpret_document(content, path, spec)
     // Extract role labels by line
-    let roles : Map[Int, String] = {}
+    let roles : Map[Int, String] = Map([])
     for fact in interpreted.facts {
       if fact.kind != "document_section_role" {
         continue
@@ -85,7 +85,7 @@ fn collect_samples(
       let label = roles.get(section.line).unwrap_or(default_class)
       let tokens = tokenize_for_training(section.content)
       if tokens.length() > 0 {
-        samples.push({ tokens, label })
+        samples.push({ tokens, label, })
       }
     }
   }
@@ -103,20 +103,20 @@ fn fit_naive_bayes(
   min_weight : Double,
 ) -> @kgf_types.ClassifyModel {
   // Count documents per class
-  let class_counts : Map[String, Int] = {}
+  let class_counts : Map[String, Int] = Map([])
   for sample in samples {
     let count = class_counts.get(sample.label).unwrap_or(0)
     class_counts.set(sample.label, count + 1)
   }
   let total_samples = samples.length()
   // Count term occurrences per class and total terms per class
-  let class_term_counts : Map[String, Map[String, Int]] = {}
-  let class_total_terms : Map[String, Int] = {}
+  let class_term_counts : Map[String, Map[String, Int]] = Map([])
+  let class_total_terms : Map[String, Int] = Map([])
   for sample in samples {
     let term_counts = match class_term_counts.get(sample.label) {
       Some(existing) => existing
       None => {
-        let m : Map[String, Int] = {}
+        let m : Map[String, Int] = Map([])
         class_term_counts.set(sample.label, m)
         m
       }
@@ -130,7 +130,7 @@ fn fit_naive_bayes(
     class_total_terms.set(sample.label, total)
   }
   // Build global vocabulary
-  let global_vocab : Map[String, Bool] = {}
+  let global_vocab : Map[String, Bool] = Map([])
   for entry in class_term_counts {
     for term_entry in entry.1 {
       global_vocab.set(term_entry.0, true)
@@ -138,7 +138,7 @@ fn fit_naive_bayes(
   }
   let vocab_size = global_vocab.length()
   // Compute model parameters
-  let classes : Map[String, @kgf_types.ClassifyClass] = {}
+  let classes : Map[String, @kgf_types.ClassifyClass] = Map([])
   for entry in class_counts {
     let class_name = entry.0
     let class_count = entry.1
@@ -149,7 +149,7 @@ fn fit_naive_bayes(
     let term_counts = class_term_counts.get(class_name).unwrap_or({})
     let total_terms = class_total_terms.get(class_name).unwrap_or(0)
     let denominator = total_terms.to_double() + vocab_size.to_double()
-    let vocab : Map[String, Double] = {}
+    let vocab : Map[String, Double] = Map([])
     // Only store terms that appear in this class (sparse representation)
     // Terms not stored get implicit weight = ln(1 / denominator) at inference
     // which is the Laplace-smoothed probability for unseen terms.
@@ -168,7 +168,7 @@ fn fit_naive_bayes(
     classes.set(class_name, @kgf_types.ClassifyClass::new(prior, vocab))
   }
   // Build metadata
-  let metadata : Map[String, String] = {}
+  let metadata : Map[String, String] = Map([])
   metadata.set("model_type", "naive_bayes")
   metadata.set("smoothing", "laplace")
   metadata.set("corpus_files", corpus_file_count.to_string())
@@ -186,7 +186,7 @@ fn fit_naive_bayes(
 ///|
 /// Serialize a ClassifyModel to the `=== classify` KGF section format.
 pub fn serialize_classify_section(model : @kgf_types.ClassifyModel) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   // Metadata
   let meta = model.get_metadata()
   let meta_keys : Array[String] = []
@@ -243,7 +243,7 @@ pub fn serialize_classify_section(model : @kgf_types.ClassifyModel) -> String {
 /// Extracts words of 2+ characters, lowercased.
 fn tokenize_for_training(text : String) -> Array[String] {
   let words : Array[String] = []
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in text {
     if (c >= 'a' && c <= 'z') ||
       (c >= 'A' && c <= 'Z') ||
@@ -290,7 +290,7 @@ fn format_double(value : Double, decimals : Int) -> String {
   let rounded = (abs_val * multiplier + 0.5).to_int()
   let integer_part = rounded / multiplier.to_int()
   let decimal_part = rounded % multiplier.to_int()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   if is_negative {
     buf.write_char('-')
   }

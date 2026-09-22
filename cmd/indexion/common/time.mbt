@@ -34,7 +34,7 @@ pub fn now_iso8601_utc() -> String? {
 /// Left-pad a non-negative integer with zeros to a minimum width.
 fn pad_int(n : Int, width : Int) -> String {
   let digits = n.to_string()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut missing = width - digits.length()
   while missing > 0 {
     buf.write_string("0")

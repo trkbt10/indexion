@@ -26,7 +26,7 @@ pub(all) struct XmlAttr {
 /// Construct an attribute. Pure helper so call sites read like
 /// `attr("name", value)` instead of struct-literal noise.
 pub fn attr(name : String, value : String) -> XmlAttr {
-  { name, value }
+  { name, value, }
 }
 
 ///|
@@ -56,7 +56,7 @@ pub fn element(
   attributes? : Array[XmlAttr] = [],
   children? : Array[XmlNode] = [],
 ) -> XmlElement {
-  { name, attributes, children }
+  { name, attributes, children, }
 }
 
 ///|
@@ -115,7 +115,7 @@ pub fn render_document(
   root : XmlElement,
   options? : XmlDocumentOptions = XmlDocumentOptions::default(),
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   if options.declaration.length() > 0 {
     buf.write_string(options.declaration)
     buf.write_string(options.newline)
@@ -138,7 +138,7 @@ pub fn render_element(
   indent? : String = "  ",
   newline? : String = "\n",
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   write_element(buf, el, 0, indent, newline)
   buf.to_string()
 }
@@ -228,7 +228,7 @@ fn write_indent(buf : StringBuilder, indent : String, depth : Int) -> Unit {
 /// `<p>say &quot;hi&quot;</p>`).
 pub fn escape(s : String, in_attribute? : Bool = false) -> String {
   let chars = s.to_array()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in chars {
     match c {
       '&' => buf.write_string("&amp;")
@@ -258,7 +258,7 @@ pub fn escape(s : String, in_attribute? : Bool = false) -> String {
 /// directly before the closing `-->`, so we append a space when needed.
 fn sanitize_comment(s : String) -> String {
   let chars = s.to_array()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut i = 0
   while i < chars.length() {
     if i + 1 < chars.length() && chars[i] == '-' && chars[i + 1] == '-' {

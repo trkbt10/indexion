@@ -13,7 +13,7 @@ priv struct FileStats {
 
 ///|
 fn slash_path(path : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for ch in path.to_array() {
     if ch == '\\' {
       buf.write_char('/')
@@ -109,7 +109,7 @@ fn offset_from_id(id : String) -> Int? {
   if at < 0 || at + 1 >= chars.length() {
     return None
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = at + 1; i < chars.length(); i = i + 1 {
     let ch = chars[i]
     if ch < '0' || ch > '9' {
@@ -224,8 +224,8 @@ fn metrics_json(nodes : Array[Json], edges : Array[Json]) -> Json {
   let mut file_count = 0
   let mut dir_count = 0
   let mut import_count = 0
-  let fan_in : Map[String, Int] = {}
-  let fan_out : Map[String, Int] = {}
+  let fan_in : Map[String, Int] = Map([])
+  let fan_out : Map[String, Int] = Map([])
   for node in nodes {
     guard node is { "type": String(node_type), .. } else { continue }
     if node_type == "file" {
@@ -338,8 +338,8 @@ fn render_sprawlens_snapshot(
   title : String,
 ) -> String {
   let repo_root = absolute_repo_root(root_dir)
-  let module_to_file : Map[String, String] = {}
-  let file_stats : Map[String, FileStats] = {}
+  let module_to_file : Map[String, String] = Map([])
+  let file_stats : Map[String, FileStats] = Map([])
   for file in files {
     let rel = snapshot_path(repo_root, file.0)
     file_stats.set(rel, file_stats_from_content(file.1))
@@ -357,15 +357,15 @@ fn render_sprawlens_snapshot(
     }
   }
 
-  let symbols_by_file : Map[String, Array[Json]] = {}
-  let symbol_to_file : Map[String, String] = {}
-  let seen_symbols : Map[String, Bool] = {}
+  let symbols_by_file : Map[String, Array[Json]] = Map([])
+  let symbol_to_file : Map[String, String] = Map([])
+  let seen_symbols : Map[String, Bool] = Map([])
   for id, symbol in graph.get_symbols() {
     match module_to_file.get(symbol.module_id) {
       Some(file_path) => {
         let stats = file_stats
           .get(file_path)
-          .unwrap_or(FileStats::{ loc: 1, size_bytes: 0, line_starts: [0] })
+          .unwrap_or(FileStats::{ loc: 1, size_bytes: 0, line_starts: [0], })
         ensure_symbol_json(
           symbols_by_file,
           symbol_to_file,
@@ -388,7 +388,7 @@ fn render_sprawlens_snapshot(
       Some(file_path) => {
         let stats = file_stats
           .get(file_path)
-          .unwrap_or(FileStats::{ loc: 1, size_bytes: 0, line_starts: [0] })
+          .unwrap_or(FileStats::{ loc: 1, size_bytes: 0, line_starts: [0], })
         let name = edge.attrs
           .get("name")
           .unwrap_or(display_name_from_id(edge.to))
@@ -408,7 +408,7 @@ fn render_sprawlens_snapshot(
     }
   }
 
-  let dirs : Map[String, Bool] = {}
+  let dirs : Map[String, Bool] = Map([])
   for _, file_path in module_to_file {
     let mut dir = dirname(file_path)
     while dir.length() > 0 && dir != "." {
@@ -443,7 +443,7 @@ fn render_sprawlens_snapshot(
   for file_path in file_paths {
     let stats = file_stats
       .get(file_path)
-      .unwrap_or(FileStats::{ loc: 1, size_bytes: 0, line_starts: [0] })
+      .unwrap_or(FileStats::{ loc: 1, size_bytes: 0, line_starts: [0], })
     nodes.push({
       "id": ("file:" + file_path).to_json(),
       "type": "file".to_json(),
@@ -483,7 +483,7 @@ fn render_sprawlens_snapshot(
     )
   }
 
-  let seen_imports : Map[String, Bool] = {}
+  let seen_imports : Map[String, Bool] = Map([])
   let mut edge_index = 0
   for edge in graph.get_edges() {
     if edge.kind is @core_graph.Declares ||

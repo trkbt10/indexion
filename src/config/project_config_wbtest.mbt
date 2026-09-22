@@ -103,11 +103,11 @@ test "project_config: build_effective_reconcile_config drops global when disable
   let project : ProjectFileConfig = {
     ..ProjectFileConfig::default(),
     inherit_global: false,
-    reconcile: { ..ReconcileFileConfig::empty(), threshold_seconds: Some(30) },
+    reconcile: { ..ReconcileFileConfig::empty(), threshold_seconds: Some(30), },
   }
   let global : GlobalConfig = {
     ..GlobalConfig::empty(),
-    reconcile: { ..ReconcileFileConfig::empty(), threshold_seconds: Some(60) },
+    reconcile: { ..ReconcileFileConfig::empty(), threshold_seconds: Some(60), },
   }
   let effective = build_effective_reconcile_config(
     project,

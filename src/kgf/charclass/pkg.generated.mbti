@@ -19,4 +19,3 @@ pub fn is_whitespace(Char) -> Bool
 // Type aliases
 
 // Traits
-

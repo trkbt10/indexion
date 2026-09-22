@@ -16,7 +16,7 @@ pub fn ExtractedDoc::new(
   content : String,
   source_path : String,
 ) -> ExtractedDoc {
-  { title, content, source_path }
+  { title, content, source_path, }
 }
 
 ///|
@@ -78,8 +78,8 @@ fn extract_module_docs(
   pkg_path : String,
   kind_filter : Map[String, Bool]?,
 ) -> String {
-  let buf = StringBuilder::new()
-  let seen : Map[String, Bool] = {}
+  let buf = StringBuilder()
+  let seen : Map[String, Bool] = Map([])
   // Module-level documentation (package overview)
   let mut has_overview = false
   for note in graph.get_all_notes() {

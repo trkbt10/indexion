@@ -14,7 +14,7 @@ pub struct Sentence {
 ///|
 /// Create a new Sentence.
 pub fn Sentence::new(text : String, start : Int, end : Int) -> Sentence {
-  { text, start, end }
+  { text, start, end, }
 }
 
 ///|
@@ -54,7 +54,7 @@ pub(all) enum SegmentType {
 
 ///|
 pub impl Show for SegmentType with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|
@@ -76,7 +76,7 @@ pub fn SegmentPoint::new(
   end : Int,
   segment_type : SegmentType,
 ) -> SegmentPoint {
-  { start, end, segment_type }
+  { start, end, segment_type, }
 }
 
 ///|
@@ -126,7 +126,7 @@ pub fn TextSegment::new(
   end : Int,
   segment_type : SegmentType,
 ) -> TextSegment {
-  { text, start, end, segment_type, heading_text: None }
+  { text, start, end, segment_type, heading_text: None, }
 }
 
 ///|
@@ -138,7 +138,7 @@ pub fn TextSegment::with_heading(
   segment_type : SegmentType,
   heading_text : String,
 ) -> TextSegment {
-  { text, start, end, segment_type, heading_text: Some(heading_text) }
+  { text, start, end, segment_type, heading_text: Some(heading_text), }
 }
 
 ///|
@@ -181,7 +181,7 @@ pub fn TextSegment::length(self : TextSegment) -> Int {
 /// Extract substring from text given character offsets.
 pub fn extract_substring(text : String, start : Int, end : Int) -> String {
   let chars = text.to_array()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let actual_end = if end > chars.length() { chars.length() } else { end }
   for i = start; i < actual_end; i = i + 1 {
     buf.write_char(chars[i])
@@ -235,7 +235,7 @@ pub fn WindowDivergence::new(
   divergence_values : Array[Double],
   window_end_positions : Array[Int],
 ) -> WindowDivergence {
-  { divergence_values, window_end_positions }
+  { divergence_values, window_end_positions, }
 }
 
 ///|

@@ -23,7 +23,7 @@ pub fn filter_task_terms(
     }
     let docs = owner_docs + consumer_docs
     if docs > 0 && !is_consumer_dominated_term(term, briefs) {
-      ranked.push({ term, owner_docs, consumer_docs, all_docs: docs })
+      ranked.push({ term, owner_docs, consumer_docs, all_docs: docs, })
     }
   }
   ranked.sort_by(fn(a, b) {
@@ -76,7 +76,7 @@ pub fn filter_owner_task_terms(
       }
     }
     if owner_docs > 0 {
-      ranked.push({ term, owner_docs, consumer_docs: 0, all_docs: owner_docs })
+      ranked.push({ term, owner_docs, consumer_docs: 0, all_docs: owner_docs, })
     }
   }
   ranked.sort_by(fn(a, b) {

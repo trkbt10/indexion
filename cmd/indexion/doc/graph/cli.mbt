@@ -76,7 +76,7 @@ pub fn GraphConfig::from_matches(matches : @argparse.Matches) -> GraphConfig {
     Some(arr) if arr.length() > 0 => arr
     _ => ["."]
   }
-  { output, specs_dir, title, format, input_paths }
+  { output, specs_dir, title, format, input_paths, }
 }
 
 ///|
@@ -115,11 +115,11 @@ fn generate_json_output(
   deps : Array[@query.ModuleDep],
   circulars : Array[@query.CircularDep],
 ) -> String {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   // Add dependencies
   let deps_arr : Array[Json] = []
   for dep in deps {
-    let dep_obj : Map[String, Json] = {}
+    let dep_obj : Map[String, Json] = Map([])
     dep_obj.set("from", dep.from.to_json())
     dep_obj.set("to", dep.to.to_json())
     match dep.via {
@@ -136,14 +136,14 @@ fn generate_json_output(
   // Add circular references
   let circ_arr : Array[Json] = []
   for circ in circulars {
-    let circ_obj : Map[String, Json] = {}
+    let circ_obj : Map[String, Json] = Map([])
     circ_obj.set("from", circ.from.to_json())
     circ_obj.set("to", circ.to.to_json())
     circ_arr.push(Json::object(circ_obj))
   }
   obj.set("circular_dependencies", Json::array(circ_arr))
   // Add statistics
-  let stats : Map[String, Json] = {}
+  let stats : Map[String, Json] = Map([])
   stats.set("total_dependencies", deps.length().to_json())
   stats.set("circular_count", circulars.length().to_json())
   obj.set("statistics", Json::object(stats))

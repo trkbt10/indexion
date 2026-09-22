@@ -68,13 +68,13 @@ fn is_doc_token_kind(kind : String) -> Bool {
 
 ///|
 pub fn extract_doc_map(tokens : Array[@kgf_types.Tok]) -> Map[Int, String] {
-  let result : Map[Int, String] = {}
+  let result : Map[Int, String] = Map([])
   let token_lines = build_token_lines(tokens)
   let mut i = 0
   while i < tokens.length() {
     let kind = tokens[i].get_kind()
     if is_doc_token_kind(kind) {
-      let doc_buf = StringBuilder::new()
+      let doc_buf = StringBuilder()
       let mut first = true
       while i < tokens.length() {
         let k = tokens[i].get_kind()
@@ -257,7 +257,7 @@ fn extract_pub_declarations_via_semantics(
     None => return ([], {})
   }
   let declarations : Array[PubDeclaration] = []
-  let doc_map : Map[Int, String] = {}
+  let doc_map : Map[Int, String] = Map([])
   let function_kinds : Array[String] = match
     parsed.spec.get_feature("function_kinds") {
     Some(kinds) => kinds
@@ -388,7 +388,7 @@ pub fn extract_project_manifest_info(
       _ => ()
     }
   }
-  Some({ name, version, description, license, repository, keywords })
+  Some({ name, version, description, license, repository, keywords, })
 }
 
 ///|
@@ -409,7 +409,7 @@ pub fn extract_all_declarations_from_events(
   }
   // Build mapping from attrs: rule_name → (id_field_name, kind_value)
   // for all rules with a `def` action
-  let def_rules : Map[String, (String, String)] = {}
+  let def_rules : Map[String, (String, String)] = Map([])
   for entry in parsed.spec.get_attrs() {
     let rule_name = entry.0
     let actions = entry.1
@@ -427,7 +427,7 @@ pub fn extract_all_declarations_from_events(
     return []
   }
   // Determine function_kinds for category assignment
-  let function_kinds : Map[String, Bool] = {}
+  let function_kinds : Map[String, Bool] = Map([])
   match parsed.spec.get_feature("function_kinds") {
     Some(kinds) =>
       for kind in kinds {
@@ -597,7 +597,7 @@ fn extract_declaration_spans(
     }
     let line = line_for_char_offset(line_offsets, start_pos)
     let end_line = line_for_char_offset(line_offsets, end_pos - 1)
-    spans.push({ line, start_pos, end_pos, end_line, start_tok, end_tok })
+    spans.push({ line, start_pos, end_pos, end_line, start_tok, end_tok, })
   }
   spans
 }

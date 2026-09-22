@@ -29,7 +29,7 @@ pub struct WikiSourceRef {
 ///|
 /// Custom ToJson: { file, lines: [start, end] } for frontend.
 pub impl ToJson for WikiSourceRef with fn to_json(self) {
-  let m : Map[String, Json] = {}
+  let m : Map[String, Json] = Map([])
   m["file"] = self.file.to_json()
   m["lines"] = [self.start_line.to_json(), self.end_line.to_json()]
   Json::object(m)
@@ -73,7 +73,7 @@ pub fn WikiHeading::new(
   text~ : String,
   anchor~ : String,
 ) -> WikiHeading {
-  { level, text, anchor }
+  { level, text, anchor, }
 }
 
 ///|
@@ -82,7 +82,7 @@ pub fn WikiSourceRef::new(
   start_line? : Int = 0,
   end_line? : Int = 0,
 ) -> WikiSourceRef {
-  { file, start_line, end_line }
+  { file, start_line, end_line, }
 }
 
 ///|
@@ -96,7 +96,7 @@ pub fn WikiPage::new(
   children? : Array[String] = [],
   parent? : String? = None,
 ) -> WikiPage {
-  { id, title, content, file, sources, headings, children, parent }
+  { id, title, content, file, sources, headings, children, parent, }
 }
 
 ///|
@@ -105,7 +105,7 @@ pub fn WikiNavItem::new(
   title~ : String,
   children? : Array[WikiNavItem] = [],
 ) -> WikiNavItem {
-  { id, title, children }
+  { id, title, children, }
 }
 
 ///|
@@ -119,7 +119,7 @@ pub fn WikiData::new(
   pages~ : Map[String, WikiPage],
   index_content? : String? = None,
 ) -> WikiData {
-  { nav, pages, index_content }
+  { nav, pages, index_content, }
 }
 
 ///|
@@ -172,7 +172,7 @@ pub struct ManifestPage {
 
 ///|
 pub impl Show for ManifestPage with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|
@@ -232,7 +232,7 @@ pub impl @json.FromJson for ManifestPage with fn from_json(json, path) {
     _ =>
       raise @json.JsonDecodeError((path, "ManifestPage: invalid 'last_actor'"))
   }
-  { id, title, file, sources, children, provenance, last_actor }
+  { id, title, file, sources, children, provenance, last_actor, }
 }
 
 ///|
@@ -245,7 +245,7 @@ pub fn ManifestPage::new(
   provenance? : String? = None,
   last_actor? : String? = None,
 ) -> ManifestPage {
-  { id, title, file, sources, children, provenance, last_actor }
+  { id, title, file, sources, children, provenance, last_actor, }
 }
 
 ///|
@@ -289,7 +289,7 @@ pub struct WikiManifest {
 
 ///|
 pub impl Show for WikiManifest with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|
@@ -324,7 +324,7 @@ pub impl @json.FromJson for WikiManifest with fn from_json(json, path) {
     Some(Null) | None => []
     _ => raise @json.JsonDecodeError((path, "WikiManifest: invalid 'pages'"))
   }
-  { title, pages }
+  { title, pages, }
 }
 
 ///|
@@ -332,5 +332,5 @@ pub fn WikiManifest::new(
   title~ : String,
   pages~ : Array[ManifestPage],
 ) -> WikiManifest {
-  { title, pages }
+  { title, pages, }
 }

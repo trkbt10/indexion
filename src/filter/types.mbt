@@ -77,7 +77,7 @@ pub fn FilterConfig::with_kgf_ignore(
       ),
     )
   }
-  { ..self, kgf_ignore_patterns: new_patterns }
+  { ..self, kgf_ignore_patterns: new_patterns, }
 }
 
 ///|
@@ -90,7 +90,7 @@ pub fn FilterConfig::with_includes(
   for p in patterns {
     new_includes.push(p)
   }
-  { ..self, user_includes: new_includes }
+  { ..self, user_includes: new_includes, }
 }
 
 ///|
@@ -103,7 +103,7 @@ pub fn FilterConfig::with_excludes(
   for p in patterns {
     new_excludes.push(p)
   }
-  { ..self, user_excludes: new_excludes }
+  { ..self, user_excludes: new_excludes, }
 }
 
 ///|
@@ -116,7 +116,7 @@ pub fn FilterConfig::with_gitignore_patterns(
   for p in patterns {
     new_patterns.push(p)
   }
-  { ..self, gitignore_patterns: new_patterns }
+  { ..self, gitignore_patterns: new_patterns, }
 }
 
 ///|
@@ -129,7 +129,7 @@ pub fn FilterConfig::with_indexionignore_patterns(
   for p in patterns {
     new_patterns.push(p)
   }
-  { ..self, indexionignore_patterns: new_patterns }
+  { ..self, indexionignore_patterns: new_patterns, }
 }
 
 ///|
@@ -171,7 +171,7 @@ pub enum FilterResult {
 
 ///|
 pub impl Show for FilterResult with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|

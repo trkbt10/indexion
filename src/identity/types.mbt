@@ -54,14 +54,14 @@ pub struct Name {
 
 ///|
 pub fn Name::new(id~ : String, display~ : String) -> Name {
-  { id, display }
+  { id, display, }
 }
 
 ///|
 /// Construct a name where id and display are the same string. Used
 /// for legacy data that has only one form.
 pub fn Name::single(value : String) -> Name {
-  { id: value, display: value }
+  { id: value, display: value, }
 }
 
 ///|
@@ -93,7 +93,7 @@ pub fn NamedEntity::new(
   content~ : String,
   origin~ : String,
 ) -> NamedEntity {
-  { name, content, origin }
+  { name, content, origin, }
 }
 
 ///|

@@ -2,7 +2,7 @@
 /// Splits text into lines, handling both \n and \r\n line endings.
 pub fn split_lines(text : String) -> Array[String] {
   let result : Array[String] = []
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut prev_cr = false
   for c in text {
     if c == '\n' {
@@ -161,7 +161,7 @@ pub fn trim_str(text : String) -> String {
 /// Splits a comma/whitespace list into string array.
 pub fn parse_list(s : String) -> Array[String] {
   let result : Array[String] = []
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in s {
     if c == ',' || is_whitespace(c) {
       let part = trim_str(buf.to_string())
@@ -189,7 +189,7 @@ pub fn substr(text : String, start : Int, end : Int) -> String {
   if actual_start >= actual_end {
     return ""
   }
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   for i = actual_start; i < actual_end; i = i + 1 {
     result.write_char(arr[i])
   }
@@ -203,7 +203,7 @@ pub fn substr_from(text : String, start : Int) -> String {
     return ""
   }
   let arr = text.to_array()
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   for i = start; i < arr.length(); i = i + 1 {
     result.write_char(arr[i])
   }

@@ -39,7 +39,7 @@ pub fn PathScope::new(
   includes? : Array[String] = [],
   excludes? : Array[String] = [],
 ) -> PathScope {
-  { includes, excludes }
+  { includes, excludes, }
 }
 
 ///|

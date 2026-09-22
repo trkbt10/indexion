@@ -147,7 +147,7 @@ fn path_stem(path : String) -> String {
 
 ///|
 fn render_text(reports : Array[@identity.NameDivergence]) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("=== indexion story names ===\n")
   buf.write_string("Entities: " + reports.length().to_string() + "\n")
   buf.write_string("\n")

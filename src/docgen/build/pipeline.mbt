@@ -120,7 +120,7 @@ pub fn FileTokens::new(
   spec_name : String,
   tokens : Array[@kgf_types.Tok],
 ) -> FileTokens {
-  { path, spec_name, tokens }
+  { path, spec_name, tokens, }
 }
 
 ///|
@@ -149,7 +149,7 @@ pub fn analyze_files_collect(
   on_progress : ProgressCallback?,
 ) -> (Array[@graph.CodeGraph], Array[FileTokens]) {
   let registry = build_registry(specs)
-  let known_paths : Map[String, Bool] = {}
+  let known_paths : Map[String, Bool] = Map([])
   for entry in files {
     known_paths.set(entry.0, true)
   }
@@ -382,7 +382,7 @@ pub fn build_json(
 pub fn group_by_file(
   symbols : Array[@analyze.DocSymbol],
 ) -> Map[String, Array[@analyze.DocSymbol]] {
-  let result : Map[String, Array[@analyze.DocSymbol]] = {}
+  let result : Map[String, Array[@analyze.DocSymbol]] = Map([])
   for sym in symbols {
     let file = sym.get_file()
     match result.get(file) {
@@ -398,7 +398,7 @@ pub fn group_by_file(
 pub fn group_by_kind(
   symbols : Array[@analyze.DocSymbol],
 ) -> Map[String, Array[@analyze.DocSymbol]] {
-  let result : Map[String, Array[@analyze.DocSymbol]] = {}
+  let result : Map[String, Array[@analyze.DocSymbol]] = Map([])
   for sym in symbols {
     let kind = sym.get_kind()
     match result.get(kind) {

@@ -7,7 +7,7 @@ pub(all) struct TimestampInfo {
 
 ///|
 pub fn TimestampInfo::unknown(source? : String = "unknown") -> TimestampInfo {
-  { epoch_seconds: None, source, is_dirty: false }
+  { epoch_seconds: None, source, is_dirty: false, }
 }
 
 ///|
@@ -16,7 +16,7 @@ pub fn TimestampInfo::new(
   source : String,
   is_dirty : Bool,
 ) -> TimestampInfo {
-  { epoch_seconds, source, is_dirty }
+  { epoch_seconds, source, is_dirty, }
 }
 
 ///|
@@ -40,7 +40,7 @@ pub fn FileState::new(
   mtime : Int?,
   git_dirty : Bool,
 ) -> FileState {
-  { path, file_kind, spec, content_hash, git_time, mtime, git_dirty }
+  { path, file_kind, spec, content_hash, git_time, mtime, git_dirty, }
 }
 
 ///|
@@ -54,10 +54,10 @@ pub fn FileTrackingConfig::new(
   git_preferred : Bool,
   mtime_fallback : Bool,
 ) -> FileTrackingConfig {
-  { git_preferred, mtime_fallback }
+  { git_preferred, mtime_fallback, }
 }
 
 ///|
 pub fn FileTrackingConfig::default() -> FileTrackingConfig {
-  { git_preferred: false, mtime_fallback: true }
+  { git_preferred: false, mtime_fallback: true, }
 }

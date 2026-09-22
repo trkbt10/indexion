@@ -16,7 +16,7 @@ pub enum Node {
 
 ///|
 pub impl Show for Node with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|

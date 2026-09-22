@@ -101,8 +101,8 @@ fn generate_dep_diagram_impl(
   let common_prefix = find_common_prefix(internal_paths)
   // Normalize paths and collect unique nodes
   // Use shortened name as key to deduplicate same logical modules
-  let label_to_id : Map[String, String] = {}
-  let original_to_label : Map[String, String] = {}
+  let label_to_id : Map[String, String] = Map([])
+  let original_to_label : Map[String, String] = Map([])
   let mut id_counter = 0
   for dep in deps {
     let from_label = normalize_module_label(
@@ -164,7 +164,7 @@ fn generate_dep_diagram_impl(
     lines.push("  " + id + "[" + escaped + "]")
   }
   // Generate normal dependency edges (deduplicate by label)
-  let seen_edges : Map[String, Bool] = {}
+  let seen_edges : Map[String, Bool] = Map([])
   for dep in deps {
     let from_label = original_to_label.get(dep.from).unwrap()
     let to_label = original_to_label.get(dep.to).unwrap()
@@ -234,7 +234,7 @@ pub fn generate_call_diagram(
   lines.push("---")
   lines.push("graph TD")
   // Collect unique nodes
-  let node_ids : Map[String, String] = {}
+  let node_ids : Map[String, String] = Map([])
   let mut id_counter = 0
   for call in filtered {
     if !node_ids.contains(call.caller) {
@@ -279,7 +279,7 @@ pub fn generate_hierarchy_diagram(
   lines.push("---")
   lines.push("classDiagram")
   // Collect unique types
-  let types : Map[String, Bool] = {}
+  let types : Map[String, Bool] = Map([])
   for rel in relations {
     types.set(rel.child, true)
     types.set(rel.parent, true)
@@ -319,7 +319,7 @@ pub fn generate_overview_diagram(
   lines.push("```mermaid")
   lines.push("graph TB")
   // Group declarations by module
-  let by_module : Map[String, Array[@query.SymbolDecl]] = {}
+  let by_module : Map[String, Array[@query.SymbolDecl]] = Map([])
   for decl in decls {
     match by_module.get(decl.module_id) {
       Some(arr) => arr.push(decl)
@@ -328,7 +328,7 @@ pub fn generate_overview_diagram(
   }
   // Generate subgraphs for each module
   let mut module_counter = 0
-  let module_ids : Map[String, String] = {}
+  let module_ids : Map[String, String] = Map([])
   for entry in by_module {
     let mod_name = entry.0
     let symbols = entry.1

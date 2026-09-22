@@ -17,13 +17,13 @@ pub fn TemplateContext::new(
   base_dir : String,
   packages : Array[(PackageInfo, ExtractedDoc)],
 ) -> TemplateContext {
-  { base_dir, packages }
+  { base_dir, packages, }
 }
 
 ///|
 /// Render a template string with the given context.
 pub fn render_template(template : String, ctx : TemplateContext) -> String {
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   let chars = template.to_array()
   let mut i = 0
   while i < chars.length() {
@@ -78,7 +78,7 @@ fn resolve_placeholder(placeholder : String, ctx : TemplateContext) -> String {
 ///|
 /// Render {{module_doc}} - outputs only module-level documentation.
 fn render_module_docs(packages : Array[(PackageInfo, ExtractedDoc)]) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i, item in packages {
     let (_, doc) = item
     // Only output non-empty content that looks like module documentation
@@ -136,7 +136,7 @@ fn render_packages(
   if packages.length() == 0 {
     return ""
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i, item in packages {
     let (pkg, doc) = item
     if i > 0 {

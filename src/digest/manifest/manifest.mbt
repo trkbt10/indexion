@@ -103,8 +103,8 @@ pub fn DigestManifest::allocate_vector_id(
   match self.providers.get(provider_key) {
     Some(meta) => {
       let id = meta.vector_id_counter
-      self.providers.set(provider_key, { ..meta, vector_id_counter: id + 1L })
-      ({ ..self, updated_at: get_timestamp() }, id)
+      self.providers.set(provider_key, { ..meta, vector_id_counter: id + 1L, })
+      ({ ..self, updated_at: get_timestamp(), }, id)
     }
     None =>
       // Provider not registered — should not happen, but handle gracefully
@@ -154,7 +154,7 @@ pub fn DigestManifest::update_function(
   entry : FunctionEntry,
 ) -> DigestManifest {
   self.functions.set(entry.function_id, entry)
-  { ..self, updated_at: get_timestamp() }
+  { ..self, updated_at: get_timestamp(), }
 }
 
 ///|
@@ -164,7 +164,7 @@ pub fn DigestManifest::remove_function(
   function_id : String,
 ) -> DigestManifest {
   self.functions.remove(function_id)
-  { ..self, updated_at: get_timestamp() }
+  { ..self, updated_at: get_timestamp(), }
 }
 
 ///|
@@ -198,7 +198,7 @@ pub fn DigestManifest::get_deleted_functions(
   self : DigestManifest,
   current_ids : Array[String],
 ) -> Array[String] {
-  let current_set : Map[String, Bool] = {}
+  let current_set : Map[String, Bool] = Map([])
   for id in current_ids {
     current_set.set(id, true)
   }
@@ -219,7 +219,7 @@ pub fn DigestManifest::remove_deleted_functions(
   current_ids : Array[String],
 ) -> (DigestManifest, Map[String, Array[Int64]]) {
   let deleted = self.get_deleted_functions(current_ids)
-  let removed : Map[String, Array[Int64]] = {}
+  let removed : Map[String, Array[Int64]] = Map([])
   let mut manifest = self
   for id in deleted {
     match manifest.functions.get(id) {
@@ -288,7 +288,7 @@ pub fn DigestManifest::update_file(
     functions: function_ids,
   }
   self.files.set(file_path, entry)
-  { ..self, updated_at: get_timestamp() }
+  { ..self, updated_at: get_timestamp(), }
 }
 
 ///|

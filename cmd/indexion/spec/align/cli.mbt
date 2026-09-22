@@ -187,116 +187,116 @@ fn resolve_config(
   match matches.values.get("spec-path") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, spec_path: values[0] }
+        config = { ..config, spec_path: values[0], }
       }
     None => ()
   }
   match matches.values.get("impl-path") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, impl_path: values[0] }
+        config = { ..config, impl_path: values[0], }
       }
     None => ()
   }
   match matches.values.get("output") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, output: values[0] }
+        config = { ..config, output: values[0], }
       }
     None => ()
   }
   match matches.values.get("format") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, format: values[0] }
+        config = { ..config, format: values[0], }
       }
     None => ()
   }
   match matches.values.get("spec-format") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, spec_format: values[0] }
+        config = { ..config, spec_format: values[0], }
       }
     None => ()
   }
   match matches.values.get("algorithm") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, algorithm: values[0] }
+        config = { ..config, algorithm: values[0], }
       }
     None => ()
   }
   match matches.values.get("threshold") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, threshold: @common.parse_double(values[0]) }
+        config = { ..config, threshold: @common.parse_double(values[0]), }
       }
     None => ()
   }
   match matches.values.get("git-base") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, git_base: values[0] }
+        config = { ..config, git_base: values[0], }
       }
     None => ()
   }
   match matches.values.get("specs-dir") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, specs_dir: values[0] }
+        config = { ..config, specs_dir: values[0], }
       }
     None => ()
   }
   match matches.values.get("cache-dir") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, cache_dir: values[0] }
+        config = { ..config, cache_dir: values[0], }
       }
     None => ()
   }
   match matches.values.get("direction") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, direction: values[0] }
+        config = { ..config, direction: values[0], }
       }
     None => ()
   }
   match matches.values.get("agent") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, agent: values[0] }
+        config = { ..config, agent: values[0], }
       }
     None => ()
   }
   match matches.values.get("fail-on") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, fail_on: values[0] }
+        config = { ..config, fail_on: values[0], }
       }
     None => ()
   }
   match matches.values.get("mode") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, watch_mode: values[0] }
+        config = { ..config, watch_mode: values[0], }
       }
     None => ()
   }
   match matches.values.get("interval") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, watch_interval: @common.parse_int(values[0]) }
+        config = { ..config, watch_interval: @common.parse_int(values[0]), }
       }
     None => ()
   }
   match matches.values.get("limit") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, watch_limit: @common.parse_int(values[0]) }
+        config = { ..config, watch_limit: @common.parse_int(values[0]), }
       }
     None => ()
   }
-  { ..config, incremental: matches.flags.get("incremental").unwrap_or(false) }
+  { ..config, incremental: matches.flags.get("incremental").unwrap_or(false), }
 }
 
 ///|
@@ -343,7 +343,7 @@ async fn render_watch_target(
   config : @spec_align.SpecAlignConfig,
   registry : @registry.KGFRegistry,
 ) -> (String, String, Bool)? {
-  let target = { ..config, subcommand: config.watch_mode }
+  let target = { ..config, subcommand: config.watch_mode, }
   match config.watch_mode {
     "diff" =>
       match @spec_align.diff_report_with_registry_async(target, registry) {

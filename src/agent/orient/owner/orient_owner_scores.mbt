@@ -94,7 +94,7 @@ pub fn build_owner_doc_counts(
   orient_map : AgentOrientMap,
   task_terms : Array[String],
 ) -> Map[String, Int] {
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   for owner in orient_map.owners {
     let tokens = task_tokens(owner.summary)
     for term in task_terms {

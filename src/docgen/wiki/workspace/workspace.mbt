@@ -18,7 +18,7 @@ priv struct WikiUpdatePlan {
 
 ///|
 fn WikiUpdatePlan::new() -> WikiUpdatePlan {
-  { full_rebuild: false, page_ids: {} }
+  { full_rebuild: false, page_ids: {}, }
 }
 
 ///|
@@ -237,22 +237,22 @@ async fn mark_committed_content_changes(
 async fn update_plan(wiki_dir : String) -> WikiUpdatePlan {
   let plan = WikiUpdatePlan::new()
   if !@wiki_search.exists(wiki_dir) {
-    return { full_rebuild: true, page_ids: {} }
+    return { full_rebuild: true, page_ids: {}, }
   }
   let index_mtime = match
     @git.file_mtime_seconds(
       @config.join_path(wiki_dir, @wiki_search.SECTIONS_FILE),
     ) {
     Some(t) => t
-    None => return { full_rebuild: true, page_ids: {} }
+    None => return { full_rebuild: true, page_ids: {}, }
   }
   let manifest = match load_manifest(wiki_dir) {
     Some(m) => m
-    None => return { full_rebuild: true, page_ids: {} }
+    None => return { full_rebuild: true, page_ids: {}, }
   }
   let content_paths = match wiki_content_paths(wiki_dir) {
     Some(paths) => paths
-    None => return { full_rebuild: true, page_ids: {} }
+    None => return { full_rebuild: true, page_ids: {}, }
   }
   mark_mtime_changes(plan, wiki_dir, manifest, content_paths, index_mtime)
   match @git.repo_root(wiki_dir) {
@@ -291,7 +291,7 @@ pub async fn update_search_index(
   }
   let index = @wiki_search.build_search_index(wiki.pages, provider, registry~)
   index.save(wiki_dir)
-  Some({ sections_count: index.sections.length(), saved: true })
+  Some({ sections_count: index.sections.length(), saved: true, })
 }
 
 ///|
@@ -325,7 +325,7 @@ async fn update_search_index_incremental(
     }
   }
   index.save(wiki_dir)
-  Some({ sections_count: index.sections.length(), saved: true })
+  Some({ sections_count: index.sections.length(), saved: true, })
 }
 
 ///|

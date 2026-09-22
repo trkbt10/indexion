@@ -44,14 +44,14 @@ pub fn SearchEngine::create(
     @embed_config.Ivf => @vcdb.VectorDB::with_ivf(dim)
     @embed_config.BruteForce => @vcdb.VectorDB::with_dim(dim)
   }
-  { db, tfidf_provider: None, documents: {}, id_map: {} }
+  { db, tfidf_provider: None, documents: {}, id_map: {}, }
 }
 
 ///|
 /// Create an engine from a serialized vcdb database.
 pub fn SearchEngine::from_bytes(data : Bytes) -> SearchEngine {
   let db = @vcdb.VectorDB::deserialize(data)
-  { db, tfidf_provider: None, documents: {}, id_map: {} }
+  { db, tfidf_provider: None, documents: {}, id_map: {}, }
 }
 
 ///|
@@ -60,7 +60,7 @@ pub fn SearchEngine::with_tfidf(
   self : SearchEngine,
   provider : @text_embed.TfidfEmbeddingProvider,
 ) -> SearchEngine {
-  { ..self, tfidf_provider: Some(provider) }
+  { ..self, tfidf_provider: Some(provider), }
 }
 
 ///|
@@ -177,7 +177,7 @@ pub fn SearchEngine::resolve_hits(
     match self.id_map.get(vid) {
       Some(doc_id) =>
         match self.documents.get(doc_id) {
-          Some(doc) => results.push({ document: doc, score: hit.score })
+          Some(doc) => results.push({ document: doc, score: hit.score, })
           None => ()
         }
       None => ()

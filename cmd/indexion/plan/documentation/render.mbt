@@ -13,7 +13,7 @@ pub fn render_full(
   info : ProjectInfo,
   name : String,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let date = get_current_date()
   let project_name = if name.length() > 0 { name } else { info.name }
 
@@ -53,7 +53,7 @@ pub fn render_full(
 ///|
 /// Render coverage analysis only.
 pub fn render_coverage(analysis : DocAnalysis, name : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
 
   buf.write_string("# ")
   buf.write_string(name)
@@ -295,7 +295,7 @@ fn generate_readme_content(
   analysis : DocAnalysis,
   info : ProjectInfo,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
 
   // Title
   buf.write_string("# ")

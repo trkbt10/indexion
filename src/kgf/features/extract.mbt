@@ -23,7 +23,7 @@ pub fn ExtractedFunction::new(
   end : Int,
   file : String,
 ) -> ExtractedFunction {
-  { name, start, end, file }
+  { name, start, end, file, }
 }
 
 ///|

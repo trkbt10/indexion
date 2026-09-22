@@ -19,13 +19,13 @@ pub struct CapturedMatch {
 ///|
 /// Creates a successful match result.
 pub fn MatchResult::success(end_pos : Int, text : String) -> MatchResult {
-  { matched: true, end_pos, text }
+  { matched: true, end_pos, text, }
 }
 
 ///|
 /// Creates a failed match result.
 pub fn MatchResult::failure() -> MatchResult {
-  { matched: false, end_pos: 0, text: "" }
+  { matched: false, end_pos: 0, text: "", }
 }
 
 ///|
@@ -40,7 +40,7 @@ pub struct CaptureState {
 ///|
 pub fn CaptureState::new(count : Int) -> CaptureState {
   let groups : Array[(Int, Int)] = Array::make(count + 1, (-1, -1))
-  { groups, count }
+  { groups, count, }
 }
 
 ///|
@@ -179,7 +179,7 @@ priv struct ParseContext {
 
 ///|
 fn ParseContext::new() -> ParseContext {
-  { next_capture: 1 }
+  { next_capture: 1, }
 }
 
 ///|

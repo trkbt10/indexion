@@ -10,7 +10,7 @@ fn render_output(report : VocabularyReport, format : String) -> String {
 
 ///|
 fn render_text(report : VocabularyReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("sources                  : ")
   buf.write_string(report.source_file_count.to_string())
   buf.write_string("\n")
@@ -74,7 +74,7 @@ fn render_text(report : VocabularyReport) -> String {
 
 ///|
 fn render_markdown(report : VocabularyReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# Vocabulary Check\n\n")
   buf.write_string("- Direction: `")
   buf.write_string(report.direction)

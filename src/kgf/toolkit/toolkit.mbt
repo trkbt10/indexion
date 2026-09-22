@@ -28,7 +28,7 @@ pub fn LanguageToolkit::from_spec(spec : @types.KGFSpec) -> LanguageToolkit {
   let identifier_set = build_set_from_feature(spec, "identifier_kinds")
   let identifier_set = if identifier_set.is_empty() {
     // Default fallback when spec has no identifier_kinds feature
-    let set : Map[String, Bool] = {}
+    let set : Map[String, Bool] = Map([])
     set["Ident"] = true
     set
   } else {
@@ -175,7 +175,7 @@ fn build_set_from_feature(
   spec : @types.KGFSpec,
   feature_name : String,
 ) -> Map[String, Bool] {
-  let set : Map[String, Bool] = {}
+  let set : Map[String, Bool] = Map([])
   match spec.get_feature(feature_name) {
     Some(values) =>
       for v in values {

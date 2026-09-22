@@ -35,7 +35,7 @@ test "render_api_reference: groups by kind" {
     @query.SymbolDecl::new("f::bar", "bar", "Function", "f"),
     @query.SymbolDecl::new("f::Baz", "Baz", "Class", "f"),
   ]
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   let md = render_api_reference(decls, counts)
   assert_true(md.contains("## Classes"))
   assert_true(md.contains("## Functions"))
@@ -46,7 +46,7 @@ test "render_api_reference: groups by kind" {
 ///|
 test "render_api_reference: shows reference counts" {
   let decls = [@query.SymbolDecl::new("f::Foo", "Foo", "Class", "f")]
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   counts.set("f::Foo", 5)
   let md = render_api_reference(decls, counts)
   assert_true(md.contains("**References:** 5"))
@@ -55,7 +55,7 @@ test "render_api_reference: shows reference counts" {
 ///|
 test "render_api_reference: empty returns empty" {
   let decls : Array[@query.SymbolDecl] = []
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   let md = render_api_reference(decls, counts)
   assert_eq(md, "")
 }
@@ -66,7 +66,7 @@ test "render_cross_references: creates table" {
     @query.SymbolDecl::new("a", "A", "Class", "f"),
     @query.SymbolDecl::new("b", "B", "Class", "f"),
   ]
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   counts.set("a", 10)
   counts.set("b", 5)
   let table = render_cross_references(decls, counts)
@@ -81,7 +81,7 @@ test "render_cross_references: sorts by count descending" {
     @query.SymbolDecl::new("a", "A", "Class", "f"),
     @query.SymbolDecl::new("b", "B", "Class", "f"),
   ]
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   counts.set("a", 5)
   counts.set("b", 10)
   let table = render_cross_references(decls, counts)
@@ -94,7 +94,7 @@ test "render_cross_references: sorts by count descending" {
 ///|
 test "render_json: produces valid JSON structure" {
   let graph = @graph.CodeGraph::new()
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("name", "Foo")
   attrs.set("kind", "Class")
   graph.add_edge(edge_kind("declares"), "file.ts", "file.ts::Foo", attrs~)
@@ -110,7 +110,7 @@ test "render_json: produces valid JSON structure" {
 ///|
 test "render_markdown: generates complete output" {
   let graph = @graph.CodeGraph::new()
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("name", "MyClass")
   attrs.set("kind", "Class")
   attrs.set("doc", "A test class")

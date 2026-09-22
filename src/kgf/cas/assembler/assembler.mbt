@@ -50,7 +50,7 @@ pub fn assemble_graph(
     }
   }
 
-  { graph, loaded_chunks, missing_chunks, unresolved_refs }
+  { graph, loaded_chunks, missing_chunks, unresolved_refs, }
 }
 
 ///|
@@ -116,7 +116,7 @@ pub fn assemble_partial_graph(
     }
   }
 
-  { graph, loaded_chunks, missing_chunks, unresolved_refs }
+  { graph, loaded_chunks, missing_chunks, unresolved_refs, }
 }
 
 ///|

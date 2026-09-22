@@ -3,7 +3,7 @@
 pub fn document_symbol_kinds(spec : @kgf_types.KGFSpec) -> Map[String, Bool]? {
   match spec.get_feature("document_symbol_kinds") {
     Some(kinds) => {
-      let m : Map[String, Bool] = {}
+      let m : Map[String, Bool] = Map([])
       for kind in kinds {
         m.set(@kgf_features.to_lower_str(kind), true)
       }

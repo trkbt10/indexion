@@ -33,7 +33,7 @@ pub fn render_report(report : StoryReport, format : StoryFormat) -> String {
 
 ///|
 fn render_text(report : StoryReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("=== indexion story analyze ===\n")
   buf.write_string(
     "Spec docs: " +
@@ -152,7 +152,7 @@ fn compress_origins(paths : Array[String]) -> String {
   if paths.is_empty() {
     return ""
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let visible = if paths.length() > 3 { 3 } else { paths.length() }
   for i = 0; i < visible; i = i + 1 {
     if i > 0 {

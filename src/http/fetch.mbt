@@ -81,7 +81,7 @@ pub async fn fetch_text(
 ///|
 /// Copy a headers map to avoid ownership issues across redirect requests.
 fn copy_headers(headers : Map[String, String]) -> Map[String, String] {
-  let result : Map[String, String] = {}
+  let result : Map[String, String] = Map([])
   for k, v in headers {
     result[k] = v
   }

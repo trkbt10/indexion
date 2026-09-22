@@ -112,14 +112,14 @@ pub fn parse_project_toml_config(content : String) -> ProjectFileConfig {
     } else if section == "indexion" {
       if key == "inherit" {
         match parse_bool_like(value) {
-          Some(v) => config = { ..config, inherit_global: v }
+          Some(v) => config = { ..config, inherit_global: v, }
           None => ()
         }
       }
     } else if section == "mcp" {
-      config = { ..config, mcp: parse_mcp_section_key(config.mcp, key, value) }
+      config = { ..config, mcp: parse_mcp_section_key(config.mcp, key, value), }
     } else if section == "doc" {
-      config = { ..config, doc: parse_doc_section_key(config.doc, key, value) }
+      config = { ..config, doc: parse_doc_section_key(config.doc, key, value), }
     } else if section == "wiki" {
       config = {
         ..config,
@@ -153,7 +153,7 @@ pub fn parse_project_toml_config(content : String) -> ProjectFileConfig {
         key,
         value,
       )
-      config = { ..config, reconcile, digest }
+      config = { ..config, reconcile, digest, }
     }
   }
   config
@@ -177,7 +177,7 @@ fn parse_project_json_config(content : String) -> ProjectFileConfig {
           match indexion_obj.get("inherit") {
             Some(inherit_global_json) =>
               match parse_json_bool(inherit_global_json) {
-                Some(v) => config = { ..config, inherit_global: v }
+                Some(v) => config = { ..config, inherit_global: v, }
                 None => ()
               }
             None => ()
@@ -198,7 +198,7 @@ fn parse_project_json_config(content : String) -> ProjectFileConfig {
   let doc = load_doc_from_json_root(root)
   // Parse [wiki] section
   let wiki = load_wiki_from_json_root(root)
-  { ..config, reconcile, digest, embedding, mcp, doc, wiki }
+  { ..config, reconcile, digest, embedding, mcp, doc, wiki, }
 }
 
 ///|
@@ -219,7 +219,7 @@ fn load_reconcile_from_json_root(
       match parse_json_string(value) {
         Some(parsed_value) =>
           if parsed_value.length() > 0 {
-            file_config = { ..file_config, doc_scope: Some(parsed_value) }
+            file_config = { ..file_config, doc_scope: Some(parsed_value), }
           }
         None => ()
       }
@@ -228,7 +228,8 @@ fn load_reconcile_from_json_root(
   match reconcile_obj.get("doc_paths") {
     Some(value) =>
       match parse_json_string_array(value) {
-        Some(values) => file_config = { ..file_config, doc_paths: Some(values) }
+        Some(values) =>
+          file_config = { ..file_config, doc_paths: Some(values), }
         None => ()
       }
     None => ()
@@ -236,7 +237,8 @@ fn load_reconcile_from_json_root(
   match reconcile_obj.get("doc_specs") {
     Some(value) =>
       match parse_json_string_array(value) {
-        Some(values) => file_config = { ..file_config, doc_specs: Some(values) }
+        Some(values) =>
+          file_config = { ..file_config, doc_specs: Some(values), }
         None => ()
       }
     None => ()
@@ -246,7 +248,7 @@ fn load_reconcile_from_json_root(
       match parse_json_string(value) {
         Some(parsed_value) =>
           if parsed_value.length() > 0 {
-            file_config = { ..file_config, index_dir: Some(parsed_value) }
+            file_config = { ..file_config, index_dir: Some(parsed_value), }
           }
         None => ()
       }
@@ -271,7 +273,7 @@ fn load_reconcile_from_json_root(
       match parse_json_int(value) {
         Some(parsed_value) =>
           if parsed_value > 0 {
-            file_config = { ..file_config, max_candidates: Some(parsed_value) }
+            file_config = { ..file_config, max_candidates: Some(parsed_value), }
           }
         None => ()
       }

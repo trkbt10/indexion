@@ -13,7 +13,7 @@ pub struct SimilarityResult {
 ///|
 /// Create a SimilarityResult from distance.
 pub fn SimilarityResult::from_distance(distance : Double) -> SimilarityResult {
-  { distance, similarity: 1.0 - distance }
+  { distance, similarity: 1.0 - distance, }
 }
 
 ///|
@@ -21,7 +21,7 @@ pub fn SimilarityResult::from_distance(distance : Double) -> SimilarityResult {
 pub fn SimilarityResult::from_similarity(
   similarity : Double,
 ) -> SimilarityResult {
-  { distance: 1.0 - similarity, similarity }
+  { distance: 1.0 - similarity, similarity, }
 }
 
 ///|
@@ -64,7 +64,7 @@ pub struct HybridConfig {
 ///|
 /// Create a default HybridConfig with equal weights (0.5, 0.5).
 pub fn HybridConfig::new() -> HybridConfig {
-  { ncd_weight: 0.5, tfidf_weight: 0.5 }
+  { ncd_weight: 0.5, tfidf_weight: 0.5, }
 }
 
 ///|
@@ -81,7 +81,7 @@ pub fn HybridConfig::create(
     // Fallback to default weights
     return HybridConfig::new()
   }
-  { ncd_weight: ncd_w / total, tfidf_weight: tfidf_w / total }
+  { ncd_weight: ncd_w / total, tfidf_weight: tfidf_w / total, }
 }
 
 ///|

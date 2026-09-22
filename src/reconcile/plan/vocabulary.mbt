@@ -95,7 +95,7 @@ fn group_files_by_directory(
   config : ReconcileConfig,
   registry : @registry.KGFRegistry,
 ) -> Array[ModuleFileGroup] {
-  let groups : Map[String, ModuleFileGroup] = {}
+  let groups : Map[String, ModuleFileGroup] = Map([])
   for file in files {
     let dir = @config_paths.dirname(file.path)
     let rel_dir = @config_paths.relative_to(config.target_dir, dir)
@@ -152,7 +152,7 @@ fn max_distance(divergences : Array[VocabularyDivergence]) -> Double {
 
 ///|
 fn count_unique_tokens(tokens : Array[String]) -> Int {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for t in tokens {
     seen.set(t, true)
   }

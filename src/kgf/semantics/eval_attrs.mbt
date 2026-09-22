@@ -202,7 +202,7 @@ fn eval_attr_call(
     None => ctx.file + "::value:" + callee_name + "?unresolved"
   }
   // Add calls edge with call_id attr
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("call_id", call_id)
   ctx.graph.add_edge(
     @graph.EdgeKind::from_string("calls"),
@@ -253,7 +253,7 @@ fn eval_attr_import(
   // Ensure target module exists in graph
   let _ = ctx.graph.get_or_add_module(resolved, file=None)
   // Add moduleDependsOn edge
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("via", module_path)
   attrs.set("dep_kind", "value")
   ctx.graph.add_edge(
@@ -344,7 +344,7 @@ fn strip_quotes(s : String) -> String {
   let first = chars[0]
   let last = chars[chars.length() - 1]
   if (first == '"' && last == '"') || (first == '\'' && last == '\'') {
-    let result = StringBuilder::new()
+    let result = StringBuilder()
     for i = 1; i < chars.length() - 1; i = i + 1 {
       result.write_char(chars[i])
     }

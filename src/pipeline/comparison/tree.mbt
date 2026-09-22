@@ -56,7 +56,7 @@ fn compare_trees_core(
   tree_score_fn : ((@apted.IndexedTree, Int), (@apted.IndexedTree, Int)) -> Double,
 ) -> BatchResult {
   if files.length() < 2 {
-    return { matches: [], file_count: files.length(), pairs_compared: 0 }
+    return { matches: [], file_count: files.length(), pairs_compared: 0, }
   }
   let registry = @kgf_features.load_registry()
   // Extract and index trees once per file
@@ -130,7 +130,7 @@ fn compare_trees_core(
       )
     }
   }
-  { matches, file_count: n, pairs_compared }
+  { matches, file_count: n, pairs_compared, }
 }
 
 ///|
@@ -187,7 +187,7 @@ fn compare_functions_core(
   tree_score_fn : ((@apted.IndexedTree, Int), (@apted.IndexedTree, Int)) -> Double,
 ) -> BatchResult {
   if files.length() < 2 {
-    return { matches: [], file_count: files.length(), pairs_compared: 0 }
+    return { matches: [], file_count: files.length(), pairs_compared: 0, }
   }
   let registry = @kgf_features.load_registry()
   // Extract functions and index trees once per function
@@ -206,7 +206,7 @@ fn compare_functions_core(
     }
   }
   if all_functions.length() < 2 {
-    return { matches: [], file_count: files.length(), pairs_compared: 0 }
+    return { matches: [], file_count: files.length(), pairs_compared: 0, }
   }
   let matches : Array[SimilarityMatch] = []
   let mut pairs_compared = 0
@@ -239,5 +239,5 @@ fn compare_functions_core(
       }
     }
   }
-  { matches, file_count: files.length(), pairs_compared }
+  { matches, file_count: files.length(), pairs_compared, }
 }

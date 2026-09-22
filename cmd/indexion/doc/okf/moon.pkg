@@ -14,8 +14,4 @@ import {
   "trkbt10/indexion/src/pipeline",
 }
 
-import {
-  "moonbitlang/core/test",
-} for "wbtest"
-
 supported_targets = "native"

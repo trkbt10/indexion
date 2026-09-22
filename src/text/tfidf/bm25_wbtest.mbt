@@ -1,6 +1,6 @@
 ///|
 test "build_bm25_vector returns empty for empty tokens" {
-  let df : Map[String, Int] = {}
+  let df : Map[String, Int] = Map([])
   let vec = build_bm25_vector([], df, 10, 100.0)
   assert_true(vec.is_empty())
 }

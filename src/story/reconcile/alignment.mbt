@@ -31,7 +31,7 @@ pub fn reconcile(
   }
   let candidates = build_candidates(acts, impl_, config, registry)
   let orphan_impl = compute_orphans(impl_paths, candidates)
-  { acts, impl_paths, candidates, orphan_impl }
+  { acts, impl_paths, candidates, orphan_impl, }
 }
 
 ///|
@@ -122,7 +122,7 @@ fn build_candidate(
       registry,
     )
     let sim = @story.bm25_pair_similarity(act_tokens, impl_tokens)
-    pairs.push({ impl_path: p.get_path(), similarity: sim })
+    pairs.push({ impl_path: p.get_path(), similarity: sim, })
   }
   pairs.sort_by(fn(a, b) { b.similarity.compare(a.similarity) })
   let best_match : ImplMatch? = if pairs.length() > 0 &&
@@ -275,7 +275,7 @@ fn lookup_impl_content(
 
 ///|
 fn build_token_set(tokens : Array[String]) -> Map[String, Bool] {
-  let s : Map[String, Bool] = {}
+  let s : Map[String, Bool] = Map([])
   for t in tokens {
     s[t] = true
   }
@@ -334,7 +334,7 @@ fn build_rationale(
   missing_terms : Array[String],
   extra_terms : Array[String],
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(action.label())
   buf.write_string(": ")
   match action {
@@ -390,7 +390,7 @@ fn compute_orphans(
   impl_paths : Array[String],
   candidates : Array[ActReconcileCandidate],
 ) -> Array[String] {
-  let claimed : Map[String, Bool] = {}
+  let claimed : Map[String, Bool] = Map([])
   for c in candidates {
     match c.best_match {
       Some(m) => claimed[m.impl_path] = true

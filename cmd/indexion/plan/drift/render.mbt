@@ -11,7 +11,7 @@ pub fn render_output(report : DriftReport, format : String) -> String {
 
 ///|
 fn render_text(report : DriftReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "Strategy: drift (KGF tokenize → @vocab.measure_divergence, natural-language mode)\n",
   )
@@ -86,7 +86,7 @@ fn write_text_section(
 
 ///|
 fn render_markdown(report : DriftReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# Drift report\n\n")
   buf.write_string("- **File A**: `")
   buf.write_string(report.file_a)

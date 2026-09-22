@@ -126,7 +126,7 @@ fn parse_single_fst_spec(json : Json) -> @types.PreprocessFstSpec? {
     return None
   }
   // Parse character classes
-  let classes : Map[String, String] = {}
+  let classes : Map[String, String] = Map([])
   for entry in classes_json {
     let class_name = entry.0
     if entry.1 is String(pattern) {
@@ -136,7 +136,7 @@ fn parse_single_fst_spec(json : Json) -> @types.PreprocessFstSpec? {
     }
   }
   // Parse states
-  let states : Map[String, Array[@types.FstTransition]] = {}
+  let states : Map[String, Array[@types.FstTransition]] = Map([])
   for entry in states_json {
     let state_name = entry.0
     if entry.1 is Array(transitions_json) {

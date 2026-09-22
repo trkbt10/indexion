@@ -31,7 +31,7 @@ pub fn render_plan(plan : StoryWikiPlan, format : PlanFormat) -> String {
 
 ///|
 fn render_text(plan : StoryWikiPlan) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("=== indexion story wiki plan ===\n")
   buf.write_string(
     "Pages proposed: " +
@@ -61,7 +61,7 @@ fn render_text(plan : StoryWikiPlan) -> String {
 
 ///|
 fn render_markdown(plan : StoryWikiPlan) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# Story Wiki Plan\n\n")
   buf.write_string(
     "**" +

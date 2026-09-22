@@ -202,7 +202,7 @@ pub fn compare_hybrid(
   threshold : Double,
 ) -> BatchResult {
   if files.length() < 2 {
-    return { matches: [], file_count: files.length(), pairs_compared: 0 }
+    return { matches: [], file_count: files.length(), pairs_compared: 0, }
   }
   let n = files.length()
   let params = HybridParams::default()
@@ -225,9 +225,9 @@ pub fn compare_hybrid(
     candidate_threshold,
   )
   // Compute lexical evidence for all candidates
-  let pair_lexical : Map[String, Double] = {}
+  let pair_lexical : Map[String, Double] = Map([])
   let pair_indices : Array[(Int, Int)] = []
-  let pair_keys_seen : Map[String, Bool] = {}
+  let pair_keys_seen : Map[String, Bool] = Map([])
   for pair in bm25_candidates {
     let (raw_i, raw_j, bm25_sim) = pair
     let i = if raw_i < raw_j { raw_i } else { raw_j }
@@ -266,7 +266,7 @@ pub fn compare_hybrid(
     return emit_lexical_only(pair_lexical, pair_indices, threshold, files, n)
   }
   // Determine which pairs warrant structural comparison
-  let structural_candidate_set : Map[String, Bool] = {}
+  let structural_candidate_set : Map[String, Bool] = Map([])
   let structural_pairs = if structural_mode == 1 {
     @candidates.brute_force(n)
   } else if structural_mode == 2 {
@@ -338,7 +338,7 @@ pub fn compare_hybrid(
       )
     }
   }
-  { matches, file_count: n, pairs_compared }
+  { matches, file_count: n, pairs_compared, }
 }
 
 ///|
@@ -427,5 +427,5 @@ fn emit_lexical_only(
       )
     }
   }
-  { matches, file_count, pairs_compared: file_count * (file_count - 1) / 2 }
+  { matches, file_count, pairs_compared: file_count * (file_count - 1) / 2, }
 }

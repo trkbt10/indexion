@@ -486,7 +486,7 @@ async test "spec-align/moonbit: suggest emits both directions for drift" {
 ///|
 async test "spec-align/moonbit: status respects fail_on drifted" {
   let root = temp_test_dir("moonbit-status")
-  let config = { ..fixture_config("moonbit", root), fail_on: "drifted" }
+  let config = { ..fixture_config("moonbit", root), fail_on: "drifted", }
   let report = match test_status_report_async(config) {
     Some(value) => value
     None => fail("expected status report")

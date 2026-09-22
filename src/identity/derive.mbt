@@ -57,7 +57,7 @@ pub fn derive_id(
   if parts.is_empty() {
     return lower_ascii(text)
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i, part in parts {
     if i > 0 {
       buf.write_char('-')
@@ -100,7 +100,7 @@ pub fn identifier_kinds_for(
   registry : @kgf_registry.KGFRegistry,
   path_hint : String,
 ) -> Map[String, Bool] {
-  let kinds : Map[String, Bool] = {}
+  let kinds : Map[String, Bool] = Map([])
   let lang = match registry.detect_from_path(path_hint) {
     Some(l) => l
     None => return kinds
@@ -127,7 +127,7 @@ pub fn identifier_kinds_for(
 /// returned untouched, which is correct: case folding outside ASCII
 /// is locale-dependent and we have no SoT for that.
 pub fn lower_ascii(s : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in s {
     if c >= 'A' && c <= 'Z' {
       buf.write_char(Int::unsafe_to_char(c.to_int() + 32))

@@ -79,7 +79,7 @@ pub fn DocPlanConfig::from_matches(
     Some(arr) => if arr.length() > 0 { arr[0] } else { "" }
     _ => ""
   }
-  { target_dir, output, style, format, template, project_name, specs_dir }
+  { target_dir, output, style, format, template, project_name, specs_dir, }
 }
 
 ///|
@@ -171,7 +171,7 @@ fn render_output(
         match @plan_template.load_issue_form(config.template) {
           Some(template) => {
             let filled = @plan_template.fill_and_render(template, doc)
-            let buf = StringBuilder::new()
+            let buf = StringBuilder()
             buf.write_string("# ")
             buf.write_string(filled.title)
             buf.write_string("\n\n")

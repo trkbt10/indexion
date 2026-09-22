@@ -4,7 +4,7 @@
 ///|
 /// Render PlanDocument to Markdown string.
 pub fn render_markdown(doc : @types.PlanDocument) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let style = RenderStyle::markdown()
   // Title
   buf.write_string("# ")

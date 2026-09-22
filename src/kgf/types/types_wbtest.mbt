@@ -282,7 +282,7 @@ test "KGFSpec::new creates spec with values" {
   let tokens = [TokenDef::new("IDENT", "[a-z]+")]
   let rules : Map[String, RuleDef] = Map([])
   rules.set("prog", RuleDef::new("prog", "stmt*"))
-  let features : Map[String, Array[String]] = {}
+  let features : Map[String, Array[String]] = Map([])
   features.set("reference_token_kinds", ["INLINE_CODE"])
   let spec = KGFSpec::new(
     "typescript",
@@ -334,10 +334,10 @@ test "FstTransition creation and getters" {
 
 ///|
 test "PreprocessFstSpec creation and getters" {
-  let classes : Map[String, String] = {}
+  let classes : Map[String, String] = Map([])
   classes.set("alpha", "[A-Za-z]")
   classes.set("digit", "[0-9]")
-  let states : Map[String, Array[FstTransition]] = {}
+  let states : Map[String, Array[FstTransition]] = Map([])
   states.set("start", [
     FstTransition::new("alpha", "start", [FstAction::emit_input()]),
   ])
@@ -363,13 +363,13 @@ test "ClassifyModel: predict with trained model" {
   // Positive weights = evidence for this class
   // Model: normative class has evidence words "shall", "must"
   //        meta class has evidence words "introduction", "scope"
-  let norm_vocab : Map[String, Double] = {}
+  let norm_vocab : Map[String, Double] = Map([])
   norm_vocab.set("shall", 2.0)
   norm_vocab.set("must", 1.5)
-  let meta_vocab : Map[String, Double] = {}
+  let meta_vocab : Map[String, Double] = Map([])
   meta_vocab.set("introduction", 2.0)
   meta_vocab.set("scope", 1.5)
-  let classes : Map[String, ClassifyClass] = {}
+  let classes : Map[String, ClassifyClass] = Map([])
   classes.set("normative", ClassifyClass::new(0.0, norm_vocab))
   classes.set("meta", ClassifyClass::new(0.0, meta_vocab))
   let model = ClassifyModel::new({}, classes)
@@ -385,11 +385,11 @@ test "ClassifyModel: predict with trained model" {
 
 ///|
 test "ClassifyModel: classify returns sorted scores" {
-  let vocab_a : Map[String, Double] = {}
+  let vocab_a : Map[String, Double] = Map([])
   vocab_a.set("x", -1.0)
-  let vocab_b : Map[String, Double] = {}
+  let vocab_b : Map[String, Double] = Map([])
   vocab_b.set("x", -0.1)
-  let classes : Map[String, ClassifyClass] = {}
+  let classes : Map[String, ClassifyClass] = Map([])
   classes.set("a", ClassifyClass::new(0.0, vocab_a))
   classes.set("b", ClassifyClass::new(0.0, vocab_b))
   let model = ClassifyModel::new({}, classes)
@@ -401,7 +401,7 @@ test "ClassifyModel: classify returns sorted scores" {
 
 ///|
 test "ClassifyClass: term_weight" {
-  let vocab : Map[String, Double] = {}
+  let vocab : Map[String, Double] = Map([])
   vocab.set("shall", -0.105)
   let class_def = ClassifyClass::new(-0.693, vocab)
   assert_eq(class_def.get_prior(), -0.693)
@@ -411,7 +411,7 @@ test "ClassifyClass: term_weight" {
 
 ///|
 test "ClassifyModel: metadata access" {
-  let meta : Map[String, String] = {}
+  let meta : Map[String, String] = Map([])
   meta.set("model_type", "naive_bayes")
   meta.set("corpus_size", "150")
   let model = ClassifyModel::new(meta, {})
@@ -422,9 +422,9 @@ test "ClassifyModel: metadata access" {
 
 ///|
 test "KGFSpec with preprocess_fst" {
-  let classes : Map[String, String] = {}
+  let classes : Map[String, String] = Map([])
   classes.set("any", "[.]")
-  let states : Map[String, Array[FstTransition]] = {}
+  let states : Map[String, Array[FstTransition]] = Map([])
   states.set("s", [])
   let fst = PreprocessFstSpec::new("my_fst", classes, "s", states)
   let spec = KGFSpec::new(

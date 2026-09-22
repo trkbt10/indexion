@@ -4,12 +4,12 @@ fn source_test_file(
   content : String,
   content_type? : String? = None,
 ) -> @pipeline.SupportedFile {
-  { path, content, language: "moonbit", content_type }
+  { path, content, language: "moonbit", content_type, }
 }
 
 ///|
 fn repeated_source_text(seed : String, count : Int) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for _ in 0..<count {
     out.write_string(seed)
   }
@@ -137,7 +137,7 @@ test "agent orient source: role and owner signals survive bounded summaries" {
   )
   let graph = @graph.CodeGraph::new()
   let _ = graph.get_or_add_module(file.path, file=Some(file.path))
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("via", "argparse")
   graph.add_edge(
     @graph.EdgeKind::from_string("moduleDependsOn"),

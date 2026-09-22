@@ -112,7 +112,7 @@ test "small 3-node" (b : @bench.T) {
     b.keep(calculate_tsed(t1, t2, TSEDConfig::default()))
   })
   b.bench(name="new_tsed_no_fin", fn() {
-    b.keep(calculate_tsed(t1, t2, { cost_config: cc, finalize_labels: false }))
+    b.keep(calculate_tsed(t1, t2, { cost_config: cc, finalize_labels: false, }))
   })
 }
 
@@ -138,7 +138,7 @@ test "medium 7-node" (b : @bench.T) {
     b.keep(calculate_tsed(t1, t2, TSEDConfig::default()))
   })
   b.bench(name="new_tsed_no_fin", fn() {
-    b.keep(calculate_tsed(t1, t2, { cost_config: cc, finalize_labels: false }))
+    b.keep(calculate_tsed(t1, t2, { cost_config: cc, finalize_labels: false, }))
   })
 }
 
@@ -158,7 +158,7 @@ test "large 31-node balanced" (b : @bench.T) {
     b.keep(calculate_tsed(t1, t2, TSEDConfig::default()))
   })
   b.bench(name="new_tsed_no_fin", fn() {
-    b.keep(calculate_tsed(t1, t2, { cost_config: cc, finalize_labels: false }))
+    b.keep(calculate_tsed(t1, t2, { cost_config: cc, finalize_labels: false, }))
   })
 }
 
@@ -178,7 +178,7 @@ test "wide 21-node" (b : @bench.T) {
     b.keep(calculate_tsed(t1, t2, TSEDConfig::default()))
   })
   b.bench(name="new_tsed_no_fin", fn() {
-    b.keep(calculate_tsed(t1, t2, { cost_config: cc, finalize_labels: false }))
+    b.keep(calculate_tsed(t1, t2, { cost_config: cc, finalize_labels: false, }))
   })
 }
 
@@ -197,7 +197,7 @@ test "identical 15-node" (b : @bench.T) {
     b.keep(calculate_tsed(t, t, TSEDConfig::default()))
   })
   b.bench(name="new_tsed_no_fin", fn() {
-    b.keep(calculate_tsed(t, t, { cost_config: cc, finalize_labels: false }))
+    b.keep(calculate_tsed(t, t, { cost_config: cc, finalize_labels: false, }))
   })
 }
 
@@ -216,6 +216,6 @@ test "large identical 63-node" (b : @bench.T) {
     b.keep(calculate_tsed(t, t, TSEDConfig::default()))
   })
   b.bench(name="new_tsed_no_fin", fn() {
-    b.keep(calculate_tsed(t, t, { cost_config: cc, finalize_labels: false }))
+    b.keep(calculate_tsed(t, t, { cost_config: cc, finalize_labels: false, }))
   })
 }

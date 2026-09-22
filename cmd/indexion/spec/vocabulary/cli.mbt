@@ -47,8 +47,8 @@ pub fn command() -> @argparse.Command {
 ///|
 fn config_from_matches(matches : @argparse.Matches) -> VocabularyConfig {
   let mut config = VocabularyConfig::default()
-  config = { ..config, source_paths: @common.arg_list(matches, role_source) }
-  config = { ..config, target_paths: @common.arg_list(matches, role_target) }
+  config = { ..config, source_paths: @common.arg_list(matches, role_source), }
+  config = { ..config, target_paths: @common.arg_list(matches, role_target), }
   config = {
     ..config,
     direction: @common.get_option(matches, "direction", direction_both),
@@ -57,11 +57,11 @@ fn config_from_matches(matches : @argparse.Matches) -> VocabularyConfig {
     ..config,
     format: @common.get_option(matches, "format", output_format_text),
   }
-  config = { ..config, output: @common.get_option(matches, "output", "") }
+  config = { ..config, output: @common.get_option(matches, "output", ""), }
   match matches.values.get("specs-dir") {
     Some(vals) =>
       if vals.length() > 0 && vals[0].length() > 0 {
-        config = { ..config, specs_dir: Some(vals[0]) }
+        config = { ..config, specs_dir: Some(vals[0]), }
       }
     None => ()
   }

@@ -153,7 +153,7 @@ async test "wiki search update can incrementally update one page" {
     wiki_dir + "/home.md",
     "# Home\n\nIncremental quartzalpha content.\n",
   )
-  let page_ids : Map[String, Bool] = {}
+  let page_ids : Map[String, Bool] = Map([])
   page_ids["home"] = true
   let _ = update_search_index_incremental(wiki_dir, "kgfs", provider, page_ids) catch {
     _ => panic()

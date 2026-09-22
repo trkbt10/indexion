@@ -10,7 +10,7 @@ pub async fn generate_impression_with_config(
   callers : Array[String],
   callees : Array[String],
 ) -> @types.Impression raise EmbedError {
-  let headers : Map[String, String] = {}
+  let headers : Map[String, String] = Map([])
   headers.set("Authorization", "Bearer " + config.api_key)
   headers.set("Content-Type", "application/json")
   // Build user prompt

@@ -13,7 +13,7 @@ fn edge_kind(s : String) -> @graph.EdgeKind {
 ///|
 test "extract_module_deps: extracts ModuleDependsOn edges" {
   let graph = @graph.CodeGraph::new()
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("via", "./utils")
   attrs.set("dep_kind", "value")
   graph.add_edge(
@@ -67,7 +67,7 @@ test "get_transitive_deps: follows dependency chain" {
 ///|
 test "extract_call_graph: extracts Calls edges" {
   let graph = @graph.CodeGraph::new()
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("file", "main.ts")
   graph.add_edge(edge_kind("calls"), "main::init", "utils::helper", attrs~)
   let calls = extract_call_graph(graph)
@@ -133,7 +133,7 @@ test "get_children: finds derived types" {
 ///|
 test "extract_references: extracts References edges" {
   let graph = @graph.CodeGraph::new()
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("ns", "value")
   graph.add_edge(edge_kind("references"), "main.ts:10", "utils::helper", attrs~)
   let refs = extract_references(graph)
@@ -146,7 +146,7 @@ test "extract_references: extracts References edges" {
 ///|
 test "extract_declarations: extracts Declares edges with attrs" {
   let graph = @graph.CodeGraph::new()
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("name", "MyClass")
   attrs.set("kind", "Class")
   attrs.set("doc", "A sample class")

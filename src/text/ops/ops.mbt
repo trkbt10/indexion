@@ -29,7 +29,7 @@ pub fn split_by_newline(text : String) -> Array[String] {
 /// Join up to `n` elements of an array with ", " separator.
 /// If the array has more than `n` elements, appends " (+M more)".
 pub fn join_with_limit(arr : Array[String], n : Int) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let limit = if n < arr.length() { n } else { arr.length() }
   for i = 0; i < limit; i = i + 1 {
     if i > 0 {

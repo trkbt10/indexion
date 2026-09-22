@@ -16,7 +16,7 @@ fn is_blank_line(line : String) -> Bool {
 ///|
 pub fn normalize_spaces(text : String) -> String {
   let chars = text.to_array()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut last_space = false
   for ch in chars {
     let is_space = ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'

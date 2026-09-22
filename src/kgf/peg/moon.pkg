@@ -1,13 +1,12 @@
 import {
-  "moonbitlang/core/bench",
   "moonbitlang/core/builtin",
   "moonbitlang/core/hashset",
-  "moonbitlang/core/json",
   "trkbt10/indexion/src/kgf/charclass",
   "trkbt10/indexion/src/kgf/types",
 }
 
 import {
+  "moonbitlang/core/bench",
   "moonbitlang/x/fs",
   "trkbt10/indexion/src/core/graph",
   "trkbt10/indexion/src/kgf/lexer",

@@ -40,22 +40,18 @@ pub async fn install_binary(src : String, dst : String) -> Unit {
         }
       }
       // Write new binary; rollback on failure
-      @async_fs.write_file(dst, data, create=0o644) catch {
-        e => {
-          // Rollback: restore old binary
-          if dst_exists {
-            let _ = @async_process.run(
-              "cmd",
-              ["/c", "move", "/Y", old_path, dst][:],
-            )
-          }
-          raise e
-        }
-      }
+      // Rollback: restore old binary
+      errdefer (if dst_exists {
+        let _ = @async_process.run(
+          "cmd",
+          ["/c", "move", "/Y", old_path, dst][:],
+        )
+      })
+      @async_fs.write_file(dst, data, create_mode=CreateOrTruncate)
     }
     _ => {
       let data = @async_fs.read_file(src)
-      @async_fs.write_file(dst, data, create=0o644)
+      @async_fs.write_file(dst, data, create_mode=CreateOrTruncate)
     }
   }
 }

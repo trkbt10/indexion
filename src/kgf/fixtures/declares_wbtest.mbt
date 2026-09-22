@@ -36,7 +36,7 @@ fn count_declares(
   }
   let mut fn_count = 0
   let mut type_count = 0
-  let names : Map[String, String] = {}
+  let names : Map[String, String] = Map([])
   for edge in graph.get_edges() {
     if !(edge.kind is @graph.Declares) {
       continue
@@ -55,7 +55,7 @@ fn count_declares(
 
 ///|
 fn programming_langs_from_kgfs() -> Map[String, Bool] {
-  let langs : Map[String, Bool] = {}
+  let langs : Map[String, Bool] = Map([])
   let entries = @fs.read_dir("kgfs/programming") catch { _ => [] }
   for entry in entries {
     if !entry.has_suffix(".kgf") {

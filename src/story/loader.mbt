@@ -48,7 +48,7 @@ pub fn load_documents(patterns : Array[String]) -> Array[StoryDocument] {
     }
   }
   let result : Array[StoryDocument] = []
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for path in collected_paths {
     let normalized = @config_paths.normalize_path(path)
     if seen.contains(normalized) {

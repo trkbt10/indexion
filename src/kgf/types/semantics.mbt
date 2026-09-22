@@ -126,7 +126,7 @@ pub fn SemOnBlock::new(
   when_cond? : SemExpr? = None,
   else_stmts? : Array[SemStmt]? = None,
 ) -> SemOnBlock {
-  { rule, when_cond, then_stmts, else_stmts }
+  { rule, when_cond, then_stmts, else_stmts, }
 }
 
 ///|

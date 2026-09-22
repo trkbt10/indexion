@@ -50,7 +50,7 @@ pub fn DiscoverOptions::new(
   include_hidden? : Bool = false,
   kgf_ignore? : Array[(String, String)] = [],
 ) -> DiscoverOptions {
-  { recursive, includes, excludes, include_hidden, kgf_ignore, root_dir }
+  { recursive, includes, excludes, include_hidden, kgf_ignore, root_dir, }
 }
 
 ///|
@@ -145,7 +145,12 @@ pub fn load_supported_file_info(
     }
     match archive_result {
       Some(Some(content)) => {
-        results.push({ path, content, language, content_type: Some("document") })
+        results.push({
+          path,
+          content,
+          language,
+          content_type: Some("document"),
+        })
         continue
       }
       Some(None) => continue // Archive but empty or failed
@@ -156,7 +161,7 @@ pub fn load_supported_file_info(
       Some(values) => if values.length() > 0 { Some(values[0]) } else { None }
       None => None
     }
-    results.push({ path, content, language, content_type })
+    results.push({ path, content, language, content_type, })
   }
   results
 }

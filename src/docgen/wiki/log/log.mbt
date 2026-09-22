@@ -32,7 +32,7 @@ pub fn WikiLogEntry::new(
   details? : Map[String, String] = {},
   affected_pages? : Array[String] = [],
 ) -> WikiLogEntry {
-  { timestamp, operation, actor, summary, details, affected_pages }
+  { timestamp, operation, actor, summary, details, affected_pages, }
 }
 
 ///|
@@ -67,7 +67,7 @@ impl @json.FromJson for WikiLogEntry with fn from_json(json, path) {
     Some(String(s)) => s
     _ => ""
   }
-  let details : Map[String, String] = {}
+  let details : Map[String, String] = Map([])
   match obj.get("details") {
     Some(Object(d)) =>
       for entry in d {
@@ -89,7 +89,7 @@ impl @json.FromJson for WikiLogEntry with fn from_json(json, path) {
       }
     _ => ()
   }
-  { timestamp, operation, actor, summary, details, affected_pages }
+  { timestamp, operation, actor, summary, details, affected_pages, }
 }
 
 ///|
@@ -100,7 +100,7 @@ pub struct WikiLog {
 
 ///|
 pub fn WikiLog::new() -> WikiLog {
-  { entries: [] }
+  { entries: [], }
 }
 
 ///|
@@ -172,7 +172,7 @@ pub fn WikiLog::length(self : WikiLog) -> Int {
 ///|
 /// Render a log entry as a human-readable line.
 pub fn WikiLogEntry::to_display(self : WikiLogEntry) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("[")
   buf.write_string(self.timestamp.to_string())
   buf.write_string("] ")

@@ -56,7 +56,7 @@ pub async fn apply_incremental_updates_with_cache(
   }
   // Apply signature-only attr refreshes via the cheap update_attrs path —
   // skips vector re-embedding for files whose content is unchanged.
-  let cached_by_path : Map[String, CachedFile] = {}
+  let cached_by_path : Map[String, CachedFile] = Map([])
   match cached_files_in {
     Some(files) =>
       for cached in files {
@@ -121,11 +121,11 @@ fn classify_updates_with_cache(
     Some(files) => files
     None => scan_all_cached_files(handle)
   }
-  let cached_by_path : Map[String, CachedFile] = {}
+  let cached_by_path : Map[String, CachedFile] = Map([])
   for file in cached_files {
     cached_by_path.set(file.path, file)
   }
-  let current_hashes : Map[String, String] = {}
+  let current_hashes : Map[String, String] = Map([])
   let upsert_briefs : Array[LocalFileBrief] = []
   let new_files : Array[String] = []
   let changed_files : Array[String] = []

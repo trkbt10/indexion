@@ -55,7 +55,7 @@ pub fn ReconcileManifest::allocate_vector_id(
 ) -> (ReconcileManifest, Int64) {
   let id = self.vector_id_counter
   (
-    { ..self, updated_at: current_epoch_seconds(), vector_id_counter: id + 1L },
+    { ..self, updated_at: current_epoch_seconds(), vector_id_counter: id + 1L, },
     id,
   )
 }
@@ -228,14 +228,14 @@ fn ensure_record_slot(
         digest: "",
         vector_id,
       })
-      ({ ..updated, updated_at: current_epoch_seconds() }, vector_id)
+      ({ ..updated, updated_at: current_epoch_seconds(), }, vector_id)
     }
   }
 }
 
 ///|
 fn keep_record_keys(keys : Array[String]) -> Map[String, Bool] {
-  let result : Map[String, Bool] = {}
+  let result : Map[String, Bool] = Map([])
   for key in keys {
     result.set(key, true)
   }
@@ -276,7 +276,7 @@ fn prune_index_state(
     manifest.logical_reviews.remove(key)
   }
   let review_state_hash = compute_review_state_hash(manifest.logical_reviews)
-  ({ ..manifest, updated_at, review_state_hash }, db)
+  ({ ..manifest, updated_at, review_state_hash, }, db)
 }
 
 ///|
@@ -319,7 +319,7 @@ pub fn apply_review_decisions(
     }
   }
   let review_state_hash = compute_review_state_hash(manifest.logical_reviews)
-  ({ ..manifest, updated_at, review_state_hash }, db)
+  ({ ..manifest, updated_at, review_state_hash, }, db)
 }
 
 ///|

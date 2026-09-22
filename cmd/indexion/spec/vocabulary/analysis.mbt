@@ -17,7 +17,7 @@ priv struct VocabularyGroup {
 
 ///|
 fn VocabularyGroup::new() -> VocabularyGroup {
-  { required: {}, allowed: {}, observed: {}, files: [] }
+  { required: {}, allowed: {}, observed: {}, files: [], }
 }
 
 ///|
@@ -180,9 +180,9 @@ fn collect_archive_vocabulary(
   registry : @kgf_registry.KGFRegistry,
   role : String,
 ) -> FileVocabulary? {
-  let required : Map[String, VocabularyTerm] = {}
-  let allowed : Map[String, VocabularyTerm] = {}
-  let observed : Map[String, VocabularyTerm] = {}
+  let required : Map[String, VocabularyTerm] = Map([])
+  let allowed : Map[String, VocabularyTerm] = Map([])
+  let observed : Map[String, VocabularyTerm] = Map([])
   for item in entries {
     match collect_content_vocabulary(item.0, item.1, registry, role) {
       Some(file) => {
@@ -247,8 +247,8 @@ fn collect_source_terms(
   spec : @kgf_types.KGFSpec,
   tokens : Array[@kgf_types.Tok],
 ) -> FileVocabulary {
-  let required : Map[String, VocabularyTerm] = {}
-  let allowed : Map[String, VocabularyTerm] = {}
+  let required : Map[String, VocabularyTerm] = Map([])
+  let allowed : Map[String, VocabularyTerm] = Map([])
   if language == "webidl" {
     add_webidl_source_terms(tokens, path, required, allowed)
   } else if language == "ebnf" {
@@ -274,7 +274,7 @@ fn collect_target_terms(
   spec : @kgf_types.KGFSpec,
   tokens : Array[@kgf_types.Tok],
 ) -> FileVocabulary {
-  let observed : Map[String, VocabularyTerm] = {}
+  let observed : Map[String, VocabularyTerm] = Map([])
   if language == "webidl" {
     add_webidl_observed_terms(tokens, path, observed)
   } else if language == "ebnf" {
@@ -444,7 +444,7 @@ fn add_moonbit_conformance_terms(
 
 ///|
 fn extract_webidl_interfaces(tokens : Array[@kgf_types.Tok]) -> Array[String] {
-  let names : Map[String, Bool] = {}
+  let names : Map[String, Bool] = Map([])
   let mut i = 0
   while i < tokens.length() {
     if tokens[i].get_kind() == "KW_interface" {
@@ -464,7 +464,7 @@ fn extract_webidl_interfaces(tokens : Array[@kgf_types.Tok]) -> Array[String] {
 
 ///|
 fn extract_webidl_members(tokens : Array[@kgf_types.Tok]) -> Array[String] {
-  let members : Map[String, Bool] = {}
+  let members : Map[String, Bool] = Map([])
   let mut i = 0
   while i < tokens.length() {
     if tokens[i].get_kind() != "KW_interface" {
@@ -622,7 +622,7 @@ fn add_term(
   }
   let key = kind + ":" + normalized
   if !terms.contains(key) {
-    terms[key] = { key, kind, value, origin }
+    terms[key] = { key, kind, value, origin, }
   }
 }
 
@@ -713,7 +713,7 @@ fn issue_assessment(
   reason : String,
   evidence_terms : Array[VocabularyTerm],
 ) -> VocabularyIssueAssessment {
-  { term, classification, reason, evidence_terms }
+  { term, classification, reason, evidence_terms, }
 }
 
 ///|
@@ -843,7 +843,7 @@ fn canonical_base_name(value : String) -> String {
 ///|
 fn canonical_name(value : String) -> String {
   let stripped = strip_wrapping_quotes(value).to_lower()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for ch in stripped {
     if (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') {
       buf.write_char(ch)

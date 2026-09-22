@@ -13,7 +13,7 @@ pub fn apply_preprocess(
     return input
   }
   // Compile FSTs
-  let fsts : Map[String, CompiledFst] = {}
+  let fsts : Map[String, CompiledFst] = Map([])
   match preprocess_fst {
     Some(specs) =>
       for spec in specs {
@@ -68,8 +68,8 @@ fn blank_matching_lines(
   input : String,
   predicate : (String, String) -> Bool,
 ) -> String {
-  let buf = StringBuilder::new()
-  let line = StringBuilder::new()
+  let buf = StringBuilder()
+  let line = StringBuilder()
   let flush = fn(text : String, has_newline : Bool) {
     let trimmed = text.trim().to_owned()
     if predicate(text, trimmed) {
@@ -153,7 +153,7 @@ fn parse_hex_codepoint(text : String) -> Int raise Error {
 /// Converts a base64 string to hexadecimal.
 fn base64_to_hex(input : String) -> String {
   // Clean input: remove non-base64 characters
-  let cleaned = StringBuilder::new()
+  let cleaned = StringBuilder()
   for ch in input {
     if is_base64_char(ch) {
       cleaned.write_char(ch)
@@ -165,7 +165,7 @@ fn base64_to_hex(input : String) -> String {
   let padded = if pad_len == 0 {
     clean_str
   } else {
-    let sb = StringBuilder::new()
+    let sb = StringBuilder()
     sb.write_string(clean_str)
     for _ in 0..<(4 - pad_len) {
       sb.write_char('=')
@@ -175,7 +175,7 @@ fn base64_to_hex(input : String) -> String {
   // Decode base64 to bytes
   let bytes = decode_base64(padded)
   // Convert to hex
-  let hex = StringBuilder::new()
+  let hex = StringBuilder()
   for b in bytes {
     hex.write_string(byte_to_hex(b))
   }
@@ -259,7 +259,7 @@ fn byte_to_hex(b : Int) -> String {
   let hex_arr = hex_chars.to_array()
   let high = hex_arr[(b >> 4) & 0x0f]
   let low = hex_arr[b & 0x0f]
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_char(high)
   sb.write_char(low)
   sb.to_string()

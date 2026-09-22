@@ -15,7 +15,7 @@ pub struct TraversalResult {
 ///|
 /// Create an empty TraversalResult.
 pub fn TraversalResult::new() -> TraversalResult {
-  { order: [], depths: {}, cycles: [] }
+  { order: [], depths: {}, cycles: [], }
 }
 
 ///|
@@ -53,12 +53,12 @@ pub fn compute_bottom_up_order(
   function_ids : Array[String],
 ) -> TraversalResult {
   let result = TraversalResult::new()
-  let id_set : Map[String, Bool] = {}
+  let id_set : Map[String, Bool] = Map([])
   for id in function_ids {
     id_set.set(id, true)
   }
   // Compute depths using DFS with cycle detection
-  let visiting : Map[String, Bool] = {}
+  let visiting : Map[String, Bool] = Map([])
   for id in function_ids {
     let _ = compute_depth_recursive(
       graph,
@@ -134,12 +134,12 @@ pub fn compute_top_down_order(
   function_ids : Array[String],
 ) -> TraversalResult {
   let result = TraversalResult::new()
-  let id_set : Map[String, Bool] = {}
+  let id_set : Map[String, Bool] = Map([])
   for id in function_ids {
     id_set.set(id, true)
   }
   // Compute depths from callers using DFS
-  let visiting : Map[String, Bool] = {}
+  let visiting : Map[String, Bool] = Map([])
   for id in function_ids {
     let _ = compute_caller_depth_recursive(
       graph,

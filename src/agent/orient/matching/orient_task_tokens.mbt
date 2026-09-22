@@ -29,7 +29,7 @@ pub fn collect_orient_tokens(text : String, unique~ : Bool) -> Array[String] {
   // fixtures) and dominated cold-cache orient time. Building the map
   // alongside the array preserves insertion order in `result` while
   // keeping the dedup cost constant.
-  let seen : Map[String, Unit] = {}
+  let seen : Map[String, Unit] = Map([])
   for token in @tokenizer.extract_word_tokens(@tokenizer.normalize_text(text)) {
     push_orient_token(result, seen, token, unique~)
     for part in split_orient_token(token) {
@@ -62,7 +62,7 @@ pub fn push_orient_token(
 ///|
 pub fn split_orient_token(token : String) -> Array[String] {
   let parts : Array[String] = []
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for ch in token {
     if ch == '-' || ch == '_' {
       let part = buf.to_string()

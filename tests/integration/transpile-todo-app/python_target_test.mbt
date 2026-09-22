@@ -3,5 +3,5 @@
 /// different lower spec — the snapshot diff vs. the moonbit one should
 /// reflect Python's structural differences, not engine logic.
 async test "snapshot: ts todo-app -> python" {
-  run_target_snapshot("python")
+  @transpile-todo-app.run_target_snapshot("python")
 }

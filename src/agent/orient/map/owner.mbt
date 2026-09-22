@@ -80,7 +80,7 @@ pub fn build_owner_map_entry(
 ) -> AgentOrientMapOwner {
   let owner_files : Array[String] = []
   let doc_sources : Array[String] = []
-  let summary = StringBuilder::new()
+  let summary = StringBuilder()
   summary.write_string(dir)
   summary.write_string("\n")
   let hashes : Array[String] = []

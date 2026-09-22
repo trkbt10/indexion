@@ -13,7 +13,7 @@ pub fn join_path(parts : Array[String]) -> String {
   if non_empty == 0 {
     return ""
   }
-  let buf = StringBuilder::new(size_hint=total + non_empty)
+  let buf = StringBuilder(size_hint=total + non_empty)
   let mut wrote = false
   for part in parts {
     if part.length() == 0 {
@@ -159,7 +159,7 @@ pub fn is_absolute(path : String) -> Bool {
 /// Splits a string by a delimiter character.
 fn split_string(s : String, delim : Char) -> Array[String] {
   let result : Array[String] = []
-  let current = StringBuilder::new()
+  let current = StringBuilder()
   for c in s {
     if c == delim {
       result.push(current.to_string())
@@ -178,7 +178,7 @@ fn join_array_strings(arr : Array[String], sep : String) -> String {
   if arr.length() == 0 {
     return ""
   }
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   result.write_string(arr[0])
   for i = 1; i < arr.length(); i = i + 1 {
     result.write_string(sep)

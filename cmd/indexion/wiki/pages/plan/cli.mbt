@@ -37,7 +37,7 @@ pub fn WikiPlanConfig::from_matches(
     Some(arr) => if arr.length() > 0 { arr[0] } else { "." }
     _ => "."
   }
-  { target_dir, output, format, specs_dir, wiki_dir }
+  { target_dir, output, format, specs_dir, wiki_dir, }
 }
 
 ///|
@@ -80,7 +80,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
       return
     }
   }
-  let config = { ..parsed, wiki_dir: wiki_dir_resolved }
+  let config = { ..parsed, wiki_dir: wiki_dir_resolved, }
   println("Analyzing project structure...")
   let graph = match
     @digest_cli.build_graph_from_source(config.target_dir, config.specs_dir) {
@@ -157,7 +157,7 @@ fn build_summary_section(
     @plan_types.ListItem::simple("Edges: " + graph.edge_count().to_string()),
   )
   let mut internal = 0
-  let top_dirs : Map[String, Bool] = {}
+  let top_dirs : Map[String, Bool] = Map([])
   for entry in graph.get_modules() {
     match entry.1.file {
       Some(_) => {
@@ -249,7 +249,7 @@ fn build_writing_tasks(
   base_dir : String,
 ) -> @plan_types.PlanSection {
   let items : Array[@plan_types.ChecklistItem] = []
-  let existing_pages : Map[String, Bool] = {}
+  let existing_pages : Map[String, Bool] = Map([])
   match existing {
     Some(wiki) =>
       for entry in wiki.pages {
@@ -344,7 +344,7 @@ fn collect_clusters(
   graph : @graph.CodeGraph,
   base_dir : String,
 ) -> Map[String, Int] {
-  let clusters : Map[String, Int] = {}
+  let clusters : Map[String, Int] = Map([])
   for entry in graph.get_modules() {
     match entry.1.file {
       None => continue

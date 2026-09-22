@@ -200,8 +200,8 @@ fn save_snapshot(cache_dir : String, snapshot : AlignSnapshot) -> Bool {
     implementations: snapshot.implementations,
     edges: snapshot.trace_edges,
   }
-  let diff_store : AlignDiffStore = { items: snapshot.diff_items }
-  let history_store : AlignHistoryStore = { entries: history_entries }
+  let diff_store : AlignDiffStore = { items: snapshot.diff_items, }
+  let history_store : AlignHistoryStore = { entries: history_entries, }
   write_json_file(
     cache_file_path(cache_dir, align_manifest_file),
     manifest.to_json(),

@@ -100,7 +100,7 @@ pub fn parse_issue_form(content : String) -> IssueFormTemplate {
 ///|
 fn create_empty_field(field_type : String) -> FormField {
   match field_type {
-    "markdown" => FormField::Markdown({ value: "" })
+    "markdown" => FormField::Markdown({ value: "", })
     "textarea" =>
       FormField::Textarea({
         id: "",
@@ -140,7 +140,7 @@ fn create_empty_field(field_type : String) -> FormField {
       })
     _ =>
       // Default to markdown for unknown types
-      FormField::Markdown({ value: "" })
+      FormField::Markdown({ value: "", })
   }
 }
 
@@ -155,16 +155,16 @@ fn update_field(
     FormField::Markdown(_) =>
       if line.has_prefix("value:") {
         let val = extract_yaml_value(line, "value:")
-        FormField::Markdown({ value: val })
+        FormField::Markdown({ value: val, })
       } else {
         field
       }
     FormField::Textarea(ta) => {
       let mut updated = ta
       if line.has_prefix("id:") {
-        updated = { ..updated, id: extract_yaml_value(line, "id:") }
+        updated = { ..updated, id: extract_yaml_value(line, "id:"), }
       } else if line.has_prefix("label:") {
-        updated = { ..updated, label: extract_yaml_value(line, "label:") }
+        updated = { ..updated, label: extract_yaml_value(line, "label:"), }
       } else if line.has_prefix("description:") {
         updated = {
           ..updated,
@@ -176,9 +176,9 @@ fn update_field(
           placeholder: extract_yaml_value(line, "placeholder:"),
         }
       } else if line.has_prefix("value:") {
-        updated = { ..updated, value: extract_yaml_value(line, "value:") }
+        updated = { ..updated, value: extract_yaml_value(line, "value:"), }
       } else if line.has_prefix("render:") {
-        updated = { ..updated, render: extract_yaml_value(line, "render:") }
+        updated = { ..updated, render: extract_yaml_value(line, "render:"), }
       } else if line.has_prefix("required:") {
         updated = {
           ..updated,
@@ -190,9 +190,9 @@ fn update_field(
     FormField::Input(inp) => {
       let mut updated = inp
       if line.has_prefix("id:") {
-        updated = { ..updated, id: extract_yaml_value(line, "id:") }
+        updated = { ..updated, id: extract_yaml_value(line, "id:"), }
       } else if line.has_prefix("label:") {
-        updated = { ..updated, label: extract_yaml_value(line, "label:") }
+        updated = { ..updated, label: extract_yaml_value(line, "label:"), }
       } else if line.has_prefix("description:") {
         updated = {
           ..updated,
@@ -204,7 +204,7 @@ fn update_field(
           placeholder: extract_yaml_value(line, "placeholder:"),
         }
       } else if line.has_prefix("value:") {
-        updated = { ..updated, value: extract_yaml_value(line, "value:") }
+        updated = { ..updated, value: extract_yaml_value(line, "value:"), }
       } else if line.has_prefix("required:") {
         updated = {
           ..updated,
@@ -216,9 +216,9 @@ fn update_field(
     FormField::Dropdown(dd) => {
       let mut updated = dd
       if line.has_prefix("id:") {
-        updated = { ..updated, id: extract_yaml_value(line, "id:") }
+        updated = { ..updated, id: extract_yaml_value(line, "id:"), }
       } else if line.has_prefix("label:") {
-        updated = { ..updated, label: extract_yaml_value(line, "label:") }
+        updated = { ..updated, label: extract_yaml_value(line, "label:"), }
       } else if line.has_prefix("description:") {
         updated = {
           ..updated,
@@ -244,9 +244,9 @@ fn update_field(
     FormField::Checkboxes(cb) => {
       let mut updated = cb
       if line.has_prefix("id:") {
-        updated = { ..updated, id: extract_yaml_value(line, "id:") }
+        updated = { ..updated, id: extract_yaml_value(line, "id:"), }
       } else if line.has_prefix("label:") {
-        updated = { ..updated, label: extract_yaml_value(line, "label:") }
+        updated = { ..updated, label: extract_yaml_value(line, "label:"), }
       } else if line.has_prefix("description:") {
         updated = {
           ..updated,
@@ -259,7 +259,7 @@ fn update_field(
         }
       } else if line.has_prefix("- label:") {
         let label = extract_yaml_value(line, "- label:")
-        updated.options.push({ label, required: false })
+        updated.options.push({ label, required: false, })
       }
       FormField::Checkboxes(updated)
     }

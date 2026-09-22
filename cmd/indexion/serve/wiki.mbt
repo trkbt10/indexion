@@ -149,7 +149,7 @@ fn empty_wiki() -> @wiki_types.WikiData {
     title="Wiki Not Generated",
     content="# Wiki Not Generated\n\nRun `indexion plan wiki` to generate a wiki structure, then have an agent write the pages.\n",
   )
-  let pages : Map[String, @wiki_types.WikiPage] = {}
+  let pages : Map[String, @wiki_types.WikiPage] = Map([])
   pages["overview"] = placeholder
   let nav = @wiki_types.WikiNav::new(pages=[
     @wiki_types.WikiNavItem::new(id="overview", title="Overview"),

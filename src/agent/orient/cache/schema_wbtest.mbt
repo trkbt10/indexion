@@ -155,7 +155,7 @@ test "orient vcdb schema: existing record path is validated before overwrite" {
 
 ///|
 fn repeat_string(unit : String, count : Int) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for _ in 0..<count {
     buf.write_string(unit)
   }

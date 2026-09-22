@@ -32,9 +32,9 @@ pub(all) struct ToolDefinition {
 ///|
 /// Serialize an InputSchema to JSON.
 pub fn InputSchema::to_json(self : InputSchema) -> Json {
-  let props : Map[String, Json] = {}
+  let props : Map[String, Json] = Map([])
   self.properties.each(fn(key, schema) { props[key] = schema.to_json() })
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["type"] = "object".to_json()
   obj["properties"] = Json::object(props)
   if self.required.length() > 0 {
@@ -48,7 +48,7 @@ pub fn InputSchema::to_json(self : InputSchema) -> Json {
 ///|
 /// Serialize a PropertySchema to JSON.
 pub fn PropertySchema::to_json(self : PropertySchema) -> Json {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   // Handle array type with items
   match self.items {
     Some(item_schema) => {
@@ -74,7 +74,7 @@ pub fn PropertySchema::to_json(self : PropertySchema) -> Json {
 ///|
 /// Serialize a ToolDefinition to JSON.
 pub fn ToolDefinition::to_json(self : ToolDefinition) -> Json {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["name"] = self.name.to_json()
   obj["description"] = self.description.to_json()
   obj["inputSchema"] = self.input_schema.to_json()
@@ -87,7 +87,7 @@ pub fn string_prop(
   description : String,
   default? : String = "",
 ) -> PropertySchema {
-  { type_: "string", description, enum_values: [], items: None, default }
+  { type_: "string", description, enum_values: [], items: None, default, }
 }
 
 ///|
@@ -97,7 +97,7 @@ pub fn enum_prop(
   values : Array[String],
   default? : String = "",
 ) -> PropertySchema {
-  { type_: "string", description, enum_values: values, items: None, default }
+  { type_: "string", description, enum_values: values, items: None, default, }
 }
 
 ///|
@@ -106,7 +106,7 @@ pub fn number_prop(
   description : String,
   default? : String = "",
 ) -> PropertySchema {
-  { type_: "number", description, enum_values: [], items: None, default }
+  { type_: "number", description, enum_values: [], items: None, default, }
 }
 
 ///|
@@ -115,7 +115,7 @@ pub fn bool_prop(
   description : String,
   default? : String = "",
 ) -> PropertySchema {
-  { type_: "boolean", description, enum_values: [], items: None, default }
+  { type_: "boolean", description, enum_values: [], items: None, default, }
 }
 
 ///|
@@ -146,7 +146,7 @@ pub(all) struct TextContent {
 ///|
 /// Serialize a TextContent to JSON as an MCP content block.
 pub fn TextContent::to_json(self : TextContent) -> Json {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["type"] = "text".to_json()
   obj["text"] = self.text.to_json()
   Json::object(obj)
@@ -159,7 +159,7 @@ pub fn call_result(
   is_error? : Bool = false,
 ) -> Json {
   let items = content.iter().map(fn(c) { c.to_json() }).collect()
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["content"] = Json::array(items)
   if is_error {
     obj["isError"] = true.to_json()
@@ -170,13 +170,13 @@ pub fn call_result(
 ///|
 /// Shorthand: success result with a single text block.
 pub fn text_result(text : String) -> Json {
-  call_result([{ text, is_error: false }])
+  call_result([{ text, is_error: false, }])
 }
 
 ///|
 /// Shorthand: error result with a single text block.
 pub fn error_result(text : String) -> Json {
-  call_result([{ text, is_error: true }], is_error=true)
+  call_result([{ text, is_error: true, }], is_error=true)
 }
 
 ///|
@@ -189,7 +189,7 @@ pub(all) struct ServerInfo {
 ///|
 /// Serialize ServerInfo to JSON.
 pub fn ServerInfo::to_json(self : ServerInfo) -> Json {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["name"] = self.name.to_json()
   obj["version"] = self.version.to_json()
   Json::object(obj)
@@ -199,7 +199,7 @@ pub fn ServerInfo::to_json(self : ServerInfo) -> Json {
 /// Build the capabilities object for the initialize response.
 /// Currently only tools capability is advertised.
 pub fn server_capabilities() -> Json {
-  let caps : Map[String, Json] = {}
+  let caps : Map[String, Json] = Map([])
   // Advertise tools capability (empty object = supported, no streaming)
   caps["tools"] = Json::object({})
   Json::object(caps)
@@ -208,7 +208,7 @@ pub fn server_capabilities() -> Json {
 ///|
 /// Build a complete MCP initialize result.
 pub fn initialize_result(info : ServerInfo) -> Json {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["protocolVersion"] = "2025-03-26".to_json()
   obj["capabilities"] = server_capabilities()
   obj["serverInfo"] = info.to_json()

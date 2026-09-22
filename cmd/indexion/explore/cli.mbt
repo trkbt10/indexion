@@ -270,7 +270,7 @@ fn output_matrix(
     return
   }
   // Build lookup map
-  let pair_map : Map[String, Double] = {}
+  let pair_map : Map[String, Double] = Map([])
   for pair in pairs {
     let key = pair.file1 + "|" + pair.file2
     pair_map.set(key, pair.similarity)
@@ -341,7 +341,7 @@ fn output_cluster(
   }
   // Simple clustering: group files with similarity >= threshold
   let clusters : Array[Array[String]] = []
-  let assigned : Map[String, Bool] = {}
+  let assigned : Map[String, Bool] = Map([])
   for f in files {
     assigned.set(f.0, false)
   }
@@ -403,14 +403,14 @@ fn build_json(files : Array[(String, String)], pairs : Array[FilePair]) -> Json 
   let pairs_json : Array[Json] = pairs
     .iter()
     .map(fn(pair) {
-      let obj : Map[String, Json] = {}
+      let obj : Map[String, Json] = Map([])
       obj.set("file1", pair.file1.to_json())
       obj.set("file2", pair.file2.to_json())
       obj.set("similarity", pair.similarity.to_json())
       Json::object(obj)
     })
     .collect()
-  let root : Map[String, Json] = {}
+  let root : Map[String, Json] = Map([])
   root.set("files", Json::array(files_json))
   root.set("pairs", Json::array(pairs_json))
   Json::object(root)
@@ -554,7 +554,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
 /// then sums |dir_i| × |dir_j| for all i < j.
 fn count_cross_dir_pairs(files : Array[(String, String)]) -> Int {
   // Count files per directory prefix
-  let dir_counts : Map[String, Int] = {}
+  let dir_counts : Map[String, Int] = Map([])
   for f in files {
     let prefix = @common.get_dirname_prefix(f.0)
     let current = dir_counts.get(prefix).unwrap_or(0)

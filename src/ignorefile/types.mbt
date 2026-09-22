@@ -22,5 +22,5 @@ pub fn IgnorePattern::new(
   anchored? : Bool = false,
   source? : String = "",
 ) -> IgnorePattern {
-  { pattern, negated, directory_only, anchored, source }
+  { pattern, negated, directory_only, anchored, source, }
 }

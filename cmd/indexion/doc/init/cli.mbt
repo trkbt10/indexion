@@ -32,7 +32,7 @@ pub struct InitConfig {
 ///|
 /// Create default InitConfig.
 pub fn InitConfig::default() -> InitConfig {
-  { target_dir: ".", specs_dir: "kgfs", force: false }
+  { target_dir: ".", specs_dir: "kgfs", force: false, }
 }
 
 ///|
@@ -47,7 +47,7 @@ pub fn InitConfig::from_matches(matches : @argparse.Matches) -> InitConfig {
     _ => "kgfs"
   }
   let force = matches.flags.get("force").unwrap_or(false)
-  { target_dir, specs_dir, force }
+  { target_dir, specs_dir, force, }
 }
 
 ///|
@@ -165,7 +165,7 @@ priv struct ProjectInfo {
 
 ///|
 fn ProjectInfo::default() -> ProjectInfo {
-  { name: "project", license: "" }
+  { name: "project", license: "", }
 }
 
 ///|
@@ -215,7 +215,7 @@ fn parse_config_content(filename : String, content : String) -> ProjectInfo {
 fn parse_json_config(content : String) -> ProjectInfo {
   let name = @common.extract_json_string(content, "name")
   let license = @common.extract_json_string(content, "license")
-  { name: if name.length() > 0 { name } else { "project" }, license }
+  { name: if name.length() > 0 { name } else { "project" }, license, }
 }
 
 // extract_json_string: use @common (SoT)
@@ -227,7 +227,7 @@ fn parse_json_config(content : String) -> ProjectInfo {
 /// Include paths are relative to the readme directory (.indexion/readme/).
 fn generate_template(info : ProjectInfo) -> String {
   let docs = @config.readme_docs_relative()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("{{include:" + docs + "/intro.md}}\n\n")
   buf.write_string("{{include:" + docs + "/overview.md}}\n\n")
   buf.write_string("{{include:" + docs + "/getting-started.md}}\n\n")

@@ -374,7 +374,7 @@ fn try_collect_repeat_positions_fast(
   // `your` was never considered).
   if quantifier is One {
     let positions : Array[Int] = []
-    let seen : Map[Int, Bool] = {}
+    let seen : Map[Int, Bool] = Map([])
     for i, alt in alternatives {
       let width = alt_widths[i]
       if pos + width > input_chars.length() {
@@ -607,7 +607,7 @@ fn enumerate_group_end_positions(
   case_insensitive : Bool,
 ) -> Array[Int] {
   let positions : Array[Int] = []
-  let seen : Map[Int, Bool] = {}
+  let seen : Map[Int, Bool] = Map([])
   let push_unique = fn(end : Int) -> Unit {
     if !seen.contains(end) {
       seen.set(end, true)

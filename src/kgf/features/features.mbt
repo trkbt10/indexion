@@ -86,7 +86,7 @@ pub fn build_coverage_token_set(
 pub fn build_insignificant_token_set(
   spec? : @kgf_types.KGFSpec? = None,
 ) -> Map[String, Bool] {
-  let set : Map[String, Bool] = {}
+  let set : Map[String, Bool] = Map([])
   set["NL"] = true
   match spec {
     Some(s) =>
@@ -130,7 +130,7 @@ pub fn token_search_terms(
 ///|
 fn subtokenize_vocab_words(text : String) -> Array[String] {
   let result : Array[String] = []
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for ch in text {
     if (ch >= 'a' && ch <= 'z') ||
       (ch >= 'A' && ch <= 'Z') ||
@@ -157,7 +157,7 @@ fn build_feature_set(
   spec : @kgf_types.KGFSpec,
   feature_name : String,
 ) -> Map[String, Bool] {
-  let set : Map[String, Bool] = {}
+  let set : Map[String, Bool] = Map([])
   match spec.get_feature(feature_name) {
     Some(kinds) =>
       for kind in kinds {
@@ -258,7 +258,7 @@ pub fn build_line_func_map(
   path : String,
   registry : @kgf_registry.KGFRegistry?,
 ) -> Map[Int, String] {
-  let result : Map[Int, String] = {}
+  let result : Map[Int, String] = Map([])
   let (decls, _) = @kgf_declarations.extract_pub_declarations_and_doc_map(
     content, path, registry,
   )

@@ -13,7 +13,7 @@ fn format_text(
     println("No results found.")
     return
   }
-  let seen_files : Map[String, Bool] = {}
+  let seen_files : Map[String, Bool] = Map([])
   for hit in hits {
     let doc = hit.document
     if files_only {
@@ -55,7 +55,7 @@ pub fn hits_to_json(hits : Array[@search_engine.SearchHit]) -> String {
   let arr : Array[Json] = []
   for hit in hits {
     let doc = hit.document
-    let m : Map[String, Json] = {}
+    let m : Map[String, Json] = Map([])
     m["id"] = doc.id.to_json()
     m["title"] = doc.title.to_json()
     m["source"] = doc.source.to_json()
@@ -63,7 +63,7 @@ pub fn hits_to_json(hits : Array[@search_engine.SearchHit]) -> String {
     m["kind"] = doc.kind.to_json()
     m["score"] = hit.score.to_json()
     if !doc.attrs.is_empty() {
-      let attrs_json : Map[String, Json] = {}
+      let attrs_json : Map[String, Json] = Map([])
       for entry in doc.attrs {
         attrs_json[entry.0] = entry.1.to_json()
       }

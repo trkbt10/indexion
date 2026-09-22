@@ -70,7 +70,7 @@ pub fn feature_kind(feature : String) -> String {
 /// and as the fallback inside `sub_tokenize_vocab_via_kgfs` when no spec
 /// in the registry declares `content_token_kinds`.
 pub fn sub_tokenize_vocab(text : String, output : Array[String]) -> Unit {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for ch in text {
     if (ch >= 'a' && ch <= 'z') ||
       (ch >= 'A' && ch <= 'Z') ||
@@ -115,7 +115,7 @@ pub fn build_natural_language_toolkits(
       Some(spec) =>
         match spec.get_feature("content_token_kinds") {
           Some(kinds) => {
-            let set : Map[String, Bool] = {}
+            let set : Map[String, Bool] = Map([])
             for k in kinds {
               set[k] = true
             }
@@ -148,7 +148,7 @@ pub fn sub_tokenize_vocab_via_kgfs(
     sub_tokenize_vocab(text, output)
     return
   }
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for binding in natural_kgfs {
     for tok in binding.toolkit.tokenize(text) {
       if !binding.content_kinds.contains(tok.get_kind()) {
@@ -331,7 +331,7 @@ fn build_feature_set(
   spec : @types.KGFSpec,
   feature_name : String,
 ) -> Map[String, Bool] {
-  let set : Map[String, Bool] = {}
+  let set : Map[String, Bool] = Map([])
   match spec.get_feature(feature_name) {
     Some(kinds) =>
       for kind in kinds {

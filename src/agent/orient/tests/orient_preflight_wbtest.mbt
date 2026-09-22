@@ -21,7 +21,7 @@ test "agent orient: preflight leads with initial owner evidence" {
     ),
   ]
   let map = build_or_update_orient_map(
-    { ..AgentOrientConfig::default(), no_update: false },
+    { ..AgentOrientConfig::default(), no_update: false, },
     briefs,
     None,
   )

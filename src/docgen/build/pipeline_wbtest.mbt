@@ -61,7 +61,7 @@ test "group_by_file: groups symbols correctly" {
 ///|
 test "DocConfig::new: creates config with defaults" {
   let files : Array[(String, String)] = []
-  let specs : Map[String, @kgf_types.KGFSpec] = {}
+  let specs : Map[String, @kgf_types.KGFSpec] = Map([])
   let config = DocConfig::new(files, specs)
   assert_eq(config.get_root_path(), "")
   assert_true(config.get_options().include_diagrams)
@@ -124,7 +124,7 @@ test "build_graph_only: story-prose fixture readme preserves semantic edges" {
 test "generate_markdown: produces output from AnalysisResult" {
   let result = @analyze.AnalysisResult::new()
   let graph = @graph.CodeGraph::new()
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("name", "Foo")
   attrs.set("kind", "Class")
   graph.add_edge(edge_kind("declares"), "test.ts", "test.ts::Foo", attrs~)

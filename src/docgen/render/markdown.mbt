@@ -81,7 +81,7 @@ pub fn render_api_reference(
   lines.push("# API Reference")
   lines.push("")
   // Group by kind
-  let by_kind : Map[String, Array[@query.SymbolDecl]] = {}
+  let by_kind : Map[String, Array[@query.SymbolDecl]] = Map([])
   for decl in decls {
     match by_kind.get(decl.kind) {
       Some(arr) => arr.push(decl)

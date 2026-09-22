@@ -49,7 +49,7 @@ pub enum TokenMatcher {
 /// to name collisions; pinning the table to one spec keeps grep correct
 /// in mixed-language projects.
 pub fn build_alias_table(spec : @kgf_types.KGFSpec?) -> Map[String, String] {
-  let aliases : Map[String, String] = {}
+  let aliases : Map[String, String] = Map([])
   let spec_value = match spec {
     Some(s) => s
     None => return aliases
@@ -109,7 +109,7 @@ fn resolve_alias(part : String, aliases : Map[String, String]) -> String {
 /// Kind matcher when grepping MoonBit but falls back to a Text matcher
 /// when grepping a language that has no such kind.
 pub fn build_kind_set(spec : @kgf_types.KGFSpec?) -> Map[String, Bool] {
-  let kinds : Map[String, Bool] = {}
+  let kinds : Map[String, Bool] = Map([])
   let spec_value = match spec {
     Some(s) => s
     None => return kinds
@@ -228,7 +228,7 @@ fn looks_like_token_kind(text : String) -> Bool {
 /// Split pattern string by spaces, respecting token boundaries.
 fn split_pattern(s : String) -> Array[String] {
   let parts : Array[String] = []
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in s {
     if c == ' ' || c == '\t' {
       if buf.to_string().length() > 0 {
@@ -427,7 +427,7 @@ fn extract_matched_text(
   _content : String,
   _token_lines : Array[Int],
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = start; i < end; i = i + 1 {
     let (_, tok) = significant[i]
     if i > start {

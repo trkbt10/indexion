@@ -30,7 +30,7 @@ pub struct DocumentTablePair {
 
 ///|
 pub impl Show for DocumentTablePair with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|
@@ -97,7 +97,7 @@ fn json_pair_array_field(
             if label.length() == 0 || literal.length() == 0 {
               continue
             }
-            let pair = { label, literal }
+            let pair = { label, literal, }
             if !result.contains(pair) {
               result.push(pair)
             }
@@ -223,7 +223,7 @@ pub fn extract_headings(
       }
     None => return headings
   }
-  let text_token_set : Map[String, Bool] = {}
+  let text_token_set : Map[String, Bool] = Map([])
   match the_spec.get_feature("heading_text_tokens") {
     Some(kinds) =>
       for kind in kinds {
@@ -253,7 +253,7 @@ pub fn extract_headings(
     } else {
       line
     }
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     if section_is_text {
       buf.write_string(tok.get_text())
     }
@@ -339,7 +339,7 @@ pub fn extract_document_sections(
     } else {
       lines.length()
     }
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     for j = heading.line; j < end_line && j < lines.length(); j = j + 1 {
       buf.write_string(lines[j])
       buf.write_string("\n")
@@ -374,7 +374,7 @@ pub fn interpret_document(
     spec=Some(spec),
     path~,
   )
-  { facts: eval_document_facts(sections, path, spec) }
+  { facts: eval_document_facts(sections, path, spec), }
 }
 
 ///|
@@ -418,7 +418,7 @@ fn merge_heading_levels(
 
 ///|
 fn heading_levels_by_line(facts : Array[DocumentFact]) -> Map[Int, Int] {
-  let result : Map[Int, Int] = {}
+  let result : Map[Int, Int] = Map([])
   for fact in facts {
     if fact.kind != "document_heading" {
       continue
@@ -461,7 +461,7 @@ fn eval_document_facts(
     fn(_) { false },
   )
   for section in sections {
-    let labels : Map[String, Json] = {}
+    let labels : Map[String, Json] = Map([])
     labels.set("title", section.title.to_json())
     labels.set("title_text", section.title.to_json())
     labels.set("body", section.content.to_json())
@@ -485,7 +485,7 @@ fn eval_document_facts(
     match event.1.get("type") {
       Some(String(kind)) =>
         match event.1.get("payload") {
-          Some(Object(payload)) => facts.push({ kind, payload })
+          Some(Object(payload)) => facts.push({ kind, payload, })
           _ => ()
         }
       _ => ()

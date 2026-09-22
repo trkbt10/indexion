@@ -26,7 +26,7 @@ test "jensen_shannon_divergence is symmetric" {
 
 ///|
 test "jensen_shannon_divergence handles empty inputs" {
-  let empty : Map[String, Int] = {}
+  let empty : Map[String, Int] = Map([])
   let non_empty : Map[String, Int] = { "a": 1 }
   assert_eq(jensen_shannon_divergence(empty, empty), 0.0)
   assert_eq(jensen_shannon_divergence(empty, non_empty), 1.0)

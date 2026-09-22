@@ -62,7 +62,7 @@ fn verify_to_coverage_report(
 ///|
 /// Render as markdown.
 fn render_markdown(report : VerifyReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# Spec Verify Report\n\n")
   buf.write_string("- Spec: ")
   buf.write_string(report.summary.spec_files.to_string())
@@ -111,7 +111,7 @@ fn render_markdown(report : VerifyReport) -> String {
 ///|
 /// Render as GitHub issue format with checkboxes.
 fn render_github_issue(report : VerifyReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# Spec Verify Report\n\n")
   buf.write_string("Vocabulary distance: ")
   buf.write_string(@common.format_percent(report.summary.cosine_distance))
@@ -147,7 +147,7 @@ fn filter_by_kind(
 ///|
 /// Collect unique kind values from items.
 fn collect_unique_kinds(items : Array[VerifyItem]) -> Array[String] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let result : Array[String] = []
   for item in items {
     let kind = item.spec_symbol.kind

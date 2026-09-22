@@ -33,7 +33,7 @@ pub struct GraphJSON {
 ///|
 /// Creates a new empty GraphJSON.
 pub fn GraphJSON::new(title? : String = "Graph") -> GraphJSON {
-  { title, nodes: [], edges: [], metadata: Map([]) }
+  { title, nodes: [], edges: [], metadata: Map([]), }
 }
 
 ///|
@@ -45,7 +45,7 @@ pub fn GraphJSON::add_node(
   kind? : String = "module",
   file? : String? = None,
 ) -> Unit {
-  self.nodes.push({ id, label, kind, file, metadata: Map([]) })
+  self.nodes.push({ id, label, kind, file, metadata: Map([]), })
 }
 
 ///|
@@ -56,7 +56,7 @@ pub fn GraphJSON::add_edge(
   to : String,
   kind? : String = "dependency",
 ) -> Unit {
-  self.edges.push({ from, to, kind, metadata: Map([]) })
+  self.edges.push({ from, to, kind, metadata: Map([]), })
 }
 
 ///|
@@ -142,7 +142,7 @@ pub fn GraphJSON::from_json(json : Json) -> GraphJSON? {
                   Some(String(s)) => Some(s)
                   _ => None
                 }
-                graph.nodes.push({ id, label, kind, file, metadata: Map([]) })
+                graph.nodes.push({ id, label, kind, file, metadata: Map([]), })
               }
               _ => ()
             }
@@ -167,7 +167,7 @@ pub fn GraphJSON::from_json(json : Json) -> GraphJSON? {
                   Some(String(s)) => s
                   _ => "dependency"
                 }
-                graph.edges.push({ from, to, kind, metadata: Map([]) })
+                graph.edges.push({ from, to, kind, metadata: Map([]), })
               }
               _ => ()
             }
@@ -243,7 +243,7 @@ pub fn build_graph_from_deps(
         } else {
           name
         }
-        result.nodes.push({ id: node_id, label, kind, file, metadata: Map([]) })
+        result.nodes.push({ id: node_id, label, kind, file, metadata: Map([]), })
       }
     }
   }
@@ -265,7 +265,7 @@ pub fn build_graph_from_deps(
         } else {
           name
         }
-        result.nodes.push({ id: node_id, label, kind, file, metadata: Map([]) })
+        result.nodes.push({ id: node_id, label, kind, file, metadata: Map([]), })
       }
     }
   }

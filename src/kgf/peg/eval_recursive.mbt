@@ -28,7 +28,7 @@ fn RecEvalContext::new(
   let num_positions = tokens.length() + 1
   let memo = create_memo(num_nodes, num_positions)
   let token_ids = compute_token_ids(peg, tokens)
-  { peg, tokens, token_ids, memo, num_positions, on_rule_match, emit_filter }
+  { peg, tokens, token_ids, memo, num_positions, on_rule_match, emit_filter, }
 }
 
 ///|
@@ -48,9 +48,9 @@ fn eval_rec(ctx : RecEvalContext, node_id : Int, pos : Int) -> FastEvalResult {
     Succeeded(end_pos, labels) => {
       // Clone labels (cheap for TokRef)
       let cloned = clone_labels(labels)
-      return { ok: true, end_pos, labels: cloned }
+      return { ok: true, end_pos, labels: cloned, }
     }
-    Failed => return { ok: false, end_pos: pos, labels: empty_labels() }
+    Failed => return { ok: false, end_pos: pos, labels: empty_labels(), }
     Unknown => ()
   }
   let result = eval_node_rec(ctx, node_id, pos)
@@ -73,14 +73,14 @@ fn eval_node_rec(
 ) -> FastEvalResult {
   let compiled = ctx.peg.fast_nodes[node_id]
   match compiled {
-    FEmpty => { ok: true, end_pos: pos, labels: empty_labels() }
-    FFail => { ok: false, end_pos: pos, labels: empty_labels() }
+    FEmpty => { ok: true, end_pos: pos, labels: empty_labels(), }
+    FFail => { ok: false, end_pos: pos, labels: empty_labels(), }
     FToken(expected_id) =>
       if pos < ctx.tokens.length() && ctx.token_ids[pos] == expected_id {
         // Use token reference - defer Map creation
-        { ok: true, end_pos: pos + 1, labels: token_labels(pos) }
+        { ok: true, end_pos: pos + 1, labels: token_labels(pos), }
       } else {
-        { ok: false, end_pos: pos, labels: empty_labels() }
+        { ok: false, end_pos: pos, labels: empty_labels(), }
       }
     FRuleRef(rule_node_id, name) => {
       let target_is_rule_ref = match ctx.peg.fast_nodes.get(rule_node_id) {
@@ -100,7 +100,7 @@ fn eval_node_rec(
           Labels::TokRef(_) | Labels::NoLabels => result
           Labels::Full(map) => {
             let clean = strip_named_labels(map)
-            { ok: true, end_pos: result.end_pos, labels: full_labels(clean) }
+            { ok: true, end_pos: result.end_pos, labels: full_labels(clean), }
           }
         }
       } else {
@@ -113,12 +113,12 @@ fn eval_node_rec(
       for elem_id in elems {
         let result = eval_rec(ctx, elem_id, current_pos)
         if !result.ok {
-          return { ok: false, end_pos: pos, labels: empty_labels() }
+          return { ok: false, end_pos: pos, labels: empty_labels(), }
         }
         labels = merge_labels(labels, result.labels, ctx.tokens)
         current_pos = result.end_pos
       }
-      { ok: true, end_pos: current_pos, labels }
+      { ok: true, end_pos: current_pos, labels, }
     }
     FChoice(alts) => {
       for alt_id in alts {
@@ -127,7 +127,7 @@ fn eval_node_rec(
           return result
         }
       }
-      { ok: false, end_pos: pos, labels: empty_labels() }
+      { ok: false, end_pos: pos, labels: empty_labels(), }
     }
     FStar(child) => {
       let mut current_pos = pos
@@ -140,12 +140,12 @@ fn eval_node_rec(
         labels = merge_labels(labels, result.labels, ctx.tokens)
         current_pos = result.end_pos
       }
-      { ok: true, end_pos: current_pos, labels }
+      { ok: true, end_pos: current_pos, labels, }
     }
     FPlus(child) => {
       let first = eval_rec(ctx, child, pos)
       if !first.ok {
-        return { ok: false, end_pos: pos, labels: empty_labels() }
+        return { ok: false, end_pos: pos, labels: empty_labels(), }
       }
       let mut labels = first.labels
       let mut current_pos = first.end_pos
@@ -157,14 +157,14 @@ fn eval_node_rec(
         labels = merge_labels(labels, result.labels, ctx.tokens)
         current_pos = result.end_pos
       }
-      { ok: true, end_pos: current_pos, labels }
+      { ok: true, end_pos: current_pos, labels, }
     }
     FOptional(child) => {
       let result = eval_rec(ctx, child, pos)
       if result.ok {
         result
       } else {
-        { ok: true, end_pos: pos, labels: empty_labels() }
+        { ok: true, end_pos: pos, labels: empty_labels(), }
       }
     }
     FLabel(label_name, child) => {
@@ -184,7 +184,7 @@ fn eval_node_rec(
           None => ()
         }
         publish_primary_text_as(labels, label_name + @types.META_TEXT_SUFFIX)
-        { ok: true, end_pos: result.end_pos, labels: full_labels(labels) }
+        { ok: true, end_pos: result.end_pos, labels: full_labels(labels), }
       } else {
         result
       }
@@ -192,17 +192,17 @@ fn eval_node_rec(
     FAnd(child) => {
       let result = eval_rec(ctx, child, pos)
       if result.ok {
-        { ok: true, end_pos: pos, labels: empty_labels() }
+        { ok: true, end_pos: pos, labels: empty_labels(), }
       } else {
-        { ok: false, end_pos: pos, labels: empty_labels() }
+        { ok: false, end_pos: pos, labels: empty_labels(), }
       }
     }
     FNot(child) => {
       let result = eval_rec(ctx, child, pos)
       if result.ok {
-        { ok: false, end_pos: pos, labels: empty_labels() }
+        { ok: false, end_pos: pos, labels: empty_labels(), }
       } else {
-        { ok: true, end_pos: pos, labels: empty_labels() }
+        { ok: true, end_pos: pos, labels: empty_labels(), }
       }
     }
   }

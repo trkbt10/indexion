@@ -20,7 +20,7 @@ fn replace_all(s : String, pattern : String, replacement : String) -> String {
   if pattern.length() == 0 || s.length() == 0 {
     return s
   }
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   let chars = s.to_array()
   let pattern_chars = pattern.to_array()
   let mut i = 0

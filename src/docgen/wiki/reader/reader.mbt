@@ -20,11 +20,11 @@ pub fn load_wiki(
   ) catch {
     _ => return None
   }
-  let page_index : Map[String, @types.ManifestPage] = {}
+  let page_index : Map[String, @types.ManifestPage] = Map([])
   for mp in manifest.pages {
     page_index[mp.id] = mp
   }
-  let pages : Map[String, @types.WikiPage] = {}
+  let pages : Map[String, @types.WikiPage] = Map([])
   for mp in manifest.pages {
     let md_path = wiki_dir + "/" + mp.file
     let content = @fs.read_file_to_string(md_path) catch { _ => "" }
@@ -145,13 +145,13 @@ fn find_parent(page_id : String, pages : Array[@types.ManifestPage]) -> String? 
 
 ///|
 fn build_nav(pages : Array[@types.ManifestPage]) -> @types.WikiNav {
-  let is_child : Map[String, Bool] = {}
+  let is_child : Map[String, Bool] = Map([])
   for mp in pages {
     for child_id in mp.children {
       is_child[child_id] = true
     }
   }
-  let page_map : Map[String, @types.ManifestPage] = {}
+  let page_map : Map[String, @types.ManifestPage] = Map([])
   for mp in pages {
     page_map[mp.id] = mp
   }

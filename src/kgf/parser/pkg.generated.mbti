@@ -74,4 +74,3 @@ pub fn LexResult::get_tokens(Self) -> Array[@types.TokenDef]
 // Type aliases
 
 // Traits
-

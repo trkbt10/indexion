@@ -13,7 +13,7 @@ pub struct ToolkitRegistry {
 pub fn ToolkitRegistry::new(
   registry : @registry.KGFRegistry,
 ) -> ToolkitRegistry {
-  { registry, cache: {} }
+  { registry, cache: {}, }
 }
 
 ///|

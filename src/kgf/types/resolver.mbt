@@ -8,7 +8,7 @@ pub enum ModulePathStyle {
 
 ///|
 pub impl Show for ModulePathStyle with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|
@@ -119,7 +119,7 @@ pub fn ResolveStep::new(
   prefix? : String = "",
   when_condition? : String = "",
 ) -> ResolveStep {
-  { step_type, file, query, files, prefix, when_condition }
+  { step_type, file, query, files, prefix, when_condition, }
 }
 
 ///|
@@ -235,7 +235,7 @@ pub struct ResolverAlias {
 ///|
 /// Creates a new ResolverAlias with the specified parameters.
 pub fn ResolverAlias::new(pattern : String, replace : String) -> ResolverAlias {
-  { pattern, replace }
+  { pattern, replace, }
 }
 
 ///|
@@ -412,7 +412,7 @@ pub struct ResolutionStats {
 ///|
 /// Creates a new ResolutionStats with zero counts.
 pub fn ResolutionStats::new() -> ResolutionStats {
-  { cache_hits: 0, cache_misses: 0, file_checks: 0, circular_detected: 0 }
+  { cache_hits: 0, cache_misses: 0, file_checks: 0, circular_detected: 0, }
 }
 
 ///|

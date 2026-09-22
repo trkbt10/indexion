@@ -17,7 +17,7 @@ pub fn DocConfig::new(
   options? : @render.RenderOptions = @render.RenderOptions::default(),
   root_path? : String = "",
 ) -> DocConfig {
-  { files, specs, options, root_path }
+  { files, specs, options, root_path, }
 }
 
 // Getters

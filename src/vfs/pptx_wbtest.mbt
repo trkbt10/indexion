@@ -99,7 +99,7 @@ fn presentation_xml() -> String {
 ///|
 /// A slide XML with realistic text runs following ECMA-376 DrawingML.
 fn slide_xml(title : String, body_text : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     (
       #|<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -157,7 +157,7 @@ fn slide_xml(title : String, body_text : String) -> String {
 ///|
 /// A notes slide XML with speaker notes text.
 fn notes_slide_xml(notes_text : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     (
       #|<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -535,7 +535,7 @@ fn write_fixture_to_file(
   data : FixedArray[Byte],
 ) -> Unit raise Error {
   let len = data.length()
-  let arr : Array[Byte] = Array::new(capacity=len)
+  let arr : Array[Byte] = Array(capacity=len)
   for i in 0..<len {
     arr.push(data[i])
   }

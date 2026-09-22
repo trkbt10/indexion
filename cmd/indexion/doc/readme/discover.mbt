@@ -16,7 +16,7 @@ pub fn PackageInfo::new(
   name : String,
   files : Array[String],
 ) -> PackageInfo {
-  { path, name, files }
+  { path, name, files, }
 }
 
 ///|
@@ -52,7 +52,7 @@ pub fn discover_packages_from_files(
     .with_includes(includes)
     .with_excludes(excludes)
   // SoT: SupportedFile.path is always a real filesystem path.
-  let by_dir : Map[String, Array[String]] = {}
+  let by_dir : Map[String, Array[String]] = Map([])
   for file in @pipeline.load_supported_file_info(file_paths, registry) {
     let dir = extract_parent_dir(file.path)
     match by_dir.get(dir) {

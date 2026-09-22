@@ -16,7 +16,7 @@ fn path_join(base : String, child : StringView) -> String {
 /// Copy a single file (async read + write).
 pub async fn copy_file(src : String, dst : String) -> Unit {
   let data = @async_fs.read_file(src)
-  @async_fs.write_file(dst, data, create=0o644)
+  @async_fs.write_file(dst, data, create_mode=CreateOrTruncate)
 }
 
 ///|
@@ -34,7 +34,7 @@ pub async fn copy_dir_recursive(src : String, dst : String) -> Unit {
       Directory => copy_dir_recursive(src_path, dst_path)
       Regular => {
         let data = @async_fs.read_file(src_path)
-        @async_fs.write_file(dst_path, data, create=0o644)
+        @async_fs.write_file(dst_path, data, create_mode=CreateOrTruncate)
       }
       _ => ()
     }
@@ -63,7 +63,7 @@ pub async fn path_exists_async(path : String) -> Bool {
 ///|
 /// Write bytes to a file (async).
 pub async fn write_bytes_async(path : String, data : Bytes) -> Unit {
-  @async_fs.write_file(path, data, create=0o644)
+  @async_fs.write_file(path, data, create_mode=CreateOrTruncate)
 }
 
 ///|

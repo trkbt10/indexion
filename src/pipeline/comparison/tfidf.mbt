@@ -8,7 +8,7 @@ pub fn compare_tfidf(
   threshold : Double,
 ) -> BatchResult {
   if files.length() < 2 {
-    return { matches: [], file_count: files.length(), pairs_compared: 0 }
+    return { matches: [], file_count: files.length(), pairs_compared: 0, }
   }
   let file_pairs : Array[(String, String)] = []
   for file in files {
@@ -34,7 +34,7 @@ pub fn compare_tfidf(
     )
   }
   let n = files.length()
-  { matches, file_count: n, pairs_compared: n * (n - 1) / 2 }
+  { matches, file_count: n, pairs_compared: n * (n - 1) / 2, }
 }
 
 ///|
@@ -47,7 +47,7 @@ pub fn compare_bm25(
   threshold : Double,
 ) -> BatchResult {
   if files.length() < 2 {
-    return { matches: [], file_count: files.length(), pairs_compared: 0 }
+    return { matches: [], file_count: files.length(), pairs_compared: 0, }
   }
   let file_pairs : Array[(String, String)] = []
   for file in files {
@@ -73,7 +73,7 @@ pub fn compare_bm25(
     )
   }
   let n = files.length()
-  { matches, file_count: n, pairs_compared: n * (n - 1) / 2 }
+  { matches, file_count: n, pairs_compared: n * (n - 1) / 2, }
 }
 
 ///|
@@ -82,7 +82,7 @@ pub fn compare_bm25(
 /// capturing different information than cosine similarity.
 pub fn compare_jsd(files : Array[FileEntry], threshold : Double) -> BatchResult {
   if files.length() < 2 {
-    return { matches: [], file_count: files.length(), pairs_compared: 0 }
+    return { matches: [], file_count: files.length(), pairs_compared: 0, }
   }
   let file_pairs : Array[(String, String)] = []
   for file in files {
@@ -108,7 +108,7 @@ pub fn compare_jsd(files : Array[FileEntry], threshold : Double) -> BatchResult 
     )
   }
   let n = files.length()
-  { matches, file_count: n, pairs_compared: n * (n - 1) / 2 }
+  { matches, file_count: n, pairs_compared: n * (n - 1) / 2, }
 }
 
 ///|
@@ -122,7 +122,7 @@ pub fn compare_with_prefilter(
   score_fn : (String, String) -> Double,
 ) -> BatchResult {
   if files.length() < 2 {
-    return { matches: [], file_count: files.length(), pairs_compared: 0 }
+    return { matches: [], file_count: files.length(), pairs_compared: 0, }
   }
   let n = files.length()
   let candidate_pairs = if n <= prefilter_min_files {
@@ -163,5 +163,5 @@ pub fn compare_with_prefilter(
       )
     }
   }
-  { matches, file_count: n, pairs_compared: candidate_pairs.length() }
+  { matches, file_count: n, pairs_compared: candidate_pairs.length(), }
 }

@@ -10,7 +10,7 @@ fn registry() -> @kgf_registry.KGFRegistry {
 
 ///|
 fn declaration_names(decls : Array[PubDeclaration]) -> Map[String, Bool] {
-  let names : Map[String, Bool] = {}
+  let names : Map[String, Bool] = Map([])
   for decl in decls {
     names.set(decl.name, true)
   }
@@ -51,7 +51,9 @@ test "declarations: extract_project_manifest_info reads moon.mod (TOML)" {
     #|]
     #|description = "An example module"
   guard extract_project_manifest_info(toml, "moon.mod", Some(registry()))
-    is Some(m)
+    is Some(m) else {
+    fail("expected manifest info")
+  }
   assert_eq(m.name, "example/widget")
   assert_eq(m.version, "0.3.0")
   assert_eq(m.license, "Apache-2.0")
@@ -65,7 +67,9 @@ test "declarations: extract_project_manifest_info reads moon.mod.json (JSON)" {
   let json =
     #|{ "name": "example/legacy", "version": "1.2.3", "keywords": ["a", "b"] }
   guard extract_project_manifest_info(json, "moon.mod.json", Some(registry()))
-    is Some(m)
+    is Some(m) else {
+    fail("expected manifest info")
+  }
   assert_eq(m.name, "example/legacy")
   assert_eq(m.version, "1.2.3")
   assert_eq(m.keywords.length(), 2)
@@ -73,7 +77,7 @@ test "declarations: extract_project_manifest_info reads moon.mod.json (JSON)" {
 
 ///|
 fn programming_langs_from_kgfs() -> Map[String, Bool] {
-  let langs : Map[String, Bool] = {}
+  let langs : Map[String, Bool] = Map([])
   let entries = @fs.read_dir("kgfs/programming") catch { _ => [] }
   for entry in entries {
     if !entry.has_suffix(".kgf") {

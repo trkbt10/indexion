@@ -15,7 +15,7 @@ pub fn extract_sections(
   let headings = tokenize_and_extract_headings(content)
   let lines = split_content_lines(content)
   let heading_map = build_heading_line_map(headings)
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   let mut in_matching_section = false
   let mut first_output = true
   for i, line in lines {
@@ -48,7 +48,7 @@ pub fn extract_sections(
 pub fn extract_overview(content : String) -> String {
   let headings = tokenize_and_extract_headings(content)
   let lines = split_content_lines(content)
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   let mut skipped_title = false
   // Find line of first level-2 heading
   let mut first_h2_line = lines.length() + 1
@@ -135,7 +135,7 @@ fn split_content_lines(content : String) -> Array[String] {
 ///|
 /// Collect lines into a trimmed text block.
 fn lines_to_text(lines : Array[String]) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i, line in lines {
     if i > 0 {
       buf.write_char('\n')
@@ -340,7 +340,7 @@ fn tokenize_and_extract_headings(
 fn build_heading_line_map(
   headings : Array[@doc_structure.Heading],
 ) -> Map[Int, @doc_structure.Heading] {
-  let map : Map[Int, @doc_structure.Heading] = {}
+  let map : Map[Int, @doc_structure.Heading] = Map([])
   for h in headings {
     map[h.line] = h
   }

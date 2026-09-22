@@ -57,62 +57,62 @@ pub fn CliConfig::from_matches(matches : @argparse.Matches) -> CliConfig {
   match matches.values.get("dim") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, dim: @common.parse_int(vals[0]) }
+        config = { ..config, dim: @common.parse_int(vals[0]), }
       }
     None => ()
   }
   match matches.values.get("strategy") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, strategy: vals[0] }
+        config = { ..config, strategy: vals[0], }
       }
     None => ()
   }
   match matches.values.get("top-k") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, top_k: @common.parse_int(vals[0]) }
+        config = { ..config, top_k: @common.parse_int(vals[0]), }
       }
     None => ()
   }
   match matches.values.get("min-score") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, min_score: @common.parse_double(vals[0]) }
+        config = { ..config, min_score: @common.parse_double(vals[0]), }
       }
     None => ()
   }
   match matches.values.get("index-dir") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, index_dir: vals[0] }
+        config = { ..config, index_dir: vals[0], }
       }
     None => ()
   }
   match matches.values.get("provider") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, provider: vals[0] }
+        config = { ..config, provider: vals[0], }
       }
     None => ()
   }
   match matches.values.get("specs") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, specs_dir: vals[0] }
+        config = { ..config, specs_dir: vals[0], }
       }
     None => ()
   }
   // Subcommand dispatch
   match matches.subcommand {
     Some((name, sub_matches)) => {
-      config = { ..config, command: name }
+      config = { ..config, command: name, }
       match name {
         "build" =>
           match sub_matches.values.get("input") {
             Some(vals) =>
               if vals.length() > 0 {
-                config = { ..config, input_path: vals[0] }
+                config = { ..config, input_path: vals[0], }
               }
             None => ()
           }
@@ -120,26 +120,26 @@ pub fn CliConfig::from_matches(matches : @argparse.Matches) -> CliConfig {
           match sub_matches.values.get("purpose") {
             Some(vals) =>
               if vals.length() > 0 {
-                config = { ..config, purpose: vals[0] }
+                config = { ..config, purpose: vals[0], }
               }
             None => ()
           }
           match sub_matches.values.get("source") {
             Some(vals) =>
               if vals.length() > 0 {
-                config = { ..config, source_dir: vals[0] }
+                config = { ..config, source_dir: vals[0], }
               }
             None => ()
           }
           if sub_matches.flags.get("no-update").unwrap_or(false) {
-            config = { ..config, no_update: true }
+            config = { ..config, no_update: true, }
           }
         }
         "status" | "rebuild" =>
           match sub_matches.values.get("input") {
             Some(vals) =>
               if vals.length() > 0 {
-                config = { ..config, input_path: vals[0] }
+                config = { ..config, input_path: vals[0], }
               }
             None => ()
           }
@@ -278,45 +278,45 @@ pub fn CliConfig::apply_embedding_file_config(
   match file.provider {
     Some(v) =>
       if config.provider == defaults.provider {
-        config = { ..config, provider: v }
+        config = { ..config, provider: v, }
       }
     None => ()
   }
   match file.strategy {
     Some(v) =>
       if config.strategy == defaults.strategy {
-        config = { ..config, strategy: v }
+        config = { ..config, strategy: v, }
       }
     None => ()
   }
   match file.dim {
-    Some(v) => if config.dim == defaults.dim { config = { ..config, dim: v } }
+    Some(v) => if config.dim == defaults.dim { config = { ..config, dim: v, } }
     None => ()
   }
   match file.api_key_env {
     Some(v) =>
       if config.api_key_env == defaults.api_key_env {
-        config = { ..config, api_key_env: v }
+        config = { ..config, api_key_env: v, }
       }
     None => ()
   }
   match file.api_base_url {
     Some(v) =>
       if config.api_base_url == defaults.api_base_url {
-        config = { ..config, api_base_url: v }
+        config = { ..config, api_base_url: v, }
       }
     None => ()
   }
   match file.model {
     Some(v) =>
       if config.model == defaults.model {
-        config = { ..config, model: v }
+        config = { ..config, model: v, }
       }
     None => ()
   }
   // Preserve file-level provider entries for build_digest_config
   if file.providers.length() > 0 {
-    config = { ..config, file_providers: file.providers }
+    config = { ..config, file_providers: file.providers, }
   }
   config
 }
@@ -419,7 +419,7 @@ pub fn resolve_provider(
 /// Returns false when openai was requested but API key is missing.
 pub fn is_provider_available(config : CliConfig) -> Bool {
   match config.provider {
-    "openai" => @sys.get_env_var(config.api_key_env) is Some(_)
+    "openai" => @env.get_env_var(config.api_key_env) is Some(_)
     _ => true
   }
 }
@@ -484,7 +484,7 @@ fn resolve_file_providers(
         Some(k) => k
         None => @dconfig.DEFAULT_TFIDF_KEY
       }
-      providers.push({ key, kind: "tfidf", dim, api_config: None })
+      providers.push({ key, kind: "tfidf", dim, api_config: None, })
     } else {
       // Remote provider — resolve API key from env
       let api_key_env = match entry.api_key_env {
@@ -495,7 +495,7 @@ fn resolve_file_providers(
         Some(k) => k
         None => "remote"
       }
-      let api_key = match @sys.get_env_var(api_key_env) {
+      let api_key = match @env.get_env_var(api_key_env) {
         Some(k) => k
         None => {
           log_error(
@@ -530,7 +530,7 @@ fn resolve_file_providers(
         model,
         dim,
       }
-      providers.push({ key, kind: "remote", dim, api_config: Some(api_config) })
+      providers.push({ key, kind: "remote", dim, api_config: Some(api_config), })
     }
   } nobreak {
     providers

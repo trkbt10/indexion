@@ -11,7 +11,7 @@ pub fn owner_dir(path : String) -> String {
 
 ///|
 pub fn cached_file_hashes(cached_map : AgentOrientMap?) -> Map[String, String] {
-  let hashes : Map[String, String] = {}
+  let hashes : Map[String, String] = Map([])
   match cached_map {
     Some(map) =>
       for file in map.files {

@@ -111,7 +111,7 @@ pub fn parse_semantics(text : String) -> Map[String, Array[@types.SemOnBlock]]? 
   if blocks.is_empty() {
     return None
   }
-  let result : Map[String, Array[@types.SemOnBlock]] = {}
+  let result : Map[String, Array[@types.SemOnBlock]] = Map([])
   for block in blocks {
     let rule = block.get_rule()
     match result.get(rule) {
@@ -505,7 +505,7 @@ fn parse_expr(s : String) -> @types.SemExpr {
 ///|
 fn unescape_string_literal(text : String) -> String {
   let chars = text.to_array()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut i = 0
   while i < chars.length() {
     let ch = chars[i]
@@ -660,7 +660,7 @@ fn parse_call_parts(
 /// Splits argument list by commas, respecting nested parens and strings.
 fn split_args(arglist : String) -> Array[String] {
   let result : Array[String] = []
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut depth = 0
   let mut in_str = false
   for c in arglist {

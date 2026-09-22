@@ -46,7 +46,7 @@ pub fn ArchiveSpec::from_spec(spec : @kgf_types.KGFSpec) -> ArchiveSpec {
     Some(vals) => vals
     None => []
   }
-  { inner_includes, inner_excludes }
+  { inner_includes, inner_excludes, }
 }
 
 ///|
@@ -110,7 +110,7 @@ pub fn extract_text_content(
   archive_spec : ArchiveSpec,
 ) -> String raise Error {
   let entries = expand_archive(archive_path, archive_spec)
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut has_content = false
   for entry in entries {
     if entry.is_binary {

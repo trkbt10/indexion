@@ -33,7 +33,7 @@ pub fn load_signatures(index_dir : String) -> SignaturesFile? {
   let json = @json.parse(raw) catch { _ => return None }
   match json {
     Object(obj) => {
-      let signatures : Map[String, @pipeline.FileSignature] = {}
+      let signatures : Map[String, @pipeline.FileSignature] = Map([])
       for entry in obj {
         let (k, v) = entry
         match v {
@@ -46,7 +46,7 @@ pub fn load_signatures(index_dir : String) -> SignaturesFile? {
               Some(String(s)) => parse_int64_or_zero(s)
               _ => 0L
             }
-            signatures.set(k, { path: k, mtime_ns, size_bytes })
+            signatures.set(k, { path: k, mtime_ns, size_bytes, })
           }
           _ => ()
         }
@@ -65,7 +65,7 @@ pub fn save_signatures(
   index_dir : String,
   signatures : Array[@pipeline.FileSignature],
 ) -> Bool {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("{\n")
   let mut first = true
   for sig in signatures {

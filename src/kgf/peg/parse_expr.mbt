@@ -28,7 +28,7 @@ priv struct ParseState {
 ///|
 /// Creates a new parse state from tokens.
 fn ParseState::new(tokens : Array[GrammarToken]) -> ParseState {
-  { tokens, pos: 0, warnings: [] }
+  { tokens, pos: 0, warnings: [], }
 }
 
 ///|
@@ -117,7 +117,7 @@ fn remove_comment(line : String) -> String {
 /// Preprocesses the input string: removes comments and empty lines.
 fn preprocess(s : String) -> String {
   let lines = s.split("\n")
-  let buf = StringBuilder::new(size_hint=s.length())
+  let buf = StringBuilder(size_hint=s.length())
   let mut first = true
   for line in lines {
     let line_str = line.to_owned()

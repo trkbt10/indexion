@@ -231,7 +231,7 @@ fn extract_wiki_documents(
     )
     for section in sections {
       let kind_str = if section.level == 1 { "page" } else { "section" }
-      let doc_attrs : Map[String, String] = {}
+      let doc_attrs : Map[String, String] = Map([])
       doc_attrs["node_type"] = @kgf_features.node_type_document
       doc_attrs["node_kind"] = kind_str
       doc_attrs["parent"] = page_id
@@ -311,7 +311,7 @@ fn extract_structured_documents(
     }
     let level = section.level.unwrap_or(if idx == 0 { 1 } else { 2 })
     let kind_str = if level == 1 { "page" } else { "section" }
-    let doc_attrs : Map[String, String] = {}
+    let doc_attrs : Map[String, String] = Map([])
     doc_attrs["node_type"] = @kgf_features.node_type_document
     doc_attrs["content_type"] = content_type
     doc_attrs["node_kind"] = kind_str
@@ -343,7 +343,7 @@ fn push_whole_file_document(
   content_type : String,
   out : Array[@search_engine.SearchDocument],
 ) -> Unit {
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs["node_type"] = @kgf_features.node_type_document
   attrs["node_kind"] = "file"
   attrs["content_type"] = content_type
@@ -378,7 +378,7 @@ fn extract_code_file_documents(
         }
       None => ""
     }
-    let attrs : Map[String, String] = {}
+    let attrs : Map[String, String] = Map([])
     attrs["node_type"] = @kgf_features.node_type_code
     attrs["node_kind"] = "file"
     if lang.length() > 0 {

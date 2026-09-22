@@ -31,12 +31,12 @@ pub fn DriftConfig::default() -> DriftConfig {
 ///|
 pub fn DriftConfig::from_matches(matches : @argparse.Matches) -> DriftConfig {
   let mut config = DriftConfig::default()
-  config = { ..config, file_a: @common.get_option(matches, "file_a", "") }
-  config = { ..config, file_b: @common.get_option(matches, "file_b", "") }
-  config = { ..config, output: @common.get_option(matches, "output", "") }
-  config = { ..config, format: @common.get_option(matches, "format", "text") }
+  config = { ..config, file_a: @common.get_option(matches, "file_a", ""), }
+  config = { ..config, file_b: @common.get_option(matches, "file_b", ""), }
+  config = { ..config, output: @common.get_option(matches, "output", ""), }
+  config = { ..config, format: @common.get_option(matches, "format", "text"), }
   let top_str = @common.get_option(matches, "top", "10")
-  config = { ..config, top: @common.parse_int(top_str) }
+  config = { ..config, top: @common.parse_int(top_str), }
   match matches.values.get("vocab-threshold") {
     Some(vals) =>
       if vals.length() > 0 {
@@ -50,7 +50,7 @@ pub fn DriftConfig::from_matches(matches : @argparse.Matches) -> DriftConfig {
   match matches.values.get("specs-dir") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, specs_dir: Some(vals[0]) }
+        config = { ..config, specs_dir: Some(vals[0]), }
       }
     None => ()
   }

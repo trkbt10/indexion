@@ -347,7 +347,7 @@ fn query_digest_index(
           None => ""
         }
     }
-    let doc_attrs : Map[String, String] = {}
+    let doc_attrs : Map[String, String] = Map([])
     doc_attrs["node_type"] = @kgf_features.node_type_code
     doc_attrs["node_kind"] = func.symbol.kind
     if summary.length() > 0 {
@@ -362,7 +362,7 @@ fn query_digest_index(
       kind: func.symbol.kind,
       attrs: doc_attrs,
     }
-    hits.push({ document: doc, score: dh.score })
+    hits.push({ document: doc, score: dh.score, })
   }
   hits
 }
@@ -487,7 +487,7 @@ fn wiki_hits_to_search_hits(
   for wh in wiki_hits {
     let s = wh.section
     let kind_str = if s.level == 1 { "page" } else { "section" }
-    let doc_attrs : Map[String, String] = {}
+    let doc_attrs : Map[String, String] = Map([])
     doc_attrs["parent"] = s.page_id
     let doc : @search_engine.SearchDocument = {
       id: s.id,
@@ -498,7 +498,7 @@ fn wiki_hits_to_search_hits(
       kind: kind_str,
       attrs: doc_attrs,
     }
-    hits.push({ document: doc, score: wh.score })
+    hits.push({ document: doc, score: wh.score, })
   }
   hits
 }

@@ -268,7 +268,7 @@ fn eval_func(
   let evaluated_args = args.map(fn(e) { eval_expr(e, env, ctx) })
   match name {
     "concat" => {
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       for arg in evaluated_args {
         sb.write_string(json_to_string(arg))
       }
@@ -481,7 +481,7 @@ fn eval_func_regex_pairs(args : Array[Json]) -> Json {
   if pattern.length() == 0 {
     return Json::array([])
   }
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let values : Array[Json] = []
   for matched in @regexp.find_pattern_captures(pattern, text, case_insensitive~) {
     if key_group <= 0 ||
@@ -511,7 +511,7 @@ fn eval_func_regex_pairs(args : Array[Json]) -> Json {
 /// Evaluates the obj() function to create an object from key-value pairs.
 /// Null values are skipped — obj("a", "1", "b", null) produces {"a": "1"}.
 fn eval_func_obj(args : Array[Json]) -> Json {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   let n = args.length()
   for i = 0; i < n; i = i + 2 {
     let key = json_to_string(args[i])
@@ -559,7 +559,7 @@ fn trim_string(s : String) -> String {
   if start >= end {
     return ""
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i = start; i < end; i = i + 1 {
     sb.write_char(chars[i])
   }
@@ -630,7 +630,7 @@ fn eval_func_slice(args : Array[Json]) -> Json {
       } else {
         start + len
       }
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       for i = start; i < end; i = i + 1 {
         sb.write_char(chars[i])
       }
@@ -652,7 +652,7 @@ fn eval_func_strip_quotes(args : Array[Json]) -> Json {
     let first = chars[0]
     let last = chars[chars.length() - 1]
     if (first == '"' && last == '"') || (first == '\'' && last == '\'') {
-      let sb = StringBuilder::new()
+      let sb = StringBuilder()
       for i = 1; i < chars.length() - 1; i = i + 1 {
         sb.write_char(chars[i])
       }
@@ -789,7 +789,7 @@ fn eval_func_digits(args : Array[Json]) -> Json {
   if args.length() == 0 {
     return "".to_json()
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for ch in json_to_string(args[0]) {
     if ch >= '0' && ch <= '9' {
       buf.write_char(ch)

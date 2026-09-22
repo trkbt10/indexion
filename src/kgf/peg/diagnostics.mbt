@@ -15,7 +15,7 @@ pub fn ParseDiagnostic::new(
   expected_kinds : Array[String],
   fully_consumed : Bool,
 ) -> ParseDiagnostic {
-  { furthest_pos, actual_token, expected_kinds, fully_consumed }
+  { furthest_pos, actual_token, expected_kinds, fully_consumed, }
 }
 
 ///|
@@ -68,7 +68,7 @@ fn run_parse_diag_iter_internal(
   match peg.get_fast_rule_body_id(start_rule) {
     None =>
       (
-        { ok: false, end_pos: 0, labels: empty_labels() },
+        { ok: false, end_pos: 0, labels: empty_labels(), },
         Map([]),
         ctx.furthest_pos,
         ctx.furthest_expected,
@@ -78,7 +78,7 @@ fn run_parse_diag_iter_internal(
       eval_iter_loop(ctx)
       let result = ctx.results
         .pop()
-        .unwrap_or({ ok: false, end_pos: 0, labels: empty_labels() })
+        .unwrap_or({ ok: false, end_pos: 0, labels: empty_labels(), })
       if result.ok && should_emit_rule_iter(ctx, start_rule) {
         let labels_map = materialize(result.labels, ctx.tokens)
         labels_map.set(@types.META_START_TOK, (0).to_json())

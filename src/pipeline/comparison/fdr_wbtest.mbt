@@ -142,7 +142,7 @@ test "BatchResult::apply_fdr works end-to-end" {
     SimilarityMatch::new(0, 1, "a", "b", 0.95),
     SimilarityMatch::new(2, 3, "c", "d", 0.82),
   ]
-  let result : BatchResult = { matches, file_count: 20, pairs_compared: 190 }
+  let result : BatchResult = { matches, file_count: 20, pairs_compared: 190, }
   let filtered = result.apply_fdr(0.05, threshold=0.8)
   assert_true(filtered.matches.length() <= 2)
   assert_eq(filtered.file_count, 20)

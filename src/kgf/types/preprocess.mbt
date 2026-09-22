@@ -53,7 +53,7 @@ pub fn FstTransition::new(
   to : String,
   actions : Array[FstAction],
 ) -> FstTransition {
-  { on, to, actions }
+  { on, to, actions, }
 }
 
 ///|
@@ -95,7 +95,7 @@ pub fn PreprocessFstSpec::new(
   initial : String,
   states : Map[String, Array[FstTransition]],
 ) -> PreprocessFstSpec {
-  { name, classes, initial, states }
+  { name, classes, initial, states, }
 }
 
 ///|

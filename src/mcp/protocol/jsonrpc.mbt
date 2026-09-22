@@ -35,7 +35,7 @@ pub fn JsonRpcRequest::from_json(json : Json) -> JsonRpcRequest? {
   }
   let id = obj.get("id")
   let params = obj.get("params")
-  Some({ jsonrpc, id, meth, params })
+  Some({ jsonrpc, id, meth, params, })
 }
 
 ///|
@@ -47,7 +47,7 @@ pub fn JsonRpcRequest::is_notification(self : JsonRpcRequest) -> Bool {
 ///|
 /// Build a JSON-RPC 2.0 success response.
 pub fn response_ok(id : Json?, result : Json) -> String {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["jsonrpc"] = "2.0".to_json()
   match id {
     Some(v) => obj["id"] = v
@@ -65,14 +65,14 @@ pub fn response_error(
   message : String,
   data? : Json? = None,
 ) -> String {
-  let err_obj : Map[String, Json] = {}
+  let err_obj : Map[String, Json] = Map([])
   err_obj["code"] = code.to_json()
   err_obj["message"] = message.to_json()
   match data {
     Some(d) => err_obj["data"] = d
     None => ()
   }
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["jsonrpc"] = "2.0".to_json()
   match id {
     Some(v) => obj["id"] = v

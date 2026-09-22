@@ -21,7 +21,7 @@ pub struct InitConfig {
 ///|
 /// Create a default InitConfig with current directory as target.
 pub fn InitConfig::default() -> InitConfig {
-  { target_dir: ".", is_global: false, force: false }
+  { target_dir: ".", is_global: false, force: false, }
 }
 
 ///|
@@ -29,17 +29,17 @@ pub fn InitConfig::default() -> InitConfig {
 pub fn InitConfig::from_matches(matches : @argparse.Matches) -> InitConfig {
   let mut config = InitConfig::default()
   match matches.flags.get("global") {
-    Some(true) => config = { ..config, is_global: true }
+    Some(true) => config = { ..config, is_global: true, }
     _ => ()
   }
   match matches.flags.get("force") {
-    Some(true) => config = { ..config, force: true }
+    Some(true) => config = { ..config, force: true, }
     _ => ()
   }
   match matches.values.get("directory") {
     Some(dirs) =>
       if dirs.length() > 0 {
-        config = { ..config, target_dir: dirs[0] }
+        config = { ..config, target_dir: dirs[0], }
       }
     None => ()
   }
@@ -220,7 +220,7 @@ fn write_reconcile_sections(buf : StringBuilder) -> Unit {
 
 ///|
 fn generate_global_config_template() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# indexion global configuration\n")
   buf.write_string("# See: https://github.com/trkbt10/indexion\n")
   buf.write_string("\n")
@@ -239,7 +239,7 @@ fn generate_global_config_template() -> String {
 
 ///|
 fn generate_project_config_template() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# indexion project configuration\n")
   buf.write_string("# See: https://github.com/trkbt10/indexion\n")
   buf.write_string("\n")
@@ -262,7 +262,7 @@ fn generate_project_config_template() -> String {
 
 ///|
 fn generate_gitignore() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# indexion local files (not committed)\n")
   buf.write_string("cache/\n")
   buf.write_string("local/\n")

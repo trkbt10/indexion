@@ -97,7 +97,7 @@ fn collect_ts_files(dir : String, out : Array[String]) -> Unit raise {
 /// Count occurrences of "@@UNRESOLVED@@<word>" in `code`. Returns a sorted
 /// (kind, count) array.
 fn count_unresolved_kinds(code : String) -> Array[(String, Int)] {
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   let chars = code.to_array()
   let marker = "@@UNRESOLVED@@"
   let marker_len = marker.length()
@@ -244,8 +244,8 @@ fn kind_diagnosis() -> Array[(String, String)] {
 async fn build_target_snapshot(target : String) -> TargetSnapshot {
   let files = list_ts_files()
   let per_file : Array[FileDrift] = []
-  let rule_hist : Map[String, Int] = {}
-  let totals_unresolved : Map[String, Int] = {}
+  let rule_hist : Map[String, Int] = Map([])
+  let totals_unresolved : Map[String, Int] = Map([])
   let mut total_ir_events = 0
   let mut total_unresolved = 0
   let output_dir = "tests/integration/transpile-todo-app/output/" + target
@@ -329,7 +329,7 @@ async fn build_target_snapshot(target : String) -> TargetSnapshot {
     .iter()
     .map(fn(f) { if f.compile_exit_code > 0 { 1 } else { 0 } })
     .fold(init=0, fn(a, b) { a + b })
-  let totals : Map[String, Int] = {}
+  let totals : Map[String, Int] = Map([])
   totals["files"] = files.length()
   totals["ir_events"] = total_ir_events
   totals["unresolved"] = total_unresolved
@@ -424,7 +424,7 @@ pub fn assert_snapshot_matches(
 
 ///|
 fn is_update_mode() -> Bool {
-  match @sys.get_env_var("INDEXION_UPDATE_SNAPSHOTS") {
+  match @env.get_env_var("INDEXION_UPDATE_SNAPSHOTS") {
     Some(s) => s == "1" || s == "true"
     None => false
   }
@@ -659,7 +659,7 @@ fn parent_dir(path : String) -> String {
 /// PATH. Used to skip compile checks for languages whose toolchain isn't
 /// installed in the current environment without making the test fail.
 fn which(cmd : String) -> String {
-  let path = match @sys.get_env_var("PATH") {
+  let path = match @env.get_env_var("PATH") {
     Some(p) => p
     None => return ""
   }

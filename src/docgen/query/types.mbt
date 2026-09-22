@@ -17,7 +17,7 @@ pub fn ModuleDep::new(
   via? : String? = None,
   dep_kind? : String? = None,
 ) -> ModuleDep {
-  { from, to, via, dep_kind }
+  { from, to, via, dep_kind, }
 }
 
 ///|
@@ -35,7 +35,7 @@ pub fn CallInfo::new(
   callee : String,
   file : String,
 ) -> CallInfo {
-  { caller, callee, file }
+  { caller, callee, file, }
 }
 
 ///|
@@ -53,7 +53,7 @@ pub fn TypeRelation::new(
   parent : String,
   relation : String,
 ) -> TypeRelation {
-  { child, parent, relation }
+  { child, parent, relation, }
 }
 
 ///|
@@ -71,7 +71,7 @@ pub fn SymbolRef::new(
   ref_site : String,
   ref_kind : String,
 ) -> SymbolRef {
-  { symbol, ref_site, ref_kind }
+  { symbol, ref_site, ref_kind, }
 }
 
 ///|
@@ -93,7 +93,7 @@ pub fn SymbolDecl::new(
   module_id : String,
   doc? : String? = None,
 ) -> SymbolDecl {
-  { id, name, kind, module_id, doc }
+  { id, name, kind, module_id, doc, }
 }
 
 // Getters
@@ -216,7 +216,7 @@ pub struct CircularDep {
 ///|
 /// Create a new CircularDep.
 pub fn CircularDep::new(from : String, to : String) -> CircularDep {
-  { from, to }
+  { from, to, }
 }
 
 ///|

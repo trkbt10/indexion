@@ -12,7 +12,7 @@ pub struct ModuleNode {
 
 ///|
 pub impl Show for ModuleNode with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|
@@ -34,7 +34,7 @@ pub(all) struct SymbolNode {
 
 ///|
 pub impl Show for SymbolNode with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|
@@ -62,7 +62,7 @@ pub enum EdgeKind {
 
 ///|
 pub impl Show for EdgeKind with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|

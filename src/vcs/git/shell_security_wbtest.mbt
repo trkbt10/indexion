@@ -42,14 +42,18 @@ async fn current_repo_root() -> String? {
 
 ///|
 async test "vcs/git: native helpers resolve the current repository" {
-  guard current_repo_root() is Some(root)
+  guard current_repo_root() is Some(root) else {
+    fail("current_repo_root() returned None; run tests inside the git checkout")
+  }
   assert_true(is_repo(root))
   assert_true(last_commit_seconds(root, "moon.mod") is Some(_))
 }
 
 ///|
 async test "vcs/git: native helpers do not interpret root shell payloads" {
-  guard current_repo_root() is Some(root)
+  guard current_repo_root() is Some(root) else {
+    fail("current_repo_root() returned None; run tests inside the git checkout")
+  }
   let marker = temp_git_dir("vcs-git-shell-root-marker-")
   remove_file_if_exists(marker)
   let injected_root = root + "; touch " + marker
@@ -60,7 +64,9 @@ async test "vcs/git: native helpers do not interpret root shell payloads" {
 
 ///|
 async test "vcs/git: native helpers do not interpret path shell payloads" {
-  guard current_repo_root() is Some(root)
+  guard current_repo_root() is Some(root) else {
+    fail("current_repo_root() returned None; run tests inside the git checkout")
+  }
   let marker = temp_git_dir("vcs-git-shell-path-marker-")
   remove_file_if_exists(marker)
   let payloads = [

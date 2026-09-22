@@ -47,7 +47,7 @@ pub fn ClassifyModel::new(
   metadata : Map[String, String],
   classes : Map[String, ClassifyClass],
 ) -> ClassifyModel {
-  { metadata, classes }
+  { metadata, classes, }
 }
 
 ///|
@@ -139,7 +139,7 @@ pub fn ClassifyClass::new(
   prior : Double,
   vocab : Map[String, Double],
 ) -> ClassifyClass {
-  { prior, vocab }
+  { prior, vocab, }
 }
 
 ///|

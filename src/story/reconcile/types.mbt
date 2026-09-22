@@ -245,7 +245,12 @@ pub fn ReconcileConfig::new(
   max_terms_per_candidate? : Int = 8,
   registry_root? : String = "",
 ) -> ReconcileConfig {
-  { similarity_floor, runner_up_margin, max_terms_per_candidate, registry_root }
+  {
+    similarity_floor,
+    runner_up_margin,
+    max_terms_per_candidate,
+    registry_root,
+  }
 }
 
 ///|

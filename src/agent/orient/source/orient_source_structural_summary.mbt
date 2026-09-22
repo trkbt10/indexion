@@ -4,7 +4,7 @@ pub fn structural_summary(
   graph : @graph.CodeGraph,
   symbols_by_module : Map[String, Array[String]],
 ) -> String {
-  let summary = StringBuilder::new()
+  let summary = StringBuilder()
   summary.write_string(file.path)
   summary.write_string("\n")
   match symbols_by_module.get(file.path) {

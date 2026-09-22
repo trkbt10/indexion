@@ -51,68 +51,68 @@ pub fn ServeConfig::from_matches(matches : @argparse.Matches) -> ServeConfig {
   match matches.values.get("port") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, port: @common.parse_int(vals[0]) }
+        config = { ..config, port: @common.parse_int(vals[0]), }
       }
     None => ()
   }
   match matches.values.get("host") {
-    Some(vals) => if vals.length() > 0 { config = { ..config, host: vals[0] } }
+    Some(vals) => if vals.length() > 0 { config = { ..config, host: vals[0], } }
     None => ()
   }
   match matches.values.get("index-dir") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, index_dir: vals[0] }
+        config = { ..config, index_dir: vals[0], }
       }
     None => ()
   }
   match matches.values.get("static-dir") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, static_dir: vals[0] }
+        config = { ..config, static_dir: vals[0], }
       }
     None => ()
   }
   match matches.values.get("provider") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, provider: vals[0] }
+        config = { ..config, provider: vals[0], }
       }
     None => ()
   }
   match matches.values.get("dim") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, dim: @common.parse_int(vals[0]) }
+        config = { ..config, dim: @common.parse_int(vals[0]), }
       }
     None => ()
   }
   match matches.values.get("strategy") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, strategy: vals[0] }
+        config = { ..config, strategy: vals[0], }
       }
     None => ()
   }
   match matches.values.get("specs") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, specs_dir: vals[0] }
+        config = { ..config, specs_dir: vals[0], }
       }
     None => ()
   }
   match matches.values.get("workspace") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, workspace_dir: vals[0] }
+        config = { ..config, workspace_dir: vals[0], }
       }
     None => ()
   }
   if matches.flags.get("cors").unwrap_or(false) {
-    config = { ..config, cors: true }
+    config = { ..config, cors: true, }
   }
   if matches.flags.get("watch-stdin").unwrap_or(false) {
-    config = { ..config, watch_stdin: true }
+    config = { ..config, watch_stdin: true, }
   }
   config
 }
@@ -220,39 +220,39 @@ pub fn ServeConfig::apply_embedding_file_config(
   match file.provider {
     Some(v) =>
       if config.provider == defaults.provider {
-        config = { ..config, provider: v }
+        config = { ..config, provider: v, }
       }
     None => ()
   }
   match file.strategy {
     Some(v) =>
       if config.strategy == defaults.strategy {
-        config = { ..config, strategy: v }
+        config = { ..config, strategy: v, }
       }
     None => ()
   }
   match file.dim {
-    Some(v) => if config.dim == defaults.dim { config = { ..config, dim: v } }
+    Some(v) => if config.dim == defaults.dim { config = { ..config, dim: v, } }
     None => ()
   }
   match file.api_key_env {
     Some(v) =>
       if config.api_key_env == defaults.api_key_env {
-        config = { ..config, api_key_env: v }
+        config = { ..config, api_key_env: v, }
       }
     None => ()
   }
   match file.api_base_url {
     Some(v) =>
       if config.api_base_url == defaults.api_base_url {
-        config = { ..config, api_base_url: v }
+        config = { ..config, api_base_url: v, }
       }
     None => ()
   }
   match file.model {
     Some(v) =>
       if config.model == defaults.model {
-        config = { ..config, model: v }
+        config = { ..config, model: v, }
       }
     None => ()
   }
@@ -274,7 +274,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
   let merged = ServeConfig::from_matches(matches).apply_embedding_file_config(
     embed_file_config,
   )
-  let merged = { ..merged, wiki_config: wiki_file_config }
+  let merged = { ..merged, wiki_config: wiki_file_config, }
   let resolved_index_dir : String? = if merged.index_dir ==
     @dconfig.DEFAULT_INDEX_DIR {
     @config.resolve_project_indexion_dir(merged.workspace_dir, "digest")
@@ -357,7 +357,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
       return
     }
   }
-  let listen_port = server.addr().port()
+  let listen_port = server.addr.port()
   println("Serving on http://" + config.host + ":" + listen_port.to_string())
   if config.watch_stdin {
     println("Watching stdin — will exit on EOF.")
@@ -778,7 +778,7 @@ fn strip_query_string(path : String) -> String {
 
 ///|
 fn json_headers(cors : Bool) -> Map[String, String] {
-  let headers : Map[String, String] = {}
+  let headers : Map[String, String] = Map([])
   headers["content-type"] = "application/json; charset=utf-8"
   if cors {
     headers["access-control-allow-origin"] = "*"
@@ -886,7 +886,7 @@ async fn handle_digest_query(
 
 ///|
 fn query_hit_to_json(hit : @types.QueryHit) -> Json {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj.set("name", hit.function.name().to_json())
   obj.set("file", hit.function.module_id.to_json())
   obj.set("score", hit.score.to_json())
@@ -946,12 +946,12 @@ fn build_stats_json(
   } else {
     "none"
   }
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj.set("indexDirectory", index_dir.to_json())
   obj.set("provider", provider_desc.to_json())
   let provider_arr : Array[Json] = []
   for p in digest_config.providers {
-    let po : Map[String, Json] = {}
+    let po : Map[String, Json] = Map([])
     po.set("key", p.key.to_json())
     po.set("kind", p.kind.to_json())
     po.set("dim", p.dim.to_json())
@@ -966,7 +966,7 @@ fn build_stats_json(
 
 ///|
 fn function_unit_to_json(unit : @types.FunctionUnit) -> Json {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj.set("id", unit.id().to_json())
   obj.set("name", unit.name().to_json())
   obj.set("module", unit.module_id.to_json())
@@ -1070,7 +1070,7 @@ async fn serve_static(
     }
     let ext = get_extension(file_path)
     let ct = content_type_for(ext)
-    let headers : Map[String, String] = {}
+    let headers : Map[String, String] = Map([])
     headers["content-type"] = ct
     conn.send_response(200, "OK", extra_headers=headers) catch {
       _ => return
@@ -1088,7 +1088,7 @@ async fn serve_static(
           return
         }
       }
-      let headers : Map[String, String] = {}
+      let headers : Map[String, String] = Map([])
       headers["content-type"] = "text/html; charset=utf-8"
       conn.send_response(200, "OK", extra_headers=headers) catch {
         _ => return
@@ -1133,7 +1133,7 @@ fn build_get_routes(
   state : ServerState,
   config : ServeConfig,
 ) -> Map[String, String] {
-  let routes : Map[String, String] = {}
+  let routes : Map[String, String] = Map([])
   routes["/api/health"] = "{\"status\":\"ready\"}"
   routes["/api/config"] = build_config_json(config)
   routes["/api/graph"] = state.graph_json

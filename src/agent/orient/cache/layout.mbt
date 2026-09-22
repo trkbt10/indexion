@@ -51,7 +51,7 @@ pub(all) suberror LayoutStorageError {
 ///|
 #warnings("-unused_value")
 impl Show for OpenDecision with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|

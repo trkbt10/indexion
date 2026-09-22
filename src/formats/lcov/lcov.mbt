@@ -28,7 +28,7 @@
 ///|
 /// Render a CoverageReport as an lcov.info tracefile string.
 pub fn render_lcov(report : @coverage.CoverageReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for file in report.files {
     render_lcov_file(buf, report.test_name, file)
   }

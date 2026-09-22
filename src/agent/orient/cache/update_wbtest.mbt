@@ -138,7 +138,7 @@ async test "orient cache update: applies new changed deleted and skips unchanged
 
 ///|
 fn orient_update_repeat_string(unit : String, count : Int) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for _ in 0..<count {
     buf.write_string(unit)
   }

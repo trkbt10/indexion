@@ -3,5 +3,5 @@
 /// lowered back into TypeScript. The round-trip surfaces what the engine
 /// CAN preserve mechanically vs. what depends on body content.
 async test "snapshot: ts todo-app -> typescript (round-trip)" {
-  run_target_snapshot("typescript")
+  @transpile-todo-app.run_target_snapshot("typescript")
 }

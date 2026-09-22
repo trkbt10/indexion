@@ -79,7 +79,7 @@ fn package_overview(
       }
     }
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let seen : Map[String, Bool] = Map([])
   let module_ids : Array[String] = [pkg.path]
   for file in pkg.files {
@@ -111,7 +111,7 @@ fn prose_prefix(text : String) -> String {
     }
     kept.push(line)
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i, line in kept {
     if i > 0 {
       buf.write_string("\n")
@@ -170,7 +170,7 @@ fn package_declarations(
       Some(d) => first_prose_line(d, DESCRIPTION_MAX_LENGTH)
       None => ""
     }
-    result.push({ name: sym.name, kind: sym.kind, doc })
+    result.push({ name: sym.name, kind: sym.kind, doc, })
   }
   result
 }
@@ -238,7 +238,7 @@ fn package_dependencies(
         if norm == own_norm {
           continue
         }
-        upsert_dep(collected, "i:" + norm, { target: raw, internal: true, via })
+        upsert_dep(collected, "i:" + norm, { target: raw, internal: true, via, })
       }
       None =>
         match external_target {

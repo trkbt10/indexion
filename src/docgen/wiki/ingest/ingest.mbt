@@ -49,7 +49,7 @@ impl @json.FromJson for PageSourceState with fn from_json(json, path) {
     Some(String(s)) => s
     _ => ""
   }
-  let source_hashes : Map[String, String] = {}
+  let source_hashes : Map[String, String] = Map([])
   match obj.get("source_hashes") {
     Some(Object(d)) =>
       for entry in d {
@@ -60,7 +60,7 @@ impl @json.FromJson for PageSourceState with fn from_json(json, path) {
       }
     _ => ()
   }
-  { page_hash, source_hashes }
+  { page_hash, source_hashes, }
 }
 
 ///|
@@ -81,7 +81,7 @@ impl @json.FromJson for IngestManifest with fn from_json(json, path) {
     Some(String(s)) => s
     _ => "1"
   }
-  let page_states : Map[String, PageSourceState] = {}
+  let page_states : Map[String, PageSourceState] = Map([])
   match obj.get("page_states") {
     Some(Object(d)) =>
       for entry in d {
@@ -92,7 +92,7 @@ impl @json.FromJson for IngestManifest with fn from_json(json, path) {
       }
     _ => ()
   }
-  { version, page_states }
+  { version, page_states, }
 }
 
 ///|
@@ -107,16 +107,16 @@ pub struct IngestResult {
 pub fn load_manifest(wiki_dir : String) -> IngestManifest {
   let path = wiki_dir + "/" + INGEST_MANIFEST_FILE
   if !@fs.path_exists(path) {
-    return { version: "1", page_states: {} }
+    return { version: "1", page_states: {}, }
   }
   let content = @fs.read_file_to_string(path) catch {
-    _ => return { version: "1", page_states: {} }
+    _ => return { version: "1", page_states: {}, }
   }
   let json = @json.parse(content) catch {
-    _ => return { version: "1", page_states: {} }
+    _ => return { version: "1", page_states: {}, }
   }
   @json.from_json(json) catch {
-    _ => { version: "1", page_states: {} }
+    _ => { version: "1", page_states: {}, }
   }
 }
 
@@ -137,7 +137,7 @@ pub fn save_manifest(manifest : IngestManifest, wiki_dir : String) -> Unit {
 pub fn analyze(wiki : @wiki_types.WikiData, wiki_dir : String) -> IngestResult {
   let prev = load_manifest(wiki_dir)
   let tasks : Array[IngestTask] = []
-  let new_states : Map[String, PageSourceState] = {}
+  let new_states : Map[String, PageSourceState] = Map([])
   // Derive project root from wiki_dir so source paths resolve correctly
   let project_root = match
     @config.find_project_root_from(@config.dirname(wiki_dir)) {
@@ -149,7 +149,7 @@ pub fn analyze(wiki : @wiki_types.WikiData, wiki_dir : String) -> IngestResult {
     // Compute current page hash
     let page_hash = @cas_hash.compute_hash(page.content).value
     // Compute current source hashes
-    let current_hashes : Map[String, String] = {}
+    let current_hashes : Map[String, String] = Map([])
     for src in page.sources {
       if src.file.length() > 0 {
         let resolved = @config.resolve_path(project_root, src.file)
@@ -160,7 +160,7 @@ pub fn analyze(wiki : @wiki_types.WikiData, wiki_dir : String) -> IngestResult {
       }
     }
     // Store new state
-    new_states[page_id] = { page_hash, source_hashes: current_hashes }
+    new_states[page_id] = { page_hash, source_hashes: current_hashes, }
     // Compare with previous state
     let changes : Array[SourceChange] = []
     match prev.page_states.get(page_id) {
@@ -233,7 +233,7 @@ pub fn analyze(wiki : @wiki_types.WikiData, wiki_dir : String) -> IngestResult {
       })
     }
   }
-  { tasks, new_manifest: { version: "1", page_states: new_states } }
+  { tasks, new_manifest: { version: "1", page_states: new_states, }, }
 }
 
 ///|

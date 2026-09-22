@@ -16,7 +16,7 @@ pub struct GlobalConfig {
 
 ///|
 pub impl Show for GlobalConfig with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|
@@ -85,7 +85,7 @@ pub fn parse_global_toml_config(content : String) -> GlobalConfig {
       if key == "kgfs_dir" {
         let parsed = trim_quotes(value)
         if parsed.length() > 0 {
-          config = { ..config, kgfs_dir: Some(expand_tilde(parsed)) }
+          config = { ..config, kgfs_dir: Some(expand_tilde(parsed)), }
         }
       }
     } else if section == "embedding" {
@@ -94,9 +94,9 @@ pub fn parse_global_toml_config(content : String) -> GlobalConfig {
         embedding: parse_embedding_section_key(config.embedding, key, value),
       }
     } else if section == "mcp" {
-      config = { ..config, mcp: parse_mcp_section_key(config.mcp, key, value) }
+      config = { ..config, mcp: parse_mcp_section_key(config.mcp, key, value), }
     } else if section == "doc" {
-      config = { ..config, doc: parse_doc_section_key(config.doc, key, value) }
+      config = { ..config, doc: parse_doc_section_key(config.doc, key, value), }
     } else if section == "wiki" {
       config = {
         ..config,
@@ -130,7 +130,7 @@ pub fn parse_global_toml_config(content : String) -> GlobalConfig {
         key,
         value,
       )
-      config = { ..config, reconcile, digest }
+      config = { ..config, reconcile, digest, }
     }
   }
   config
@@ -144,17 +144,17 @@ fn parse_reconcile_section_key(
   value : String,
 ) -> ReconcileFileConfig {
   match key {
-    "doc_scope" => { ..config, doc_scope: Some(trim_quotes(value)) }
+    "doc_scope" => { ..config, doc_scope: Some(trim_quotes(value)), }
     "doc_paths" =>
-      { ..config, doc_paths: Some(parse_string_array_literal(value)) }
+      { ..config, doc_paths: Some(parse_string_array_literal(value)), }
     "doc_specs" =>
-      { ..config, doc_specs: Some(parse_string_array_literal(value)) }
-    "index_dir" => { ..config, index_dir: Some(trim_quotes(value)) }
+      { ..config, doc_specs: Some(parse_string_array_literal(value)), }
+    "index_dir" => { ..config, index_dir: Some(trim_quotes(value)), }
     "review_results_path" =>
-      { ..config, review_results_path: Some(trim_quotes(value)) }
+      { ..config, review_results_path: Some(trim_quotes(value)), }
     "threshold_seconds" =>
-      { ..config, threshold_seconds: Some(parse_int(value)) }
-    "max_candidates" => { ..config, max_candidates: Some(parse_int(value)) }
+      { ..config, threshold_seconds: Some(parse_int(value)), }
+    "max_candidates" => { ..config, max_candidates: Some(parse_int(value)), }
     _ => config
   }
 }
@@ -168,7 +168,7 @@ fn parse_reconcile_mapping_key(
 ) -> ReconcileFileConfig {
   if key == "allow_file_fallback" {
     match parse_bool_like(value) {
-      Some(v) => { ..config, allow_file_fallback: Some(v) }
+      Some(v) => { ..config, allow_file_fallback: Some(v), }
       None => config
     }
   } else {
@@ -184,7 +184,7 @@ fn parse_reconcile_output_key(
   value : String,
 ) -> ReconcileFileConfig {
   if key == "default_format" {
-    { ..config, format: Some(trim_quotes(value)) }
+    { ..config, format: Some(trim_quotes(value)), }
   } else {
     config
   }
@@ -200,12 +200,12 @@ fn parse_reconcile_time_key(
   match key {
     "git_preferred" =>
       match parse_bool_like(value) {
-        Some(v) => { ..config, git_preferred: Some(v) }
+        Some(v) => { ..config, git_preferred: Some(v), }
         None => config
       }
     "mtime_fallback" =>
       match parse_bool_like(value) {
-        Some(v) => { ..config, mtime_fallback: Some(v) }
+        Some(v) => { ..config, mtime_fallback: Some(v), }
         None => config
       }
     _ => config
@@ -220,7 +220,7 @@ fn parse_reconcile_logical_review_key(
   value : String,
 ) -> ReconcileFileConfig {
   if key == "mode" {
-    { ..config, logical_review_mode: Some(trim_quotes(value)) }
+    { ..config, logical_review_mode: Some(trim_quotes(value)), }
   } else {
     config
   }
@@ -236,7 +236,7 @@ fn parse_reconcile_vocabulary_key(
   if key == "threshold" {
     let parsed = parse_double_value(trim_string(value))
     if parsed > 0.0 {
-      { ..config, vocabulary_divergence_threshold: Some(parsed) }
+      { ..config, vocabulary_divergence_threshold: Some(parsed), }
     } else {
       config
     }

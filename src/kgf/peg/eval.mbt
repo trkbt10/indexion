@@ -14,13 +14,13 @@ pub fn EvalResult::success(
   labels? : Map[String, Json] = Map([]),
   events? : Array[(String, Map[String, Json])] = [],
 ) -> EvalResult {
-  { ok: true, pos, labels, events }
+  { ok: true, pos, labels, events, }
 }
 
 ///|
 /// Creates a new failed EvalResult.
 pub fn EvalResult::failure(pos : Int) -> EvalResult {
-  { ok: false, pos, labels: Map([]), events: [] }
+  { ok: false, pos, labels: Map([]), events: [], }
 }
 
 ///|

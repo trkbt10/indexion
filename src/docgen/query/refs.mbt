@@ -83,7 +83,7 @@ pub fn get_module_declarations(
 /// Get the number of references to each symbol.
 /// Returns a map of symbol_id -> reference_count.
 pub fn count_references(graph : @graph.CodeGraph) -> Map[String, Int] {
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   for edge in graph.get_edges() {
     if edge.kind is @graph.References {
       let current = counts.get(edge.to).unwrap_or(0)

@@ -121,7 +121,7 @@ pub fn build_report_with_registry(
 
 ///|
 fn to_drift_term(g : @vocab.GapTerm) -> DriftGapTerm {
-  { value: g.value, kind: g.kind, weight: g.weight }
+  { value: g.value, kind: g.kind, weight: g.weight, }
 }
 
 ///|

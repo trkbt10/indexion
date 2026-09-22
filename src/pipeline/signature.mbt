@@ -54,7 +54,7 @@ pub fn signature_for(path : String) -> FileSignature? {
   if ok == 0 {
     None
   } else {
-    Some({ path, mtime_ns: out[0], size_bytes: out[1] })
+    Some({ path, mtime_ns: out[0], size_bytes: out[1], })
   }
 }
 
@@ -157,7 +157,7 @@ pub fn classify_against_cache(
 ) -> SignatureClassification {
   let unchanged : Array[FileSignature] = []
   let candidates : Array[FileSignature] = []
-  let seen : Map[String, Unit] = {}
+  let seen : Map[String, Unit] = Map([])
   for sig in fresh {
     seen.set(sig.path, ())
     match cached_by_path.get(sig.path) {
@@ -172,7 +172,7 @@ pub fn classify_against_cache(
       deleted_paths.push(entry.0)
     }
   }
-  { unchanged, candidates, deleted_paths }
+  { unchanged, candidates, deleted_paths, }
 }
 
 ///|

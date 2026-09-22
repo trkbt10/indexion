@@ -47,7 +47,14 @@ pub fn load_wiki_spec(spec_name : String) -> WikiBackendSpec? {
     Some(vals) => vals
     None => []
   }
-  Some(WikiBackendSpec::{ spec, lexer, peg, nav_file, home_file, special_files })
+  Some(WikiBackendSpec::{
+    spec,
+    lexer,
+    peg,
+    nav_file,
+    home_file,
+    special_files,
+  })
 }
 
 ///|
@@ -68,7 +75,7 @@ fn get_feature_string(
 /// Registry of wiki backend configs, keyed by KGF spec language name.
 /// Each wiki KGF spec (github-wiki, gitlab-wiki, etc.) maps to its config.
 let wiki_backend_registry : Map[String, () -> WikiBackendConfig] = {
-  let m : Map[String, () -> WikiBackendConfig] = {}
+  let m : Map[String, () -> WikiBackendConfig] = Map([])
   m["github-wiki"] = github_config
   m["gitlab-wiki"] = gitlab_config
   m
@@ -150,7 +157,7 @@ let filename_invalid_chars : Array[Char] = [
 /// Generic slug: lowercase, spaces→hyphens, strip invalid chars.
 /// Used as the default; backends can wrap this with additional transforms.
 pub fn title_to_slug(title : String, lowercase? : Bool = true) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in title {
     if c == ' ' || c == '/' {
       buf.write_char('-')
@@ -168,7 +175,7 @@ pub fn title_to_slug(title : String, lowercase? : Bool = true) -> String {
 ///|
 /// Convert slug to lowercase ID.
 pub fn slug_to_id(slug : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in slug {
     if c >= 'A' && c <= 'Z' {
       buf.write_char((c.to_int() + 32).unsafe_to_char())
@@ -182,7 +189,7 @@ pub fn slug_to_id(slug : String) -> String {
 ///|
 /// Convert slug to display title (capitalize after hyphens).
 pub fn slug_to_title(slug : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut capitalize_next = true
   for c in slug {
     if c == '-' {
@@ -240,7 +247,7 @@ pub fn load_external_wiki(
   let file_to_id = config.file_to_id
   let title_to_name = config.title_to_name
   let name_to_title = config.name_to_title
-  let file_id_map : Map[String, String] = {}
+  let file_id_map : Map[String, String] = Map([])
   for f in files {
     file_id_map[f] = file_to_id(f)
   }
@@ -252,7 +259,7 @@ pub fn load_external_wiki(
     )
   } else {
     let items : Array[@types.WikiNavItem] = []
-    let titles : Map[String, String] = {}
+    let titles : Map[String, String] = Map([])
     for f in files {
       let id = file_id_map.get(f).unwrap_or(file_to_id(f))
       let title = name_to_title(f)
@@ -261,7 +268,7 @@ pub fn load_external_wiki(
     }
     (items, titles)
   }
-  let pages : Map[String, @types.WikiPage] = {}
+  let pages : Map[String, @types.WikiPage] = Map([])
   for f in files {
     let id = file_id_map.get(f).unwrap_or(file_to_id(f))
     let title = sidebar_titles.get(id).unwrap_or(name_to_title(f))
@@ -308,8 +315,8 @@ pub fn export_external_wiki(
   }
   let home_name = strip_md_ext(spec.home_file)
   let result : Array[(String, String)] = []
-  let id_to_title : Map[String, String] = {}
-  let id_to_name : Map[String, String] = {}
+  let id_to_title : Map[String, String] = Map([])
+  let id_to_name : Map[String, String] = Map([])
   let root_id = find_root_id(data.nav)
   let title_to_name = config.title_to_name
   for entry in data.pages {
@@ -368,7 +375,7 @@ pub fn generate_manifest_json(data : @types.WikiData, title : String) -> String 
       src.file.to_json()
     })
     let children_json : Array[Json] = page.children.map(fn(c) { c.to_json() })
-    let m : Map[String, Json] = {}
+    let m : Map[String, Json] = Map([])
     m["id"] = id.to_json()
     m["title"] = page.title.to_json()
     m["file"] = (id + ".md").to_json()
@@ -376,7 +383,7 @@ pub fn generate_manifest_json(data : @types.WikiData, title : String) -> String 
     m["children"] = Json::array(children_json)
     pages_json.push(Json::object(m))
   }
-  let root : Map[String, Json] = {}
+  let root : Map[String, Json] = Map([])
   root["title"] = title.to_json()
   root["pages"] = Json::array(pages_json)
   Json::object(root).stringify(indent=2) + "\n"
@@ -390,7 +397,7 @@ pub fn embed_sources_comment(sources : Array[@types.WikiSourceRef]) -> String {
   if sources.is_empty() {
     return ""
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("<!-- indexion:sources ")
   for i, src in sources {
     if i > 0 {
@@ -447,7 +454,7 @@ pub fn extract_sources_kgf(
     return (content, sources)
   }
   let chars = content.to_array()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut last = 0
   for removal in removals {
     let (start, end) = removal
@@ -567,7 +574,7 @@ pub fn convert_internal_to_wikilinks(
 ) -> String {
   let chars = content.to_array()
   let len = chars.length()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let wiki_marker = "](wiki://"
   let marker_chars = wiki_marker.to_array()
   let marker_len = marker_chars.length()
@@ -632,7 +639,7 @@ pub fn parse_sidebar_kgf(
   spec : WikiBackendSpec,
 ) -> (Array[@types.WikiNavItem], Map[String, String]) {
   let lines = @common.split_lines(content)
-  let titles : Map[String, String] = {}
+  let titles : Map[String, String] = Map([])
   let entries : Array[(Int, String, String)] = []
   for line in lines {
     let indent = count_leading_spaces(line)
@@ -786,7 +793,7 @@ pub fn list_md_files(
   dir : String,
   special_files : Array[String],
 ) -> Array[String] {
-  let special_set : Map[String, Bool] = {}
+  let special_set : Map[String, Bool] = Map([])
   for f in special_files {
     special_set[strip_md_ext(f)] = true
   }
@@ -811,7 +818,7 @@ pub fn list_md_files_recursive(
   dir : String,
   special_files : Array[String],
 ) -> Array[String] {
-  let special_set : Map[String, Bool] = {}
+  let special_set : Map[String, Bool] = Map([])
   for f in special_files {
     special_set[strip_md_ext(f)] = true
   }
@@ -866,7 +873,7 @@ pub fn render_sidebar_wikilinks(
   root_id : String,
   home_name : String,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for item in nav.pages {
     render_sidebar_item_wikilinks(
       buf, item, id_to_name, id_to_title, root_id, home_name, 0,
@@ -929,7 +936,7 @@ pub fn apply_replacements(
     return content
   }
   let chars = content.to_array()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut last = 0
   for rep in replacements {
     let (start, end, text) = rep
@@ -947,7 +954,7 @@ pub fn apply_replacements(
 
 ///|
 pub fn chars_to_string(chars : Array[Char], start : Int, end : Int) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = start; i < end; i = i + 1 {
     buf.write_char(chars[i])
   }

@@ -20,7 +20,7 @@ fn render_summary_block(
 
 ///|
 fn sanitize_node_id(text : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for ch in text.to_array() {
     if (ch >= 'a' && ch <= 'z') ||
       (ch >= 'A' && ch <= 'Z') ||
@@ -40,7 +40,7 @@ fn task_action(suggestion : @spec_align.AlignSuggestion) -> String {
 
 ///|
 fn render_tasks_generic(report : @spec_align.AlignSuggestReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# Spec Align Tasks\n\n")
   for suggestion in report.suggestions {
     buf.write_string("- ")
@@ -62,7 +62,7 @@ fn render_tasks_generic(report : @spec_align.AlignSuggestReport) -> String {
 
 ///|
 fn render_tasks_claude(report : @spec_align.AlignSuggestReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# Claude Tasks\n\n")
   for i = 0; i < report.suggestions.length(); i = i + 1 {
     let suggestion = report.suggestions[i]
@@ -113,7 +113,7 @@ fn render_tasks_claude(report : @spec_align.AlignSuggestReport) -> String {
 
 ///|
 fn render_tasks_copilot(report : @spec_align.AlignSuggestReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# Copilot Tasks\n\n")
   for suggestion in report.suggestions {
     buf.write_string("- [ ] ")
@@ -169,7 +169,7 @@ pub fn render_diff(
       " conflict=" +
       report.summary.conflict.to_string()
     _ => {
-      let buf = StringBuilder::new()
+      let buf = StringBuilder()
       buf.write_string("# Spec Align Diff Report\n\n")
       buf.write_string("- Spec: `")
       buf.write_string(report.config.spec_path)
@@ -207,7 +207,7 @@ pub fn render_trace(
 ) -> String {
   match format {
     "yaml" => {
-      let buf = StringBuilder::new()
+      let buf = StringBuilder()
       buf.write_string("requirements:\n")
       for requirement in report.requirements {
         buf.write_string("- id: ")
@@ -229,7 +229,7 @@ pub fn render_trace(
       buf.to_string()
     }
     "mermaid" => {
-      let buf = StringBuilder::new()
+      let buf = StringBuilder()
       buf.write_string("graph TD\n")
       for requirement in report.requirements {
         buf.write_string("  ")
@@ -274,7 +274,7 @@ pub fn render_suggest(
         _ => render_tasks_generic(report)
       }
     "delta-spec" => {
-      let buf = StringBuilder::new()
+      let buf = StringBuilder()
       for suggestion in report.suggestions {
         if suggestion.direction != "impl-wins" {
           continue
@@ -294,7 +294,7 @@ pub fn render_suggest(
       }
     }
     _ => {
-      let buf = StringBuilder::new()
+      let buf = StringBuilder()
       buf.write_string("# Spec Align Suggestions\n\n")
       render_summary_block(buf, report.summary)
       buf.write_string("\n")
@@ -349,7 +349,7 @@ pub fn render_status(
       " drifted:" +
       report.summary.drifted.to_string()
     _ => {
-      let buf = StringBuilder::new()
+      let buf = StringBuilder()
       buf.write_string("status=")
       buf.write_string(report.status)
       buf.write_string(" fail_on=")

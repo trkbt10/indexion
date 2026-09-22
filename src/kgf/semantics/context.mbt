@@ -8,7 +8,7 @@ pub struct ScopeEntry {
 ///|
 /// Creates a new empty ScopeEntry.
 pub fn ScopeEntry::new() -> ScopeEntry {
-  { value_ns: {}, type_ns: {} }
+  { value_ns: {}, type_ns: {}, }
 }
 
 ///|
@@ -53,7 +53,7 @@ pub struct Env {
 ///|
 /// Creates a new Env with the specified labels.
 pub fn Env::new(labels : Map[String, Json]) -> Env {
-  { labels, locals: {} }
+  { labels, locals: {}, }
 }
 
 ///|

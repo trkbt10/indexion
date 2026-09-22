@@ -28,14 +28,14 @@ pub fn IndexedTree::from_tree_with_size(
   let labels : Array[String] = Array::make(size + 1, "")
   let leftmost_leaf : Array[Int] = Array::make(size + 1, 0)
   let children_count : Array[Int] = Array::make(size + 1, 0)
-  let postorder_counter : PostorderCounter = { val: 0 }
+  let postorder_counter : PostorderCounter = { val: 0, }
   ignore(
     fill_postorder(
       root, labels, leftmost_leaf, children_count, postorder_counter,
     ),
   )
   let keyroots = compute_keyroots(size, leftmost_leaf)
-  { size, labels, leftmost_leaf, keyroots, children_count }
+  { size, labels, leftmost_leaf, keyroots, children_count, }
 }
 
 ///|

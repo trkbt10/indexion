@@ -50,7 +50,7 @@ pub(all) enum Arch {
 /// marker) and /usr/lib/x86_64-linux-gnu (x64 marker) as a filesystem heuristic.
 pub fn detect_arch() -> Arch {
   // Windows: PROCESSOR_ARCHITECTURE is authoritative
-  match @sys.get_env_var("PROCESSOR_ARCHITECTURE") {
+  match @env.get_env_var("PROCESSOR_ARCHITECTURE") {
     Some(pa) =>
       if pa.length() > 0 {
         if pa == "AMD64" || pa == "x86_64" {
@@ -63,7 +63,7 @@ pub fn detect_arch() -> Arch {
     None => ()
   }
   // Unix: HOSTTYPE is set by bash and some other shells
-  match @sys.get_env_var("HOSTTYPE") {
+  match @env.get_env_var("HOSTTYPE") {
     Some(ht) =>
       if ht.length() > 0 {
         if ht.contains("x86_64") || ht.contains("amd64") {

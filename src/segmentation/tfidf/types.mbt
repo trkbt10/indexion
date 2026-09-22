@@ -22,7 +22,7 @@ pub struct TfidfConfig {
 
 ///|
 pub impl Show for TfidfConfig with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|
@@ -116,7 +116,7 @@ pub struct TfidfStrategy {
 ///|
 /// Create a new TfidfStrategy with default configuration.
 pub fn TfidfStrategy::new() -> TfidfStrategy {
-  { config: TfidfConfig::new() }
+  { config: TfidfConfig::new(), }
 }
 
 ///|

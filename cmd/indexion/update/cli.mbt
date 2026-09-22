@@ -19,7 +19,7 @@ pub struct UpdateConfig {
 ///|
 /// Create a default UpdateConfig with all options disabled.
 pub fn UpdateConfig::default() -> UpdateConfig {
-  { check_only: false, force: false }
+  { check_only: false, force: false, }
 }
 
 ///|
@@ -27,11 +27,11 @@ pub fn UpdateConfig::default() -> UpdateConfig {
 pub fn UpdateConfig::from_matches(matches : @argparse.Matches) -> UpdateConfig {
   let mut config = UpdateConfig::default()
   match matches.flags.get("check") {
-    Some(true) => config = { ..config, check_only: true }
+    Some(true) => config = { ..config, check_only: true, }
     _ => ()
   }
   match matches.flags.get("force") {
-    Some(true) => config = { ..config, force: true }
+    Some(true) => config = { ..config, force: true, }
     _ => ()
   }
   config

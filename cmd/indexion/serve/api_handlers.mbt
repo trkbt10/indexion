@@ -592,7 +592,7 @@ async fn handle_grep(
 ///|
 /// Build readonly config JSON from ServeConfig.
 fn build_config_json(config : ServeConfig) -> String {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj.set("workspaceDir", config.workspace_dir.to_json())
   obj.set("specsDir", config.specs_dir.to_json())
   obj.set("indexDir", config.index_dir.to_json())

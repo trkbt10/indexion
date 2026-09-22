@@ -48,7 +48,7 @@ priv struct AliasIndex {
 
 ///|
 fn AliasIndex::new() -> AliasIndex {
-  { entries: Map([]) }
+  { entries: Map([]), }
 }
 
 ///|
@@ -130,7 +130,7 @@ fn emit_source_alias_edges(
       continue
     }
     let pkg_dir = dir_of(ft.get_path())
-    let seen : Map[String, Bool] = {}
+    let seen : Map[String, Bool] = Map([])
     for tok in ft.get_tokens() {
       if !contains_str(alias_token_kinds, tok.get_kind()) {
         continue
@@ -147,7 +147,7 @@ fn emit_source_alias_edges(
         Some(target) => {
           let sigil = leading_sigil(tok.get_text())
           let via_label = sigil + alias_name
-          let attrs : Map[String, String] = {}
+          let attrs : Map[String, String] = Map([])
           attrs.set("via", via_label)
           attrs.set("dep_kind", "value")
           attrs.set("alias", via_label)
@@ -234,7 +234,7 @@ fn leading_sigil(s : String) -> String {
   if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') {
     return ""
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_char(c)
   sb.to_string()
 }
@@ -250,7 +250,7 @@ fn strip_sigil(s : String) -> String {
   if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') {
     return s
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i = 1; i < chars.length(); i = i + 1 {
     sb.write_char(chars[i])
   }
@@ -313,9 +313,9 @@ fn build_cluster_meta(specs : Map[String, @kgf_types.KGFSpec]) -> ClusterMeta {
   let identity_edge_kinds : @hashset.HashSet[String] = HashSet([])
   let entry_edge_kinds : @hashset.HashSet[String] = HashSet([])
   let source_dir_edge_kinds : @hashset.HashSet[String] = HashSet([])
-  let default_source_dir_by_identity : Map[String, String] = {}
-  let seen_prefix : Map[String, Bool] = {}
-  let seen_anc : Map[String, Bool] = {}
+  let default_source_dir_by_identity : Map[String, String] = Map([])
+  let seen_prefix : Map[String, Bool] = Map([])
+  let seen_anc : Map[String, Bool] = Map([])
   for entry in specs {
     let spec = entry.1
     let resolver = spec.get_resolver()
@@ -414,7 +414,7 @@ fn canonicalize_external_refs(
     return
   }
   let modules = graph.get_modules()
-  let rewrite : Map[String, String] = {}
+  let rewrite : Map[String, String] = Map([])
   for edge in graph.get_edges() {
     let target = edge.to
     if rewrite.contains(target) {
@@ -447,7 +447,7 @@ fn collect_clusters(
   meta : ClusterMeta,
 ) -> (Array[ProjectEntry], Map[String, Array[String]]) {
   // First pass: collect per-manifest source-dir overrides.
-  let source_dir_by_manifest : Map[String, String] = {}
+  let source_dir_by_manifest : Map[String, String] = Map([])
   for edge in graph.get_edges() {
     if meta.source_dir_edge_kinds.contains(edge.kind.to_string()) {
       if edge.to.length() > 0 {
@@ -458,7 +458,7 @@ fn collect_clusters(
   // Second pass: collect identity edges and entry edges, pairing each project
   // with the source_dir found in pass 1 (or the spec-declared default).
   let projects : Array[ProjectEntry] = []
-  let entries_by_manifest : Map[String, Array[String]] = {}
+  let entries_by_manifest : Map[String, Array[String]] = Map([])
   for edge in graph.get_edges() {
     let kind_str = edge.kind.to_string()
     if meta.identity_edge_kinds.contains(kind_str) {
@@ -473,7 +473,7 @@ fn collect_clusters(
               None => ""
             }
         }
-        projects.push({ name, root_dir, manifest_path: edge.from, source_dir })
+        projects.push({ name, root_dir, manifest_path: edge.from, source_dir, })
       }
     }
     if meta.entry_edge_kinds.contains(kind_str) {
@@ -680,7 +680,7 @@ fn substring_after(s : String, start : Int) -> String {
   if start >= chars.length() {
     return ""
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i = start; i < chars.length(); i = i + 1 {
     sb.write_char(chars[i])
   }
@@ -724,7 +724,7 @@ fn dir_of(path : String) -> String {
   if last < 0 {
     return ""
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i = 0; i < last; i = i + 1 {
     sb.write_char(chars[i])
   }
@@ -743,7 +743,7 @@ fn last_segment(path : String) -> String {
   if last < 0 {
     return path
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i = last + 1; i < chars.length(); i = i + 1 {
     sb.write_char(chars[i])
   }

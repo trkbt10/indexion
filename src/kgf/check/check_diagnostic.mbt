@@ -19,7 +19,7 @@ pub fn CheckDiagnostic::new(
   message : String,
   source : String,
 ) -> CheckDiagnostic {
-  { file, line, col, severity, message, source }
+  { file, line, col, severity, message, source, }
 }
 
 ///|

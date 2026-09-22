@@ -2,8 +2,4 @@ import {
   "trkbt10/indexion/src/config",
 }
 
-import {
-  "moonbitlang/core/test",
-} for "wbtest"
-
 supported_targets = "native"

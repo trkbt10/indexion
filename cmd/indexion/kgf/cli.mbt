@@ -105,11 +105,11 @@ fn KgfConfig::from_matches(matches : @argparse.Matches) -> KgfConfig {
           }
           match name {
             "tokens" =>
-              config = { ..config, show_events: false, show_edges: false }
+              config = { ..config, show_events: false, show_edges: false, }
             "events" =>
-              config = { ..config, show_tokens: false, show_edges: false }
+              config = { ..config, show_tokens: false, show_edges: false, }
             "edges" =>
-              config = { ..config, show_tokens: false, show_events: false }
+              config = { ..config, show_tokens: false, show_events: false, }
             _ => ()
           }
         }
@@ -439,7 +439,7 @@ fn pad_right(s : String, width : Int) -> String {
   if s.length() >= width {
     return s
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(s)
   for i = s.length(); i < width; i = i + 1 {
     buf.write_char(' ')
@@ -632,14 +632,14 @@ fn run_tokens(config : KgfConfig) -> Unit {
 ///|
 /// Run events-only inspection.
 fn run_events(config : KgfConfig) -> Unit {
-  let c = { ..config, show_tokens: false, show_edges: false }
+  let c = { ..config, show_tokens: false, show_edges: false, }
   run_inspect(c)
 }
 
 ///|
 /// Run edges-only inspection.
 fn run_edges(config : KgfConfig) -> Unit {
-  let c = { ..config, show_tokens: false, show_events: false }
+  let c = { ..config, show_tokens: false, show_events: false, }
   run_inspect(c)
 }
 
@@ -719,7 +719,7 @@ pub fn list_specs_json() -> String {
   let arr : Array[Json] = specs
     .iter()
     .map(fn(spec) {
-      let obj : Map[String, Json] = {}
+      let obj : Map[String, Json] = Map([])
       obj.set("name", spec.name.to_json())
       obj.set("category", spec.category.to_json())
       obj.set(
@@ -736,7 +736,7 @@ pub fn list_specs_json() -> String {
 /// Return a map of spec name -> spec content for all installed specs.
 /// Used by serve to expose /api/kgf/specs/{name} routes.
 pub fn all_specs_content() -> Map[String, String] {
-  let result : Map[String, String] = {}
+  let result : Map[String, String] = Map([])
   let specs = @kgf_manage.list_installed_specs()
   for spec in specs {
     let content = @fs.read_file_to_string(spec.path) catch { _ => continue }
@@ -794,7 +794,7 @@ pub fn tokenize_json(
     .iter()
     .map(fn(tok) {
       let (line, col) = pos_to_line_col(line_starts, tok.pos)
-      let obj : Map[String, Json] = {}
+      let obj : Map[String, Json] = Map([])
       obj.set("kind", tok.kind.to_json())
       obj.set("text", tok.text.to_json())
       obj.set("line", line.to_json())
@@ -840,7 +840,7 @@ pub fn events_json(
       let arr : Array[Json] = events
         .iter()
         .map(fn(event) {
-          let obj : Map[String, Json] = {}
+          let obj : Map[String, Json] = Map([])
           obj.set("rule", event.0.to_json())
           obj.set("labels", Json::object(event.1))
           Json::object(obj)
@@ -884,7 +884,7 @@ pub fn inspect_json(
     .iter()
     .map(fn(tok) {
       let (line, col) = pos_to_line_col(line_starts, tok.pos)
-      let obj : Map[String, Json] = {}
+      let obj : Map[String, Json] = Map([])
       obj.set("kind", tok.kind.to_json())
       obj.set("text", tok.text.to_json())
       obj.set("pos", tok.pos.to_json())
@@ -893,7 +893,7 @@ pub fn inspect_json(
       Json::object(obj)
     })
     .collect()
-  let root : Map[String, Json] = {}
+  let root : Map[String, Json] = Map([])
   root.set("spec", resolved.to_json())
   root.set("file", file_path.to_json())
   root.set("source_length", source.length().to_json())
@@ -911,7 +911,7 @@ pub fn inspect_json(
       let events_arr : Array[Json] = events
         .iter()
         .map(fn(event) {
-          let obj : Map[String, Json] = {}
+          let obj : Map[String, Json] = Map([])
           obj.set("rule", event.0.to_json())
           obj.set("labels", Json::object(event.1))
           Json::object(obj)
@@ -935,11 +935,11 @@ pub fn inspect_json(
       let edges_arr : Array[Json] = edges
         .iter()
         .map(fn(edge) {
-          let obj : Map[String, Json] = {}
+          let obj : Map[String, Json] = Map([])
           obj.set("from", edge.from.to_json())
           obj.set("to", edge.to.to_json())
           obj.set("kind", edge.kind.to_string().to_json())
-          let attrs : Map[String, Json] = {}
+          let attrs : Map[String, Json] = Map([])
           for entry in edge.attrs {
             attrs.set(entry.0, entry.1.to_json())
           }
@@ -998,7 +998,7 @@ pub fn edges_json(
       let arr : Array[Json] = edges
         .iter()
         .map(fn(edge) {
-          let obj : Map[String, Json] = {}
+          let obj : Map[String, Json] = Map([])
           obj.set("from", edge.from.to_json())
           obj.set("to", edge.to.to_json())
           obj.set("kind", edge.kind.to_string().to_json())

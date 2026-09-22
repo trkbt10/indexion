@@ -205,7 +205,7 @@ pub fn run_pattern_search_json(
     }
     let matches = find_matches(tokens, matchers, path, content, spec~)
     for m in matches {
-      let obj : Map[String, Json] = {}
+      let obj : Map[String, Json] = Map([])
       obj["file"] = m.file.to_json()
       obj["line"] = m.line.to_json()
       obj["matched"] = m.matched_text.to_json()
@@ -275,7 +275,7 @@ pub fn grep_single_file(
   let matches = find_matches(tokens, matchers, path, content, spec~)
   let results : Array[Json] = []
   for m in matches {
-    let obj : Map[String, Json] = {}
+    let obj : Map[String, Json] = Map([])
     obj["file"] = m.file.to_json()
     obj["line"] = m.line.to_json()
     obj["matched"] = m.matched_text.to_json()
@@ -311,7 +311,7 @@ pub fn run_semantic_search_json(
       query, tokens, path, content, registry,
     )
     for m in matches {
-      let obj : Map[String, Json] = {}
+      let obj : Map[String, Json] = Map([])
       obj["file"] = m.file.to_json()
       obj["line"] = m.line.to_json()
       obj["kind"] = m.kind.to_json()

@@ -5,7 +5,6 @@ import {
   "trkbt10/indexion/src/config",
   "trkbt10/indexion/src/core/graph",
   "trkbt10/indexion/src/regexp",
-  "moonbitlang/core/json",
   "moonbitlang/core/string",
 }
 

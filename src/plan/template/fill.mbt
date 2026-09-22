@@ -8,7 +8,7 @@ pub fn fill_issue_form(
   template : IssueFormTemplate,
   doc : @types.PlanDocument,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let style = @render.RenderStyle::markdown()
   // Map section IDs to content
   let section_map : Map[String, @types.PlanSection] = Map([])
@@ -123,7 +123,7 @@ pub fn fill_and_render(
   } else {
     doc.title
   }
-  { title, body, labels: template.labels, assignees: template.assignees }
+  { title, body, labels: template.labels, assignees: template.assignees, }
 }
 
 ///|
@@ -133,7 +133,7 @@ fn replace_title_placeholders(
 ) -> String {
   // Simple placeholder replacement: [TYPE] -> doc.metadata.get("type")
   let chars = title_pattern.to_array()
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   let mut i = 0
   while i < chars.length() {
     if chars[i] == '[' {

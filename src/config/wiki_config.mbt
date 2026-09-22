@@ -16,7 +16,7 @@ pub struct WikiColorConfig {
 
 ///|
 pub fn WikiColorConfig::empty() -> WikiColorConfig {
-  { background: None, foreground: None, primary: None, accent: None }
+  { background: None, foreground: None, primary: None, accent: None, }
 }
 
 ///|
@@ -31,10 +31,10 @@ pub fn parse_wiki_color_key(
     return config
   }
   match key {
-    "background" => { ..config, background: Some(v) }
-    "foreground" => { ..config, foreground: Some(v) }
-    "primary" => { ..config, primary: Some(v) }
-    "accent" => { ..config, accent: Some(v) }
+    "background" => { ..config, background: Some(v), }
+    "foreground" => { ..config, foreground: Some(v), }
+    "primary" => { ..config, primary: Some(v), }
+    "accent" => { ..config, accent: Some(v), }
     _ => config
   }
 }
@@ -56,7 +56,7 @@ pub fn merge_wiki_color_configs(
 ///|
 /// Convert WikiColorConfig to JSON object.
 pub fn WikiColorConfig::to_json(self : WikiColorConfig) -> Json {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj.set(
     "background",
     match self.background {
@@ -127,12 +127,12 @@ pub fn parse_wiki_section_key(
     return config
   }
   match key {
-    "title" => { ..config, title: Some(v) }
-    "logo_url" => { ..config, logo_url: Some(v) }
-    "favicon_url" => { ..config, favicon_url: Some(v) }
-    "logo_alt" => { ..config, logo_alt: Some(v) }
-    "default_color_scheme" => { ..config, default_color_scheme: Some(v) }
-    "locale" => { ..config, locale: Some(v) }
+    "title" => { ..config, title: Some(v), }
+    "logo_url" => { ..config, logo_url: Some(v), }
+    "favicon_url" => { ..config, favicon_url: Some(v), }
+    "logo_alt" => { ..config, logo_alt: Some(v), }
+    "default_color_scheme" => { ..config, default_color_scheme: Some(v), }
+    "locale" => { ..config, locale: Some(v), }
     _ => config
   }
 }
@@ -181,7 +181,7 @@ fn resolve_logo_url(url : String) -> String {
 ///|
 /// Convert WikiFileConfig to JSON for the /api/config branding response.
 pub fn WikiFileConfig::to_branding_json(self : WikiFileConfig) -> Json {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj.set(
     "title",
     match self.title {
@@ -224,7 +224,7 @@ pub fn WikiFileConfig::to_branding_json(self : WikiFileConfig) -> Json {
       None => Json::null()
     },
   )
-  let colors : Map[String, Json] = {}
+  let colors : Map[String, Json] = Map([])
   colors.set("dark", self.colors_dark.to_json())
   colors.set("light", self.colors_light.to_json())
   obj.set("colors", Json::object(colors))
@@ -245,7 +245,7 @@ pub fn load_wiki_from_json_root(root : Map[String, Json]) -> WikiFileConfig {
   match wiki_obj.get("title") {
     Some(value) =>
       match parse_json_string(value) {
-        Some(v) => if v.length() > 0 { config = { ..config, title: Some(v) } }
+        Some(v) => if v.length() > 0 { config = { ..config, title: Some(v), } }
         None => ()
       }
     None => ()
@@ -255,7 +255,7 @@ pub fn load_wiki_from_json_root(root : Map[String, Json]) -> WikiFileConfig {
       match parse_json_string(value) {
         Some(v) =>
           if v.length() > 0 {
-            config = { ..config, logo_url: Some(v) }
+            config = { ..config, logo_url: Some(v), }
           }
         None => ()
       }
@@ -266,7 +266,7 @@ pub fn load_wiki_from_json_root(root : Map[String, Json]) -> WikiFileConfig {
       match parse_json_string(value) {
         Some(v) =>
           if v.length() > 0 {
-            config = { ..config, favicon_url: Some(v) }
+            config = { ..config, favicon_url: Some(v), }
           }
         None => ()
       }
@@ -277,7 +277,7 @@ pub fn load_wiki_from_json_root(root : Map[String, Json]) -> WikiFileConfig {
       match parse_json_string(value) {
         Some(v) =>
           if v.length() > 0 {
-            config = { ..config, logo_alt: Some(v) }
+            config = { ..config, logo_alt: Some(v), }
           }
         None => ()
       }
@@ -288,7 +288,7 @@ pub fn load_wiki_from_json_root(root : Map[String, Json]) -> WikiFileConfig {
       match parse_json_string(value) {
         Some(v) =>
           if v.length() > 0 {
-            config = { ..config, default_color_scheme: Some(v) }
+            config = { ..config, default_color_scheme: Some(v), }
           }
         None => ()
       }
@@ -297,7 +297,7 @@ pub fn load_wiki_from_json_root(root : Map[String, Json]) -> WikiFileConfig {
   match wiki_obj.get("locale") {
     Some(value) =>
       match parse_json_string(value) {
-        Some(v) => if v.length() > 0 { config = { ..config, locale: Some(v) } }
+        Some(v) => if v.length() > 0 { config = { ..config, locale: Some(v), } }
         None => ()
       }
     None => ()
@@ -342,7 +342,7 @@ fn load_wiki_color_from_json(value : Json) -> WikiColorConfig {
       match parse_json_string(v) {
         Some(s) =>
           if s.length() > 0 {
-            config = { ..config, background: Some(s) }
+            config = { ..config, background: Some(s), }
           }
         None => ()
       }
@@ -353,7 +353,7 @@ fn load_wiki_color_from_json(value : Json) -> WikiColorConfig {
       match parse_json_string(v) {
         Some(s) =>
           if s.length() > 0 {
-            config = { ..config, foreground: Some(s) }
+            config = { ..config, foreground: Some(s), }
           }
         None => ()
       }
@@ -362,7 +362,10 @@ fn load_wiki_color_from_json(value : Json) -> WikiColorConfig {
   match obj.get("primary") {
     Some(v) =>
       match parse_json_string(v) {
-        Some(s) => if s.length() > 0 { config = { ..config, primary: Some(s) } }
+        Some(s) =>
+          if s.length() > 0 {
+            config = { ..config, primary: Some(s), }
+          }
         None => ()
       }
     None => ()
@@ -370,7 +373,7 @@ fn load_wiki_color_from_json(value : Json) -> WikiColorConfig {
   match obj.get("accent") {
     Some(v) =>
       match parse_json_string(v) {
-        Some(s) => if s.length() > 0 { config = { ..config, accent: Some(s) } }
+        Some(s) => if s.length() > 0 { config = { ..config, accent: Some(s), } }
         None => ()
       }
     None => ()

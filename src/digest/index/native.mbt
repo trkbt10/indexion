@@ -14,8 +14,8 @@ pub async fn DigestIndex::build_with_config(
 ) -> BuildResult {
   let result = BuildResult::new()
   // --- Phase 1: Determine which files have changed ---
-  let changed_files : Map[String, Bool] = {}
-  let file_to_modules : Map[String, Array[String]] = {}
+  let changed_files : Map[String, Bool] = Map([])
+  let file_to_modules : Map[String, Array[String]] = Map([])
   for entry in graph.get_modules() {
     let module_id = entry.0
     let module_node = entry.1
@@ -40,7 +40,7 @@ pub async fn DigestIndex::build_with_config(
       None => ()
     }
   }
-  let changed_module_set : Map[String, Bool] = {}
+  let changed_module_set : Map[String, Bool] = Map([])
   for entry in changed_files {
     match file_to_modules.get(entry.0) {
       Some(mods) =>
@@ -95,7 +95,7 @@ pub async fn DigestIndex::build_with_config(
   }
   result.removed_count = total_removed
   // --- Phase 4: Remove stale functions' old vectors ---
-  let stale_set : Map[String, Bool] = {}
+  let stale_set : Map[String, Bool] = Map([])
   for id in stale {
     stale_set.set(id, true)
     match self.manifest.get_function(id) {
@@ -164,7 +164,7 @@ pub async fn DigestIndex::build_with_config(
     let reverse = match self.vid_to_fid.get(key) {
       Some(m) => m
       None => {
-        let m : Map[Int64, String] = {}
+        let m : Map[Int64, String] = Map([])
         self.vid_to_fid.set(key, m)
         m
       }
@@ -214,7 +214,7 @@ pub async fn DigestIndex::build_with_config(
               self.manifest = self.manifest.update_function(existing)
             }
             None => {
-              let vids : Map[String, Int64] = {}
+              let vids : Map[String, Int64] = Map([])
               vids.set(key, vid)
               let entry = @manifest.FunctionEntry::from_unit(unit, vids)
               self.manifest = self.manifest.update_function(entry)
@@ -266,7 +266,7 @@ fn DigestIndex::update_file_entries(
 ) -> Unit {
   match file_hashes {
     Some(fh) => {
-      let file_functions : Map[String, Array[String]] = {}
+      let file_functions : Map[String, Array[String]] = Map([])
       for entry in self.units {
         let unit = entry.1
         match graph.get_module(unit.module_id) {
@@ -433,9 +433,9 @@ pub fn DigestIndex::from_manifest(
   manifest : @manifest.DigestManifest,
   db_map : Map[String, Bytes],
 ) -> DigestIndex {
-  let engines : Map[String, @search.SearchEngine] = {}
-  let tfidf_providers : Map[String, TfidfEmbeddingProvider] = {}
-  let vid_to_fid : Map[String, Map[Int64, String]] = {}
+  let engines : Map[String, @search.SearchEngine] = Map([])
+  let tfidf_providers : Map[String, TfidfEmbeddingProvider] = Map([])
+  let vid_to_fid : Map[String, Map[Int64, String]] = Map([])
   // Create engines and reverse indexes from loaded bytes
   for entry in db_map {
     let key = entry.0
@@ -455,7 +455,7 @@ pub fn DigestIndex::from_manifest(
       None => engines.set(key, engine)
     }
     // Build reverse index for this provider
-    let reverse : Map[Int64, String] = {}
+    let reverse : Map[Int64, String] = Map([])
     for func_entry in manifest.functions {
       match func_entry.1.vector_ids.get(key) {
         Some(vid) => reverse.set(vid, func_entry.0)
@@ -464,7 +464,7 @@ pub fn DigestIndex::from_manifest(
     }
     vid_to_fid.set(key, reverse)
   }
-  { manifest, engines, tfidf_providers, units: {}, vid_to_fid }
+  { manifest, engines, tfidf_providers, units: {}, vid_to_fid, }
 }
 
 ///|
@@ -473,7 +473,7 @@ pub fn DigestIndex::with_config(config : @config.DigestConfig) -> DigestIndex {
   let spec_hash = @hash.to_content_hash(
     @types.FunctionHash::from_string("digest-v1"),
   )
-  let provider_metas : Map[String, @manifest.ProviderMeta] = {}
+  let provider_metas : Map[String, @manifest.ProviderMeta] = Map([])
   for pc in config.providers {
     let model : String? = match pc.api_config {
       Some(cfg) => Some(cfg.model)
@@ -493,9 +493,9 @@ pub fn DigestIndex::with_config(config : @config.DigestConfig) -> DigestIndex {
   }
   let manifest = @manifest.DigestManifest::new(spec_hash, provider_metas)
   let strategy = config.vcdb_strategy
-  let engines : Map[String, @search.SearchEngine] = {}
-  let tfidf_providers : Map[String, TfidfEmbeddingProvider] = {}
-  let vid_to_fid : Map[String, Map[Int64, String]] = {}
+  let engines : Map[String, @search.SearchEngine] = Map([])
+  let tfidf_providers : Map[String, TfidfEmbeddingProvider] = Map([])
+  let vid_to_fid : Map[String, Map[Int64, String]] = Map([])
   for pc in config.providers {
     let engine = @search.SearchEngine::create(dim=pc.dim, strategy~)
     if pc.kind == "tfidf" {
@@ -507,7 +507,7 @@ pub fn DigestIndex::with_config(config : @config.DigestConfig) -> DigestIndex {
     }
     vid_to_fid.set(pc.key, {})
   }
-  { manifest, engines, tfidf_providers, units: {}, vid_to_fid }
+  { manifest, engines, tfidf_providers, units: {}, vid_to_fid, }
 }
 
 // --- Index store management (persistence, locking, cleanup) ---
@@ -572,7 +572,7 @@ pub fn DigestIndex::load_or_create(
     None => return DigestIndex::with_config(digest_config)
   }
   // Load vector databases for each provider in the manifest
-  let db_map : Map[String, Bytes] = {}
+  let db_map : Map[String, Bytes] = Map([])
   for entry in manifest.providers {
     let key = entry.0
     let vp = @config.vectors_db_path(index_dir, key)

@@ -42,32 +42,32 @@ pub fn McpConfig::from_matches(matches : @argparse.Matches) -> McpConfig {
   match matches.values.get("transport") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, transport: vals[0] }
+        config = { ..config, transport: vals[0], }
       }
     None => ()
   }
   match matches.values.get("port") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, port: @common.parse_int(vals[0]) }
+        config = { ..config, port: @common.parse_int(vals[0]), }
       }
     None => ()
   }
   match matches.values.get("host") {
-    Some(vals) => if vals.length() > 0 { config = { ..config, host: vals[0] } }
+    Some(vals) => if vals.length() > 0 { config = { ..config, host: vals[0], } }
     None => ()
   }
   match matches.values.get("specs-dir") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, specs_dir: vals[0] }
+        config = { ..config, specs_dir: vals[0], }
       }
     None => ()
   }
   match matches.values.get("workspace") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, workspace_dir: vals[0] }
+        config = { ..config, workspace_dir: vals[0], }
       }
     None => ()
   }
@@ -115,28 +115,28 @@ pub fn McpConfig::apply_file_config(
   match file.transport {
     Some(v) =>
       if config.transport == defaults.transport {
-        config = { ..config, transport: v }
+        config = { ..config, transport: v, }
       }
     None => ()
   }
   match file.port {
     Some(v) =>
       if config.port == defaults.port {
-        config = { ..config, port: v }
+        config = { ..config, port: v, }
       }
     None => ()
   }
   match file.host {
     Some(v) =>
       if config.host == defaults.host {
-        config = { ..config, host: v }
+        config = { ..config, host: v, }
       }
     None => ()
   }
   match file.specs_dir {
     Some(v) =>
       if config.specs_dir == defaults.specs_dir {
-        config = { ..config, specs_dir: v }
+        config = { ..config, specs_dir: v, }
       }
     None => ()
   }

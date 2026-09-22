@@ -71,7 +71,7 @@ pub async fn get_embeddings(
   config : OpenAIConfig,
   texts : Array[String],
 ) -> Array[Array[Double]] raise EmbedError {
-  let headers : Map[String, String] = {}
+  let headers : Map[String, String] = Map([])
   headers.set("Authorization", "Bearer " + config.api_key)
   headers.set("Content-Type", "application/json")
   let body = build_request_body(texts, config.model)

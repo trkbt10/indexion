@@ -28,11 +28,11 @@
 /// Lines starting with `#` are comments. Blank lines are ignored.
 pub fn parse_classify(text : String) -> @types.ClassifyModel? {
   let lines = split_lines(text)
-  let metadata : Map[String, String] = {}
-  let classes : Map[String, @types.ClassifyClass] = {}
+  let metadata : Map[String, String] = Map([])
+  let classes : Map[String, @types.ClassifyClass] = Map([])
   let mut current_class : String = ""
   let mut current_prior : Double = 0.0
-  let mut current_vocab : Map[String, Double] = {}
+  let mut current_vocab : Map[String, Double] = Map([])
   for line in lines {
     let trimmed = trim_str(line)
     if trimmed.length() == 0 || trimmed.has_prefix("#") {

@@ -33,42 +33,42 @@ fn resolve_config(matches : @argparse.Matches) -> @spec_draft.DraftConfig {
   match matches.values.get("source-path") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, source_path: values[0] }
+        config = { ..config, source_path: values[0], }
       }
     None => ()
   }
   match matches.values.get("output") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, output: values[0] }
+        config = { ..config, output: values[0], }
       }
     None => ()
   }
   match matches.values.get("format") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, format: values[0] }
+        config = { ..config, format: values[0], }
       }
     None => ()
   }
   match matches.values.get("specs-dir") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, specs_dir: values[0] }
+        config = { ..config, specs_dir: values[0], }
       }
     None => ()
   }
   match matches.values.get("profile") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, profile: values[0] }
+        config = { ..config, profile: values[0], }
       }
     None => ()
   }
   match matches.values.get("max-requirements") {
     Some(values) =>
       if values.length() > 0 {
-        config = { ..config, max_requirements: @common.parse_int(values[0]) }
+        config = { ..config, max_requirements: @common.parse_int(values[0]), }
       }
     None => ()
   }

@@ -46,7 +46,7 @@ pub fn jensen_shannon_divergence(
     return 1.0
   }
   // Collect all terms from both distributions
-  let all_terms : Map[String, Bool] = {}
+  let all_terms : Map[String, Bool] = Map([])
   for entry in tf_a {
     all_terms.set(entry.0, true)
   }

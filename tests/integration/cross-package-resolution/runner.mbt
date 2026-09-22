@@ -97,7 +97,7 @@ pub fn snapshot_of(graph : @graph.CodeGraph) -> String raise {
   dep_rows.sort()
   let dep_json : Array[Json] = []
   for row in dep_rows {
-    let obj : Map[String, Json] = {}
+    let obj : Map[String, Json] = Map([])
     obj.set("from", row.0.to_json())
     obj.set("to", row.1.to_json())
     if row.2.length() > 0 {
@@ -115,8 +115,8 @@ pub fn snapshot_of(graph : @graph.CodeGraph) -> String raise {
   // deduping pins the snapshot to the set of distinct relationships the
   // graph asserts, regardless of how many times each was emitted during
   // the build pass.
-  let unique_edge_keys : Map[String, Unit] = {}
-  let by_kind : Map[String, Int] = {}
+  let unique_edge_keys : Map[String, Unit] = Map([])
+  let by_kind : Map[String, Int] = Map([])
   for edge in round_tripped.get_edges() {
     let kind_str = edge.kind.to_string()
     let key = kind_str + "\u{1f}" + edge.from + "\u{1f}" + edge.to
@@ -132,11 +132,11 @@ pub fn snapshot_of(graph : @graph.CodeGraph) -> String raise {
     kind_keys.push(entry.0)
   }
   kind_keys.sort()
-  let by_kind_json : Map[String, Json] = {}
+  let by_kind_json : Map[String, Json] = Map([])
   for k in kind_keys {
     by_kind_json.set(k, by_kind.get(k).unwrap().to_json())
   }
-  let stats : Map[String, Json] = {}
+  let stats : Map[String, Json] = Map([])
   stats.set("symbols", symbols.length().to_json())
   stats.set("edges", unique_edge_keys.length().to_json())
   stats.set("edgesByKind", Json::object(by_kind_json))
@@ -253,7 +253,7 @@ pub fn assert_snapshot_matches(
 
 ///|
 fn is_update_mode() -> Bool {
-  match @sys.get_env_var("INDEXION_UPDATE_SNAPSHOTS") {
+  match @env.get_env_var("INDEXION_UPDATE_SNAPSHOTS") {
     Some(v) => v == "1" || v == "true"
     None => false
   }

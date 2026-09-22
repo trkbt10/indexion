@@ -1,11 +1,11 @@
 ///|
 test "agent orient: readiness quiz captures owner and forbidden path" {
   let quiz = readiness_quiz(
-    [{ path: "src/identity", reason: "owner" }],
+    [{ path: "src/identity", reason: "owner", }],
     [],
-    [{ path: "cmd/indexion/identity/cli.mbt", reason: "consumer" }],
-    [{ path: "cmd/indexion/identity/cli.mbt", reason: "forbidden" }],
-    [{ path: "src/identity/audit.mbt", reason: "read first" }],
+    [{ path: "cmd/indexion/identity/cli.mbt", reason: "consumer", }],
+    [{ path: "cmd/indexion/identity/cli.mbt", reason: "forbidden", }],
+    [{ path: "src/identity/audit.mbt", reason: "read first", }],
   )
   assert_eq(quiz.length(), 3)
   assert_eq(quiz[0].expected_answer, "src/identity")
@@ -16,13 +16,13 @@ test "agent orient: readiness quiz captures owner and forbidden path" {
 ///|
 test "agent orient: readiness quiz prefers implementation preflight evidence" {
   let quiz = readiness_quiz(
-    [{ path: "src/identity", reason: "owner" }],
+    [{ path: "src/identity", reason: "owner", }],
     [],
     [],
-    [{ path: "cmd/indexion/identity/cli.mbt", reason: "forbidden" }],
+    [{ path: "cmd/indexion/identity/cli.mbt", reason: "forbidden", }],
     [
-      { path: "cmd/indexion/main.mbt", reason: "consumer read first" },
-      { path: "src/identity/audit.mbt", reason: "read second" },
+      { path: "cmd/indexion/main.mbt", reason: "consumer read first", },
+      { path: "src/identity/audit.mbt", reason: "read second", },
     ],
   )
   assert_eq(quiz[2].expected_answer, "src/identity/audit.mbt")

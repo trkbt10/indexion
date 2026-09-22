@@ -22,7 +22,7 @@ test "solid: categorize_matches uses shared path scope matching" {
     },
   ]
   let rules : Array[SolidRule] = [
-    { pattern: "src/**/api.[tj]s", target: "shared/http/" },
+    { pattern: "src/**/api.[tj]s", target: "shared/http/", },
   ]
   let categorized = categorize_matches(matches, rules, "components")
   assert_eq(categorized.unmatched.length(), 0)
@@ -42,7 +42,7 @@ test "solid: content matches are categorized correctly" {
     },
   ]
   let rules : Array[SolidRule] = [
-    { pattern: "src/auth/**", target: "shared/auth/" },
+    { pattern: "src/auth/**", target: "shared/auth/", },
   ]
   let categorized = categorize_matches(matches, rules, "components")
   assert_eq(categorized.unmatched.length(), 0)

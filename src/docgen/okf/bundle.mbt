@@ -222,7 +222,7 @@ fn render_package_concept(
     Some(ts) => frontmatter.push(("timestamp", Str(ts)))
     None => ()
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(render_frontmatter(frontmatter))
   buf.write_string("\n")
   if pkg.overview.length() > 0 {
@@ -347,7 +347,7 @@ fn render_external_concept(
     Some(ts) => frontmatter.push(("timestamp", Str(ts)))
     None => ()
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(render_frontmatter(frontmatter))
   buf.write_string("\n")
   if dependents.length() > 0 {
@@ -399,7 +399,7 @@ fn render_indexes(entries : Array[ConceptEntry]) -> Array[(String, String)] {
   dir_list.sort()
   let result : Array[(String, String)] = []
   for dir in dir_list {
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     // Direct-child concepts grouped by type.
     let child_entries : Array[ConceptEntry] = []
     for entry in entries {
@@ -479,7 +479,7 @@ fn render_log(
   package_count : Int,
   external_count : Int,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# Bundle Update Log\n\n## ")
   buf.write_string(date_of(timestamp))
   buf.write_string("\n\n* **Generation**: Generated ")
@@ -550,7 +550,7 @@ fn push_segment(segments : Array[String], current : Array[Char]) -> Unit {
 
 ///|
 fn join_segments(segments : Array[String]) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i, segment in segments {
     if i > 0 {
       buf.write_string("/")
@@ -588,7 +588,7 @@ fn base_of(path : String) -> String {
 ///|
 /// Escape a value for use inside a markdown table cell.
 fn escape_table_cell(s : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for ch in s.to_array() {
     match ch {
       '|' => buf.write_string("\\|")

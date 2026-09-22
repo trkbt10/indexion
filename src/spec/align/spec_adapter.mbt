@@ -2,7 +2,7 @@
 /// Tokenize text into lowercase words for classification scoring.
 fn tokenize_for_scoring(text : String) -> Array[String] {
   let words : Array[String] = []
-  let mut buf = StringBuilder::new()
+  let mut buf = StringBuilder()
   for c in text {
     if (c >= 'a' && c <= 'z') ||
       (c >= 'A' && c <= 'Z') ||
@@ -17,7 +17,7 @@ fn tokenize_for_scoring(text : String) -> Array[String] {
       if buf.to_string().length() >= 2 {
         words.push(buf.to_string())
       }
-      buf = StringBuilder::new()
+      buf = StringBuilder()
     }
   }
   if buf.to_string().length() >= 2 {
@@ -51,7 +51,7 @@ fn classify_normative_strength(body : String) -> String? {
 fn section_roles_from_facts(
   interpreted : @doc_structure.InterpretedDocument,
 ) -> Map[Int, String] {
-  let roles : Map[Int, String] = {}
+  let roles : Map[Int, String] = Map([])
   for fact in interpreted.facts {
     if fact.kind != "document_section_role" {
       continue
@@ -254,7 +254,7 @@ fn note_strings_by_line(
   kind : String,
   key : String,
 ) -> Map[Int, Array[String]] {
-  let result : Map[Int, Array[String]] = {}
+  let result : Map[Int, Array[String]] = Map([])
   for fact in interpreted.facts {
     if fact.kind != kind {
       continue
@@ -281,8 +281,8 @@ fn note_strings_by_line(
 fn note_pairs_by_line(
   interpreted : @doc_structure.InterpretedDocument,
 ) -> Map[Int, Array[String]] {
-  let result : Map[Int, Array[String]] = {}
-  let seen : Map[Int, Bool] = {}
+  let result : Map[Int, Array[String]] = Map([])
+  let seen : Map[Int, Bool] = Map([])
   for fact in interpreted.facts {
     let line = @doc_structure.json_int_field(fact.payload, "line")
     if fact.kind != "document_table_pairs" || line <= 0 || seen.contains(line) {
@@ -327,7 +327,7 @@ fn load_spec_nodes(
     let source_format = spec.get_language()
     let requirements : Array[RequirementNode] = []
     let scenarios : Array[ScenarioNode] = []
-    let criteria_by_requirement : Map[String, Array[String]] = {}
+    let criteria_by_requirement : Map[String, Array[String]] = Map([])
     for fact in interpreted.facts {
       let ty = fact.kind
       let payload = fact.payload

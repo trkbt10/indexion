@@ -191,7 +191,7 @@ fn apply_doc_scope(config : ReconcileConfig) -> ReconcileConfig {
     index_patterns~,
     wildcard_patterns~,
   )
-  { ..config, documents: resolved }
+  { ..config, documents: resolved, }
 }
 
 ///|
@@ -204,7 +204,7 @@ fn collect_document_patterns(
   }
   let index_patterns : Array[String] = []
   let wild_patterns : Array[String] = []
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let languages = reg.get_languages()
   for language in languages {
     let spec = match reg.get_spec(language) {
@@ -218,7 +218,7 @@ fn collect_document_patterns(
     for idx in resolver.get_indexes() {
       let clean = if idx.has_prefix("/") {
         let chars = idx.to_array()
-        let buf = StringBuilder::new()
+        let buf = StringBuilder()
         for i = 1; i < chars.length(); i = i + 1 {
           buf.write_char(chars[i])
         }
@@ -372,12 +372,12 @@ fn parse_args_state_from_matches(
   let mut config = ReconcileConfig::default()
   // output
   match matches.values.get("output") {
-    Some(arr) => if arr.length() > 0 { config = { ..config, output: arr[0] } }
+    Some(arr) => if arr.length() > 0 { config = { ..config, output: arr[0], } }
     _ => ()
   }
   // format
   match matches.values.get("format") {
-    Some(arr) => if arr.length() > 0 { config = { ..config, format: arr[0] } }
+    Some(arr) => if arr.length() > 0 { config = { ..config, format: arr[0], } }
     _ => ()
   }
   // scope
@@ -392,7 +392,7 @@ fn parse_args_state_from_matches(
   match matches.values.get("specs-dir") {
     Some(arr) =>
       if arr.length() > 0 {
-        config = { ..config, specs_dir: arr[0] }
+        config = { ..config, specs_dir: arr[0], }
       }
     _ => ()
   }
@@ -400,7 +400,7 @@ fn parse_args_state_from_matches(
   match matches.values.get("index-dir") {
     Some(arr) =>
       if arr.length() > 0 {
-        config = { ..config, index_dir: arr[0] }
+        config = { ..config, index_dir: arr[0], }
       }
     _ => ()
   }
@@ -408,7 +408,7 @@ fn parse_args_state_from_matches(
   match matches.values.get("config") {
     Some(arr) =>
       if arr.length() > 0 {
-        config = { ..config, config_path: arr[0] }
+        config = { ..config, config_path: arr[0], }
       }
     _ => ()
   }
@@ -416,7 +416,7 @@ fn parse_args_state_from_matches(
   match matches.values.get("review-results") {
     Some(arr) =>
       if arr.length() > 0 {
-        config = { ..config, review_results_path: arr[0] }
+        config = { ..config, review_results_path: arr[0], }
       }
     _ => ()
   }
@@ -424,7 +424,7 @@ fn parse_args_state_from_matches(
   match matches.values.get("threshold-seconds") {
     Some(arr) =>
       if arr.length() > 0 {
-        config = { ..config, threshold_seconds: @common.parse_int(arr[0]) }
+        config = { ..config, threshold_seconds: @common.parse_int(arr[0]), }
       }
     _ => ()
   }
@@ -432,7 +432,7 @@ fn parse_args_state_from_matches(
   match matches.values.get("max-candidates") {
     Some(arr) =>
       if arr.length() > 0 {
-        config = { ..config, max_candidates: @common.parse_int(arr[0]) }
+        config = { ..config, max_candidates: @common.parse_int(arr[0]), }
       }
     _ => ()
   }
@@ -454,7 +454,7 @@ fn parse_args_state_from_matches(
   match matches.values.get("logical-review") {
     Some(arr) =>
       if arr.length() > 0 {
-        config = { ..config, logical_review_mode: arr[0] }
+        config = { ..config, logical_review_mode: arr[0], }
       }
     _ => ()
   }
@@ -471,30 +471,30 @@ fn parse_args_state_from_matches(
   }
   // no-file-fallback (flag)
   match matches.flags.get("no-file-fallback") {
-    Some(true) => config = { ..config, allow_file_fallback: false }
+    Some(true) => config = { ..config, allow_file_fallback: false, }
     _ => ()
   }
   // git (flag)
   match matches.flags.get("git") {
-    Some(true) => config = { ..config, git_preferred: true }
+    Some(true) => config = { ..config, git_preferred: true, }
     _ => ()
   }
   // mtime-only (flag)
   match matches.flags.get("mtime-only") {
     Some(true) =>
-      config = { ..config, git_preferred: false, mtime_fallback: true }
+      config = { ..config, git_preferred: false, mtime_fallback: true, }
     _ => ()
   }
   // no-parallel (flag)
   match matches.flags.get("no-parallel") {
-    Some(true) => config = { ..config, parallel: false }
+    Some(true) => config = { ..config, parallel: false, }
     _ => ()
   }
   // directory (positional)
   match matches.values.get("directory") {
     Some(arr) =>
       if arr.length() > 0 {
-        config = { ..config, target_dir: arr[0] }
+        config = { ..config, target_dir: arr[0], }
       }
     _ => ()
   }
@@ -543,7 +543,7 @@ pub fn resolve_config_from_matches(
     config_path,
     specs_dir: resolve_specs_dir(target_dir, specs_dir=cli.specs_dir),
   }
-  let merged0 = merge_file_config({ ..parsed, config: base }, file_config)
+  let merged0 = merge_file_config({ ..parsed, config: base, }, file_config)
   let merged = if (parsed.explicit_doc_paths || parsed.explicit_doc_specs) &&
     !parsed.explicit_doc_scope {
     update_documents_scope_name(merged0, "custom")

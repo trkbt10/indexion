@@ -124,7 +124,7 @@ pub fn CompiledPattern::literal_text(self : CompiledPattern) -> String? {
     return None
   }
   let alt = self.alternatives[0]
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for q in alt {
     if q.lazy_ {
       return None

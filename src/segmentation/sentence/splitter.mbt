@@ -87,7 +87,7 @@ fn update_quote_stack(
   index : Int,
 ) -> Unit {
   if is_opening_quote(c) {
-    stack.push({ open: c, start: index })
+    stack.push({ open: c, start: index, })
     return
   }
   if is_closing_quote(c) {
@@ -263,7 +263,7 @@ pub fn split_sentences_with_options(
 ///|
 /// Extract a substring from a character array.
 fn extract_substring(chars : Array[Char], start : Int, end : Int) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = start; i < end; i = i + 1 {
     buf.write_char(chars[i])
   }

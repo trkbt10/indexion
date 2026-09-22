@@ -42,7 +42,7 @@ pub fn PageProposal::new(
   content~ : String,
   sources~ : Array[String],
 ) -> PageProposal {
-  { id, title, content, sources }
+  { id, title, content, sources, }
 }
 
 ///|

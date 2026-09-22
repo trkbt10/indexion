@@ -115,13 +115,13 @@ pub fn transpile_file_json_with_registry(
       let ir_events_json : Array[Json] = ir_events
         .iter()
         .map(fn(ev) {
-          let obj : Map[String, Json] = {}
+          let obj : Map[String, Json] = Map([])
           obj.set("rule", ev.0.to_json())
           obj.set("labels", Json::object(ev.1))
           Json::object(obj)
         })
         .collect()
-      let root : Map[String, Json] = {}
+      let root : Map[String, Json] = Map([])
       root.set("source_lang", source_lang.to_json())
       root.set("target_lang", target_lang.to_json())
       root.set("source_file", file_path.to_json())
@@ -208,7 +208,7 @@ fn enrich_with_raw_body(
   open_ch : Char,
   close_ch : Char,
 ) -> Map[String, Json] {
-  let out : Map[String, Json] = {}
+  let out : Map[String, Json] = Map([])
   for entry in labels {
     out.set(entry.0, entry.1)
   }

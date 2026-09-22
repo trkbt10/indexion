@@ -33,7 +33,7 @@ pub struct StoryDocument {
 
 ///|
 pub fn StoryDocument::new(path : String, content : String) -> StoryDocument {
-  { path, content }
+  { path, content, }
 }
 
 ///|
@@ -61,7 +61,7 @@ pub fn StoryGroups::new(
   spec : Array[StoryDocument],
   impl_ : Array[StoryDocument],
 ) -> StoryGroups {
-  { spec, impl_ }
+  { spec, impl_, }
 }
 
 ///|
@@ -252,7 +252,7 @@ pub fn StoryConfig::new(
   min_value_length? : Int = 2,
   registry_root? : String = "",
 ) -> StoryConfig {
-  { max_terms, min_value_length, registry_root }
+  { max_terms, min_value_length, registry_root, }
 }
 
 ///|

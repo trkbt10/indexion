@@ -113,7 +113,7 @@ test "document semantics emit section refs and table pairs" {
   let refs = section_refs_for_line(interpreted, 1)
   let pairs = table_pairs_for_line(interpreted, 1)
   assert_eq(refs, ["6", "6.1", "6.2"])
-  assert_eq(pairs, [{ label: "REQUEST_STOP", literal: "7" }])
+  assert_eq(pairs, [{ label: "REQUEST_STOP", literal: "7", }])
 }
 
 ///|
@@ -133,7 +133,7 @@ test "document semantics from kgf spec emit generic fact notes" {
     spec.get_language(),
     fn(_) { false },
   )
-  let labels : Map[String, Json] = {}
+  let labels : Map[String, Json] = Map([])
   labels.set("title", "Timeout".to_json())
   labels.set(
     "body",

@@ -91,7 +91,7 @@ pub fn OkfConfig::from_matches(matches : @argparse.Matches) -> OkfConfig {
     Some(arr) if arr.length() > 0 => arr
     _ => ["."]
   }
-  { paths, specs_dir, includes, excludes, recursive, output, title }
+  { paths, specs_dir, includes, excludes, recursive, output, title, }
 }
 
 ///|

@@ -19,7 +19,7 @@ pub struct PunctuationConfig {
 
 ///|
 pub impl Show for PunctuationConfig with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|
@@ -51,7 +51,7 @@ pub fn PunctuationConfig::create(
   min_chunk_size : Int,
   max_chunk_size : Int,
 ) -> PunctuationConfig {
-  { target_chunk_size, min_chunk_size, max_chunk_size }
+  { target_chunk_size, min_chunk_size, max_chunk_size, }
 }
 
 ///|
@@ -85,7 +85,7 @@ pub struct PunctuationStrategy {
 ///|
 /// Create a new PunctuationStrategy with default configuration.
 pub fn PunctuationStrategy::new() -> PunctuationStrategy {
-  { config: PunctuationConfig::new() }
+  { config: PunctuationConfig::new(), }
 }
 
 ///|

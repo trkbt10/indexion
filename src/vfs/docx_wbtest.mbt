@@ -57,7 +57,7 @@ let rels_ns : String = "http://schemas.openxmlformats.org/package/2006/relations
 /// Build the [Content_Types].xml part.
 /// This is a structural part that should be EXCLUDED by the KGF spec.
 fn make_content_types_xml() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -81,7 +81,7 @@ fn make_content_types_xml() -> String {
 /// Build the top-level _rels/.rels part.
 /// Structural relationship part — should be EXCLUDED.
 fn make_root_rels() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -102,7 +102,7 @@ fn make_root_rels() -> String {
 /// Build word/_rels/document.xml.rels.
 /// Structural relationship part — should be EXCLUDED.
 fn make_document_rels() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -123,7 +123,7 @@ fn make_document_rels() -> String {
 /// Build word/glossary/_rels/document.xml.rels.
 /// Structural relationship part for glossary — should be EXCLUDED.
 fn make_glossary_rels() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -141,7 +141,7 @@ fn make_glossary_rels() -> String {
 /// Build word/document.xml — the main document body.
 /// Contains paragraphs with runs and text elements per ECMA-376 Section 17.3.
 fn make_document_xml() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -168,7 +168,7 @@ fn make_document_xml() -> String {
 /// Build a word/headerN.xml part.
 /// Headers use <w:hdr> root element per ECMA-376 Section 17.10.3.
 fn make_header_xml(number : Int, text : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -192,7 +192,7 @@ fn make_header_xml(number : Int, text : String) -> String {
 /// Build a word/footerN.xml part.
 /// Footers use <w:ftr> root element per ECMA-376 Section 17.10.2.
 fn make_footer_xml(number : Int, text : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -216,7 +216,7 @@ fn make_footer_xml(number : Int, text : String) -> String {
 /// Build word/footnotes.xml.
 /// Contains footnote elements per ECMA-376 Section 17.11.8.
 fn make_footnotes_xml() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -243,7 +243,7 @@ fn make_footnotes_xml() -> String {
 /// Build word/endnotes.xml.
 /// Contains endnote elements per ECMA-376 Section 17.11.4.
 fn make_endnotes_xml() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -268,7 +268,7 @@ fn make_endnotes_xml() -> String {
 /// Build word/comments.xml.
 /// Contains comment elements per ECMA-376 Section 17.13.4.2.
 fn make_comments_xml() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -292,7 +292,7 @@ fn make_comments_xml() -> String {
 /// Build word/commentsExtended.xml.
 /// Extended comments introduced in Office 2013 (ISO/IEC 29500:2012 amendment).
 fn make_comments_extended_xml() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -310,7 +310,7 @@ fn make_comments_extended_xml() -> String {
 /// Build word/numbering.xml.
 /// List numbering definitions per ECMA-376 Section 17.9.
 fn make_numbering_xml() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -335,7 +335,7 @@ fn make_numbering_xml() -> String {
 /// Build word/styles.xml.
 /// Style definitions per ECMA-376 Section 17.7.
 fn make_styles_xml() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -359,7 +359,7 @@ fn make_styles_xml() -> String {
 /// Build word/glossary/document.xml.
 /// Glossary document (building blocks) per ECMA-376 Section 17.12.
 fn make_glossary_document_xml() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -388,7 +388,7 @@ fn make_glossary_document_xml() -> String {
 /// Build docProps/core.xml.
 /// Dublin Core metadata per ECMA-376 Part 2, Section 11.1.
 fn make_core_properties_xml() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -416,7 +416,7 @@ fn make_core_properties_xml() -> String {
 /// Build docProps/app.xml.
 /// Application metadata per ECMA-376 Part 2, Section 11.2.
 fn make_app_properties_xml() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )
@@ -435,7 +435,7 @@ fn make_app_properties_xml() -> String {
 /// Build docProps/custom.xml.
 /// Custom properties per ECMA-376 Part 2, Section 11.3.
 fn make_custom_properties_xml() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(
     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n",
   )

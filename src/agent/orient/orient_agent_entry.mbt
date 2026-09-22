@@ -15,14 +15,8 @@ pub async fn orient_agent(config : AgentOrientConfig) -> AgentOrientReport {
 ///|
 async fn orient_agent_update(config : AgentOrientConfig) -> AgentOrientReport {
   let lock = @cache.try_acquire_writer_lock(config)
-  let report = orient_agent_update_locked(config) catch {
-    err => {
-      lock.release()
-      raise err
-    }
-  }
-  lock.release()
-  report
+  defer lock.release()
+  orient_agent_update_locked(config)
 }
 
 ///|
@@ -83,8 +77,8 @@ async fn orient_agent_update_locked(
   // for classification.
   let t = @pipeline.now_ms()
   let cached_files = @cache.scan_all_cached_files(handle)
-  let cached_signature_by_path : Map[String, @pipeline.FileSignature] = {}
-  let cached_by_path : Map[String, @cache.CachedFile] = {}
+  let cached_signature_by_path : Map[String, @pipeline.FileSignature] = Map([])
+  let cached_by_path : Map[String, @cache.CachedFile] = Map([])
   for cached in cached_files {
     cached_by_path.set(cached.path, cached)
     cached_signature_by_path.set(cached.path, {
@@ -153,8 +147,8 @@ async fn orient_agent_update_locked(
     classification.candidates,
     registry,
   )
-  let candidate_files_by_path : Map[String, @pipeline.SupportedFile] = {}
-  let candidate_hashes : Map[String, String] = {}
+  let candidate_files_by_path : Map[String, @pipeline.SupportedFile] = Map([])
+  let candidate_hashes : Map[String, String] = Map([])
   let mut content_changed = 0
   for file in candidate_files {
     candidate_files_by_path.set(file.path, file)
@@ -177,7 +171,7 @@ async fn orient_agent_update_locked(
 
   // Build the per-file brief list.
   let needs_graph = content_changed > 0
-  let signatures_by_fresh_path : Map[String, @pipeline.FileSignature] = {}
+  let signatures_by_fresh_path : Map[String, @pipeline.FileSignature] = Map([])
   for sig in fresh_signatures {
     signatures_by_fresh_path.set(sig.path, sig)
   }
@@ -214,7 +208,7 @@ async fn orient_agent_update_locked(
   let mut refreshed_only = 0
   let mut reused_pure = 0
   let mut rebuilt = 0
-  let rebuilt_by_path : Map[String, @types.LocalFileBrief] = {}
+  let rebuilt_by_path : Map[String, @types.LocalFileBrief] = Map([])
   for brief in rebuild_briefs {
     let fresh_sig = signatures_by_fresh_path.get(brief.path)
     let mtime_ns = match fresh_sig {
@@ -225,7 +219,7 @@ async fn orient_agent_update_locked(
       Some(sig) => sig.size_bytes
       None => 0L
     }
-    rebuilt_by_path.set(brief.path, { ..brief, mtime_ns, size_bytes })
+    rebuilt_by_path.set(brief.path, { ..brief, mtime_ns, size_bytes, })
   }
   for sig in fresh_signatures {
     match rebuilt_by_path.get(sig.path) {
@@ -384,7 +378,7 @@ fn orient_entry_stamp_signatures(
   briefs : Array[@types.LocalFileBrief],
   signatures : Array[@pipeline.FileSignature],
 ) -> Array[@types.LocalFileBrief] {
-  let sig_by_path : Map[String, @pipeline.FileSignature] = {}
+  let sig_by_path : Map[String, @pipeline.FileSignature] = Map([])
   for sig in signatures {
     sig_by_path.set(sig.path, sig)
   }

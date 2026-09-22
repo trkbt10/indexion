@@ -59,7 +59,7 @@ fn to_lower(c : Char) -> Char {
 /// point of the entire body before doing any work, which dominated tokenize
 /// time and triggered OOM on huge files.
 pub fn normalize_text(text : String) -> String {
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   let mut last_was_space = true // Start true to trim leading space
   for c in text {
     if c == ' ' || c == '\t' || c == '\n' || c == '\r' {
@@ -88,7 +88,7 @@ pub fn normalize_text(text : String) -> String {
 /// array — see `normalize_text` for the underlying memory rationale.
 pub fn extract_word_tokens(text : String) -> Array[String] {
   let tokens : Array[String] = []
-  let current_word = StringBuilder::new()
+  let current_word = StringBuilder()
   let mut current_len = 0
   for c in text {
     if is_word_char(c) && !is_cjk_char(c) {

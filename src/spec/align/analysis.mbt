@@ -166,7 +166,7 @@ async fn collect_spec_data(
   let requirements : Array[RequirementNode] = []
   let scenarios : Array[ScenarioNode] = []
   let used_specs : Array[String] = []
-  let file_hashes : Map[String, String] = {}
+  let file_hashes : Map[String, String] = Map([])
   let file_states : Array[@reconcile_tracking.FileState] = []
   let spec_files = discover_spec_files(config.spec_path, registry)
   let root = tracking_root(config)
@@ -286,8 +286,8 @@ async fn collect_impl_data(
 ) {
   let implementations : Array[ImplementationNode] = []
   let used_specs : Array[String] = []
-  let file_hashes : Map[String, String] = {}
-  let file_contents : Map[String, String] = {}
+  let file_hashes : Map[String, String] = Map([])
+  let file_contents : Map[String, String] = Map([])
   let file_states : Array[@reconcile_tracking.FileState] = []
   let impl_files = discover_impl_files(config.impl_path, registry)
   let root = tracking_root(config)
@@ -331,7 +331,7 @@ async fn collect_impl_data(
       Some(registry),
     )
     if kgf_declarations.length() > 0 {
-      let seen : Map[String, Bool] = {}
+      let seen : Map[String, Bool] = Map([])
       for declaration in kgf_declarations {
         let key = declaration.name + "@" + declaration.line.to_string()
         if seen.contains(key) {
@@ -392,7 +392,7 @@ fn requirement_text(
   requirement : RequirementNode,
   scenarios : Array[ScenarioNode],
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(requirement.title)
   buf.write_string("\n")
   buf.write_string(requirement.description)
@@ -617,7 +617,7 @@ fn decimal_to_hex(value : String) -> String? {
     chars.push(digits[current % 16])
     current = current / 16
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = chars.length() - 1; i >= 0; i = i - 1 {
     buf.write_char(chars[i])
   }
@@ -836,7 +836,7 @@ fn table_pair_overlap_score(
 
 ///|
 fn implementation_evidence_text(implementation : ImplementationNode) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(implementation.name)
   buf.write_string("\n")
   buf.write_string(normalize_identifier_words(implementation.name))
@@ -849,7 +849,7 @@ fn implementation_evidence_text(implementation : ImplementationNode) -> String {
 
 ///|
 fn implementation_text(implementation : ImplementationNode) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(implementation_evidence_text(implementation))
   buf.write_string("\n")
   match implementation.doc_comment {
@@ -861,7 +861,7 @@ fn implementation_text(implementation : ImplementationNode) -> String {
 
 ///|
 fn normalize_identifier_words(text : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let chars = text.to_array()
   for i = 0; i < chars.length(); i = i + 1 {
     let ch = chars[i]
@@ -930,7 +930,7 @@ fn identifier_match_score(
   let impl_normalized = lower_ascii(
     normalize_identifier_words(implementation.name),
   )
-  let impl_body_buf = StringBuilder::new()
+  let impl_body_buf = StringBuilder()
   impl_body_buf.write_string(implementation.declaration_text)
   match implementation.doc_comment {
     Some(doc) => {
@@ -969,7 +969,7 @@ fn identifier_match_score(
 /// Used to normalize spec identifiers (e.g. `data:` → `data`) for
 /// fuzzy matching against code.
 fn extract_alnum(s : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in s {
     let code = c.to_int()
     let is_ascii_alnum = (code >= 0x30 && code <= 0x39) ||
@@ -1234,7 +1234,7 @@ fn matched_implementations_for_requirement(
   requirement_id : String,
 ) -> Array[ImplementationNode] {
   let result : Array[ImplementationNode] = []
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for edge in edges {
     if edge.requirement_id != requirement_id || edge.status != "matched" {
       continue
@@ -1259,7 +1259,7 @@ fn aggregate_requirement_evidence_text(
   edges : Array[TraceEdge],
   implementations : Array[ImplementationNode],
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let matched = matched_implementations_for_requirement(
     edges, implementations, requirement_id,
   )
@@ -1574,7 +1574,7 @@ fn diff_item_for_requirement(
 fn implementation_group_keys(
   implementations : Array[ImplementationNode],
 ) -> Map[String, String] {
-  let groups : Map[String, String] = {}
+  let groups : Map[String, String] = Map([])
   if implementations.length() == 0 {
     return groups
   }
@@ -1616,8 +1616,8 @@ fn build_diff_items(
   file_hashes : Map[String, String],
 ) -> Array[AlignDiffItem] {
   let items : Array[AlignDiffItem] = []
-  let referenced : Map[String, Bool] = {}
-  let referenced_groups : Map[String, Bool] = {}
+  let referenced : Map[String, Bool] = Map([])
+  let referenced_groups : Map[String, Bool] = Map([])
   let group_keys = implementation_group_keys(implementations)
   for edge in edges {
     if edge.status == "unmatched" || edge.status == "orphan" {
@@ -1726,7 +1726,7 @@ async fn build_snapshot(
   if requirements.length() == 0 && implementations.length() == 0 {
     return None
   }
-  let file_hashes : Map[String, String] = {}
+  let file_hashes : Map[String, String] = Map([])
   for entry in spec_hashes {
     file_hashes.set(entry.0, entry.1)
   }
@@ -1867,7 +1867,7 @@ fn build_suggestions(
   direction : String,
 ) -> Array[AlignSuggestion] {
   let suggestions : Array[AlignSuggestion] = []
-  let emitted : Map[String, Bool] = {}
+  let emitted : Map[String, Bool] = Map([])
   for item in snapshot.diff_items {
     let mut current : AlignSuggestion? = None
     match item.category {
@@ -2126,7 +2126,7 @@ async fn current_commit_info(config : SpecAlignConfig) -> AlignCommitInfo? {
   }
   let committed_at = @git.head_commit_seconds(repo_root)
   let dirty = @git.status_dirty(repo_root, ".")
-  Some({ repo_root, head, short_head, committed_at, dirty })
+  Some({ repo_root, head, short_head, committed_at, dirty, })
 }
 
 ///|
@@ -2188,12 +2188,12 @@ fn filter_snapshot_for_incremental(
   snapshot : AlignSnapshot,
   changed_files : Array[String],
 ) -> AlignSnapshot {
-  let changed : Map[String, Bool] = {}
+  let changed : Map[String, Bool] = Map([])
   for path in changed_files {
     changed.set(@config.normalize_path(path), true)
   }
-  let affected_requirements : Map[String, Bool] = {}
-  let affected_implementations : Map[String, Bool] = {}
+  let affected_requirements : Map[String, Bool] = Map([])
+  let affected_implementations : Map[String, Bool] = Map([])
   let mut changed_any = false
   for item in snapshot.diff_items {
     let item_changed = file_is_changed(changed, item.spec_file) ||
@@ -2286,7 +2286,7 @@ fn build_current_file_hashes(
   config : SpecAlignConfig,
   registry : @registry.KGFRegistry,
 ) -> Map[String, String] {
-  let hashes : Map[String, String] = {}
+  let hashes : Map[String, String] = Map([])
   let spec_files = discover_spec_files(config.spec_path, registry)
   let impl_files = discover_impl_files(config.impl_path, registry)
   for path in spec_files {
@@ -2385,7 +2385,11 @@ async fn snapshot_for_config_with_registry_async(
         if hash_match {
           // Carry forward the caller's config so that report-only fields
           // (subcommand, fail_on, direction, format, agent) take effect.
-          let snapshot = { ..cached, config: effective_config, cache_hit: true }
+          let snapshot = {
+            ..cached,
+            config: effective_config,
+            cache_hit: true,
+          }
           if !config.incremental {
             return Some(snapshot)
           }
@@ -2402,7 +2406,7 @@ async fn snapshot_for_config_with_registry_async(
     Some(value) => value
     None => return None
   }
-  let snapshot = { ..snapshot, commit: current_commit_info(effective_config) }
+  let snapshot = { ..snapshot, commit: current_commit_info(effective_config), }
   if !save_snapshot(cache_dir, snapshot) {
     return None
   }

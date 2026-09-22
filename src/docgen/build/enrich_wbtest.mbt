@@ -18,7 +18,7 @@ fn make_project_manifest_spec(
   identity_edge_kind : String,
   bare_prefix? : String = "pkg:",
 ) -> @kgf_types.KGFSpec {
-  let features : Map[String, Array[String]] = {}
+  let features : Map[String, Array[String]] = Map([])
   features.set("manifest_role", ["project"])
   features.set("identity_edge", [identity_edge_kind])
   @kgf_types.KGFSpec::new(
@@ -39,7 +39,7 @@ fn make_package_manifest_spec(
   bare_prefix? : String = "",
   ancestors? : Array[String] = [],
 ) -> @kgf_types.KGFSpec {
-  let features : Map[String, Array[String]] = {}
+  let features : Map[String, Array[String]] = Map([])
   features.set("manifest_role", ["package"])
   if identity_edge_kind.length() > 0 {
     features.set("identity_edge", [identity_edge_kind])
@@ -70,7 +70,7 @@ test "enrich_graph: MoonBit @alias in source file emits moduleDependsOn via mani
     "src/pipeline/discover.mbt",
     file=Some("src/pipeline/discover.mbt"),
   )
-  let manifest_attrs : Map[String, String] = {}
+  let manifest_attrs : Map[String, String] = Map([])
   manifest_attrs.set("via", "trkbt10/indexion/src/filter")
   manifest_attrs.set("dep_kind", "value")
   manifest_attrs.set("alias", "@filter")
@@ -89,7 +89,7 @@ test "enrich_graph: MoonBit @alias in source file emits moduleDependsOn via mani
   let ft : Array[FileTokens] = [
     FileTokens::new("src/pipeline/discover.mbt", "moonbit", tokens),
   ]
-  let specs : Map[String, @kgf_types.KGFSpec] = {}
+  let specs : Map[String, @kgf_types.KGFSpec] = Map([])
   specs.set("moonbit", make_source_spec())
   enrich_graph(graph, ft, specs)
   // Exactly one new module_depends_on edge should have been added, from the
@@ -112,7 +112,7 @@ test "enrich_graph: implicit alias is derived from trailing segment when no alia
   let _ = graph.get_or_add_module("pkg/source.mbt", file=Some("pkg/source.mbt"))
   // Manifest edge with no `alias` attr — enrichment must derive `bench` from
   // the trailing segment of the via path.
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("via", "moonbitlang/core/bench")
   attrs.set("dep_kind", "value")
   graph.add_edge(
@@ -127,7 +127,7 @@ test "enrich_graph: implicit alias is derived from trailing segment when no alia
   let ft : Array[FileTokens] = [
     FileTokens::new("pkg/source.mbt", "moonbit", tokens),
   ]
-  let specs : Map[String, @kgf_types.KGFSpec] = {}
+  let specs : Map[String, @kgf_types.KGFSpec] = Map([])
   specs.set("moonbit", make_source_spec())
   enrich_graph(graph, ft, specs)
   let mut found = false
@@ -164,7 +164,7 @@ test "enrich_graph: canonicalize rewrites internal pkg target to package manifes
   )
   // A source file that (before canonicalization) targets `pkg:<proj>/src/filter`.
   let _ = graph.get_or_add_module("src/caller.mbt", file=Some("src/caller.mbt"))
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("via", "trkbt10/indexion/src/filter")
   graph.add_edge(
     @graph.EdgeKind::from_string("moduleDependsOn"),
@@ -172,7 +172,7 @@ test "enrich_graph: canonicalize rewrites internal pkg target to package manifes
     "pkg:trkbt10/indexion/src/filter",
     attrs~,
   )
-  let specs : Map[String, @kgf_types.KGFSpec] = {}
+  let specs : Map[String, @kgf_types.KGFSpec] = Map([])
   specs.set("moonbit", make_source_spec())
   specs.set("moon-mod", make_project_manifest_spec("projectName"))
   specs.set(
@@ -226,7 +226,7 @@ test "enrich_graph: workspace package ancestor-walk target is rewritten to inter
     "packages/graph-canvas/src/consumer.ts",
     file=Some("packages/graph-canvas/src/consumer.ts"),
   )
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("via", "@indexion/api-client")
   graph.add_edge(
     @graph.EdgeKind::from_string("moduleDependsOn"),
@@ -234,7 +234,7 @@ test "enrich_graph: workspace package ancestor-walk target is rewritten to inter
     "packages/graph-canvas/node_modules/@indexion/api-client/src/index.ts",
     attrs~,
   )
-  let specs : Map[String, @kgf_types.KGFSpec] = {}
+  let specs : Map[String, @kgf_types.KGFSpec] = Map([])
   // TS-ecosystem package manifest: declares node_modules/ as an ancestor walk
   // dir and packageName/mainEntry as identity/entry edges.
   specs.set(
@@ -273,7 +273,7 @@ test "enrich_graph: self-loop edges are dropped after canonicalization" {
   // canonicalization pass can discover it. Its role is "package" but it has no
   // identity_edge in this simplified test — discovery happens through the
   // nested-manifest branch of try_match_project.
-  let moonpkg_features : Map[String, Array[String]] = {}
+  let moonpkg_features : Map[String, Array[String]] = Map([])
   moonpkg_features.set("manifest_role", ["package"])
   moonpkg_features.set("entry_edges", ["packageEntry"])
   let moon_pkg_spec : @kgf_types.KGFSpec = @kgf_types.KGFSpec::new(
@@ -287,7 +287,7 @@ test "enrich_graph: self-loop edges are dropped after canonicalization" {
     "a/moon.pkg",
     "a/moon.pkg",
   )
-  let specs : Map[String, @kgf_types.KGFSpec] = {}
+  let specs : Map[String, @kgf_types.KGFSpec] = Map([])
   specs.set("moonbit", make_source_spec())
   specs.set("moon-mod", make_project_manifest_spec("projectName"))
   specs.set("moon-pkg", moon_pkg_spec)

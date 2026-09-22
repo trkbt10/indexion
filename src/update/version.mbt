@@ -33,7 +33,7 @@ fn parse_semver(version : String) -> Semver? {
   let minor = parse_int_opt(parts[1])
   let patch = parse_int_opt(parts[2])
   match (major, minor, patch) {
-    (Some(ma), Some(mi), Some(pa)) => Some({ major: ma, minor: mi, patch: pa })
+    (Some(ma), Some(mi), Some(pa)) => Some({ major: ma, minor: mi, patch: pa, })
     _ => None
   }
 }

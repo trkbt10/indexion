@@ -17,7 +17,7 @@ pub(all) enum OkfValue {
 /// Render a YAML frontmatter block, including both `---` fences and a
 /// trailing newline after the closing fence.
 pub fn render_frontmatter(entries : Array[(String, OkfValue)]) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("---\n")
   for entry in entries {
     let (key, value) = entry
@@ -49,7 +49,7 @@ fn yaml_scalar(s : String) -> String {
   if !needs_quoting(s) {
     return s
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("\"")
   for ch in s.to_array() {
     match ch {
@@ -120,7 +120,7 @@ fn needs_quoting(s : String) -> Bool {
 ///|
 /// Keywords YAML parses as booleans or null in plain style (any casing).
 fn is_yaml_coercible(s : String) -> Bool {
-  let lowered = StringBuilder::new()
+  let lowered = StringBuilder()
   for ch in s.to_array() {
     if ch >= 'A' && ch <= 'Z' {
       lowered.write_char((ch.to_int() + 32).unsafe_to_char())

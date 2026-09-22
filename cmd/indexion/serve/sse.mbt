@@ -15,7 +15,7 @@
 
 ///|
 fn sse_headers(cors : Bool) -> Map[String, String] {
-  let headers : Map[String, String] = {}
+  let headers : Map[String, String] = Map([])
   headers["content-type"] = "text/event-stream"
   headers["cache-control"] = "no-cache"
   headers["connection"] = "keep-alive"
@@ -48,7 +48,7 @@ async fn sse_progress(
   phase : String,
   detail : String,
 ) -> Unit {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["type"] = "progress".to_json()
   obj["phase"] = phase.to_json()
   obj["detail"] = detail.to_json()
@@ -57,7 +57,7 @@ async fn sse_progress(
 
 ///|
 async fn sse_item(conn : @async_http.ServerConnection, item : Json) -> Unit {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["type"] = "item".to_json()
   obj["data"] = item
   sse_event(conn, Json::object(obj).stringify())
@@ -65,7 +65,7 @@ async fn sse_item(conn : @async_http.ServerConnection, item : Json) -> Unit {
 
 ///|
 async fn _sse_items(conn : @async_http.ServerConnection, items : Json) -> Unit {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["type"] = "items".to_json()
   obj["data"] = items
   sse_event(conn, Json::object(obj).stringify())
@@ -73,7 +73,7 @@ async fn _sse_items(conn : @async_http.ServerConnection, items : Json) -> Unit {
 
 ///|
 async fn sse_result(conn : @async_http.ServerConnection, data : Json) -> Unit {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["type"] = "result".to_json()
   obj["data"] = data
   sse_event(conn, Json::object(obj).stringify())
@@ -81,7 +81,7 @@ async fn sse_result(conn : @async_http.ServerConnection, data : Json) -> Unit {
 
 ///|
 async fn sse_done(conn : @async_http.ServerConnection, total : Int) -> Unit {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["type"] = "done".to_json()
   obj["total"] = total.to_json()
   sse_event(conn, Json::object(obj).stringify())
@@ -95,7 +95,7 @@ async fn sse_error(
   conn : @async_http.ServerConnection,
   message : String,
 ) -> Unit {
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   obj["type"] = "error".to_json()
   obj["message"] = message.to_json()
   sse_event(conn, Json::object(obj).stringify())
@@ -341,7 +341,7 @@ async fn handle_digest_query_stream(
 /// Convert a digest QueryHit to the search frontend JSON format.
 /// Maps digest fields to the SearchHit shape: title, source, line, kind, score.
 fn query_hit_to_search_json(hit : @types.QueryHit) -> Json {
-  let m : Map[String, Json] = {}
+  let m : Map[String, Json] = Map([])
   m["id"] = hit.function.symbol.id.to_json()
   m["title"] = hit.function.name().to_json()
   m["source"] = hit.function.module_id.to_json()
@@ -357,7 +357,7 @@ fn query_hit_to_search_json(hit : @types.QueryHit) -> Json {
       }
   }
   if summary.length() > 0 {
-    let attrs_json : Map[String, Json] = {}
+    let attrs_json : Map[String, Json] = Map([])
     attrs_json["summary"] = summary.to_json()
     m["attrs"] = Json::object(attrs_json)
   }
@@ -369,7 +369,7 @@ fn query_hit_to_search_json(hit : @types.QueryHit) -> Json {
 /// Matches the structure produced by @search_cli.hits_to_json (per-item).
 fn _search_hit_to_json(hit : @search_engine.SearchHit) -> Json {
   let doc = hit.document
-  let m : Map[String, Json] = {}
+  let m : Map[String, Json] = Map([])
   m["id"] = doc.id.to_json()
   m["title"] = doc.title.to_json()
   m["source"] = doc.source.to_json()
@@ -377,7 +377,7 @@ fn _search_hit_to_json(hit : @search_engine.SearchHit) -> Json {
   m["kind"] = doc.kind.to_json()
   m["score"] = hit.score.to_json()
   if !doc.attrs.is_empty() {
-    let attrs_json : Map[String, Json] = {}
+    let attrs_json : Map[String, Json] = Map([])
     for entry in doc.attrs {
       attrs_json[entry.0] = entry.1.to_json()
     }

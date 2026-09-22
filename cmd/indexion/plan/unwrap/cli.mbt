@@ -310,7 +310,7 @@ fn run_with_config(config : UnwrapConfig) -> Unit {
     println("[3/4] Finding call sites...")
   }
   // Tokenize all files once
-  let file_tokens : Map[String, Array[@kgf_types.Tok]] = {}
+  let file_tokens : Map[String, Array[@kgf_types.Tok]] = Map([])
   let reg = match registry {
     Some(r) => r
     None => {
@@ -429,7 +429,7 @@ fn render_dry_run(
   files : Array[(String, String)],
 ) -> Unit {
   // Build file contents map for showing context
-  let file_contents : Map[String, String] = {}
+  let file_contents : Map[String, String] = Map([])
   for f in files {
     file_contents.set(f.0, f.1)
   }
@@ -516,12 +516,12 @@ fn apply_fixes(
   target_dir : String,
 ) -> Unit {
   // Build file contents map
-  let file_contents : Map[String, String] = {}
+  let file_contents : Map[String, String] = Map([])
   for f in files {
     file_contents.set(f.0, f.1)
   }
   // Collect all edits per file
-  let edits_by_file : Map[String, Array[@kgf_features.UnwrapEdit]] = {}
+  let edits_by_file : Map[String, Array[@kgf_features.UnwrapEdit]] = Map([])
   for pair in all_edits {
     let edits = pair.1
     for edit in edits {
@@ -532,7 +532,7 @@ fn apply_fixes(
     }
   }
   // Collect deletions per file (def_start_line, def_end_line) sorted descending
-  let deletions_by_file : Map[String, Array[(Int, Int)]] = {}
+  let deletions_by_file : Map[String, Array[(Int, Int)]] = Map([])
   for def in wrapper_defs {
     let (_name, _target, start, end, file) = def
     match deletions_by_file.get(file) {
@@ -545,7 +545,7 @@ fn apply_fixes(
     dels.sort_by(fn(a, b) { b.0 - a.0 })
   }
   // Collect all affected files
-  let affected_files : Map[String, Bool] = {}
+  let affected_files : Map[String, Bool] = Map([])
   for _, edits in edits_by_file {
     for edit in edits {
       affected_files.set(edit.file, true)

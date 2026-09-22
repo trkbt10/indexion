@@ -47,12 +47,12 @@ fn make_lower(
 
 ///|
 test "lift: rule rename + scalar in label _text" {
-  let scalars : Map[String, String] = {}
+  let scalars : Map[String, String] = Map([])
   scalars.set("number", "Float")
-  let renames : Map[String, String] = {}
+  let renames : Map[String, String] = Map([])
   renames.set("PropertySig", "IRStructField")
   let lift = make_lift(scalars, [], renames)
-  let labels : Map[String, Json] = {}
+  let labels : Map[String, Json] = Map([])
   labels.set("id_text", "id".to_json())
   labels.set("_text", "id:number;".to_json())
   let lifted = lift_events([("PropertySig", labels)], lift)
@@ -68,10 +68,10 @@ test "lift_type_text: wraps run before scalars on isolated type fragments" {
   // type_wraps are applied only to isolated type expressions (via
   // extract_text or rewrite_type_text), NOT to composite `_text` labels
   // like `argv:string[]` — that distinction prevents cross-token mismatches.
-  let scalars : Map[String, String] = {}
+  let scalars : Map[String, String] = Map([])
   scalars.set("number", "Float")
   let wraps : Array[TypeWrap] = [
-    { source_suffix: "[]", target_template: "Array<%s>" },
+    { source_suffix: "[]", target_template: "Array<%s>", },
   ]
   let lift = make_lift(scalars, wraps, Map([]))
   inspect(lift_type_text("number[]", lift), content="Array<Float>")
@@ -81,13 +81,13 @@ test "lift_type_text: wraps run before scalars on isolated type fragments" {
 test "lift_event: scalars applied broadly, wraps NOT applied to composite _text" {
   // The bug being prevented: a Param event's `_text` is `argv:string[]`.
   // If wraps fired here, the whole composite would become `Array<argv:string>`.
-  let scalars : Map[String, String] = {}
+  let scalars : Map[String, String] = Map([])
   scalars.set("string", "String")
   let wraps : Array[TypeWrap] = [
-    { source_suffix: "[]", target_template: "Array<%s>" },
+    { source_suffix: "[]", target_template: "Array<%s>", },
   ]
   let lift = make_lift(scalars, wraps, Map([]))
-  let labels : Map[String, Json] = {}
+  let labels : Map[String, Json] = Map([])
   labels.set("_text", "argv:string[]".to_json())
   let lifted = lift_events([("Param", labels)], lift)
   match lifted[0].1.get("_text") {
@@ -98,10 +98,10 @@ test "lift_event: scalars applied broadly, wraps NOT applied to composite _text"
 
 ///|
 test "lower: emit_templates fill placeholders, missing → @@UNRESOLVED@@" {
-  let templates : Map[String, String] = {}
+  let templates : Map[String, String] = Map([])
   templates.set("IREnum", "pub enum {{id_text}} { {{variants}} }\n")
   let lower = make_lower(Map([]), [], templates, ["IREnum"])
-  let labels : Map[String, Json] = {}
+  let labels : Map[String, Json] = Map([])
   labels.set("id_text", "TodoStatus".to_json())
   // No `variants` label — should become @@UNRESOLVED@@variants
   let lift = make_lift(Map([]), [], Map([]))
@@ -123,10 +123,10 @@ test "lower: emit_templates fill placeholders, missing → @@UNRESOLVED@@" {
 
 ///|
 test "lower: rule outside emit_order is skipped" {
-  let templates : Map[String, String] = {}
+  let templates : Map[String, String] = Map([])
   templates.set("IREnum", "ENUM:{{id_text}}\n")
   let lower = make_lower(Map([]), [], templates, ["IREnum"])
-  let labels : Map[String, Json] = {}
+  let labels : Map[String, Json] = Map([])
   labels.set("id_text", "X".to_json())
   let lift = make_lift(Map([]), [], Map([]))
   let code = lower_to_code(
@@ -145,7 +145,7 @@ test "lower: rule outside emit_order is skipped" {
 ///|
 test "module_alias: node:fs → fs → @fs end-to-end" {
   // Demonstrates user-extensible library translation via spec data.
-  let lift_aliases : Map[String, String] = {}
+  let lift_aliases : Map[String, String] = Map([])
   lift_aliases.set("node:fs", "fs")
   let lift : LiftSpec = {
     scalars: Map([]),
@@ -157,9 +157,9 @@ test "module_alias: node:fs → fs → @fs end-to-end" {
     body_delimiters: None,
     regex_replace: None,
   }
-  let lower_aliases : Map[String, String] = {}
+  let lower_aliases : Map[String, String] = Map([])
   lower_aliases.set("fs", "@fs")
-  let templates : Map[String, String] = {}
+  let templates : Map[String, String] = Map([])
   templates.set("IRImport", "use {{module_target}}\n")
   let lower : LowerSpec = {
     scalars: Map([]),
@@ -178,7 +178,7 @@ test "module_alias: node:fs → fs → @fs end-to-end" {
     symbol_aliases: None,
     variant_case_style: None,
   }
-  let labels : Map[String, Json] = {}
+  let labels : Map[String, Json] = Map([])
   labels.set("from_text", "node:fs".to_json())
   labels.set("_origin_rule", "ImportNamed".to_json())
   let code = lower_to_code(

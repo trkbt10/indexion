@@ -25,12 +25,12 @@ fn run_pipeline_with_registry(
 ) -> PipelineResult {
   let spec = match registry.get_spec(spec_name) {
     Some(s) => s
-    None => return { edges: [], parse_ok: false }
+    None => return { edges: [], parse_ok: false, }
   }
   let lexer = @lexer.Lexer::new(spec.get_tokens())
   let tokens = lexer.tokenize(source)
   let peg = @peg.build_peg(spec) catch {
-    _ => return { edges: [], parse_ok: false }
+    _ => return { edges: [], parse_ok: false, }
   }
   let start_rule = spec.get_start_rule()
   let parse_result = @peg.run_parse(peg, spec, start_rule, tokens)
@@ -49,9 +49,9 @@ fn run_pipeline_with_registry(
       for event in eval_result.get_events() {
         @semantics.eval_rule_semantics(event.0, event.1, ctx)
       }
-      { edges: graph.get_edges(), parse_ok: true }
+      { edges: graph.get_edges(), parse_ok: true, }
     }
-    None => { edges: [], parse_ok: false }
+    None => { edges: [], parse_ok: false, }
   }
 }
 

@@ -145,10 +145,10 @@ test "base64_to_hex AA" {
 
 ///|
 test "compile_fst simple" {
-  let classes : Map[String, String] = {}
+  let classes : Map[String, String] = Map([])
   classes.set("alpha", "[A-Za-z]")
   classes.set("ws", "[ ]")
-  let states : Map[String, Array[@types.FstTransition]] = {}
+  let states : Map[String, Array[@types.FstTransition]] = Map([])
   states.set("start", [
     @types.FstTransition::new("alpha", "start", [@types.FstAction::emit_input()]),
     @types.FstTransition::new("ws", "start", [@types.FstAction::emit(" ")]),
@@ -162,9 +162,9 @@ test "compile_fst simple" {
 
 ///|
 test "run_fst simple passthrough" {
-  let classes : Map[String, String] = {}
+  let classes : Map[String, String] = Map([])
   classes.set("any", "[A-Za-z ]")
-  let states : Map[String, Array[@types.FstTransition]] = {}
+  let states : Map[String, Array[@types.FstTransition]] = Map([])
   states.set("start", [
     @types.FstTransition::new("any", "start", [@types.FstAction::emit_input()]),
   ])
@@ -178,10 +178,10 @@ test "run_fst simple passthrough" {
 
 ///|
 test "run_fst emit replacement" {
-  let classes : Map[String, String] = {}
+  let classes : Map[String, String] = Map([])
   classes.set("alpha", "[A-Za-z]")
   classes.set("space", "[ ]")
-  let states : Map[String, Array[@types.FstTransition]] = {}
+  let states : Map[String, Array[@types.FstTransition]] = Map([])
   states.set("start", [
     @types.FstTransition::new("alpha", "start", [@types.FstAction::emit("X")]),
     @types.FstTransition::new("space", "start", [@types.FstAction::emit_input()]),
@@ -225,9 +225,9 @@ test "apply_preprocess with generic line blanking steps" {
 
 ///|
 test "apply_preprocess with FST" {
-  let classes : Map[String, String] = {}
+  let classes : Map[String, String] = Map([])
   classes.set("any", "[A-Za-z ]")
-  let states : Map[String, Array[@types.FstTransition]] = {}
+  let states : Map[String, Array[@types.FstTransition]] = Map([])
   states.set("start", [
     @types.FstTransition::new("any", "start", [@types.FstAction::emit_input()]),
   ])

@@ -4,7 +4,7 @@
 /// Build term frequency map from a list of tokens.
 /// Returns a map from term to count.
 pub fn build_term_frequency(tokens : Array[String]) -> Map[String, Int] {
-  let frequency : Map[String, Int] = {}
+  let frequency : Map[String, Int] = Map([])
   for token in tokens {
     let current = frequency.get(token).unwrap_or(0)
     frequency.set(token, current + 1)
@@ -18,10 +18,10 @@ pub fn build_term_frequency(tokens : Array[String]) -> Map[String, Int] {
 pub fn build_document_frequency(
   docs : Array[Array[String]],
 ) -> Map[String, Int] {
-  let document_frequency : Map[String, Int] = {}
+  let document_frequency : Map[String, Int] = Map([])
   for tokens in docs {
     // Get unique tokens in this document
-    let unique_tokens : Map[String, Bool] = {}
+    let unique_tokens : Map[String, Bool] = Map([])
     for token in tokens {
       unique_tokens.set(token, true)
     }
@@ -285,7 +285,7 @@ pub fn TfidfBatch::all_pairs_above_threshold_with_stats(
   if threshold > 1.0 {
     return (
       results,
-      { posting_hits, candidate_pairs, cosine_evaluations, output_pairs: 0 },
+      { posting_hits, candidate_pairs, cosine_evaluations, output_pairs: 0, },
     )
   }
   if threshold <= 0.0 {
@@ -314,7 +314,7 @@ pub fn TfidfBatch::all_pairs_above_threshold_with_stats(
       },
     )
   }
-  let postings : Map[String, Array[Int]] = {}
+  let postings : Map[String, Array[Int]] = Map([])
   let seen_candidates : Array[Int] = Array::make(n, -1)
   let candidates : Array[Int] = []
   for i = 0; i < n; i = i + 1 {

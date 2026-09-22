@@ -29,7 +29,7 @@ fn build_test_pptx(path : String) -> Unit raise Error {
     ("[Content_Types].xml", @fzip.str_to_u8("<?xml version=\"1.0\"?><Types/>")),
   )
   let zip_data = @fzip.zip_sync(files)
-  let bytes_arr : Array[Byte] = Array::new(capacity=zip_data.length())
+  let bytes_arr : Array[Byte] = Array(capacity=zip_data.length())
   for i in 0..<zip_data.length() {
     bytes_arr.push(zip_data[i])
   }

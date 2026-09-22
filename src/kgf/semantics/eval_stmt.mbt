@@ -24,7 +24,7 @@ fn eval_stmt_edge(
 ) -> Unit {
   let from_val = json_to_string(eval_expr(from, env, ctx))
   let to_val = json_to_string(eval_expr(to, env, ctx))
-  let attrs_map : Map[String, String] = {}
+  let attrs_map : Map[String, String] = Map([])
   match attrs {
     Some(attrs_expr) => {
       let attrs_json = eval_expr(attrs_expr, env, ctx)
@@ -70,7 +70,7 @@ fn eval_stmt_note(
   env : Env,
   ctx : SemEvalCtx,
 ) -> Unit {
-  let payload_map : Map[String, Json] = {}
+  let payload_map : Map[String, Json] = Map([])
   payload_map.set("type", note_type.to_json())
   match payload {
     Some(payload_expr) => {

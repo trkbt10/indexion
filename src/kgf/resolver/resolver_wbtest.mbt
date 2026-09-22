@@ -7,7 +7,7 @@ struct MockFileResolver {
 
 ///|
 fn MockFileResolver::new(files : Array[String]) -> MockFileResolver {
-  { existing_files: files, file_contents: {} }
+  { existing_files: files, file_contents: {}, }
 }
 
 ///|
@@ -15,7 +15,7 @@ fn MockFileResolver::with_contents(
   files : Array[String],
   contents : Map[String, String],
 ) -> MockFileResolver {
-  { existing_files: files, file_contents: contents }
+  { existing_files: files, file_contents: contents, }
 }
 
 ///|
@@ -601,7 +601,7 @@ test "resolve_chain with manifest step (package.json main)" {
       @types.ResolveStep::fallback("npm:"),
     ],
   )
-  let contents : Map[String, String] = {}
+  let contents : Map[String, String] = Map([])
   contents.set(
     "/project/node_modules/lodash/package.json", "{\"name\": \"lodash\", \"main\": \"lodash.js\"}",
   )
@@ -693,7 +693,7 @@ test "npm: package.json main field resolution" {
       @types.ResolveStep::fallback("npm:"),
     ],
   )
-  let contents : Map[String, String] = {}
+  let contents : Map[String, String] = Map([])
   contents.set(
     "/project/node_modules/lodash/package.json", "{\"name\": \"lodash\", \"main\": \"./lodash.js\"}",
   )

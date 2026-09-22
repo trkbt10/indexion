@@ -56,7 +56,7 @@ pub fn get_transitive_deps(
   graph : @graph.CodeGraph,
   module_id : String,
 ) -> Array[String] {
-  let visited : Map[String, Bool] = {}
+  let visited : Map[String, Bool] = Map([])
   let result : Array[String] = []
   let queue : Array[String] = [module_id]
   while queue.length() > 0 {

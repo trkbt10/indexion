@@ -11,7 +11,7 @@ pub struct McpFileConfig {
 ///|
 /// Create an empty MCP file config with all fields set to None.
 pub fn McpFileConfig::empty() -> McpFileConfig {
-  { transport: None, port: None, host: None, specs_dir: None }
+  { transport: None, port: None, host: None, specs_dir: None, }
 }
 
 ///|
@@ -22,10 +22,10 @@ pub fn parse_mcp_section_key(
   value : String,
 ) -> McpFileConfig {
   match key {
-    "transport" => { ..config, transport: Some(trim_quotes(value)) }
-    "port" => { ..config, port: Some(parse_int(value)) }
-    "host" => { ..config, host: Some(trim_quotes(value)) }
-    "specs_dir" => { ..config, specs_dir: Some(trim_quotes(value)) }
+    "transport" => { ..config, transport: Some(trim_quotes(value)), }
+    "port" => { ..config, port: Some(parse_int(value)), }
+    "host" => { ..config, host: Some(trim_quotes(value)), }
+    "specs_dir" => { ..config, specs_dir: Some(trim_quotes(value)), }
     _ => config
   }
 }
@@ -46,7 +46,7 @@ pub fn load_mcp_from_json_root(root : Map[String, Json]) -> McpFileConfig {
       match parse_json_string(value) {
         Some(v) =>
           if v.length() > 0 {
-            config = { ..config, transport: Some(v) }
+            config = { ..config, transport: Some(v), }
           }
         None => ()
       }
@@ -55,7 +55,7 @@ pub fn load_mcp_from_json_root(root : Map[String, Json]) -> McpFileConfig {
   match mcp_obj.get("port") {
     Some(value) =>
       match parse_json_int(value) {
-        Some(v) => if v > 0 { config = { ..config, port: Some(v) } }
+        Some(v) => if v > 0 { config = { ..config, port: Some(v), } }
         None => ()
       }
     None => ()
@@ -63,7 +63,7 @@ pub fn load_mcp_from_json_root(root : Map[String, Json]) -> McpFileConfig {
   match mcp_obj.get("host") {
     Some(value) =>
       match parse_json_string(value) {
-        Some(v) => if v.length() > 0 { config = { ..config, host: Some(v) } }
+        Some(v) => if v.length() > 0 { config = { ..config, host: Some(v), } }
         None => ()
       }
     None => ()
@@ -73,7 +73,7 @@ pub fn load_mcp_from_json_root(root : Map[String, Json]) -> McpFileConfig {
       match parse_json_string(value) {
         Some(v) =>
           if v.length() > 0 {
-            config = { ..config, specs_dir: Some(v) }
+            config = { ..config, specs_dir: Some(v), }
           }
         None => ()
       }

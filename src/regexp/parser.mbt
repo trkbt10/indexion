@@ -432,7 +432,7 @@ fn parse_pattern_ctx(
         }
       _ => One
     }
-    elements.push({ element, quantifier, lazy_ })
+    elements.push({ element, quantifier, lazy_, })
   }
   Some(elements)
 }

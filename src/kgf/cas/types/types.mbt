@@ -10,7 +10,7 @@ pub struct ContentHash {
 
 ///|
 pub impl Show for ContentHash with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|
@@ -75,7 +75,7 @@ pub fn SymbolicRef::new(
   edge_kind : String,
   via : String,
 ) -> SymbolicRef {
-  { ref_str, edge_kind, via }
+  { ref_str, edge_kind, via, }
 }
 
 ///|
@@ -133,7 +133,7 @@ pub fn ContentHash::to_string(self : ContentHash) -> String {
 ///|
 /// Create a ContentHash from a String (no validation).
 pub fn ContentHash::from_string(s : String) -> ContentHash {
-  { value: s }
+  { value: s, }
 }
 
 ///|
@@ -144,7 +144,7 @@ pub fn CASManifest::new(
   spec_hash : ContentHash,
   modules : Map[String, ContentHash],
 ) -> CASManifest {
-  { created_at, updated_at, spec_hash, modules }
+  { created_at, updated_at, spec_hash, modules, }
 }
 
 ///|
@@ -154,7 +154,7 @@ pub fn CASManifest::with_modules(
   modules : Map[String, ContentHash],
   updated_at : String,
 ) -> CASManifest {
-  { ..self, updated_at, modules }
+  { ..self, updated_at, modules, }
 }
 
 ///|
@@ -164,5 +164,5 @@ pub fn CASManifest::with_spec_hash(
   spec_hash : ContentHash,
   updated_at : String,
 ) -> CASManifest {
-  { ..self, updated_at, spec_hash, modules: Map([]) }
+  { ..self, updated_at, spec_hash, modules: Map([]), }
 }

@@ -22,9 +22,9 @@ pub fn Lexer::new(tokens : Array[@types.TokenDef]) -> Lexer {
       token_def.pattern,
       case_insensitive~,
     )
-    compiled_tokens.push({ token_def, compiled_pattern })
+    compiled_tokens.push({ token_def, compiled_pattern, })
   }
-  { tokens: compiled_tokens }
+  { tokens: compiled_tokens, }
 }
 
 ///|
@@ -162,7 +162,7 @@ pub struct LexerBuilder {
 ///|
 /// Creates a new LexerBuilder.
 pub fn LexerBuilder::new() -> LexerBuilder {
-  { tokens: [] }
+  { tokens: [], }
 }
 
 ///|

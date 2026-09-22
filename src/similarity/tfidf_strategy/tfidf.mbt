@@ -13,7 +13,7 @@ pub struct TfidfStrategy {
 ///|
 /// Create a new TfidfStrategy.
 pub fn TfidfStrategy::new() -> TfidfStrategy {
-  { _unused: () }
+  { _unused: (), }
 }
 
 ///|

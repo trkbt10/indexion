@@ -3,7 +3,7 @@ name = "trkbt10/indexion"
 version = "0.18.0"
 
 import {
-  "moonbitlang/x@0.4.41",
+  "moonbitlang/x@0.5.5",
   "trkbt10/vcdb@0.3.2",
   "moonbitlang/async@0.19.4",
   "trkbt10/osenv@0.1.0",

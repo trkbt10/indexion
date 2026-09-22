@@ -77,7 +77,7 @@ pub fn FileInfo::new(
   ext : String,
   spec_name : String,
 ) -> FileInfo {
-  { path, lang, ext, spec_name }
+  { path, lang, ext, spec_name, }
 }
 
 ///|
@@ -131,7 +131,7 @@ pub fn DocSymbol::new(
   kind : String,
   file : String,
 ) -> DocSymbol {
-  { id, name, kind, doc: None, parent: None, file, children: [] }
+  { id, name, kind, doc: None, parent: None, file, children: [], }
 }
 
 ///|
@@ -143,7 +143,7 @@ pub fn DocSymbol::with_doc(
   file : String,
   doc : String,
 ) -> DocSymbol {
-  { id, name, kind, doc: Some(doc), parent: None, file, children: [] }
+  { id, name, kind, doc: Some(doc), parent: None, file, children: [], }
 }
 
 ///|
@@ -216,7 +216,7 @@ pub struct AnalysisResult {
 ///|
 /// Create an empty analysis result.
 pub fn AnalysisResult::new() -> AnalysisResult {
-  { files: [], graph: @graph.CodeGraph::new(), symbols: [], module_docs: {} }
+  { files: [], graph: @graph.CodeGraph::new(), symbols: [], module_docs: {}, }
 }
 
 ///|

@@ -42,10 +42,10 @@ fn sample_packages() -> Array[OkfPackageConcept] {
     description: "Alpha coordinates the work.",
     languages: ["moonbit"],
     files: ["src/alpha/a.mbt"],
-    declarations: [{ name: "run", kind: "Function", doc: "Run it." }],
+    declarations: [{ name: "run", kind: "Function", doc: "Run it.", }],
     depends_on: [
-      { target: "src/beta", internal: true, via: Some("@beta") },
-      { target: "acme/util", internal: false, via: None },
+      { target: "src/beta", internal: true, via: Some("@beta"), },
+      { target: "acme/util", internal: false, via: None, },
     ],
   }
   let beta : OkfPackageConcept = {
@@ -101,7 +101,10 @@ test "package concept carries frontmatter, schema, links, and files" {
 
 ///|
 test "internal dependents produce backlinks" {
-  let files = build_bundle(sample_packages(), { title: "demo", timestamp: None })
+  let files = build_bundle(sample_packages(), {
+    title: "demo",
+    timestamp: None,
+  })
   guard find_file(files, "packages/src/beta.md") is Some(beta) else {
     fail("missing packages/src/beta.md")
   }
@@ -112,7 +115,10 @@ test "internal dependents produce backlinks" {
 
 ///|
 test "external concept lists dependents" {
-  let files = build_bundle(sample_packages(), { title: "demo", timestamp: None })
+  let files = build_bundle(sample_packages(), {
+    title: "demo",
+    timestamp: None,
+  })
   guard find_file(files, "dependencies/acme/util.md") is Some(ext) else {
     fail("missing dependencies/acme/util.md")
   }
@@ -125,7 +131,10 @@ test "external concept lists dependents" {
 
 ///|
 test "every directory gets an index listing" {
-  let files = build_bundle(sample_packages(), { title: "demo", timestamp: None })
+  let files = build_bundle(sample_packages(), {
+    title: "demo",
+    timestamp: None,
+  })
   guard find_file(files, "index.md") is Some(root) else {
     fail("missing root index.md")
   }
@@ -175,9 +184,9 @@ test "dependency on an unknown package is ignored in backlinks" {
     languages: [],
     files: [],
     declarations: [],
-    depends_on: [{ target: "src/missing", internal: true, via: None }],
+    depends_on: [{ target: "src/missing", internal: true, via: None, }],
   }
-  let files = build_bundle([orphan], { title: "demo", timestamp: None })
+  let files = build_bundle([orphan], { title: "demo", timestamp: None, })
   // The unknown internal target must not create a concept or crash...
   assert_true(find_file(files, "packages/src/missing.md") is None)
   // ...and the emitting concept must not carry a dangling link to it.
@@ -208,7 +217,7 @@ test "packages named like reserved files are escaped, not clobbered" {
     languages: ["moonbit"],
     files: ["src/user/u.mbt"],
     declarations: [],
-    depends_on: [{ target: "src/digest/index", internal: true, via: None }],
+    depends_on: [{ target: "src/digest/index", internal: true, via: None, }],
   }
   let files = build_bundle([index_pkg, user_pkg], {
     title: "demo",

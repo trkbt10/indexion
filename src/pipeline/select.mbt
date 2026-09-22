@@ -16,11 +16,11 @@ pub struct KGFIndex {
 /// Build KGF index by reading only headers from all KGF files.
 /// This is fast because it only parses the header section.
 pub fn build_kgf_index(specs_dir : String) -> KGFIndex {
-  let source_to_files : Map[String, Array[String]] = {}
+  let source_to_files : Map[String, Array[String]] = Map([])
   let all_files : Array[String] = []
   try {
     if !@fs.is_dir(specs_dir) {
-      return { source_to_files, all_files }
+      return { source_to_files, all_files, }
     }
     let entries = @fs.read_dir(specs_dir)
     for entry in entries {
@@ -40,14 +40,14 @@ pub fn build_kgf_index(specs_dir : String) -> KGFIndex {
   } catch {
     _ => ()
   }
-  { source_to_files, all_files }
+  { source_to_files, all_files, }
 }
 
 ///|
 /// Build matching signals from file paths (extensions and basenames).
 /// These signals are used to select only relevant KGF specs.
 pub fn build_path_signals(file_paths : Array[String]) -> Map[String, Bool] {
-  let signals : Map[String, Bool] = {}
+  let signals : Map[String, Bool] = Map([])
   for path in file_paths {
     let basename = extract_basename(path)
     signals.set(basename, true)
@@ -65,7 +65,7 @@ fn get_matching_kgf_paths(
   index : KGFIndex,
   signals : Map[String, Bool],
 ) -> Array[String] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let result : Array[String] = []
   for entry in index.source_to_files {
     let source = entry.0

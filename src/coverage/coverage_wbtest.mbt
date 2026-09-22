@@ -10,22 +10,22 @@ fn fixture() -> CoverageReport {
   let mod_a : FileCoverage = {
     path: "src/a/foo.mbt",
     pkg: "src/a",
-    lines: [{ line: 1, hits: 1 }, { line: 4, hits: 1 }, { line: 7, hits: 0 }],
+    lines: [{ line: 1, hits: 1, }, { line: 4, hits: 1, }, { line: 7, hits: 0, }],
     functions: [
-      { line: 1, name: "foo", hits: 1 },
-      { line: 4, name: "bar", hits: 1 },
-      { line: 7, name: "baz", hits: 0 },
+      { line: 1, name: "foo", hits: 1, },
+      { line: 4, name: "bar", hits: 1, },
+      { line: 7, name: "baz", hits: 0, },
     ],
     branches: [
-      { line: 4, block: 0, branch: 0, taken: 3 },
-      { line: 4, block: 0, branch: 1, taken: 0 },
-      { line: 7, block: 0, branch: 0, taken: -1 },
+      { line: 4, block: 0, branch: 0, taken: 3, },
+      { line: 4, block: 0, branch: 1, taken: 0, },
+      { line: 7, block: 0, branch: 0, taken: -1, },
     ],
   }
   let mod_b : FileCoverage = {
     path: "src/b/quux.mbt",
     pkg: "src/b",
-    lines: [{ line: 2, hits: 1 }, { line: 3, hits: 1 }],
+    lines: [{ line: 2, hits: 1, }, { line: 3, hits: 1, }],
     functions: [],
     branches: [],
   }
@@ -72,9 +72,9 @@ test "coverage_rate: empty unit is fully covered" {
 ///|
 test "sort_lines: ascending by line number, stable copy" {
   let original : Array[LineHit] = [
-    { line: 5, hits: 1 },
-    { line: 2, hits: 0 },
-    { line: 9, hits: 1 },
+    { line: 5, hits: 1, },
+    { line: 2, hits: 0, },
+    { line: 9, hits: 1, },
   ]
   let sorted = sort_lines(original)
   assert_eq(sorted[0].line, 2)

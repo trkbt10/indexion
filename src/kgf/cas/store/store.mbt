@@ -25,7 +25,7 @@ pub struct MemoryChunkStore {
 ///|
 /// Create a new in-memory chunk store.
 pub fn MemoryChunkStore::new() -> MemoryChunkStore {
-  { chunks: Map([]) }
+  { chunks: Map([]), }
 }
 
 ///|

@@ -21,12 +21,12 @@ pub fn to_coverage_report(
 ) -> @coverage.CoverageReport {
   // Index wrappers by file → (line → name). Indexing is what lets us
   // mark a function "failed" without re-iterating wrappers per function.
-  let wrappers_by_file : Map[String, Map[Int, String]] = {}
+  let wrappers_by_file : Map[String, Map[Int, String]] = Map([])
   for w in wrappers {
     let line_map = match wrappers_by_file.get(w.file) {
       Some(m) => m
       None => {
-        let m : Map[Int, String] = {}
+        let m : Map[Int, String] = Map([])
         wrappers_by_file.set(w.file, m)
         m
       }

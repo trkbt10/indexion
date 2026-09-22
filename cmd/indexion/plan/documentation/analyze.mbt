@@ -181,7 +181,7 @@ pub fn analyze_documentation(
   }
   // Stage 2: Group files by directory.
   // SoT: SupportedFile.path is always a real filesystem path.
-  let by_dir : Map[String, Array[@pipeline.SupportedFile]] = {}
+  let by_dir : Map[String, Array[@pipeline.SupportedFile]] = Map([])
   for file in supported_files {
     let dir_path = @common.parent_dir(file.path)
     match by_dir.get(dir_path) {

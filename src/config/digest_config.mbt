@@ -9,12 +9,12 @@ pub struct DigestFileConfig {
 
 ///|
 pub impl Show for DigestFileConfig with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|
 pub fn DigestFileConfig::empty() -> DigestFileConfig {
-  { placeholder_: false }
+  { placeholder_: false, }
 }
 
 ///|
@@ -100,12 +100,12 @@ pub fn parse_embedding_section_key(
   value : String,
 ) -> EmbeddingFileConfig {
   match key {
-    "provider" => { ..config, provider: Some(trim_quotes(value)) }
-    "strategy" => { ..config, strategy: Some(trim_quotes(value)) }
-    "dim" => { ..config, dim: Some(parse_int(value)) }
-    "api_key_env" => { ..config, api_key_env: Some(trim_quotes(value)) }
-    "api_base_url" => { ..config, api_base_url: Some(trim_quotes(value)) }
-    "model" => { ..config, model: Some(trim_quotes(value)) }
+    "provider" => { ..config, provider: Some(trim_quotes(value)), }
+    "strategy" => { ..config, strategy: Some(trim_quotes(value)), }
+    "dim" => { ..config, dim: Some(parse_int(value)), }
+    "api_key_env" => { ..config, api_key_env: Some(trim_quotes(value)), }
+    "api_base_url" => { ..config, api_base_url: Some(trim_quotes(value)), }
+    "model" => { ..config, model: Some(trim_quotes(value)), }
     _ => config
   }
 }
@@ -123,12 +123,12 @@ pub fn parse_embedding_provider_key(
   let idx = config.providers.length() - 1
   let entry = config.providers[idx]
   let updated = match key {
-    "key" => { ..entry, key: Some(trim_quotes(value)) }
-    "kind" => { ..entry, kind: Some(trim_quotes(value)) }
-    "dim" => { ..entry, dim: Some(parse_int(value)) }
-    "api_key_env" => { ..entry, api_key_env: Some(trim_quotes(value)) }
-    "api_base_url" => { ..entry, api_base_url: Some(trim_quotes(value)) }
-    "model" => { ..entry, model: Some(trim_quotes(value)) }
+    "key" => { ..entry, key: Some(trim_quotes(value)), }
+    "kind" => { ..entry, kind: Some(trim_quotes(value)), }
+    "dim" => { ..entry, dim: Some(parse_int(value)), }
+    "api_key_env" => { ..entry, api_key_env: Some(trim_quotes(value)), }
+    "api_base_url" => { ..entry, api_base_url: Some(trim_quotes(value)), }
+    "model" => { ..entry, model: Some(trim_quotes(value)), }
     _ => entry
   }
   config.providers[idx] = updated
@@ -170,7 +170,7 @@ pub fn load_embedding_from_json_root(
       match parse_json_string(value) {
         Some(v) =>
           if v.length() > 0 {
-            config = { ..config, provider: Some(v) }
+            config = { ..config, provider: Some(v), }
           }
         None => ()
       }
@@ -181,7 +181,7 @@ pub fn load_embedding_from_json_root(
       match parse_json_string(value) {
         Some(v) =>
           if v.length() > 0 {
-            config = { ..config, strategy: Some(v) }
+            config = { ..config, strategy: Some(v), }
           }
         None => ()
       }
@@ -190,7 +190,7 @@ pub fn load_embedding_from_json_root(
   match obj.get("dim") {
     Some(value) =>
       match parse_json_int(value) {
-        Some(v) => if v > 0 { config = { ..config, dim: Some(v) } }
+        Some(v) => if v > 0 { config = { ..config, dim: Some(v), } }
         None => ()
       }
     None => ()
@@ -200,7 +200,7 @@ pub fn load_embedding_from_json_root(
       match parse_json_string(value) {
         Some(v) =>
           if v.length() > 0 {
-            config = { ..config, api_key_env: Some(v) }
+            config = { ..config, api_key_env: Some(v), }
           }
         None => ()
       }
@@ -211,7 +211,7 @@ pub fn load_embedding_from_json_root(
       match parse_json_string(value) {
         Some(v) =>
           if v.length() > 0 {
-            config = { ..config, api_base_url: Some(v) }
+            config = { ..config, api_base_url: Some(v), }
           }
         None => ()
       }
@@ -220,7 +220,7 @@ pub fn load_embedding_from_json_root(
   match obj.get("model") {
     Some(value) =>
       match parse_json_string(value) {
-        Some(v) => if v.length() > 0 { config = { ..config, model: Some(v) } }
+        Some(v) => if v.length() > 0 { config = { ..config, model: Some(v), } }
         None => ()
       }
     None => ()
@@ -234,7 +234,7 @@ pub fn load_embedding_from_json_root(
             let entry = parse_provider_json_entry(item)
             entries.push(entry)
           }
-          config = { ..config, providers: entries }
+          config = { ..config, providers: entries, }
         }
         _ => ()
       }
@@ -252,7 +252,7 @@ fn parse_provider_json_entry(json : Json) -> ProviderFileEntry {
   match obj.get("key") {
     Some(v) =>
       match parse_json_string(v) {
-        Some(s) => entry = { ..entry, key: Some(s) }
+        Some(s) => entry = { ..entry, key: Some(s), }
         None => ()
       }
     None => ()
@@ -260,7 +260,7 @@ fn parse_provider_json_entry(json : Json) -> ProviderFileEntry {
   match obj.get("kind") {
     Some(v) =>
       match parse_json_string(v) {
-        Some(s) => entry = { ..entry, kind: Some(s) }
+        Some(s) => entry = { ..entry, kind: Some(s), }
         None => ()
       }
     None => ()
@@ -268,7 +268,7 @@ fn parse_provider_json_entry(json : Json) -> ProviderFileEntry {
   match obj.get("dim") {
     Some(v) =>
       match parse_json_int(v) {
-        Some(d) => entry = { ..entry, dim: Some(d) }
+        Some(d) => entry = { ..entry, dim: Some(d), }
         None => ()
       }
     None => ()
@@ -276,7 +276,7 @@ fn parse_provider_json_entry(json : Json) -> ProviderFileEntry {
   match obj.get("api_key_env") {
     Some(v) =>
       match parse_json_string(v) {
-        Some(s) => entry = { ..entry, api_key_env: Some(s) }
+        Some(s) => entry = { ..entry, api_key_env: Some(s), }
         None => ()
       }
     None => ()
@@ -284,7 +284,7 @@ fn parse_provider_json_entry(json : Json) -> ProviderFileEntry {
   match obj.get("api_base_url") {
     Some(v) =>
       match parse_json_string(v) {
-        Some(s) => entry = { ..entry, api_base_url: Some(s) }
+        Some(s) => entry = { ..entry, api_base_url: Some(s), }
         None => ()
       }
     None => ()
@@ -292,7 +292,7 @@ fn parse_provider_json_entry(json : Json) -> ProviderFileEntry {
   match obj.get("model") {
     Some(v) =>
       match parse_json_string(v) {
-        Some(s) => entry = { ..entry, model: Some(s) }
+        Some(s) => entry = { ..entry, model: Some(s), }
         None => ()
       }
     None => ()

@@ -54,7 +54,7 @@ fn count_matches_for_pattern(
   let registry = shared_test_registry
   let files = collect_search_files([root], GrepConfig::default(), registry)
   let matchers = parse_pattern(pattern)
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   for file in files {
     let (path, content) = file
     let spec = match registry.detect_from_path(path) {

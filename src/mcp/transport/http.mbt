@@ -30,7 +30,7 @@ pub async fn run_http(
       return
     }
   }
-  let listen_port = http_server.addr().port()
+  let listen_port = http_server.addr.port()
   // Log to stderr so stdout remains clean for any future stdio needs
   eprintln(
     "MCP server listening on http://" +
@@ -57,7 +57,7 @@ pub async fn run_http(
       // Health check
       if req.meth == @async_http.Get && path == "/health" {
         conn.skip_request_body()
-        let headers : Map[String, String] = {}
+        let headers : Map[String, String] = Map([])
         headers["content-type"] = "application/json"
         conn.send_response(200, "OK", extra_headers=headers) catch {
           _ => return
@@ -70,7 +70,7 @@ pub async fn run_http(
       }
       // 404
       conn.skip_request_body()
-      let headers : Map[String, String] = {}
+      let headers : Map[String, String] = Map([])
       headers["content-type"] = "application/json"
       conn.send_response(404, "Not Found", extra_headers=headers) catch {
         _ => return
@@ -97,7 +97,7 @@ async fn handle_mcp_post(
 ) -> Unit {
   match server.handle_message(body_text) {
     Some(response) => {
-      let headers : Map[String, String] = {}
+      let headers : Map[String, String] = Map([])
       headers["content-type"] = "application/json"
       headers["access-control-allow-origin"] = "*"
       headers["access-control-allow-methods"] = "POST, OPTIONS"
@@ -112,7 +112,7 @@ async fn handle_mcp_post(
     }
     None => {
       // Notification — respond with 202 Accepted (no body)
-      let headers : Map[String, String] = {}
+      let headers : Map[String, String] = Map([])
       headers["access-control-allow-origin"] = "*"
       conn.send_response(202, "Accepted", extra_headers=headers) catch {
         _ => return
@@ -126,7 +126,7 @@ async fn handle_mcp_post(
 
 ///|
 async fn send_cors_preflight(conn : @async_http.ServerConnection) -> Unit {
-  let headers : Map[String, String] = {}
+  let headers : Map[String, String] = Map([])
   headers["access-control-allow-origin"] = "*"
   headers["access-control-allow-methods"] = "POST, OPTIONS"
   headers["access-control-allow-headers"] = "Content-Type"

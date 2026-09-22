@@ -236,7 +236,7 @@ fn find_clusters(
     return []
   }
   // Create file index map
-  let file_index : Map[String, Int] = {}
+  let file_index : Map[String, Int] = Map([])
   for i, f in files {
     file_index.set(f.0, i)
   }
@@ -270,7 +270,7 @@ fn find_clusters(
     }
   }
   // Group files by their root
-  let groups : Map[Int, Array[String]] = {}
+  let groups : Map[Int, Array[String]] = Map([])
   for i, f in files {
     let root = find(i)
     match groups.get(root) {
@@ -279,12 +279,12 @@ fn find_clusters(
     }
   }
   // Build file-to-root lookup for O(1) cluster membership check
-  let file_to_root : Map[String, Int] = {}
+  let file_to_root : Map[String, Int] = Map([])
   for i, f in files {
     file_to_root.set(f.0, find(i))
   }
   // Group pairs by cluster root in one pass over pairs
-  let cluster_pairs_map : Map[Int, Array[SimilarPair]] = {}
+  let cluster_pairs_map : Map[Int, Array[SimilarPair]] = Map([])
   for pair in pairs {
     if pair.similarity >= threshold {
       let root1 = file_to_root.get(pair.file1)
@@ -318,7 +318,7 @@ fn find_clusters(
           0
         }
       })
-      clusters.push({ files: group, pairs: cluster_pairs })
+      clusters.push({ files: group, pairs: cluster_pairs, })
     }
   }
   // Sort clusters by max similarity (descending)
@@ -377,7 +377,7 @@ fn find_duplicate_blocks(
     trimmed2[i] = @common.trim_ascii_spaces(line)
   }
   // Build line hash map for file2
-  let line_map : Map[String, Array[Int]] = {}
+  let line_map : Map[String, Array[Int]] = Map([])
   for i, trimmed in trimmed2 {
     if trimmed.length() > 5 {
       // Skip very short lines
@@ -566,7 +566,7 @@ fn collect_similar_pairs(
   }
   let pairs : Array[SimilarPair] = []
   for m in filtered_result.matches {
-    pairs.push({ file1: m.file1, file2: m.file2, similarity: m.similarity })
+    pairs.push({ file1: m.file1, file2: m.file2, similarity: m.similarity, })
   }
   pairs
 }
@@ -592,7 +592,7 @@ pub fn run_to_string(config : RefactorPlanConfig) -> String? {
   }
   let pairs = collect_similar_pairs(files, config)
   let clusters = find_clusters(files, pairs, config.threshold)
-  let file_contents : Map[String, String] = {}
+  let file_contents : Map[String, String] = Map([])
   for f in files {
     file_contents.set(f.0, f.1)
   }
@@ -644,7 +644,7 @@ fn run_with_config(config : RefactorPlanConfig) -> Unit {
       let markers = reg.get_project_markers()
       let search_dirs = @common.ancestor_dirs(config.target_dir)
       for dir in search_dirs {
-        let entries : Array[String] = @fs.read_dir(dir) catch { _ => continue }
+        let entries = @fs.read_dir(dir) catch { _ => continue }
         for marker in markers {
           for entry in entries {
             if @glob.glob_match(entry, marker) {
@@ -723,7 +723,7 @@ fn run_with_config(config : RefactorPlanConfig) -> Unit {
       "ms)",
     )
   }
-  let file_contents : Map[String, String] = {}
+  let file_contents : Map[String, String] = Map([])
   for f in files {
     file_contents.set(f.0, f.1)
   }
@@ -887,7 +887,7 @@ fn find_magic_strings(
   let min_length = 4
   let min_files = 2
   // value → Array[(file, line)]
-  let occurrences : Map[String, Array[(String, Int)]] = {}
+  let occurrences : Map[String, Array[(String, Int)]] = Map([])
   let toolkit_reg2 = match registry {
     Some(reg) => Some(@kgf_toolkit.ToolkitRegistry::new(reg))
     None => None
@@ -927,16 +927,16 @@ fn find_magic_strings(
   for entry in occurrences {
     let value = entry.0
     let locs = entry.1
-    let files_seen : Map[String, Bool] = {}
+    let files_seen : Map[String, Bool] = Map([])
     for loc in locs {
       files_seen.set(loc.0, true)
     }
     if files_seen.length() >= min_files {
       let occ : Array[MagicStringOccurrence] = []
       for loc in locs {
-        occ.push({ file: loc.0, line: loc.1 })
+        occ.push({ file: loc.0, line: loc.1, })
       }
-      result.push({ value, occurrences: occ, file_count: files_seen.length() })
+      result.push({ value, occurrences: occ, file_count: files_seen.length(), })
     }
   }
   // Sort by file_count desc, then occurrence count desc

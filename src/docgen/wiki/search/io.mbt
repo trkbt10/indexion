@@ -88,8 +88,8 @@ pub fn load(wiki_dir : String) -> WikiSearchIndex? {
     _ => 1L
   }
   // Parse entries: [{section, vid}]
-  let sections : Map[String, WikiSection] = {}
-  let section_to_vid : Map[String, Int64] = {}
+  let sections : Map[String, WikiSection] = Map([])
+  let section_to_vid : Map[String, Int64] = Map([])
   match sections_json {
     { "entries": Array(arr), .. } =>
       for item in arr {
@@ -110,7 +110,13 @@ pub fn load(wiki_dir : String) -> WikiSearchIndex? {
       }
     _ => ()
   }
-  Some(WikiSearchIndex::{ engine, provider, sections, section_to_vid, next_vid })
+  Some(WikiSearchIndex::{
+    engine,
+    provider,
+    sections,
+    section_to_vid,
+    next_vid,
+  })
 }
 
 ///|

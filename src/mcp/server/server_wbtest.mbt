@@ -16,7 +16,7 @@ async fn do_init(server : McpServer) -> Unit {
 
 ///|
 async test "initialize handshake" {
-  let server = McpServer::new({ name: "test-server", version: "0.1.0" })
+  let server = McpServer::new({ name: "test-server", version: "0.1.0", })
   let resp = server.handle_message(
     "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{}}",
   )
@@ -30,7 +30,7 @@ async test "initialize handshake" {
 
 ///|
 async test "notification returns None" {
-  let server = McpServer::new({ name: "test", version: "0.1.0" })
+  let server = McpServer::new({ name: "test", version: "0.1.0", })
   let resp = server.handle_message(
     "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}",
   )
@@ -39,7 +39,7 @@ async test "notification returns None" {
 
 ///|
 async test "tools/list requires initialization" {
-  let server = McpServer::new({ name: "test", version: "0.1.0" })
+  let server = McpServer::new({ name: "test", version: "0.1.0", })
   let resp = server.handle_message(
     "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}",
   )
@@ -53,7 +53,7 @@ async test "tools/list requires initialization" {
 
 ///|
 async test "tools/list with registered tool" {
-  let server = McpServer::new({ name: "test", version: "0.1.0" })
+  let server = McpServer::new({ name: "test", version: "0.1.0", })
   server.register_tool(
     {
       name: "search",
@@ -79,7 +79,7 @@ async test "tools/list with registered tool" {
 
 ///|
 async test "tools/call invokes handler" {
-  let server = McpServer::new({ name: "test", version: "0.1.0" })
+  let server = McpServer::new({ name: "test", version: "0.1.0", })
   server.register_tool(
     {
       name: "greet",
@@ -119,7 +119,7 @@ async test "tools/call invokes handler" {
 
 ///|
 async test "unknown method returns error" {
-  let server = McpServer::new({ name: "test", version: "0.1.0" })
+  let server = McpServer::new({ name: "test", version: "0.1.0", })
   do_init(server)
   let resp = server.handle_message(
     "{\"jsonrpc\":\"2.0\",\"id\":4,\"method\":\"unknown/method\"}",
@@ -134,7 +134,7 @@ async test "unknown method returns error" {
 
 ///|
 async test "ping responds with empty object" {
-  let server = McpServer::new({ name: "test", version: "0.1.0" })
+  let server = McpServer::new({ name: "test", version: "0.1.0", })
   let resp = server.handle_message(
     "{\"jsonrpc\":\"2.0\",\"id\":5,\"method\":\"ping\"}",
   )

@@ -32,7 +32,7 @@ pub fn MinHashSignature::from_tokens(
     return { values, }
   }
   // Deduplicate tokens into a set
-  let unique : Map[String, Bool] = {}
+  let unique : Map[String, Bool] = Map([])
   for token in tokens {
     unique.set(token, true)
   }

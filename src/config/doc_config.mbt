@@ -13,7 +13,7 @@ pub struct DocConfig {
 
 ///|
 pub impl ToJson for DocConfig with fn to_json(self) {
-  let m : Map[String, Json] = {}
+  let m : Map[String, Json] = Map([])
   m["root"] = self.root.to_json()
   let pkg_arr : Array[Json] = self.packages.map(fn(p) { p.to_json() })
   m["packages"] = pkg_arr.to_json()
@@ -47,7 +47,7 @@ pub struct DocRootConfig {
 
 ///|
 pub impl ToJson for DocRootConfig with fn to_json(self) {
-  let m : Map[String, Json] = {}
+  let m : Map[String, Json] = Map([])
   if self.template.length() > 0 {
     m["template"] = self.template.to_json()
   }
@@ -66,7 +66,7 @@ pub enum DocRootSection {
 
 ///|
 pub impl ToJson for DocRootSection with fn to_json(self) {
-  let m : Map[String, Json] = {}
+  let m : Map[String, Json] = Map([])
   match self {
     Static(file) => {
       m["type"] = "static".to_json()
@@ -90,9 +90,9 @@ pub fn DocConfig::empty() -> DocConfig {
   {
     version: "1.0",
     spec: "",
-    output: { format: "markdown", filename: "README.md" },
+    output: { format: "markdown", filename: "README.md", },
     packages: [],
-    root: { template: "", output: "README.md", sections: [] },
+    root: { template: "", output: "README.md", sections: [], },
   }
 }
 
@@ -103,7 +103,7 @@ pub fn DocConfig::for_init() -> DocConfig {
   {
     version: "1.0",
     spec: "",
-    output: { format: "markdown", filename: "README.md" },
+    output: { format: "markdown", filename: "README.md", },
     packages: [],
     root: {
       template: readme_template_relative(),
@@ -144,7 +144,7 @@ fn parse_doc_config_json(content : String) -> DocConfig? {
   }
   let output = match root.get("output") {
     Some(v) => parse_doc_output_config(v)
-    None => { format: "markdown", filename: "README.md" }
+    None => { format: "markdown", filename: "README.md", }
   }
   let packages = match root.get("packages") {
     Some(v) => parse_doc_packages(v)
@@ -152,15 +152,15 @@ fn parse_doc_config_json(content : String) -> DocConfig? {
   }
   let root_config = match root.get("root") {
     Some(v) => parse_doc_root_config(v)
-    None => { template: "", output: "README.md", sections: [] }
+    None => { template: "", output: "README.md", sections: [], }
   }
-  Some({ version, spec, output, packages, root: root_config })
+  Some({ version, spec, output, packages, root: root_config, })
 }
 
 ///|
 fn parse_doc_output_config(value : Json) -> DocOutputConfig {
   let obj : Map[String, Json] = @json.from_json(value) catch {
-    _ => return { format: "markdown", filename: "README.md" }
+    _ => return { format: "markdown", filename: "README.md", }
   }
   let format = match obj.get("format") {
     Some(v) => parse_doc_json_string(v).unwrap_or("markdown")
@@ -170,7 +170,7 @@ fn parse_doc_output_config(value : Json) -> DocOutputConfig {
     Some(v) => parse_doc_json_string(v).unwrap_or("README.md")
     None => "README.md"
   }
-  { format, filename }
+  { format, filename, }
 }
 
 ///|
@@ -214,13 +214,13 @@ fn parse_doc_package_entry(value : Json) -> DocPackageEntry? {
     Some(v) => parse_doc_json_string_array(v)
     None => []
   }
-  Some({ path, title, description, include_in_root, sections })
+  Some({ path, title, description, include_in_root, sections, })
 }
 
 ///|
 fn parse_doc_root_config(value : Json) -> DocRootConfig {
   let obj : Map[String, Json] = @json.from_json(value) catch {
-    _ => return { template: "", output: "README.md", sections: [] }
+    _ => return { template: "", output: "README.md", sections: [], }
   }
   let template = match obj.get("template") {
     Some(v) => parse_doc_json_string(v).unwrap_or("")
@@ -234,7 +234,7 @@ fn parse_doc_root_config(value : Json) -> DocRootConfig {
     Some(v) => parse_doc_root_sections(v)
     None => []
   }
-  { template, output, sections }
+  { template, output, sections, }
 }
 
 ///|
@@ -298,7 +298,7 @@ pub struct DocFileConfig {
 ///|
 /// Create an empty doc file config with all fields set to None.
 pub fn DocFileConfig::empty() -> DocFileConfig {
-  { config_path: None, per_package: None }
+  { config_path: None, per_package: None, }
 }
 
 ///|
@@ -309,10 +309,10 @@ pub fn parse_doc_section_key(
   value : String,
 ) -> DocFileConfig {
   match key {
-    "config_path" => { ..config, config_path: Some(trim_quotes(value)) }
+    "config_path" => { ..config, config_path: Some(trim_quotes(value)), }
     "per_package" => {
       let v = trim_quotes(value)
-      { ..config, per_package: Some(v == "true") }
+      { ..config, per_package: Some(v == "true"), }
     }
     _ => config
   }
@@ -334,7 +334,7 @@ pub fn load_doc_from_json_root(root : Map[String, Json]) -> DocFileConfig {
       match parse_doc_json_string(value) {
         Some(v) =>
           if v.length() > 0 {
-            config = { ..config, config_path: Some(v) }
+            config = { ..config, config_path: Some(v), }
           }
         None => ()
       }
@@ -343,7 +343,7 @@ pub fn load_doc_from_json_root(root : Map[String, Json]) -> DocFileConfig {
   match doc_obj.get("per_package") {
     Some(value) =>
       match parse_doc_json_bool(value) {
-        Some(v) => config = { ..config, per_package: Some(v) }
+        Some(v) => config = { ..config, per_package: Some(v), }
         None => ()
       }
     None => ()

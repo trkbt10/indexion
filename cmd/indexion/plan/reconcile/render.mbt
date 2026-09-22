@@ -38,7 +38,7 @@ fn render_aggregate_suggestions(
 
 ///|
 fn render_markdown(report : ReconcileReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# Reconcile Report\n\n")
   buf.write_string("- Target: `")
   buf.write_string(report.config.target_dir)
@@ -152,7 +152,7 @@ fn render_markdown(report : ReconcileReport) -> String {
 
 ///|
 fn render_github_issue(report : ReconcileReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# Reconcile drift report\n\n")
   buf.write_string("Detected ")
   buf.write_string(report.summary.total_candidates.to_string())

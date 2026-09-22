@@ -206,7 +206,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   } else {
     doc_file_config.per_package.unwrap_or(false)
   }
-  let config = { ..config, per_package: effective_per_package }
+  let config = { ..config, per_package: effective_per_package, }
   // When --per-package is set, use KGF-based pipeline UNLESS --config was
   // explicitly provided (explicit --config always takes priority for root-level generation).
   let cli_config_explicit = match config.config_path {

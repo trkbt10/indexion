@@ -1,5 +1,4 @@
 import {
-  "moonbitlang/core/bench",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
   "moonbitlang/x/fs",
@@ -14,6 +13,7 @@ import {
 }
 
 import {
+  "moonbitlang/core/bench",
   "moonbitlang/core/test",
   "trkbt10/indexion/src/kgf/lexer" @kgf_lexer,
   "trkbt10/indexion/src/kgf/peg" @kgf_peg,

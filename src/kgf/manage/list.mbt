@@ -63,7 +63,7 @@ fn extract_spec_info(path : String, root_dir : String) -> KgfSpecInfo? {
       return None
     }
     let category = derive_category(path, root_dir)
-    Some({ name, category, sources: header.sources, path })
+    Some({ name, category, sources: header.sources, path, })
   } catch {
     _ => None
   }

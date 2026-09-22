@@ -12,13 +12,13 @@ pub struct TreeNode {
 ///|
 /// Create a leaf node with no children.
 pub fn TreeNode::leaf(label : String) -> TreeNode {
-  { label, children: [] }
+  { label, children: [], }
 }
 
 ///|
 /// Create a node with children.
 pub fn TreeNode::node(label : String, children : Array[TreeNode]) -> TreeNode {
-  { label, children }
+  { label, children, }
 }
 
 ///|
@@ -90,7 +90,7 @@ pub fn NodeInfo::new(
   left_most_leaf : Int,
   subtree_size : Int,
 ) -> NodeInfo {
-  { node, id, parent, left_most_leaf, subtree_size }
+  { node, id, parent, left_most_leaf, subtree_size, }
 }
 
 ///|
@@ -136,13 +136,13 @@ pub struct CostConfig {
 
 ///|
 pub impl Show for CostConfig with fn output(self, logger) {
-  to_repr(self).output(logger)
+  logger.write_object(Repr(self))
 }
 
 ///|
 /// Create default cost config (all operations cost 1.0).
 pub fn CostConfig::default() -> CostConfig {
-  { insert_cost: 1.0, delete_cost: 1.0, rename_cost: 1.0 }
+  { insert_cost: 1.0, delete_cost: 1.0, rename_cost: 1.0, }
 }
 
 ///|
@@ -152,7 +152,7 @@ pub fn CostConfig::create(
   delete_cost : Double,
   rename_cost : Double,
 ) -> CostConfig {
-  { insert_cost, delete_cost, rename_cost }
+  { insert_cost, delete_cost, rename_cost, }
 }
 
 ///|
@@ -199,7 +199,7 @@ pub struct TSEDConfig {
 ///|
 /// Create default TSED configuration.
 pub fn TSEDConfig::default() -> TSEDConfig {
-  { cost_config: CostConfig::default(), finalize_labels: true }
+  { cost_config: CostConfig::default(), finalize_labels: true, }
 }
 
 ///|

@@ -15,7 +15,10 @@ import {
   "trkbt10/indexion/src/kgf/toolkit" @kgf_toolkit,
   "trkbt10/indexion/src/pipeline/comparison" @batch,
   "trkbt10/indexion/src/coverage",
-  "moonbitlang/core/bench",
 }
+
+import {
+  "moonbitlang/core/bench",
+} for "wbtest"
 
 supported_targets = "native"

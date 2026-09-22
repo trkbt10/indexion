@@ -110,7 +110,7 @@ pub async fn rebuild_empty(
       provider.dim().to_string(),
     )
   }
-  { db, provider, layout, metadata, mode: ReadWrite }
+  { db, provider, layout, metadata, mode: ReadWrite, }
 }
 
 ///|
@@ -154,7 +154,7 @@ async fn open_validated_handle(
 ) -> Handle raise CacheError {
   let db = open_persistent_db(layout, provider)
   if db.dim() == provider.dim() {
-    { db, provider, layout, metadata: metadata_for_provider(provider), mode }
+    { db, provider, layout, metadata: metadata_for_provider(provider), mode, }
   } else {
     let message = "orient vcdb database dimension mismatch: found " +
       db.dim().to_string() +
@@ -345,7 +345,7 @@ pub fn Handle::search(
   let results : Array[SearchHit] = []
   for hit in hits {
     match self.lookup_id(hit.id) {
-      Some(file) => results.push({ file, score: hit.score })
+      Some(file) => results.push({ file, score: hit.score, })
       None => ()
     }
   }

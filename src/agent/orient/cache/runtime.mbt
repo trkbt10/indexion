@@ -113,7 +113,7 @@ pub async fn try_acquire_writer_lock(
     }
   }
   let path = layout.writer_lock_path
-  let file = @async_fs.open(path, mode=ReadWrite, create=0o644) catch {
+  let file = @async_fs.open(path, mode=ReadWrite, create_mode=OpenOrCreate) catch {
     err =>
       raise WriterLockStorageError(
         "failed to open orient vcdb writer lock `" +
@@ -134,7 +134,7 @@ pub async fn try_acquire_writer_lock(
     }
   }
   if locked {
-    { file, released: false }
+    { file, released: false, }
   } else {
     file.close()
     raise WriterAlreadyActive(path)

@@ -4,29 +4,29 @@ fn fixture() -> @coverage.CoverageReport {
   let mod_a : @coverage.FileCoverage = {
     path: "src/a/foo.mbt",
     pkg: "src/a",
-    lines: [{ line: 1, hits: 1 }, { line: 4, hits: 1 }, { line: 7, hits: 0 }],
+    lines: [{ line: 1, hits: 1, }, { line: 4, hits: 1, }, { line: 7, hits: 0, }],
     functions: [
-      { line: 1, name: "foo", hits: 1 },
-      { line: 4, name: "bar", hits: 1 },
-      { line: 7, name: "baz", hits: 0 },
+      { line: 1, name: "foo", hits: 1, },
+      { line: 4, name: "bar", hits: 1, },
+      { line: 7, name: "baz", hits: 0, },
     ],
     branches: [
-      { line: 4, block: 0, branch: 0, taken: 3 },
-      { line: 4, block: 0, branch: 1, taken: 0 },
-      { line: 7, block: 0, branch: 0, taken: -1 },
+      { line: 4, block: 0, branch: 0, taken: 3, },
+      { line: 4, block: 0, branch: 1, taken: 0, },
+      { line: 7, block: 0, branch: 0, taken: -1, },
     ],
   }
   let mod_b : @coverage.FileCoverage = {
     path: "src/b/quux.mbt",
     pkg: "src/b",
-    lines: [{ line: 2, hits: 1 }, { line: 3, hits: 1 }],
+    lines: [{ line: 2, hits: 1, }, { line: 3, hits: 1, }],
     functions: [],
     branches: [],
   }
   let orphan : @coverage.FileCoverage = {
     path: "indexion.mbt",
     pkg: "",
-    lines: [{ line: 1, hits: 0 }],
+    lines: [{ line: 1, hits: 0, }],
     functions: [],
     branches: [],
   }
@@ -115,7 +115,7 @@ test "cobertura: escapes xml special characters in attributes" {
   let file : @coverage.FileCoverage = {
     path: "a&b/<c>.mbt",
     pkg: "weird\"pkg'",
-    lines: [{ line: 1, hits: 1 }],
+    lines: [{ line: 1, hits: 1, }],
     functions: [],
     branches: [],
   }

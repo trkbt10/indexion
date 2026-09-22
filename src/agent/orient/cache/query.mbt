@@ -183,7 +183,7 @@ fn owner_candidates_from_implementation_hits(
         if !candidate.implementation_paths.contains(hit.path) {
           candidate.implementation_paths.push(hit.path)
         }
-        result[index] = { ..candidate, score: candidate.score + hit.score }
+        result[index] = { ..candidate, score: candidate.score + hit.score, }
       }
       None =>
         result.push({

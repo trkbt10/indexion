@@ -106,7 +106,7 @@ pub fn parse_resolver_with_sources(
   header_sources : Array[String],
 ) -> @types.ResolverSpec {
   let lines = split_lines(text)
-  let kv : Map[String, String] = {}
+  let kv : Map[String, String] = Map([])
   let aliases : Array[@types.ResolverAlias] = []
   let resolve_chain : Array[@types.ResolveStep] = []
   let mut i = 0
@@ -358,7 +358,7 @@ fn parse_multi_line_resolve_step(
   lines : Array[String],
   start : Int,
 ) -> (@types.ResolveStep?, Int) {
-  let kv : Map[String, String] = {}
+  let kv : Map[String, String] = Map([])
   let mut i = start
   while i < lines.length() {
     let s = lines[i]

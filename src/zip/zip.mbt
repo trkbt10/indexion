@@ -66,7 +66,7 @@ pub fn extract_all(path : String) -> Array[ZipFile] raise Error {
   let pairs = @fzip.unzip_sync(data)
   let files : Array[ZipFile] = []
   for pair in pairs {
-    files.push({ name: pair.0, data: pair.1 })
+    files.push({ name: pair.0, data: pair.1, })
   }
   files
 }
@@ -86,7 +86,7 @@ pub fn extract_filtered(
   for pair in pairs {
     let name = pair.0
     if should_include_entry(name, includes, excludes) {
-      files.push({ name, data: pair.1 })
+      files.push({ name, data: pair.1, })
     }
   }
   files
@@ -148,7 +148,7 @@ fn should_include_entry(
 /// Decode extracted bytes as a UTF-8 string.
 /// Returns None if the bytes are not valid UTF-8.
 pub fn decode_utf8(data : FixedArray[Byte]) -> String? {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let len = data.length()
   let mut i = 0
   while i < len {
@@ -211,7 +211,7 @@ pub fn decode_utf8(data : FixedArray[Byte]) -> String? {
 pub fn encode_base64(data : FixedArray[Byte]) -> String {
   let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
   let len = data.length()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   fn b64char(idx : Int) -> Char {
     alphabet[idx].to_int().unsafe_to_char()
   }

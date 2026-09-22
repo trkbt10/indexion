@@ -19,7 +19,7 @@ pub struct TfidfEmbeddingProvider {
 ///|
 /// Create a new TfidfEmbeddingProvider with given dimension.
 pub fn TfidfEmbeddingProvider::new(dim : Int) -> TfidfEmbeddingProvider {
-  { dim, vocabulary: {}, idf: {} }
+  { dim, vocabulary: {}, idf: {}, }
 }
 
 ///|
@@ -37,7 +37,7 @@ pub fn TfidfEmbeddingProvider::build_vocabulary(
   let df = @tfidf.build_document_frequency(tokenized)
   let total_docs = tokenized.length()
   // Precompute IDF for all terms
-  let idf_map : Map[String, Double] = {}
+  let idf_map : Map[String, Double] = Map([])
   for entry in df {
     let term = entry.0
     let term_df = entry.1
@@ -48,7 +48,7 @@ pub fn TfidfEmbeddingProvider::build_vocabulary(
     idf_map.set(term, idf_val)
   }
   // Accumulate aggregate TF-IDF weight per term across all documents
-  let aggregate_weight : Map[String, Double] = {}
+  let aggregate_weight : Map[String, Double] = Map([])
   for tokens in tokenized {
     let tf = @tfidf.build_term_frequency(tokens)
     for entry in tf {

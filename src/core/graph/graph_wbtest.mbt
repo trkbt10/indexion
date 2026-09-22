@@ -317,7 +317,7 @@ test "JSON roundtrip produces equivalent graph" {
 ///|
 test "JSON roundtrip with edge attributes" {
   let graph = CodeGraph::new()
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("line", "42")
   attrs.set("col", "10")
   graph.add_edge(Calls, "src", "dst", attrs~)
@@ -427,7 +427,7 @@ test "to_json_string: declares edge 'to' is remapped to canonical symbol id" {
     ns="value",
     module_id="src/foo.mbt",
   )
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("name", "bar")
   attrs.set("kind", "Function")
   graph.add_edge(Declares, "src/foo.mbt", "src/foo.mbt::bar", attrs~)
@@ -451,7 +451,7 @@ test "to_json_string: attrs cannot clobber canonical edge fields" {
     ns="value",
     module_id="m",
   )
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("name", "f")
   attrs.set("kind", "Function")
   attrs.set("from", "hijacked")
@@ -475,7 +475,7 @@ test "to_json_string: unknown edge targets are backfilled as external modules" {
   // must add them to `modules` so every endpoint resolves.
   let graph = CodeGraph::new()
   let _ = graph.get_or_add_module("src/mymod.pkg", file=Some("src/mymod.pkg"))
-  let attrs : Map[String, String] = {}
+  let attrs : Map[String, String] = Map([])
   attrs.set("via", "some/external/pkg")
   attrs.set("dep_kind", "value")
   graph.add_edge(
@@ -513,18 +513,18 @@ test "to_json_string: full invariant holds for mixed graph" {
     ns="type",
     module_id="b.mbt",
   )
-  let declares_attrs : Map[String, String] = {}
+  let declares_attrs : Map[String, String] = Map([])
   declares_attrs.set("name", "hello")
   declares_attrs.set("kind", "Function")
   graph.add_edge(Declares, "a.mbt", "a.mbt::hello", attrs=declares_attrs)
-  let struct_attrs : Map[String, String] = {}
+  let struct_attrs : Map[String, String] = Map([])
   struct_attrs.set("name", "Thing")
   struct_attrs.set("kind", "Struct")
   graph.add_edge(Declares, "b.mbt", "b.mbt::Thing", attrs=struct_attrs)
-  let dep_attrs : Map[String, String] = {}
+  let dep_attrs : Map[String, String] = Map([])
   dep_attrs.set("via", "b")
   graph.add_edge(ModuleDependsOn, "a.mbt", "b.mbt", attrs=dep_attrs)
-  let ext_attrs : Map[String, String] = {}
+  let ext_attrs : Map[String, String] = Map([])
   ext_attrs.set("via", "moonbitlang/core")
   graph.add_edge(
     ModuleDependsOn,

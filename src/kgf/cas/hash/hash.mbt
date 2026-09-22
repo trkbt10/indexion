@@ -147,7 +147,7 @@ fn sha256(data : Array[Byte]) -> String {
   let hex_chars : Array[Char] = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
   ]
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   for i = 0; i < 8; i = i + 1 {
     let v = h[i]
     for j = 7; j >= 0; j = j - 1 {
@@ -164,7 +164,7 @@ pub fn compute_hash(content : String) -> @types.ContentHash {
   let bytes = string_to_bytes(content)
   let full_hash = sha256(bytes)
   // Take first 32 characters for truncated hash
-  let truncated = StringBuilder::new()
+  let truncated = StringBuilder()
   for i = 0; i < 32 && i < full_hash.length(); i = i + 1 {
     truncated.write_char(full_hash[i].to_int().unsafe_to_char())
   }

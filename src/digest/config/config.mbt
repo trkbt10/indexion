@@ -251,7 +251,7 @@ pub fn DigestConfig::with_llm(
   self : DigestConfig,
   llm_config : LlmConfig,
 ) -> DigestConfig {
-  { ..self, llm_config: Some(llm_config) }
+  { ..self, llm_config: Some(llm_config), }
 }
 
 ///|
@@ -260,7 +260,8 @@ pub fn DigestConfig::with_impress_prompt(
   prompt : String,
 ) -> DigestConfig {
   match self.llm_config {
-    Some(cfg) => { ..self, llm_config: Some({ ..cfg, system_prompt: prompt }) }
+    Some(cfg) =>
+      { ..self, llm_config: Some({ ..cfg, system_prompt: prompt, }), }
     None => {
       for p in self.providers {
         match p.api_config {
@@ -283,7 +284,7 @@ pub fn DigestConfig::with_impress_model(
   model : String,
 ) -> DigestConfig {
   match self.llm_config {
-    Some(cfg) => { ..self, llm_config: Some({ ..cfg, model, }) }
+    Some(cfg) => { ..self, llm_config: Some({ ..cfg, model, }), }
     None => {
       for p in self.providers {
         match p.api_config {
@@ -305,7 +306,7 @@ pub fn DigestConfig::with_index_dir(
   self : DigestConfig,
   dir : String,
 ) -> DigestConfig {
-  { ..self, index_dir: dir }
+  { ..self, index_dir: dir, }
 }
 
 ///|
@@ -313,7 +314,7 @@ pub fn DigestConfig::with_exclude_kinds(
   self : DigestConfig,
   kinds : Array[String],
 ) -> DigestConfig {
-  { ..self, exclude_kinds: kinds }
+  { ..self, exclude_kinds: kinds, }
 }
 
 ///|

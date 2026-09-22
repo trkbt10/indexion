@@ -42,4 +42,3 @@ pub fn LexerBuilder::token(Self, String, String, skip? : Bool, flags? : String?)
 // Type aliases
 
 // Traits
-

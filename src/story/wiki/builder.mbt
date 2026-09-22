@@ -58,7 +58,7 @@ pub async fn build_story_wiki(
       ) {
       // write_page already printed the error; abort the rest of the build
       // so the manifest does not get further out of sync with the disk.
-      return Some({ written, skipped })
+      return Some({ written, skipped, })
     }
     current_manifest = next_manifest
     written.push(proposal.id)
@@ -79,7 +79,7 @@ pub async fn build_story_wiki(
   if written.length() > 0 || !@wiki_search.exists(wiki_dir) {
     rebuild_story_wiki_search_index(wiki_dir, specs_dir)
   }
-  Some({ written, skipped })
+  Some({ written, skipped, })
 }
 
 ///|

@@ -126,7 +126,7 @@ fn add_specific_token(tokens : Map[String, Bool], token : String) -> Unit {
 
 ///|
 fn build_exact_token_index(text : String) -> Map[String, Bool] {
-  let index : Map[String, Bool] = {}
+  let index : Map[String, Bool] = Map([])
   let raw_token : Array[Char] = []
   fn flush_raw(index : Map[String, Bool], raw_token : Array[Char]) -> Unit {
     if raw_token.length() == 0 {
@@ -209,7 +209,7 @@ fn build_feature_token_kinds(
   spec : @kgf_types.KGFSpec,
   feature_name : String,
 ) -> Map[String, Bool] {
-  let kinds : Map[String, Bool] = {}
+  let kinds : Map[String, Bool] = Map([])
   match spec.get_feature(feature_name) {
     Some(values) =>
       for value in values {
@@ -251,7 +251,7 @@ fn add_path_anchor_terms(tokens : Map[String, Bool], text : String) -> Unit {
 
 ///|
 fn configured_doc_roots(doc_paths : Array[String]) -> Map[String, Bool] {
-  let roots : Map[String, Bool] = {}
+  let roots : Map[String, Bool] = Map([])
   for pattern in doc_paths {
     let normalized = @config_paths.normalize_path(pattern)
     let segment_chars : Array[Char] = []
@@ -331,12 +331,12 @@ fn build_module_signals(
   root_dir : String,
   doc_roots : Map[String, Bool],
 ) -> Map[String, ModuleSignals] {
-  let signals : Map[String, ModuleSignals] = {}
+  let signals : Map[String, ModuleSignals] = Map([])
   for unit in units {
     let current = match signals.get(unit.module_path) {
       Some(existing) => existing
       None => {
-        let seeded = { tokens: {}, anchors: {} }
+        let seeded = { tokens: {}, anchors: {}, }
         add_specific_token(
           seeded.anchors,
           coverage_anchor_term(root_dir, unit.module_path, doc_roots),
@@ -382,9 +382,9 @@ fn build_fragment_terms(
   root_dir : String,
   doc_roots : Map[String, Bool],
 ) -> Map[String, Map[String, Bool]] {
-  let terms : Map[String, Map[String, Bool]] = {}
+  let terms : Map[String, Map[String, Bool]] = Map([])
   for fragment in fragments {
-    let current : Map[String, Bool] = {}
+    let current : Map[String, Bool] = Map([])
     let source_text = fragment.title + "\n" + fragment.content
     match registry.get_spec(fragment.spec) {
       Some(spec) =>
@@ -422,7 +422,7 @@ fn build_module_coverage_index(
     fragments, registry, root_dir, doc_roots,
   )
   // Build inverted index: token → [fragment_id]
-  let token_to_frags : Map[String, Array[String]] = {}
+  let token_to_frags : Map[String, Array[String]] = Map([])
   for entry in fragment_terms {
     let frag_id = entry.0
     let terms = entry.1
@@ -433,11 +433,11 @@ fn build_module_coverage_index(
       }
     }
   }
-  let coverage : Map[String, Bool] = {}
+  let coverage : Map[String, Bool] = Map([])
   for module_entry in module_signals {
     let signals = module_entry.1
     // Count token overlaps per fragment via inverted index
-    let frag_overlap : Map[String, Int] = {}
+    let frag_overlap : Map[String, Int] = Map([])
     for token_entry in signals.tokens {
       match token_to_frags.get(token_entry.0) {
         Some(frag_ids) =>
@@ -483,12 +483,12 @@ pub fn build_fragment_match_signals(
   fragments : Array[DocFragment],
   registry : @registry.KGFRegistry,
 ) -> Map[String, FragmentMatchSignals] {
-  let signals : Map[String, FragmentMatchSignals] = {}
+  let signals : Map[String, FragmentMatchSignals] = Map([])
   for fragment in fragments {
     let source_text = fragment.title + "\n" + fragment.content
     let lowered_text = lower_string(source_text)
     let exact_tokens = build_exact_token_index(source_text)
-    let reference_tokens : Map[String, Bool] = {}
+    let reference_tokens : Map[String, Bool] = Map([])
     match registry.get_spec(fragment.spec) {
       Some(spec) => {
         let reference_kinds = build_feature_token_kinds(
@@ -518,7 +518,7 @@ pub fn build_fragment_match_signals(
       }
       None => ()
     }
-    signals.set(fragment.id, { exact_tokens, reference_tokens, lowered_text })
+    signals.set(fragment.id, { exact_tokens, reference_tokens, lowered_text, })
   }
   signals
 }
@@ -687,7 +687,7 @@ fn build_fragment_inverted_index(
   fragments : Array[DocFragment],
   fragment_signals : Map[String, FragmentMatchSignals],
 ) -> Map[String, Array[Int]] {
-  let index : Map[String, Array[Int]] = {}
+  let index : Map[String, Array[Int]] = Map([])
   for i, fragment in fragments {
     let signals = match fragment_signals.get(fragment.id) {
       Some(v) => v
@@ -734,7 +734,7 @@ async fn match_units_batch(
     // Pre-compute lowered terms once per unit (not per fragment)
     let terms = unit_match_terms(unit)
     // Use inverted index to find candidate fragments
-    let candidate_set : Map[Int, Bool] = {}
+    let candidate_set : Map[Int, Bool] = Map([])
     match inverted_index.get(terms.lowered_name) {
       Some(indices) =>
         for idx in indices {
@@ -893,7 +893,7 @@ pub async fn build_candidates(
       b.mapping_confidence.compare(a.mapping_confidence)
     }
   })
-  { candidates, module_covered_symbols }
+  { candidates, module_covered_symbols, }
 }
 
 ///|
@@ -968,7 +968,7 @@ pub async fn build_candidates_concurrent(
         b.mapping_confidence.compare(a.mapping_confidence)
       }
     })
-    { candidates: all_candidates, module_covered_symbols: total_covered }
+    { candidates: all_candidates, module_covered_symbols: total_covered, }
   })
 }
 
@@ -1174,7 +1174,7 @@ fn project_doc_paths(
   root_dir : String,
   project_markers : Array[String],
 ) -> Map[String, Array[String]] {
-  let index : Map[String, Array[String]] = {}
+  let index : Map[String, Array[String]] = Map([])
   for fragment in fragments {
     match project_group_path(root_dir, fragment.path, project_markers) {
       Some(project_path) => {
@@ -1199,13 +1199,13 @@ pub fn build_aggregate_suggestions(
   root_dir : String,
   project_markers : Array[String],
 ) -> Array[ReconcileAggregateSuggestion] {
-  let visible_index : Map[String, ReconcileCandidate] = {}
+  let visible_index : Map[String, ReconcileCandidate] = Map([])
   for candidate in visible_candidates {
     visible_index.set(candidate.id, candidate)
   }
   let project_docs = project_doc_paths(fragments, root_dir, project_markers)
-  let module_buckets : Map[String, AggregateBucket] = {}
-  let project_buckets : Map[String, AggregateBucket] = {}
+  let module_buckets : Map[String, AggregateBucket] = Map([])
+  let project_buckets : Map[String, AggregateBucket] = Map([])
   for candidate in raw_candidates {
     let logical_review_count_delta = match visible_index.get(candidate.id) {
       Some(visible) => if visible.needs_logical_review { 1 } else { 0 }
@@ -1304,8 +1304,8 @@ pub fn collapse_aggregate_only_candidates(
   root_dir : String,
   project_markers : Array[String],
 ) -> Array[ReconcileCandidate] {
-  let suppressed_modules : Map[String, Bool] = {}
-  let suppressed_projects : Map[String, Bool] = {}
+  let suppressed_modules : Map[String, Bool] = Map([])
+  let suppressed_projects : Map[String, Bool] = Map([])
   for group in aggregate_suggestions {
     if group.status != "missing_doc" || group.doc_paths.length() == 0 {
       continue

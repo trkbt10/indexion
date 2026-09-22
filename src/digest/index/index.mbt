@@ -20,7 +20,7 @@ pub struct BuildResult {
 ///|
 /// Create an empty BuildResult.
 pub fn BuildResult::new() -> BuildResult {
-  { indexed_count: 0, skipped_count: 0, removed_count: 0, errors: [] }
+  { indexed_count: 0, skipped_count: 0, removed_count: 0, errors: [], }
 }
 
 // TfidfEmbeddingProvider: use @text_embed.TfidfEmbeddingProvider (SoT)
@@ -147,7 +147,7 @@ pub fn DigestIndex::serialize(
   self : DigestIndex,
 ) -> (String, Map[String, Bytes]) {
   let manifest_json = self.manifest.to_json_string()
-  let db_map : Map[String, Bytes] = {}
+  let db_map : Map[String, Bytes] = Map([])
   for entry in self.engines {
     db_map.set(entry.0, entry.1.serialize())
   }
@@ -157,7 +157,7 @@ pub fn DigestIndex::serialize(
 ///|
 /// Get statistics about the index.
 pub fn DigestIndex::stats(self : DigestIndex) -> Map[String, Int] {
-  let stats : Map[String, Int] = {}
+  let stats : Map[String, Int] = Map([])
   stats.set("function_count", self.manifest.functions.length())
   for entry in self.engines {
     stats.set(entry.0 + "_vector_count", entry.1.size())

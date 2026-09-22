@@ -1,0 +1,19 @@
+// Explicit method promotion for trait impls (MoonBit warning 79,
+// `implicit_impl_as_method`). Methods under "promoted" are called with dot
+// syntax somewhere in this project; the rest are kept only as deprecated shims
+// for the old implicit promotion and can be removed once it is gone.
+
+// --- promoted: kept as regular methods (blessed public API) ---
+
+///|
+pub extend WikiSearchHit with ToJson::{to_json}
+
+///|
+pub extend WikiSection with ToJson::{to_json}
+
+// --- deprecated: hidden from the generated interface ---
+
+///|
+#deprecated("Use `FromJson::from_json` instead")
+#doc(hidden)
+pub extend WikiSection with FromJson::{from_json}

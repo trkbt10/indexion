@@ -23,14 +23,14 @@ fn resolve_os_dir(
     MacOS =>
       @osenv_dirs.home_dir().map(fn(home) { home + "/Library/" + macos_subpath })
     Linux => {
-      match @sys.get_env_var(xdg_env) {
+      match @env.get_env_var(xdg_env) {
         Some(xdg) => if xdg.length() > 0 { return Some(xdg + "/indexion") }
         None => ()
       }
       @osenv_dirs.home_dir().map(fn(home) { home + "/" + linux_fallback })
     }
     Windows =>
-      match @sys.get_env_var(windows_env) {
+      match @env.get_env_var(windows_env) {
         Some(dir) =>
           if dir.length() > 0 {
             Some(dir + windows_subpath)
@@ -75,7 +75,7 @@ pub fn get_global_cache_dir() -> String? {
 /// Priority: INDEXION_INSTALL_DIR env var, then ~/.indexion
 /// This is the SoT for install directory resolution.
 pub fn get_install_dir() -> String? {
-  match @sys.get_env_var("INDEXION_INSTALL_DIR") {
+  match @env.get_env_var("INDEXION_INSTALL_DIR") {
     Some(dir) => if dir.length() > 0 { return Some(dir) }
     None => ()
   }

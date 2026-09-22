@@ -45,7 +45,7 @@ pub fn inline_search(
   let results : Array[SearchHit] = []
   for i in 0..<limit {
     let (idx, sim) = scored[i]
-    results.push({ document: documents[idx], score: sim })
+    results.push({ document: documents[idx], score: sim, })
   }
   results
 }

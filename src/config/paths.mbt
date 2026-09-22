@@ -50,7 +50,7 @@ pub fn substring(s : String, start : Int, end : Int) -> String {
   if actual_start >= actual_end {
     return ""
   }
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   for i = actual_start; i < actual_end; i = i + 1 {
     result.write_char(chars[i])
   }
@@ -425,7 +425,7 @@ pub fn find_kgfs_dir(
   if explicit_path.length() > 0 {
     return find_explicit_kgfs_candidate(base_dir, explicit_path)
   }
-  let env_candidate = match @sys.get_env_var("INDEXION_KGFS_DIR") {
+  let env_candidate = match @env.get_env_var("INDEXION_KGFS_DIR") {
     Some(dir) =>
       if dir.length() > 0 && is_valid_dir(dir) {
         Some(normalize_path(dir))
@@ -488,7 +488,7 @@ pub fn find_kgf_transpile_dir(
       return Some(resolved)
     }
   }
-  match @sys.get_env_var("INDEXION_KGF_TRANSPILE_DIR") {
+  match @env.get_env_var("INDEXION_KGF_TRANSPILE_DIR") {
     Some(dir) =>
       if dir.length() > 0 && is_valid_dir(dir) {
         return Some(normalize_path(dir))

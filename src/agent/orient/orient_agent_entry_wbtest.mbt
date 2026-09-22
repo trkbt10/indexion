@@ -227,7 +227,7 @@ async test "orient entry: read-only mode queries existing cache without writer l
   let update_config = orient_entry_config(name, false)
   seed_orient_entry_repo(update_config)
   let update_report = orient_agent(update_config)
-  let read_config = { ..update_config, no_update: true }
+  let read_config = { ..update_config, no_update: true, }
   let lock = @cache.try_acquire_writer_lock(update_config)
   let read_report = orient_agent(read_config)
   lock.release()

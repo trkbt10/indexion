@@ -34,7 +34,7 @@ pub fn render_report(
 
 ///|
 fn render_text(report : ReconcileReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("=== indexion story reconcile ===\n")
   buf.write_string(
     "Acts: " +
@@ -126,7 +126,7 @@ fn render_text(report : ReconcileReport) -> String {
 
 ///|
 fn join_terms(arr : Array[String]) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i, s in arr {
     if i > 0 {
       buf.write_string(", ")

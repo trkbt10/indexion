@@ -71,7 +71,7 @@ pub fn ReadmePlanConfig::from_matches(
     Some(arr) => if arr.length() > 0 { arr[0] } else { "." }
     _ => "."
   }
-  { target_dir, output, format, specs_dir, template, plans_dir }
+  { target_dir, output, format, specs_dir, template, plans_dir, }
 }
 
 ///|
@@ -204,7 +204,7 @@ priv struct ProjectInfo {
 
 ///|
 fn ProjectInfo::default() -> ProjectInfo {
-  { name: "project", description: "" }
+  { name: "project", description: "", }
 }
 
 ///|
@@ -239,7 +239,7 @@ fn parse_project_config(filename : String, content : String) -> ProjectInfo {
   if filename.has_suffix(".json") {
     let name = @common.extract_json_string(content, "name")
     let description = @common.extract_json_string(content, "description")
-    { name: if name.length() > 0 { name } else { "project" }, description }
+    { name: if name.length() > 0 { name } else { "project" }, description, }
   } else {
     ProjectInfo::default()
   }
@@ -306,7 +306,7 @@ fn discover_docs_recursive(
     if entry.has_suffix(".md") && !@common.is_directory(full_path) {
       let rel_path = @common.make_relative_path(full_path, base_dir)
       let title = extract_doc_title(full_path)
-      docs.push({ path: rel_path, title })
+      docs.push({ path: rel_path, title, })
     } else if @common.is_directory(full_path) {
       if !local_config.should_skip_dir(entry) {
         discover_docs_recursive(base_dir, full_path, docs, local_config)
@@ -390,7 +390,7 @@ fn discover_packages_recursive(
   }
   if has_mbt_files && pub_count > 0 {
     let rel_path = @common.make_relative_path(current_dir, base_dir)
-    packages.push({ path: rel_path, pub_items: pub_count })
+    packages.push({ path: rel_path, pub_items: pub_count, })
   }
   // Recurse into subdirectories
   for entry in entries {
@@ -515,7 +515,7 @@ fn generate_writing_plan(
   existing_docs : Array[ExistingDoc],
   target_dir : String,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   // Header
   buf.write_string("# ")
   buf.write_string(include_path)
@@ -630,7 +630,7 @@ fn render_plans_markdown(
   plans_dir : String,
   target_dir : String,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let date = get_current_date()
   // Header
   buf.write_string("# ")
@@ -684,7 +684,7 @@ fn render_plans_json(
 ) -> String {
   let plans_arr : Array[Json] = []
   for i, include_path in include_paths {
-    let obj : Map[String, Json] = {}
+    let obj : Map[String, Json] = Map([])
     obj.set("target", include_path.to_json())
     let plan_path = if i < plans_created.length() {
       plans_created[i]
@@ -694,7 +694,7 @@ fn render_plans_json(
     obj.set("plan", plan_path.to_json())
     plans_arr.push(Json::object(obj))
   }
-  let root : Map[String, Json] = {}
+  let root : Map[String, Json] = Map([])
   root.set("project", project.name.to_json())
   root.set("date", get_current_date().to_json())
   root.set("plans_dir", plans_dir.to_json())

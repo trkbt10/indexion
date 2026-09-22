@@ -7,12 +7,12 @@ pub fn build_or_update(
 ) -> AgentOrientMap {
   if config.no_update {
     match cached_map {
-      Some(map) => return { ..map, status: map_status_for_cached(map) }
+      Some(map) => return { ..map, status: map_status_for_cached(map), }
       None => ()
     }
   }
   let old_hashes = cached_file_hashes(cached_map)
-  let current_hashes : Map[String, String] = {}
+  let current_hashes : Map[String, String] = Map([])
   let files : Array[AgentOrientMapFile] = []
   let changed : Array[String] = []
   let new_files : Array[String] = []

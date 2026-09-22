@@ -79,8 +79,8 @@ fn IterEvalContext::new(
     furthest_pos: 0,
     furthest_expected: [],
     furthest_expected_set: HashSet([]),
-    work: Array::new(capacity=1024),
-    results: Array::new(capacity=256),
+    work: Array(capacity=1024),
+    results: Array(capacity=256),
   }
 }
 
@@ -153,11 +153,11 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
   match ctx.memo[memo_idx] {
     Succeeded(end_pos, labels) => {
       let cloned = clone_labels(labels)
-      ctx.results.push({ ok: true, end_pos, labels: cloned })
+      ctx.results.push({ ok: true, end_pos, labels: cloned, })
       return
     }
     Failed => {
-      ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels() })
+      ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels(), })
       return
     }
     Unknown => ()
@@ -167,22 +167,22 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
     FEmpty => {
       let labels = empty_labels()
       ctx.memo[memo_idx] = Succeeded(pos, labels)
-      ctx.results.push({ ok: true, end_pos: pos, labels })
+      ctx.results.push({ ok: true, end_pos: pos, labels, })
     }
     FFail => {
       ctx.memo[memo_idx] = Failed
-      ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels() })
+      ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels(), })
     }
     FToken(expected_id) =>
       if pos < ctx.tokens.length() && ctx.token_ids[pos] == expected_id {
         // Use token reference - defer Map creation
         let labels = token_labels(pos)
         ctx.memo[memo_idx] = Succeeded(pos + 1, labels)
-        ctx.results.push({ ok: true, end_pos: pos + 1, labels })
+        ctx.results.push({ ok: true, end_pos: pos + 1, labels, })
       } else {
         record_token_failure(ctx, pos, expected_id)
         ctx.memo[memo_idx] = Failed
-        ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels() })
+        ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels(), })
       }
     FRuleRef(rule_node_id, name) => {
       let target_is_rule_ref = match ctx.peg.fast_nodes.get(rule_node_id) {
@@ -196,7 +196,7 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
       if elems.length() == 0 {
         let labels = empty_labels()
         ctx.memo[memo_idx] = Succeeded(pos, labels)
-        ctx.results.push({ ok: true, end_pos: pos, labels })
+        ctx.results.push({ ok: true, end_pos: pos, labels, })
       } else {
         ctx.work.push(SeqCont(node_id, 0, pos, pos, empty_labels()))
         ctx.work.push(Eval(elems[0], pos))
@@ -204,7 +204,7 @@ fn process_eval(ctx : IterEvalContext, node_id : Int, pos : Int) -> Unit {
     FChoice(alts) =>
       if alts.length() == 0 {
         ctx.memo[memo_idx] = Failed
-        ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels() })
+        ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels(), })
       } else {
         ctx.work.push(ChoiceCont(node_id, 0, pos))
         ctx.work.push(Eval(alts[0], pos))
@@ -250,7 +250,7 @@ fn process_seq_cont(
   if !result.ok {
     let memo_idx = node_id * ctx.num_positions + start_pos
     ctx.memo[memo_idx] = Failed
-    ctx.results.push({ ok: false, end_pos: start_pos, labels: empty_labels() })
+    ctx.results.push({ ok: false, end_pos: start_pos, labels: empty_labels(), })
     return
   }
   let merged = merge_labels(labels, result.labels, ctx.tokens)
@@ -266,7 +266,7 @@ fn process_seq_cont(
     // whichever consumer fires next would otherwise see state mutated by
     // the other. The memo entry must survive future `merge_labels` calls.
     ctx.memo[memo_idx] = Succeeded(new_pos, clone_labels(merged))
-    ctx.results.push({ ok: true, end_pos: new_pos, labels: merged })
+    ctx.results.push({ ok: true, end_pos: new_pos, labels: merged, })
   } else {
     ctx.work.push(SeqCont(node_id, next_idx, start_pos, new_pos, merged))
     ctx.work.push(Eval(elems[next_idx], new_pos))
@@ -296,7 +296,7 @@ fn process_choice_cont(
   if next_idx >= alts.length() {
     let memo_idx = node_id * ctx.num_positions + pos
     ctx.memo[memo_idx] = Failed
-    ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels() })
+    ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels(), })
   } else {
     ctx.work.push(ChoiceCont(node_id, next_idx, pos))
     ctx.work.push(Eval(alts[next_idx], pos))
@@ -321,7 +321,7 @@ fn repetition_cont(
 ) -> Unit {
   let result = ctx.results.pop().unwrap()
   if !result.ok || result.end_pos == current_pos {
-    ctx.results.push({ ok: true, end_pos: current_pos, labels })
+    ctx.results.push({ ok: true, end_pos: current_pos, labels, })
     return
   }
   let merged = merge_labels(labels, result.labels, ctx.tokens)
@@ -356,7 +356,7 @@ fn process_plus_first(
   if !result.ok {
     let memo_idx = node_id * ctx.num_positions + start_pos
     ctx.memo[memo_idx] = Failed
-    ctx.results.push({ ok: false, end_pos: start_pos, labels: empty_labels() })
+    ctx.results.push({ ok: false, end_pos: start_pos, labels: empty_labels(), })
     return
   }
   let current_pos = result.end_pos
@@ -394,7 +394,7 @@ fn process_optional_cont(
     let memo_idx = node_id * ctx.num_positions + pos
     let labels = empty_labels()
     ctx.memo[memo_idx] = Succeeded(pos, labels)
-    ctx.results.push({ ok: true, end_pos: pos, labels })
+    ctx.results.push({ ok: true, end_pos: pos, labels, })
   }
 }
 
@@ -475,10 +475,10 @@ fn process_predicate_cont(
   if matched {
     let labels = empty_labels()
     ctx.memo[memo_idx] = Succeeded(pos, labels)
-    ctx.results.push({ ok: true, end_pos: pos, labels })
+    ctx.results.push({ ok: true, end_pos: pos, labels, })
   } else {
     ctx.memo[memo_idx] = Failed
-    ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels() })
+    ctx.results.push({ ok: false, end_pos: pos, labels: empty_labels(), })
   }
 }
 
@@ -499,7 +499,7 @@ fn run_parse_iter_internal(
       eval_iter_loop(ctx)
       let result = ctx.results
         .pop()
-        .unwrap_or({ ok: false, end_pos: 0, labels: empty_labels() })
+        .unwrap_or({ ok: false, end_pos: 0, labels: empty_labels(), })
       if result.ok && should_emit_rule_iter(ctx, start_rule) {
         let labels_map = materialize(result.labels, ctx.tokens)
         labels_map.set(@types.META_START_TOK, (0).to_json())

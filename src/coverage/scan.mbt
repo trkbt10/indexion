@@ -46,7 +46,7 @@ pub fn ScanUnit::new(
   name? : String = "",
   is_function? : Bool = false,
 ) -> ScanUnit {
-  { line, name, is_function, passed }
+  { line, name, is_function, passed, }
 }
 
 ///|
@@ -67,7 +67,7 @@ pub fn ScanFile::new(
   pkg? : String = "",
   units? : Array[ScanUnit] = [],
 ) -> ScanFile {
-  { path, pkg, units }
+  { path, pkg, units, }
 }
 
 ///|
@@ -94,7 +94,7 @@ pub fn ScanResult::new(
   source_root : String,
   files? : Array[ScanFile] = [],
 ) -> ScanResult {
-  { test_name, source_root, files }
+  { test_name, source_root, files, }
 }
 
 ///|
@@ -130,7 +130,7 @@ pub(all) struct ScanBuilder {
 ///|
 /// Construct an empty `ScanBuilder`.
 pub fn ScanBuilder::new() -> ScanBuilder {
-  { by_file: {}, file_order: [] }
+  { by_file: {}, file_order: [], }
 }
 
 ///|
@@ -266,7 +266,7 @@ pub fn ScanResult::to_coverage_report(self : ScanResult) -> CoverageReport {
   for sf in self.files {
     // line → max hits seen so far. First-seen order is preserved via
     // `line_order` so the converted lines reflect producer order.
-    let line_hits : Map[Int, Int] = {}
+    let line_hits : Map[Int, Int] = Map([])
     let line_order : Array[Int] = []
     let functions : Array[FunctionHit] = []
     for u in sf.units {
@@ -279,14 +279,14 @@ pub fn ScanResult::to_coverage_report(self : ScanResult) -> CoverageReport {
         }
       }
       if u.is_function && u.name.length() > 0 {
-        functions.push({ line: u.line, name: u.name, hits })
+        functions.push({ line: u.line, name: u.name, hits, })
       }
     }
     let lines : Array[LineHit] = []
     for line in line_order {
-      lines.push({ line, hits: line_hits.get(line).unwrap_or(0) })
+      lines.push({ line, hits: line_hits.get(line).unwrap_or(0), })
     }
-    files.push({ path: sf.path, pkg: sf.pkg, lines, functions, branches: [] })
+    files.push({ path: sf.path, pkg: sf.pkg, lines, functions, branches: [], })
   }
   CoverageReport::new(
     files,

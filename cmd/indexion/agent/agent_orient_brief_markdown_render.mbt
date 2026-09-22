@@ -1,7 +1,7 @@
 ///|
 /// Render an agent orientation brief as Markdown for human and subagent handoff.
 fn render_markdown(report : @agent_orient.AgentOrientReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# Agent Orientation Brief\n\n")
   if report.task.length() > 0 {
     buf.write_string("## Task\n\n")

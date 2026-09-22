@@ -11,7 +11,7 @@ pub struct FunctionHash {
 ///|
 /// Create a FunctionHash from a string value.
 pub fn FunctionHash::from_string(s : String) -> FunctionHash {
-  { value: s }
+  { value: s, }
 }
 
 ///|
@@ -39,13 +39,13 @@ pub fn Impression::new(
   keywords : Array[String],
   context? : String? = None,
 ) -> Impression {
-  { summary, keywords, context }
+  { summary, keywords, context, }
 }
 
 ///|
 /// Create an Impression from just a summary (auto-extract keywords later).
 pub fn Impression::from_summary(summary : String) -> Impression {
-  { summary, keywords: [], context: None }
+  { summary, keywords: [], context: None, }
 }
 
 ///|
@@ -113,7 +113,7 @@ pub fn FunctionUnit::with_impression(
   self : FunctionUnit,
   impression : Impression,
 ) -> FunctionUnit {
-  { ..self, impression: Some(impression) }
+  { ..self, impression: Some(impression), }
 }
 
 ///|
@@ -152,7 +152,7 @@ pub fn FunctionEmbedding::new(
   vector : Array[Double],
   source : String,
 ) -> FunctionEmbedding {
-  { function_id, vector, source }
+  { function_id, vector, source, }
 }
 
 ///|
@@ -173,7 +173,7 @@ pub fn QueryHit::new(
   score : Double,
   matched_keywords : Array[String],
 ) -> QueryHit {
-  { function, score, matched_keywords }
+  { function, score, matched_keywords, }
 }
 
 ///|
@@ -192,11 +192,11 @@ pub struct QueryOptions {
 ///|
 /// Create default QueryOptions.
 pub fn QueryOptions::default() -> QueryOptions {
-  { top_k: 10, min_score: 0.1, filter_module: None, filter_kind: None }
+  { top_k: 10, min_score: 0.1, filter_module: None, filter_kind: None, }
 }
 
 ///|
 /// Create QueryOptions with top_k.
 pub fn QueryOptions::with_top_k(k : Int) -> QueryOptions {
-  { ..QueryOptions::default(), top_k: k }
+  { ..QueryOptions::default(), top_k: k, }
 }

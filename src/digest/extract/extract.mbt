@@ -17,13 +17,13 @@ pub(all) struct ExtractConfig {
 /// Create default extraction config.
 /// Excludes Param (function parameters) by default.
 pub fn ExtractConfig::default() -> ExtractConfig {
-  { include_external: false, min_body_length: 0, exclude_kinds: ["param"] }
+  { include_external: false, min_body_length: 0, exclude_kinds: ["param"], }
 }
 
 ///|
 /// Create config that includes all symbols (no exclusions).
 pub fn ExtractConfig::all() -> ExtractConfig {
-  { include_external: false, min_body_length: 0, exclude_kinds: [] }
+  { include_external: false, min_body_length: 0, exclude_kinds: [], }
 }
 
 ///|
@@ -148,7 +148,7 @@ pub fn extract_function_unit(
   // Compute context hash including call relationships
   let context_hash = @hash.compute_context_hash(source_hash, callers, callees)
   // Compute depth
-  let visiting : Map[String, Bool] = {}
+  let visiting : Map[String, Bool] = Map([])
   let depth = compute_depth(graph, symbol.id, depth_memo, visiting)
   @types.FunctionUnit::new(
     symbol,
@@ -171,7 +171,7 @@ pub fn extract_function_units(
   file_hashes? : Map[String, @cas_types.ContentHash]? = None,
 ) -> Array[@types.FunctionUnit] {
   let result : Array[@types.FunctionUnit] = []
-  let depth_memo : Map[String, Int] = {}
+  let depth_memo : Map[String, Int] = Map([])
   for entry in graph.get_symbols() {
     let symbol = entry.1
     // Check symbol kind

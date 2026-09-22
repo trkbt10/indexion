@@ -61,7 +61,7 @@ pub fn get_ancestors(
   graph : @graph.CodeGraph,
   type_id : String,
 ) -> Array[TypeRelation] {
-  let visited : Map[String, Bool] = {}
+  let visited : Map[String, Bool] = Map([])
   let result : Array[TypeRelation] = []
   let queue : Array[String] = [type_id]
   while queue.length() > 0 {
@@ -86,7 +86,7 @@ pub fn get_descendants(
   graph : @graph.CodeGraph,
   type_id : String,
 ) -> Array[TypeRelation] {
-  let visited : Map[String, Bool] = {}
+  let visited : Map[String, Bool] = Map([])
   let result : Array[TypeRelation] = []
   let queue : Array[String] = [type_id]
   while queue.length() > 0 {

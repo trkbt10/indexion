@@ -711,7 +711,7 @@ test "reconcile: match_fragment requires exact token for plain symbol names" {
   )
   assert_eq(
     match_fragment(
-      { ..generic_unit, name: "default" },
+      { ..generic_unit, name: "default", },
       default_fragment,
       markdown_signals.get(default_fragment.id).unwrap(),
       true,
@@ -720,7 +720,7 @@ test "reconcile: match_fragment requires exact token for plain symbol names" {
   )
   assert_eq(
     match_fragment(
-      { ..generic_unit, name: "default" },
+      { ..generic_unit, name: "default", },
       default_column_fragment,
       markdown_signals.get(default_column_fragment.id).unwrap(),
       true,
@@ -914,9 +914,9 @@ fn sample_candidate_for(
     ..sample_candidate(),
     id: "cand:" + name,
     symbol_id,
-    code_anchor: { ..sample_code_anchor(), symbol_id, name, module_path },
+    code_anchor: { ..sample_code_anchor(), symbol_id, name, module_path, },
     doc_anchor: if doc_path.length() > 0 {
-      Some({ ..sample_doc_anchor(), path: doc_path })
+      Some({ ..sample_doc_anchor(), path: doc_path, })
     } else {
       None
     },
@@ -1138,7 +1138,7 @@ test "reconcile: apply_review_decisions closes pending logical review" {
   )
   let review_key = first.logical_reviews[0].review_key
   let decisions : Array[ReviewDecisionInput] = [
-    { review_key, status: "accepted", verdict: Some("document needs update") },
+    { review_key, status: "accepted", verdict: Some("document needs update"), },
   ]
   let (manifest_after_review, db_after_review) = apply_review_decisions(
     first.manifest,

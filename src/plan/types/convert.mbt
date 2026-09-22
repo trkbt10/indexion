@@ -10,7 +10,7 @@ pub struct ConvertContext {
 
 ///|
 pub fn ConvertContext::new() -> ConvertContext {
-  { project_name: "", project_version: "" }
+  { project_name: "", project_version: "", }
 }
 
 ///|
@@ -18,5 +18,5 @@ pub fn ConvertContext::with_project(
   name : String,
   version : String,
 ) -> ConvertContext {
-  { project_name: name, project_version: version }
+  { project_name: name, project_version: version, }
 }

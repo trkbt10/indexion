@@ -273,7 +273,7 @@ pub fn get_relative_part(display_name : String) -> String {
 /// Example: split_by_char("a,b,c", ',') -> ["a", "b", "c"]
 pub fn split_by_char(s : String, delim : Char) -> Array[String] {
   let parts : Array[String] = []
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in s {
     if c == delim {
       if buf.to_string().length() > 0 {
@@ -338,7 +338,7 @@ pub fn parent_dir(path : String) -> String {
   if parts.length() <= 1 {
     return if path.has_prefix("/") { "/" } else { "." }
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   if path.has_prefix("/") {
     buf.write_string("/")
   }
@@ -674,7 +674,7 @@ pub fn extract_json_array(json : String, key : String) -> Array[String] {
 ///|
 /// Join lines with newline separator.
 pub fn join_lines(lines : Array[String]) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i, line in lines {
     if i > 0 {
       buf.write_char('\n')
@@ -732,7 +732,7 @@ pub fn write_output(
 /// Slugify text for URL-safe identifiers.
 /// Lowercases, replaces spaces/slashes/underscores/dots with hyphens.
 pub fn slugify(text : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in text {
     if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' {
       buf.write_char(c)
@@ -749,7 +749,7 @@ pub fn slugify(text : String) -> String {
 /// Make a URL anchor from heading text.
 /// Like slugify but only accepts spaces as separators.
 pub fn make_anchor(text : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in text {
     if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' {
       buf.write_char(c)
@@ -770,7 +770,7 @@ pub fn capitalize(text : String) -> String {
   }
   let chars = text.to_array()
   if chars[0] >= 'a' && chars[0] <= 'z' {
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     buf.write_char((chars[0].to_int() - 32).unsafe_to_char())
     for i = 1; i < chars.length(); i = i + 1 {
       buf.write_char(chars[i])

@@ -25,7 +25,7 @@ pub fn SegmentConfig::new(
   threshold : Double,
   window_size : Int,
 ) -> SegmentConfig {
-  { target_chunk_size, min_chunk_size, max_chunk_size, threshold, window_size }
+  { target_chunk_size, min_chunk_size, max_chunk_size, threshold, window_size, }
 }
 
 ///|
@@ -143,7 +143,7 @@ pub struct WindowStrategy {
 ///|
 /// Create a new WindowStrategy with default configuration.
 pub fn WindowStrategy::new() -> WindowStrategy {
-  { config: default_segment_config() }
+  { config: default_segment_config(), }
 }
 
 ///|

@@ -342,7 +342,7 @@ fn build_plan_json(
         source2: m.source2,
       })
     }
-    extractions.push({ target_path: target, files })
+    extractions.push({ target_path: target, files, })
   }
   // Build unmatched list
   let unmatched : Array[UnmatchedFile] = []
@@ -496,7 +496,7 @@ fn parse_rule(rule_str : String) -> SolidRule? {
   if pattern.length() == 0 || target.length() == 0 {
     return None
   }
-  Some({ pattern, target })
+  Some({ pattern, target, })
 }
 
 // split_lines: use @common (SoT)
@@ -522,7 +522,7 @@ fn collect_sources(config : SolidConfig) -> CollectedSources {
     excludes=config.excludes,
     registry~,
   )
-  { files, registry }
+  { files, registry, }
 }
 
 ///|
@@ -548,7 +548,7 @@ fn find_cross_matches(
     @batch.BatchConfig::create(config.threshold, config.strategy),
   )
   // Track which pairs are path-matches vs content-matches
-  let seen_paths : Map[String, Bool] = {}
+  let seen_paths : Map[String, Bool] = Map([])
   // Phase 1: path-based cross-directory matches (highest confidence)
   for m in result.matches {
     let file1 = m.file1
@@ -775,7 +775,7 @@ fn categorize_matches(
   rules : Array[SolidRule],
   to_dir : String,
 ) -> CategorizedMatches {
-  let by_target : Map[String, Array[FileMatch]] = {}
+  let by_target : Map[String, Array[FileMatch]] = Map([])
   let unmatched : Array[FileMatch] = []
   for m in matches {
     let mut matched = false
@@ -783,7 +783,7 @@ fn categorize_matches(
       if @scope.path_matches_pattern(m.relative_path, rule.pattern) {
         // Resolve target path
         let target = resolve_target(rule.target, to_dir)
-        let updated_match = { ..m, _matched_rule: Some(rule) }
+        let updated_match = { ..m, _matched_rule: Some(rule), }
         match by_target.get(target) {
           Some(arr) => arr.push(updated_match)
           None => by_target.set(target, [updated_match])
@@ -796,7 +796,7 @@ fn categorize_matches(
       unmatched.push(m)
     }
   }
-  { by_target, unmatched }
+  { by_target, unmatched, }
 }
 
 ///|
@@ -809,7 +809,7 @@ fn build_extraction_tasks(
 ) -> Array[ExtractionTask] {
   // Group by function name clusters: functions that are similar across dirs
   // Key: canonical function name → all matches involving that function
-  let func_groups : Map[String, Array[CrossFunctionMatch]] = {}
+  let func_groups : Map[String, Array[CrossFunctionMatch]] = Map([])
   for m in func_matches {
     // Use the common name if names match, otherwise create a composite key
     let key = if m.func_name1 == m.func_name2 {
@@ -846,7 +846,7 @@ fn build_extraction_tasks(
     let rel1 = @common.get_relative_part(representative.file1)
     let target_path = resolve_extraction_target(rel1, rules, to_dir)
     // Collect all unique source files
-    let source_files_set : Map[String, Bool] = {}
+    let source_files_set : Map[String, Bool] = Map([])
     for m in group_matches {
       source_files_set.set(m.file1, true)
       source_files_set.set(m.file2, true)
@@ -857,7 +857,7 @@ fn build_extraction_tasks(
     }
     // Build extractable functions
     let functions : Array[ExtractableFunction] = []
-    let seen_funcs : Map[String, Bool] = {}
+    let seen_funcs : Map[String, Bool] = Map([])
     let mut min_similarity = 1.0
     for m in group_matches {
       // Avoid duplicating the same function
@@ -876,7 +876,7 @@ fn build_extraction_tasks(
           start_line: 0, // populated later if needed
           end_line: 0,
         },
-        { file: m.file2, dir: m.dir2, start_line: 0, end_line: 0 },
+        { file: m.file2, dir: m.dir2, start_line: 0, end_line: 0, },
       ]
       functions.push({
         name: m.func_name1,

@@ -226,7 +226,7 @@ pub fn combine_sentences(
   start : Int,
   count : Int,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let end = if start + count > sentences.length() {
     sentences.length()
   } else {

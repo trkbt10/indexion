@@ -19,7 +19,7 @@ pub fn OutputFormat::from_string(s : String) -> OutputFormat {
 ///|
 /// Render extracted docs as Markdown.
 pub fn render_markdown(docs : Array[(PackageInfo, ExtractedDoc)]) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i, item in docs {
     let (pkg, doc) = item
     if i > 0 {
@@ -41,7 +41,7 @@ pub fn render_json(docs : Array[(PackageInfo, ExtractedDoc)]) -> String {
     .iter()
     .map(fn(item) {
       let (pkg, doc) = item
-      let obj : Map[String, Json] = {}
+      let obj : Map[String, Json] = Map([])
       obj.set("path", pkg.path.to_json())
       obj.set("name", pkg.name.to_json())
       match doc.title {
@@ -58,7 +58,7 @@ pub fn render_json(docs : Array[(PackageInfo, ExtractedDoc)]) -> String {
 ///|
 /// Render extracted docs as raw text (just the content blocks).
 pub fn render_raw(docs : Array[(PackageInfo, ExtractedDoc)]) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i, item in docs {
     let (_, doc) = item
     if i > 0 {
@@ -81,7 +81,7 @@ pub fn write_per_package(docs : Array[(PackageInfo, ExtractedDoc)]) -> Unit {
       println("  Skipped (exists): " + readme_path)
       continue
     }
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     buf.write_string("# ")
     buf.write_string(pkg.name)
     buf.write_string("\n\n")

@@ -17,7 +17,7 @@ pub fn RemoteEmbeddingConfig::default() -> RemoteEmbeddingConfig {
     Some(dir) => dir
     None => ".indexion/digest"
   }
-  { embeddings_file: base_dir + "/embeddings.jsonl", dim: 1536 }
+  { embeddings_file: base_dir + "/embeddings.jsonl", dim: 1536, }
 }
 
 ///|
@@ -34,7 +34,7 @@ pub struct RemoteEmbeddingProvider {
 pub fn RemoteEmbeddingProvider::new(
   config : RemoteEmbeddingConfig,
 ) -> RemoteEmbeddingProvider {
-  { config, cache: {} }
+  { config, cache: {}, }
 }
 
 ///|

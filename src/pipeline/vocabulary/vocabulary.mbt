@@ -39,7 +39,7 @@ pub(all) struct GapConfig {
 
 ///|
 pub fn GapConfig::default() -> GapConfig {
-  { min_value_length: 2, max_terms: 0, include_vocab_terms: false }
+  { min_value_length: 2, max_terms: 0, include_vocab_terms: false, }
 }
 
 ///|
@@ -92,7 +92,7 @@ pub fn measure_divergence(
   let gap_terms = extract_gap_terms(
     source_vec, target_tf, project_df, ubiquity_threshold, config,
   )
-  { cosine_distance: cosine_dist, gap_terms }
+  { cosine_distance: cosine_dist, gap_terms, }
 }
 
 ///|
@@ -112,14 +112,14 @@ fn extract_gap_terms(
   // matches Ident:status in target, but NOT TEXT:status in target).
   // This prevents specification prose terms from being silently matched
   // by unrelated identifier names in the implementation.
-  let target_kind_values : Map[String, Bool] = {}
+  let target_kind_values : Map[String, Bool] = Map([])
   for kv in target_tf {
     let term = kv.0
     if @kgf_tokenize.feature_has_value(term) {
       target_kind_values[term] = true
     }
   }
-  let value_weights : Map[String, (Double, String)] = {}
+  let value_weights : Map[String, (Double, String)] = Map([])
   for entry in source_vec.iter() {
     let term = entry.0
     let weight = entry.1
@@ -162,7 +162,7 @@ fn extract_gap_terms(
   for vw in value_weights {
     let value = vw.0
     let (weight, kind) = vw.1
-    gaps.push({ term: kind + ":" + value, value, weight, kind })
+    gaps.push({ term: kind + ":" + value, value, weight, kind, })
   }
   gaps.sort_by(fn(a, b) { b.weight.compare(a.weight) })
   // Kneedle thresholding: find the "knee" in the weight curve to separate

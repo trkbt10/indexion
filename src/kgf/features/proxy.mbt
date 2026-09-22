@@ -51,7 +51,7 @@ pub fn UnwrapEdit::new(
   new_text : String,
   line : Int,
 ) -> UnwrapEdit {
-  { file, start_offset, end_offset, old_text, new_text, line }
+  { file, start_offset, end_offset, old_text, new_text, line, }
 }
 
 ///|
@@ -448,7 +448,7 @@ fn build_call_target(
   qualifier_set~ : Map[String, Bool],
   self_kw_set~ : Map[String, Bool],
 ) -> CallTargetResult {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let mut has_qualifier = false
   let mut starts_with_self = false
   for i = start; i < end; i = i + 1 {
@@ -464,10 +464,10 @@ fn build_call_target(
       has_qualifier = true
     } else {
       // Unexpected token in qualifier — not a valid call target
-      return { target: "", has_qualifier: false, starts_with_self: false }
+      return { target: "", has_qualifier: false, starts_with_self: false, }
     }
   }
-  { target: buf.to_string(), has_qualifier, starts_with_self }
+  { target: buf.to_string(), has_qualifier, starts_with_self, }
 }
 
 ///|
@@ -717,7 +717,7 @@ pub fn apply_edits(content : String, edits : Array[UnwrapEdit]) -> String {
   sorted.sort_by(fn(a, b) { a.start_offset - b.start_offset })
   let chars = content.to_array()
   let len = chars.length()
-  let buf = StringBuilder::new(size_hint=len)
+  let buf = StringBuilder(size_hint=len)
   let mut cursor = 0
   for edit in sorted {
     let start = if edit.start_offset < 0 {
@@ -791,7 +791,7 @@ fn is_blank(s : String) -> Bool {
 
 ///|
 fn join_lines(lines : Array[String]) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i, line in lines {
     if i > 0 {
       buf.write_string("\n")

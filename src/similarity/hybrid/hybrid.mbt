@@ -13,7 +13,7 @@ pub struct HybridStrategy {
 ///|
 /// Create a new HybridStrategy with default config (50/50 weights).
 pub fn HybridStrategy::new() -> HybridStrategy {
-  { config: @types.HybridConfig::new() }
+  { config: @types.HybridConfig::new(), }
 }
 
 ///|

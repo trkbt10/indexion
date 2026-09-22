@@ -370,4 +370,3 @@ pub fn TokenDef::new(String, String, skip? : Bool, flags? : String?, skip_value?
 // Type aliases
 
 // Traits
-

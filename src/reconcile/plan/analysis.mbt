@@ -67,7 +67,7 @@ async fn collect_code_file_states(
   units : Array[CodeUnit],
   config : ReconcileConfig,
 ) -> Array[FileState] {
-  let file_map : Map[String, Bool] = {}
+  let file_map : Map[String, Bool] = Map([])
   let file_states : Array[FileState] = []
   for unit in units {
     if file_map.contains(unit.module_path) {
@@ -334,7 +334,7 @@ pub async fn persisted_report(config : ReconcileConfig) -> ReconcileReport? {
         source_fingerprint: state.source_fingerprint,
         report_path: report_cache_path(config.index_dir),
         files: {
-          let map : Map[String, FileState] = {}
+          let map : Map[String, FileState] = Map([])
           for s in state.all_file_states {
             map.set(s.path, s)
           }
@@ -405,7 +405,7 @@ fn try_signature_fast_path(config : ReconcileConfig) -> ReconcileReport? {
       if report.cache_state.review_state_hash == manifest.review_state_hash {
         Some({
           ..report,
-          cache_state: { ..report.cache_state, cache_hit: true },
+          cache_state: { ..report.cache_state, cache_hit: true, },
         })
       } else {
         None

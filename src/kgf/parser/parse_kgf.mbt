@@ -176,7 +176,7 @@ pub fn KGFHeader::get_sources(self : KGFHeader) -> Array[String] {
 pub fn parse_kgf_header(text : String) -> KGFHeader {
   let language = extract_language(text)
   let sources = extract_sources(text)
-  { language, sources }
+  { language, sources, }
 }
 
 ///|
@@ -236,7 +236,7 @@ fn init {
 /// Each line is `name: value1, value2`.
 fn parse_features(text : String) -> Map[String, Array[String]]? {
   let lines = split_lines(text)
-  let result : Map[String, Array[String]] = {}
+  let result : Map[String, Array[String]] = Map([])
   for line in lines {
     let trimmed = trim_str(line)
     if trimmed.length() == 0 || trimmed.has_prefix("#") {

@@ -146,7 +146,7 @@ fn audit_config_from_matches(
 
 ///|
 fn render_audit_text(report : @identity_core.IdentityAuditReport) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("=== indexion identity audit ===\n")
   buf.write_string("Scanned: ")
   buf.write_string(report.summary.scanned.to_string())

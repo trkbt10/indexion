@@ -40,13 +40,13 @@ pub fn build_index(
     Some(l) => extract_recent_changes(l)
     None => []
   }
-  { categories, hub_pages, recent_changes, total_pages: wiki.pages.length() }
+  { categories, hub_pages, recent_changes, total_pages: wiki.pages.length(), }
 }
 
 ///|
 /// Render the index as markdown content suitable for a wiki page.
 pub fn WikiIndex::to_markdown(self : WikiIndex) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("# Wiki Index\n\n")
   buf.write_string(
     "This index catalogs all " +
@@ -110,7 +110,7 @@ pub fn WikiIndex::to_markdown(self : WikiIndex) -> String {
 ///|
 /// Categorize pages by the top-level directory of their source references.
 fn build_categories(wiki : @wiki_types.WikiData) -> Array[IndexCategory] {
-  let dir_pages : Map[String, Array[(String, String)]] = {}
+  let dir_pages : Map[String, Array[(String, String)]] = Map([])
   let uncategorized : Array[(String, String)] = []
   for entry in wiki.pages {
     let (page_id, page) = (entry.0, entry.1)
@@ -138,12 +138,12 @@ fn build_categories(wiki : @wiki_types.WikiData) -> Array[IndexCategory] {
   names.sort()
   for name in names {
     match dir_pages.get(name) {
-      Some(pages) => categories.push({ name, pages })
+      Some(pages) => categories.push({ name, pages, })
       None => ()
     }
   }
   if uncategorized.length() > 0 {
-    categories.push({ name: "Uncategorized", pages: uncategorized })
+    categories.push({ name: "Uncategorized", pages: uncategorized, })
   }
   categories
 }
@@ -152,7 +152,7 @@ fn build_categories(wiki : @wiki_types.WikiData) -> Array[IndexCategory] {
 /// Extract the top-level directory from a file path.
 fn extract_top_directory(path : String) -> String {
   let chars = path.to_array()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in chars {
     if c == '/' {
       break
@@ -170,7 +170,7 @@ fn extract_top_directory(path : String) -> String {
 ///|
 /// Find hub pages — pages with the most incoming links from other pages.
 fn find_hub_pages(wiki : @wiki_types.WikiData) -> Array[HubPage] {
-  let link_counts : Map[String, Int] = {}
+  let link_counts : Map[String, Int] = Map([])
   let wiki_prefix = "wiki://"
   let prefix_chars = wiki_prefix.to_array()
   let prefix_len = prefix_chars.length()
@@ -209,7 +209,7 @@ fn find_hub_pages(wiki : @wiki_types.WikiData) -> Array[HubPage] {
         end += 1
       }
       if end > start {
-        let buf = StringBuilder::new()
+        let buf = StringBuilder()
         for i in start..<end {
           buf.write_char(content_chars[i])
         }
@@ -245,7 +245,7 @@ fn find_hub_pages(wiki : @wiki_types.WikiData) -> Array[HubPage] {
       Some(page) => page.title
       None => page_id
     }
-    result.push({ page_id, title, incoming_link_count: count })
+    result.push({ page_id, title, incoming_link_count: count, })
   }
   result
 }
@@ -254,7 +254,7 @@ fn find_hub_pages(wiki : @wiki_types.WikiData) -> Array[HubPage] {
 /// Extract recent changes from the log (last 20 entries that affected pages).
 fn extract_recent_changes(log : @wiki_log.WikiLog) -> Array[(String, String)] {
   let result : Array[(String, String)] = []
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let entries = log.tail(50)
   // Walk backwards to get most recent first
   let len = entries.length()

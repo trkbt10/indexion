@@ -76,37 +76,43 @@ pub fn SimilarityConfig::from_matches(
   match matches.values.get("strategy") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, strategy: vals[0] }
+        config = { ..config, strategy: vals[0], }
       }
     None => ()
   }
   match matches.values.get("ncd-weight") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, ncd_weight: @common.parse_double(vals[0]) }
+        config = { ..config, ncd_weight: @common.parse_double(vals[0]), }
       }
     None => ()
   }
   match matches.values.get("tfidf-weight") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, tfidf_weight: @common.parse_double(vals[0]) }
+        config = { ..config, tfidf_weight: @common.parse_double(vals[0]), }
       }
     None => ()
   }
   match matches.values.get("output") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, format: vals[0] }
+        config = { ..config, format: vals[0], }
       }
     None => ()
   }
   match matches.values.get("text1") {
-    Some(vals) => if vals.length() > 0 { config = { ..config, text1: vals[0] } }
+    Some(vals) =>
+      if vals.length() > 0 {
+        config = { ..config, text1: vals[0], }
+      }
     None => ()
   }
   match matches.values.get("text2") {
-    Some(vals) => if vals.length() > 0 { config = { ..config, text2: vals[0] } }
+    Some(vals) =>
+      if vals.length() > 0 {
+        config = { ..config, text2: vals[0], }
+      }
     None => ()
   }
   config

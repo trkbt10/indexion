@@ -94,7 +94,7 @@ fn empty_audit_report(
 ) -> IdentityAuditReport {
   {
     version: "identity-audit-v1",
-    summary: { scanned: 0, candidates: 0, threshold, max_divergence: 0.0 },
+    summary: { scanned: 0, candidates: 0, threshold, max_divergence: 0.0, },
     candidates: [],
     skipped,
   }
@@ -132,7 +132,7 @@ fn build_graph(
 fn build_path_name_model(
   files : Array[@pipeline.SupportedFile],
 ) -> PathNameModel {
-  let basename_counts : Map[String, Int] = {}
+  let basename_counts : Map[String, Int] = Map([])
   for file in files {
     let base = @config_paths.basename(file.path)
     basename_counts[base] = basename_counts.get(base).unwrap_or(0) + 1
@@ -147,8 +147,8 @@ fn build_file_summaries(
   registry : @kgf_registry.KGFRegistry,
   model : PathNameModel,
 ) -> Array[LocalEntitySummary] {
-  let by_module : Map[String, Array[String]] = {}
-  let profiles : Map[String, LocalEntityProfile] = {}
+  let by_module : Map[String, Array[String]] = Map([])
+  let profiles : Map[String, LocalEntityProfile] = Map([])
   for entry in graph.get_symbols() {
     let sym = entry.1
     let text = symbol_summary_text(sym.name, sym.doc)
@@ -163,7 +163,7 @@ fn build_file_summaries(
   }
   let result : Array[LocalEntitySummary] = []
   for file in files {
-    let summary = StringBuilder::new()
+    let summary = StringBuilder()
     match by_module.get(file.path) {
       Some(symbols) =>
         for symbol in symbols {
@@ -196,7 +196,7 @@ fn build_folder_summaries(
   files : Array[LocalEntitySummary],
   model : PathNameModel,
 ) -> Array[LocalEntitySummary] {
-  let by_dir : Map[String, Array[LocalEntitySummary]] = {}
+  let by_dir : Map[String, Array[LocalEntitySummary]] = Map([])
   for file in files {
     let dir = @config_paths.dirname(file.path)
     if dir.length() == 0 || dir == "." {
@@ -214,7 +214,7 @@ fn build_folder_summaries(
     if children.length() < 2 {
       continue
     }
-    let summary = StringBuilder::new()
+    let summary = StringBuilder()
     let limit = if children.length() < 8 { children.length() } else { 8 }
     for i = 0; i < limit; i = i + 1 {
       summary.write_string(children[i].name)
@@ -295,7 +295,7 @@ fn is_declaration_symbol_kind(kind : String) -> Bool {
 
 ///|
 fn empty_entity_profile() -> LocalEntityProfile {
-  { declaration_symbols: 0, behavior_symbols: 0 }
+  { declaration_symbols: 0, behavior_symbols: 0, }
 }
 
 ///|
@@ -369,7 +369,7 @@ fn needs_review(candidate : IdentityAuditCandidate) -> Bool {
 
 ///|
 fn expected_summary(entity : LocalEntitySummary) -> String {
-  let summary = StringBuilder::new()
+  let summary = StringBuilder()
   summary.write_string(entity.kind)
   summary.write_string(" ")
   summary.write_string(entity.name)
@@ -454,7 +454,7 @@ fn bm25_similarity(left : String, right : String) -> Double {
 
 ///|
 fn symbol_summary_text(name : String, doc : String?) -> String {
-  let summary = StringBuilder::new()
+  let summary = StringBuilder()
   summary.write_string(name)
   match doc {
     Some(text) if text.length() > 0 => {
@@ -473,7 +473,7 @@ fn append_feature_values(
   path : String,
   registry : @kgf_registry.KGFRegistry,
 ) -> Unit {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for feat in @kgf_tokenize.tokenize_file(content, path, registry) {
     if !@kgf_tokenize.feature_has_value(feat) {
       continue
@@ -529,7 +529,7 @@ fn path_scope_terms(path : String) -> Array[String] {
 ///|
 fn split_path(path : String) -> Array[String] {
   let parts : Array[String] = []
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for ch in path {
     if ch == '/' || ch == '\\' {
       let part = buf.to_string()

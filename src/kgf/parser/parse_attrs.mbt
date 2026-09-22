@@ -73,7 +73,7 @@
 /// Syntax:
 ///   on RuleName: kind1 key1=val1; kind2; ...
 pub fn parse_attrs(text : String) -> Map[String, Array[@types.AttrAction]] {
-  let result : Map[String, Array[@types.AttrAction]] = {}
+  let result : Map[String, Array[@types.AttrAction]] = Map([])
   let lines = split_lines(text)
   for line in lines {
     let ln = trim_str(line)
@@ -131,7 +131,7 @@ fn parse_action_list(text : String) -> Array[@types.AttrAction] {
 /// Splits text by a character.
 fn split_by_char(text : String, delim : Char) -> Array[String] {
   let result : Array[String] = []
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in text {
     if c == delim {
       result.push(buf.to_string())
@@ -155,7 +155,7 @@ fn parse_single_action(text : String) -> @types.AttrAction {
   let parts = split_by_space(text)
   guard parts.length() > 0 else { return @types.AttrAction::new("") }
   let kind = parts[0]
-  let params : Map[String, String] = {}
+  let params : Map[String, String] = Map([])
   let mut has_implicit_id = false
   for i in 1..<parts.length() {
     let part = parts[i]
@@ -186,7 +186,7 @@ fn parse_single_action(text : String) -> @types.AttrAction {
 /// Splits text by whitespace.
 fn split_by_space(text : String) -> Array[String] {
   let result : Array[String] = []
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for c in text {
     if is_whitespace(c) {
       let part = buf.to_string()

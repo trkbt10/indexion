@@ -14,7 +14,7 @@ pub struct PlanDocument {
 ///|
 /// Create a new empty plan document.
 pub fn PlanDocument::new(title : String) -> PlanDocument {
-  { title, description: "", sections: [], metadata: Map([]) }
+  { title, description: "", sections: [], metadata: Map([]), }
 }
 
 ///|
@@ -60,7 +60,7 @@ pub fn PlanSection::new(
   heading : String,
   content : SectionContent,
 ) -> PlanSection {
-  { id, heading, content }
+  { id, heading, content, }
 }
 
 ///|
@@ -131,13 +131,13 @@ pub struct ListItem {
 ///|
 /// Create a list item with no description.
 pub fn ListItem::simple(text : String) -> ListItem {
-  { text, description: "" }
+  { text, description: "", }
 }
 
 ///|
 /// Create a list item with a description.
 pub fn ListItem::with_desc(text : String, description : String) -> ListItem {
-  { text, description }
+  { text, description, }
 }
 
 ///|
@@ -155,7 +155,7 @@ pub fn TableData::new(headers : Array[String]) -> TableData {
   for _ in headers {
     alignments.push(TableAlign::Left)
   }
-  { headers, rows: [], alignments }
+  { headers, rows: [], alignments, }
 }
 
 ///|
@@ -188,7 +188,7 @@ pub struct ChecklistItem {
 ///|
 /// Create an unchecked checklist item with no priority.
 pub fn ChecklistItem::new(label : String) -> ChecklistItem {
-  { label, description: "", checked: false, priority: 0 }
+  { label, description: "", checked: false, priority: 0, }
 }
 
 ///|
@@ -197,7 +197,7 @@ pub fn ChecklistItem::with_priority(
   label : String,
   priority : Int,
 ) -> ChecklistItem {
-  { label, description: "", checked: false, priority }
+  { label, description: "", checked: false, priority, }
 }
 
 ///|
@@ -206,7 +206,7 @@ pub fn ChecklistItem::with_desc(
   label : String,
   description : String,
 ) -> ChecklistItem {
-  { label, description, checked: false, priority: 0 }
+  { label, description, checked: false, priority: 0, }
 }
 
 // =============================================================================

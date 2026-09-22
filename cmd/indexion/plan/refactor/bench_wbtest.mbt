@@ -16,7 +16,7 @@ fn gen_test_files(n : Int) -> Array[(String, String)] {
 
 ///|
 fn gen_test_content(seed : Int, lines : Int) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = 0; i < lines; i = i + 1 {
     buf.write_string("fn func_")
     buf.write_string(((seed * 7 + i) % 100).to_string())
@@ -96,7 +96,7 @@ test "build_refactor_plan_3clusters" (b : @bench.T) {
   let pairs = gen_test_pairs(files, 2000)
   let clusters = find_clusters(files, pairs, 0.7)
   let config = RefactorPlanConfig::default()
-  let file_contents : Map[String, String] = {}
+  let file_contents : Map[String, String] = Map([])
   for f in files {
     file_contents.set(f.0, f.1)
   }

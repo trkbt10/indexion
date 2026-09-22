@@ -3,7 +3,7 @@
 ///|
 /// Create a new empty code graph.
 pub fn CodeGraph::new() -> CodeGraph {
-  { modules: Map([]), symbols: Map([]), edges: [], notes: [] }
+  { modules: Map([]), symbols: Map([]), edges: [], notes: [], }
 }
 
 ///|
@@ -14,7 +14,7 @@ pub fn CodeGraph::add_note(
   content : String,
   module_id : String,
 ) -> Unit {
-  self.notes.push({ note_type, content, module_id })
+  self.notes.push({ note_type, content, module_id, })
 }
 
 ///|
@@ -67,14 +67,14 @@ pub fn CodeGraph::get_or_add_module(
       // Update file path if newly provided and not already set
       match (file, existing.file) {
         (Some(f), None) => {
-          let updated = { ..existing, file: Some(f) }
+          let updated = { ..existing, file: Some(f), }
           self.modules.set(id, updated)
           updated
         }
         _ => existing
       }
     None => {
-      let node : ModuleNode = { id, file }
+      let node : ModuleNode = { id, file, }
       self.modules.set(id, node)
       node
     }
@@ -96,7 +96,7 @@ pub fn CodeGraph::get_or_add_symbol(
   match self.symbols.get(id) {
     Some(existing) => existing
     None => {
-      let node : SymbolNode = { id, name, kind, ns, module_id, doc }
+      let node : SymbolNode = { id, name, kind, ns, module_id, doc, }
       self.symbols.set(id, node)
       node
     }
@@ -112,7 +112,7 @@ pub fn CodeGraph::add_edge(
   to : String,
   attrs? : Map[String, String] = Map([]),
 ) -> Unit {
-  let edge : Edge = { kind, from, to, attrs }
+  let edge : Edge = { kind, from, to, attrs, }
   self.edges.push(edge)
 }
 
@@ -359,7 +359,7 @@ fn find_last_substring(s : String, needle : String) -> Int {
 ///|
 fn substring_upto(s : String, end : Int) -> String {
   let ca = s.to_array()
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i = 0; i < end && i < ca.length(); i = i + 1 {
     sb.write_char(ca[i])
   }
@@ -372,7 +372,7 @@ fn substring_from(s : String, start : Int) -> String {
   if start >= ca.length() {
     return ""
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i = start; i < ca.length(); i = i + 1 {
     sb.write_char(ca[i])
   }
@@ -456,7 +456,7 @@ fn resolve_edge_target(
 ///   `symbols`.
 pub fn CodeGraph::to_json_string(self : CodeGraph) -> String {
   // Build (module_id, name) → symbol_id lookup for declares-edge normalization.
-  let symbol_by_module_name : Map[String, String] = {}
+  let symbol_by_module_name : Map[String, String] = Map([])
   for entry in self.symbols {
     let s = entry.1
     let key = s.module_id + "\u{1f}" + s.name
@@ -467,7 +467,7 @@ pub fn CodeGraph::to_json_string(self : CodeGraph) -> String {
   }
 
   // Working copy of modules; receives backfilled external targets.
-  let modules_out : Map[String, ModuleNode] = {}
+  let modules_out : Map[String, ModuleNode] = Map([])
   for entry in self.modules {
     modules_out.set(entry.0, entry.1)
   }
@@ -512,7 +512,7 @@ pub fn CodeGraph::to_json_string(self : CodeGraph) -> String {
     if is_structural &&
       !self.symbols.contains(resolved_to) &&
       !modules_out.contains(resolved_to) {
-      modules_out.set(resolved_to, { id: resolved_to, file: None })
+      modules_out.set(resolved_to, { id: resolved_to, file: None, })
       backfilled_count = backfilled_count + 1
       if backfilled_samples.length() < 5 {
         backfilled_samples.push(resolved_to)
@@ -521,13 +521,13 @@ pub fn CodeGraph::to_json_string(self : CodeGraph) -> String {
     if is_structural &&
       !self.symbols.contains(resolved_from) &&
       !modules_out.contains(resolved_from) {
-      modules_out.set(resolved_from, { id: resolved_from, file: None })
+      modules_out.set(resolved_from, { id: resolved_from, file: None, })
       backfilled_count = backfilled_count + 1
       if backfilled_samples.length() < 5 {
         backfilled_samples.push(resolved_from)
       }
     }
-    let edge_obj : Map[String, Json] = {}
+    let edge_obj : Map[String, Json] = Map([])
     // Attrs first, then canonical fields — canonical fields must win so
     // attrs like `"kind": "Function"` on a `declares` edge do not clobber
     // the edge's actual kind.
@@ -541,7 +541,7 @@ pub fn CodeGraph::to_json_string(self : CodeGraph) -> String {
   }
 
   // Build modules object from working copy.
-  let modules_obj : Map[String, Json] = {}
+  let modules_obj : Map[String, Json] = Map([])
   for entry in modules_out {
     let id = entry.0
     let m = entry.1
@@ -553,11 +553,11 @@ pub fn CodeGraph::to_json_string(self : CodeGraph) -> String {
   }
 
   // Build symbols object.
-  let symbols_obj : Map[String, Json] = {}
+  let symbols_obj : Map[String, Json] = Map([])
   for entry in self.symbols {
     let id = entry.0
     let s = entry.1
-    let sym_map : Map[String, Json] = {}
+    let sym_map : Map[String, Json] = Map([])
     sym_map.set("name", s.name.to_json())
     sym_map.set("kind", s.kind.to_json())
     sym_map.set("ns", s.ns.to_json())
@@ -664,7 +664,7 @@ pub fn CodeGraph::from_json_string(json_str : String) -> CodeGraph? {
       } {
       let kind = EdgeKind::from_string(kind_str)
       // Extract additional attrs (excluding kind, from, to)
-      let attrs : Map[String, String] = {}
+      let attrs : Map[String, String] = Map([])
       let obj : Map[String, Json] = @json.from_json(e_json) catch { _ => {} }
       for attr_entry in obj {
         let k = attr_entry.0

@@ -556,7 +556,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
   }
   let claude_tasks = match
     @align_cli.run_to_string_with_registry(
-      { ..task_config, agent: "claude" },
+      { ..task_config, agent: "claude", },
       shared_test_registry,
     ) {
     Some(value) => value
@@ -565,7 +565,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
   assert_true(claude_tasks.contains("# Claude Tasks"))
   let generic_tasks = match
     @align_cli.run_to_string_with_registry(
-      { ..task_config, agent: "generic" },
+      { ..task_config, agent: "generic", },
       shared_test_registry,
     ) {
     Some(value) => value

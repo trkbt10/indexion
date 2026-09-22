@@ -18,7 +18,7 @@ test "agent orient: owner profile uses directory concept text" {
     ),
   ]
   let map = build_or_update_orient_map(
-    { ..AgentOrientConfig::default(), no_update: false },
+    { ..AgentOrientConfig::default(), no_update: false, },
     briefs,
     None,
   )

@@ -11,7 +11,7 @@ fn short_input() -> String {
 
 ///|
 fn medium_input() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = 0; i < 100; i = i + 1 {
     buf.write_string("let variable_")
     buf.write_string(i.to_string())
@@ -22,7 +22,7 @@ fn medium_input() -> String {
 
 ///|
 fn large_input() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = 0; i < 1000; i = i + 1 {
     buf.write_string("pub fn process_item_")
     buf.write_string(i.to_string())
@@ -38,7 +38,7 @@ fn large_input() -> String {
 
 ///|
 fn block_comment_input() -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = 0; i < 50; i = i + 1 {
     buf.write_string("/** Documentation for function_")
     buf.write_string(i.to_string())

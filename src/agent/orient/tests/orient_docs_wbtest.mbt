@@ -21,7 +21,7 @@ test "agent orient: owner query uses provided objective gloss" {
     ),
   ]
   let map = build_or_update_orient_map(
-    { ..AgentOrientConfig::default(), no_update: false },
+    { ..AgentOrientConfig::default(), no_update: false, },
     briefs,
     None,
   )
@@ -64,7 +64,7 @@ test "agent orient: documentation-only paths remain knowledge sources" {
     ),
   ]
   let map = build_or_update_orient_map(
-    { ..AgentOrientConfig::default(), no_update: false },
+    { ..AgentOrientConfig::default(), no_update: false, },
     briefs,
     None,
   )

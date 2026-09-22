@@ -18,7 +18,7 @@ pub fn TokenDef::new(
   flags? : String? = None,
   skip_value? : Bool = false,
 ) -> TokenDef {
-  { name, pattern, skip, flags, skip_value }
+  { name, pattern, skip, flags, skip_value, }
 }
 
 ///|
@@ -68,7 +68,7 @@ pub fn Tok::new(
   pos : Int,
   value? : String? = None,
 ) -> Tok {
-  { kind, text, value, pos }
+  { kind, text, value, pos, }
 }
 
 ///|

@@ -51,7 +51,7 @@ pub struct LintReport {
 
 ///|
 pub fn LintReport::new(total_pages~ : Int) -> LintReport {
-  { total_pages, issues: [] }
+  { total_pages, issues: [], }
 }
 
 ///|
@@ -144,12 +144,12 @@ fn check_broken_links(wiki : @wiki_types.WikiData, report : LintReport) -> Unit 
 /// Pages not reachable from the navigation tree and not linked by any other page.
 fn check_orphan_pages(wiki : @wiki_types.WikiData, report : LintReport) -> Unit {
   // Collect all page IDs reachable from nav tree
-  let nav_reachable : Map[String, Bool] = {}
+  let nav_reachable : Map[String, Bool] = Map([])
   for item in wiki.nav.pages {
     collect_nav_ids(item, nav_reachable)
   }
   // Collect all page IDs linked from other pages via wiki:// or children
-  let linked : Map[String, Bool] = {}
+  let linked : Map[String, Bool] = Map([])
   let wiki_link_prefix = "wiki://"
   for entry in wiki.pages {
     let page = entry.1
@@ -205,7 +205,7 @@ fn check_missing_cross_references(
   report : LintReport,
 ) -> Unit {
   // Build source-file → page-id mapping
-  let source_to_pages : Map[String, Array[String]] = {}
+  let source_to_pages : Map[String, Array[String]] = Map([])
   for entry in wiki.pages {
     let (page_id, page) = (entry.0, entry.1)
     for src in page.sources {
@@ -216,7 +216,7 @@ fn check_missing_cross_references(
     }
   }
   // For each source file with multiple pages, check cross-links
-  let checked : Map[String, Bool] = {}
+  let checked : Map[String, Bool] = Map([])
   for entry in source_to_pages {
     let pages = entry.1
     if pages.length() < 2 {
@@ -493,7 +493,7 @@ fn is_in_code_span(content : String, pos : Int) -> Bool {
 ///|
 fn substring(s : String, start : Int, end : Int) -> String {
   let chars = s.to_array()
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i in start..<end {
     if i < chars.length() {
       buf.write_char(chars[i])

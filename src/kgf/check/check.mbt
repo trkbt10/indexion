@@ -23,7 +23,7 @@ pub fn Diagnostic::new(
   severity : String,
   message : String,
 ) -> Diagnostic {
-  { section, severity, message }
+  { section, severity, message, }
 }
 
 ///|
@@ -62,7 +62,7 @@ fn check_lex(
   spec : @kgf_types.KGFSpec,
   diagnostics : Array[Diagnostic],
 ) -> Map[String, Bool] {
-  let token_names : Map[String, Bool] = {}
+  let token_names : Map[String, Bool] = Map([])
   for token_def in spec.get_tokens() {
     let name = token_def.get_name()
     if name.length() > 0 {
@@ -108,7 +108,7 @@ fn check_grammar(
   diagnostics : Array[Diagnostic],
 ) -> Map[String, Bool] {
   let rules = spec.get_rules()
-  let rule_names : Map[String, Bool] = {}
+  let rule_names : Map[String, Bool] = Map([])
   for entry in rules {
     rule_names.set(entry.0, true)
   }
@@ -279,8 +279,8 @@ fn check_classify(
 /// that isn't a PEG operator.
 fn extract_symbols_from_expr(expr : String) -> Array[String] {
   let symbols : Array[String] = []
-  let seen : Map[String, Bool] = {}
-  let buf = StringBuilder::new()
+  let seen : Map[String, Bool] = Map([])
+  let buf = StringBuilder()
   let chars = expr.to_array()
   for c in chars {
     if @charclass.is_ident_char(c) {
@@ -315,7 +315,7 @@ fn merge_symbol_sets(
   a : Map[String, Bool],
   b : Map[String, Bool],
 ) -> Map[String, Bool] {
-  let merged : Map[String, Bool] = {}
+  let merged : Map[String, Bool] = Map([])
   for entry in a {
     merged.set(entry.0, true)
   }

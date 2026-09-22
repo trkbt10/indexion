@@ -24,7 +24,7 @@ pub fn compile_fst(spec : @types.PreprocessFstSpec) -> CompiledFst {
     let pattern = entry.1
     classes.push(compile_char_class(class_name, pattern))
   }
-  { name: spec.name, initial: spec.initial, classes, states: spec.states }
+  { name: spec.name, initial: spec.initial, classes, states: spec.states, }
 }
 
 ///|
@@ -96,7 +96,7 @@ fn compile_char_class(name : String, pattern : String) -> CompiledCharClass {
       chars.push(c)
     }
   }
-  { name, chars, ranges }
+  { name, chars, ranges, }
 }
 
 ///|
@@ -321,7 +321,7 @@ fn utf8_agg_to_string(agg : Utf8Agg) -> String {
 ///|
 /// Runs a compiled FST over the input string and returns the transformed output.
 pub fn run_fst(fst : CompiledFst, input : String) -> String raise Error {
-  let emit = StringBuilder::new()
+  let emit = StringBuilder()
   let mut state = fst.initial
   let buf_chars : Array[Char] = []
   let buf_sextets : Array[Int] = []

@@ -7,7 +7,7 @@ pub fn build_file_briefs(
   // Index the cached map by path once so per-file lookup is O(1). The legacy
   // `cached_file_for` helper scans the entire array per call, which collapses
   // into O(N²) and dominates orient update time on large repos.
-  let cached_by_path : Map[String, AgentOrientMapFile] = {}
+  let cached_by_path : Map[String, AgentOrientMapFile] = Map([])
   match cached_map {
     Some(map) =>
       for entry in map.files {
@@ -33,7 +33,7 @@ pub fn build_file_briefs(
   }
   // The graph-derived signals are only consulted on the rebuild path. Avoid
   // paying for them when every discovered file already has a cached brief.
-  let symbols_by_module : Map[String, Array[String]] = {}
+  let symbols_by_module : Map[String, Array[String]] = Map([])
   let dep_counts : Map[String, (Int, Int)] = if has_dirty_file {
     for entry in graph.get_symbols() {
       let sym = entry.1
@@ -106,7 +106,7 @@ fn source_summary_for_cache(
   structural : String,
 ) -> String {
   if keeps_full_source_summary(file) {
-    let summary = StringBuilder::new()
+    let summary = StringBuilder()
     summary.write_string(structural)
     summary.write_string(file.content)
     summary.write_string("\n")
@@ -128,7 +128,7 @@ fn bounded_source_preview(text : String, limit : Int) -> String {
   // first `limit` code points — that turns the per-file cached path into an
   // O(file size) allocation across every refresh and dominated orient time
   // on large repos.
-  let preview = StringBuilder::new()
+  let preview = StringBuilder()
   let mut written = 0
   for c in text {
     if written >= limit {

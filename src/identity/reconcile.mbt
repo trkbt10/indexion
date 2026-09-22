@@ -53,7 +53,7 @@ pub fn score_name_divergence(
     // Empty name vacuously matches: nothing to disagree about.
     1.0
   } else {
-    let body_set : Map[String, Bool] = {}
+    let body_set : Map[String, Bool] = Map([])
     for t in body_tokens {
       body_set[t] = true
     }
@@ -71,7 +71,7 @@ pub fn score_name_divergence(
   // few distinct content tokens; a sprawling body has many. We use
   // unique token count divided by a soft ceiling so the metric is
   // bounded.
-  let unique_body : Map[String, Bool] = {}
+  let unique_body : Map[String, Bool] = Map([])
   for t in body_tokens {
     unique_body[t] = true
   }
@@ -167,7 +167,7 @@ fn body_tokens_absent_from_name(
     registry,
     kinds,
   )
-  let name_set : Map[String, Bool] = {}
+  let name_set : Map[String, Bool] = Map([])
   for t in name_tokens {
     name_set[lower_ascii(t)] = true
   }
@@ -175,7 +175,7 @@ fn body_tokens_absent_from_name(
   // without a spec), tokenise the display string by splitting on
   // ASCII whitespace so the comparison still does something useful.
   if name_tokens.is_empty() {
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     for c in entity.name.display {
       if c == ' ' || c == '\t' || c == '\n' {
         let s = buf.to_string()
@@ -192,7 +192,7 @@ fn body_tokens_absent_from_name(
       name_set[lower_ascii(s)] = true
     }
   }
-  let counts : Map[String, Int] = {}
+  let counts : Map[String, Int] = Map([])
   for t in body_tokens {
     let lt = lower_ascii(t)
     if name_set.contains(lt) {
@@ -252,7 +252,7 @@ fn build_rationale(
   prominent_unused : Array[String],
   name : Name,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(action.label())
   buf.write_string(": ")
   match action {

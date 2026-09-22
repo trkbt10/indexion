@@ -71,7 +71,7 @@
 ///           continued on multiple lines
 pub fn parse_rules(text : String) -> Map[String, @types.RuleDef] {
   let lines = split_lines(text)
-  let rules : Map[String, @types.RuleDef] = {}
+  let rules : Map[String, @types.RuleDef] = Map([])
   let mut current_name : String? = None
   let buf : Array[String] = []
   for line in lines {
@@ -151,7 +151,7 @@ fn parse_rule_header(line : String) -> (String, String)? {
 ///|
 /// Joins buffer lines into a single expression, preserving newlines.
 fn join_rule_buffer(buf : Array[String]) -> String {
-  let result = StringBuilder::new()
+  let result = StringBuilder()
   for i, line in buf {
     if i > 0 {
       result.write_char('\n')

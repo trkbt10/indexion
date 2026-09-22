@@ -205,7 +205,7 @@ pub fn analyze_story(groups : StoryGroups, config : StoryConfig) -> StoryReport 
       } else {
         0.0
       }
-      by_spec.push({ spec_path: s.path, impl_path: p.path, similarity: sim })
+      by_spec.push({ spec_path: s.path, impl_path: p.path, similarity: sim, })
     }
     by_spec.sort_by(fn(a, b) { b.similarity.compare(a.similarity) })
     let combined = bm25_pair_similarity(flatten(spec_tokens), impl_tokens[i])
@@ -309,7 +309,7 @@ fn compute_under_coverage(
   // Pre-compute per-document token presence so we can attribute origins.
   let spec_doc_tokens : Array[Map[String, Bool]] = []
   for tokens in spec_tokens {
-    let s : Map[String, Bool] = {}
+    let s : Map[String, Bool] = Map([])
     for t in tokens {
       s[t] = true
     }
@@ -335,7 +335,7 @@ fn compute_under_coverage(
         origins.push(spec[k].path)
       }
     }
-    candidates.push({ value: term, weight, origin_paths: origins })
+    candidates.push({ value: term, weight, origin_paths: origins, })
   }
   // Sort with a soft penalty for terms that span every spec document.
   // BM25 already discounts ubiquity, but in small corpora a word that appears
@@ -377,7 +377,7 @@ fn compute_out_of_source(
 
   let impl_doc_tokens : Array[Map[String, Bool]] = []
   for tokens in impl_tokens {
-    let s : Map[String, Bool] = {}
+    let s : Map[String, Bool] = Map([])
     for t in tokens {
       s[t] = true
     }
@@ -403,7 +403,7 @@ fn compute_out_of_source(
         origins.push(impl_[k].path)
       }
     }
-    candidates.push({ value: term, weight, origin_paths: origins })
+    candidates.push({ value: term, weight, origin_paths: origins, })
   }
   let total_impl = impl_.length()
   candidates.sort_by(fn(a, b) {
@@ -435,7 +435,7 @@ fn penalize(weight : Double, origin_count : Int, total : Int) -> Double {
 
 ///|
 fn build_token_set(lists : Array[Array[String]]) -> Map[String, Bool] {
-  let s : Map[String, Bool] = {}
+  let s : Map[String, Bool] = Map([])
   for l in lists {
     for t in l {
       s[t] = true

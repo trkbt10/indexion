@@ -10,12 +10,12 @@ pub fn render_json(graph : @graph.CodeGraph) -> String {
   let hierarchy = @query.extract_type_hierarchy(graph)
   let refs = @query.extract_references(graph)
   // Build JSON object
-  let obj : Map[String, Json] = {}
+  let obj : Map[String, Json] = Map([])
   // Add modules
   let modules_arr : Array[Json] = []
   for entry in graph.get_modules() {
     let m = entry.1
-    let m_obj : Map[String, Json] = {}
+    let m_obj : Map[String, Json] = Map([])
     m_obj.set("id", m.id.to_json())
     match m.file {
       Some(f) => m_obj.set("file", f.to_json())
@@ -27,7 +27,7 @@ pub fn render_json(graph : @graph.CodeGraph) -> String {
   // Add symbols (declarations)
   let symbols_arr : Array[Json] = []
   for decl in decls {
-    let s_obj : Map[String, Json] = {}
+    let s_obj : Map[String, Json] = Map([])
     s_obj.set("id", decl.id.to_json())
     s_obj.set("name", decl.name.to_json())
     s_obj.set("kind", decl.kind.to_json())
@@ -42,7 +42,7 @@ pub fn render_json(graph : @graph.CodeGraph) -> String {
   // Add dependencies
   let deps_arr : Array[Json] = []
   for dep in deps {
-    let d_obj : Map[String, Json] = {}
+    let d_obj : Map[String, Json] = Map([])
     d_obj.set("from", dep.from.to_json())
     d_obj.set("to", dep.to.to_json())
     match dep.via {
@@ -59,7 +59,7 @@ pub fn render_json(graph : @graph.CodeGraph) -> String {
   // Add calls
   let calls_arr : Array[Json] = []
   for call in calls {
-    let c_obj : Map[String, Json] = {}
+    let c_obj : Map[String, Json] = Map([])
     c_obj.set("caller", call.caller.to_json())
     c_obj.set("callee", call.callee.to_json())
     c_obj.set("file", call.file.to_json())
@@ -69,7 +69,7 @@ pub fn render_json(graph : @graph.CodeGraph) -> String {
   // Add type hierarchy
   let hier_arr : Array[Json] = []
   for rel in hierarchy {
-    let h_obj : Map[String, Json] = {}
+    let h_obj : Map[String, Json] = Map([])
     h_obj.set("child", rel.child.to_json())
     h_obj.set("parent", rel.parent.to_json())
     h_obj.set("relation", rel.relation.to_json())
@@ -79,7 +79,7 @@ pub fn render_json(graph : @graph.CodeGraph) -> String {
   // Add references
   let refs_arr : Array[Json] = []
   for ref_ in refs {
-    let r_obj : Map[String, Json] = {}
+    let r_obj : Map[String, Json] = Map([])
     r_obj.set("symbol", ref_.symbol.to_json())
     r_obj.set("site", ref_.ref_site.to_json())
     r_obj.set("kind", ref_.ref_kind.to_json())

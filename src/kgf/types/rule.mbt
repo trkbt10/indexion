@@ -9,7 +9,7 @@ pub struct RuleDef {
 ///|
 /// Creates a new RuleDef with the specified parameters.
 pub fn RuleDef::new(name : String, expr : String) -> RuleDef {
-  { name, expr }
+  { name, expr, }
 }
 
 ///|
@@ -39,7 +39,7 @@ pub fn AttrAction::new(
   kind : String,
   params? : Map[String, String] = Map([]),
 ) -> AttrAction {
-  { kind, params }
+  { kind, params, }
 }
 
 ///|

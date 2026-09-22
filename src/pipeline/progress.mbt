@@ -40,7 +40,7 @@ pub fn elapsed_ms(start : UInt64) -> UInt64 {
 /// Emit a single timed stage line:
 ///   `[orient] discover  done  files=1900  in=1234ms`
 pub fn stage(label : String, detail : String, elapsed_ms : UInt64) -> Unit {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(label)
   if detail.length() > 0 {
     buf.write_string("  ")

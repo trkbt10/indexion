@@ -52,7 +52,7 @@ pub fn get_call_chain(
   start_id : String,
   max_depth? : Int = 10,
 ) -> Array[CallInfo] {
-  let visited : Map[String, Bool] = {}
+  let visited : Map[String, Bool] = Map([])
   let result : Array[CallInfo] = []
   let queue : Array[(String, Int)] = [(start_id, 0)]
   while queue.length() > 0 {

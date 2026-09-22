@@ -122,13 +122,13 @@ pub fn resolve_provider(
   match provider_name {
     "tfidf" => TfIdf(dim)
     "openai" =>
-      match @sys.get_env_var(api_key_env) {
-        Some(api_key) => OpenAI({ api_key, api_key_env, base_url, model, dim })
+      match @env.get_env_var(api_key_env) {
+        Some(api_key) => OpenAI({ api_key, api_key_env, base_url, model, dim, })
         None => raise MissingApiKey(api_key_env)
       }
     "auto" | "" =>
-      match @sys.get_env_var(api_key_env) {
-        Some(api_key) => OpenAI({ api_key, api_key_env, base_url, model, dim })
+      match @env.get_env_var(api_key_env) {
+        Some(api_key) => OpenAI({ api_key, api_key_env, base_url, model, dim, })
         None => TfIdf(dim)
       }
     _ => raise UnknownProvider(provider_name)
@@ -154,7 +154,7 @@ pub fn EmbeddingProvider::from_json(json : Json) -> EmbeddingProvider {
         { "api_key_env": String(e), .. } => e
         _ => DEFAULT_API_KEY_ENV
       }
-      OpenAI({ api_key, api_key_env, base_url, model, dim: dim.to_int() })
+      OpenAI({ api_key, api_key_env, base_url, model, dim: dim.to_int(), })
     }
     { "kind": String("precomputed"), "path": String(path), .. } =>
       Precomputed(path)
@@ -201,7 +201,7 @@ pub(all) struct ProviderConfig {
 ///|
 /// Create a default TF-IDF provider config.
 pub fn ProviderConfig::tfidf(dim? : Int = DEFAULT_TFIDF_DIM) -> ProviderConfig {
-  { key: DEFAULT_TFIDF_KEY, kind: "tfidf", dim, api_config: None }
+  { key: DEFAULT_TFIDF_KEY, kind: "tfidf", dim, api_config: None, }
 }
 
 ///|
@@ -222,7 +222,7 @@ pub fn ProviderConfig::remote(
 /// Sanitize a string for use as a provider key (filesystem-safe).
 /// Replaces non-alphanumeric chars (except hyphen, underscore, dot) with hyphen.
 pub fn sanitize_provider_key(raw : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for ch in raw {
     if (ch >= 'a' && ch <= 'z') ||
       (ch >= 'A' && ch <= 'Z') ||

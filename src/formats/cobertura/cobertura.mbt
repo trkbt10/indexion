@@ -255,7 +255,7 @@ fn group_files_by_package(
   files : Array[@coverage.FileCoverage],
 ) -> Array[(String, Array[@coverage.FileCoverage])] {
   let order : Array[String] = []
-  let groups : Map[String, Array[@coverage.FileCoverage]] = {}
+  let groups : Map[String, Array[@coverage.FileCoverage]] = Map([])
   for file in files {
     let key = if file.pkg.length() > 0 { file.pkg } else { "(default)" }
     match groups.get(key) {
@@ -280,7 +280,7 @@ fn group_files_by_package(
 fn group_branches_by_line(
   branches : Array[@coverage.BranchHit],
 ) -> Map[Int, Array[@coverage.BranchHit]] {
-  let map : Map[Int, Array[@coverage.BranchHit]] = {}
+  let map : Map[Int, Array[@coverage.BranchHit]] = Map([])
   for b in branches {
     match map.get(b.line) {
       Some(arr) => arr.push(b)
@@ -345,7 +345,7 @@ fn pad_left(s : String, width : Int, pad : Char) -> String {
   if len >= width {
     return s
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for _ in 0..<(width - len) {
     buf.write_char(pad)
   }

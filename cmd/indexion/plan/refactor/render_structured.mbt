@@ -12,7 +12,7 @@ pub fn render_structured(
   plan : RefactorPlanJSON,
   project_name : String,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let date = get_current_date()
 
   // Header
