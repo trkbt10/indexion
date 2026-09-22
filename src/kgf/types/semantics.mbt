@@ -61,6 +61,10 @@ pub enum SemStmt {
   Let(id~ : String, value~ : SemExpr)
   For(id~ : String, iter~ : SemExpr, body~ : Array[SemStmt])
   Module(id~ : SemExpr, file~ : SemExpr?)
+  /// Pushes a fresh lexical scope frame; subsequent `bind`/`def` write into it.
+  ScopePush
+  /// Pops the innermost lexical scope frame (no-op on the root frame).
+  ScopePop
 }
 
 ///|
@@ -106,6 +110,18 @@ pub fn SemStmt::for_(
 /// Creates a module statement.
 pub fn SemStmt::mod_(id : SemExpr, file? : SemExpr? = None) -> SemStmt {
   Module(id~, file~)
+}
+
+///|
+/// Creates a `scope push` statement.
+pub fn SemStmt::scope_push() -> SemStmt {
+  ScopePush
+}
+
+///|
+/// Creates a `scope pop` statement.
+pub fn SemStmt::scope_pop() -> SemStmt {
+  ScopePop
 }
 
 ///|

@@ -11,6 +11,7 @@ import {
 import {
   "moonbitlang/x/fs",
   "trkbt10/indexion/src/kgf/fixtures" @kgf_fixtures,
+  "trkbt10/indexion/src/kgf/parser" @kgf_parser,
   "trkbt10/indexion/src/kgf/registry",
   "moonbitlang/core/test",
 } for "wbtest"

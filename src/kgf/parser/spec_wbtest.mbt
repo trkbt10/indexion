@@ -1243,3 +1243,56 @@ test "parse_classify: end-to-end with KGFSpec" {
   // "meta" has prior=-0.8 + 0 (no terms match) = -0.8
   assert_eq(result, Some("normative"))
 }
+
+///|
+test "parse_semantics scope push and pop statements" {
+  let text =
+    #|on ClassHeader {
+    #|  scope push
+    #|  bind ns "value" name "current_class" to $id
+    #|}
+    #|on ClassDecl {
+    #|  edge declares from $file to $id
+    #|  scope pop
+    #|}
+    #|
+  let sem = parse_semantics(text).unwrap()
+  let header = sem.get("ClassHeader").unwrap()[0].get_then_stmts()
+  assert_eq(header.length(), 2)
+  assert_true(header[0] is @types.ScopePush)
+  assert_true(header[1] is @types.Bind(_))
+  let decl = sem.get("ClassDecl").unwrap()[0].get_then_stmts()
+  assert_eq(decl.length(), 2)
+  assert_true(decl[0] is @types.Edge(_))
+  assert_true(decl[1] is @types.ScopePop)
+}
+
+///|
+test "parse_semantics scope statement rejects unknown operands" {
+  // Typos must not silently degrade into a no-op frame operation.
+  let text =
+    #|on R {
+    #|  scope drop
+    #|  scope push extra
+    #|  scope
+    #|}
+    #|
+  let sem = parse_semantics(text).unwrap()
+  let stmts = sem.get("R").unwrap()[0].get_then_stmts()
+  assert_eq(stmts.length(), 0)
+}
+
+///|
+test "parse_semantics scope statements inside else branch" {
+  let text =
+    #|on R when $cond {
+    #|  scope push
+    #|} else {
+    #|  scope pop
+    #|}
+    #|
+  let sem = parse_semantics(text).unwrap()
+  let block = sem.get("R").unwrap()[0]
+  assert_true(block.get_then_stmts()[0] is @types.ScopePush)
+  assert_true(block.get_else_stmts().unwrap()[0] is @types.ScopePop)
+}

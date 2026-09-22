@@ -539,3 +539,103 @@ test "eval_expr with generic regex capture functions" {
     _ => fail("expected array")
   }
 }
+
+///|
+/// Builds `bind ns "value" name <name> to <value>`.
+fn bind_value(name : String, value : String) -> @types.SemStmt {
+  @types.SemStmt::bind(
+    @types.SemExpr::str("value"),
+    @types.SemExpr::str(name),
+    @types.SemExpr::str(value),
+  )
+}
+
+///|
+test "eval_stmt scope push isolates binds and pop restores the outer binding" {
+  let ctx = create_test_ctx()
+  let env = Env::new({})
+  eval_stmt(bind_value("current_class", "Outer"), env, ctx)
+  assert_eq(ctx.lookup_scope("value", "current_class"), Some("Outer"))
+  // A nested declaration opens its own frame and rebinds the context.
+  eval_stmt(@types.SemStmt::scope_push(), env, ctx)
+  eval_stmt(bind_value("current_class", "Outer.Inner"), env, ctx)
+  assert_eq(ctx.lookup_scope("value", "current_class"), Some("Outer.Inner"))
+  // Closing the frame restores the enclosing declaration's context — this is
+  // exactly what a flat scope map could not do.
+  eval_stmt(@types.SemStmt::scope_pop(), env, ctx)
+  assert_eq(ctx.lookup_scope("value", "current_class"), Some("Outer"))
+}
+
+///|
+test "eval_stmt scope frames see through to outer frames" {
+  let ctx = create_test_ctx()
+  let env = Env::new({})
+  eval_stmt(bind_value("current_module", "m"), env, ctx)
+  eval_stmt(@types.SemStmt::scope_push(), env, ctx)
+  eval_stmt(bind_value("current_class", "C"), env, ctx)
+  // $scope searches innermost-first but falls through to outer frames.
+  assert_eq(ctx.lookup_scope("value", "current_module"), Some("m"))
+  assert_eq(ctx.lookup_scope("value", "current_class"), Some("C"))
+  eval_stmt(@types.SemStmt::scope_pop(), env, ctx)
+  assert_eq(ctx.lookup_scope("value", "current_module"), Some("m"))
+  assert_eq(ctx.lookup_scope("value", "current_class"), None)
+}
+
+///|
+test "eval_stmt scope pop on the root frame is a no-op" {
+  let ctx = create_test_ctx()
+  let env = Env::new({})
+  eval_stmt(bind_value("current_class", "Outer"), env, ctx)
+  // An unbalanced spec must degrade to flat behaviour, never corrupt the stack.
+  eval_stmt(@types.SemStmt::scope_pop(), env, ctx)
+  eval_stmt(@types.SemStmt::scope_pop(), env, ctx)
+  assert_eq(ctx.lookup_scope("value", "current_class"), Some("Outer"))
+  // The root frame is still writable afterwards.
+  eval_stmt(bind_value("after", "ok"), env, ctx)
+  assert_eq(ctx.lookup_scope("value", "after"), Some("ok"))
+}
+
+///|
+test "eval_stmt scope frames apply to the type namespace too" {
+  let ctx = create_test_ctx()
+  let env = Env::new({})
+  let bind_type = fn(name : String, value : String) {
+    eval_stmt(
+      @types.SemStmt::bind(
+        @types.SemExpr::str("type"),
+        @types.SemExpr::str(name),
+        @types.SemExpr::str(value),
+      ),
+      env,
+      ctx,
+    )
+  }
+  bind_type("T", "outer_T")
+  eval_stmt(@types.SemStmt::scope_push(), env, ctx)
+  bind_type("T", "inner_T")
+  assert_eq(ctx.lookup_scope("type", "T"), Some("inner_T"))
+  eval_stmt(@types.SemStmt::scope_pop(), env, ctx)
+  assert_eq(ctx.lookup_scope("type", "T"), Some("outer_T"))
+}
+
+///|
+test "attrs def registers in the innermost frame and unbinds on pop" {
+  let ctx = create_test_ctx()
+  let env = Env::new({})
+  eval_stmt(@types.SemStmt::scope_push(), env, ctx)
+  let params : Map[String, String] = Map([])
+  params.set("id", "id")
+  params.set("kind", "Function")
+  params.set("ns", "value")
+  let labels : Map[String, Json] = Map([])
+  labels.set("id", "member".to_json())
+  eval_attrs([@types.AttrAction::new("def", params~)], labels, ctx)
+  let sym_id = ctx.lookup_scope("value", "member")
+  assert_true(sym_id is Some(_))
+  eval_stmt(@types.SemStmt::scope_pop(), env, ctx)
+  // Decided semantics: the *name binding* is lexically scoped, so a member is
+  // no longer resolvable by bare name once its frame closes. The symbol node
+  // itself is permanent — it lives in the graph, not in the scope stack.
+  assert_eq(ctx.lookup_scope("value", "member"), None)
+  assert_true(ctx.get_graph().get_symbols().contains(sym_id.unwrap()))
+}
