@@ -491,12 +491,12 @@ fn run_inspect(config : KgfConfig) -> Unit {
       return
     }
   }
+  // Prepare first: everything printed below (lengths, positions, tokens) must
+  // describe the text the parser actually sees.
+  let (source, tokens) = prepare_and_tokenize(spec, source)
   println("Source length: \{source.length()} chars")
   println("")
-  // Tokenize
   println("=== Tokens ===")
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
-  let tokens = lexer.tokenize(source)
   println("Token count: \{tokens.length()}")
   if config.show_tokens {
     for i, tok in tokens {
@@ -645,11 +645,10 @@ fn run_tokens(config : KgfConfig) -> Unit {
       return
     }
   }
+  let (source, tokens) = prepare_and_tokenize(spec, source)
   println("Source length: \{source.length()} chars")
   println("")
   println("=== Tokens ===")
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
-  let tokens = lexer.tokenize(source)
   println("Token count: \{tokens.length()}")
   for i, tok in tokens {
     if i < 50 {
@@ -791,6 +790,25 @@ fn resolve_spec_name(
 }
 
 ///|
+/// Prepares source text and tokenizes it exactly the way the analysis pipeline
+/// does (`parse_source` / `ToolkitRegistry::tokenize`): the spec's
+/// `=== preprocess` steps run first, then the cached lexer.
+///
+/// Returns the prepared text alongside the tokens. Every position an inspect
+/// command reports — line/col, `pos`, `source_length`, the parse-stop location
+/// — is resolved against the PREPARED text, because that is what was
+/// tokenized. For a spec with no preprocess section the prepared text is the
+/// raw source, so nothing changes there.
+fn prepare_and_tokenize(
+  spec : @kgf_types.KGFSpec,
+  source : String,
+) -> (String, Array[@kgf_types.Tok]) {
+  let toolkit = @kgf_toolkit.LanguageToolkit::from_spec(spec)
+  let prepared = toolkit.preprocess(source)
+  (prepared, toolkit.get_lexer().tokenize(prepared))
+}
+
+///|
 /// Read file and ensure trailing newline.
 fn read_source(file_path : String) -> String? {
   let source = @fs.read_file_to_string(file_path) catch { _ => return None }
@@ -817,8 +835,7 @@ pub fn tokenize_json(
     Some(s) => s
     None => return None
   }
-  let lex = @lexer.Lexer::new(spec.get_tokens())
-  let tokens = lex.tokenize(source)
+  let (source, tokens) = prepare_and_tokenize(spec, source)
   // Build pos → (line, col) lookup from source
   let line_starts = build_line_starts(source)
   let arr : Array[Json] = tokens
@@ -861,8 +878,7 @@ pub fn events_json(
     Some(s) => s
     None => return None
   }
-  let lex = @lexer.Lexer::new(spec.get_tokens())
-  let tokens = lex.tokenize(source)
+  let (_, tokens) = prepare_and_tokenize(spec, source)
   let peg = @peg.build_peg(spec) catch { _ => return None }
   let start_rule = spec.get_start_rule()
   match @peg.run_parse(peg, spec, start_rule, tokens) {
@@ -908,8 +924,7 @@ pub fn inspect_json(
     Some(s) => s
     None => return None
   }
-  let lex = @lexer.Lexer::new(spec.get_tokens())
-  let tokens = lex.tokenize(source)
+  let (source, tokens) = prepare_and_tokenize(spec, source)
   let line_starts = build_line_starts(source)
   let tokens_json : Array[Json] = tokens
     .iter()
@@ -1005,8 +1020,7 @@ pub fn edges_json(
     Some(s) => s
     None => return None
   }
-  let lex = @lexer.Lexer::new(spec.get_tokens())
-  let tokens = lex.tokenize(source)
+  let (_, tokens) = prepare_and_tokenize(spec, source)
   let peg = @peg.build_peg(spec) catch { _ => return None }
   let start_rule = spec.get_start_rule()
   match @peg.run_parse(peg, spec, start_rule, tokens) {

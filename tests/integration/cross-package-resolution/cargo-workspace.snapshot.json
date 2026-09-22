@@ -82,11 +82,13 @@
   ],
   "stats": {
     "symbols": 25,
-    "edges": 22,
+    "edges": 37,
     "edgesByKind": {
       "declares": 7,
+      "dependsOn": 12,
       "projectName": 3,
-      "module_depends_on": 12
+      "module_depends_on": 12,
+      "projectDescription": 3
     },
     "unresolved_structural_edges": 0
   }

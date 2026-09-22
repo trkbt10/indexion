@@ -110,3 +110,19 @@ test "parser: group with {n}" {
   let result2 = match_pattern("(ab){3}", "abab", 0)
   assert_eq(result2.matched, false)
 }
+
+///|
+/// A lookahead body may be an alternation: `(?=\s|\/?>)` must accept each
+/// alternative, not look for the literal sequence `\s|\/?>`.
+test "lookahead with alternation matches any alternative" {
+  let compiled = compile_pattern("<\\/?[A-Za-z]+(?=\\s|\\/?>)").unwrap()
+  for input in ["<p ", "<p>", "</p>", "<br/>"] {
+    let chars = build_input_chars(input)
+    assert_true(
+      match_compiled_end_pos_with_chars(compiled, chars, 0) is Some(_),
+      msg="expected a match on " + input,
+    )
+  }
+  let chars = build_input_chars("<p=")
+  assert_true(match_compiled_end_pos_with_chars(compiled, chars, 0) is None)
+}

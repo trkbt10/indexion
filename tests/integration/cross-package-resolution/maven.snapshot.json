@@ -1,150 +1,82 @@
 {
   "modules": [
-    "maven:User",
-    "maven:Service",
-    "maven:Optional",
-    "maven:Autowired",
-    "maven:GetMapping",
-    "maven:PathVariable",
-    "maven:RestController",
-    "maven:UserRepository",
+    "maven:java.util.Optional",
     "fixtures/project/maven/pom.xml",
+    "maven:org.springframework.web.bind.annotation.GetMapping",
+    "maven:org.springframework.web.bind.annotation.PathVariable",
+    "maven:org.springframework.beans.factory.annotation.Autowired",
+    "maven:org.springframework.web.bind.annotation.RestController",
     "fixtures/project/maven/src/main/java/com/example/Service.java",
     "fixtures/project/maven/src/main/java/com/example/model/User.java",
     "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-    "fixtures/project/maven/src/main/java/com/example/repository/UserRepository.java"
+    "fixtures/project/maven/src/main/java/com/example/model/User.java::User.id",
+    "fixtures/project/maven/src/main/java/com/example/model/User.java::User.age",
+    "fixtures/project/maven/src/main/java/com/example/model/User.java::User.name",
+    "fixtures/project/maven/src/main/java/com/example/Service.java::UserRecord.age",
+    "fixtures/project/maven/src/main/java/com/example/Service.java::Service.process",
+    "fixtures/project/maven/src/main/java/com/example/Service.java::UserRecord.name",
+    "fixtures/project/maven/src/main/java/com/example/repository/UserRepository.java",
+    "fixtures/project/maven/src/main/java/com/example/web/UserController.java::UserController.get",
+    "fixtures/project/maven/src/main/java/com/example/repository/UserRepository.java::UserRepository.save",
+    "fixtures/project/maven/src/main/java/com/example/repository/UserRepository.java::UserRepository.findById"
   ],
   "moduleDependsOn": [
     {
       "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:User",
-      "via": "User"
+      "to": "maven:java.util.Optional",
+      "via": "java.util.Optional"
     },
     {
       "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:User",
-      "via": "User"
+      "to": "maven:org.springframework.web.bind.annotation.GetMapping",
+      "via": "org.springframework.web.bind.annotation.GetMapping"
     },
     {
       "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:Service",
-      "via": "Service"
+      "to": "maven:org.springframework.web.bind.annotation.PathVariable",
+      "via": "org.springframework.web.bind.annotation.PathVariable"
     },
     {
       "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:Service",
-      "via": "Service"
+      "to": "maven:org.springframework.beans.factory.annotation.Autowired",
+      "via": "org.springframework.beans.factory.annotation.Autowired"
     },
     {
       "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:Optional",
-      "via": "Optional"
+      "to": "maven:org.springframework.web.bind.annotation.RestController",
+      "via": "org.springframework.web.bind.annotation.RestController"
     },
     {
       "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:Optional",
-      "via": "Optional"
+      "to": "fixtures/project/maven/src/main/java/com/example/Service.java",
+      "via": "com.example.Service"
     },
     {
       "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:Autowired",
-      "via": "Autowired"
+      "to": "fixtures/project/maven/src/main/java/com/example/model/User.java",
+      "via": "com.example.model.User"
     },
     {
       "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:Autowired",
-      "via": "Autowired"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:Autowired",
-      "via": "@Autowired",
-      "alias": "@Autowired"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:GetMapping",
-      "via": "GetMapping"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:GetMapping",
-      "via": "GetMapping"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:GetMapping",
-      "via": "@GetMapping",
-      "alias": "@GetMapping"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:PathVariable",
-      "via": "PathVariable"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:PathVariable",
-      "via": "PathVariable"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:PathVariable",
-      "via": "@PathVariable",
-      "alias": "@PathVariable"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:RestController",
-      "via": "RestController"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:RestController",
-      "via": "RestController"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:RestController",
-      "via": "@RestController",
-      "alias": "@RestController"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:UserRepository",
-      "via": "UserRepository"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/web/UserController.java",
-      "to": "maven:UserRepository",
-      "via": "UserRepository"
+      "to": "fixtures/project/maven/src/main/java/com/example/repository/UserRepository.java",
+      "via": "com.example.repository.UserRepository"
     },
     {
       "from": "fixtures/project/maven/src/main/java/com/example/repository/UserRepository.java",
-      "to": "maven:User",
-      "via": "User"
+      "to": "maven:java.util.Optional",
+      "via": "java.util.Optional"
     },
     {
       "from": "fixtures/project/maven/src/main/java/com/example/repository/UserRepository.java",
-      "to": "maven:User",
-      "via": "User"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/repository/UserRepository.java",
-      "to": "maven:Optional",
-      "via": "Optional"
-    },
-    {
-      "from": "fixtures/project/maven/src/main/java/com/example/repository/UserRepository.java",
-      "to": "maven:Optional",
-      "via": "Optional"
+      "to": "fixtures/project/maven/src/main/java/com/example/model/User.java",
+      "via": "com.example.model.User"
     }
   ],
   "stats": {
-    "symbols": 16,
-    "edges": 24,
+    "symbols": 21,
+    "edges": 31,
     "edgesByKind": {
-      "declares": 7,
+      "declares": 14,
       "dependsOn": 4,
       "projectName": 1,
       "projectVersion": 1,

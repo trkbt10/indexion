@@ -1,0 +1,54 @@
+// Core task definitions shared by the scheduler and the store.
+syntax = "proto2";
+
+package example.tasks.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option java_package = "com.example.tasks";
+
+// Lifecycle state of a task.
+enum Status {
+  // Queued but not started.
+  STATUS_PENDING = 0;
+
+  STATUS_RUNNING = 1;
+
+  // Finished, successfully or not.
+  STATUS_DONE = 2;
+}
+
+// A unit of work tracked by the system.
+message Task {
+  // Stable identifier, assigned by the store.
+  required int64 id = 1;
+
+  // Human readable title.
+  required string title = 2;
+
+  optional Status status = 3 [default = STATUS_PENDING];
+
+  repeated string tags = 4;
+
+  // Free-form annotations keyed by name.
+  map<string, string> annotations = 5;
+
+  extensions 100 to 199;
+
+  reserved 6, 7;
+  reserved "legacy_owner";
+}
+
+// Extra fields contributed by the scheduling subsystem.
+extend Task {
+  optional int32 priority_weight = 100;
+}
+
+// Read and write tasks.
+service TaskStore {
+  // Fetches a single task by identifier.
+  rpc Get(Task) returns (Task);
+
+  // Streams every task the caller may see.
+  rpc List(Task) returns (stream Task);
+}

@@ -6,9 +6,21 @@ pub fn check_source(
   spec : @kgf_types.KGFSpec,
 ) -> Array[CheckDiagnostic] {
   let diagnostics : Array[CheckDiagnostic] = []
-  let source_map = SourceMap::new(content)
-  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
-  let (tokens, lex_diagnostics) = lexer.tokenize_with_diagnostics(content)
+  // Use the same LanguageToolkit the real pipeline uses (parse_source /
+  // ToolkitRegistry::tokenize) so the spec's `=== preprocess` steps are applied
+  // before lexing. Without this, specs with a preprocess section are checked
+  // against text the runtime never sees and report bogus errors.
+  //
+  // Positions below are resolved against the PREPARED text (post-preprocess),
+  // not the raw file. For specs without a preprocess section the two are
+  // identical; for the rest, the prepared text is what was actually tokenized,
+  // so reporting against it keeps line/col consistent with the diagnostics.
+  let toolkit = @kgf_toolkit.LanguageToolkit::from_spec(spec)
+  let prepared = toolkit.preprocess(content)
+  let source_map = SourceMap::new(prepared)
+  let (tokens, lex_diagnostics) = toolkit
+    .get_lexer()
+    .tokenize_with_diagnostics(prepared)
   for diagnostic in lex_diagnostics {
     let (line, col) = source_map.resolve(diagnostic.get_pos())
     diagnostics.push(
@@ -50,7 +62,7 @@ pub fn check_source(
   if !parse_diagnostic.is_fully_consumed() {
     let pos = match parse_diagnostic.get_actual_token() {
       Some(tok) => tok.get_pos()
-      None => content.length()
+      None => prepared.length()
     }
     let (line, col) = source_map.resolve(pos)
     diagnostics.push(

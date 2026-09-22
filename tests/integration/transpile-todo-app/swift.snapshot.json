@@ -3,7 +3,7 @@
   "source_lang": "typescript",
   "totals": {
     "files": 6,
-    "ir_events": 2640,
+    "ir_events": 2931,
     "unresolved": 1,
     "emit_parse_errors": 0,
     "compile_failures": 5,
@@ -17,6 +17,10 @@
     [
       "BodyAtom",
       963
+    ],
+    [
+      "OpAtom",
+      285
     ],
     [
       "Item",
@@ -59,10 +63,6 @@
       19
     ],
     [
-      "InterfaceMember",
-      19
-    ],
-    [
       "ParamList",
       18
     ],
@@ -73,6 +73,14 @@
     [
       "Atom",
       14
+    ],
+    [
+      "Other",
+      14
+    ],
+    [
+      "InterfaceMember",
+      11
     ],
     [
       "IRImport",
@@ -118,7 +126,7 @@
   "files": [
     {
       "file": "cli.ts",
-      "ir_event_count": 982,
+      "ir_event_count": 1112,
       "unresolved_total": 1,
       "unresolved_kinds": [
         [
@@ -131,7 +139,7 @@
     },
     {
       "file": "main.ts",
-      "ir_event_count": 162,
+      "ir_event_count": 185,
       "unresolved_total": 0,
       "unresolved_kinds": [],
       "emit_parse_errors": 0,
@@ -139,7 +147,7 @@
     },
     {
       "file": "types.ts",
-      "ir_event_count": 113,
+      "ir_event_count": 110,
       "unresolved_total": 0,
       "unresolved_kinds": [],
       "emit_parse_errors": 0,
@@ -147,7 +155,7 @@
     },
     {
       "file": "format.ts",
-      "ir_event_count": 131,
+      "ir_event_count": 144,
       "unresolved_total": 0,
       "unresolved_kinds": [],
       "emit_parse_errors": 0,
@@ -155,7 +163,7 @@
     },
     {
       "file": "service.ts",
-      "ir_event_count": 1062,
+      "ir_event_count": 1176,
       "unresolved_total": 0,
       "unresolved_kinds": [],
       "emit_parse_errors": 0,
@@ -163,7 +171,7 @@
     },
     {
       "file": "storage.ts",
-      "ir_event_count": 190,
+      "ir_event_count": 204,
       "unresolved_total": 0,
       "unresolved_kinds": [],
       "emit_parse_errors": 0,

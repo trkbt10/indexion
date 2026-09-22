@@ -491,7 +491,9 @@ test "declares: go exported func and type" {
   assert_eq(fn_count, 2)
   assert_eq(type_count, 1)
   assert_true(names.get("New") == Some("function"))
-  assert_true(names.get("Run") == Some("function"))
+  // `Run` has a receiver, so it is a Method attached to its type, not a free
+  // function.
+  assert_true(names.get("Run") == Some("method"))
   assert_true(names.get("Server") == Some("type"))
   // lowercase helper should NOT be exported
   assert_true(!names.contains("helper"))
@@ -790,7 +792,9 @@ test "declares: java public class and method" {
     registry, "java", source, "Service.java",
   )
   assert_eq(fn_count, 1)
-  assert_eq(type_count, 2)
+  // Service + UserRecord, plus the record components `name`/`age` which are the
+  // record's public accessors (count_declares buckets member kinds as types).
+  assert_eq(type_count, 4)
   assert_true(names.get("process") == Some("method"))
   assert_true(names.get("Service") == Some("class"))
   assert_true(names.get("UserRecord") == Some("record"))
@@ -820,7 +824,8 @@ test "declares: csharp public class, interface, method" {
   let (fn_count, type_count, names) = count_declares(
     registry, "csharp", source, "Models.cs",
   )
-  assert_eq(fn_count, 1)
+  // Process, plus the interface member Validate (implicitly public in C#).
+  assert_eq(fn_count, 2)
   assert_eq(type_count, 2)
   assert_true(names.get("GetDisplayName") == Some("method"))
   assert_true(names.get("User") == Some("class"))
@@ -848,9 +853,14 @@ test "declares: swift public struct, protocol, func" {
   let (fn_count, type_count, names) = count_declares(
     registry, "swift", source, "Models.swift",
   )
-  assert_eq(fn_count, 1)
-  assert_eq(type_count, 2)
-  assert_true(names.get("displayName") == Some("function"))
+  // The public func, plus the protocol requirement `validate` (a public
+  // protocol's requirements are part of its surface).
+  assert_eq(fn_count, 2)
+  // User, Validator, plus the public stored property `name` (Property is a
+  // member kind, bucketed as a type by count_declares).
+  assert_eq(type_count, 3)
+  // `displayName` is declared under `User` as a Method, not a free function.
+  assert_true(names.get("displayName") == Some("method"))
   assert_true(names.get("User") == Some("struct"))
   assert_true(names.get("Validator") == Some("protocol"))
   assert_true(!names.contains("InternalHelper"))

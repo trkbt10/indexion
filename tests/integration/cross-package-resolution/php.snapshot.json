@@ -6,7 +6,12 @@
     "fixtures/project/php/composer.json",
     "fixtures/project/php/src/helpers.php",
     "fixtures/project/php/src/Dto/UserDto.php",
-    "fixtures/project/php/src/UserService.php"
+    "fixtures/project/php/src/UserService.php",
+    "fixtures/project/php/src/UserService.php::UserService::create",
+    "fixtures/project/php/src/Dto/UserDto.php::UserDto::__construct",
+    "fixtures/project/php/src/UserService.php::UserService::findById",
+    "fixtures/project/php/src/UserService.php::UserService::validate",
+    "fixtures/project/php/src/UserService.php::UserService::__construct"
   ],
   "moduleDependsOn": [
     {
@@ -51,10 +56,10 @@
     }
   ],
   "stats": {
-    "symbols": 8,
-    "edges": 19,
+    "symbols": 10,
+    "edges": 25,
     "edgesByKind": {
-      "declares": 4,
+      "declares": 10,
       "dependsOn": 7,
       "projectName": 1,
       "projectLicense": 1,

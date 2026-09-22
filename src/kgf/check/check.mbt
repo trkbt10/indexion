@@ -8,6 +8,8 @@
 /// - Undefined built-in functions in semantic expressions
 /// - Feature values referencing undefined token kinds
 /// - Classify section structural problems
+/// - Label references in semantics/attrs that the rule's grammar never binds
+/// - Token kinds defined in lex that no grammar rule can consume
 
 ///|
 /// A single diagnostic produced by validation.
@@ -52,6 +54,11 @@ pub fn check(spec : @kgf_types.KGFSpec) -> Array[Diagnostic] {
   check_semantics(spec, rule_names, all_symbols, diagnostics)
   check_features(spec, token_names, diagnostics)
   check_classify(spec, diagnostics)
+  // Cross-section reference checks (see static_refs.mbt): catch the two
+  // failure modes the engine degrades on silently instead of reporting.
+  check_semantics_label_refs(spec, diagnostics)
+  check_attrs_label_refs(spec, diagnostics)
+  check_unreachable_tokens(spec, diagnostics)
   diagnostics
 }
 
@@ -278,27 +285,34 @@ fn check_classify(
 /// Symbols are uppercase-starting identifiers (tokens) or any identifier
 /// that isn't a PEG operator.
 fn extract_symbols_from_expr(expr : String) -> Array[String] {
-  let symbols : Array[String] = []
+  identifier_words(expr).filter(is_symbol_candidate)
+}
+
+///|
+/// Every maximal run of identifier characters in a PEG expression string,
+/// in order of appearance and without duplicates. This is the one tokenizer
+/// for expression text; callers filter the words they care about.
+fn identifier_words(expr : String) -> Array[String] {
+  let words : Array[String] = []
   let seen : Map[String, Bool] = Map([])
   let buf = StringBuilder()
-  let chars = expr.to_array()
-  for c in chars {
+  let flush = fn() {
+    let word = buf.to_string()
+    if word.length() > 0 && !seen.contains(word) {
+      words.push(word)
+      seen.set(word, true)
+    }
+    buf.reset()
+  }
+  for c in expr.to_array() {
     if @charclass.is_ident_char(c) {
       buf.write_char(c)
     } else {
-      let word = buf.to_string()
-      if word.length() > 0 && is_symbol_candidate(word) && !seen.contains(word) {
-        symbols.push(word)
-        seen.set(word, true)
-      }
-      buf.reset()
+      flush()
     }
   }
-  let word = buf.to_string()
-  if word.length() > 0 && is_symbol_candidate(word) && !seen.contains(word) {
-    symbols.push(word)
-  }
-  symbols
+  flush()
+  words
 }
 
 ///|

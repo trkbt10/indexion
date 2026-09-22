@@ -323,9 +323,11 @@ fn parse_pattern_ctx(
           group_start = group_start + 2
         }
         let group_pattern = pattern[group_start:group_end].to_owned()
-        // Lookahead -- zero-width assertion
+        // Lookahead -- zero-width assertion. The body may itself be an
+        // alternation (`(?=\s|>)`), which must become one Alternation element
+        // rather than a literal sequence containing `|`.
         if is_pos_lookahead || is_neg_lookahead {
-          match parse_pattern_ctx(group_pattern, ctx) {
+          match parse_group_elements(group_pattern, ctx) {
             Some(elems) => (Lookahead(elems, is_pos_lookahead), group_end + 1)
             None => return None
           }
@@ -348,32 +350,13 @@ fn parse_pattern_ctx(
             }
           }
         } else {
-          // Capturing group: (...) -- allocate capture index
+          // Capturing group: (...) -- allocate capture index. The group
+          // itself captures; an alternation inside it is internal.
           let capture_idx = ctx.alloc_capture()
-          if group_pattern.contains("|") {
-            // Capturing group with alternation: (a|b)
-            // The group itself captures; alternation is internal
-            let alternatives = split_by_alternation(group_pattern)
-            let parsed_alternatives : Array[Array[QuantifiedElement]] = []
-            for alt in alternatives {
-              match parse_pattern_ctx(alt, ctx) {
-                Some(elems) => parsed_alternatives.push(elems)
-                None => return None
-              }
-            }
-            // Wrap alternation inside a capturing group
-            let alt_element : QuantifiedElement = {
-              element: Alternation(parsed_alternatives),
-              quantifier: One,
-              lazy_: false,
-            }
-            (Group([alt_element], Some(capture_idx)), group_end + 1)
-          } else {
-            match parse_pattern_ctx(group_pattern, ctx) {
-              Some(group_elems) =>
-                (Group(group_elems, Some(capture_idx)), group_end + 1)
-              None => return None
-            }
+          match parse_group_elements(group_pattern, ctx) {
+            Some(group_elems) =>
+              (Group(group_elems, Some(capture_idx)), group_end + 1)
+            None => return None
           }
         }
       }
@@ -435,6 +418,33 @@ fn parse_pattern_ctx(
     elements.push({ element, quantifier, lazy_, })
   }
   Some(elements)
+}
+
+///|
+/// Parses the body of a parenthesised group into the element sequence the
+/// group wraps: a plain sequence, or — when the body has a top-level `|` —
+/// a single Alternation element holding the parsed alternatives.
+fn parse_group_elements(
+  group_pattern : String,
+  ctx : ParseContext,
+) -> Array[QuantifiedElement]? {
+  if !group_pattern.contains("|") {
+    return parse_pattern_ctx(group_pattern, ctx)
+  }
+  let parsed_alternatives : Array[Array[QuantifiedElement]] = []
+  for alt in split_by_alternation(group_pattern) {
+    match parse_pattern_ctx(alt, ctx) {
+      Some(elems) => parsed_alternatives.push(elems)
+      None => return None
+    }
+  }
+  Some([
+    {
+      element: Alternation(parsed_alternatives),
+      quantifier: One,
+      lazy_: false,
+    },
+  ])
 }
 
 ///|

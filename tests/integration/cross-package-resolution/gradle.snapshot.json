@@ -1,95 +1,58 @@
 {
   "modules": [
-    "maven:Service",
-    "maven:KotlinLogging",
-    "maven:runApplication",
-    "maven:GreetingService",
-    "maven:jacksonObjectMapper",
-    "maven:SpringBootApplication",
+    "maven:mu.KotlinLogging",
     "fixtures/project/gradle/build.gradle.kts",
+    "maven:org.springframework.stereotype.Service",
+    "maven:org.springframework.boot.runApplication",
     "fixtures/project/gradle/src/main/java/com/example/App.java",
+    "maven:com.fasterxml.jackson.module.kotlin.jacksonObjectMapper",
     "fixtures/project/gradle/src/main/kotlin/com/example/Application.kt",
-    "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt"
+    "maven:org.springframework.boot.autoconfigure.SpringBootApplication",
+    "fixtures/project/gradle/src/main/java/com/example/App.java::App.main",
+    "fixtures/project/gradle/src/main/java/com/example/App.java::App.getName",
+    "fixtures/project/gradle/src/main/java/com/example/App.java::Config.getHost",
+    "fixtures/project/gradle/src/main/java/com/example/App.java::Config.getPort",
+    "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt",
+    "fixtures/project/gradle/src/main/kotlin/com/example/Application.kt::Application.entryPoint",
+    "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt::GreetingService.greet"
   ],
   "moduleDependsOn": [
     {
       "from": "fixtures/project/gradle/src/main/kotlin/com/example/Application.kt",
-      "to": "maven:runApplication",
-      "via": "runApplication"
+      "to": "maven:org.springframework.boot.runApplication",
+      "via": "org.springframework.boot.runApplication"
     },
     {
       "from": "fixtures/project/gradle/src/main/kotlin/com/example/Application.kt",
-      "to": "maven:runApplication",
-      "via": "runApplication"
+      "to": "maven:org.springframework.boot.autoconfigure.SpringBootApplication",
+      "via": "org.springframework.boot.autoconfigure.SpringBootApplication"
     },
     {
       "from": "fixtures/project/gradle/src/main/kotlin/com/example/Application.kt",
-      "to": "maven:GreetingService",
-      "via": "GreetingService"
-    },
-    {
-      "from": "fixtures/project/gradle/src/main/kotlin/com/example/Application.kt",
-      "to": "maven:GreetingService",
-      "via": "GreetingService"
-    },
-    {
-      "from": "fixtures/project/gradle/src/main/kotlin/com/example/Application.kt",
-      "to": "maven:SpringBootApplication",
-      "via": "SpringBootApplication"
-    },
-    {
-      "from": "fixtures/project/gradle/src/main/kotlin/com/example/Application.kt",
-      "to": "maven:SpringBootApplication",
-      "via": "SpringBootApplication"
-    },
-    {
-      "from": "fixtures/project/gradle/src/main/kotlin/com/example/Application.kt",
-      "to": "maven:SpringBootApplication",
-      "via": "@SpringBootApplication",
-      "alias": "@SpringBootApplication"
+      "to": "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt",
+      "via": "com.example.service.GreetingService"
     },
     {
       "from": "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt",
-      "to": "maven:Service",
-      "via": "Service"
+      "to": "maven:mu.KotlinLogging",
+      "via": "mu.KotlinLogging"
     },
     {
       "from": "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt",
-      "to": "maven:Service",
-      "via": "Service"
+      "to": "maven:org.springframework.stereotype.Service",
+      "via": "org.springframework.stereotype.Service"
     },
     {
       "from": "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt",
-      "to": "maven:Service",
-      "via": "@Service",
-      "alias": "@Service"
-    },
-    {
-      "from": "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt",
-      "to": "maven:KotlinLogging",
-      "via": "KotlinLogging"
-    },
-    {
-      "from": "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt",
-      "to": "maven:KotlinLogging",
-      "via": "KotlinLogging"
-    },
-    {
-      "from": "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt",
-      "to": "maven:jacksonObjectMapper",
-      "via": "jacksonObjectMapper"
-    },
-    {
-      "from": "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt",
-      "to": "maven:jacksonObjectMapper",
-      "via": "jacksonObjectMapper"
+      "to": "maven:com.fasterxml.jackson.module.kotlin.jacksonObjectMapper",
+      "via": "com.fasterxml.jackson.module.kotlin.jacksonObjectMapper"
     }
   ],
   "stats": {
-    "symbols": 13,
-    "edges": 22,
+    "symbols": 17,
+    "edges": 25,
     "edgesByKind": {
-      "declares": 8,
+      "declares": 11,
       "dependsOn": 6,
       "projectGroup": 1,
       "projectVersion": 1,

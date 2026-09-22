@@ -48,10 +48,10 @@
   ],
   "stats": {
     "symbols": 24,
-    "edges": 25,
+    "edges": 29,
     "edgesByKind": {
       "declares": 13,
-      "dependsOn": 8,
+      "dependsOn": 12,
       "rubyVersion": 1,
       "module_depends_on": 3
     },

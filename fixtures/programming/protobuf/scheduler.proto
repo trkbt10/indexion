@@ -1,0 +1,91 @@
+// Scheduling service for the task pipeline.
+//
+// Defines the messages and RPCs used to queue, order and report on tasks.
+syntax = "proto3";
+
+package example.tasks.scheduling.v1;
+
+import "google/protobuf/timestamp.proto";
+import public "example/tasks/task.proto";
+
+option java_package = "com.example.tasks.scheduling";
+option java_multiple_files = true;
+option go_package = "github.com/example/tasks/scheduling;schedulingpb";
+
+// How urgently a task should run.
+enum Priority {
+  // Unset; treated as PRIORITY_NORMAL by the server.
+  PRIORITY_UNSPECIFIED = 0;
+  PRIORITY_LOW = 1;
+  // Run before anything else.
+  PRIORITY_HIGH = 3;
+
+  reserved 4, 5 to 7;
+  reserved "PRIORITY_URGENT";
+}
+
+// Retry behaviour attached to a scheduled task.
+message RetryPolicy {
+  // Maximum number of attempts, including the first.
+  int32 limit = 1;
+
+  double backoff_seconds = 2 [deprecated = false];
+
+  // Attempts made so far.
+  int32 attempts = 3;
+}
+
+// A task queued for execution.
+message ScheduledTask {
+  // Server-assigned identifier.
+  string name = 1;
+
+  Priority priority = 2;
+
+  optional RetryPolicy retry = 3;
+
+  google.protobuf.Timestamp submitted_at = 4;
+
+  // Labels attached by the submitter.
+  map<string, string> labels = 5;
+
+  // Either an inline payload or a reference to stored bytes.
+  oneof payload {
+    // Raw bytes, for small payloads.
+    bytes inline_payload = 6;
+
+    // Object-store URI, for large payloads.
+    string payload_uri = 7;
+  }
+
+  // Nested detail attached to a failed attempt.
+  message Failure {
+    string message = 1;
+    int32 code = 2;
+  }
+
+  repeated Failure failures = 8;
+}
+
+// Request to enqueue a task.
+message SubmitRequest {
+  ScheduledTask task = 1;
+}
+
+// Response carrying the queued task.
+message SubmitResponse {
+  ScheduledTask task = 1;
+}
+
+// Orders and dispatches tasks by priority.
+service Scheduler {
+  option deprecated = false;
+
+  // Enqueues a single task.
+  rpc Submit(SubmitRequest) returns (SubmitResponse);
+
+  // Streams every task in priority order.
+  rpc Watch(SubmitRequest) returns (stream ScheduledTask) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}

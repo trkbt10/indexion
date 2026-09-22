@@ -9,10 +9,10 @@
   ],
   "moduleDependsOn": [],
   "stats": {
-    "symbols": 10,
-    "edges": 11,
+    "symbols": 22,
+    "edges": 18,
     "edgesByKind": {
-      "declares": 3,
+      "declares": 10,
       "dependsOn": 4,
       "projectName": 1,
       "projectLicense": 1,

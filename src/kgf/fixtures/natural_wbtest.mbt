@@ -60,3 +60,65 @@ test "natural: tokenize japanese, english, korean, chinese" {
     assert_true(tokens.length() > 0)
   }
 }
+
+///|
+/// The Japanese grammar required a word before a particle and allowed no
+/// particle inside quoted speech, so a line that opens with a particle
+/// (`でも、…`) or a bracket stopped the parse and every word after it was
+/// dropped. `CjkNumber` was lexed but no rule consumed it at all.
+test "natural: japanese parses whole texts including particles and brackets" {
+  let registry = get_fixture_registry()
+  let fixtures = get_fixtures_dir()
+  for name in ["simple.txt", "quotes.txt", "tech.txt"] {
+    let path = fixtures + "/natural/japanese/" + name
+    let source = @fs.read_file_to_string(path) catch { _ => "" }
+    assert_true(source.length() > 0)
+    let result = run_pipeline_with_registry(
+      registry, "japanese", source, "text.txt",
+    )
+    assert_true(result.parse_ok)
+    assert_eq(result.tokens_consumed, result.tokens_total)
+    assert_eq(result.lex_errors, 0)
+  }
+}
+
+///|
+/// A CJK numeral is a number written in kanji. The token existed but no
+/// grammar rule consumed it, so any text containing 一/十/百 stopped there.
+test "natural: japanese reads cjk numerals as numbers" {
+  let registry = get_fixture_registry()
+  let spec = registry.get_spec("japanese").unwrap()
+  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let source = "彼は三十分待った。でも、誰も来なかった。"
+  let tokens = lexer.tokenize(source)
+  assert_true(tokens.iter().any(fn(t) { t.kind == "CjkNumber" }))
+  let result = run_pipeline_with_registry(
+    registry, "japanese", source, "text.txt",
+  )
+  assert_true(result.parse_complete())
+  assert_eq(result.lex_errors, 0)
+}
+
+///|
+/// Each natural-language spec must consume any of the text fixtures, not
+/// only the ones written in its own language: the specs are used as overlays
+/// on mixed-language documents.
+test "natural: every language spec consumes every text fixture" {
+  let registry = get_fixture_registry()
+  let fixtures = get_fixtures_dir()
+  let paths = [
+    "/natural/japanese/simple.txt", "/natural/english/sample.txt", "/natural/korean/sample.txt",
+    "/natural/chinese/sample.txt",
+  ]
+  for spec_name in ["japanese", "english", "korean", "chinese"] {
+    for rel in paths {
+      let source = @fs.read_file_to_string(fixtures + rel) catch { _ => "" }
+      assert_true(source.length() > 0)
+      let result = run_pipeline_with_registry(
+        registry, spec_name, source, "text.txt",
+      )
+      assert_true(result.parse_ok)
+      assert_eq(result.tokens_consumed, result.tokens_total)
+    }
+  }
+}
