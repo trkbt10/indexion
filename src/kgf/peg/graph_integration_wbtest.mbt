@@ -11,7 +11,7 @@ fn run_full_pipeline(
   // Parse spec
   let spec = @parser.parse_kgf(spec_text).unwrap()
   // Create lexer and tokenize
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize(source_code)
   // Build PEG and parse
   let peg = build_peg(spec) catch { _ => return @graph.CodeGraph::new() }
@@ -465,7 +465,7 @@ fn run_parse_with_events(
   source_code : String,
 ) -> Array[(String, Map[String, Json])] {
   let spec = @parser.parse_kgf(spec_text).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize(source_code)
   let peg = build_peg(spec) catch { _ => return [] }
   let start_rule = spec.get_start_rule()

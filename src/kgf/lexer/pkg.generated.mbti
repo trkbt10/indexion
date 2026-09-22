@@ -7,6 +7,8 @@ import {
 }
 
 // Values
+pub fn apply_layout(Array[@types.Tok], @types.LayoutSpec) -> Array[@types.Tok]
+
 pub fn lexer() -> LexerBuilder
 
 // Errors
@@ -26,8 +28,11 @@ pub fn LexDiagnostic::new(Int, Int, String) -> Self
 
 pub struct Lexer {
   tokens : Array[CompiledToken]
+  layout : @types.LayoutSpec?
 }
-pub fn Lexer::new(Array[@types.TokenDef]) -> Self
+pub fn Lexer::for_spec(@types.KGFSpec) -> Self
+pub fn Lexer::get_layout(Self) -> @types.LayoutSpec?
+pub fn Lexer::new(Array[@types.TokenDef], layout? : @types.LayoutSpec?) -> Self
 pub fn Lexer::tokenize(Self, String) -> Array[@types.Tok]
 pub fn Lexer::tokenize_with_diagnostics(Self, String) -> (Array[@types.Tok], Array[LexDiagnostic])
 

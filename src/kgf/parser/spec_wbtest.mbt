@@ -1296,3 +1296,88 @@ test "parse_semantics scope statements inside else branch" {
   assert_true(block.get_then_stmts()[0] is @types.ScopePush)
   assert_true(block.get_else_stmts().unwrap()[0] is @types.ScopePop)
 }
+
+///|
+/// A lex section with no LAYOUT directive has no layout declaration, and the
+/// spec is then tokenized without the indentation pass.
+test "parse_lex: no LAYOUT directive" {
+  let text =
+    #|TOKEN NL /\r?\n/
+    #|
+  assert_eq(parse_lex(text).get_layout(), None)
+}
+
+///|
+test "parse_lex: LAYOUT directive with every field" {
+  let text =
+    #|TOKEN NL_INDENT /\r?\n[ \t]+/
+    #|TOKEN NL /\r?\n/
+    #|LAYOUT newline=NL_INDENT,NL indent=INDENT dedent=DEDENT comment=Comment open=LPAREN,LBRACKET close=RPAREN,RBRACKET
+    #|
+  let layout = parse_lex(text).get_layout().unwrap()
+  assert_eq(layout.get_newline(), ["NL_INDENT", "NL"])
+  assert_eq(layout.get_indent(), "INDENT")
+  assert_eq(layout.get_dedent(), "DEDENT")
+  assert_eq(layout.get_comment(), Some("Comment"))
+  assert_eq(layout.get_open(), ["LPAREN", "LBRACKET"])
+  assert_eq(layout.get_close(), ["RPAREN", "RBRACKET"])
+  // The synthetic kinds never appear among the lex tokens: nothing in the
+  // source matches them, the pass is what emits them.
+  for token in parse_lex(text).get_tokens() {
+    assert_true(token.get_name() != "INDENT")
+    assert_true(token.get_name() != "DEDENT")
+  }
+}
+
+///|
+/// The optional fields may be left out, and the field order is free.
+test "parse_lex: LAYOUT directive with only the required fields" {
+  let text =
+    #|LAYOUT dedent=DEDENT indent=INDENT newline=NL
+    #|
+  let layout = parse_lex(text).get_layout().unwrap()
+  assert_eq(layout.get_newline(), ["NL"])
+  assert_eq(layout.get_indent(), "INDENT")
+  assert_eq(layout.get_dedent(), "DEDENT")
+  assert_eq(layout.get_comment(), None)
+  assert_eq(layout.get_open(), [])
+  assert_eq(layout.get_close(), [])
+}
+
+///|
+/// A directive missing a required field declares nothing: the spec is then
+/// tokenized without layout, and `kgf check` is what reports the incomplete
+/// directive.
+test "parse_lex: incomplete LAYOUT directive declares no layout" {
+  assert_eq(parse_lex("LAYOUT newline=NL indent=INDENT\n").get_layout(), None)
+  assert_eq(
+    parse_lex("LAYOUT indent=INDENT dedent=DEDENT\n").get_layout(),
+    None,
+  )
+}
+
+///|
+/// An unknown field is ignored rather than invalidating the directive, so a
+/// spec written for a later engine still loads.
+test "parse_lex: LAYOUT directive ignores unknown fields" {
+  let text =
+    #|LAYOUT newline=NL indent=INDENT dedent=DEDENT continuation=BACKSLASH
+    #|
+  let layout = parse_lex(text).get_layout().unwrap()
+  assert_eq(layout.get_newline(), ["NL"])
+}
+
+///|
+/// The kinds a layout refers to and the kinds it synthesizes are two disjoint
+/// lists; `kgf check` validates the first against the lex section and rejects
+/// a lex TOKEN that collides with the second.
+test "parse_lex: LAYOUT referenced and synthetic kinds" {
+  let text =
+    #|LAYOUT newline=NL_INDENT,NL indent=INDENT dedent=DEDENT comment=Comment open=LPAREN close=RPAREN
+    #|
+  let layout = parse_lex(text).get_layout().unwrap()
+  assert_eq(layout.referenced_kinds(), [
+    "NL_INDENT", "NL", "Comment", "LPAREN", "RPAREN",
+  ])
+  assert_eq(layout.synthetic_kinds(), ["INDENT", "DEDENT"])
+}

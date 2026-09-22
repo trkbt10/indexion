@@ -95,6 +95,22 @@ pub fn build_peg(spec : @types.KGFSpec) -> PEG raise {
       token_id_counter = token_id_counter + 1
     }
   }
+  // The synthetic kinds a `LAYOUT` directive introduces (INDENT / DEDENT) are
+  // in the token stream the layout pass produces, but have no lex TOKEN rule.
+  // They are terminals for the grammar all the same: without this, a rule
+  // referring to one would be compiled as a reference to a rule that does not
+  // exist and could never match.
+  match spec.get_layout() {
+    Some(layout) =>
+      for name in layout.synthetic_kinds() {
+        if !token_ids.contains(name) {
+          tokens.add(name)
+          token_ids.set(name, token_id_counter)
+          token_id_counter = token_id_counter + 1
+        }
+      }
+    None => ()
+  }
   let ast : Map[String, Node] = Map([])
   let compiled_nodes : Array[CompiledNode] = []
   let rule_node_ids : Map[String, Int] = Map([])

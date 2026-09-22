@@ -11,6 +11,8 @@
 /// - Label references in semantics/attrs that the rule's grammar never binds
 /// - Token kinds defined in lex that no grammar rule can consume
 /// - `$label` reads of a capture that can span more than one token
+/// - `LAYOUT` directives that name undefined token kinds, or that declare a
+///   synthetic INDENT/DEDENT kind the lex section also defines as a TOKEN
 
 ///|
 /// A single diagnostic produced by validation.
@@ -49,6 +51,10 @@ pub fn Diagnostic::get_message(self : Diagnostic) -> String {
 pub fn check(spec : @kgf_types.KGFSpec) -> Array[Diagnostic] {
   let diagnostics : Array[Diagnostic] = []
   let token_names = check_lex(spec, diagnostics)
+  // The layout pass injects token kinds that no lex rule defines. They are
+  // legal grammar symbols and legal feature values, so they join the token
+  // name set before the checks that consult it.
+  check_layout(spec, token_names, diagnostics)
   let rule_names = check_grammar(spec, token_names, diagnostics)
   let all_symbols = merge_symbol_sets(token_names, rule_names)
   check_attrs(spec, rule_names, diagnostics)
@@ -111,6 +117,72 @@ fn check_lex(
   // NL is implicitly available even if not defined
   token_names.set("NL", true)
   token_names
+}
+
+///|
+/// Check the `LAYOUT` directive of the lex section, and register its synthetic
+/// kinds in `token_names` so every later check treats them as defined.
+///
+/// Three things can go wrong in a directive:
+///
+/// - it names a token kind the lex section does not define (`newline`,
+///   `comment`, `open`, `close`) — the pass would then never fire, or would
+///   never see a bracket;
+/// - it declares a synthetic kind (`indent` / `dedent`) that the lex section
+///   ALSO defines as a TOKEN — the lexer would emit that kind from source text
+///   too, and the grammar could no longer tell a real token from a synthesized
+///   one;
+/// - `indent` and `dedent` name the same kind, which makes opening and closing
+///   a level indistinguishable.
+fn check_layout(
+  spec : @kgf_types.KGFSpec,
+  token_names : Map[String, Bool],
+  diagnostics : Array[Diagnostic],
+) -> Unit {
+  let layout = match spec.get_layout() {
+    Some(l) => l
+    None => return
+  }
+  for kind in layout.referenced_kinds() {
+    if !token_names.contains(kind) {
+      diagnostics.push(
+        Diagnostic::new(
+          "lex",
+          "error",
+          "LAYOUT references token kind '" +
+          kind +
+          "' which the lex section does not define",
+        ),
+      )
+    }
+  }
+  for kind in layout.synthetic_kinds() {
+    if token_names.contains(kind) {
+      diagnostics.push(
+        Diagnostic::new(
+          "lex",
+          "error",
+          "LAYOUT declares '" +
+          kind +
+          "' as a synthetic layout kind, but the lex section also defines it as a TOKEN; a synthetic kind must be emitted by the layout pass alone",
+        ),
+      )
+    }
+    // Registered regardless: a rule referring to it is correct either way, and
+    // the duplicate-definition error above is the one worth reporting.
+    token_names.set(kind, true)
+  }
+  if layout.get_indent() == layout.get_dedent() {
+    diagnostics.push(
+      Diagnostic::new(
+        "lex",
+        "error",
+        "LAYOUT uses the same kind '" +
+        layout.get_indent() +
+        "' for indent and dedent; opening and closing a level would be indistinguishable",
+      ),
+    )
+  }
 }
 
 ///|

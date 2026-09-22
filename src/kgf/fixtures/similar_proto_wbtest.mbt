@@ -57,7 +57,7 @@ test "similar-code: protobuf tokenization produces expected token kinds" {
     return
   }
   let spec = registry.get_spec("protobuf").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
   let tokens = lexer.tokenize(source)
   assert_true(tokens.length() > 0)
   assert_true(tokens.iter().any(fn(t) { t.kind == "KW_syntax" }))
@@ -87,7 +87,7 @@ test "similar-code: protobuf pair declares same structure" {
     return
   }
   let spec = registry.get_spec("protobuf").unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let lexer = @lexer.Lexer::for_spec(spec)
 
   // Count top-level declaration kinds in each file by tokenizing and parsing
   fn count_kind(source : String, kind : String) -> Int {

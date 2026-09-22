@@ -93,5 +93,8 @@ pub fn Lexer::tokenize_with_diagnostics(
       ),
     )
   }
-  (result, diagnostics)
+  // The layout pass runs on the diagnostic path too, so `kgf check` parses the
+  // same stream the pipeline does. Unmatched spans are reported against the
+  // source, which the synthetic tokens do not touch.
+  (self.with_layout(result), diagnostics)
 }

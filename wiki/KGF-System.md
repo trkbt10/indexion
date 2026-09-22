@@ -72,10 +72,11 @@ cycle-a: 1 error(s), 0 warning(s)
 
 ### === lex (Lexical Analysis)
 
-The lex section defines token rules using regex patterns. Tokens are matched in declaration order -- first match wins -- so more specific patterns (keywords) must appear before general ones (identifiers). There are two kinds of rules `[src/kgf/parser/parse_lex.mbt:5-15]`:
+The lex section defines token rules using regex patterns. Tokens are matched in declaration order -- first match wins -- so more specific patterns (keywords) must appear before general ones (identifiers). There are three kinds of rules `[src/kgf/parser/parse_lex.mbt:5-30]`:
 
 - **SKIP** rules match text that is consumed but not emitted (whitespace, comments)
 - **TOKEN** rules match text and emit a named token into the stream
+- **LAYOUT** is a directive rather than a pattern: it declares how the engine should derive indentation depth after lexing (see below)
 
 ```kgf
 === lex
@@ -88,6 +89,44 @@ TOKEN LBRACE      /\{/
 ```
 
 Patterns use JavaScript-compatible regular expression syntax with support for character classes, quantifiers, groups, and lookahead. The lexer compiles each pattern once at construction time into a `CompiledPattern` for efficient matching `[src/kgf/lexer/lexer.mbt:3-11]`. Capture groups in patterns can extract sub-matches -- for example, a doc comment pattern `/(\/\/\/(.*))/` captures just the content after the `///` prefix. The special `skip_value` flag on a token makes it act as a marker without carrying text content.
+
+#### LAYOUT (indentation-sensitive languages)
+
+A regex cannot compare one line's indentation with the previous line's -- that comparison needs memory across matches -- so a regex-only lexer cannot tell a nested block from a sibling one. In Python, YAML, Haskell and every other layout-sensitive language, that is the whole of the nesting structure. `LAYOUT` declares how the engine should recover it, and a post-lex pass `[src/kgf/lexer/layout.mbt]` then maintains an indentation stack and injects synthetic INDENT / DEDENT tokens between the lexer's tokens, so a grammar rule can bracket a body exactly:
+
+```kgf
+=== lex
+TOKEN NL_INDENT /\r?\n[ \t]+/
+TOKEN NL        /\r?\n/
+SKIP  /[ \t]+/
+TOKEN Comment   /#[^\r\n]*/
+TOKEN LPAREN    /\(/
+...
+LAYOUT newline=NL_INDENT,NL indent=INDENT dedent=DEDENT comment=Comment open=LPAREN,LBRACKET,LBRACE close=RPAREN,RBRACKET,RBRACE
+```
+
+```kgf
+=== grammar
+# A suite is exactly one INDENT...DEDENT pair, at any depth.
+FunctionDef -> KW_def id:Ident Params COLON ( SuiteOpen doc:Docstring? BodyItem* DEDENT / SimpleBody )
+SuiteOpen   -> ( LineBreak / Comment )* INDENT
+```
+
+The directive names token kinds, never literal syntax:
+
+| Field | Required | Meaning |
+|-------|----------|---------|
+| `newline` | yes | the kind(s) whose text is a line break plus the *next* line's leading whitespace. Everything after the line break characters is that line's indentation. Several kinds may be listed when a spec splits indented from column-0 line breaks, as Python's `NL_INDENT` / `NL` do |
+| `indent` | yes | the synthetic kind to emit when a line is indented deeper than the enclosing one |
+| `dedent` | yes | the synthetic kind to emit once per level a shallower line closes |
+| `comment` | no | the comment token kind. A line whose only token is a comment carries no layout, matching Python and YAML, where a comment may sit at any column |
+| `open` / `close` | no | bracket kinds. While a bracket is open, layout is suppressed entirely: flow collections, multi-line calls and parameter lists may be laid out freely |
+
+The pass ignores blank lines (a newline token followed directly by another newline token) and comment-only lines, closes every level still open at end of input, and tolerates a dedent to a column that is on no open level -- it emits the DEDENTs it can and adopts the new column, because indexion analyses files that do not compile. Indentation is compared as the raw whitespace string's **length in characters**, so one tab counts as one space; this is exact for the consistently-indented files real code consists of and needs no per-language tab width.
+
+`indent` and `dedent` are *synthetic* kinds: they must not have a `TOKEN` definition, since no source text matches them, but they are valid grammar symbols. `kgf check` enforces both halves of that rule, reports a `LAYOUT` field naming a token kind the lex section does not define, and includes the synthetic kinds in the unreachable-token-kind check -- the pass injects them into every stream, so a grammar that ignores them would stop at the first indented line. `kgf tokens` shows them in the stream like any other token, with an empty text.
+
+Because the pass lives inside `Lexer::tokenize`, every tokenization entry point gets it: `LanguageToolkit::tokenize` / `preprocess_and_tokenize`, the CLI's `kgf` subcommands, `check_source`, the declarations extractor and the graph pipeline all build their lexer with `Lexer::for_spec(spec)`, which carries the spec's layout declaration.
 
 ### === grammar (PEG Parsing)
 

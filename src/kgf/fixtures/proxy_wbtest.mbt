@@ -148,7 +148,7 @@ test "proxy: find_call_sites detects calls in caller file" {
   }
   if source.length() > 0 {
     let spec = registry.get_spec("moonbit").unwrap()
-    let lexer_inst = @lexer.Lexer::new(spec.get_tokens())
+    let lexer_inst = @lexer.Lexer::for_spec(spec)
     let tokens = lexer_inst.tokenize(source)
     let edits = @features.find_call_sites(
       "round_ties_even_f32",

@@ -132,7 +132,7 @@ test "full_spec_build" (b : @bench.T) {
   let content = @fs.read_file_to_string("kgfs/moonbit.kgf") catch { _ => "" }
   b.bench(name="full_spec_build", fn() {
     let spec = @kgf_parser.parse_kgf(content).unwrap()
-    let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+    let lexer = @kgf_lexer.Lexer::for_spec(spec)
     let peg = @kgf_peg.build_peg(spec) catch { _ => @kgf_peg.PEG::new() }
     b.keep((lexer, peg))
   })
@@ -163,7 +163,7 @@ test "load_registry_with_index" (b : @bench.T) {
 test "tokenize_single_file" (b : @bench.T) {
   let content = @fs.read_file_to_string("kgfs/moonbit.kgf") catch { _ => "" }
   let spec = @kgf_parser.parse_kgf(content).unwrap()
-  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+  let lexer = @kgf_lexer.Lexer::for_spec(spec)
   let src = @fs.read_file_to_string("src/kgf/lexer/lexer.mbt") catch { _ => "" }
   b.bench(name="tokenize", fn() { b.keep(lexer.tokenize(src)) })
 }
@@ -173,7 +173,7 @@ test "tokenize_single_file" (b : @bench.T) {
 test "peg_parse_single_file" (b : @bench.T) {
   let content = @fs.read_file_to_string("kgfs/moonbit.kgf") catch { _ => "" }
   let spec = @kgf_parser.parse_kgf(content).unwrap()
-  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+  let lexer = @kgf_lexer.Lexer::for_spec(spec)
   let peg = @kgf_peg.build_peg(spec) catch { _ => @kgf_peg.PEG::new() }
   let active_rules = @kgf_peg.collect_active_rules(spec)
   let src = @fs.read_file_to_string("src/kgf/lexer/lexer.mbt") catch { _ => "" }
@@ -191,7 +191,7 @@ test "peg_parse_single_file" (b : @bench.T) {
 test "peg_parse_large_file" (b : @bench.T) {
   let content = @fs.read_file_to_string("kgfs/moonbit.kgf") catch { _ => "" }
   let spec = @kgf_parser.parse_kgf(content).unwrap()
-  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+  let lexer = @kgf_lexer.Lexer::for_spec(spec)
   let peg = @kgf_peg.build_peg(spec) catch { _ => @kgf_peg.PEG::new() }
   let active_rules = @kgf_peg.collect_active_rules(spec)
   let src = @fs.read_file_to_string("src/kgf/lexer/pattern_matcher.mbt") catch {
@@ -211,7 +211,7 @@ test "peg_parse_large_file" (b : @bench.T) {
 test "peg_parse_very_large_file" (b : @bench.T) {
   let content = @fs.read_file_to_string("kgfs/moonbit.kgf") catch { _ => "" }
   let spec = @kgf_parser.parse_kgf(content).unwrap()
-  let lexer = @kgf_lexer.Lexer::new(spec.get_tokens())
+  let lexer = @kgf_lexer.Lexer::for_spec(spec)
   let peg = @kgf_peg.build_peg(spec) catch { _ => @kgf_peg.PEG::new() }
   let active_rules = @kgf_peg.collect_active_rules(spec)
   let src = @fs.read_file_to_string("src/kgf/parser/integration_wbtest.mbt") catch {

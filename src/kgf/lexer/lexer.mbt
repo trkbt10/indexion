@@ -1,7 +1,15 @@
 ///|
 /// Lexer transforms input text into tokens based on token definitions.
+///
+/// A lexer built for a spec that declares a `LAYOUT` directive also carries
+/// that declaration, and applies the indentation pass (see layout.mbt) to
+/// every stream it produces. Keeping the pass inside the Lexer is what makes
+/// it unskippable: the CLI, `check_source`, the declarations extractor and the
+/// graph pipeline all tokenize through a Lexer, so none of them can see a
+/// layout-sensitive file without its INDENT/DEDENT tokens.
 pub struct Lexer {
   tokens : Array[CompiledToken]
+  layout : @types.LayoutSpec?
 }
 
 ///|
@@ -14,7 +22,10 @@ struct CompiledToken {
 ///|
 /// Creates a new Lexer with the given token definitions.
 /// Token definitions are tried in order, so more specific patterns should come first.
-pub fn Lexer::new(tokens : Array[@types.TokenDef]) -> Lexer {
+pub fn Lexer::new(
+  tokens : Array[@types.TokenDef],
+  layout? : @types.LayoutSpec? = None,
+) -> Lexer {
   let compiled_tokens : Array[CompiledToken] = []
   for token_def in tokens {
     let case_insensitive = has_case_insensitive_flag(token_def.flags)
@@ -24,7 +35,37 @@ pub fn Lexer::new(tokens : Array[@types.TokenDef]) -> Lexer {
     )
     compiled_tokens.push({ token_def, compiled_pattern, })
   }
-  { tokens: compiled_tokens, }
+  { tokens: compiled_tokens, layout, }
+}
+
+///|
+/// Builds the lexer a spec describes: its token rules and its `LAYOUT`
+/// declaration, if any.
+///
+/// This is the single source of truth for "turn a spec into a lexer". Building
+/// one with `Lexer::new(spec.get_tokens())` instead drops the layout
+/// declaration and silently produces a stream without INDENT/DEDENT.
+pub fn Lexer::for_spec(spec : @types.KGFSpec) -> Lexer {
+  Lexer::new(spec.get_tokens(), layout=spec.get_layout())
+}
+
+///|
+/// The layout declaration this lexer applies, if any.
+pub fn Lexer::get_layout(self : Lexer) -> @types.LayoutSpec? {
+  self.layout
+}
+
+///|
+/// Applies this lexer's layout pass to a raw token stream, or returns it
+/// unchanged when the spec declares no layout.
+fn Lexer::with_layout(
+  self : Lexer,
+  tokens : Array[@types.Tok],
+) -> Array[@types.Tok] {
+  match self.layout {
+    Some(layout) => apply_layout(tokens, layout)
+    None => tokens
+  }
 }
 
 ///|
@@ -60,7 +101,7 @@ pub fn Lexer::tokenize(self : Lexer, input : String) -> Array[@types.Tok] {
         pos = pos + 1
     }
   }
-  result
+  self.with_layout(result)
 }
 
 ///|
