@@ -11,12 +11,17 @@ pub struct KGFRegistry {
   ext_to_lang : Map[String, String]
   /// Language name -> doc spec name (if separate -doc spec exists)
   lang_to_doc_spec : Map[String, String]
+  /// Source pattern -> every language that declared it in `resolver.sources`,
+  /// in registration order. `ext_to_lang` keeps only the winner; this keeps
+  /// the full claim list so the conflict can be reported instead of being
+  /// silently resolved (see `get_source_conflicts`).
+  source_claims : Map[String, Array[String]]
 }
 
 ///|
 /// Create an empty registry.
 pub fn KGFRegistry::new() -> KGFRegistry {
-  { specs: {}, ext_to_lang: {}, lang_to_doc_spec: {}, }
+  { specs: {}, ext_to_lang: {}, lang_to_doc_spec: {}, source_claims: {}, }
 }
 
 ///|
@@ -192,6 +197,20 @@ pub fn KGFRegistry::register_spec(
   let resolver = spec.get_resolver()
   let sources = resolver.get_sources()
   for ext in sources {
+    // Record the claim before resolving it. Every spec that declares the
+    // pattern is kept, whether or not it ends up owning it, so callers can
+    // report the conflict rather than only seeing the winner.
+    let claims = match self.source_claims.get(ext) {
+      Some(existing) => existing
+      None => {
+        let fresh : Array[String] = []
+        self.source_claims.set(ext, fresh)
+        fresh
+      }
+    }
+    if !contains_string(claims, lang) {
+      claims.push(lang)
+    }
     // sources contains extensions like ".ts", ".tsx"
     match self.ext_to_lang.get(ext) {
       Some(_) =>
@@ -279,6 +298,71 @@ pub fn KGFRegistry::get_extensions(self : KGFRegistry) -> Array[String] {
     result.push(entry.0)
   }
   result
+}
+
+///|
+/// A source pattern claimed by more than one spec, and how the registry
+/// resolved it.
+///
+/// Only one spec can own a pattern — `register_spec` lets the last
+/// general-purpose spec win — so the rest are shadowed: files matching the
+/// pattern are never analysed with them. That is a silent behavioural choice,
+/// and this type is what makes it reportable.
+pub struct SourceConflict {
+  pattern : String
+  /// The language `detect_from_path` will actually pick for this pattern.
+  winner : String
+  /// The languages that also declared it and lost, in registration order.
+  losers : Array[String]
+}
+
+///|
+pub fn SourceConflict::get_pattern(self : SourceConflict) -> String {
+  self.pattern
+}
+
+///|
+pub fn SourceConflict::get_winner(self : SourceConflict) -> String {
+  self.winner
+}
+
+///|
+pub fn SourceConflict::get_losers(self : SourceConflict) -> Array[String] {
+  self.losers
+}
+
+///|
+/// Every source pattern claimed by more than one registered spec, sorted by
+/// pattern so the report is stable.
+pub fn KGFRegistry::get_source_conflicts(
+  self : KGFRegistry,
+) -> Array[SourceConflict] {
+  let conflicts : Array[SourceConflict] = []
+  for entry in self.source_claims {
+    let pattern = entry.0
+    let claimants = entry.1
+    if claimants.length() < 2 {
+      continue
+    }
+    // The winner is whoever `ext_to_lang` ended up holding; if the pattern
+    // somehow never made it there, fall back to the first claimant so the
+    // report still names a concrete spec.
+    let winner = match self.ext_to_lang.get(pattern) {
+      Some(lang) => lang
+      None => claimants[0]
+    }
+    let losers : Array[String] = []
+    for lang in claimants {
+      if lang != winner {
+        losers.push(lang)
+      }
+    }
+    if losers.length() > 0 {
+      conflicts.push({ pattern, winner, losers, })
+    }
+  }
+  conflicts.sort_by_key(fn(c) { c.pattern })
+  conflicts
 }
 
 ///|

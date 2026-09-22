@@ -10,6 +10,7 @@
 /// - Classify section structural problems
 /// - Label references in semantics/attrs that the rule's grammar never binds
 /// - Token kinds defined in lex that no grammar rule can consume
+/// - `$label` reads of a capture that can span more than one token
 
 ///|
 /// A single diagnostic produced by validation.
@@ -60,6 +61,11 @@ pub fn check(spec : @kgf_types.KGFSpec) -> Array[Diagnostic] {
   check_semantics_label_refs(spec, diagnostics)
   check_attrs_label_refs(spec, diagnostics)
   check_unreachable_tokens(spec, diagnostics)
+  // Multi-token capture reads (see multi_token_labels.mbt): the label
+  // resolves, so nothing fails — the value is just truncated to its last
+  // token.
+  check_semantics_multi_token_labels(spec, diagnostics)
+  check_attrs_multi_token_labels(spec, diagnostics)
   diagnostics
 }
 

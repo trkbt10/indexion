@@ -384,6 +384,85 @@ test "registry: tokenize natural languages" {
 }
 
 ///|
+/// Builds a spec that declares `sources` and nothing else, which is all
+/// `register_spec` needs in order to record a claim.
+fn source_claiming_spec(
+  lang : String,
+  sources : Array[String],
+) -> @types.KGFSpec {
+  @types.KGFSpec::new(lang, resolver=@types.ResolverSpec::new(sources~))
+}
+
+///|
+test "registry: a pattern claimed once is not a conflict" {
+  let registry = KGFRegistry::new()
+  registry.register_spec(source_claiming_spec("alpha", [".a"]))
+  registry.register_spec(source_claiming_spec("beta", [".b"]))
+  assert_eq(registry.get_source_conflicts().length(), 0)
+}
+
+///|
+test "registry: a contested pattern names the winner and every loser" {
+  // `register_spec` lets the last general-purpose spec take the pattern, so
+  // `third` owns `.x` and the two earlier claimants are shadowed. The report
+  // must say so without changing that outcome.
+  let registry = KGFRegistry::new()
+  registry.register_spec(source_claiming_spec("first", [".x"]))
+  registry.register_spec(source_claiming_spec("second", [".x"]))
+  registry.register_spec(source_claiming_spec("third", [".x", ".y"]))
+  let conflicts = registry.get_source_conflicts()
+  assert_eq(conflicts.length(), 1)
+  assert_eq(conflicts[0].get_pattern(), ".x")
+  assert_eq(conflicts[0].get_winner(), "third")
+  assert_eq(conflicts[0].get_losers(), ["first", "second"])
+  // Reporting must not disturb the resolution itself.
+  assert_eq(registry.get_lang_from_ext(".x"), Some("third"))
+  assert_eq(registry.get_lang_from_ext(".y"), Some("third"))
+}
+
+///|
+test "registry: conflicts are sorted by pattern for stable output" {
+  let registry = KGFRegistry::new()
+  registry.register_spec(source_claiming_spec("one", [".z", ".a"]))
+  registry.register_spec(source_claiming_spec("two", [".z", ".a"]))
+  let patterns : Array[String] = []
+  for conflict in registry.get_source_conflicts() {
+    patterns.push(conflict.get_pattern())
+  }
+  assert_eq(patterns, [".a", ".z"])
+}
+
+///|
+test "registry: filename patterns are contested like extensions" {
+  // `package.json` is claimed by two real specs, so the mechanism must not be
+  // limited to dot-prefixed extensions.
+  let registry = KGFRegistry::new()
+  registry.register_spec(source_claiming_spec("manifest-a", ["package.json"]))
+  registry.register_spec(source_claiming_spec("manifest-b", ["package.json"]))
+  let conflicts = registry.get_source_conflicts()
+  assert_eq(conflicts.length(), 1)
+  assert_eq(conflicts[0].get_pattern(), "package.json")
+}
+
+///|
+test "registry: the real kgfs directory reports its known collisions" {
+  // Each of these three was confirmed by hand in the spec files. The registry
+  // resolves them silently; this pins that they stay visible.
+  let conflicts = shared_test_registry.get_source_conflicts()
+  let contested : Map[String, Bool] = Map([])
+  for conflict in conflicts {
+    contested.set(conflict.get_pattern(), true)
+    // A reported conflict always shadows at least one spec, and the winner is
+    // never also listed as a loser.
+    assert_true(conflict.get_losers().length() > 0)
+    assert_false(contains_string(conflict.get_losers(), conflict.get_winner()))
+  }
+  for pattern in [".sql", ".h", "package.json"] {
+    assert_true(contested.contains(pattern))
+  }
+}
+
+///|
 /// KGF version validation.
 test "registry: all kgfs are version 0.6" {
   let dir = @kgf_fixtures.get_kgfs_dir()
