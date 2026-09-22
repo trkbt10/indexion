@@ -1,0 +1,68 @@
+{
+  "modules": [
+    "maven:mu.KotlinLogging",
+    "maven:com.example.core.Money",
+    "maven:com.example.core.Ledger",
+    "maven:com.example.core.util.CurrencyCodes",
+    "maven:com.fasterxml.jackson.databind.ObjectMapper",
+    "fixtures/project/gradle-multimodule/build.gradle.kts",
+    "fixtures/project/gradle-multimodule/settings.gradle.kts",
+    "fixtures/project/gradle-multimodule/app/build.gradle.kts",
+    "fixtures/project/gradle-multimodule/core/build.gradle.kts",
+    "fixtures/project/gradle-multimodule/app/src/main/kotlin/com/example/app/Main.kt",
+    "fixtures/project/gradle-multimodule/core/src/main/kotlin/com/example/core/Money.kt",
+    "fixtures/project/gradle-multimodule/core/src/main/kotlin/com/example/core/Ledger.kt",
+    "fixtures/project/gradle-multimodule/app/src/main/kotlin/com/example/app/Main.kt::Report.run",
+    "fixtures/project/gradle-multimodule/core/src/main/java/com/example/core/util/CurrencyCodes.kt",
+    "fixtures/project/gradle-multimodule/core/src/main/kotlin/com/example/core/Ledger.kt::Ledger.add",
+    "fixtures/project/gradle-multimodule/core/src/main/kotlin/com/example/core/Money.kt::Money.amount",
+    "fixtures/project/gradle-multimodule/core/src/main/kotlin/com/example/core/Money.kt::Money.format",
+    "fixtures/project/gradle-multimodule/core/src/main/kotlin/com/example/core/Ledger.kt::Ledger.toJson",
+    "fixtures/project/gradle-multimodule/core/src/main/kotlin/com/example/core/Money.kt::Money.currency",
+    "fixtures/project/gradle-multimodule/core/src/main/java/com/example/core/util/CurrencyCodes.kt::CurrencyCodes.symbolFor"
+  ],
+  "moduleDependsOn": [
+    {
+      "from": "fixtures/project/gradle-multimodule/app/src/main/kotlin/com/example/app/Main.kt",
+      "to": "maven:mu.KotlinLogging",
+      "via": "mu.KotlinLogging"
+    },
+    {
+      "from": "fixtures/project/gradle-multimodule/app/src/main/kotlin/com/example/app/Main.kt",
+      "to": "maven:com.example.core.Money",
+      "via": "com.example.core.Money"
+    },
+    {
+      "from": "fixtures/project/gradle-multimodule/app/src/main/kotlin/com/example/app/Main.kt",
+      "to": "maven:com.example.core.Ledger",
+      "via": "com.example.core.Ledger"
+    },
+    {
+      "from": "fixtures/project/gradle-multimodule/app/src/main/kotlin/com/example/app/Main.kt",
+      "to": "maven:com.example.core.util.CurrencyCodes",
+      "via": "com.example.core.util.CurrencyCodes"
+    },
+    {
+      "from": "fixtures/project/gradle-multimodule/core/src/main/kotlin/com/example/core/Money.kt",
+      "to": "fixtures/project/gradle-multimodule/core/src/main/java/com/example/core/util/CurrencyCodes.kt",
+      "via": "com.example.core.util.CurrencyCodes"
+    },
+    {
+      "from": "fixtures/project/gradle-multimodule/core/src/main/kotlin/com/example/core/Ledger.kt",
+      "to": "maven:com.fasterxml.jackson.databind.ObjectMapper",
+      "via": "com.fasterxml.jackson.databind.ObjectMapper"
+    }
+  ],
+  "stats": {
+    "symbols": 18,
+    "edges": 28,
+    "edgesByKind": {
+      "declares": 12,
+      "dependsOn": 4,
+      "projectGroup": 3,
+      "projectVersion": 3,
+      "module_depends_on": 6
+    },
+    "unresolved_structural_edges": 0
+  }
+}

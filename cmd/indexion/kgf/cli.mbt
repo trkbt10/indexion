@@ -387,7 +387,12 @@ fn layer_label(layer : Int) -> String {
 /// overlays one spec can see at a glance which of its files is in effect and
 /// which installed file it replaced.
 fn run_list(kgf_dirs : Array[String]) -> Unit {
-  let dirs = @kgf_features.resolve_specs_dirs(specs_dirs=kgf_dirs)
+  // Through the same SoT every other subcommand uses, so the listing shows
+  // the chain that would actually be used. Resolving the chain directly here
+  // skipped the project-local `.indexion/kgfs/` discovery, which made `list`
+  // the one command that could not see an overlay — precisely the thing its
+  // Origin column exists to report.
+  let dirs = resolve_kgfs_dirs(kgf_dirs)
   let specs = @kgf_manage.list_specs_from_dirs(dirs)
   if specs.length() == 0 {
     println("No KGF specs installed.")
@@ -622,11 +627,12 @@ fn run_inspect(config : KgfConfig) -> Unit {
   }
   // Prepare first: everything printed below (lengths, positions, tokens) must
   // describe the text the parser actually sees.
-  let (source, tokens) = prepare_and_tokenize(spec, source)
+  let (source, tokens, lex_diagnostics) = prepare_and_tokenize(spec, source)
   println("Source length: \{source.length()} chars")
   println("")
   println("=== Tokens ===")
   println("Token count: \{tokens.length()}")
+  print_lex_diagnostics(source, lex_diagnostics)
   if config.show_tokens {
     for i, tok in tokens {
       if i < 50 {
@@ -774,11 +780,12 @@ fn run_tokens(config : KgfConfig) -> Unit {
       return
     }
   }
-  let (source, tokens) = prepare_and_tokenize(spec, source)
+  let (source, tokens, lex_diagnostics) = prepare_and_tokenize(spec, source)
   println("Source length: \{source.length()} chars")
   println("")
   println("=== Tokens ===")
   println("Token count: \{tokens.length()}")
+  print_lex_diagnostics(source, lex_diagnostics)
   for i, tok in tokens {
     if i < 50 {
       println("  [\{i}] \{tok.kind}: \"\{escape_string(tok.text)}\"")
@@ -935,10 +942,48 @@ fn resolve_spec_name(
 fn prepare_and_tokenize(
   spec : @kgf_types.KGFSpec,
   source : String,
-) -> (String, Array[@kgf_types.Tok]) {
+) -> (String, Array[@kgf_types.Tok], Array[@kgf_lexer.LexDiagnostic]) {
   let toolkit = @kgf_toolkit.LanguageToolkit::from_spec(spec)
   let prepared = toolkit.preprocess(source)
-  (prepared, toolkit.get_lexer().tokenize(prepared))
+  // Diagnostics come back alongside the tokens because a span that matched no
+  // token rule is simply dropped from the stream. The parser then succeeds on
+  // what is left and reports SUCCESS, so without printing these a file with a
+  // lexer error is indistinguishable from a clean one — which is exactly how
+  // such errors reach the repository unnoticed.
+  let (tokens, diagnostics) = toolkit
+    .get_lexer()
+    .tokenize_with_diagnostics(prepared)
+  (prepared, tokens, diagnostics)
+}
+
+///|
+/// Print the lexer diagnostics for a tokenized source, if any.
+///
+/// `Parse: SUCCESS` describes only the token stream the parser was handed; it
+/// says nothing about the characters the lexer could not turn into tokens.
+/// Reporting the count here is what makes `kgf inspect` agree with
+/// `indexion check` about whether a file is clean.
+fn print_lex_diagnostics(
+  source : String,
+  diagnostics : Array[@kgf_lexer.LexDiagnostic],
+) -> Unit {
+  if diagnostics.length() == 0 {
+    return
+  }
+  println("Lexer errors: \{diagnostics.length()}")
+  // `SourceMap` is the shared offset→line/col resolver `check` reports with,
+  // so both commands name the same position for the same byte.
+  let source_map = @kgf_check.SourceMap::new(source)
+  for i, diagnostic in diagnostics {
+    if i < 10 {
+      let (line, column) = source_map.resolve(diagnostic.get_pos())
+      println(
+        "  \{line}:\{column}: unrecognized input: \"\{escape_string(diagnostic.get_text())}\"",
+      )
+    } else if i == 10 {
+      println("  ... (\{diagnostics.length() - 10} more)")
+    }
+  }
 }
 
 ///|
@@ -968,7 +1013,7 @@ pub fn tokenize_json(
     Some(s) => s
     None => return None
   }
-  let (source, tokens) = prepare_and_tokenize(spec, source)
+  let (source, tokens, _) = prepare_and_tokenize(spec, source)
   // Build pos → (line, col) lookup from source
   let line_starts = build_line_starts(source)
   let arr : Array[Json] = tokens
@@ -1011,7 +1056,7 @@ pub fn events_json(
     Some(s) => s
     None => return None
   }
-  let (_, tokens) = prepare_and_tokenize(spec, source)
+  let (_, tokens, _) = prepare_and_tokenize(spec, source)
   let peg = @peg.build_peg(spec) catch { _ => return None }
   let start_rule = spec.get_start_rule()
   match @peg.run_parse(peg, spec, start_rule, tokens) {
@@ -1057,7 +1102,7 @@ pub fn inspect_json(
     Some(s) => s
     None => return None
   }
-  let (source, tokens) = prepare_and_tokenize(spec, source)
+  let (source, tokens, _) = prepare_and_tokenize(spec, source)
   let line_starts = build_line_starts(source)
   let tokens_json : Array[Json] = tokens
     .iter()
@@ -1153,7 +1198,7 @@ pub fn edges_json(
     Some(s) => s
     None => return None
   }
-  let (_, tokens) = prepare_and_tokenize(spec, source)
+  let (_, tokens, _) = prepare_and_tokenize(spec, source)
   let peg = @peg.build_peg(spec) catch { _ => return None }
   let start_rule = spec.get_start_rule()
   match @peg.run_parse(peg, spec, start_rule, tokens) {

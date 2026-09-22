@@ -36,6 +36,23 @@ full resolution order.
 | `check` | Validate spec structure; with no name, checks the whole resolved set (see [Validation](#validation-kgf-check)) |
 | `classify train` | Train a Naive Bayes section classifier from labeled documents |
 
+### Reading `inspect` / `tokens` output
+
+`Parse: SUCCESS` describes only the token stream the parser was handed. A
+span that matches no token rule is dropped before parsing, so a file can
+lex badly and still parse "successfully" on what survives. `inspect` and
+`tokens` therefore print a `Lexer errors:` line, with the same positions
+`indexion check` reports, whenever any span went unrecognized:
+
+```
+Token count: 15
+Lexer errors: 1
+  2:26: unrecognized input: "$"
+Parse: SUCCESS
+```
+
+A file is only clean when that line is absent.
+
 ## Examples
 
 ```bash

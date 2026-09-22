@@ -22,6 +22,44 @@ let shared_test_registry : @registry.KGFRegistry = @kgf_features.load_registry_o
 )
 
 ///|
+/// Registries resolved against a particular fixture, keyed by fixture
+/// directory. Loading a spec set is expensive, and most fixtures resolve to
+/// the same base set, so each distinct target is loaded once per run.
+let fixture_registries : Map[String, @registry.KGFRegistry] = Map([])
+
+///|
+/// The spec set that applies to a fixture.
+///
+/// `@kgf_features.load_registry` is the SoT for this, and it takes the
+/// analysed directory because the chain is not global: the base set is
+/// layered with the project-local `.indexion/kgfs/` overlay of whatever is
+/// being analysed. The CLI resolves the chain against its target for exactly
+/// this reason, so the test harness must too — otherwise a fixture that
+/// carries its own overlay spec would be analysed with the repository's spec
+/// set and its own files would simply be skipped as unsupported.
+fn registry_for(fixture_dir : String) -> @registry.KGFRegistry {
+  match fixture_registries.get(fixture_dir) {
+    Some(found) => found
+    None => {
+      let loaded = @kgf_features.load_registry_or_empty(
+        specs_dir="kgfs",
+        target_dir=fixture_dir,
+      )
+      // An empty chain means no spec set was found at all; fall back to the
+      // repository's own so the failure is reported as a missing edge rather
+      // than as a fixture with no supported files.
+      let registry = if loaded.spec_count() > 0 {
+        loaded
+      } else {
+        shared_test_registry
+      }
+      fixture_registries.set(fixture_dir, registry)
+      registry
+    }
+  }
+}
+
+///|
 /// Analyze a fixture directory and return the resulting CodeGraph. The test
 /// caller passes the relative path to the fixture from the repo root; the
 /// analyzer is invoked identically to the `doc graph` CLI.
@@ -31,7 +69,7 @@ pub fn analyze_fixture(fixture_dir : String) -> @graph.CodeGraph raise {
     fail("fixture directory not found: " + fixture_dir)
   }
   let input_paths = [fixture_dir]
-  let registry = shared_test_registry
+  let registry = registry_for(fixture_dir)
   let kgf_ignore = registry.collect_ignore_patterns()
   let discover_opts = @pipeline.DiscoverOptions::new(
     root_dir=@pipeline.root_dir_from_paths(input_paths),

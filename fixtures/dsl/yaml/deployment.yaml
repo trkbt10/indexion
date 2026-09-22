@@ -1,0 +1,49 @@
+---
+# First document: the service account the workload runs as.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: storefront
+  namespace: shop
+  labels: {app: storefront, tier: backend}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storefront
+  namespace: shop
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: storefront
+  template:
+    metadata:
+      annotations:
+        checksum/config: "8f14e45fceea167a"
+    spec:
+      containers:
+        - name: api
+          image: registry.example.com/storefront:1.4.0
+          ports: [{containerPort: 8080}, {containerPort: 9090}]
+          args:
+            - --config=/etc/storefront/config.yaml
+            - --log-level=info
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: storefront-db
+                  key: url
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+      volumes:
+        - name: config
+          configMap:
+            name: storefront-config
+...

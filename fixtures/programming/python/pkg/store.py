@@ -1,5 +1,6 @@
 """In-memory task storage."""
 from typing import List
+from .filters import PendingFilter, overdue
 from .models import Task, TaskStatus
 
 
@@ -25,12 +26,19 @@ class TaskStore:
         task.complete()
         return True
 
-    def list_pending(self) -> List[Task]:
-        """Returns all pending tasks sorted by priority."""
-        return sorted(
-            [t for t in self._tasks.values() if t.status == TaskStatus.PENDING],
-            key=lambda t: t.priority,
-        )
+    def list_pending(self, limit: int | None = None) -> List[Task]:
+        """
+        Returns the pending tasks sorted by priority.
+
+        ``limit`` is applied after sorting, so the tasks that survive are
+        the most urgent ones rather than an arbitrary prefix.
+        """
+        ordered = sorted(self._tasks.values(), key=lambda t: t.priority)
+        return PendingFilter(limit=limit).apply(ordered)
+
+    def list_overdue(self, threshold: int = 3) -> List[Task]:
+        """Returns the pending tasks whose priority is at or above threshold."""
+        return overdue(list(self._tasks.values()), threshold=threshold)
 
     def count_by_status(self, status: TaskStatus) -> int:
         """Counts tasks with the given status."""

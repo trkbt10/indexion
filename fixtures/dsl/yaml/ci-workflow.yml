@@ -1,0 +1,47 @@
+# Continuous integration for the storefront service.
+# Comments are allowed at any column, including deep inside a block.
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+      - release/*
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: registry.example.com
+  IMAGE_NAME: storefront
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18, 20, 22]
+        include:
+          - node: 20
+            coverage: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          # An indented comment between two sibling keys.
+      - name: Install
+        run: npm ci
+      - name: Test
+        run: |
+          npm run lint
+          npm test -- --reporter=dot
+  publish:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build image
+        run: docker build -t $REGISTRY/$IMAGE_NAME:latest .

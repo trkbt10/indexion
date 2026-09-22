@@ -1,22 +1,45 @@
 {
   "modules": [
     "pip:abc",
+    "pip:hmac",
     "pip:httpx",
+    "pip:hashlib",
     "pip:pydantic",
     "pip:tenacity",
+    "pip:functools",
+    "pip:dataclasses",
     "fixtures/project/python/pyproject.toml",
     "fixtures/project/python/src/example_sdk/client.py",
     "fixtures/project/python/src/example_sdk/models.py",
     "fixtures/project/python/src/example_sdk/__init__.py",
     "fixtures/project/python/src/example_sdk/auth/token.py",
+    "fixtures/project/python/src/example_sdk/auth/signing.py",
     "fixtures/project/python/src/example_sdk/auth/__init__.py",
+    "fixtures/project/python/src/example_sdk/models.py::Page.Cursor",
+    "fixtures/project/python/src/example_sdk/client.py::Client._send",
+    "fixtures/project/python/src/example_sdk/models.py::Page.chunked",
+    "fixtures/project/python/src/example_sdk/models.py::Page.is_last",
+    "fixtures/project/python/src/example_sdk/client.py::Client.Options",
     "fixtures/project/python/src/example_sdk/client.py::Client.__init__",
     "fixtures/project/python/src/example_sdk/client.py::Client.get_user",
+    "fixtures/project/python/src/example_sdk/models.py::Page.Cursor.__str__",
     "fixtures/project/python/src/example_sdk/client.py::Client.list_projects",
+    "fixtures/project/python/src/example_sdk/client.py::Client.page_projects",
+    "fixtures/project/python/src/example_sdk/models.py::Page.Cursor.__init__",
     "fixtures/project/python/src/example_sdk/auth/token.py::StaticToken.token",
     "fixtures/project/python/src/example_sdk/auth/token.py::TokenProvider.apply",
     "fixtures/project/python/src/example_sdk/auth/token.py::TokenProvider.token",
-    "fixtures/project/python/src/example_sdk/auth/token.py::StaticToken.__init__"
+    "fixtures/project/python/src/example_sdk/client.py::Client.Options.__init__",
+    "fixtures/project/python/src/example_sdk/auth/signing.py::RequestSigner.sign",
+    "fixtures/project/python/src/example_sdk/auth/token.py::StaticToken.__init__",
+    "fixtures/project/python/src/example_sdk/client.py::Client.Options.total_budget",
+    "fixtures/project/python/src/example_sdk/auth/signing.py::RequestSigner.__init__",
+    "fixtures/project/python/src/example_sdk/auth/signing.py::RequestSigner.for_user",
+    "fixtures/project/python/src/example_sdk/auth/signing.py::RequestSigner.provider",
+    "fixtures/project/python/src/example_sdk/auth/signing.py::RequestSigner.Canonical",
+    "fixtures/project/python/src/example_sdk/auth/signing.py::RequestSigner.canonicalize",
+    "fixtures/project/python/src/example_sdk/auth/signing.py::RequestSigner.Canonical.render",
+    "fixtures/project/python/src/example_sdk/auth/signing.py::RequestSigner.Canonical.__init__"
   ],
   "moduleDependsOn": [
     {
@@ -28,6 +51,11 @@
       "from": "fixtures/project/python/src/example_sdk/client.py",
       "to": "pip:tenacity",
       "via": "tenacity"
+    },
+    {
+      "from": "fixtures/project/python/src/example_sdk/client.py",
+      "to": "pip:functools",
+      "via": "functools"
     },
     {
       "from": "fixtures/project/python/src/example_sdk/client.py",
@@ -45,6 +73,11 @@
       "via": "pydantic"
     },
     {
+      "from": "fixtures/project/python/src/example_sdk/models.py",
+      "to": "pip:dataclasses",
+      "via": "dataclasses"
+    },
+    {
       "from": "fixtures/project/python/src/example_sdk/__init__.py",
       "to": "fixtures/project/python/src/example_sdk/client.py",
       "via": ".client"
@@ -53,6 +86,11 @@
       "from": "fixtures/project/python/src/example_sdk/__init__.py",
       "to": "fixtures/project/python/src/example_sdk/models.py",
       "via": ".models"
+    },
+    {
+      "from": "fixtures/project/python/src/example_sdk/__init__.py",
+      "to": "fixtures/project/python/src/example_sdk/auth/__init__.py",
+      "via": ".auth"
     },
     {
       "from": "fixtures/project/python/src/example_sdk/auth/token.py",
@@ -65,22 +103,47 @@
       "via": "httpx"
     },
     {
+      "from": "fixtures/project/python/src/example_sdk/auth/signing.py",
+      "to": "pip:hmac",
+      "via": "hmac"
+    },
+    {
+      "from": "fixtures/project/python/src/example_sdk/auth/signing.py",
+      "to": "pip:hashlib",
+      "via": "hashlib"
+    },
+    {
+      "from": "fixtures/project/python/src/example_sdk/auth/signing.py",
+      "to": "fixtures/project/python/src/example_sdk/models.py",
+      "via": "..models"
+    },
+    {
+      "from": "fixtures/project/python/src/example_sdk/auth/signing.py",
+      "to": "fixtures/project/python/src/example_sdk/auth/token.py",
+      "via": ".token"
+    },
+    {
       "from": "fixtures/project/python/src/example_sdk/auth/__init__.py",
       "to": "fixtures/project/python/src/example_sdk/auth/token.py",
       "via": ".token"
+    },
+    {
+      "from": "fixtures/project/python/src/example_sdk/auth/__init__.py",
+      "to": "fixtures/project/python/src/example_sdk/auth/signing.py",
+      "via": ".signing"
     }
   ],
   "stats": {
-    "symbols": 28,
-    "edges": 33,
+    "symbols": 69,
+    "edges": 63,
     "edgesByKind": {
-      "declares": 13,
+      "declares": 35,
       "dependsOn": 3,
       "projectName": 1,
       "projectKeyword": 3,
       "projectLicense": 1,
       "projectVersion": 1,
-      "module_depends_on": 10,
+      "module_depends_on": 18,
       "projectDescription": 1
     },
     "unresolved_structural_edges": 0

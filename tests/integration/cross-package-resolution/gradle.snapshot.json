@@ -12,8 +12,10 @@
     "fixtures/project/gradle/src/main/java/com/example/App.java::App.getName",
     "fixtures/project/gradle/src/main/java/com/example/App.java::Config.getHost",
     "fixtures/project/gradle/src/main/java/com/example/App.java::Config.getPort",
+    "fixtures/project/gradle/src/main/java/com/example/legacy/LegacyFormatter.kt",
     "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt",
     "fixtures/project/gradle/src/main/kotlin/com/example/Application.kt::Application.entryPoint",
+    "fixtures/project/gradle/src/main/java/com/example/legacy/LegacyFormatter.kt::LegacyFormatter.format",
     "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt::GreetingService.greet"
   ],
   "moduleDependsOn": [
@@ -46,17 +48,22 @@
       "from": "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt",
       "to": "maven:com.fasterxml.jackson.module.kotlin.jacksonObjectMapper",
       "via": "com.fasterxml.jackson.module.kotlin.jacksonObjectMapper"
+    },
+    {
+      "from": "fixtures/project/gradle/src/main/kotlin/com/example/service/GreetingService.kt",
+      "to": "fixtures/project/gradle/src/main/java/com/example/legacy/LegacyFormatter.kt",
+      "via": "com.example.legacy.LegacyFormatter"
     }
   ],
   "stats": {
-    "symbols": 17,
-    "edges": 25,
+    "symbols": 21,
+    "edges": 28,
     "edgesByKind": {
-      "declares": 11,
+      "declares": 13,
       "dependsOn": 6,
       "projectGroup": 1,
       "projectVersion": 1,
-      "module_depends_on": 6
+      "module_depends_on": 7
     },
     "unresolved_structural_edges": 0
   }

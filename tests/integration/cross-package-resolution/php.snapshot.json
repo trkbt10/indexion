@@ -4,11 +4,20 @@
     "fixtures/project/php/composer.json",
     "fixtures/project/php/src/helpers.php",
     "fixtures/project/php/src/Dto/UserDto.php",
+    "fixtures/project/php/lib/Legacy/Mailer.php",
     "fixtures/project/php/src/Services/UserService.php",
+    "fixtures/project/php/modules/billing/src/Invoice.php",
     "fixtures/project/php/src/Dto/UserDto.php::UserDto::__construct",
+    "fixtures/project/php/lib/Legacy/Mailer.php::Legacy_Mailer::send",
+    "fixtures/project/php/modules/billing/src/Invoice.php::Invoice::total",
+    "fixtures/project/php/lib/Legacy/Mailer.php::Legacy_Mailer::__construct",
+    "fixtures/project/php/modules/billing/src/Invoice.php::Invoice::addLine",
     "fixtures/project/php/src/Services/UserService.php::UserService::create",
     "fixtures/project/php/src/Services/UserService.php::UserService::findById",
     "fixtures/project/php/src/Services/UserService.php::UserService::validate",
+    "fixtures/project/php/modules/billing/src/Invoice.php::Invoice::__construct",
+    "fixtures/project/php/src/Services/UserService.php::UserService::invoiceFor",
+    "fixtures/project/php/modules/billing/src/Invoice.php::Invoice::customerName",
     "fixtures/project/php/src/Services/UserService.php::UserService::__construct"
   ],
   "moduleDependsOn": [
@@ -31,18 +40,28 @@
       "from": "fixtures/project/php/src/Services/UserService.php",
       "to": "fixtures/project/php/src/Dto/UserDto.php",
       "via": "App\\Dto\\UserDto"
+    },
+    {
+      "from": "fixtures/project/php/src/Services/UserService.php",
+      "to": "fixtures/project/php/modules/billing/src/Invoice.php",
+      "via": "App\\Billing\\Invoice"
+    },
+    {
+      "from": "fixtures/project/php/modules/billing/src/Invoice.php",
+      "to": "fixtures/project/php/src/Dto/UserDto.php",
+      "via": "App\\Dto\\UserDto"
     }
   ],
   "stats": {
-    "symbols": 10,
-    "edges": 25,
+    "symbols": 19,
+    "edges": 36,
     "edgesByKind": {
-      "declares": 10,
+      "declares": 19,
       "dependsOn": 7,
       "projectName": 1,
       "projectLicense": 1,
       "projectVersion": 1,
-      "module_depends_on": 4,
+      "module_depends_on": 6,
       "projectDescription": 1
     },
     "unresolved_structural_edges": 0

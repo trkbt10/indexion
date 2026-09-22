@@ -1,0 +1,13 @@
+{
+  "name": "@example/storefront",
+  "version": "1.4.0",
+  "private": true,
+  "description": "Storefront API using tsconfig path aliases",
+  "type": "module",
+  "dependencies": {
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.2"
+  }
+}

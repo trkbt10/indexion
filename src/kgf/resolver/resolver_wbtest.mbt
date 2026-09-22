@@ -2570,9 +2570,11 @@ test "namespace_map works under the docgen pipeline's empty project root" {
     "",
     resolver,
   )
-  // The result is reported relative to the (empty) project root, exactly as
-  // every other step reports its hits.
-  assert_eq(result, "abs/proj/src/models/user.ts")
+  // An empty root gives the hit nothing to be relative TO, so the absolute
+  // path is the module's identity and is kept whole. Stripping the leading
+  // slash to make it look relative would name a file that does not exist,
+  // and the graph would register the module with `file: null`.
+  assert_eq(result, "/abs/proj/src/models/user.ts")
 }
 
 ///|
@@ -2592,4 +2594,51 @@ test "namespace_map works with a relative file path and empty root" {
     resolver,
   )
   assert_eq(result, "proj/src/models/user.ts")
+}
+
+///|
+test "an absolute hit under an empty root names a file that exists" {
+  // The property the leading slash carries: whatever the resolver reports for
+  // an internal module must be an id the file resolver itself recognises.
+  // This is what the graph relies on to fill in `ModuleNode.file`.
+  let target = "/abs/proj/src/models/user.ts"
+  let tsconfig =
+    #|{"compilerOptions": {"baseUrl": ".", "paths": {"@app/*": ["src/*"]}}}
+  let resolver = MockFileResolver::with_contents(
+    [target, "/abs/proj/tsconfig.json"],
+    { "/abs/proj/tsconfig.json": tsconfig },
+  )
+  let result = resolve_module(
+    tspaths_spec(),
+    "typescript",
+    "/abs/proj/src/index.ts",
+    "@app/models/user",
+    "",
+    resolver,
+  )
+  assert_eq(result, target)
+  assert_true(FileResolver::file_exists(resolver, result))
+}
+
+///|
+test "source_roots under an empty root keeps the absolute hit whole" {
+  // The same anchoring rule applies to every step that reports a file hit,
+  // not just namespace_map: source_roots resolves through the shared
+  // normalize step, so a Java project analysed by absolute path must also
+  // report an id that exists.
+  let target = "/abs/proj/src/main/java/com/example/Service.java"
+  let resolver = MockFileResolver::with_contents(
+    [target, "/abs/proj/pom.xml"],
+    { "/abs/proj/pom.xml": "<project/>" },
+  )
+  let result = resolve_module(
+    source_roots_spec(["src/main/java"]),
+    "java",
+    "/abs/proj/src/main/java/com/example/App.java",
+    "com.example.Service",
+    "",
+    resolver,
+  )
+  assert_eq(result, target)
+  assert_true(FileResolver::file_exists(resolver, result))
 }

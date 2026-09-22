@@ -1,0 +1,15 @@
+kgf 0.6
+language: python-strict
+sources: .pyx
+extends: python
+
+# A project-local dialect of Python.
+#
+# The build step in this project compiles `.pyx` sources with the same syntax
+# as the `.py` files beside them, so the only thing this overlay has to say
+# is which extension carries it: `extends: python` inherits the lexer, the
+# grammar, the semantics and the resolver wholesale, and `sources:` is the
+# one section inheritance deliberately never copies.
+#
+# This is the shape a project-local overlay is meant to take — a few lines
+# naming a difference, not a fork of the base spec.

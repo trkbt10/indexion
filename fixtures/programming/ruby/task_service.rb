@@ -3,7 +3,30 @@
 require_relative 'task'
 
 # Service for managing tasks — wraps an in-memory store.
+#
+# The store is keyed by the id the service hands out itself, so a task
+# built elsewhere can never collide with one created here.
 class TaskService
+  # Raised when an operation names a task that is not in the store.
+  #
+  # Nested inside the service because the id space it complains about is
+  # the service's own; a top-level MissingTask would be ambiguous.
+  class MissingTask < StandardError
+    # @return [Integer] the id that was not found
+    attr_reader :id
+
+    # @param id [Integer] the id that was not found
+    def initialize(id)
+      @id = id
+    end
+
+    # A one-line description for a log.
+    # @return [String]
+    def message
+      "no task with id #{@id}"
+    end
+  end
+
   def initialize
     @tasks = {}
     @next_id = 1
@@ -28,6 +51,16 @@ class TaskService
 
     task.complete!
     true
+  end
+
+  # Marks a task as done, raising when it is not there.
+  # @param id [Integer]
+  # @raise [MissingTask] when no task has that id
+  # @return [Task]
+  def complete!(id)
+    raise MissingTask.new(id) unless @tasks.key?(id)
+
+    @tasks[id].tap(&:complete!)
   end
 
   # Returns all pending tasks.

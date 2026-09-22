@@ -1,0 +1,27 @@
+{
+  "modules": [
+    "pip:dataclasses",
+    "fixtures/project/spec-overlay/pyproject.toml",
+    "fixtures/project/spec-overlay/src/kernels.pyx",
+    "fixtures/project/spec-overlay/src/kernels.pyx::Window.width"
+  ],
+  "moduleDependsOn": [
+    {
+      "from": "fixtures/project/spec-overlay/src/kernels.pyx",
+      "to": "pip:dataclasses",
+      "via": "dataclasses"
+    }
+  ],
+  "stats": {
+    "symbols": 8,
+    "edges": 7,
+    "edgesByKind": {
+      "declares": 3,
+      "projectName": 1,
+      "projectVersion": 1,
+      "module_depends_on": 1,
+      "projectDescription": 1
+    },
+    "unresolved_structural_edges": 0
+  }
+}

@@ -349,3 +349,87 @@ test "yaml layout: the repo's own workflows parse whole" {
     assert_true(checked > 0)
   }
 }
+
+///|
+/// Read a YAML file from the repository-tracked fixture directory and run it
+/// through the real pipeline.
+///
+/// The inline sources above isolate one layout rule each, which is what makes
+/// a failure readable. They cannot show that those rules still hold when the
+/// constructs are COMBINED the way a real file combines them — a sequence of
+/// mappings inside a block inside a document, with comments and flow
+/// collections between them. `fixtures/dsl/yaml/` is that file, tracked in
+/// the repository so the fixture and its expectation move together.
+fn yml_fixture_run(name : String) -> PipelineResult raise {
+  let path = get_fixtures_dir() + "/dsl/yaml/" + name
+  let source = @fs.read_file_to_string(path) catch { _ => "" }
+  // A fixture that cannot be read must fail the test rather than skip it:
+  // a silently missing file is how a broken spec keeps passing.
+  assert_true(source.length() > 0)
+  let run = run_pipeline_with_registry(
+    get_fixture_registry(),
+    "yaml",
+    source,
+    path,
+  )
+  assert_eq(run.lex_errors, 0)
+  assert_true(run.parse_complete())
+  run
+}
+
+///|
+/// A realistic CI workflow: nested block mappings, sequences of mappings whose
+/// entries carry sibling keys, flow collections, a block scalar, and comments
+/// at column 0 and at depth.
+///
+/// The full path list is asserted, in order, because a nesting bug does not
+/// drop a key — it MOVES one, and a test that only checked for the presence
+/// of `jobs.build.steps` would pass just as happily with every step reported
+/// under the wrong parent.
+test "yaml fixture: ci-workflow.yml key paths" {
+  let run = yml_fixture_run("ci-workflow.yml")
+  assert_eq(yml_paths_of(run), [
+    "name", "on", "on.push", "on.push.branches", "on.pull_request", "on.pull_request.branches",
+    "env", "env.REGISTRY", "env.IMAGE_NAME", "jobs", "jobs.build", "jobs.build.runs-on",
+    "jobs.build.strategy", "jobs.build.strategy.fail-fast", "jobs.build.strategy.matrix",
+    "jobs.build.strategy.matrix.node", "jobs.build.strategy.matrix.include", "jobs.build.strategy.matrix.include.node",
+    "jobs.build.strategy.matrix.include.coverage", "jobs.build.steps", "jobs.build.steps.uses",
+    "jobs.build.steps.name", "jobs.build.steps.uses", "jobs.build.steps.with", "jobs.build.steps.with.node-version",
+    "jobs.build.steps.with.cache", "jobs.build.steps.name", "jobs.build.steps.run",
+    "jobs.build.steps.name", "jobs.build.steps.run", "jobs.publish", "jobs.publish.needs",
+    "jobs.publish.if", "jobs.publish.runs-on", "jobs.publish.steps", "jobs.publish.steps.name",
+    "jobs.publish.steps.run",
+  ])
+}
+
+///|
+/// A multi-document file. The `---` that opens the second document returns to
+/// the top level: its `apiVersion` is a root key again, not a child of
+/// whatever the first document left open. Flow mappings used as values
+/// (`labels: {app: ...}`, `requests: {cpu: ...}`) contribute no keys of their
+/// own but must not disturb the path of the keys around them.
+test "yaml fixture: deployment.yaml spans documents without leaking paths" {
+  let run = yml_fixture_run("deployment.yaml")
+  let paths = yml_paths_of(run)
+  assert_eq(paths, [
+    "apiVersion", "kind", "metadata", "metadata.name", "metadata.namespace", "metadata.labels",
+    "apiVersion", "kind", "metadata", "metadata.name", "metadata.namespace", "spec",
+    "spec.replicas", "spec.selector", "spec.selector.matchLabels", "spec.selector.matchLabels.app",
+    "spec.template", "spec.template.metadata", "spec.template.metadata.annotations",
+    "spec.template.metadata.annotations.checksum/config", "spec.template.spec", "spec.template.spec.containers",
+    "spec.template.spec.containers.name", "spec.template.spec.containers.image",
+    "spec.template.spec.containers.ports", "spec.template.spec.containers.args",
+    "spec.template.spec.containers.env", "spec.template.spec.containers.env.name",
+    "spec.template.spec.containers.env.valueFrom", "spec.template.spec.containers.env.valueFrom.secretKeyRef",
+    "spec.template.spec.containers.env.valueFrom.secretKeyRef.name", "spec.template.spec.containers.env.valueFrom.secretKeyRef.key",
+    "spec.template.spec.containers.resources", "spec.template.spec.containers.resources.requests",
+    "spec.template.spec.containers.resources.limits", "spec.template.spec.containers.readinessProbe",
+    "spec.template.spec.containers.readinessProbe.httpGet", "spec.template.spec.containers.readinessProbe.httpGet.path",
+    "spec.template.spec.containers.readinessProbe.httpGet.port", "spec.template.spec.volumes",
+    "spec.template.spec.volumes.name", "spec.template.spec.volumes.configMap", "spec.template.spec.volumes.configMap.name",
+  ])
+  // The second document restarts at the root: `apiVersion` appears once per
+  // document, at depth 0 both times.
+  let roots = paths.iter().filter(fn(p) { p == "apiVersion" }).count()
+  assert_eq(roots, 2)
+}

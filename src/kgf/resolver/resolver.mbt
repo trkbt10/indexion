@@ -737,8 +737,22 @@ fn try_local(
 
 ///|
 /// Normalizes a result path to be relative to project root.
+///
+/// Relativising is only meaningful when the two paths are anchored the same
+/// way: `relative_path` compares them segment by segment, so it silently
+/// treats a relative root as if it were the absolute one. With the root the
+/// docgen pipeline passes (`""`), an absolute hit like `/abs/proj/src/x.ts`
+/// came back as `abs/proj/src/x.ts` — an id no file on disk carries, so the
+/// module was registered with `file: null` and its edge counted as
+/// unresolved. An analysis rooted outside the current directory (an absolute
+/// path on the command line) has no relative form to report, so the absolute
+/// path IS the identity and is kept verbatim.
 fn normalize_relative_result(project_root : String, path : String) -> String {
-  let rel = relative_path(project_root, path)
+  let rel = if is_absolute(path) && !is_absolute(project_root) {
+    normalize_path(path)
+  } else {
+    relative_path(project_root, path)
+  }
   // Replace backslashes with forward slashes (for Windows compatibility)
   replace_backslashes(rel)
 }

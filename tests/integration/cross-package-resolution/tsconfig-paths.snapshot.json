@@ -1,0 +1,101 @@
+{
+  "modules": [
+    "fixtures/project/tsconfig-paths/package.json",
+    "fixtures/project/tsconfig-paths/tsconfig.json",
+    "fixtures/project/tsconfig-paths/src/app/server.ts",
+    "fixtures/project/tsconfig-paths/src/app/checkout.ts",
+    "fixtures/project/tsconfig-paths/src/shared/money.ts",
+    "fixtures/project/tsconfig-paths/src/shared/logger.ts",
+    "fixtures/project/tsconfig-paths/scripts/jsconfig.json",
+    "fixtures/project/tsconfig-paths/scripts/lib/report.js",
+    "fixtures/project/tsconfig-paths/src/domain/orders/model.ts",
+    "fixtures/project/tsconfig-paths/scripts/tasks/daily-totals.js",
+    "fixtures/project/tsconfig-paths/src/domain/orders/repository.ts",
+    "fixtures/project/tsconfig-paths/src/shared/money.ts::Money.currency",
+    "fixtures/project/tsconfig-paths/src/shared/money.ts::Money.minorUnits",
+    "fixtures/project/tsconfig-paths/src/domain/orders/model.ts::OrderLine.sku",
+    "fixtures/project/tsconfig-paths/src/app/checkout.ts::CheckoutRequest.items",
+    "fixtures/project/tsconfig-paths/src/app/checkout.ts::CheckoutRequest.orderId",
+    "fixtures/project/tsconfig-paths/src/domain/orders/model.ts::OrderStatus.Draft",
+    "fixtures/project/tsconfig-paths/src/domain/orders/model.ts::OrderLine.quantity",
+    "fixtures/project/tsconfig-paths/src/domain/orders/model.ts::OrderStatus.Placed",
+    "fixtures/project/tsconfig-paths/src/domain/orders/model.ts::OrderLine.unitPrice",
+    "fixtures/project/tsconfig-paths/src/domain/orders/model.ts::OrderStatus.Shipped",
+    "fixtures/project/tsconfig-paths/src/domain/orders/repository.ts::OrderRepository.find",
+    "fixtures/project/tsconfig-paths/src/domain/orders/repository.ts::OrderRepository.save",
+    "fixtures/project/tsconfig-paths/src/domain/orders/repository.ts::InMemoryOrderRepository.byId",
+    "fixtures/project/tsconfig-paths/src/domain/orders/repository.ts::InMemoryOrderRepository.find",
+    "fixtures/project/tsconfig-paths/src/domain/orders/repository.ts::InMemoryOrderRepository.save",
+    "fixtures/project/tsconfig-paths/src/domain/orders/repository.ts::InMemoryOrderRepository.logger"
+  ],
+  "moduleDependsOn": [
+    {
+      "from": "fixtures/project/tsconfig-paths/src/app/server.ts",
+      "to": "fixtures/project/tsconfig-paths/src/app/checkout.ts",
+      "via": "@app/checkout"
+    },
+    {
+      "from": "fixtures/project/tsconfig-paths/src/app/server.ts",
+      "to": "fixtures/project/tsconfig-paths/src/shared/logger.ts",
+      "via": "shared/logger"
+    },
+    {
+      "from": "fixtures/project/tsconfig-paths/src/app/server.ts",
+      "to": "fixtures/project/tsconfig-paths/src/domain/orders/repository.ts",
+      "via": "@domain/orders/repository"
+    },
+    {
+      "from": "fixtures/project/tsconfig-paths/src/app/checkout.ts",
+      "to": "fixtures/project/tsconfig-paths/src/shared/money.ts",
+      "via": "shared/money"
+    },
+    {
+      "from": "fixtures/project/tsconfig-paths/src/app/checkout.ts",
+      "to": "fixtures/project/tsconfig-paths/src/shared/logger.ts",
+      "via": "shared/logger"
+    },
+    {
+      "from": "fixtures/project/tsconfig-paths/src/app/checkout.ts",
+      "to": "fixtures/project/tsconfig-paths/src/domain/orders/model.ts",
+      "via": "@domain/orders/model"
+    },
+    {
+      "from": "fixtures/project/tsconfig-paths/src/app/checkout.ts",
+      "to": "fixtures/project/tsconfig-paths/src/domain/orders/repository.ts",
+      "via": "@domain/orders/repository"
+    },
+    {
+      "from": "fixtures/project/tsconfig-paths/src/domain/orders/model.ts",
+      "to": "fixtures/project/tsconfig-paths/src/shared/money.ts",
+      "via": "shared/money"
+    },
+    {
+      "from": "fixtures/project/tsconfig-paths/scripts/tasks/daily-totals.js",
+      "to": "fixtures/project/tsconfig-paths/scripts/lib/report.js",
+      "via": "~/report"
+    },
+    {
+      "from": "fixtures/project/tsconfig-paths/src/domain/orders/repository.ts",
+      "to": "fixtures/project/tsconfig-paths/src/shared/logger.ts",
+      "via": "shared/logger"
+    },
+    {
+      "from": "fixtures/project/tsconfig-paths/src/domain/orders/repository.ts",
+      "to": "fixtures/project/tsconfig-paths/src/domain/orders/model.ts",
+      "via": "@domain/orders/model"
+    }
+  ],
+  "stats": {
+    "symbols": 39,
+    "edges": 47,
+    "edgesByKind": {
+      "declares": 31,
+      "dependsOn": 2,
+      "projectName": 1,
+      "projectVersion": 1,
+      "module_depends_on": 11,
+      "projectDescription": 1
+    },
+    "unresolved_structural_edges": 0
+  }
+}

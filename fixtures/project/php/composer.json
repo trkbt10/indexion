@@ -23,7 +23,11 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "src/"
+            "App\\": "src/",
+            "App\\Billing\\": "modules/billing/src/"
+        },
+        "psr-0": {
+            "Legacy_": "lib/"
         }
     }
 }
