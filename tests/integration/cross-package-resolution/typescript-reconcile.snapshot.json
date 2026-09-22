@@ -6,14 +6,15 @@
     "fixtures/project/typescript-reconcile/package.json",
     "fixtures/project/typescript-reconcile/tsconfig.json",
     "fixtures/project/typescript-reconcile/src/internal.ts",
-    "fixtures/project/typescript-reconcile/src/api.ts::ReportRenderer.render"
+    "fixtures/project/typescript-reconcile/src/api.ts::ReportRenderer.render",
+    "fixtures/project/typescript-reconcile/src/api.ts::ReconcileConfig.rootDir"
   ],
   "moduleDependsOn": [],
   "stats": {
     "symbols": 9,
-    "edges": 8,
+    "edges": 9,
     "edgesByKind": {
-      "declares": 6,
+      "declares": 7,
       "projectName": 1,
       "projectVersion": 1
     },

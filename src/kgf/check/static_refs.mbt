@@ -247,6 +247,8 @@ fn check_stmt_var_refs(
           None => ()
         }
       }
+      // Frame management carries no variable references.
+      @kgf_types.ScopePush | @kgf_types.ScopePop => ()
     }
   }
 }

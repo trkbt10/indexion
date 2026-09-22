@@ -7,7 +7,15 @@
     "fixtures/project/npm/src/types.ts",
     "fixtures/project/npm/src/utils.ts",
     "fixtures/project/npm/src/components/Input.tsx",
-    "fixtures/project/npm/src/components/Button.tsx"
+    "fixtures/project/npm/src/components/Button.tsx",
+    "fixtures/project/npm/src/types.ts::InputProps.type",
+    "fixtures/project/npm/src/types.ts::ButtonProps.size",
+    "fixtures/project/npm/src/types.ts::InputProps.value",
+    "fixtures/project/npm/src/types.ts::ButtonProps.onClick",
+    "fixtures/project/npm/src/types.ts::ButtonProps.variant",
+    "fixtures/project/npm/src/types.ts::InputProps.onChange",
+    "fixtures/project/npm/src/types.ts::ButtonProps.children",
+    "fixtures/project/npm/src/types.ts::InputProps.placeholder"
   ],
   "moduleDependsOn": [
     {
@@ -38,9 +46,9 @@
   ],
   "stats": {
     "symbols": 17,
-    "edges": 25,
+    "edges": 33,
     "edgesByKind": {
-      "declares": 6,
+      "declares": 14,
       "dependsOn": 5,
       "projectName": 1,
       "projectKeyword": 3,

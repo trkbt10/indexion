@@ -520,7 +520,8 @@ test "declares: typescript function and interface" {
   )
   // TS semantics emits declares for all top-level declarations (no vis filter)
   assert_eq(fn_count, 2)
-  assert_eq(type_count, 1)
+  // Config, plus its two property signatures declared under it.
+  assert_eq(type_count, 3)
   assert_true(names.get("formatClassName") == Some("function"))
   assert_true(names.get("Config") == Some("interface"))
   assert_true(names.get("privateHelper") == Some("function"))
@@ -543,7 +544,8 @@ test "declares: typescript-jsx jsx component and interface" {
     registry, "typescript-jsx", source, "app.tsx",
   )
   assert_eq(fn_count, 1)
-  assert_eq(type_count, 1)
+  // Props, plus its `title` property signature declared under it.
+  assert_eq(type_count, 2)
   assert_true(names.get("App") == Some("function"))
   assert_true(names.get("Props") == Some("interface"))
 }
@@ -772,6 +774,34 @@ test "declares: python import forms produce one edge each" {
     #|import httpx
   let via = depends_via(registry, "python", source, "pkg/sub/mod.py")
   assert_eq(via, [".", ".models", "..pkg.core", "...top", "httpx"])
+}
+
+///|
+/// Interface members are part of the interface's surface: method and
+/// property signatures are declared under the interface, with their docs.
+test "declares: typescript interface members declared under the interface" {
+  let registry = get_fixture_registry()
+  let source =
+    #|/** Storage contract. */
+    #|export interface Store {
+    #|  /** Fetch one item. */
+    #|  get(id: string): Item | undefined;
+    #|  /** Number of items. */
+    #|  size: number;
+    #|}
+  let decls = declares_of(registry, "typescript", source, "store.ts")
+  let by_name : Map[String, (String, String, String)] = Map([])
+  for decl in decls {
+    by_name.set(decl.1, (decl.0, decl.2, decl.3))
+  }
+  assert_eq(
+    by_name.get("get"),
+    Some(("store.ts::Store", "Method", " Fetch one item. ")),
+  )
+  assert_eq(
+    by_name.get("size"),
+    Some(("store.ts::Store", "Property", " Number of items. ")),
+  )
 }
 
 // ─── Java ───────────────────────────────────────────────────

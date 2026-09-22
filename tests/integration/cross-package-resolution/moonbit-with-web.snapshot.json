@@ -9,7 +9,15 @@
     "fixtures/project/moonbit-with-web/src/core/moon.pkg",
     "fixtures/project/moonbit-with-web/src/core/task.mbt",
     "fixtures/project/moonbit-with-web/src/api/handler.mbt",
+    "fixtures/project/moonbit-with-web/web/src/types.ts::Task.id",
+    "fixtures/project/moonbit-with-web/web/src/types.ts::Task.done",
+    "fixtures/project/moonbit-with-web/web/src/types.ts::Task.title",
+    "fixtures/project/moonbit-with-web/web/src/types.ts::ApiResponse.data",
+    "fixtures/project/moonbit-with-web/web/src/types.ts::Task.description",
+    "fixtures/project/moonbit-with-web/web/src/types.ts::ApiResponse.error",
+    "fixtures/project/moonbit-with-web/web/src/types.ts::CreateTaskRequest.title",
     "fixtures/project/moonbit-with-web/src/core/task.mbt::doc::Creates a new task.",
+    "fixtures/project/moonbit-with-web/web/src/types.ts::CreateTaskRequest.description",
     "fixtures/project/moonbit-with-web/src/api/handler.mbt::doc::In-memory store for tasks."
   ],
   "moduleDependsOn": [
@@ -43,9 +51,9 @@
   ],
   "stats": {
     "symbols": 28,
-    "edges": 29,
+    "edges": 37,
     "edgesByKind": {
-      "declares": 15,
+      "declares": 23,
       "dependsOn": 3,
       "projectName": 2,
       "packageEntry": 2,

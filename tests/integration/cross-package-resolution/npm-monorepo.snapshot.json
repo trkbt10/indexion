@@ -13,7 +13,13 @@
     "fixtures/project/npm-monorepo/packages/ui/src/Modal.tsx",
     "fixtures/project/npm-monorepo/packages/core/package.json",
     "fixtures/project/npm-monorepo/packages/core/src/index.ts",
-    "fixtures/project/npm-monorepo/packages/ui/src/Button.tsx"
+    "fixtures/project/npm-monorepo/packages/ui/src/Button.tsx",
+    "fixtures/project/npm-monorepo/packages/ui/src/types.ts::ModalProps.title",
+    "fixtures/project/npm-monorepo/packages/app/src/App.tsx::AppState.showModal",
+    "fixtures/project/npm-monorepo/packages/ui/src/types.ts::ModalProps.onClose",
+    "fixtures/project/npm-monorepo/packages/ui/src/types.ts::ButtonProps.onClick",
+    "fixtures/project/npm-monorepo/packages/ui/src/types.ts::ModalProps.children",
+    "fixtures/project/npm-monorepo/packages/ui/src/types.ts::ButtonProps.children"
   ],
   "moduleDependsOn": [
     {
@@ -74,9 +80,9 @@
   ],
   "stats": {
     "symbols": 15,
-    "edges": 43,
+    "edges": 49,
     "edgesByKind": {
-      "declares": 8,
+      "declares": 14,
       "dependsOn": 10,
       "projectName": 4,
       "projectLicense": 1,
