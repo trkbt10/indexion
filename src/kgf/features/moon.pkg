@@ -10,6 +10,7 @@ import {
 
 import {
   "moonbitlang/core/test",
+  "trkbt10/indexion/src/kgf/parser" @kgf_parser,
 } for "wbtest"
 
 supported_targets = "native"

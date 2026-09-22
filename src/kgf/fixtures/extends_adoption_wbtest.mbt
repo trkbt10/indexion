@@ -43,7 +43,7 @@ fn ext_token_defs(spec : @kgf_types.KGFSpec) -> Array[String] {
 fn ext_same_grammar(a : @kgf_types.KGFSpec, b : @kgf_types.KGFSpec) -> Bool {
   let ra = ext_rule_exprs(a)
   let rb = ext_rule_exprs(b)
-  if ra.size() != rb.size() {
+  if ra.length() != rb.length() {
     return false
   }
   for name, expr in ra {
@@ -74,7 +74,7 @@ fn ext_same_features(a : @kgf_types.KGFSpec, b : @kgf_types.KGFSpec) -> Bool {
   match (a.get_features(), b.get_features()) {
     (None, None) => true
     (Some(fa), Some(fb)) => {
-      if fa.size() != fb.size() {
+      if fa.length() != fb.length() {
         return false
       }
       for k, va in fa {
@@ -100,7 +100,7 @@ fn ext_same_semantic_rules(
   match (a.get_semantics(), b.get_semantics()) {
     (None, None) => true
     (Some(sa), Some(sb)) => {
-      if sa.size() != sb.size() {
+      if sa.length() != sb.length() {
         return false
       }
       for name, blocks in sa {
@@ -177,7 +177,7 @@ test "extends: typescript-jsx inherits everything but lex and grammar" {
   assert_true(ext_same_semantic_rules(tsx, ts))
   assert_true(ext_same_resolver_body(tsx, ts))
   assert_eq(tsx.get_ignore(), ts.get_ignore())
-  assert_eq(tsx.get_attrs().size(), ts.get_attrs().size())
+  assert_eq(tsx.get_attrs().length(), ts.get_attrs().length())
 
   // Declared by the derived spec, and genuinely different.
   assert_true(!ext_same_grammar(tsx, ts))
@@ -202,7 +202,7 @@ test "extends: javascript-jsx inherits attrs, features, semantics and ignore" {
   assert_true(ext_same_features(jsx, js))
   assert_true(ext_same_semantic_rules(jsx, js))
   assert_eq(jsx.get_ignore(), js.get_ignore())
-  assert_eq(jsx.get_attrs().size(), js.get_attrs().size())
+  assert_eq(jsx.get_attrs().length(), js.get_attrs().length())
 
   // The grammar is the second declared section.
   assert_true(!ext_same_grammar(jsx, js))
@@ -233,7 +233,7 @@ test "extends: gitlab-wiki inherits github-wiki's markup sections" {
   assert_true(ext_same_grammar(gl, gh))
   assert_true(ext_same_semantic_rules(gl, gh))
   assert_eq(gl.get_ignore(), gh.get_ignore())
-  assert_eq(gl.get_attrs().size(), gh.get_attrs().size())
+  assert_eq(gl.get_attrs().length(), gh.get_attrs().length())
 
   // The two declared sections carry each host's own conventions.
   assert_eq(gl.get_feature("nav_file"), Some(["_sidebar.md"]))
@@ -270,7 +270,7 @@ test "extends: sdd specs inherit markdown and keep its DocumentSection block" {
     // Inherited wholesale: lex, grammar, attrs, resolver.
     assert_true(ext_same_list(ext_token_defs(sdd), ext_token_defs(md)))
     assert_true(ext_same_grammar(sdd, md))
-    assert_eq(sdd.get_attrs().size(), md.get_attrs().size())
+    assert_eq(sdd.get_attrs().length(), md.get_attrs().length())
     assert_true(ext_same_resolver_body(sdd, md))
 
     // Markdown's link semantics survive the wholesale override, because the

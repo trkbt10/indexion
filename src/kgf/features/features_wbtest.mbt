@@ -127,3 +127,32 @@ test "token_search_terms includes vocabulary subtokens for string literals" {
   assert_true(value_terms.contains("release"))
   assert_true(value_terms.contains("build"))
 }
+
+///|
+/// A spec that declares `document_symbol_kinds:` with no values says that
+/// nothing it declares is documentable API (structure specs such as yaml or
+/// the kgf self-spec): the filter is present and empty, so every kind is
+/// excluded — unlike a spec without the feature, which contributes all kinds.
+test "document_symbol_kind_filter: declared-empty feature excludes every kind" {
+  let spec = @kgf_parser.parse_kgf(
+    (
+      #|kgf 0.6
+      #|language: structural
+      #|sources: .st
+      #|
+      #|=== lex
+      #|TOKEN A /a/
+      #|
+      #|=== grammar
+      #|Doc -> A*
+      #|
+      #|=== features
+      #|document_symbol_kinds:
+    ),
+  ).unwrap()
+  let specs : Map[String, @kgf_types.KGFSpec] = { "structural": spec }
+  match document_symbol_kind_filter(["x.st"], specs) {
+    Some(filter) => assert_eq(filter.length(), 0)
+    None => fail("expected an empty filter, not the absence of one")
+  }
+}

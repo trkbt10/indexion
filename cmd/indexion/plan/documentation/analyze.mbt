@@ -291,8 +291,24 @@ fn analyze_source_file(
   if declarations.length() == 0 {
     return
   }
+  // Only the kinds the file's spec declares as documentable count towards
+  // coverage (`document_symbol_kinds`, the same SoT README generation and
+  // reconcile use); a spec that declares none contributes nothing, a spec
+  // without the feature contributes every declaration.
+  let kind_filter = match registry {
+    Some(reg) =>
+      @kgf_features.document_symbol_kind_filter([path], reg.to_specs_map())
+    None => None
+  }
   // Associate declarations with their doc comments
   for decl in declarations {
+    match kind_filter {
+      Some(filter) =>
+        if !filter.contains(@kgf_features.to_lower_str(decl.kind)) {
+          continue
+        }
+      None => ()
+    }
     let doc_lines = match doc_map.get(decl.line) {
       Some(doc) => @common.split_lines(doc)
       None => []
