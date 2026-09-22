@@ -6,7 +6,21 @@
     "fixtures/project/ruby/Gemfile",
     "fixtures/project/ruby/lib/calculator.rb",
     "fixtures/project/ruby/lib/calculator/history.rb",
-    "fixtures/project/ruby/lib/calculator/formatter.rb"
+    "fixtures/project/ruby/lib/calculator/formatter.rb",
+    "fixtures/project/ruby/lib/calculator.rb::Calculator::Basic",
+    "fixtures/project/ruby/lib/calculator.rb::Calculator::Basic::add",
+    "fixtures/project/ruby/lib/calculator.rb::Calculator::Basic::subtract",
+    "fixtures/project/ruby/lib/calculator/history.rb::Calculator::History",
+    "fixtures/project/ruby/lib/calculator.rb::Calculator::Basic::initialize",
+    "fixtures/project/ruby/lib/calculator/formatter.rb::Calculator::Formatter",
+    "fixtures/project/ruby/lib/calculator/history.rb::Calculator::History::History",
+    "fixtures/project/ruby/lib/calculator/formatter.rb::Calculator::Formatter::format",
+    "fixtures/project/ruby/lib/calculator/history.rb::Calculator::History::History::History",
+    "fixtures/project/ruby/lib/calculator/formatter.rb::Calculator::Formatter::format_history",
+    "fixtures/project/ruby/lib/calculator/history.rb::Calculator::History::History::History::to_a",
+    "fixtures/project/ruby/lib/calculator/history.rb::Calculator::History::History::History::record",
+    "fixtures/project/ruby/lib/calculator/history.rb::Calculator::History::History::History::to_json",
+    "fixtures/project/ruby/lib/calculator/history.rb::Calculator::History::History::History::initialize"
   ],
   "moduleDependsOn": [
     {
@@ -47,10 +61,10 @@
     }
   ],
   "stats": {
-    "symbols": 24,
-    "edges": 29,
+    "symbols": 26,
+    "edges": 33,
     "edgesByKind": {
-      "declares": 13,
+      "declares": 17,
       "dependsOn": 12,
       "rubyVersion": 1,
       "module_depends_on": 3

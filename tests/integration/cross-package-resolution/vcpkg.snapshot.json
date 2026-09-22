@@ -5,14 +5,25 @@
     "fixtures/project/vcpkg/src/config.cpp",
     "fixtures/project/vcpkg/src/server.cpp",
     "fixtures/project/vcpkg/include/config.hpp",
-    "fixtures/project/vcpkg/include/server.hpp"
+    "fixtures/project/vcpkg/include/server.hpp",
+    "fixtures/project/vcpkg/include/config.hpp::app::Config",
+    "fixtures/project/vcpkg/include/server.hpp::app::Server",
+    "fixtures/project/vcpkg/include/server.hpp::app::Server::io_",
+    "fixtures/project/vcpkg/include/server.hpp::app::Server::run",
+    "fixtures/project/vcpkg/include/config.hpp::app::Config::load",
+    "fixtures/project/vcpkg/include/config.hpp::app::Config::name",
+    "fixtures/project/vcpkg/include/config.hpp::app::Config::port",
+    "fixtures/project/vcpkg/include/config.hpp::app::Config::debug",
+    "fixtures/project/vcpkg/include/server.hpp::app::Server::Server",
+    "fixtures/project/vcpkg/include/config.hpp::app::Config::to_json",
+    "fixtures/project/vcpkg/include/server.hpp::app::Server::config_"
   ],
   "moduleDependsOn": [],
   "stats": {
     "symbols": 22,
-    "edges": 18,
+    "edges": 27,
     "edgesByKind": {
-      "declares": 10,
+      "declares": 19,
       "dependsOn": 4,
       "projectName": 1,
       "projectLicense": 1,
