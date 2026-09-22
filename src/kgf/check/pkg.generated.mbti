@@ -21,6 +21,8 @@ pub fn diagnostics_to_json(Array[CheckDiagnostic]) -> String
 
 pub fn load_spec_sources(String) -> Map[String, @parser.KGFSpecSource]
 
+pub fn load_spec_sources_from_dirs(Array[String]) -> Map[String, @parser.KGFSpecSource]
+
 // Errors
 
 // Types and methods
@@ -63,4 +65,3 @@ pub fn SourceMap::resolve(Self, Int) -> (Int, Int)
 // Type aliases
 
 // Traits
-

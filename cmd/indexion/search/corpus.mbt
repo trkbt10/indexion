@@ -15,7 +15,7 @@ pub fn build_corpus(
   let (wiki_paths, file_paths) = partition_corpus_paths(paths)
   let all_target_dirs = if file_paths.length() > 0 { file_paths } else { ["."] }
   let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dirs=all_target_dirs,
   )
   build_corpus_from_partitioned_paths(file_paths, wiki_paths, config, registry)

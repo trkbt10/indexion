@@ -39,9 +39,7 @@ fn audit_command() -> @argparse.Command {
       ),
     ],
     options=[
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
       @argparse.OptionArg(
         "format",
         about="Output format: text, json, lcov, cobertura",
@@ -136,7 +134,7 @@ fn audit_config_from_matches(
       Some(arr) if arr.length() > 0 => arr
       _ => base.paths
     },
-    specs_dir: @common.arg_str(matches, "specs-dir", base.specs_dir),
+    specs_dirs: @common.arg_specs_dirs(matches),
     threshold: @common.arg_double(matches, "threshold", base.threshold),
     limit: @common.arg_int(matches, "limit", base.limit),
     include_symbols: !matches.flags.get("no-symbols").unwrap_or(false),

@@ -67,7 +67,7 @@ pub fn PackageInfo::new(String, String, Array[String]) -> Self
 
 pub struct ReadmeConfig {
   paths : Array[String]
-  specs_dir : String
+  specs_dirs : Array[String]
   includes : Array[String]
   excludes : Array[String]
   recursive : Bool
@@ -89,4 +89,3 @@ pub fn TemplateContext::new(String, Array[(PackageInfo, ExtractedDoc)]) -> Self
 // Type aliases
 
 // Traits
-

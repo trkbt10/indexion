@@ -59,7 +59,7 @@ pub(all) struct RefactorPlanConfig {
   format : String // output format: "md", "json", "text"
   style : String // output style: "raw" (similarity), "structured" (plan)
   project_name : String // project name for structured output
-  specs_dir : String // KGF specs directory
+  specs_dirs : Array[String] // KGF specs directory
 }
 
 ///|
@@ -76,7 +76,7 @@ pub fn RefactorPlanConfig::default() -> RefactorPlanConfig {
     format: "md",
     style: "raw",
     project_name: "",
-    specs_dir: "kgfs",
+    specs_dirs: [],
   }
 }
 
@@ -137,10 +137,7 @@ pub fn RefactorPlanConfig::from_matches(
     Some(arr) => if arr.length() > 0 { arr[0] } else { "" }
     _ => ""
   }
-  let specs_dir = match matches.values.get("specs-dir") {
-    Some(arr) => if arr.length() > 0 { arr[0] } else { "kgfs" }
-    _ => "kgfs"
-  }
+  let specs_dirs = @common.arg_specs_dirs(matches)
   let target_dir = match matches.values.get("directory") {
     Some(arr) => if arr.length() > 0 { arr[0] } else { "" }
     _ => ""
@@ -165,7 +162,7 @@ pub fn RefactorPlanConfig::from_matches(
     format,
     style,
     project_name,
-    specs_dir,
+    specs_dirs,
   }
 }
 
@@ -201,9 +198,7 @@ pub fn command() -> @argparse.Command {
         "raw",
       ]),
       @argparse.OptionArg("name", about="Project name for structured output"),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
     ],
     positionals=[
       @argparse.PositionArg(
@@ -578,7 +573,7 @@ pub fn run_to_string(config : RefactorPlanConfig) -> String? {
     return None
   }
   let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir=config.target_dir,
   )
   let files = @common.collect_files(
@@ -634,7 +629,7 @@ fn run_with_config(config : RefactorPlanConfig) -> Unit {
     println("")
   }
   let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir=config.target_dir,
   )
   // Detect project type from marker files

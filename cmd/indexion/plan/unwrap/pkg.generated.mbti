@@ -3,6 +3,9 @@ package "trkbt10/indexion/cmd/indexion/plan/unwrap"
 
 import {
   "moonbitlang/core/argparse",
+  "trkbt10/indexion/src/coverage",
+  "trkbt10/indexion/src/kgf/features",
+  "trkbt10/indexion/src/kgf/registry",
 }
 
 // Values
@@ -18,6 +21,8 @@ pub fn run_matches(@argparse.Matches) -> Unit
 
 pub fn run_to_string(UnwrapConfig) -> String?
 
+pub fn to_coverage_report(String, Array[(String, String)], Array[@features.ProxyFunction], @registry.KGFRegistry?) -> @coverage.CoverageReport
+
 // Errors
 
 // Types and methods
@@ -30,7 +35,7 @@ pub(all) struct UnwrapConfig {
   include_self : Bool
   include_bare : Bool
   mode : String
-  specs_dir : String
+  specs_dirs : Array[String]
 }
 pub fn UnwrapConfig::default() -> Self
 pub fn UnwrapConfig::from_matches(@argparse.Matches) -> Self
@@ -67,4 +72,3 @@ pub struct UnwrapSummary {
 // Type aliases
 
 // Traits
-

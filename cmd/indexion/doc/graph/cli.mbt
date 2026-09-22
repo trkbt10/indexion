@@ -35,7 +35,7 @@
 /// CLI configuration for graph command.
 pub(all) struct GraphConfig {
   output : String
-  specs_dir : String
+  specs_dirs : Array[String]
   title : String
   format : String
   input_paths : Array[String]
@@ -46,7 +46,7 @@ pub(all) struct GraphConfig {
 pub fn GraphConfig::default() -> GraphConfig {
   {
     output: "",
-    specs_dir: "kgfs",
+    specs_dirs: [],
     title: "Module Dependencies",
     format: "mermaid",
     input_paths: [],
@@ -60,10 +60,7 @@ pub fn GraphConfig::from_matches(matches : @argparse.Matches) -> GraphConfig {
     Some(arr) => if arr.length() > 0 { arr[0] } else { "" }
     _ => ""
   }
-  let specs_dir = match matches.values.get("specs-dir") {
-    Some(arr) => if arr.length() > 0 { arr[0] } else { "kgfs" }
-    _ => "kgfs"
-  }
+  let specs_dirs = @common.arg_specs_dirs(matches)
   let title = match matches.values.get("title") {
     Some(arr) => if arr.length() > 0 { arr[0] } else { "Module Dependencies" }
     _ => "Module Dependencies"
@@ -76,7 +73,7 @@ pub fn GraphConfig::from_matches(matches : @argparse.Matches) -> GraphConfig {
     Some(arr) if arr.length() > 0 => arr
     _ => ["."]
   }
-  { output, specs_dir, title, format, input_paths, }
+  { output, specs_dirs, title, format, input_paths, }
 }
 
 ///|
@@ -87,9 +84,7 @@ pub fn command() -> @argparse.Command {
     about="Generate dependency graph in Mermaid format",
     options=[
       @argparse.OptionArg("output", about="Output file (default: stdout)"),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
       @argparse.OptionArg("title", about="Diagram title", default_values=[
         "Module Dependencies",
       ]),
@@ -165,7 +160,7 @@ pub fn run_to_string(config : GraphConfig) -> String? {
     return None
   }
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dirs=config.input_paths,
   )
   let kgf_ignore = registry.collect_ignore_patterns()

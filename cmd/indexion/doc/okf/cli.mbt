@@ -47,7 +47,7 @@
 /// Configuration for OKF bundle export.
 pub struct OkfConfig {
   paths : Array[String]
-  specs_dir : String
+  specs_dirs : Array[String]
   includes : Array[String]
   excludes : Array[String]
   recursive : Bool
@@ -60,7 +60,7 @@ pub struct OkfConfig {
 pub fn OkfConfig::default() -> OkfConfig {
   {
     paths: [],
-    specs_dir: "kgfs",
+    specs_dirs: [],
     includes: [],
     excludes: [],
     recursive: true,
@@ -72,10 +72,7 @@ pub fn OkfConfig::default() -> OkfConfig {
 ///|
 /// Create OkfConfig from argparse matches.
 pub fn OkfConfig::from_matches(matches : @argparse.Matches) -> OkfConfig {
-  let specs_dir = match matches.values.get("specs-dir") {
-    Some(arr) => if arr.length() > 0 { arr[0] } else { "kgfs" }
-    _ => "kgfs"
-  }
+  let specs_dirs = @common.arg_specs_dirs(matches)
   let includes = matches.values.get("include").unwrap_or([])
   let excludes = matches.values.get("exclude").unwrap_or([])
   let recursive = matches.flags.get("recursive").unwrap_or(true)
@@ -91,7 +88,7 @@ pub fn OkfConfig::from_matches(matches : @argparse.Matches) -> OkfConfig {
     Some(arr) if arr.length() > 0 => arr
     _ => ["."]
   }
-  { paths, specs_dir, includes, excludes, recursive, output, title, }
+  { paths, specs_dirs, includes, excludes, recursive, output, title, }
 }
 
 ///|
@@ -107,9 +104,7 @@ pub fn command() -> @argparse.Command {
         required=true,
         about="Output directory for the OKF bundle",
       ),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
       @argparse.OptionArg(
         "include",
         action=Append,
@@ -149,7 +144,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   // Stage 1: Load KGF specs.
   println("[1/5] Loading KGF specs...")
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dirs=config.paths,
   )
   if registry.spec_count() > 0 {

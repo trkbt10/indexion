@@ -46,7 +46,7 @@ priv struct KgfConfig {
   mut subcommand : String
   mut file_path : String
   mut spec_name : String // empty means auto-detect
-  mut kgf_dir : String
+  kgf_dirs : Array[String]
   mut format : String // "human" or "json"
   mut target_lang : String // for `transcribe`: target KGF spec name
   show_tokens : Bool
@@ -60,7 +60,7 @@ fn KgfConfig::default() -> KgfConfig {
     subcommand: "inspect",
     file_path: "",
     spec_name: "",
-    kgf_dir: "kgfs",
+    kgf_dirs: [],
     format: "human",
     target_lang: "",
     show_tokens: true,
@@ -72,17 +72,16 @@ fn KgfConfig::default() -> KgfConfig {
 ///|
 /// Create KgfConfig from argparse Matches.
 fn KgfConfig::from_matches(matches : @argparse.Matches) -> KgfConfig {
-  let mut config = KgfConfig::default()
+  let mut config = {
+    ..KgfConfig::default(),
+    kgf_dirs: @common.arg_specs_dirs(matches, key="kgf-dir"),
+  }
   // Global options
   match matches.values.get("spec") {
     Some(vals) =>
       if vals.length() > 0 && vals[0].length() > 0 {
         config.spec_name = vals[0]
       }
-    None => ()
-  }
-  match matches.values.get("kgf-dir") {
-    Some(vals) => if vals.length() > 0 { config.kgf_dir = vals[0] }
     None => ()
   }
   // Subcommand dispatch
@@ -148,12 +147,7 @@ pub fn command() -> @argparse.Command {
       default_values=[""],
       global=true,
     ),
-    @argparse.OptionArg(
-      "kgf-dir",
-      about=@help.specs_dir,
-      default_values=["kgfs"],
-      global=true,
-    ),
+    @help.specs_dir_option(name="kgf-dir", global=true),
   ]
   let file_positional : Array[@argparse.PositionArg] = [
     @argparse.PositionArg(
@@ -225,14 +219,14 @@ pub fn command() -> @argparse.Command {
         positionals=[
           @argparse.PositionArg(
             "spec-or-file",
-            about="KGF spec name or .kgf file path (omit with --all)",
+            about="KGF spec name or .kgf file path (omit to check the whole resolved set)",
             num_args=@argparse.ValueRange(lower=0),
           ),
         ],
         flags=[
           @argparse.FlagArg(
             "all",
-            about="Check every spec in the KGF directory and report source-pattern conflicts",
+            about="Check every spec in the resolved set and report source-pattern conflicts (the default when no name is given)",
           ),
         ],
       ),
@@ -281,7 +275,7 @@ pub fn command() -> @argparse.Command {
 pub async fn run_matches(matches : @argparse.Matches) -> Unit {
   let config = KgfConfig::from_matches(matches)
   match config.subcommand {
-    "list" => run_list(config.kgf_dir)
+    "list" => run_list(config.kgf_dirs)
     "update" => run_kgf_update()
     "add" => {
       if config.file_path.length() == 0 {
@@ -307,7 +301,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
         @kgf_transpile.transpile_file_json(
           config.file_path,
           config.target_lang,
-          config.kgf_dir,
+          config.kgf_dirs,
         ) {
         Some(s) => println(s)
         None =>
@@ -326,13 +320,13 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
       if config.format == "json" {
         let json_out = match config.subcommand {
           "inspect" =>
-            inspect_json(config.file_path, config.spec_name, config.kgf_dir)
+            inspect_json(config.file_path, config.spec_name, config.kgf_dirs)
           "tokens" =>
-            tokenize_json(config.file_path, config.spec_name, config.kgf_dir)
+            tokenize_json(config.file_path, config.spec_name, config.kgf_dirs)
           "events" =>
-            events_json(config.file_path, config.spec_name, config.kgf_dir)
+            events_json(config.file_path, config.spec_name, config.kgf_dirs)
           "edges" =>
-            edges_json(config.file_path, config.spec_name, config.kgf_dir)
+            edges_json(config.file_path, config.spec_name, config.kgf_dirs)
           _ => None
         }
         match json_out {
@@ -351,7 +345,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
     }
     "check" =>
       match matches.subcommand {
-        Some((_, check_matches)) => run_check(config.kgf_dir, check_matches)
+        Some((_, check_matches)) => run_check(config.kgf_dirs, check_matches)
         _ => println(command().render_help())
       }
     "classify" =>
@@ -360,7 +354,7 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
           match classify_matches.subcommand {
             Some(("train", train_matches)) =>
               run_classify_train(
-                config.kgf_dir,
+                config.kgf_dirs,
                 config.spec_name,
                 train_matches,
               )
@@ -376,74 +370,106 @@ pub async fn run_matches(matches : @argparse.Matches) -> Unit {
 }
 
 ///|
-/// List installed KGF specs.
-fn run_list(kgf_dir : String) -> Unit {
-  let resolved_dir = resolve_kgfs_dir(kgf_dir)
-  let specs = match resolved_dir {
-    Some(dir) => @kgf_manage.list_specs_from_dir(dir)
-    None => []
+/// Label for the layer a spec's winning file came from: the base set, or the
+/// 1-based position of the overlay that provided it.
+fn layer_label(layer : Int) -> String {
+  if layer == 0 {
+    "base"
+  } else {
+    "overlay " + layer.to_string()
   }
+}
+
+///|
+/// List the KGF specs of the resolved, layered spec set.
+///
+/// Each row names the file that won for that language, so a project that
+/// overlays one spec can see at a glance which of its files is in effect and
+/// which installed file it replaced.
+fn run_list(kgf_dirs : Array[String]) -> Unit {
+  let dirs = @kgf_features.resolve_specs_dirs(specs_dirs=kgf_dirs)
+  let specs = @kgf_manage.list_specs_from_dirs(dirs)
   if specs.length() == 0 {
     println("No KGF specs installed.")
-    match resolved_dir {
-      Some(dir) => println("Searched: " + dir)
-      None =>
-        if kgf_dir.length() > 0 {
-          println("Searched: " + kgf_dir)
-        } else {
-          println("No kgfs directory found.")
-        }
+    if dirs.length() > 0 {
+      println("Searched: " + dirs.join(", "))
+    } else {
+      println("No kgfs directory found.")
     }
     return
   }
+  for layer, dir in dirs {
+    println(layer_label(layer) + ": " + dir)
+  }
+  println("")
   // Print table header. The Extends column names the base a derived spec
   // inherits its undeclared sections from, so a reader can tell at a glance
-  // which specs are not self-contained.
+  // which specs are not self-contained. The Origin column names the layer the
+  // winning file came from, which is what a reader needs once overlays are in
+  // play — the two are independent: an overlay spec may extend a base-layer
+  // one, and a spec an overlay replaced may still be the base of others.
   println(
     pad_right("Category", 14) +
     pad_right("Name", 22) +
     pad_right("Extends", 18) +
+    pad_right("Origin", 12) +
     "Sources",
   )
   println(
     pad_right("─".repeat(12), 14) +
     pad_right("─".repeat(20), 22) +
     pad_right("─".repeat(16), 18) +
+    pad_right("─".repeat(10), 12) +
     "─".repeat(20),
   )
   // The listing shows each spec's declared sources, but declaring a pattern
   // is not the same as owning it: when several specs claim one, the registry
   // silently gives it to a single winner. Mark the contested patterns so the
-  // table does not read as if every claim were honoured.
-  let conflicts = load_registry(kgf_dir).get_source_conflicts()
+  // table does not read as if every claim were honoured. The registry is built
+  // over the same resolved chain, so the winner reflects the overlay too.
+  let conflicts = load_registry(kgf_dirs).get_source_conflicts()
   let winner_of : Map[String, String] = Map([])
   for conflict in conflicts {
     winner_of.set(conflict.get_pattern(), conflict.get_winner())
   }
+  let mut overridden = 0
   for spec in specs {
-    let sources = if spec.sources.length() > 0 {
-      annotate_contested_sources(spec.sources, spec.name, winner_of).join(", ")
+    let sources = if spec.info.sources.length() > 0 {
+      annotate_contested_sources(spec.info.sources, spec.info.name, winner_of).join(
+        ", ",
+      )
     } else {
       "(none)"
     }
-    let category = if spec.category.length() > 0 {
-      spec.category
+    let category = if spec.info.category.length() > 0 {
+      spec.info.category
     } else {
       "(root)"
     }
-    let extends = match spec.extends {
+    let extends = match spec.info.extends {
       Some(base) if base.length() > 0 => base
       _ => "-"
     }
     println(
       pad_right(category, 14) +
-      pad_right(spec.name, 22) +
+      pad_right(spec.info.name, 22) +
       pad_right(extends, 18) +
+      pad_right(layer_label(spec.layer), 12) +
       sources,
     )
+    if spec.shadowed.length() > 0 {
+      overridden += 1
+      println("  from:     " + spec.info.path)
+      for path in spec.shadowed {
+        println("  replaces: " + path)
+      }
+    }
   }
   println("")
   println("Total: \{specs.length()} specs")
+  if overridden > 0 {
+    println("Shadowed by a later file of the same language: \{overridden}")
+  }
   if conflicts.length() > 0 {
     println("")
     println("Contested source patterns (only the winner analyses the files):")
@@ -522,27 +548,45 @@ fn pad_right(s : String, width : Int) -> String {
 }
 
 ///|
-/// Load KGF registry with smart directory resolution.
-/// When `kgf_dir` is the default "kgfs", uses `@config.find_kgfs_dir()` to
-/// search environment variables, global config, project-local, and OS-standard
-/// data directories. An explicit non-default value is treated as a literal path.
-/// Resolve the spec directory a `--kgf-dir` value names.
+/// Resolve the spec directories a `--kgf-dir` chain names.
 ///
-/// The default `"kgfs"` is not a path but a request to auto-detect, so it is
-/// passed on as "no explicit path"; anything else is the user's own location.
-/// Shared by every kgf subcommand that needs the directory rather than a
-/// loaded registry.
-fn resolve_kgfs_dir(kgf_dir : String) -> String? {
-  let explicit = if kgf_dir != "kgfs" { kgf_dir } else { "" }
-  @config.find_kgfs_dir(explicit_path=explicit)
+/// An empty chain is not a path but a request to auto-detect, so the base set
+/// is resolved as usual and the project-local `.indexion/kgfs/` overlay is
+/// layered on top. A non-empty chain replaces that: the first entry is the
+/// base and each later one is an overlay. Composition lives in
+/// `@kgf_features.resolve_specs_dirs`, which wraps the `@config` SoT.
+///
+/// Shared by every kgf subcommand that needs the directories rather than a
+/// loaded registry — `kgf check` resolves `extends:` against the raw sources
+/// of the same chain.
+fn resolve_kgfs_dirs(
+  kgf_dirs : Array[String],
+  targets? : Array[String] = [],
+) -> Array[String] {
+  let target_dirs : Array[String] = []
+  for target in targets {
+    if target.length() > 0 {
+      target_dirs.push(target)
+    }
+  }
+  if target_dirs.length() == 0 {
+    target_dirs.push(".")
+  }
+  @kgf_features.resolve_specs_dirs(specs_dirs=kgf_dirs, target_dirs~)
 }
 
 ///|
-fn load_registry(kgf_dir : String) -> @registry.KGFRegistry {
-  match resolve_kgfs_dir(kgf_dir) {
-    Some(dir) => @registry.KGFRegistry::load_from_dir(dir)
-    None => @registry.KGFRegistry::new()
-  }
+/// Load KGF registry over the resolved, layered spec directories.
+///
+/// Composition of the chain lives in `resolve_kgfs_dirs`; this only turns the
+/// resolved chain into a registry. Because `load_from_dirs` flattens the
+/// layers before resolving `extends:`, an overlay spec may extend one that
+/// only the base layer provides.
+fn load_registry(
+  kgf_dirs : Array[String],
+  targets? : Array[String] = [],
+) -> @registry.KGFRegistry {
+  @registry.KGFRegistry::load_from_dirs(resolve_kgfs_dirs(kgf_dirs, targets~))
 }
 
 ///|
@@ -551,7 +595,7 @@ fn run_inspect(config : KgfConfig) -> Unit {
   println("=== indexion kgf inspect ===")
   println("File: \{config.file_path}")
   println("")
-  let registry = load_registry(config.kgf_dir)
+  let registry = load_registry(config.kgf_dirs, targets=[config.file_path])
   let resolved = match
     resolve_spec_name(config.file_path, config.spec_name, registry) {
     Some(n) => n
@@ -705,7 +749,7 @@ fn run_tokens(config : KgfConfig) -> Unit {
   println("=== indexion kgf inspect ===")
   println("File: \{config.file_path}")
   println("")
-  let registry = load_registry(config.kgf_dir)
+  let registry = load_registry(config.kgf_dirs, targets=[config.file_path])
   let resolved = match
     resolve_spec_name(config.file_path, config.spec_name, registry) {
     Some(n) => n
@@ -909,9 +953,9 @@ fn read_source(file_path : String) -> String? {
 pub fn tokenize_json(
   file_path : String,
   spec_name : String,
-  kgf_dir : String,
+  kgf_dirs : Array[String],
 ) -> String? {
-  let registry = load_registry(kgf_dir)
+  let registry = load_registry(kgf_dirs, targets=[file_path])
   let resolved = match resolve_spec_name(file_path, spec_name, registry) {
     Some(n) => n
     None => return None
@@ -952,9 +996,9 @@ pub fn tokenize_json(
 pub fn events_json(
   file_path : String,
   spec_name : String,
-  kgf_dir : String,
+  kgf_dirs : Array[String],
 ) -> String? {
-  let registry = load_registry(kgf_dir)
+  let registry = load_registry(kgf_dirs, targets=[file_path])
   let resolved = match resolve_spec_name(file_path, spec_name, registry) {
     Some(n) => n
     None => return None
@@ -998,9 +1042,9 @@ pub fn events_json(
 pub fn inspect_json(
   file_path : String,
   spec_name : String,
-  kgf_dir : String,
+  kgf_dirs : Array[String],
 ) -> String? {
-  let registry = load_registry(kgf_dir)
+  let registry = load_registry(kgf_dirs, targets=[file_path])
   let resolved = match resolve_spec_name(file_path, spec_name, registry) {
     Some(n) => n
     None => return None
@@ -1094,9 +1138,9 @@ pub fn inspect_json(
 pub fn edges_json(
   file_path : String,
   spec_name : String,
-  kgf_dir : String,
+  kgf_dirs : Array[String],
 ) -> String? {
-  let registry = load_registry(kgf_dir)
+  let registry = load_registry(kgf_dirs, targets=[file_path])
   let resolved = match resolve_spec_name(file_path, spec_name, registry) {
     Some(n) => n
     None => return None
@@ -1177,7 +1221,7 @@ fn pos_to_line_col(line_starts : Array[Int], pos : Int) -> (Int, Int) {
 ///|
 /// Run the `kgf classify train` subcommand.
 fn run_classify_train(
-  kgf_dir : String,
+  kgf_dirs : Array[String],
   spec_name : String,
   matches : @argparse.Matches,
 ) -> Unit {
@@ -1219,7 +1263,7 @@ fn run_classify_train(
     None => 0.5
   }
   // Load registry and resolve spec
-  let registry = load_registry(kgf_dir)
+  let registry = load_registry(kgf_dirs, targets=directories)
   // Collect training files
   let includes = if include_pattern.length() > 0 {
     [include_pattern]
@@ -1426,20 +1470,24 @@ fn report_source_conflicts(
 
 ///|
 /// Run the `kgf check` subcommand.
-fn run_check(kgf_dir : String, matches : @argparse.Matches) -> Unit {
+fn run_check(kgf_dirs : Array[String], matches : @argparse.Matches) -> Unit {
   let targets = matches.values.get("spec-or-file").unwrap_or([])
-  let check_all = matches.flags.get("all").unwrap_or(false)
-  if targets.length() == 0 && !check_all {
-    println("Error: No spec or file specified (use --all to check every spec)")
+  // Naming nothing is a request to check everything, which is what a project
+  // wants after adding an overlay; `--all` stays as the explicit spelling.
+  let check_all = matches.flags.get("all").unwrap_or(false) ||
+    targets.length() == 0
+  // Resolve `extends:` against the flattened chain, not one directory, so a
+  // spec may extend a base another layer provides and an overlay's version is
+  // the one every deriving spec inherits from.
+  let dirs = resolve_kgfs_dirs(kgf_dirs)
+  let by_language = @kgf_check.load_spec_sources_from_dirs(dirs)
+  if check_all && by_language.is_empty() && targets.length() == 0 {
+    println(@help.no_specs_loaded)
     return
-  }
-  let by_language = match resolve_kgfs_dir(kgf_dir) {
-    Some(dir) => @kgf_check.load_spec_sources(dir)
-    None => Map([])
   }
   let tally : CheckTally = { specs: 0, errors: 0, warnings: 0, }
   if check_all {
-    // Every spec of the directory, in a stable order so the output can be
+    // Every spec of the resolved chain, in a stable order so the output can be
     // diffed.
     let languages : Array[String] = []
     for entry in by_language {
@@ -1452,7 +1500,7 @@ fn run_check(kgf_dir : String, matches : @argparse.Matches) -> Unit {
         None => ()
       }
     }
-    report_source_conflicts(load_registry(kgf_dir), tally)
+    report_source_conflicts(load_registry(kgf_dirs), tally)
   }
   for target in targets {
     match resolve_check_target(by_language, target) {

@@ -23,11 +23,10 @@ fn VocabularyGroup::new() -> VocabularyGroup {
 ///|
 fn build_report(config : VocabularyConfig) -> VocabularyReport? {
   let all_paths = combined_paths(config.source_paths, config.target_paths)
-  let registry = match config.specs_dir {
-    Some(dir) =>
-      @kgf_features.load_registry_or_empty(specs_dir=dir, target_dirs=all_paths)
-    None => @kgf_features.load_registry_or_empty(target_dirs=all_paths)
-  }
+  let registry = @kgf_features.load_registry_or_empty(
+    specs_dirs=config.specs_dirs,
+    target_dirs=all_paths,
+  )
   build_report_with_registry(config, registry)
 }
 
@@ -37,10 +36,7 @@ fn build_report_with_registry(
   registry : @kgf_registry.KGFRegistry,
 ) -> VocabularyReport? {
   if registry.get_languages().length() == 0 {
-    println(
-      "Error: no KGF specs were loaded. Run from a directory whose ancestry " +
-      "contains a `kgfs/` directory, or pass --specs-dir.",
-    )
+    println(@help.no_specs_loaded)
     return None
   }
   let source_group = match

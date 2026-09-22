@@ -8,7 +8,7 @@ pub fn command() -> @argparse.Command {
       @argparse.OptionArg("format", about="Output format: markdown, json", default_values=[
         "markdown",
       ]),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir),
+      @help.specs_dir_option(),
       @argparse.OptionArg("profile", about="Draft profile: sdd-requirement", default_values=[
         "sdd-requirement",
       ]),
@@ -51,13 +51,7 @@ fn resolve_config(matches : @argparse.Matches) -> @spec_draft.DraftConfig {
       }
     None => ()
   }
-  match matches.values.get("specs-dir") {
-    Some(values) =>
-      if values.length() > 0 {
-        config = { ..config, specs_dir: values[0], }
-      }
-    None => ()
-  }
+  config = { ..config, specs_dirs: @common.arg_specs_dirs(matches), }
   match matches.values.get("profile") {
     Some(values) =>
       if values.length() > 0 {

@@ -15,7 +15,7 @@ pub struct ServeConfig {
   provider : String
   dim : Int
   strategy : String
-  specs_dir : String
+  specs_dirs : Array[String]
   cors : Bool
   api_key_env : String
   api_base_url : String
@@ -35,7 +35,7 @@ pub fn ServeConfig::default() -> ServeConfig {
     provider: "auto",
     dim: @dconfig.DEFAULT_TFIDF_DIM,
     strategy: "hnsw",
-    specs_dir: "kgfs",
+    specs_dirs: [],
     cors: false,
     api_key_env: @dconfig.DEFAULT_API_KEY_ENV,
     api_base_url: @dconfig.DEFAULT_API_BASE_URL,
@@ -97,7 +97,7 @@ pub fn ServeConfig::from_matches(matches : @argparse.Matches) -> ServeConfig {
   match matches.values.get("specs") {
     Some(vals) =>
       if vals.length() > 0 {
-        config = { ..config, specs_dir: vals[0], }
+        config = { ..config, specs_dirs: @common.arg_specs_dirs(matches), }
       }
     None => ()
   }
@@ -615,7 +615,7 @@ fn make_digest_cli_config(config : ServeConfig) -> @digest_cli.CliConfig {
     strategy: config.strategy,
     top_k: 10,
     min_score: 0.1,
-    specs_dir: config.specs_dir,
+    specs_dirs: config.specs_dirs,
     api_key_env: config.api_key_env,
     api_base_url: config.api_base_url,
     model: config.model,
@@ -677,7 +677,7 @@ async fn do_build(
   @digest_cli.log_progress("Building from " + config.workspace_dir + "...")
   // Build graph from source
   let build_result = match
-    @digest_cli.build_graph_from_source(config.workspace_dir, config.specs_dir) {
+    @digest_cli.build_graph_from_source(config.workspace_dir, config.specs_dirs) {
     Some(r) => r
     None => {
       @digest_cli.log_error(

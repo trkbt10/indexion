@@ -9,9 +9,9 @@
 pub fn transpile_file_json(
   file_path : String,
   target_lang : String,
-  kgf_dir : String,
+  kgf_dirs : Array[String],
 ) -> String? {
-  let registry = load_registry(kgf_dir)
+  let registry = load_registry(kgf_dirs)
   transpile_file_json_with_registry(file_path, target_lang, registry)
 }
 
@@ -225,11 +225,14 @@ fn enrich_with_raw_body(
 }
 
 ///|
-/// Mirror `cmd/indexion/kgf/cli.mbt`'s registry-loader.
-fn load_registry(kgf_dir : String) -> @registry.KGFRegistry {
-  let explicit = if kgf_dir != "kgfs" { kgf_dir } else { "" }
-  match @config.find_kgfs_dir(explicit_path=explicit) {
-    Some(dir) => @registry.KGFRegistry::load_from_dir(dir)
-    None => @registry.KGFRegistry::new()
-  }
+/// Load the registry over a resolved, layered spec-directory chain.
+///
+/// Composition of the chain — auto-detection, the project-local
+/// `.indexion/kgfs/` overlay, and explicit `--specs-dir` layers — lives in
+/// `@kgf_features.resolve_specs_dirs`, the SoT; this only turns the resolved
+/// chain into a registry.
+fn load_registry(kgf_dirs : Array[String]) -> @registry.KGFRegistry {
+  @registry.KGFRegistry::load_from_dirs(
+    @kgf_features.resolve_specs_dirs(specs_dirs=kgf_dirs),
+  )
 }

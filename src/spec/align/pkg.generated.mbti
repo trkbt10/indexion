@@ -2,19 +2,38 @@
 package "trkbt10/indexion/src/spec/align"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
+  "trkbt10/indexion/src/kgf/registry",
+  "trkbt10/indexion/src/pipeline",
 }
 
 // Values
 pub async fn diff_report_async(SpecAlignConfig) -> AlignDiffReport?
 
+pub async fn diff_report_with_registry_async(SpecAlignConfig, @registry.KGFRegistry) -> AlignDiffReport?
+
+pub fn discover_signatures_for_align(SpecAlignConfig, @registry.KGFRegistry) -> Array[@pipeline.FileSignature]
+
+pub fn load_signatures(String) -> AlignSignaturesFile?
+
+pub fn save_signatures(String, Array[@pipeline.FileSignature]) -> Bool
+
 pub async fn status_report_async(SpecAlignConfig) -> AlignStatusReport?
+
+pub async fn status_report_with_registry_async(SpecAlignConfig, @registry.KGFRegistry) -> AlignStatusReport?
 
 pub async fn suggest_report_async(SpecAlignConfig) -> AlignSuggestReport?
 
+pub async fn suggest_report_with_registry_async(SpecAlignConfig, @registry.KGFRegistry) -> AlignSuggestReport?
+
 pub async fn trace_report_async(SpecAlignConfig) -> AlignTraceReport?
 
+pub async fn trace_report_with_registry_async(SpecAlignConfig, @registry.KGFRegistry) -> AlignTraceReport?
+
 pub async fn watch_probe_async(SpecAlignConfig) -> String?
+
+pub async fn watch_probe_with_registry_async(SpecAlignConfig, @registry.KGFRegistry) -> String?
 
 // Errors
 
@@ -29,7 +48,8 @@ pub(all) struct AlignCacheManifest {
   used_specs : Array[String]
   commit : AlignCommitInfo?
   history_count : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn AlignCacheManifest::to_json(Self) -> Json
 
 pub struct AlignCommitInfo {
   repo_root : String
@@ -37,7 +57,7 @@ pub struct AlignCommitInfo {
   short_head : String
   committed_at : Int?
   dirty : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct AlignDiffItem {
   category : String
@@ -54,7 +74,7 @@ pub struct AlignDiffItem {
   impl_line : Int?
   spec_excerpt : String?
   impl_excerpt : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct AlignDiffReport {
   version : String
@@ -66,22 +86,29 @@ pub struct AlignDiffReport {
   source_fingerprint : String
   commit : AlignCommitInfo?
   cache_hit : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn AlignDiffReport::to_json(Self) -> Json
 
 pub(all) struct AlignDiffStore {
   items : Array[AlignDiffItem]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn AlignDiffStore::to_json(Self) -> Json
 
 pub struct AlignHistoryEntry {
   generated_at : Int
   source_fingerprint : String
   summary : AlignSummary
   commit : AlignCommitInfo?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct AlignHistoryStore {
   entries : Array[AlignHistoryEntry]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn AlignHistoryStore::to_json(Self) -> Json
+
+pub struct AlignSignaturesFile {
+  signatures : Map[String, @pipeline.FileSignature]
+}
 
 pub struct AlignSnapshot {
   version : String
@@ -99,7 +126,7 @@ pub struct AlignSnapshot {
   commit : AlignCommitInfo?
   history : Array[AlignHistoryEntry]
   cache_hit : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct AlignStatusReport {
   version : String
@@ -113,7 +140,8 @@ pub struct AlignStatusReport {
   source_fingerprint : String
   commit : AlignCommitInfo?
   cache_hit : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn AlignStatusReport::to_json(Self) -> Json
 
 pub struct AlignSuggestReport {
   version : String
@@ -125,7 +153,8 @@ pub struct AlignSuggestReport {
   source_fingerprint : String
   commit : AlignCommitInfo?
   cache_hit : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn AlignSuggestReport::to_json(Self) -> Json
 
 pub struct AlignSuggestion {
   category : String
@@ -137,7 +166,7 @@ pub struct AlignSuggestion {
   patch : String?
   task : String?
   reasons : Array[String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct AlignSummary {
   matched : Int
@@ -145,10 +174,11 @@ pub struct AlignSummary {
   spec_only : Int
   impl_only : Int
   conflict : Int
+  shallow : Int
   total_requirements : Int
   total_implementations : Int
   total_edges : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct AlignTraceReport {
   version : String
@@ -162,26 +192,29 @@ pub struct AlignTraceReport {
   commit : AlignCommitInfo?
   history : Array[AlignHistoryEntry]
   cache_hit : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn AlignTraceReport::to_json(Self) -> Json
 
 pub(all) struct AlignTraceStore {
   requirements : Array[RequirementNode]
   scenarios : Array[ScenarioNode]
   implementations : Array[ImplementationNode]
   edges : Array[TraceEdge]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn AlignTraceStore::to_json(Self) -> Json
 
 pub struct ImplementationNode {
   id : String
   name : String
   kind : String
+  category : String
   file : String
   start_line : Int
   end_line : Int
   signature : String
   declaration_text : String
   doc_comment : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct RequirementNode {
   id : String
@@ -196,7 +229,7 @@ pub struct RequirementNode {
   section_refs : Array[String]
   literals : Array[String]
   table_pairs : Array[String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct ScenarioNode {
   id : String
@@ -211,13 +244,13 @@ pub struct ScenarioNode {
   section_refs : Array[String]
   literals : Array[String]
   table_pairs : Array[String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct SpecAlignConfig {
   subcommand : String
   spec_path : String
   impl_path : String
-  specs_dir : String
+  specs_dirs : Array[String]
   cache_dir : String
   output : String
   format : String
@@ -232,7 +265,7 @@ pub(all) struct SpecAlignConfig {
   watch_mode : String
   watch_interval : Int
   watch_limit : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub fn SpecAlignConfig::default() -> Self
 
 pub struct TraceEdge {
@@ -242,9 +275,8 @@ pub struct TraceEdge {
   algorithm : String
   status : String
   rank : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 // Type aliases
 
 // Traits
-

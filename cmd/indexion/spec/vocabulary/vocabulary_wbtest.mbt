@@ -10,7 +10,7 @@ fn fixture_specs_dir() -> String {
 
 ///|
 let shared_test_registry : @kgf_registry.KGFRegistry = @kgf_features.load_registry_or_empty(
-  specs_dir=fixture_specs_dir(),
+  specs_dirs=[fixture_specs_dir()],
   target_dir=fixture_root(),
 )
 
@@ -25,7 +25,7 @@ fn fixture_config(target_name : String) -> VocabularyConfig {
     ..VocabularyConfig::default(),
     source_paths: [fixture_root() + "/spec/dom.idl"],
     target_paths: [fixture_root() + "/src/conformance/" + target_name],
-    specs_dir: Some(fixture_specs_dir()),
+    specs_dirs: [fixture_specs_dir()],
   }
 }
 
@@ -58,7 +58,7 @@ test "spec-vocabulary: EBNF source can be checked against MoonBit targets" {
     ..VocabularyConfig::default(),
     source_paths: [fixture_root() + "/spec/xpath.ebnf"],
     target_paths: [fixture_root() + "/src/xpath_lexer.mbt"],
-    specs_dir: Some(fixture_specs_dir()),
+    specs_dirs: [fixture_specs_dir()],
     direction: direction_source_to_target,
   }).unwrap()
   assert_true(report.passed)
@@ -76,7 +76,7 @@ test "spec-vocabulary: generic KGF features cover markdown sources" {
     ..VocabularyConfig::default(),
     source_paths: [fixture_root() + "/spec/terms.md"],
     target_paths: [fixture_root() + "/src/terms.md"],
-    specs_dir: Some(fixture_specs_dir()),
+    specs_dirs: [fixture_specs_dir()],
     direction: direction_source_to_target,
   }).unwrap()
   assert_true(report.passed)
@@ -96,7 +96,7 @@ test "spec-vocabulary: assessments separate raw miss from report precision" {
     ..VocabularyConfig::default(),
     source_paths: [fixture_root() + "/spec/trace.ebnf"],
     target_paths: [fixture_root() + "/src/trace.mbt"],
-    specs_dir: Some(fixture_specs_dir()),
+    specs_dirs: [fixture_specs_dir()],
     direction: direction_source_to_target,
   }).unwrap()
   assert_false(report.passed)

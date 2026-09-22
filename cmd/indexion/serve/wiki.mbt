@@ -20,7 +20,7 @@ async fn load_wiki_pages(
     }
   }
   let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir=config.workspace_dir,
   )
   match @wiki_interop.load_wiki_auto(wiki_dir, registry~) {

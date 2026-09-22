@@ -148,14 +148,14 @@ async test "wiki search update can incrementally update one page" {
   write_test_file(wiki_dir + "/home.md", "# Home\n\nOriginal alpha content.\n")
   write_test_file(wiki_dir + "/other.md", "# Other\n\nStable beta content.\n")
   let provider = @embed_config.TfIdf(@embed_config.DEFAULT_TFIDF_DIM)
-  let _ = update_search_index(wiki_dir, "kgfs", provider) catch { _ => panic() }
+  let _ = update_search_index(wiki_dir, [], provider) catch { _ => panic() }
   write_test_file(
     wiki_dir + "/home.md",
     "# Home\n\nIncremental quartzalpha content.\n",
   )
   let page_ids : Map[String, Bool] = Map([])
   page_ids["home"] = true
-  let _ = update_search_index_incremental(wiki_dir, "kgfs", provider, page_ids) catch {
+  let _ = update_search_index_incremental(wiki_dir, [], provider, page_ids) catch {
     _ => panic()
   }
   let idx = match @wiki_search.WikiSearchIndex::load(wiki_dir) {

@@ -281,10 +281,10 @@ pub async fn may_be_stale(wiki_dir : String) -> Bool {
 ///|
 pub async fn update_search_index(
   wiki_dir : String,
-  specs_dir : String,
+  specs_dirs : Array[String],
   provider : @embed_config.EmbeddingProvider,
 ) -> SearchUpdateResult? raise @embed.EmbedError {
-  let registry = @kgf_features.load_registry(specs_dir~, target_dir=wiki_dir)
+  let registry = @kgf_features.load_registry(specs_dirs~, target_dir=wiki_dir)
   let wiki = match @wiki_reader.load_wiki(wiki_dir, registry~) {
     Some(w) => w
     None => return None
@@ -297,15 +297,15 @@ pub async fn update_search_index(
 ///|
 async fn update_search_index_incremental(
   wiki_dir : String,
-  specs_dir : String,
+  specs_dirs : Array[String],
   provider : @embed_config.EmbeddingProvider,
   page_ids : Map[String, Bool],
 ) -> SearchUpdateResult? raise @embed.EmbedError {
   let index = match @wiki_search.WikiSearchIndex::load(wiki_dir) {
     Some(idx) => idx
-    None => return update_search_index(wiki_dir, specs_dir, provider)
+    None => return update_search_index(wiki_dir, specs_dirs, provider)
   }
-  let registry = @kgf_features.load_registry(specs_dir~, target_dir=wiki_dir)
+  let registry = @kgf_features.load_registry(specs_dirs~, target_dir=wiki_dir)
   let wiki = match @wiki_reader.load_wiki(wiki_dir, registry~) {
     Some(w) => w
     None => return None
@@ -321,7 +321,7 @@ async fn update_search_index_incremental(
           path=@config.join_path(wiki_dir, page.file),
           registry~,
         )
-      None => return update_search_index(wiki_dir, specs_dir, provider)
+      None => return update_search_index(wiki_dir, specs_dirs, provider)
     }
   }
   index.save(wiki_dir)
@@ -331,7 +331,7 @@ async fn update_search_index_incremental(
 ///|
 pub async fn update_search_index_if_stale(
   wiki_dir : String,
-  specs_dir : String,
+  specs_dirs : Array[String],
   provider : @embed_config.EmbeddingProvider,
 ) -> SearchUpdateResult? {
   let plan = update_plan(wiki_dir)
@@ -339,11 +339,11 @@ pub async fn update_search_index_if_stale(
     return None
   }
   if plan.full_rebuild {
-    return update_search_index(wiki_dir, specs_dir, provider) catch {
+    return update_search_index(wiki_dir, specs_dirs, provider) catch {
       _ => None
     }
   }
-  update_search_index_incremental(wiki_dir, specs_dir, provider, plan.page_ids) catch {
+  update_search_index_incremental(wiki_dir, specs_dirs, provider, plan.page_ids) catch {
     _ => None
   }
 }

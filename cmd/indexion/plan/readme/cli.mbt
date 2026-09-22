@@ -24,7 +24,7 @@ pub(all) struct ReadmePlanConfig {
   target_dir : String
   output : String
   format : String // "md", "json"
-  specs_dir : String // KGF specs directory
+  specs_dirs : Array[String] // KGF specs directory
   template : String // Template file to analyze for {{include:...}}
   plans_dir : String // Output directory for plan files (default: .plans)
 }
@@ -36,7 +36,7 @@ pub fn ReadmePlanConfig::default() -> ReadmePlanConfig {
     target_dir: ".",
     output: "",
     format: "md",
-    specs_dir: "kgfs",
+    specs_dirs: [],
     template: "",
     plans_dir: ".indexion/plans",
   }
@@ -55,10 +55,7 @@ pub fn ReadmePlanConfig::from_matches(
     Some(arr) => if arr.length() > 0 { arr[0] } else { "md" }
     _ => "md"
   }
-  let specs_dir = match matches.values.get("specs-dir") {
-    Some(arr) => if arr.length() > 0 { arr[0] } else { "kgfs" }
-    _ => "kgfs"
-  }
+  let specs_dirs = @common.arg_specs_dirs(matches)
   let template = match matches.values.get("template") {
     Some(arr) => if arr.length() > 0 { arr[0] } else { "" }
     _ => ""
@@ -71,7 +68,7 @@ pub fn ReadmePlanConfig::from_matches(
     Some(arr) => if arr.length() > 0 { arr[0] } else { "." }
     _ => "."
   }
-  { target_dir, output, format, specs_dir, template, plans_dir, }
+  { target_dir, output, format, specs_dirs, template, plans_dir, }
 }
 
 ///|
@@ -89,9 +86,7 @@ pub fn command() -> @argparse.Command {
       @argparse.OptionArg("format", about="Output format: markdown, json", default_values=[
         "md",
       ]),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
       @argparse.OptionArg(
         "template",
         about="Template file with {{include:...}} placeholders",
@@ -118,7 +113,7 @@ pub fn run_to_string(config : ReadmePlanConfig) -> String? {
   }
   let target_dir = @common.normalize_path(config.target_dir)
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir~,
   )
   let (project_info, lang_spec) = detect_project_with_kgf(target_dir, registry)

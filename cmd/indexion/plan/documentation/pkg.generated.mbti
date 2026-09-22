@@ -3,15 +3,16 @@ package "trkbt10/indexion/cmd/indexion/plan/documentation"
 
 import {
   "moonbitlang/core/argparse",
+  "trkbt10/indexion/src/coverage",
   "trkbt10/indexion/src/plan/types",
 }
 
 // Values
-pub fn analyze_documentation(String, specs_dir? : String) -> DocAnalysis
+pub fn analyze_documentation(String, specs_dirs? : Array[String]) -> DocAnalysis
 
 pub fn command() -> @argparse.Command
 
-pub fn load_project_info(String) -> ProjectInfo
+pub fn load_project_info(String, specs_dirs? : Array[String]) -> ProjectInfo
 
 pub fn render_coverage(DocAnalysis, String) -> String
 
@@ -22,6 +23,8 @@ pub fn render_readme_template(DocAnalysis, ProjectInfo) -> String
 pub fn run_matches(@argparse.Matches) -> Unit
 
 pub fn run_to_string(DocPlanConfig) -> String?
+
+pub fn to_coverage_report(DocAnalysis, String) -> @coverage.CoverageReport
 
 pub fn to_plan_document(DocAnalysis, ProjectInfo, String) -> @types.PlanDocument
 
@@ -43,7 +46,7 @@ pub(all) struct DocPlanConfig {
   format : String
   template : String
   project_name : String
-  specs_dir : String
+  specs_dirs : Array[String]
 }
 pub fn DocPlanConfig::default() -> Self
 pub fn DocPlanConfig::from_matches(@argparse.Matches) -> Self
@@ -80,4 +83,3 @@ pub struct PubItem {
 // Type aliases
 
 // Traits
-

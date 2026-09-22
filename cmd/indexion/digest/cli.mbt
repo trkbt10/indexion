@@ -16,7 +16,7 @@ pub(all) struct CliConfig {
   strategy : String
   top_k : Int
   min_score : Double
-  specs_dir : String
+  specs_dirs : Array[String]
   api_key_env : String
   api_base_url : String
   model : String
@@ -39,7 +39,7 @@ pub fn CliConfig::default() -> CliConfig {
     strategy: "hnsw",
     top_k: 10,
     min_score: 0.1,
-    specs_dir: "kgfs",
+    specs_dirs: [],
     api_key_env: @dconfig.DEFAULT_API_KEY_ENV,
     api_base_url: @dconfig.DEFAULT_API_BASE_URL,
     model: @dconfig.DEFAULT_EMBEDDING_MODEL,
@@ -96,12 +96,9 @@ pub fn CliConfig::from_matches(matches : @argparse.Matches) -> CliConfig {
       }
     None => ()
   }
-  match matches.values.get("specs") {
-    Some(vals) =>
-      if vals.length() > 0 {
-        config = { ..config, specs_dir: vals[0], }
-      }
-    None => ()
+  config = {
+    ..config,
+    specs_dirs: @common.arg_specs_dirs(matches, key="specs"),
   }
   // Subcommand dispatch
   match matches.subcommand {
@@ -185,12 +182,7 @@ pub fn command() -> @argparse.Command {
         default_values=["hnsw"],
         global=true,
       ),
-      @argparse.OptionArg(
-        "specs",
-        about=@help.specs_dir,
-        default_values=["kgfs"],
-        global=true,
-      ),
+      @help.specs_dir_option(name="specs", global=true),
       @argparse.OptionArg(
         "top-k",
         about="Number of results",
@@ -605,7 +597,7 @@ pub type GraphBuildResult = @workspace.GraphBuildResult
 /// change detection in incremental index updates.
 pub fn build_graph_from_source(
   source_dir : String,
-  specs_dir : String,
+  specs_dirs : Array[String],
   quiet? : Bool = false,
 ) -> GraphBuildResult? {
   if !quiet {
@@ -627,7 +619,7 @@ pub fn build_graph_from_source(
   }
   let result = @workspace.build_graph_from_source(
     source_dir,
-    specs_dir,
+    specs_dirs,
     progress=progress_fn,
   )
   match result {
@@ -744,7 +736,7 @@ async fn run_build_inner(config : CliConfig) -> Unit {
     @graph.CodeGraph,
     Map[String, @cas_types.ContentHash]?,
   ) = if @common.is_directory(config.input_path) {
-    match build_graph_from_source(config.input_path, config.specs_dir) {
+    match build_graph_from_source(config.input_path, config.specs_dirs) {
       Some(r) => (r.graph, Some(r.file_hashes))
       None => return
     }
@@ -826,7 +818,7 @@ async fn run_query_async(config : CliConfig) -> Unit {
         @workspace.update_index_if_stale(
           source_dir,
           config.index_dir,
-          config.specs_dir,
+          config.specs_dirs,
           digest_config,
           progress=progress_fn,
         ) {
@@ -973,7 +965,7 @@ fn run_status(config : CliConfig) -> Unit {
     return
   }
   println("Scanning " + source_dir + " for changes...")
-  match build_graph_from_source(source_dir, config.specs_dir) {
+  match build_graph_from_source(source_dir, config.specs_dirs) {
     Some(build_result) => {
       let file_hashes = build_result.file_hashes
       // Compare file hashes against manifest

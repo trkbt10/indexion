@@ -2321,7 +2321,7 @@ fn file_hashes_match(
 ///|
 async fn snapshot_for_config_async(config : SpecAlignConfig) -> AlignSnapshot? {
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir=config.impl_path,
   )
   snapshot_for_config_with_registry_async(config, registry)
@@ -2434,7 +2434,7 @@ async fn snapshot_for_config_with_registry_async(
 ///|
 pub async fn watch_probe_async(config : SpecAlignConfig) -> String? {
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir=config.impl_path,
   )
   watch_probe_with_registry_async(config, registry)

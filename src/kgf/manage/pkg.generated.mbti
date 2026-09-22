@@ -14,6 +14,8 @@ pub fn list_installed_specs() -> Array[KgfSpecInfo]
 
 pub fn list_specs_from_dir(String) -> Array[KgfSpecInfo]
 
+pub fn list_specs_from_dirs(Array[String]) -> Array[KgfResolvedSpec]
+
 pub async fn update_kgfs() -> Unit raise KgfManageError
 
 // Errors
@@ -25,6 +27,12 @@ pub suberror KgfManageError {
 pub fn KgfManageError::to_string(Self) -> String
 
 // Types and methods
+pub struct KgfResolvedSpec {
+  info : KgfSpecInfo
+  layer : Int
+  shadowed : Array[String]
+}
+
 pub struct KgfSpecInfo {
   name : String
   category : String

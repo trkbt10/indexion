@@ -86,7 +86,7 @@ let wiki_backend_registry : Map[String, () -> WikiBackendConfig] = {
 /// Probes each registered wiki spec's home_file and nav_file markers.
 /// Returns the spec language name, or None if no match.
 pub fn detect_wiki_spec(dir : String) -> String? {
-  let registry = @kgf_features.load_registry(specs_dir="kgfs", target_dir=".")
+  let registry = @kgf_features.load_registry(target_dir=".")
   let reg = match registry {
     Some(r) => r
     None => return None

@@ -126,7 +126,10 @@ test "nesting: java nested class owns its own method, outer method returns to ou
     #|    public void outerMethod() {}
     #|}
   // Inner is declared under Outer, qualified as Outer.Inner.
-  assert_eq(nest_parent_of(registry, "java", source, path, "Inner"), "Nest.java::Outer")
+  assert_eq(
+    nest_parent_of(registry, "java", source, path, "Inner"),
+    "Nest.java::Outer",
+  )
   assert_eq(
     nest_symbol_of(registry, "java", source, path, "Inner"),
     "Nest.java::Outer.Inner",
@@ -158,7 +161,10 @@ test "nesting: kotlin nested class, and a top-level fun below it returns to file
     #|    fun outerFun() {}
     #|}
     #|fun topLevel() {}
-  assert_eq(nest_parent_of(registry, "kotlin", source, path, "Inner"), "Nest.kt::Outer")
+  assert_eq(
+    nest_parent_of(registry, "kotlin", source, path, "Inner"),
+    "Nest.kt::Outer",
+  )
   assert_eq(
     nest_symbol_of(registry, "kotlin", source, path, "Inner"),
     "Nest.kt::Outer.Inner",
@@ -174,7 +180,10 @@ test "nesting: kotlin nested class, and a top-level fun below it returns to file
   // Outer's own ClassDecl popped back to the root frame, so topLevel is the
   // file's, not Outer's. The old `|`-joined type stack this replaced needed
   // explicit string surgery to get this right.
-  assert_eq(nest_parent_of(registry, "kotlin", source, path, "topLevel"), "Nest.kt")
+  assert_eq(
+    nest_parent_of(registry, "kotlin", source, path, "topLevel"),
+    "Nest.kt",
+  )
   assert_eq(nest_declares(registry, "kotlin", source, path).length(), 5)
 }
 
@@ -216,7 +225,10 @@ test "nesting: csharp nested class owns its own method" {
     #|    }
     #|    public void OuterMethod() {}
     #|}
-  assert_eq(nest_parent_of(registry, "csharp", source, path, "Inner"), "Nest.cs::Outer")
+  assert_eq(
+    nest_parent_of(registry, "csharp", source, path, "Inner"),
+    "Nest.cs::Outer",
+  )
   assert_eq(
     nest_symbol_of(registry, "csharp", source, path, "Inner"),
     "Nest.cs::Outer.Inner",
@@ -262,7 +274,10 @@ test "nesting: swift nested struct, and a top-level func below it returns to fil
     nest_parent_of(registry, "swift", source, path, "outerFunc"),
     "Nest.swift::Outer",
   )
-  assert_eq(nest_parent_of(registry, "swift", source, path, "topLevel"), "Nest.swift")
+  assert_eq(
+    nest_parent_of(registry, "swift", source, path, "topLevel"),
+    "Nest.swift",
+  )
   assert_eq(nest_declares(registry, "swift", source, path).length(), 5)
 }
 
@@ -284,7 +299,10 @@ test "nesting: swift extension visibility does not leak past the extension" {
     nest_parent_of(registry, "swift", source, path, "inExtension"),
     "Ext.swift::Thing",
   )
-  assert_eq(nest_parent_of(registry, "swift", source, path, "afterExtension"), "")
+  assert_eq(
+    nest_parent_of(registry, "swift", source, path, "afterExtension"),
+    "",
+  )
 }
 
 // ─── Scala ──────────────────────────────────────────────────
@@ -333,7 +351,10 @@ test "nesting: scala multi-parameter case class keeps its members" {
   // comma between two PARAMETERS, so the parameter list never reached its
   // closing paren, the class header ended at its name, and the body was
   // re-parsed at top level.
-  assert_eq(nest_parent_of(registry, "scala", source, path, "Task"), "Params.scala")
+  assert_eq(
+    nest_parent_of(registry, "scala", source, path, "Task"),
+    "Params.scala",
+  )
   assert_eq(
     nest_parent_of(registry, "scala", source, path, "summary"),
     "Params.scala::Task",
@@ -357,7 +378,10 @@ test "nesting: ruby methods belong to their class, nested class under its parent
     #|end
   // Before the header/body split every method hung off the FILE: nothing
   // bound a namespace at all.
-  assert_eq(nest_parent_of(registry, "ruby", source, path, "Inner"), "nest.rb::Outer")
+  assert_eq(
+    nest_parent_of(registry, "ruby", source, path, "Inner"),
+    "nest.rb::Outer",
+  )
   assert_eq(
     nest_symbol_of(registry, "ruby", source, path, "Inner"),
     "nest.rb::Outer::Inner",
@@ -388,7 +412,10 @@ test "nesting: ruby private does not escape the class it was written in" {
   // `private` binds into the class's own frame, so it stops at the matching
   // `end`. Without the frame it hid every later declaration in the file.
   assert_eq(nest_parent_of(registry, "ruby", source, path, "secret"), "")
-  assert_eq(nest_parent_of(registry, "ruby", source, path, "top_level"), "vis.rb")
+  assert_eq(
+    nest_parent_of(registry, "ruby", source, path, "top_level"),
+    "vis.rb",
+  )
 }
 
 // ─── C++ ────────────────────────────────────────────────────
@@ -408,7 +435,10 @@ test "nesting: cpp nested class owns its own method" {
     #|};
   // Before the header/body split nothing ever bound `current_class`, so no
   // method or field of any class was declared at all.
-  assert_eq(nest_parent_of(registry, "cpp", source, path, "Inner"), "nest.cpp::Outer")
+  assert_eq(
+    nest_parent_of(registry, "cpp", source, path, "Inner"),
+    "nest.cpp::Outer",
+  )
   assert_eq(
     nest_symbol_of(registry, "cpp", source, path, "Inner"),
     "nest.cpp::Outer::Inner",
@@ -435,7 +465,10 @@ test "nesting: cpp namespace qualifies the types declared in it" {
     #|    void go();
     #|};
     #|}
-  assert_eq(nest_parent_of(registry, "cpp", source, path, "Thing"), "ns.cpp::app")
+  assert_eq(
+    nest_parent_of(registry, "cpp", source, path, "Thing"),
+    "ns.cpp::app",
+  )
   assert_eq(
     nest_symbol_of(registry, "cpp", source, path, "Thing"),
     "ns.cpp::app::Thing",
@@ -461,7 +494,10 @@ test "nesting: c struct fields and enum values belong to their type" {
   // `current_enum`, so no field or enum value was declared at all.
   assert_eq(nest_parent_of(registry, "c", source, path, "a"), "nest.c::Outer")
   assert_eq(nest_parent_of(registry, "c", source, path, "RED"), "nest.c::Color")
-  assert_eq(nest_parent_of(registry, "c", source, path, "GREEN"), "nest.c::Color")
+  assert_eq(
+    nest_parent_of(registry, "c", source, path, "GREEN"),
+    "nest.c::Color",
+  )
   // The enum's values are not claimed by the struct that precedes it: the
   // struct's frame was popped at its own StructDecl.
   assert_eq(nest_declares(registry, "c", source, path).length(), 5)
@@ -495,7 +531,10 @@ test "nesting: zig nested struct owns its own field, later field returns to oute
     #|    };
     #|    after: i32,
     #|};
-  assert_eq(nest_parent_of(registry, "zig", source, path, "Inner"), "nest.zig::Outer")
+  assert_eq(
+    nest_parent_of(registry, "zig", source, path, "Inner"),
+    "nest.zig::Outer",
+  )
   assert_eq(
     nest_symbol_of(registry, "zig", source, path, "Inner"),
     "nest.zig::Outer.Inner",
@@ -545,7 +584,10 @@ test "nesting: protobuf rpc belongs to its service" {
     #|service Svc {
     #|  rpc Go(Req) returns (Res);
     #|}
-  assert_eq(nest_parent_of(registry, "protobuf", source, path, "Svc"), "svc.proto")
+  assert_eq(
+    nest_parent_of(registry, "protobuf", source, path, "Svc"),
+    "svc.proto",
+  )
   assert_eq(
     nest_parent_of(registry, "protobuf", source, path, "Go"),
     "svc.proto::Svc",
@@ -565,7 +607,10 @@ test "nesting: elixir nested defmodule owns its own def" {
     #|  end
     #|  def outer_fun, do: 2
     #|end
-  assert_eq(nest_parent_of(registry, "elixir", source, path, "Inner"), "nest.ex::Outer")
+  assert_eq(
+    nest_parent_of(registry, "elixir", source, path, "Inner"),
+    "nest.ex::Outer",
+  )
   assert_eq(
     nest_symbol_of(registry, "elixir", source, path, "Inner"),
     "nest.ex::Outer.Inner",
@@ -594,7 +639,10 @@ test "nesting: ocaml nested module is declared under its parent module" {
     #|    let inner_fn x = x
     #|  end
     #|end
-  assert_eq(nest_parent_of(registry, "ocaml", source, path, "Inner"), "nest.ml::Outer")
+  assert_eq(
+    nest_parent_of(registry, "ocaml", source, path, "Inner"),
+    "nest.ml::Outer",
+  )
   assert_eq(
     nest_symbol_of(registry, "ocaml", source, path, "Inner"),
     "nest.ml::Outer.Inner",
@@ -625,7 +673,10 @@ test "nesting: typescript members stay on their own type and export chain surviv
   )
   // `after` is a top-level function: Outer's and Shape's frames were both
   // popped by their own declaration rules.
-  assert_eq(nest_parent_of(registry, "typescript", source, path, "after"), "nest.ts")
+  assert_eq(
+    nest_parent_of(registry, "typescript", source, path, "after"),
+    "nest.ts",
+  )
   assert_eq(nest_declares(registry, "typescript", source, path).length(), 5)
 }
 
@@ -642,7 +693,10 @@ test "nesting: javascript class members stay on the class, function after it on 
     nest_parent_of(registry, "javascript", source, path, "method"),
     "nest.js::Outer",
   )
-  assert_eq(nest_parent_of(registry, "javascript", source, path, "after"), "nest.js")
+  assert_eq(
+    nest_parent_of(registry, "javascript", source, path, "after"),
+    "nest.js",
+  )
 }
 
 // ─── PHP / Dart / Go ────────────────────────────────────────
@@ -661,7 +715,10 @@ test "nesting: php top-level function after a class is not attributed to it" {
     nest_parent_of(registry, "php", source, path, "outerMethod"),
     "nest.php::Outer",
   )
-  assert_eq(nest_parent_of(registry, "php", source, path, "topLevel"), "nest.php")
+  assert_eq(
+    nest_parent_of(registry, "php", source, path, "topLevel"),
+    "nest.php",
+  )
 }
 
 ///|
@@ -677,7 +734,10 @@ test "nesting: dart top-level function after a class is not attributed to it" {
     nest_parent_of(registry, "dart", source, path, "outerMethod"),
     "nest.dart::Outer",
   )
-  assert_eq(nest_parent_of(registry, "dart", source, path, "topLevel"), "nest.dart")
+  assert_eq(
+    nest_parent_of(registry, "dart", source, path, "topLevel"),
+    "nest.dart",
+  )
 }
 
 ///|
@@ -696,8 +756,17 @@ test "nesting: go anonymous inner struct does not steal the fields after it" {
   // Go's anonymous inner struct has no name of its own, so all three fields
   // belong to Outer — and `After`, written after the inner body, proves the
   // binding did not outlive it.
-  assert_eq(nest_parent_of(registry, "go", source, path, "Deep"), "nest.go::Outer")
-  assert_eq(nest_parent_of(registry, "go", source, path, "Inner"), "nest.go::Outer")
-  assert_eq(nest_parent_of(registry, "go", source, path, "After"), "nest.go::Outer")
+  assert_eq(
+    nest_parent_of(registry, "go", source, path, "Deep"),
+    "nest.go::Outer",
+  )
+  assert_eq(
+    nest_parent_of(registry, "go", source, path, "Inner"),
+    "nest.go::Outer",
+  )
+  assert_eq(
+    nest_parent_of(registry, "go", source, path, "After"),
+    "nest.go::Outer",
+  )
   assert_eq(nest_declares(registry, "go", source, path).length(), 4)
 }

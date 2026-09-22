@@ -25,6 +25,61 @@ pub fn list_specs_from_dir(kgfs_dir : String) -> Array[KgfSpecInfo] {
 }
 
 ///|
+/// List the specs of a layered spec set, resolved the way the registry
+/// resolves them: directories are walked in order, and a spec whose language
+/// name repeats replaces the earlier one.
+///
+/// This is the listing counterpart of `KGFRegistry::load_from_dirs`, and the
+/// SoT for reporting which file won for a language. Within one directory the
+/// last file wins, matching the registry's sorted traversal.
+pub fn list_specs_from_dirs(dirs : Array[String]) -> Array[KgfResolvedSpec] {
+  let by_name : Map[String, KgfResolvedSpec] = Map([])
+  for layer, dir in dirs {
+    for info in list_specs_from_dir(dir) {
+      let shadowed : Array[String] = []
+      match by_name.get(info.name) {
+        Some(previous) => {
+          for path in previous.shadowed {
+            shadowed.push(path)
+          }
+          shadowed.push(previous.info.path)
+        }
+        None => ()
+      }
+      by_name.set(info.name, { info, layer, shadowed, })
+    }
+  }
+  let resolved : Array[KgfResolvedSpec] = []
+  for entry in by_name {
+    resolved.push(entry.1)
+  }
+  sort_resolved_specs(resolved)
+  resolved
+}
+
+///|
+/// Sort resolved specs by category then name, matching `sort_specs`.
+fn sort_resolved_specs(specs : Array[KgfResolvedSpec]) -> Unit {
+  for i = 0; i < specs.length(); i = i + 1 {
+    for j = i + 1; j < specs.length(); j = j + 1 {
+      let swap = if specs[j].info.category < specs[i].info.category {
+        true
+      } else if specs[j].info.category == specs[i].info.category &&
+        specs[j].info.name < specs[i].info.name {
+        true
+      } else {
+        false
+      }
+      if swap {
+        let tmp = specs[i]
+        specs[i] = specs[j]
+        specs[j] = tmp
+      }
+    }
+  }
+}
+
+///|
 /// Recursively scan directory for .kgf files and extract metadata.
 fn collect_specs_recursive(
   dir : String,

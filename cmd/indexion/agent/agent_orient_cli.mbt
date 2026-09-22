@@ -19,9 +19,7 @@ fn orient_command() -> @argparse.Command {
       ),
     ],
     options=[
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
       @argparse.OptionArg(
         "cache-dir",
         about="Directory for the prebuilt agent orientation map",
@@ -146,7 +144,7 @@ fn orient_config_from_matches(
       Some(arr) if arr.length() > 0 => arr
       _ => base.paths
     },
-    specs_dir: @common.arg_str(matches, "specs-dir", base.specs_dir),
+    specs_dirs: @common.arg_specs_dirs(matches),
     cache_dir: @common.arg_str(matches, "cache-dir", base.cache_dir),
     wiki_dir: @common.arg_str(matches, "wiki-dir", base.wiki_dir),
     no_update: @common.arg_flag(matches, "no-update", base.no_update),

@@ -16,35 +16,94 @@ pub struct KGFRegistry {
   /// the full claim list so the conflict can be reported instead of being
   /// silently resolved (see `get_source_conflicts`).
   source_claims : Map[String, Array[String]]
+  /// Language name -> path of the `.kgf` file the winning spec was read from.
+  /// Empty for specs registered programmatically (e.g. from an in-memory
+  /// string in tests), so callers must treat a missing entry as "unknown
+  /// origin" rather than "not registered".
+  spec_origins : Map[String, String]
+  /// Layer roots that were loaded, in load order. Index 0 is the base set and
+  /// every following entry is an overlay layered on top of it. Used by callers
+  /// that need to report which layer a spec's origin path belongs to.
+  layer_roots : Array[String]
 }
 
 ///|
 /// Create an empty registry.
 pub fn KGFRegistry::new() -> KGFRegistry {
-  { specs: {}, ext_to_lang: {}, lang_to_doc_spec: {}, source_claims: {}, }
+  {
+    specs: {},
+    ext_to_lang: {},
+    lang_to_doc_spec: {},
+    source_claims: {},
+    spec_origins: {},
+    layer_roots: [],
+  }
 }
 
 ///|
 /// Load all KGF specs from a directory (recursively including subdirectories).
 ///
-/// Loading is two-phase because of `extends:`. A derived spec's base may live
-/// in a sibling subdirectory that has not been traversed yet, so phase one
-/// only splits each `.kgf` file into its raw sections, and phase two resolves
-/// inheritance and registers the fully merged specs. Every spec handed out by
-/// the registry is therefore already resolved — no consumer has to know that
-/// `extends:` exists.
+/// Single-directory case of `load_from_dirs`; both share the same loading,
+/// inheritance and override rules so there is one implementation to reason
+/// about.
 pub fn KGFRegistry::load_from_dir(dir : String) -> KGFRegistry {
+  KGFRegistry::load_from_dirs([dir])
+}
+
+///|
+/// Load KGF specs from several directories, layered in order.
+///
+/// `dirs[0]` is the base set; each following directory is an overlay applied
+/// on top of the result so far. A spec whose `language:` header matches one
+/// already loaded **replaces** it wholesale — by language name, not by file
+/// path or by the category subdirectory it happens to live in. That lets a
+/// project drop a single `rust.kgf` into its overlay directory and keep every
+/// other installed spec.
+///
+/// Loading is two-phase because of `extends:`. A derived spec's base may live
+/// in a sibling subdirectory that has not been traversed yet — or, once
+/// overlays exist, in a different layer entirely — so phase one only splits
+/// each `.kgf` file into its raw sections, and phase two resolves inheritance
+/// and registers the fully merged specs. Every spec handed out by the registry
+/// is therefore already resolved; no consumer has to know that `extends:`
+/// exists.
+///
+/// Crucially, the layers are flattened *before* inheritance is resolved. That
+/// is what makes the two features compose: an overlay spec may extend a spec
+/// that only the base layer provides, and an overlay may replace a base spec
+/// that other specs extend — the derived specs then inherit from the overlay's
+/// version, because by resolution time there is only one spec per language.
+///
+/// Within one directory the pre-existing rules still apply: entries are walked
+/// in sorted order and a domain-specific spec (one declaring `special_files`
+/// or `detection_scope: overlay`) does not steal an extension from a
+/// general-purpose spec.
+pub fn KGFRegistry::load_from_dirs(dirs : Array[String]) -> KGFRegistry {
   let registry = KGFRegistry::new()
-  let sources : Array[@parser.KGFSpecSource] = []
-  collect_spec_sources(sources, dir)
-  registry.register_spec_sources(sources)
+  let sources : Array[LayeredSpecSource] = []
+  for dir in dirs {
+    registry.layer_roots.push(dir)
+    collect_spec_sources(sources, dir)
+  }
+  registry.register_layered_sources(sources)
   registry
 }
 
 ///|
-/// Recursively split every `.kgf` file under `dir` into its raw sections.
+/// A spec source together with the file it was read from, so the origin
+/// survives the flatten-then-resolve pipeline and can be reported by
+/// `kgf list`.
+priv struct LayeredSpecSource {
+  source : @parser.KGFSpecSource
+  origin : String
+}
+
+///|
+/// Recursively split every `.kgf` file under `dir` into its raw sections,
+/// appending them to `sources` in traversal order and remembering each one's
+/// path.
 fn collect_spec_sources(
-  sources : Array[@parser.KGFSpecSource],
+  sources : Array[LayeredSpecSource],
   dir : String,
 ) -> Unit {
   try {
@@ -65,7 +124,10 @@ fn collect_spec_sources(
       let path = dir + "/" + entry
       if entry.has_suffix(".kgf") {
         let content = @fs.read_file_to_string(path)
-        sources.push(@parser.parse_kgf_source(content))
+        sources.push({
+          source: @parser.parse_kgf_source(content),
+          origin: path,
+        })
       } else if @fs.is_dir(path) && !entry.has_prefix(".") {
         // Recurse into subdirectory
         collect_spec_sources(sources, path)
@@ -73,6 +135,45 @@ fn collect_spec_sources(
     }
   } catch {
     _ => ()
+  }
+}
+
+///|
+/// Flatten a layered source list down to one source per language — the last
+/// one collected wins, which is the later layer — and register the result.
+///
+/// Registration order follows first appearance, so a spec an overlay replaces
+/// keeps the position its base-layer file had. That keeps the winner of a
+/// contested source pattern stable whether or not an unrelated overlay is
+/// present.
+fn KGFRegistry::register_layered_sources(
+  self : KGFRegistry,
+  sources : Array[LayeredSpecSource],
+) -> Unit {
+  let by_language : Map[String, LayeredSpecSource] = Map([])
+  let order : Array[String] = []
+  for entry in sources {
+    let lang = entry.source.get_language()
+    if !by_language.contains(lang) {
+      order.push(lang)
+    }
+    by_language.set(lang, entry)
+  }
+  let source_by_language : Map[String, @parser.KGFSpecSource] = Map([])
+  for entry in by_language {
+    source_by_language.set(entry.0, entry.1.source)
+  }
+  for lang in order {
+    match by_language.get(lang) {
+      Some(entry) => {
+        let (resolved, _) = resolve_spec_source(
+          entry.source,
+          source_by_language,
+        )
+        self.register_spec(resolved.to_spec(), origin=entry.origin)
+      }
+      None => ()
+    }
   }
 }
 
@@ -89,14 +190,11 @@ pub fn KGFRegistry::register_spec_sources(
   self : KGFRegistry,
   sources : Array[@parser.KGFSpecSource],
 ) -> Unit {
-  let by_language : Map[String, @parser.KGFSpecSource] = Map([])
+  let layered : Array[LayeredSpecSource] = []
   for source in sources {
-    by_language.set(source.get_language(), source)
+    layered.push({ source, origin: "", })
   }
-  for source in sources {
-    let (resolved, _) = resolve_spec_source(source, by_language)
-    self.register_spec(resolved.to_spec())
-  }
+  self.register_layered_sources(layered)
 }
 
 ///|
@@ -171,12 +269,20 @@ pub fn resolve_spec_source(
 
 ///|
 /// Register a single spec into the registry.
+///
+/// `origin` is the path of the `.kgf` file the spec was read from; callers
+/// that build a spec in memory leave it empty. It is recorded so `kgf list`
+/// can report which file won for a language once overlays are in play.
 pub fn KGFRegistry::register_spec(
   self : KGFRegistry,
   spec : @types.KGFSpec,
+  origin? : String = "",
 ) -> Unit {
   let lang = spec.get_language()
   self.specs.set(lang, spec)
+  if origin.length() > 0 {
+    self.spec_origins.set(lang, origin)
+  }
 
   // Check if this is a doc spec (e.g., typescript-doc)
   if lang.has_suffix("-doc") {
@@ -236,6 +342,28 @@ pub fn KGFRegistry::get_spec(
   lang : String,
 ) -> @types.KGFSpec? {
   self.specs.get(lang)
+}
+
+///|
+/// Get the path of the `.kgf` file the registered spec for `lang` came from.
+/// Returns None for languages that are not registered, and for specs that were
+/// registered without an origin (e.g. parsed from an in-memory string).
+pub fn KGFRegistry::get_spec_origin(
+  self : KGFRegistry,
+  lang : String,
+) -> String? {
+  self.spec_origins.get(lang)
+}
+
+///|
+/// Get the layer roots this registry was loaded from, in load order.
+/// Index 0 is the base directory; later entries are overlays.
+pub fn KGFRegistry::get_layer_roots(self : KGFRegistry) -> Array[String] {
+  let roots : Array[String] = []
+  for root in self.layer_roots {
+    roots.push(root)
+  }
+  roots
 }
 
 ///|

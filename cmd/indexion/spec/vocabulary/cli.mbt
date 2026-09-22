@@ -32,10 +32,7 @@ pub fn command() -> @argparse.Command {
         about="Check direction: both, source-to-target, target-to-source",
         default_values=[direction_both],
       ),
-      @argparse.OptionArg(
-        "specs-dir",
-        about="KGF specs directory (default: auto-detect)",
-      ),
+      @help.specs_dir_option(),
       @argparse.OptionArg("format", about="Output format: text, md, json", default_values=[
         output_format_text,
       ]),
@@ -58,13 +55,7 @@ fn config_from_matches(matches : @argparse.Matches) -> VocabularyConfig {
     format: @common.get_option(matches, "format", output_format_text),
   }
   config = { ..config, output: @common.get_option(matches, "output", ""), }
-  match matches.values.get("specs-dir") {
-    Some(vals) =>
-      if vals.length() > 0 && vals[0].length() > 0 {
-        config = { ..config, specs_dir: Some(vals[0]), }
-      }
-    None => ()
-  }
+  config = { ..config, specs_dirs: @common.arg_specs_dirs(matches), }
   config
 }
 

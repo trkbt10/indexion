@@ -21,7 +21,7 @@ pub struct McpConfig {
   transport : String
   port : Int
   host : String
-  specs_dir : String
+  specs_dirs : Array[String]
   workspace_dir : String
 }
 
@@ -31,7 +31,7 @@ pub fn McpConfig::default() -> McpConfig {
     transport: "stdio",
     port: 3741,
     host: "127.0.0.1",
-    specs_dir: "kgfs",
+    specs_dirs: [],
     workspace_dir: ".",
   }
 }
@@ -57,13 +57,7 @@ pub fn McpConfig::from_matches(matches : @argparse.Matches) -> McpConfig {
     Some(vals) => if vals.length() > 0 { config = { ..config, host: vals[0], } }
     None => ()
   }
-  match matches.values.get("specs-dir") {
-    Some(vals) =>
-      if vals.length() > 0 {
-        config = { ..config, specs_dir: vals[0], }
-      }
-    None => ()
-  }
+  config = { ..config, specs_dirs: @common.arg_specs_dirs(matches), }
   match matches.values.get("workspace") {
     Some(vals) =>
       if vals.length() > 0 {
@@ -89,9 +83,7 @@ pub fn command() -> @argparse.Command {
       @argparse.OptionArg("host", about="HTTP server host", default_values=[
         "127.0.0.1",
       ]),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
     ],
     positionals=[
       @argparse.PositionArg(
@@ -135,8 +127,10 @@ pub fn McpConfig::apply_file_config(
   }
   match file.specs_dir {
     Some(v) =>
-      if config.specs_dir == defaults.specs_dir {
-        config = { ..config, specs_dir: v, }
+      // The config file carries one directory; it seeds the chain only when
+      // the CLI did not already supply one.
+      if config.specs_dirs.length() == defaults.specs_dirs.length() {
+        config = { ..config, specs_dirs: @common.specs_dirs_of(v), }
       }
     None => ()
   }

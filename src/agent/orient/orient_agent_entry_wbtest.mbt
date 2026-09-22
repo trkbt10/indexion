@@ -9,7 +9,7 @@ fn orient_entry_config(name : String, no_update : Bool) -> AgentOrientConfig {
   {
     task: "orient vcdb implementation cache workflow",
     paths: [root + "/repo"],
-    specs_dir: "./kgfs",
+    specs_dirs: ["./kgfs"],
     cache_dir: root + "/cache",
     wiki_dir: root + "/wiki",
     no_update,

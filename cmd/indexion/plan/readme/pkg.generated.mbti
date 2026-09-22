@@ -19,7 +19,7 @@ pub(all) struct ReadmePlanConfig {
   target_dir : String
   output : String
   format : String
-  specs_dir : String
+  specs_dirs : Array[String]
   template : String
   plans_dir : String
 }
@@ -29,4 +29,3 @@ pub fn ReadmePlanConfig::from_matches(@argparse.Matches) -> Self
 // Type aliases
 
 // Traits
-

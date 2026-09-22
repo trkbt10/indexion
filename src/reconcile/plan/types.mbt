@@ -5,7 +5,7 @@ pub(all) struct ReconcileConfig {
   output : String
   format : String
   documents : @config_paths.ReconcileDocumentScope
-  specs_dir : String
+  specs_dirs : Array[String]
   index_dir : String
   config_path : String
   review_results_path : String
@@ -27,7 +27,7 @@ pub fn ReconcileConfig::default() -> ReconcileConfig {
     output: "",
     format: "json",
     documents: @config_paths.resolve_reconcile_document_scope("custom"),
-    specs_dir: "",
+    specs_dirs: [],
     index_dir: "",
     config_path: "",
     review_results_path: "",
@@ -178,7 +178,7 @@ pub(all) struct CacheState {
 /// Snapshot of configuration settings stored within the reconcile report.
 pub(all) struct ReconcileReportConfig {
   target_dir : String
-  specs_dir : String
+  specs_dirs : Array[String]
   index_dir : String
   review_results_path : String
   doc_scope : String

@@ -45,7 +45,7 @@ fn rfc2795_impl_path() -> String {
 
 ///|
 let shared_test_registry : @registry.KGFRegistry = @kgf_features.load_registry_or_empty(
-  specs_dir="kgfs",
+  specs_dirs=[],
   target_dir=".",
 )
 
@@ -167,11 +167,7 @@ test "spec-draft: bullet list yields numbered requirements" {
   let root = temp_dir("fixture")
   let path = fixture_doc(root)
   let report = match
-    test_report({
-      ..DraftConfig::default(),
-      source_path: path,
-      specs_dir: "kgfs",
-    }) {
+    test_report({ ..DraftConfig::default(), source_path: path, specs_dirs: [], }) {
     Some(value) => value
     None => fail("expected draft report")
   }
@@ -188,7 +184,7 @@ test "spec-draft: render markdown emits requirement headings" {
     test_run_to_string({
       ..DraftConfig::default(),
       source_path: path,
-      specs_dir: "kgfs",
+      specs_dirs: [],
       format: "markdown",
     }) {
     Some(value) => value
@@ -206,7 +202,7 @@ async test "spec-draft: RFC 3492 fixture drafts and aligns under current benchma
     test_run_to_string({
       ..DraftConfig::default(),
       source_path: rfc3492_spec_path(),
-      specs_dir: "kgfs",
+      specs_dirs: [],
     }) {
     Some(value) => value
     None => fail("expected RFC 3492 draft")
@@ -222,7 +218,7 @@ async test "spec-draft: RFC 3492 fixture drafts and aligns under current benchma
       ..@spec_align.SpecAlignConfig::default(),
       spec_path: draft_path,
       impl_path: rfc3492_impl_path(),
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: draft_dir + "/cache",
       threshold: rfc_fixture_threshold,
     }) {
@@ -255,7 +251,7 @@ async test "spec-draft: RFC 3492 fixture drafts and aligns under current benchma
       subcommand: "status",
       spec_path: draft_path,
       impl_path: rfc3492_impl_path(),
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: draft_dir + "/cache",
       threshold: rfc_fixture_threshold,
       fail_on: "drifted",
@@ -270,7 +266,7 @@ async test "spec-draft: RFC 3492 fixture drafts and aligns under current benchma
       subcommand: "suggest",
       spec_path: draft_path,
       impl_path: rfc3492_impl_path(),
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: draft_dir + "/cache",
       threshold: rfc_fixture_threshold,
       direction: "both",
@@ -290,7 +286,7 @@ async test "spec-draft: RFC 2795 fixture drafts and produces drift on code table
     test_run_to_string({
       ..DraftConfig::default(),
       source_path: rfc2795_spec_path(),
-      specs_dir: "kgfs",
+      specs_dirs: [],
     }) {
     Some(value) => value
     None => fail("expected RFC 2795 draft")
@@ -307,7 +303,7 @@ async test "spec-draft: RFC 2795 fixture drafts and produces drift on code table
       ..@spec_align.SpecAlignConfig::default(),
       spec_path: draft_path,
       impl_path: rfc2795_impl_path(),
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: draft_dir + "/cache",
       threshold: rfc_fixture_threshold,
     }) {
@@ -354,7 +350,7 @@ async test "spec-draft: RFC 3492 mutated implementation is detected as drift" {
     test_run_to_string({
       ..DraftConfig::default(),
       source_path: rfc3492_spec_path(),
-      specs_dir: "kgfs",
+      specs_dirs: [],
     }) {
     Some(value) => value
     None => fail("expected RFC 3492 draft")
@@ -368,7 +364,7 @@ async test "spec-draft: RFC 3492 mutated implementation is detected as drift" {
       ..@spec_align.SpecAlignConfig::default(),
       spec_path: draft_path,
       impl_path,
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: root + "/cache",
       threshold: rfc_fixture_threshold,
     }) {
@@ -386,7 +382,7 @@ async test "spec-draft: RFC 3492 mutated implementation is detected as drift" {
       subcommand: "status",
       spec_path: draft_path,
       impl_path,
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: root + "/cache",
       threshold: rfc_fixture_threshold,
       fail_on: "drifted",
@@ -401,7 +397,7 @@ async test "spec-draft: RFC 3492 mutated implementation is detected as drift" {
       subcommand: "suggest",
       spec_path: draft_path,
       impl_path,
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: root + "/cache",
       threshold: rfc_fixture_threshold,
       direction: "both",
@@ -420,7 +416,7 @@ async test "spec-draft: RFC 2795 mutated implementation is detected as drift" {
     test_run_to_string({
       ..DraftConfig::default(),
       source_path: rfc2795_spec_path(),
-      specs_dir: "kgfs",
+      specs_dirs: [],
     }) {
     Some(value) => value
     None => fail("expected RFC 2795 draft")
@@ -434,7 +430,7 @@ async test "spec-draft: RFC 2795 mutated implementation is detected as drift" {
       ..@spec_align.SpecAlignConfig::default(),
       spec_path: draft_path,
       impl_path,
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: root + "/cache",
       threshold: rfc_fixture_threshold,
     }) {
@@ -456,7 +452,7 @@ async test "spec-draft: RFC 2795 mutated implementation is detected as drift" {
       subcommand: "status",
       spec_path: draft_path,
       impl_path,
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: root + "/cache",
       threshold: rfc_fixture_threshold,
       fail_on: "drifted",
@@ -471,7 +467,7 @@ async test "spec-draft: RFC 2795 mutated implementation is detected as drift" {
       subcommand: "suggest",
       spec_path: draft_path,
       impl_path,
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: root + "/cache",
       threshold: rfc_fixture_threshold,
       direction: "both",
@@ -490,7 +486,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
     test_run_to_string({
       ..DraftConfig::default(),
       source_path: "cmd/indexion/spec/align/README.md",
-      specs_dir: "kgfs",
+      specs_dirs: [],
     }) {
     Some(value) => value
     None => fail("expected repo draft")
@@ -503,7 +499,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
       ..@spec_align.SpecAlignConfig::default(),
       spec_path: draft_path,
       impl_path: "cmd/indexion/spec",
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: draft_dir + "/cache",
       threshold: 0.05,
     }) {
@@ -517,7 +513,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
       ..@spec_align.SpecAlignConfig::default(),
       spec_path: draft_path,
       impl_path: "cmd/indexion/spec",
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: draft_dir + "/cache",
       threshold: 0.05,
       format: "json",
@@ -532,7 +528,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
       subcommand: "suggest",
       spec_path: draft_path,
       impl_path: "cmd/indexion/spec",
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: draft_dir + "/cache",
       threshold: 0.05,
       direction: "both",
@@ -548,7 +544,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
     subcommand: "suggest",
     spec_path: draft_path,
     impl_path: "cmd/indexion/spec",
-    specs_dir: "kgfs",
+    specs_dirs: [],
     cache_dir: draft_dir + "/cache",
     threshold: 0.05,
     direction: "both",
@@ -578,7 +574,7 @@ async test "spec-draft: repo README can be drafted and aligned" {
       subcommand: "status",
       spec_path: draft_path,
       impl_path: "cmd/indexion/spec",
-      specs_dir: "kgfs",
+      specs_dirs: [],
       cache_dir: draft_dir + "/cache",
       threshold: 0.05,
       fail_on: "none",

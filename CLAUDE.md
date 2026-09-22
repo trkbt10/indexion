@@ -118,6 +118,17 @@ CLIコマンド共通ユーティリティ。新しいCLIユーティリティ�
 | `split_display_name(name)` | `"pkg:path"` → `("pkg", "path")` 分割 |
 | `get_dirname_prefix(name)` | display_name の `:` 前部分 |
 | `get_relative_part(name)` | display_name の `:` 後部分 |
+| `arg_specs_dirs(matches, key~)` | 反復可能な `--specs-dir` → KGFスペックチェーン（SoT） |
+| `specs_dirs_of(specs_dir)` | 単一のスペックディレクトリ文字列 → チェーン |
+
+### `@help`（cmd/indexion/help/options.mbt）
+
+CLIオプション定義のSoT。複数コマンドで共有する `about=` 文言とオプション定義はここに置く。
+
+| 項目 | 用途 |
+|------|------|
+| `SPECS_DIR_AUTO` | `--specs-dir` の「未指定＝auto-detect」センチネル |
+| `specs_dir_option(name~, global~)` | 反復可能な `--specs-dir` 定義（SoT）。各コマンドで手書きしない |
 
 ### `@config`（src/config/app.mbt）
 
@@ -139,6 +150,10 @@ OS標準ディレクトリ解決。新しいOS別パスが必要な場合は `re
 | `find_last_char(text, target)` | 最後の文字位置検索（SoT） |
 | `basename(path)`, `extension(path)` | ファイル名・拡張子抽出 |
 | `relative_to(base, path)` | 相対パス計算 |
+| `find_kgfs_dir(...)` | ベーススペックセットの探索（SoT） |
+| `find_kgfs_overlay_dirs(...)` | プロジェクトローカル `.indexion/kgfs/` の探索 |
+| `resolve_kgfs_dirs(...)` | ベース＋オーバーレイの順序付きチェーン合成（SoT） |
+| `KGFS_OVERLAY_SUBDIR` / `kgfs_overlay_relative()` | オーバーレイのディレクトリ名・相対パス |
 
 ### `@kgf_features`（src/kgf/features/）
 
@@ -146,8 +161,9 @@ KGFベースの言語非依存機能。言語固有のハードコーディン�
 
 | 関数 | 用途 |
 |------|------|
-| `load_registry(specs_dir~, target_dir~, target_dirs~)` | KGFレジストリ読み込み（SoT）。`specs_dir="kgfs"` はauto-detection |
-| `load_registry_or_empty(specs_dir~, target_dir~, target_dirs~)` | 上記の非Optional版。空Registryフォールバック |
+| `resolve_specs_dirs(specs_dir~, specs_dirs~, target_dir~, target_dirs~)` | スペックディレクトリチェーンの解決（`@config.resolve_kgfs_dirs` に委譲） |
+| `load_registry(specs_dir~, specs_dirs~, target_dir~, target_dirs~)` | KGFレジストリ読み込み（SoT）。`specs_dirs=[]` かつ `specs_dir="kgfs"` はauto-detection＋`.indexion/kgfs/` オーバーレイ |
+| `load_registry_or_empty(specs_dir~, specs_dirs~, target_dir~, target_dirs~)` | 上記の非Optional版。空Registryフォールバック |
 | `extract_pub_declarations(content, path, registry)` | 公開宣言抽出（`pub fn`等のハードコーディング禁止） |
 | `count_pub_declarations(content, path, registry)` | 公開宣言カウント |
 | `build_line_func_map(content, path, registry)` | 行番号→関数名マップ |

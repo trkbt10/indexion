@@ -3,6 +3,7 @@ package "trkbt10/indexion/cmd/indexion/plan/reconcile"
 
 import {
   "moonbitlang/core/argparse",
+  "trkbt10/indexion/src/coverage",
   "trkbt10/indexion/src/reconcile/plan",
   "trkbt10/indexion/src/reconcile/tracking",
 }
@@ -15,6 +16,8 @@ pub fn resolve_config_from_matches(@argparse.Matches) -> @plan.ReconcileConfig
 pub async fn run_matches(@argparse.Matches) -> Unit
 
 pub async fn run_to_string(@plan.ReconcileConfig) -> String?
+
+pub fn to_coverage_report(String, @plan.ReconcileReport) -> @coverage.CoverageReport
 
 // Errors
 
@@ -62,4 +65,3 @@ pub using @tracking {type TimestampInfo}
 pub using @plan {type VocabularyDivergence}
 
 // Traits
-

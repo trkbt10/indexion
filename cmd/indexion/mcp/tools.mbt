@@ -97,7 +97,7 @@ fn validate_path(path : String) -> Bool {
 
 ///|
 fn register_explore(server : @mcp_server.McpServer, config : McpConfig) -> Unit {
-  let specs_dir = config.specs_dir
+  let specs_dirs = config.specs_dirs
   server.register_tool(
     {
       name: "explore",
@@ -141,7 +141,7 @@ fn register_explore(server : @mcp_server.McpServer, config : McpConfig) -> Unit 
         extensions: [],
         includes: json_string_array(params, "includes"),
         excludes: json_string_array(params, "excludes"),
-        specs_dir,
+        specs_dirs,
       }
       match @explore_cli.run_to_json(explore_config) {
         Some(result) => @mcp_types.text_result(result)
@@ -156,7 +156,7 @@ fn register_doc_graph(
   server : @mcp_server.McpServer,
   config : McpConfig,
 ) -> Unit {
-  let specs_dir = config.specs_dir
+  let specs_dirs = config.specs_dirs
   server.register_tool(
     {
       name: "doc_graph",
@@ -191,7 +191,7 @@ fn register_doc_graph(
       }
       let graph_config : @doc_graph_cli.GraphConfig = {
         output: "",
-        specs_dir,
+        specs_dirs,
         title: json_string(params, "title", "Module Dependencies"),
         format: json_string(params, "format", "mermaid"),
         input_paths,
@@ -209,7 +209,7 @@ fn register_kgf_tokens(
   server : @mcp_server.McpServer,
   config : McpConfig,
 ) -> Unit {
-  let specs_dir = config.specs_dir
+  let specs_dirs = config.specs_dirs
   server.register_tool(
     {
       name: "kgf_tokens",
@@ -230,7 +230,7 @@ fn register_kgf_tokens(
         return @mcp_types.error_result("Valid file path required")
       }
       let spec = json_string(params, "spec", "")
-      match @kgf_cli.tokenize_json(file, spec, specs_dir) {
+      match @kgf_cli.tokenize_json(file, spec, specs_dirs) {
         Some(result) => @mcp_types.text_result(result)
         None => @mcp_types.error_result("Failed to tokenize file")
       }
@@ -243,7 +243,7 @@ fn register_kgf_edges(
   server : @mcp_server.McpServer,
   config : McpConfig,
 ) -> Unit {
-  let specs_dir = config.specs_dir
+  let specs_dirs = config.specs_dirs
   server.register_tool(
     {
       name: "kgf_edges",
@@ -264,7 +264,7 @@ fn register_kgf_edges(
         return @mcp_types.error_result("Valid file path required")
       }
       let spec = json_string(params, "spec", "")
-      match @kgf_cli.edges_json(file, spec, specs_dir) {
+      match @kgf_cli.edges_json(file, spec, specs_dirs) {
         Some(result) => @mcp_types.text_result(result)
         None => @mcp_types.error_result("Failed to extract edges")
       }
@@ -277,7 +277,7 @@ fn register_plan_refactor(
   server : @mcp_server.McpServer,
   config : McpConfig,
 ) -> Unit {
-  let specs_dir = config.specs_dir
+  let specs_dirs = config.specs_dirs
   server.register_tool(
     {
       name: "plan_refactor",
@@ -327,7 +327,7 @@ fn register_plan_refactor(
         format: json_string(params, "format", "md"),
         style: json_string(params, "style", "raw"),
         project_name: json_string(params, "projectName", ""),
-        specs_dir,
+        specs_dirs,
       }
       match @plan_refactor.run_to_string(refactor_config) {
         Some(result) => @mcp_types.text_result(result)
@@ -342,7 +342,7 @@ fn register_plan_documentation(
   server : @mcp_server.McpServer,
   config : McpConfig,
 ) -> Unit {
-  let specs_dir = config.specs_dir
+  let specs_dirs = config.specs_dirs
   server.register_tool(
     {
       name: "plan_documentation",
@@ -377,7 +377,7 @@ fn register_plan_documentation(
         format: json_string(params, "format", "md"),
         template: json_string(params, "template", ""),
         project_name: json_string(params, "projectName", ""),
-        specs_dir,
+        specs_dirs,
       }
       match @plan_doc.run_to_string(doc_config) {
         Some(result) => @mcp_types.text_result(result)
@@ -392,7 +392,7 @@ fn register_plan_reconcile(
   server : @mcp_server.McpServer,
   config : McpConfig,
 ) -> Unit {
-  let specs_dir = config.specs_dir
+  let specs_dirs = config.specs_dirs
   server.register_tool(
     {
       name: "plan_reconcile",
@@ -418,7 +418,7 @@ fn register_plan_reconcile(
         ..@plan_reconcile.ReconcileConfig::default(),
         target_dir,
         format: json_string(params, "format", "json"),
-        specs_dir,
+        specs_dirs,
       }
       match @plan_reconcile.run_to_string(reconcile_config) {
         Some(result) => @mcp_types.text_result(result)
@@ -431,7 +431,7 @@ fn register_plan_reconcile(
 ///|
 fn build_spec_align_config(
   params : Json?,
-  specs_dir : String,
+  specs_dirs : Array[String],
   subcommand : String,
   default_format : String,
 ) -> @spec_align.SpecAlignConfig? {
@@ -448,7 +448,7 @@ fn build_spec_align_config(
     subcommand,
     spec_path,
     impl_path,
-    specs_dir,
+    specs_dirs,
     format: json_string(params, "format", default_format),
     spec_format: json_string(params, "specFormat", "auto"),
     algorithm: json_string(params, "algorithm", "hybrid"),
@@ -472,7 +472,7 @@ fn register_spec_align_tool(
   default_format : String,
   formats : Array[String],
 ) -> Unit {
-  let specs_dir = config.specs_dir
+  let specs_dirs = config.specs_dirs
   server.register_tool(
     {
       name,
@@ -535,7 +535,7 @@ fn register_spec_align_tool(
     },
     async fn(params) {
       let align_config = match
-        build_spec_align_config(params, specs_dir, subcommand, default_format) {
+        build_spec_align_config(params, specs_dirs, subcommand, default_format) {
         Some(value) => value
         None =>
           return @mcp_types.error_result(
@@ -619,7 +619,7 @@ fn register_plan_solid(
   server : @mcp_server.McpServer,
   config : McpConfig,
 ) -> Unit {
-  let specs_dir = config.specs_dir
+  let specs_dirs = config.specs_dirs
   server.register_tool(
     {
       name: "plan_solid",
@@ -672,7 +672,7 @@ fn register_plan_solid(
         excludes: json_string_array(params, "excludes"),
         output: "",
         format: json_string(params, "format", "md"),
-        specs_dir,
+        specs_dirs,
       }
       match @plan_solid.run_to_string(solid_config) {
         Some(result) => @mcp_types.text_result(result)
@@ -687,7 +687,7 @@ fn register_plan_unwrap(
   server : @mcp_server.McpServer,
   config : McpConfig,
 ) -> Unit {
-  let specs_dir = config.specs_dir
+  let specs_dirs = config.specs_dirs
   server.register_tool(
     {
       name: "plan_unwrap",
@@ -724,7 +724,7 @@ fn register_plan_unwrap(
         include_self: json_bool(params, "includeSelf", false),
         include_bare: json_bool(params, "includeBare", false),
         mode: "report",
-        specs_dir,
+        specs_dirs,
       }
       match @plan_unwrap.run_to_string(unwrap_config) {
         Some(result) => @mcp_types.text_result(result)
@@ -739,7 +739,7 @@ fn register_plan_readme(
   server : @mcp_server.McpServer,
   config : McpConfig,
 ) -> Unit {
-  let specs_dir = config.specs_dir
+  let specs_dirs = config.specs_dirs
   server.register_tool(
     {
       name: "plan_readme",
@@ -775,7 +775,7 @@ fn register_plan_readme(
         target_dir,
         output: "",
         format: json_string(params, "format", "md"),
-        specs_dir,
+        specs_dirs,
         template,
         plans_dir: {
           let v = json_string(params, "plansDir", "")
@@ -804,7 +804,7 @@ fn register_wiki_lint(
   server : @mcp_server.McpServer,
   config : McpConfig,
 ) -> Unit {
-  let specs_dir = config.specs_dir
+  let specs_dirs = config.specs_dirs
   server.register_tool(
     {
       name: "wiki_lint",
@@ -834,7 +834,7 @@ fn register_wiki_lint(
         None => return @mcp_types.error_result("Project root not found")
       }
       let format = json_string(params, "format", "md")
-      let registry = @kgf_features.load_registry(specs_dir~, target_dir=".")
+      let registry = @kgf_features.load_registry(specs_dirs~, target_dir=".")
       let wiki = match @wiki_reader.load_wiki(wiki_dir, registry~) {
         Some(w) => w
         None => return @mcp_types.error_result("No wiki found at " + wiki_dir)
@@ -855,7 +855,7 @@ fn register_wiki_ingest(
   server : @mcp_server.McpServer,
   config : McpConfig,
 ) -> Unit {
-  let specs_dir = config.specs_dir
+  let specs_dirs = config.specs_dirs
   server.register_tool(
     {
       name: "wiki_ingest",
@@ -890,7 +890,7 @@ fn register_wiki_ingest(
       }
       let format = json_string(params, "format", "md")
       let dry_run = json_bool(params, "dryRun", true)
-      let registry = @kgf_features.load_registry(specs_dir~, target_dir=".")
+      let registry = @kgf_features.load_registry(specs_dirs~, target_dir=".")
       let wiki = match @wiki_reader.load_wiki(wiki_dir, registry~) {
         Some(w) => w
         None => return @mcp_types.error_result("No wiki found at " + wiki_dir)

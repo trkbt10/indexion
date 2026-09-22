@@ -15,7 +15,7 @@ pub fn run_matches(@argparse.Matches) -> Unit
 // Types and methods
 pub struct InitConfig {
   target_dir : String
-  specs_dir : String
+  specs_dirs : Array[String]
   force : Bool
 }
 pub fn InitConfig::default() -> Self
@@ -24,4 +24,3 @@ pub fn InitConfig::from_matches(@argparse.Matches) -> Self
 // Type aliases
 
 // Traits
-

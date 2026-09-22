@@ -5,7 +5,7 @@
 /// only a consumer. The identity package owns the name/content relationship.
 pub(all) struct IdentityAuditConfig {
   paths : Array[String]
-  specs_dir : String
+  specs_dirs : Array[String]
   threshold : Double
   limit : Int
   include_symbols : Bool
@@ -16,7 +16,7 @@ pub(all) struct IdentityAuditConfig {
 pub fn IdentityAuditConfig::default() -> IdentityAuditConfig {
   {
     paths: ["."],
-    specs_dir: "kgfs",
+    specs_dirs: [],
     threshold: 0.62,
     limit: 50,
     include_symbols: true,

@@ -25,7 +25,7 @@ fn fixture_specs_dir() -> String {
 /// All fixture analyses are read-only, so avoid reparsing the complete KGF
 /// registry for every language/spec-format assertion.
 let fixture_registry : @registry.KGFRegistry = @kgf_features.load_registry_or_empty(
-  specs_dir=fixture_specs_dir(),
+  specs_dirs=[fixture_specs_dir()],
   target_dir=fixture_root(),
 )
 
@@ -38,7 +38,7 @@ fn fixture_config_for(lang_dir : String) -> VerifyConfig {
     spec_patterns: [fixture_root() + "/spec/jsonrpc-2.0.md"],
     target_dir: fixture_root() + "/" + lang_dir,
     root_dir: None,
-    specs_dir: fixture_specs_dir(),
+    specs_dirs: [fixture_specs_dir()],
   }
 }
 
@@ -50,7 +50,7 @@ fn fixture_config_html(lang_dir : String) -> VerifyConfig {
     spec_patterns: [fixture_root() + "/spec/rfc7396-merge-patch.html"],
     target_dir: fixture_root() + "/" + lang_dir,
     root_dir: None,
-    specs_dir: fixture_specs_dir(),
+    specs_dirs: [fixture_specs_dir()],
   }
 }
 

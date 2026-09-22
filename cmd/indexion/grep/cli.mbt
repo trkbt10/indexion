@@ -64,7 +64,7 @@ pub(all) struct GrepConfig {
   paths : Array[String]
   includes : Array[String]
   excludes : Array[String]
-  specs_dir : String
+  specs_dirs : Array[String]
   semantic : String
   undocumented : Bool
   context_lines : Int
@@ -79,7 +79,7 @@ pub fn GrepConfig::default() -> GrepConfig {
     paths: [],
     includes: [],
     excludes: [],
-    specs_dir: "kgfs",
+    specs_dirs: [],
     semantic: "",
     undocumented: false,
     context_lines: 0,
@@ -113,7 +113,7 @@ pub fn GrepConfig::from_matches(matches : @argparse.Matches) -> GrepConfig {
     paths: get_all("paths"),
     includes: get_all("include"),
     excludes: get_all("exclude"),
-    specs_dir: get_str("specs-dir", "kgfs"),
+    specs_dirs: @common.arg_specs_dirs(matches),
     semantic: get_str("semantic", ""),
     undocumented: get_flag("undocumented", false),
     context_lines: @common.parse_int(get_str("context", "0")),
@@ -150,9 +150,7 @@ pub fn command() -> @argparse.Command {
         "semantic",
         about="Semantic query: proxy, short:N, long:N, params-gte:N, name:substr, undocumented",
       ),
-      @argparse.OptionArg("specs-dir", about="KGF specs directory", default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
       @argparse.OptionArg("context", about="Lines of context around matches", default_values=[
         "0",
       ]),

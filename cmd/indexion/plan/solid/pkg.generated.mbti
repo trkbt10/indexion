@@ -3,6 +3,7 @@ package "trkbt10/indexion/cmd/indexion/plan/solid"
 
 import {
   "moonbitlang/core/argparse",
+  "trkbt10/indexion/src/coverage",
   "trkbt10/indexion/src/plan/types",
 }
 
@@ -15,18 +16,58 @@ pub fn run_to_string(SolidConfig) -> String?
 
 pub fn solid_to_plan_document(SolidPlanJSON) -> @types.PlanDocument
 
+pub fn to_coverage_report(String, SolidPlanJSON) -> @coverage.CoverageReport
+
 // Errors
 
 // Types and methods
+pub struct CrossFunctionMatch {
+  func_name1 : String
+  func_name2 : String
+  file1 : String
+  file2 : String
+  dir1 : String
+  dir2 : String
+  similarity : Double
+  body_preview : String
+  line_count : Int
+}
+
+pub struct ExtractableFunction {
+  name : String
+  source_locations : Array[FunctionLocation]
+  similarity : Double
+  preview : String
+  line_count : Int
+}
+
 pub struct ExtractionFile {
   relative_path : String
   similarity : Double
   action : String
+  source1 : String
+  source2 : String
 }
 
 pub struct ExtractionGroup {
   target_path : String
   files : Array[ExtractionFile]
+}
+
+pub struct ExtractionTask {
+  task_id : Int
+  target_path : String
+  functions : Array[ExtractableFunction]
+  source_files : Array[String]
+  merge_strategy : String
+  confidence : Double
+}
+
+pub struct FunctionLocation {
+  file : String
+  dir : String
+  start_line : Int
+  end_line : Int
 }
 
 pub(all) struct SolidConfig {
@@ -40,7 +81,7 @@ pub(all) struct SolidConfig {
   excludes : Array[String]
   output : String
   format : String
-  specs_dir : String
+  specs_dirs : Array[String]
 }
 pub fn SolidConfig::default() -> Self
 pub fn SolidConfig::from_matches(@argparse.Matches) -> Self
@@ -50,6 +91,7 @@ pub struct SolidConfigJSON {
   target : String
   threshold : Double
   rules_count : Int
+  from_dirs : Array[String]
 }
 
 pub struct SolidPlanJSON {
@@ -57,6 +99,8 @@ pub struct SolidPlanJSON {
   summary : SolidSummaryJSON
   extractions : Array[ExtractionGroup]
   unmatched : Array[UnmatchedFile]
+  function_matches : Array[CrossFunctionMatch]
+  extraction_tasks : Array[ExtractionTask]
 }
 
 pub struct SolidRule {
@@ -68,14 +112,19 @@ pub struct SolidSummaryJSON {
   total_matches : Int
   matched_by_rules : Int
   unmatched_count : Int
+  path_match_count : Int
+  content_match_count : Int
+  function_match_count : Int
+  extraction_task_count : Int
 }
 
 pub struct UnmatchedFile {
   relative_path : String
   similarity : Double
+  source1 : String
+  source2 : String
 }
 
 // Type aliases
 
 // Traits
-

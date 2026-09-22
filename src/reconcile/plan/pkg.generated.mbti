@@ -2,6 +2,7 @@
 package "trkbt10/indexion/src/reconcile/plan"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "trkbt10/indexion/src/config",
   "trkbt10/indexion/src/kgf/registry",
@@ -52,6 +53,8 @@ pub fn is_document_candidate(String, String?, ReconcileConfig, @registry.KGFRegi
 
 pub fn is_document_path(String, ReconcileConfig, @registry.KGFRegistry) -> Bool
 
+pub fn load_signatures(String) -> ReconcileSignaturesFile?
+
 pub fn lower_string(String) -> String
 
 pub fn make_fragment(String, String, String, String, String) -> DocFragment
@@ -68,9 +71,15 @@ pub fn preview_text(String, max_len? : Int) -> String
 
 pub async fn report(ReconcileConfig) -> ReconcileReport?
 
+pub fn save_signatures(String, Array[@pipeline.FileSignature]) -> Bool
+
 pub fn select_document_spec(String, ReconcileConfig, @registry.KGFRegistry) -> String?
 
 pub fn select_document_spec_for_file(@pipeline.SupportedFile, ReconcileConfig, @registry.KGFRegistry) -> String?
+
+pub fn signatures_for_file_states(Array[@tracking.FileState]) -> Array[@pipeline.FileSignature]
+
+pub fn signatures_match_disk(ReconcileSignaturesFile) -> Bool
 
 pub fn sync_candidates_with_index(Array[ReconcileCandidate], ReconcileManifest, @vcdb.VectorDB, String, Int) -> IndexSyncResult
 
@@ -85,7 +94,7 @@ pub(all) struct CacheState {
   review_state_hash : String
   reused_candidates : Int
   reused_logical_reviews : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct CandidateBuildResult {
   candidates : Array[ReconcileCandidate]
@@ -99,7 +108,7 @@ pub(all) struct CodeAnchor {
   ns : String
   module_path : String
   inline_doc : String?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct CodeUnit {
   symbol_id : String
@@ -110,7 +119,7 @@ pub(all) struct CodeUnit {
   module_path : String
   inline_doc : String?
   code_hash : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct DocAnchor {
   fragment_id : String
@@ -119,7 +128,7 @@ pub(all) struct DocAnchor {
   kind : String
   title : String
   preview : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct DocFragment {
   id : String
@@ -130,7 +139,7 @@ pub(all) struct DocFragment {
   content : String
   preview : String
   fragment_hash : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct FragmentMatchSignals {
   exact_tokens : Map[String, Bool]
@@ -152,7 +161,7 @@ pub(all) struct IndexedRecordEntry {
   record_kind : String
   digest : String
   vector_id : Int64
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct LogicalReviewEntry {
   review_key : String
@@ -162,7 +171,7 @@ pub(all) struct LogicalReviewEntry {
   verdict : String?
   updated_at : Int
   vector_id : Int64
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct LogicalReviewTask {
   review_key : String
@@ -174,7 +183,7 @@ pub(all) struct LogicalReviewTask {
   doc_anchor : DocAnchor?
   evidence : MappingEvidence
   recommended_action : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct MappingEvidence {
   matched_terms : Array[String]
@@ -182,7 +191,7 @@ pub(all) struct MappingEvidence {
   reason : String
   code_time : @tracking.TimestampInfo
   doc_time : @tracking.TimestampInfo
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct ReconcileAggregateSuggestion {
   id : String
@@ -195,7 +204,7 @@ pub(all) struct ReconcileAggregateSuggestion {
   symbol_ids : Array[String]
   symbol_names : Array[String]
   doc_paths : Array[String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct ReconcileCandidate {
   id : String
@@ -212,14 +221,14 @@ pub(all) struct ReconcileCandidate {
   logical_review_status : String
   logical_review_reused : Bool
   needs_logical_review : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct ReconcileConfig {
   target_dir : String
   output : String
   format : String
   documents : @config.ReconcileDocumentScope
-  specs_dir : String
+  specs_dirs : Array[String]
   index_dir : String
   config_path : String
   review_results_path : String
@@ -231,7 +240,7 @@ pub(all) struct ReconcileConfig {
   logical_review_mode : String
   parallel : Bool
   vocabulary_divergence_threshold : Double
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ReconcileConfig::default() -> Self
 
 pub(all) struct ReconcileManifest {
@@ -245,9 +254,10 @@ pub(all) struct ReconcileManifest {
   files : Map[String, @tracking.FileState]
   records : Map[String, IndexedRecordEntry]
   logical_reviews : Map[String, LogicalReviewEntry]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub fn ReconcileManifest::allocate_vector_id(Self) -> (Self, Int64)
 pub fn ReconcileManifest::empty() -> Self
+pub fn ReconcileManifest::to_json(Self) -> Json
 
 pub(all) struct ReconcileReport {
   version : String
@@ -261,11 +271,12 @@ pub(all) struct ReconcileReport {
   skipped : Array[String]
   used_specs : Array[String]
   cache_state : CacheState
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn ReconcileReport::to_json(Self) -> Json
 
 pub(all) struct ReconcileReportConfig {
   target_dir : String
-  specs_dir : String
+  specs_dirs : Array[String]
   index_dir : String
   review_results_path : String
   doc_scope : String
@@ -277,7 +288,11 @@ pub(all) struct ReconcileReportConfig {
   git_preferred : Bool
   mtime_fallback : Bool
   logical_review_mode : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+
+pub struct ReconcileSignaturesFile {
+  signatures : Map[String, @pipeline.FileSignature]
+}
 
 pub(all) struct ReconcileSummary {
   total_symbols : Int
@@ -298,13 +313,13 @@ pub(all) struct ReconcileSummary {
   completed_logical_reviews : Int
   vocabulary_divergence_count : Int
   max_vocabulary_divergence : Double
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct ReviewDecisionInput {
   review_key : String
   status : String
   verdict : String?
-} derive(Eq, Show, @json.FromJson)
+} derive(Eq, @debug.Debug, @json.FromJson)
 
 pub(all) struct UnitMatchTerms {
   lowered_name : String
@@ -322,7 +337,7 @@ pub(all) struct VocabularyDivergence {
   gap_terms : Array[String]
   source_term_count : Int
   doc_term_count : Int
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 // Type aliases
 pub using @tracking {type FileState}
@@ -330,4 +345,3 @@ pub using @tracking {type FileState}
 pub using @tracking {type TimestampInfo}
 
 // Traits
-

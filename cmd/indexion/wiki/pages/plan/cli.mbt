@@ -12,7 +12,7 @@ pub struct WikiPlanConfig {
   target_dir : String
   output : String
   format : String
-  specs_dir : String
+  specs_dirs : Array[String]
   wiki_dir : String
 }
 
@@ -28,16 +28,13 @@ pub fn WikiPlanConfig::from_matches(
     Some(arr) => if arr.length() > 0 { arr[0] } else { "md" }
     _ => "md"
   }
-  let specs_dir = match matches.values.get("specs-dir") {
-    Some(arr) => if arr.length() > 0 { arr[0] } else { "kgfs" }
-    _ => "kgfs"
-  }
+  let specs_dirs = @common.arg_specs_dirs(matches)
   let wiki_dir = @wiki_cli_common.wiki_dir_arg(matches)
   let target_dir = match matches.values.get("directory") {
     Some(arr) => if arr.length() > 0 { arr[0] } else { "." }
     _ => "."
   }
-  { target_dir, output, format, specs_dir, wiki_dir, }
+  { target_dir, output, format, specs_dirs, wiki_dir, }
 }
 
 ///|
@@ -52,9 +49,7 @@ pub fn command() -> @argparse.Command {
         about="Output format: md, json, github-issue",
         default_values=["md"],
       ),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
       @argparse.OptionArg("wiki-dir", about="Wiki directory", default_values=[
         @wiki_workspace.DEFAULT_WIKI_DIR,
       ]),
@@ -83,7 +78,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
   let config = { ..parsed, wiki_dir: wiki_dir_resolved, }
   println("Analyzing project structure...")
   let graph = match
-    @digest_cli.build_graph_from_source(config.target_dir, config.specs_dir) {
+    @digest_cli.build_graph_from_source(config.target_dir, config.specs_dirs) {
     Some(r) => r.graph
     None => {
       println("Failed to build project graph.")
@@ -91,7 +86,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     }
   }
   let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dir=config.target_dir,
   )
   let existing_wiki = @wiki_reader.load_wiki(config.wiki_dir, registry~)

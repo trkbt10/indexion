@@ -17,7 +17,7 @@ pub fn run_to_string(GraphConfig) -> String?
 // Types and methods
 pub(all) struct GraphConfig {
   output : String
-  specs_dir : String
+  specs_dirs : Array[String]
   title : String
   format : String
   input_paths : Array[String]
@@ -28,4 +28,3 @@ pub fn GraphConfig::from_matches(@argparse.Matches) -> Self
 // Type aliases
 
 // Traits
-

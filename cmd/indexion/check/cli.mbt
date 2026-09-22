@@ -5,7 +5,7 @@ priv struct CheckConfig {
   includes : Array[String]
   excludes : Array[String]
   format : String
-  specs_dir : String
+  specs_dirs : Array[String]
   quiet : Bool
 }
 
@@ -76,7 +76,7 @@ fn CheckConfig::from_matches(matches : @argparse.Matches) -> CheckConfig {
     includes: get_all(matches, "include"),
     excludes: get_all(matches, "exclude"),
     format: get_str(matches, "format", "human"),
-    specs_dir: get_str(matches, "specs-dir", "kgfs"),
+    specs_dirs: @common.arg_specs_dirs(matches),
     quiet: matches.flags.get("quiet").unwrap_or(false),
   }
 }
@@ -102,9 +102,7 @@ pub fn command() -> @argparse.Command {
         about="Output format: human, json, lcov, cobertura",
         default_values=["human"],
       ),
-      @argparse.OptionArg("specs-dir", about=@help.specs_dir, default_values=[
-        "kgfs",
-      ]),
+      @help.specs_dir_option(),
     ],
     positionals=[
       @argparse.PositionArg(
@@ -125,7 +123,7 @@ pub fn run_matches(matches : @argparse.Matches) -> Unit {
     return
   }
   let registry = @kgf_features.load_registry(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dirs=config.paths,
   )
   let reg = match registry {

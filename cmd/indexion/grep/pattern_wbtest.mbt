@@ -3,7 +3,7 @@ using @test {assert_eq}
 
 ///|
 let shared_test_registry : @kgf_registry.KGFRegistry = @kgf_features.load_registry_or_empty(
-  specs_dir="kgfs",
+  specs_dirs=[],
   target_dir=".",
 )
 

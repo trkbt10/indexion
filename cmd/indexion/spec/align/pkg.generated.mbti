@@ -3,6 +3,7 @@ package "trkbt10/indexion/cmd/indexion/spec/align"
 
 import {
   "moonbitlang/core/argparse",
+  "trkbt10/indexion/src/kgf/registry",
 }
 
 // Values
@@ -20,6 +21,8 @@ pub async fn run_matches(@argparse.Matches) -> Unit
 
 pub async fn run_to_string(@trkbt10/indexion/src/spec/align.SpecAlignConfig) -> String?
 
+pub async fn run_to_string_with_registry(@trkbt10/indexion/src/spec/align.SpecAlignConfig, @registry.KGFRegistry) -> String?
+
 // Errors
 
 // Types and methods
@@ -27,4 +30,3 @@ pub async fn run_to_string(@trkbt10/indexion/src/spec/align.SpecAlignConfig) -> 
 // Type aliases
 
 // Traits
-

@@ -2,12 +2,23 @@
 package "trkbt10/indexion/src/config"
 
 import {
+  "moonbitlang/core/debug",
   "trkbt10/indexion/src/ignorefile",
   "trkbt10/indexion/src/scope",
 }
 
 // Values
 pub const INDEXIONIGNORE_FILENAME : String = ".indexionignore"
+
+pub const KGFS_OVERLAY_SUBDIR : String = "kgfs"
+
+pub const README_DOCS_SUBDIR : String = "docs"
+
+pub const README_DOC_CONFIG_FILE : String = "doc.json"
+
+pub const README_SUBDIR : String = "readme"
+
+pub const README_TEMPLATE_FILE : String = "template.md"
 
 pub fn ancestors_top_down(String, String) -> Array[String]
 
@@ -29,13 +40,19 @@ pub fn extension(String) -> String
 
 pub fn find_indexion_config_path(String, explicit_path? : String) -> String
 
+pub fn find_kgf_transpile_dir(explicit_path? : String, target_dir? : String) -> String?
+
 pub fn find_kgfs_dir(explicit_path? : String, target_dir? : String, target_dirs? : Array[String]) -> String?
+
+pub fn find_kgfs_overlay_dirs(target_dir? : String, target_dirs? : Array[String]) -> Array[String]
 
 pub fn find_last_char(String, Char) -> Int
 
 pub fn find_nearest_marker_dir(String, String, Array[String]) -> String?
 
 pub fn find_project_root(String, Array[String]) -> String?
+
+pub fn find_project_root_from(String) -> String?
 
 pub fn get_archive_extension() -> String
 
@@ -61,6 +78,8 @@ pub fn is_absolute_path(String) -> Bool
 
 pub fn join_path(String, String) -> String
 
+pub fn kgfs_overlay_relative() -> String
+
 pub fn load_doc_config(String) -> DocConfig?
 
 pub fn load_doc_from_json_root(Map[String, Json]) -> DocFileConfig
@@ -75,6 +94,8 @@ pub fn load_effective_mcp_config(String) -> McpFileConfig
 
 pub fn load_effective_reconcile_config(String) -> ReconcileFileConfig
 
+pub fn load_effective_wiki_config(String) -> WikiFileConfig
+
 pub fn load_embedding_from_json_root(Map[String, Json]) -> EmbeddingFileConfig
 
 pub fn load_global_config() -> GlobalConfig
@@ -87,6 +108,8 @@ pub fn load_project_config(String) -> ProjectFileConfig
 
 pub fn load_reconcile_file_config(String) -> ReconcileFileConfig
 
+pub fn load_wiki_from_json_root(Map[String, Json]) -> WikiFileConfig
+
 pub fn merge_digest_configs(DigestFileConfig, DigestFileConfig) -> DigestFileConfig
 
 pub fn merge_doc_configs(DocFileConfig, DocFileConfig) -> DocFileConfig
@@ -96,6 +119,10 @@ pub fn merge_embedding_configs(EmbeddingFileConfig, EmbeddingFileConfig) -> Embe
 pub fn merge_global_into_file(ReconcileFileConfig, ReconcileFileConfig) -> ReconcileFileConfig
 
 pub fn merge_mcp_configs(McpFileConfig, McpFileConfig) -> McpFileConfig
+
+pub fn merge_wiki_color_configs(WikiColorConfig, WikiColorConfig) -> WikiColorConfig
+
+pub fn merge_wiki_configs(WikiFileConfig, WikiFileConfig) -> WikiFileConfig
 
 pub fn normalize_path(String) -> String
 
@@ -117,6 +144,24 @@ pub fn parse_project_toml_config(String) -> ProjectFileConfig
 
 pub fn parse_reconcile_toml_config(String) -> ReconcileFileConfig
 
+pub fn parse_wiki_color_key(WikiColorConfig, String, String) -> WikiColorConfig
+
+pub fn parse_wiki_section_key(WikiFileConfig, String, String) -> WikiFileConfig
+
+pub fn readme_dir(String) -> String
+
+pub fn readme_doc_config_path(String) -> String
+
+pub fn readme_doc_config_relative() -> String
+
+pub fn readme_docs_dir(String) -> String
+
+pub fn readme_docs_relative() -> String
+
+pub fn readme_template_path(String) -> String
+
+pub fn readme_template_relative() -> String
+
 pub fn reconcile_doc_scope_paths(String, index_patterns? : Array[String], wildcard_patterns? : Array[String]) -> Array[String]
 
 pub fn reconcile_doc_scope_specs(String, doc_specs? : Array[String]) -> Array[String]
@@ -127,13 +172,15 @@ pub fn resolve_config_path_value(String, String, String) -> String
 
 pub fn resolve_effective_reconcile_config(String) -> EffectiveReconcileConfig
 
+pub fn resolve_kgfs_dirs(explicit_paths? : Array[String], explicit_path? : String, target_dir? : String, target_dirs? : Array[String]) -> Array[String]
+
 pub fn resolve_path(String, String) -> String
 
 pub fn resolve_project_indexion_dir(String, String) -> String?
 
 pub fn resolve_reconcile_document_scope(String, doc_paths? : Array[String], doc_specs? : Array[String], index_patterns? : Array[String], wildcard_patterns? : Array[String]) -> ReconcileDocumentScope
 
-pub fn resolve_reconcile_specs_dir(String, explicit_specs_dir? : String) -> String
+pub fn resolve_reconcile_specs_dirs(String, explicit_specs_dirs? : Array[String]) -> Array[String]
 
 pub fn start_embedding_provider_entry(EmbeddingFileConfig) -> EmbeddingFileConfig
 
@@ -148,8 +195,9 @@ pub fn trim_toml_comment(String) -> String
 // Types and methods
 pub struct DigestFileConfig {
   placeholder_ : Bool
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn DigestFileConfig::empty() -> Self
+pub impl Show for DigestFileConfig
 
 pub struct DocConfig {
   version : String
@@ -157,18 +205,22 @@ pub struct DocConfig {
   output : DocOutputConfig
   packages : Array[DocPackageEntry]
   root : DocRootConfig
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn DocConfig::empty() -> Self
+pub fn DocConfig::for_init() -> Self
+pub fn DocConfig::to_json(Self) -> Json
+pub impl ToJson for DocConfig
 
 pub struct DocFileConfig {
   config_path : String?
-} derive(Eq, Show)
+  per_package : Bool?
+} derive(Eq, @debug.Debug)
 pub fn DocFileConfig::empty() -> Self
 
 pub struct DocOutputConfig {
   format : String
   filename : String
-} derive(Eq, Show)
+} derive(Eq, ToJson, @debug.Debug)
 
 pub struct DocPackageEntry {
   path : String
@@ -176,26 +228,31 @@ pub struct DocPackageEntry {
   description : String
   include_in_root : Bool
   sections : Array[String]
-} derive(Eq, Show)
+} derive(Eq, ToJson, @debug.Debug)
+pub fn DocPackageEntry::to_json(Self) -> Json
 
 pub struct DocRootConfig {
   template : String
   output : String
   sections : Array[DocRootSection]
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub fn DocRootConfig::to_json(Self) -> Json
+pub impl ToJson for DocRootConfig
 
 pub enum DocRootSection {
   Static(String)
   Toc(String)
   Packages(String)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
+pub fn DocRootSection::to_json(Self) -> Json
+pub impl ToJson for DocRootSection
 
 pub struct EffectiveReconcileConfig {
   project : ProjectFileConfig
   global : GlobalConfig
   merged : ReconcileFileConfig
   global_config_path : String?
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub struct EmbeddingFileConfig {
   provider : String?
@@ -205,7 +262,7 @@ pub struct EmbeddingFileConfig {
   api_base_url : String?
   model : String?
   providers : Array[ProviderFileEntry]
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn EmbeddingFileConfig::empty() -> Self
 
 pub struct GlobalConfig {
@@ -215,15 +272,17 @@ pub struct GlobalConfig {
   embedding : EmbeddingFileConfig
   mcp : McpFileConfig
   doc : DocFileConfig
-} derive(Eq, Show)
+  wiki : WikiFileConfig
+} derive(Eq, @debug.Debug)
 pub fn GlobalConfig::empty() -> Self
+pub impl Show for GlobalConfig
 
 pub struct McpFileConfig {
   transport : String?
   port : Int?
   host : String?
   specs_dir : String?
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn McpFileConfig::empty() -> Self
 
 pub struct ProjectFileConfig {
@@ -233,7 +292,8 @@ pub struct ProjectFileConfig {
   embedding : EmbeddingFileConfig
   mcp : McpFileConfig
   doc : DocFileConfig
-} derive(Eq, Show)
+  wiki : WikiFileConfig
+} derive(Eq, @debug.Debug)
 pub fn ProjectFileConfig::default() -> Self
 
 pub(all) struct ProviderFileEntry {
@@ -243,7 +303,7 @@ pub(all) struct ProviderFileEntry {
   api_key_env : String?
   api_base_url : String?
   model : String?
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ProviderFileEntry::empty() -> Self
 
 pub struct ReconcileDocumentScope {
@@ -251,7 +311,7 @@ pub struct ReconcileDocumentScope {
   doc_paths : Array[String]
   doc_specs : Array[String]
   path_scope : @scope.PathScope
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub struct ReconcileFileConfig {
   doc_scope : String?
@@ -267,10 +327,31 @@ pub struct ReconcileFileConfig {
   mtime_fallback : Bool?
   logical_review_mode : String?
   vocabulary_divergence_threshold : Double?
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn ReconcileFileConfig::empty() -> Self
+
+pub struct WikiColorConfig {
+  background : String?
+  foreground : String?
+  primary : String?
+  accent : String?
+} derive(Eq, @debug.Debug)
+pub fn WikiColorConfig::empty() -> Self
+pub fn WikiColorConfig::to_json(Self) -> Json
+
+pub struct WikiFileConfig {
+  title : String?
+  logo_url : String?
+  favicon_url : String?
+  logo_alt : String?
+  default_color_scheme : String?
+  locale : String?
+  colors_dark : WikiColorConfig
+  colors_light : WikiColorConfig
+} derive(Eq, @debug.Debug)
+pub fn WikiFileConfig::empty() -> Self
+pub fn WikiFileConfig::to_branding_json(Self) -> Json
 
 // Type aliases
 
 // Traits
-

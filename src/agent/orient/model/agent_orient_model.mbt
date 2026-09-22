@@ -3,7 +3,7 @@
 pub(all) struct AgentOrientConfig {
   task : String
   paths : Array[String]
-  specs_dir : String
+  specs_dirs : Array[String]
   cache_dir : String
   wiki_dir : String
   no_update : Bool
@@ -25,7 +25,7 @@ pub fn AgentOrientConfig::default() -> AgentOrientConfig {
   {
     task: "",
     paths: ["."],
-    specs_dir: "kgfs",
+    specs_dirs: [],
     cache_dir: ".indexion/cache/agent",
     wiki_dir: ".indexion/wiki",
     no_update: false,

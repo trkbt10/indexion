@@ -29,7 +29,7 @@ async fn orient_agent_update_locked(
   // Stage: load KGF registry.
   let t = @pipeline.now_ms()
   let registry = @kgf_features.load_registry_or_empty(
-    specs_dir=config.specs_dir,
+    specs_dirs=config.specs_dirs,
     target_dirs=config.paths,
   )
   log_progress(config, "[orient] load registry", "", @pipeline.elapsed_ms(t))

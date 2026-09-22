@@ -20,7 +20,7 @@ pub fn run_to_string(VocabularyConfig) -> String?
 pub(all) struct VocabularyConfig {
   source_paths : Array[String]
   target_paths : Array[String]
-  specs_dir : String?
+  specs_dirs : Array[String]
   direction : String
   format : String
   output : String
@@ -66,6 +66,7 @@ pub(all) struct VocabularyReport {
   unresolved_issue_count : Int
   passed : Bool
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn VocabularyReport::to_json(Self) -> Json
 
 pub(all) struct VocabularyTerm {
   key : String

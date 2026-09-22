@@ -25,7 +25,7 @@ pub struct ServeConfig {
   provider : String
   dim : Int
   strategy : String
-  specs_dir : String
+  specs_dirs : Array[String]
   cors : Bool
   api_key_env : String
   api_base_url : String
@@ -40,4 +40,3 @@ pub fn ServeConfig::from_matches(@argparse.Matches) -> Self
 // Type aliases
 
 // Traits
-

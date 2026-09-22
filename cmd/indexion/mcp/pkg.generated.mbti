@@ -18,7 +18,7 @@ pub struct McpConfig {
   transport : String
   port : Int
   host : String
-  specs_dir : String
+  specs_dirs : Array[String]
   workspace_dir : String
 }
 pub fn McpConfig::apply_file_config(Self, @config.McpFileConfig) -> Self
@@ -28,4 +28,3 @@ pub fn McpConfig::from_matches(@argparse.Matches) -> Self
 // Type aliases
 
 // Traits
-

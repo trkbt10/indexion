@@ -5,7 +5,7 @@ fn fixture_specs_dir() -> String {
 
 ///|
 let shared_test_registry : @registry.KGFRegistry = @kgf_features.load_registry_or_empty(
-  specs_dir=fixture_specs_dir(),
+  specs_dirs=[fixture_specs_dir()],
   target_dir=".",
 )
 
@@ -131,7 +131,7 @@ fn fixture_config(impl_subdir : String, root : String) -> SpecAlignConfig {
     ..SpecAlignConfig::default(),
     spec_path,
     impl_path,
-    specs_dir: fixture_specs_dir(),
+    specs_dirs: [fixture_specs_dir()],
     cache_dir: root + "/cache",
     threshold: 0.35,
     spec_format: "sdd-requirement",
@@ -173,7 +173,7 @@ fn user_story_config(root : String) -> SpecAlignConfig {
     ..SpecAlignConfig::default(),
     spec_path,
     impl_path,
-    specs_dir: fixture_specs_dir(),
+    specs_dirs: [fixture_specs_dir()],
     cache_dir: root + "/cache",
     spec_format: "sdd-user-story",
     threshold: 0.2,
@@ -235,7 +235,7 @@ fn incremental_config(root : String) -> SpecAlignConfig {
     ..SpecAlignConfig::default(),
     spec_path,
     impl_path,
-    specs_dir: fixture_specs_dir(),
+    specs_dirs: [fixture_specs_dir()],
     cache_dir: root + "/cache",
     threshold: 0.35,
     incremental: true,

@@ -34,4 +34,3 @@ pub using @model {type AgentOrientQuizItem}
 pub using @model {type AgentOrientReport}
 
 // Traits
-

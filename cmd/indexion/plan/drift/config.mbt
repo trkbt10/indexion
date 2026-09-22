@@ -12,7 +12,7 @@ pub(all) struct DriftConfig {
   /// the measured distance exceeds this value.
   vocab_threshold : Double?
   /// KGF specs directory (None = auto-detect).
-  specs_dir : String?
+  specs_dirs : Array[String]
 }
 
 ///|
@@ -24,7 +24,7 @@ pub fn DriftConfig::default() -> DriftConfig {
     format: "text",
     top: 10,
     vocab_threshold: None,
-    specs_dir: None,
+    specs_dirs: [],
   }
 }
 
@@ -47,13 +47,7 @@ pub fn DriftConfig::from_matches(matches : @argparse.Matches) -> DriftConfig {
       }
     None => ()
   }
-  match matches.values.get("specs-dir") {
-    Some(vals) =>
-      if vals.length() > 0 {
-        config = { ..config, specs_dir: Some(vals[0]), }
-      }
-    None => ()
-  }
+  config = { ..config, specs_dirs: @common.arg_specs_dirs(matches), }
   config
 }
 
@@ -76,10 +70,7 @@ pub fn command() -> @argparse.Command {
         "vocab-threshold",
         about="Cosine-distance threshold; exit non-zero if exceeded",
       ),
-      @argparse.OptionArg(
-        "specs-dir",
-        about="KGF specs directory (default: auto-detect)",
-      ),
+      @help.specs_dir_option(),
     ],
     positionals=[
       @argparse.PositionArg("file_a", about="First file path"),
