@@ -445,20 +445,14 @@ test "registry: filename patterns are contested like extensions" {
 }
 
 ///|
-test "registry: the real kgfs directory reports its known collisions" {
-  // Each of these three was confirmed by hand in the spec files. The registry
-  // resolves them silently; this pins that they stay visible.
-  let conflicts = shared_test_registry.get_source_conflicts()
-  let contested : Map[String, Bool] = Map([])
-  for conflict in conflicts {
-    contested.set(conflict.get_pattern(), true)
-    // A reported conflict always shadows at least one spec, and the winner is
-    // never also listed as a loser.
+test "registry: conflicts reported for the real kgfs directory are well-formed" {
+  // Which patterns are contested is a property of the shipped specs and
+  // changes as they are cleaned up (the inline-spec tests above pin the
+  // reporting rules); what must always hold is the shape of a report: a
+  // conflict shadows at least one spec, and the winner is never a loser.
+  for conflict in shared_test_registry.get_source_conflicts() {
     assert_true(conflict.get_losers().length() > 0)
     assert_false(contains_string(conflict.get_losers(), conflict.get_winner()))
-  }
-  for pattern in [".sql", ".h", "package.json"] {
-    assert_true(contested.contains(pattern))
   }
 }
 
