@@ -3,15 +3,49 @@
 /// - Dot style: "a.b.c" -> "a/b/c"
 /// - ColonColon style: "a::b::c" -> "a/b/c"
 /// - Slash style: "a/b/c" -> "a/b/c" (no change)
+///
+/// A leading run of the spec's `relative_prefixes` (e.g. "./", "../") is the
+/// resolver's own navigation syntax, not part of the module identifier, so it
+/// is kept verbatim and only the remainder is converted: with dot style,
+/// "../a.b" -> "../a/b". Converting the prefix too would turn "../" into
+/// "///" and silently drop the parent step.
 pub fn module_to_path(
   mod_str : String,
   style : @types.ModulePathStyle,
+  relative_prefixes? : Array[String] = [],
 ) -> String {
-  match style {
-    Dot => replace_all(mod_str, ".", "/")
-    ColonColon => replace_all(mod_str, "::", "/")
-    Slash => mod_str
+  let prefix_len = leading_prefix_run_length(mod_str, relative_prefixes)
+  let prefix = mod_str[0:prefix_len].to_owned()
+  let rest = mod_str[prefix_len:].to_owned()
+  let converted = match style {
+    Dot => replace_all(rest, ".", "/")
+    ColonColon => replace_all(rest, "::", "/")
+    Slash => rest
   }
+  prefix + converted
+}
+
+///|
+/// Length of the leading run of declared prefixes in `path`: at each step the
+/// longest declared prefix that matches is consumed, until none matches.
+fn leading_prefix_run_length(path : String, prefixes : Array[String]) -> Int {
+  let chars = path.to_array()
+  let mut pos = 0
+  while pos < chars.length() {
+    let mut best = 0
+    for prefix in prefixes {
+      let prefix_chars = prefix.to_array()
+      if prefix_chars.length() > best &&
+        starts_with_at_arr(chars, prefix_chars, pos) {
+        best = prefix_chars.length()
+      }
+    }
+    if best == 0 {
+      break
+    }
+    pos = pos + best
+  }
+  pos
 }
 
 ///|

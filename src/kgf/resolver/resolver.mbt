@@ -84,7 +84,11 @@ pub fn resolve_module(
     return spec.get_bare_prefix() + module0
   }
   // Non-relative - attempt under project root
-  let mod_path = module_to_path(module0, spec.get_module_path_style())
+  let mod_path = module_to_path(
+    module0,
+    spec.get_module_path_style(),
+    relative_prefixes=spec.get_relative_prefixes(),
+  )
   let local_try = join_path([project_root, mod_path])
   // Try extensions
   for ext in spec.get_exts() {
@@ -119,7 +123,11 @@ fn resolve_with_chain(
   project_root : String,
   file_resolver : &FileResolver,
 ) -> String? {
-  let mod_path = module_to_path(module_str, spec.get_module_path_style())
+  let mod_path = module_to_path(
+    module_str,
+    spec.get_module_path_style(),
+    relative_prefixes=spec.get_relative_prefixes(),
+  )
   let base_abs = if is_absolute(base_path) {
     base_path
   } else {
@@ -577,7 +585,11 @@ fn try_local(
   project_root : String,
   file_resolver : &FileResolver,
 ) -> String? {
-  let mod_path = module_to_path(module_str, spec.get_module_path_style())
+  let mod_path = module_to_path(
+    module_str,
+    spec.get_module_path_style(),
+    relative_prefixes=spec.get_relative_prefixes(),
+  )
   let base_abs = if is_absolute(base) {
     base
   } else {

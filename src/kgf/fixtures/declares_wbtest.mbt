@@ -4,6 +4,86 @@
 /// function and type counts for realistic fixture code.
 
 ///|
+/// Helper: run the full KGF pipeline (lex, parse, semantics) on inline source
+/// and return the resulting graph, or None when parsing fails outright.
+fn eval_source_graph(
+  registry : @registry.KGFRegistry,
+  lang : String,
+  source : String,
+  path : String,
+) -> @graph.CodeGraph? {
+  let spec = registry.get_spec(lang).unwrap()
+  let lexer = @lexer.Lexer::new(spec.get_tokens())
+  let tokens = lexer.tokenize(source)
+  let peg = @peg.build_peg(spec) catch { _ => return None }
+  let start_rule = spec.get_start_rule()
+  let parse_result = match @peg.run_parse(peg, spec, start_rule, tokens) {
+    Some(r) => r
+    None => return None
+  }
+  let graph = @graph.CodeGraph::new()
+  let _ = graph.get_or_add_module(path, file=Some(path))
+  let ctx = @semantics.SemEvalCtx::new(spec, graph, path, "", lang, fn(_) {
+    false
+  })
+  for event in parse_result.get_events() {
+    @semantics.eval_rule_semantics(event.0, event.1, ctx)
+  }
+  Some(graph)
+}
+
+///|
+/// Helper: the declares edges of inline source as (from, name, kind, doc)
+/// tuples, in emission order.
+fn declares_of(
+  registry : @registry.KGFRegistry,
+  lang : String,
+  source : String,
+  path : String,
+) -> Array[(String, String, String, String)] {
+  let result : Array[(String, String, String, String)] = []
+  let graph = match eval_source_graph(registry, lang, source, path) {
+    Some(g) => g
+    None => return result
+  }
+  for edge in graph.get_edges() {
+    if !(edge.kind is @graph.Declares) {
+      continue
+    }
+    result.push(
+      (
+        edge.from,
+        edge.attrs.get("name").unwrap_or(""),
+        edge.attrs.get("kind").unwrap_or(""),
+        edge.attrs.get("doc").unwrap_or(""),
+      ),
+    )
+  }
+  result
+}
+
+///|
+/// Helper: the `via` attrs of the moduleDependsOn edges of inline source.
+fn depends_via(
+  registry : @registry.KGFRegistry,
+  lang : String,
+  source : String,
+  path : String,
+) -> Array[String] {
+  let result : Array[String] = []
+  let graph = match eval_source_graph(registry, lang, source, path) {
+    Some(g) => g
+    None => return result
+  }
+  for edge in graph.get_edges() {
+    if edge.kind is @graph.ModuleDependsOn {
+      result.push(edge.attrs.get("via").unwrap_or(""))
+    }
+  }
+  result
+}
+
+///|
 /// Helper: run the full KGF pipeline on inline source and count declares edges.
 /// Returns (fn_count, type_count, names_set).
 fn count_declares(
@@ -13,21 +93,9 @@ fn count_declares(
   path : String,
 ) -> (Int, Int, Map[String, String]) {
   let spec = registry.get_spec(lang).unwrap()
-  let lexer = @lexer.Lexer::new(spec.get_tokens())
-  let tokens = lexer.tokenize(source)
-  let peg = @peg.build_peg(spec) catch { _ => return (0, 0, {}) }
-  let start_rule = spec.get_start_rule()
-  let parse_result = match @peg.run_parse(peg, spec, start_rule, tokens) {
-    Some(r) => r
+  let graph = match eval_source_graph(registry, lang, source, path) {
+    Some(g) => g
     None => return (0, 0, {})
-  }
-  let graph = @graph.CodeGraph::new()
-  let _ = graph.get_or_add_module(path, file=Some(path))
-  let ctx = @semantics.SemEvalCtx::new(spec, graph, path, "", lang, fn(_) {
-    false
-  })
-  for event in parse_result.get_events() {
-    @semantics.eval_rule_semantics(event.0, event.1, ctx)
   }
   let function_kinds : Array[String] = match
     spec.get_feature("function_kinds") {
@@ -282,6 +350,120 @@ test "declares: rust doc-before-attr member and type-word identifiers" {
   assert_true(names.get("Value") == Some("enum"))
 }
 
+///|
+/// Regression test for the idiomatic top-level shape `/// doc` THEN `#[attr]`
+/// on the next line THEN the declaration. The rule used to allow a newline
+/// only before the attributes, so the newline after them broke the match,
+/// the item fell through to `Other` and was lost (or, for the struct, kept
+/// without its doc). Every declaration kind is covered, plus an `impl` block
+/// whose doc-then-attr methods used to vanish with the whole block.
+test "declares: rust doc comment followed by attribute on top-level items" {
+  let registry = get_fixture_registry()
+  let source =
+    #|/// Doc then attr struct.
+    #|#[derive(Debug, Clone)]
+    #|pub struct DocAttr {
+    #|    pub a: u8,
+    #|}
+    #|
+    #|/// Doc then attr enum.
+    #|#[derive(Debug)]
+    #|pub enum Kind { A, B }
+    #|
+    #|/// Doc then attr trait.
+    #|#[allow(dead_code)]
+    #|pub trait Tr { fn m(&self); }
+    #|
+    #|/// Doc then two attrs fn.
+    #|#[inline]
+    #|#[must_use]
+    #|pub fn f2() -> u8 { 1 }
+    #|
+    #|/// Doc then attr const.
+    #|#[allow(dead_code)]
+    #|pub const C: u8 = 1;
+    #|
+    #|/// Doc then attr static.
+    #|#[allow(dead_code)]
+    #|pub static S: u8 = 1;
+    #|
+    #|/// Doc then attr type.
+    #|#[allow(dead_code)]
+    #|pub type T = u8;
+    #|
+    #|/// Doc then attr mod.
+    #|#[cfg(test)]
+    #|pub mod tests {}
+    #|
+    #|/// Doc then attr impl.
+    #|#[allow(dead_code)]
+    #|impl DocAttr {
+    #|    /// Method doc then attr.
+    #|    #[inline]
+    #|    pub fn m1(&self) {}
+    #|}
+  let docs : Map[String, String] = Map([])
+  for decl in declares_of(registry, "rust", source, "attrs.rs") {
+    docs.set(decl.1, decl.3)
+  }
+  assert_eq(docs.get("DocAttr"), Some("Doc then attr struct."))
+  assert_eq(docs.get("Kind"), Some("Doc then attr enum."))
+  assert_eq(docs.get("Tr"), Some("Doc then attr trait."))
+  assert_eq(docs.get("f2"), Some("Doc then two attrs fn."))
+  assert_eq(docs.get("C"), Some("Doc then attr const."))
+  assert_eq(docs.get("S"), Some("Doc then attr static."))
+  assert_eq(docs.get("T"), Some("Doc then attr type."))
+  assert_eq(docs.get("tests"), Some("Doc then attr mod."))
+  assert_eq(docs.get("m1"), Some("Method doc then attr."))
+}
+
+///|
+/// A multi-line `///` block must reach the declares edge in full: `$doc`
+/// alone holds only the last line, so the edge is built from `$doc_text`.
+test "declares: rust multi-line doc block keeps every line" {
+  let registry = get_fixture_registry()
+  let source =
+    #|/// First line.
+    #|/// Second line.
+    #|/// Third line.
+    #|pub fn multi() {}
+  let decls = declares_of(registry, "rust", source, "multi.rs")
+  assert_eq(decls.length(), 1)
+  assert_eq(decls[0].3, "First line.\n Second line.\n Third line.")
+}
+
+///|
+/// Receivers other than `self` / `&self` (`mut self`, `self: Box<Self>`) and
+/// trait bodies with associated types/consts used to abort the enclosing
+/// impl or trait, dropping every method in it.
+test "declares: rust owned receivers and trait associated items" {
+  let registry = get_fixture_registry()
+  let source =
+    #|/// Trait with associated items.
+    #|pub trait Store {
+    #|    /// Associated type.
+    #|    type Item;
+    #|    /// Associated const.
+    #|    const LIMIT: usize;
+    #|    fn get(&self) -> Self::Item;
+    #|}
+    #|
+    #|impl Thing {
+    #|    pub fn consume(mut self) -> u8 { 0 }
+    #|    pub fn boxed(self: Box<Self>) -> u8 { 0 }
+    #|    pub fn borrowed(&self) -> u8 { 0 }
+    #|}
+  let (fn_count, type_count, names) = count_declares(
+    registry, "rust", source, "recv.rs",
+  )
+  assert_eq(type_count, 1)
+  assert_eq(fn_count, 3)
+  assert_true(names.get("Store") == Some("trait"))
+  assert_true(names.get("consume") == Some("function"))
+  assert_true(names.get("boxed") == Some("function"))
+  assert_true(names.get("borrowed") == Some("function"))
+}
+
 // ─── Go ─────────────────────────────────────────────────────
 
 ///|
@@ -444,6 +626,150 @@ test "declares: python def and class" {
   assert_true(names.get("create_client") == Some("function"))
   assert_true(names.get("User") == Some("class"))
   assert_true(names.get("Project") == Some("class"))
+}
+
+///|
+/// Python docstrings sit INSIDE the body, after the `def`/`class` line. They
+/// are captured on the declaration itself, for functions, classes, methods
+/// and properties alike; a method is declared under its class and a
+/// `@property` method is a Property.
+test "declares: python docstrings on functions, classes, methods and properties" {
+  let registry = get_fixture_registry()
+  let source =
+    #|"""Module docstring."""
+    #|
+    #|
+    #|def documented(x: int) -> int:
+    #|    """Function docstring."""
+    #|    return x
+    #|
+    #|
+    #|def undocumented(x):
+    #|    return x
+    #|
+    #|
+    #|class Documented:
+    #|    """Class docstring."""
+    #|
+    #|    def method_doc(self):
+    #|        """Method docstring."""
+    #|        return 1
+    #|
+    #|    @property
+    #|    def prop(self):
+    #|        '''Property docstring.'''
+    #|        return 3
+    #|
+    #|
+    #|class Undocumented:
+    #|
+    #|    def method_nodoc(self):
+    #|        return 1
+  let decls = declares_of(registry, "python", source, "app.py")
+  let by_name : Map[String, (String, String, String)] = Map([])
+  for decl in decls {
+    by_name.set(decl.1, (decl.0, decl.2, decl.3))
+  }
+  assert_eq(decls.length(), 7)
+  assert_eq(
+    by_name.get("documented"),
+    Some(("app.py", "Function", "Function docstring.")),
+  )
+  assert_eq(by_name.get("undocumented"), Some(("app.py", "Function", "")))
+  assert_eq(
+    by_name.get("Documented"),
+    Some(("app.py", "Class", "Class docstring.")),
+  )
+  assert_eq(
+    by_name.get("method_doc"),
+    Some(("app.py::Documented", "Method", "Method docstring.")),
+  )
+  assert_eq(
+    by_name.get("prop"),
+    Some(("app.py::Documented", "Property", "Property docstring.")),
+  )
+  assert_eq(by_name.get("Undocumented"), Some(("app.py", "Class", "")))
+  assert_eq(
+    by_name.get("method_nodoc"),
+    Some(("app.py::Undocumented", "Method", "")),
+  )
+}
+
+///|
+/// Regression test for the statement forms that used to stop the whole
+/// module parse silently (everything after them was dropped): `return`,
+/// `with ... as`, `import x as y`, multi-line parameter lists, blank lines
+/// inside bodies, nested functions and module-level compound statements.
+test "declares: python bodies with keywords, nesting and multi-line params" {
+  let registry = get_fixture_registry()
+  let source =
+    #|import os.path as osp, sys
+    #|from typing import (
+    #|    List,
+    #|    Optional,
+    #|)
+    #|
+    #|
+    #|def first(
+    #|    a: int,
+    #|    b: str = "x",
+    #|    *args,
+    #|    **kwargs,
+    #|) -> List[int]:
+    #|    with open(b) as handle:
+    #|        data = handle.read()
+    #|
+    #|    def helper(v):
+    #|        return v * 2
+    #|
+    #|    return [helper(a) for _ in data]
+    #|
+    #|
+    #|class Store:
+    #|    items: dict[str, int] = {}
+    #|
+    #|    def add(self, key: str) -> None:
+    #|        self.items[key] = 1
+    #|
+    #|    async def fetch(self):
+    #|        return await osp.join("a", "b")
+    #|
+    #|
+    #|if __name__ == "__main__":
+    #|    first(1)
+    #|
+    #|
+    #|def last():
+    #|    pass
+  let (fn_count, type_count, names) = count_declares(
+    registry, "python", source, "flow.py",
+  )
+  // first, last, Store.add, Store.fetch — the nested helper is not declared.
+  assert_eq(fn_count, 4)
+  assert_eq(type_count, 1)
+  assert_true(names.get("first") == Some("function"))
+  assert_true(names.get("last") == Some("function"))
+  assert_true(names.get("add") == Some("method"))
+  assert_true(names.get("fetch") == Some("method"))
+  assert_true(names.get("Store") == Some("class"))
+  assert_true(!names.contains("helper"))
+  let via = depends_via(registry, "python", source, "flow.py")
+  assert_eq(via, ["os.path", "sys", "typing"])
+}
+
+///|
+/// Relative imports keep their leading dots in `via`, and each `import`
+/// entry yields exactly one dependency edge (no duplicates).
+test "declares: python import forms produce one edge each" {
+  let registry = get_fixture_registry()
+  let source =
+    #|from . import sibling
+    #|from .models import User
+    #|from ..pkg.core import thing as other
+    #|from ...top import *
+    #|import httpx
+  let via = depends_via(registry, "python", source, "pkg/sub/mod.py")
+  assert_eq(via, [".", ".models", "..pkg.core", "...top", "httpx"])
 }
 
 // ─── Java ───────────────────────────────────────────────────

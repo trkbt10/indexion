@@ -1,10 +1,7 @@
 {
   "modules": [
     "pip:abc",
-    "pip:auth",
-    "pip:token",
-    "pip:client",
-    "pip:models",
+    "pip:httpx",
     "pip:pydantic",
     "pip:tenacity",
     "fixtures/project/python/pyproject.toml",
@@ -12,28 +9,20 @@
     "fixtures/project/python/src/example_sdk/models.py",
     "fixtures/project/python/src/example_sdk/__init__.py",
     "fixtures/project/python/src/example_sdk/auth/token.py",
-    "fixtures/project/python/src/example_sdk/auth/__init__.py"
+    "fixtures/project/python/src/example_sdk/auth/__init__.py",
+    "fixtures/project/python/src/example_sdk/client.py::Client.__init__",
+    "fixtures/project/python/src/example_sdk/client.py::Client.get_user",
+    "fixtures/project/python/src/example_sdk/client.py::Client.list_projects",
+    "fixtures/project/python/src/example_sdk/auth/token.py::StaticToken.token",
+    "fixtures/project/python/src/example_sdk/auth/token.py::TokenProvider.apply",
+    "fixtures/project/python/src/example_sdk/auth/token.py::TokenProvider.token",
+    "fixtures/project/python/src/example_sdk/auth/token.py::StaticToken.__init__"
   ],
   "moduleDependsOn": [
     {
       "from": "fixtures/project/python/src/example_sdk/client.py",
-      "to": "pip:auth",
-      "via": "auth"
-    },
-    {
-      "from": "fixtures/project/python/src/example_sdk/client.py",
-      "to": "pip:auth",
-      "via": "auth"
-    },
-    {
-      "from": "fixtures/project/python/src/example_sdk/client.py",
-      "to": "pip:models",
-      "via": "models"
-    },
-    {
-      "from": "fixtures/project/python/src/example_sdk/client.py",
-      "to": "pip:models",
-      "via": "models"
+      "to": "pip:httpx",
+      "via": "httpx"
     },
     {
       "from": "fixtures/project/python/src/example_sdk/client.py",
@@ -42,8 +31,13 @@
     },
     {
       "from": "fixtures/project/python/src/example_sdk/client.py",
-      "to": "pip:tenacity",
-      "via": "tenacity"
+      "to": "fixtures/project/python/src/example_sdk/models.py",
+      "via": ".models"
+    },
+    {
+      "from": "fixtures/project/python/src/example_sdk/client.py",
+      "to": "fixtures/project/python/src/example_sdk/auth/__init__.py",
+      "via": ".auth"
     },
     {
       "from": "fixtures/project/python/src/example_sdk/models.py",
@@ -51,29 +45,14 @@
       "via": "pydantic"
     },
     {
-      "from": "fixtures/project/python/src/example_sdk/models.py",
-      "to": "pip:pydantic",
-      "via": "pydantic"
+      "from": "fixtures/project/python/src/example_sdk/__init__.py",
+      "to": "fixtures/project/python/src/example_sdk/client.py",
+      "via": ".client"
     },
     {
       "from": "fixtures/project/python/src/example_sdk/__init__.py",
-      "to": "pip:client",
-      "via": "client"
-    },
-    {
-      "from": "fixtures/project/python/src/example_sdk/__init__.py",
-      "to": "pip:client",
-      "via": "client"
-    },
-    {
-      "from": "fixtures/project/python/src/example_sdk/__init__.py",
-      "to": "pip:models",
-      "via": "models"
-    },
-    {
-      "from": "fixtures/project/python/src/example_sdk/__init__.py",
-      "to": "pip:models",
-      "via": "models"
+      "to": "fixtures/project/python/src/example_sdk/models.py",
+      "via": ".models"
     },
     {
       "from": "fixtures/project/python/src/example_sdk/auth/token.py",
@@ -82,31 +61,26 @@
     },
     {
       "from": "fixtures/project/python/src/example_sdk/auth/token.py",
-      "to": "pip:abc",
-      "via": "abc"
+      "to": "pip:httpx",
+      "via": "httpx"
     },
     {
       "from": "fixtures/project/python/src/example_sdk/auth/__init__.py",
-      "to": "pip:token",
-      "via": "token"
-    },
-    {
-      "from": "fixtures/project/python/src/example_sdk/auth/__init__.py",
-      "to": "pip:token",
-      "via": "token"
+      "to": "fixtures/project/python/src/example_sdk/auth/token.py",
+      "via": ".token"
     }
   ],
   "stats": {
-    "symbols": 8,
-    "edges": 23,
+    "symbols": 28,
+    "edges": 33,
     "edgesByKind": {
-      "declares": 5,
+      "declares": 13,
       "dependsOn": 3,
       "projectName": 1,
       "projectKeyword": 3,
       "projectLicense": 1,
       "projectVersion": 1,
-      "module_depends_on": 8,
+      "module_depends_on": 10,
       "projectDescription": 1
     },
     "unresolved_structural_edges": 0

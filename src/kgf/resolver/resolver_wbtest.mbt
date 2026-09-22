@@ -2100,3 +2100,71 @@ test "resolution_cache: stats tracking" {
   assert_eq(circulars[0].0, "/a.ts")
   assert_eq(circulars[0].1, "./b")
 }
+
+///|
+test "module_to_path keeps a declared relative prefix run intact" {
+  let prefixes = ["./", "../"]
+  assert_eq(
+    module_to_path("./a.b", get_dot_style(), relative_prefixes=prefixes),
+    "./a/b",
+  )
+  assert_eq(
+    module_to_path("../a.b", get_dot_style(), relative_prefixes=prefixes),
+    "../a/b",
+  )
+  assert_eq(
+    module_to_path("../../a", get_dot_style(), relative_prefixes=prefixes),
+    "../../a",
+  )
+  assert_eq(
+    module_to_path("./", get_dot_style(), relative_prefixes=prefixes),
+    "./",
+  )
+  // Without declared prefixes nothing is protected.
+  assert_eq(module_to_path("../a.b", get_dot_style()), "///a/b")
+}
+
+///|
+test "resolve_module dot style resolves a parent-relative module" {
+  let spec = @types.ResolverSpec::new(
+    exts=[".py"],
+    indexes=["/__init__.py"],
+    relative_prefixes=["./", "../"],
+    module_path_style=get_dot_style(),
+  )
+  let resolver = MockFileResolver::new(["/project/pkg/models.py"])
+  let result = resolve_module(
+    spec, "python", "/project/pkg/auth/token.py", "../models", "/project", resolver,
+  )
+  assert_eq(result, "pkg/models.py")
+}
+
+///|
+test "resolve_module dot style resolves a sibling-relative dotted module" {
+  let spec = @types.ResolverSpec::new(
+    exts=[".py"],
+    indexes=["/__init__.py"],
+    relative_prefixes=["./", "../"],
+    module_path_style=get_dot_style(),
+  )
+  let resolver = MockFileResolver::new(["/project/pkg/auth/token.py"])
+  let result = resolve_module(
+    spec, "python", "/project/pkg/client.py", "./auth.token", "/project", resolver,
+  )
+  assert_eq(result, "pkg/auth/token.py")
+}
+
+///|
+test "resolve_module dot style resolves the current package index" {
+  let spec = @types.ResolverSpec::new(
+    exts=[".py"],
+    indexes=["/__init__.py"],
+    relative_prefixes=["./", "../"],
+    module_path_style=get_dot_style(),
+  )
+  let resolver = MockFileResolver::new(["/project/pkg/__init__.py"])
+  let result = resolve_module(
+    spec, "python", "/project/pkg/store.py", "./", "/project", resolver,
+  )
+  assert_eq(result, "pkg/__init__.py")
+}

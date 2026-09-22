@@ -238,3 +238,27 @@ test "capture_group: capturing group with alternation (a|b)" {
   assert_eq(tokens[0].get_kind(), "Doc")
   assert_eq(tokens[0].get_value(), " hello")
 }
+
+///|
+test "capture_group: second alternative's group supplies the value" {
+  let lexer = Lexer::new([
+    @types.TokenDef::new("Doc", "\\/\\/\\/(.*)|---(.*)"),
+    @types.TokenDef::new("NL", "\\r?\\n"),
+  ])
+  let tokens = lexer.tokenize("--- world\n")
+  assert_eq(tokens[0].get_kind(), "Doc")
+  assert_eq(tokens[0].get_value(), " world")
+}
+
+///|
+test "capture_group: python-style docstring alternatives strip both quote kinds" {
+  let lexer = Lexer::new([
+    @types.TokenDef::new(
+      "Docstring", "\"\"\"([\\s\\S]*?)\"\"\"|'''([\\s\\S]*?)'''",
+    ),
+    @types.TokenDef::new("NL", "\\r?\\n"),
+  ])
+  let tokens = lexer.tokenize("\"\"\"double\"\"\"\n'''single'''\n")
+  assert_eq(tokens[0].get_value(), "double")
+  assert_eq(tokens[2].get_value(), "single")
+}

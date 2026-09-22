@@ -41,6 +41,22 @@ pub fn ParseDiagnostic::is_fully_consumed(self : ParseDiagnostic) -> Bool {
 }
 
 ///|
+/// One-line description of where parsing stopped, for user-facing output:
+/// "expected A, B, found C" when the parser recorded expectations, otherwise
+/// "unexpected C" (or "end of input" when the stop is past the last token).
+pub fn ParseDiagnostic::describe(self : ParseDiagnostic) -> String {
+  let actual = match self.actual_token {
+    Some(tok) => tok.get_kind()
+    None => "end of input"
+  }
+  if self.expected_kinds.length() > 0 {
+    "expected " + self.expected_kinds.join(", ") + ", found " + actual
+  } else {
+    "unexpected " + actual
+  }
+}
+
+///|
 fn token_at(tokens : Array[@types.Tok], pos : Int) -> @types.Tok? {
   if pos >= 0 && pos < tokens.length() {
     Some(tokens[pos])

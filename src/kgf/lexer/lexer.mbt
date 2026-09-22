@@ -65,7 +65,8 @@ pub fn Lexer::tokenize(self : Lexer, input : String) -> Array[@types.Tok] {
 
 ///|
 /// Tries to match a token at the given position.
-/// Returns the matched token definition, end position, matched text, and first capture group.
+/// Returns the matched token definition, end position, matched text, and the
+/// text of the first capture group that participated in the match.
 fn Lexer::try_match(
   self : Lexer,
   input : String,
@@ -97,15 +98,42 @@ fn Lexer::try_match(
             return Some((token_def, end_pos_value, None, None))
           } else {
             let text = input[pos:end_pos_value].to_owned()
-            // Extract first capture group text
-            let group1 = match captures {
-              Some(cap) => cap.get_group_text(1, input_chars)
+            let captured = match captures {
+              Some(cap) =>
+                first_participating_group(
+                  cap,
+                  compiled.get_capture_count(),
+                  input_chars,
+                )
               None => None
             }
-            return Some((token_def, end_pos_value, Some(text), group1))
+            return Some((token_def, end_pos_value, Some(text), captured))
           }
         }
       None => ()
+    }
+  }
+  None
+}
+
+///|
+/// Returns the text of the first capture group that participated in the
+/// match, or None when no group did.
+///
+/// A token pattern may carry one group per alternative, e.g. a docstring
+/// rule `"""(...)"""|'''(...)'''`. Only the alternative that matched
+/// sets its group; the others stay unset. Always reading group 1 would leave
+/// every non-first alternative without a value, so the value comes from the
+/// lowest-numbered group that actually matched.
+fn first_participating_group(
+  captures : @regexp.CaptureState,
+  capture_count : Int,
+  input_chars : Array[Char],
+) -> String? {
+  for index = 1; index <= capture_count; index = index + 1 {
+    match captures.get_group_text(index, input_chars) {
+      Some(text) => return Some(text)
+      None => continue
     }
   }
   None

@@ -59,24 +59,10 @@ pub fn check_source(
         line,
         col,
         "error",
-        format_parse_message(parse_diagnostic),
+        parse_diagnostic.describe(),
         "parser",
       ),
     )
   }
   diagnostics
-}
-
-///|
-fn format_parse_message(diagnostic : @kgf_peg.ParseDiagnostic) -> String {
-  let expected = diagnostic.get_expected_kinds()
-  let actual = match diagnostic.get_actual_token() {
-    Some(tok) => tok.get_kind()
-    None => "end of input"
-  }
-  if expected.length() > 0 {
-    "expected " + expected.join(", ") + ", found " + actual
-  } else {
-    "unexpected " + actual
-  }
 }

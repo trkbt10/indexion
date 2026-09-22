@@ -518,11 +518,26 @@ fn run_inspect(config : KgfConfig) -> Unit {
   }
   let start_rule = spec.get_start_rule()
   println("Start rule: \{start_rule}")
-  let parse_result = @peg.run_parse(peg, spec, start_rule, tokens)
+  let (parse_result, diagnostic) = @peg.run_parse_with_diagnostics(
+    peg, spec, start_rule, tokens,
+  )
   match parse_result {
     Some(eval_result) => {
       let events = eval_result.get_events()
-      println("Parse: SUCCESS")
+      if diagnostic.is_fully_consumed() {
+        println("Parse: SUCCESS")
+      } else {
+        // The start rule matched a prefix of the token stream and stopped.
+        // Everything after the stop point is invisible to events, semantics
+        // and edges, so say so instead of reporting a bare SUCCESS.
+        println(
+          "Parse: PARTIAL (consumed \{diagnostic.get_furthest_pos()} of \{tokens.length()} tokens)",
+        )
+        println("  " + describe_parse_stop(source, diagnostic))
+        println(
+          "  Events, semantics and edges below cover only the consumed prefix.",
+        )
+      }
       println("Event count: \{events.length()}")
       if config.show_events {
         println("")
@@ -574,6 +589,7 @@ fn run_inspect(config : KgfConfig) -> Unit {
     }
     None => {
       println("Parse: FAILED")
+      println("  " + describe_parse_stop(source, diagnostic))
       println("")
       println("Possible issues:")
       println("  - Grammar doesn't match file structure")
@@ -581,6 +597,21 @@ fn run_inspect(config : KgfConfig) -> Unit {
       println("  - File format issues")
     }
   }
+}
+
+///|
+/// Formats where the parser stopped as "line L, col C: <reason>" using the
+/// diagnostic's actual token position (end of input when there is none).
+fn describe_parse_stop(
+  source : String,
+  diagnostic : @peg.ParseDiagnostic,
+) -> String {
+  let pos = match diagnostic.get_actual_token() {
+    Some(tok) => tok.get_pos()
+    None => source.length()
+  }
+  let (line, col) = @kgf_check.SourceMap::new(source).resolve(pos)
+  "stopped at line \{line}, col \{col}: " + diagnostic.describe()
 }
 
 ///|
